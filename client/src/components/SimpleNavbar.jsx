@@ -12,7 +12,7 @@ function SimpleNavbar() {
   const isDark = useThemeDetector();
 
   return (
-    <Navbar maxWidth={"full"}>
+    <Navbar maxWidth={"full"} className="z-50">
       <NavbarBrand>
         <a href="https://chartbrew.com">
           <Image src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={150} radius="sm" />

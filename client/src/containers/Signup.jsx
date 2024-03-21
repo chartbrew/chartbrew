@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { useWindowSize } from "react-use";
 import {
-  Button, Card, Spacer, Input, Link as LinkNext, Avatar, CardHeader, CardBody,
+  Button, Card, Spacer, Input, Link as LinkNext, Avatar, CardHeader, CardBody, Divider,
 } from "@nextui-org/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
@@ -21,6 +20,8 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 import { createUser, createInvitedUser } from "../slices/user";
 import SimpleNavbar from "../components/SimpleNavbar";
+import circularCity from "../assets/circular_city.webp";
+import moomken from "../assets/moomken.png";
 
 const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 
@@ -36,7 +37,6 @@ function Signup() {
   const [password, setPassword] = useState("");
   const [signupError, setSignupError] = useState("");
 
-  const { height } = useWindowSize();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -94,14 +94,14 @@ function Signup() {
   };
 
   return (
-    <div style={styles.container(height)}>
+    <div>
       <SimpleNavbar />
-      <div style={styles.mainGrid(height)} className="grid grid-cols-12">
-        <div className="col-span-12 md:col-span-6">
-          <div className="py-10 px-4 sm:px-8 md:px-16 lg:px-20 lg:py-16">
+      <div className="p-4 sm:w-1/2 pt-10 mt-[-50px] sm:mt-[-100px] h-screen flex flex-col justify-center">
+        <div className="flex flex-col justify-center w-full">
+          <div className="mx-auto max-w-[400px] sm:max-w-[500px] sm:px-10">
             <Row>
               <Text size="h2">
-                {"Let's get you started with your Chartbrew account"}
+                {"Create your Chartbrew account"}
               </Text>
             </Row>
             <Spacer y={4} />
@@ -111,9 +111,9 @@ function Signup() {
               submitUser();
             }}>
               <Row>
-                <Text>{"But first, how can we call you?"}</Text>
+                <Text>{"Enter your new sign in details"}</Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={2} />
               <Row>
                 <Input
                   variant="bordered"
@@ -130,17 +130,13 @@ function Signup() {
                   size="lg"
                 />
               </Row>
-              <Spacer y={4} />
               {errors.name && (
-              <Row>
-                <Text color={negative}>
-                  {"Please enter your name"}
-                </Text>
-              </Row>
+                <Row>
+                  <Text color={negative}>
+                    {"Please enter your name"}
+                  </Text>
+                </Row>
               )}
-              <Row>
-                <Text>{"Enter your new sign in details"}</Text>
-              </Row>
               <Spacer y={2} />
               <Row>
                 <Input
@@ -220,11 +216,13 @@ function Signup() {
             <Spacer y={4} />
             <Text size="sm">
               {"By signing up for a Chartbrew account, you agree to our "}
-              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
+              <a href="https://chartbrew.com/legal/terms" rel="noopener noreferrer" target="_blank">Terms of Service</a>
               {" and "}
-              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
+              <a href="https://chartbrew.com/legal/privacy-policy" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
             </Text>
-            <Spacer y={0.5} />
+            <Spacer y={4} />
+            <Divider />
+            <Spacer y={4} />
             <div>
               <Text size="sm">
                 {" "}
@@ -236,89 +234,118 @@ function Signup() {
             </div>
 
             <Spacer y={8} className="block sm:hidden" />
-            <Card className="block sm:hidden p-4">
-              <CardHeader>
-                <Avatar isBordered size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
-                <div className="grid grid-cols-12 pl-6">
-                  <div className="col-span-12">
-                    <Text size={20} b className={"leading-4"}>
-                      Schuyler
-                    </Text>
-                  </div>
-                  <div className="col-span-12">
-                    <Text className="text-gray-400 flex flex-row">
-                      {"Full-stack Developer at "}
-                      <Spacer x={1} />
-                      <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
-                        {"Fairchain"}
-                      </LinkNext>
-                    </Text>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardBody>
-                <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
-              </CardBody>
-            </Card>
-          </div>
-        </div>
-        <div className="col-span-12 md:col-span-6">
-          <div style={styles.sideBackground} className="opacity-30" />
-          <div style={styles.testimonialCard} className="hidden md:block">
-            <Card style={{ minWidth: 400, padding: 10 }}>
-              <CardHeader>
-                <Avatar isBordered size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
-                <div className="grid grid-cols-12 pl-6">
-                  <div className="col-span-12">
-                    <Text size={20} b className={"leading-4"}>
-                      Schuyler
-                    </Text>
-                  </div>
-                  <div className="col-span-12">
-                    <Text className="text-gray-400 flex flex-row">
-                      {"Full-stack Developer at "}
-                      <Spacer x={1} />
-                      <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
-                        {"Fairchain"}
-                      </LinkNext>
-                    </Text>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardBody>
-                <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
-              </CardBody>
-            </Card>
           </div>
         </div>
       </div>
+
+      <aside className="hidden sm:block fixed top-6 right-0 z-40 w-1/2 h-screen border-l-2 border-solid border-content3" aria-label="Sidebar">
+        <div className="h-full px-3 py-4 overflow-y-auto">
+          <div style={styles.sideBackground} className="opacity-15 dark:opacity-20 hidden md:block" />
+          <Spacer y={8} />
+          <div className="flex flex-col justify-center h-full mt-[-50px] sm:mt-[-100px] max-w-[500px] mx-auto">
+            <Card className="p-2">
+              <CardHeader>
+                <Avatar isBordered src={testimonialAvatar} alt="Fairchain testimonial" />
+                <div className="grid grid-cols-12 pl-6">
+                  <div className="col-span-12">
+                    <span className={"text-sm font-medium leading-4"}>
+                      Schuyler
+                    </span>
+                  </div>
+                  <div className="col-span-12">
+                    <span className="text-gray-500 text-sm flex flex-row">
+                      {"Full-stack Developer at "}
+                      <Spacer x={1} />
+                      <LinkNext className="text-sm" href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
+                        {"Fairchain"}
+                      </LinkNext>
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <span className="italic text-sm">{"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!"}</span>
+              </CardBody>
+            </Card>
+            <Spacer y={4} />
+            <Card className="p-2">
+              <CardHeader>
+                <Avatar isBordered src={circularCity} alt="Circular City testimonial" />
+                <div className="grid grid-cols-12 pl-6">
+                  <div className="col-span-12">
+                    <span className={"text-sm font-medium leading-4"}>
+                      Debbie Lau
+                    </span>
+                  </div>
+                  <div className="col-span-12">
+                    <span className="text-gray-500 text-sm flex flex-row">
+                      {"Co-founder, "}
+                      <Spacer x={1} />
+                      <LinkNext className="text-sm" href="https://www.circularcity.asia/?ref=chartbrew" rel="noopener noreferrer" target="_blank" color="secondary">
+                        {"Circular City"}
+                      </LinkNext>
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <span className="italic text-sm">{"Chartbrew is definitely a great open-source platform to go to, particularly for a non-technical person like me, for connecting databases and APIs to create beautiful live charts. Strongly recommend."}</span>
+              </CardBody>
+            </Card>
+            <Spacer y={4} />
+            <Card className="p-2">
+              <CardHeader>
+                <Avatar isBordered src={moomken} alt="Moomken testimonial" />
+                <div className="grid grid-cols-12 pl-6">
+                  <div className="col-span-12">
+                    <span className={"text-sm font-medium leading-4"}>
+                      Taha Elsherif
+                    </span>
+                  </div>
+                  <div className="col-span-12">
+                    <span className="text-gray-500 text-sm flex flex-row">
+                      {"IT Manager at "}
+                      <Spacer x={1} />
+                      <LinkNext className="text-sm" href="https://moomken.org/?ref=chartbrew" rel="noopener noreferrer" target="_blank" color="secondary">
+                        {"Moomken"}
+                      </LinkNext>
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <span className="italic text-sm">{"Chartbrew helped us collect and visualize data from the General Electricity Company Of Libya. It was very easy to set up with the integration of Strapi CMS and we are glad Chartbrew has our backs!"}</span>
+              </CardBody>
+            </Card>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
 
 const styles = {
-  container: (height) => ({
-    minHeight: height,
-  }),
   loginLink: {
     color: secondary,
   },
   sideBackground: {
     backgroundImage: `url(${signupBackground})`,
-    filter: "contrast(100%) blur(0px)",
     backgroundSize: "cover",
     backgroundPosition: "top",
+    backgroundRepeat: "no-repeat",
     width: "100%",
     height: "100%",
     transition: "filter 1s ease",
-    position: "relative",
+    position: "absolute",
+    top: 0,
+    right: 0,
   },
-  mainGrid: (height) => ({
-    height: height + 20,
-  }),
   testimonialCard: {
     position: "absolute",
-    top: "30%",
+    top: "20%",
     right: "5%",
     width: "40%",
   },
