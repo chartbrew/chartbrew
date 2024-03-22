@@ -783,10 +783,12 @@ class AxisChart {
 
     pairedData = pairedData.sort((a, b) => a.xItem && b.xItem && a.xItem.diff(b.xItem));
     axisData = pairedData.map((item) => item.xItem);
+    axisData = axisData.filter((item) => !!item);
 
     finalData.yData = pairedData.map((item) => item.yItem);
 
     finalData.filtered = _.cloneDeep(axisData);
+    finalData.filtered = finalData.filtered.filter((item) => !!item);
     finalData.timestamps = finalData.filtered.map((item) => item.valueOf());
     finalData.filtered = finalData.filtered.map((item) => item.format());
 
