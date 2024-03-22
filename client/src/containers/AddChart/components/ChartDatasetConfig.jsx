@@ -684,7 +684,7 @@ function ChartDatasetConfig(props) {
               color="primary"
               onClick={() => {
                 setEditConfirmation(false);
-                navigate(`/${params.teamId}/dataset/${cdc.dataset_id}`);
+                navigate(`/${params.teamId}/dataset/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);
               }}
             >
               Continue

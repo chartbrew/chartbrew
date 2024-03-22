@@ -6,7 +6,7 @@ import {
   Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
 } from "@nextui-org/react";
 import { LuAreaChart, LuArrowRight, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 
 import Row from "../../components/Row";
 import Text from "../../components/Text";
@@ -27,6 +27,7 @@ import DatasetBuilder from "./DatasetBuilder";
 import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
 import getDashboardLayout from "../../modules/getDashboardLayout";
+import useQuery from "../../modules/useQuery";
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -38,14 +39,17 @@ function Dataset() {
   const [completeProjects, setCompleteProjects] = useState([]);
   const [projectSearch, setProjectSearch] = useState("");
   const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
+  const [fromChart, setFromChart] = useState("");
 
   const theme = useThemeDetector() ? "dark" : "light";
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { search } = useLocation();
   const initRef = useRef(null);
   const chartInitRef = useRef(null);
   const createInitRef = useRef(null);
+  const query = useQuery();
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
@@ -88,7 +92,8 @@ function Dataset() {
         },
       }))
         .then((newDataset) => {
-          navigate(`/${params.teamId}/dataset/${newDataset.payload.id}`);
+          let newPathname = `/${params.teamId}/dataset/${newDataset.payload.id}${search}`;
+          navigate(newPathname);
           dispatch(getDataset({
             team_id: params.teamId,
             dataset_id: newDataset.payload.id,
@@ -149,6 +154,17 @@ function Dataset() {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (query) {
+      if (query.has("create") && query.has("chart_id") && query.has("project_id")) {
+        setFromChart("create");
+      }
+      if (!query.has("create") && query.has("chart_id") && query.has("project_id")) {
+        setFromChart("edit");
+      }
+    }
+  }, [query]);
+
   const _onUpdateDataset = (data) => {
     return dispatch(updateDataset({
       team_id: params.teamId,
@@ -174,6 +190,15 @@ function Dataset() {
     });
   };
 
+  const _onSaveDataset = () => {
+    if (fromChart === "edit") {
+      navigate(`/${params.teamId}/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
+      return;
+    }
+
+    setCompleteModal(true);
+  }
+
   const _onCompleteDataset = () => {
     setCompleteDatasetLoading(true);
 
@@ -185,6 +210,33 @@ function Dataset() {
         legend,
       },
     }));
+
+    let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
+    let cdcData = { ...dataset, ...ghostCdc };
+    delete cdcData.id;
+
+    if (fromChart === "create") {
+      dispatch(createCdc({
+        project_id: query.get("project_id"),
+        chart_id: query.get("chart_id"),
+        data: {
+          ...cdcData,
+          dataset_id: dataset.id,
+          datasetColor: chartColors.blue.hex,
+        },
+      }))
+        .then((cdcData) => {
+          navigate(`/${params.teamId}/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);          
+          dispatch(runQuery({
+            project_id: query.get("project_id"),
+            chart_id: cdcData.payload.chart_id,
+            noSource: false,
+            skipParsing: false,
+            getCache: true,
+          }));
+        });
+      return;
+    }
 
     if (completeProjects.length === 0) {
       navigate("/user");
@@ -228,10 +280,6 @@ function Dataset() {
         data: newChart,
       }))
         .then((actionData) => {
-          let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
-          let cdcData = { ...dataset, ...ghostCdc };
-          delete cdcData.id;
-
           dispatch(createCdc({
             project_id: projectId,
             chart_id: actionData.payload.id,
@@ -364,11 +412,12 @@ function Dataset() {
             {datasetMenu === "configure" && (
               <Button
                 color="primary"
-                onClick={() => setCompleteModal(true)}
+                onClick={() => _onSaveDataset()}
                 endContent={<LuCheck />}
                 isDisabled={dataset?.DataRequests.length === 0}
               >
-                Complete dataset
+                {fromChart === "edit" && "Save & return to chart"}
+                {fromChart !== "edit" && "Complete dataset"}
               </Button>
             )}
           </div>
@@ -407,34 +456,38 @@ function Dataset() {
             />
             <Spacer y={1} />
 
-            <div>Want to add this chart to a dashboard?</div>
-            {projects.length > 5 && (
-              <Input
-                labelPlacement="outside"
-                placeholder="Search projects"
-                startContent={<LuSearch />}
-                variant="bordered"
-                className="max-w-[300px]"
-                onChange={(e) => setProjectSearch(e.target.value)}
-                onClear={() => setProjectSearch("")}
-                value={projectSearch}
-                isClearable
-              />
+            {fromChart !== "create" && (
+              <>
+                <div>Want to add this chart to a dashboard?</div>
+                {projects.length > 5 && (
+                  <Input
+                    labelPlacement="outside"
+                    placeholder="Search projects"
+                    startContent={<LuSearch />}
+                    variant="bordered"
+                    className="max-w-[300px]"
+                    onChange={(e) => setProjectSearch(e.target.value)}
+                    onClear={() => setProjectSearch("")}
+                    value={projectSearch}
+                    isClearable
+                  />
+                )}
+                <div className="flex flex-row flex-wrap gap-2">
+                  {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1 && !p.ghost).map((p) => (
+                    <Chip
+                      key={p.id}
+                      radius="sm"
+                      color={completeProjects.includes(p.id) ? "primary" : "default"}
+                      variant={completeProjects.includes(p.id) ? "solid" : "bordered"}
+                      onClick={() => _onSelectCompleteProject(p.id)}
+                      className="cursor-pointer hover:shadow-md hover:saturate-150 transition-shadow"
+                    >
+                      {p.name}
+                    </Chip>
+                  ))}
+                </div>
+              </>
             )}
-            <div className="flex flex-row flex-wrap gap-2">
-              {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1 && !p.ghost).map((p) => (
-                <Chip
-                  key={p.id}
-                  radius="sm"
-                  color={completeProjects.includes(p.id) ? "primary" : "default"}
-                  variant={completeProjects.includes(p.id) ? "solid" : "bordered"}
-                  onClick={() => _onSelectCompleteProject(p.id)}
-                  className="cursor-pointer hover:shadow-md hover:saturate-150 transition-shadow"
-                >
-                  {p.name}
-                </Chip>
-              ))}
-            </div>
           </ModalBody>
           <ModalFooter>
             <Button
@@ -443,13 +496,24 @@ function Dataset() {
             >
               Close
             </Button>
-            <Button
-              color="primary"
-              onClick={_onCompleteDataset}
-              isLoading={completeDatasetLoading}
-            >
-              {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
-            </Button>
+            {fromChart !== "create" && (
+              <Button
+                color="primary"
+                onClick={_onCompleteDataset}
+                isLoading={completeDatasetLoading}
+              >
+                {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
+              </Button>
+            )}
+            {fromChart === "create" && (
+              <Button
+                color="primary"
+                onClick={_onCompleteDataset}
+                isLoading={completeDatasetLoading}
+              >
+                Save & return to chart
+              </Button>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>

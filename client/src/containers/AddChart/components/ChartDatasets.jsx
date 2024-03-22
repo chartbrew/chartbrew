@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { LuExternalLink, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import moment from "moment";
 
 import { createCdc, runQuery, selectChart } from "../../../slices/chart";
@@ -32,6 +32,7 @@ function ChartDatasets(props) {
   const params = useParams();
   const isDark = useThemeDetector();
   const team = useSelector(selectTeam);
+  const navigate = useNavigate();
 
   const initRef = useRef(null);
 
@@ -42,7 +43,7 @@ function ChartDatasets(props) {
   }, []);
 
   useEffect(() => {
-    if (datasets?.length > 0 && !initRef.current) {
+    if (datasets?.length > 0 && !initRef.current && chart) {
       initRef.current = true;
       const projectDatasets = datasets.filter((d) => (
         !d.draft
@@ -112,16 +113,27 @@ function ChartDatasets(props) {
     <div>
       <Row align={"center"} className={"justify-between"}>
         <Text size="h4">Datasets</Text>
-        <Button
-          isIconOnly
-          variant="faded"
-          size="sm"
-          onClick={() => setAddMode(!addMode)}
-          className="chart-cdc-add"
-        >
-          {!addMode && (<LuPlus />)}
-          {addMode && (<LuMinus />)}
-        </Button>
+        <div className="flex flex-row gap-1 items-center">
+          {addMode && (
+            <Button
+              size="sm"
+              color="primary"
+              onClick={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
+            >
+              Create dataset
+            </Button>
+          )}
+          <Button
+            isIconOnly
+            variant="faded"
+            size="sm"
+            onClick={() => setAddMode(!addMode)}
+            className="chart-cdc-add"
+          >
+            {!addMode && (<LuPlus />)}
+            {addMode && (<LuMinus />)}
+          </Button>
+        </div>
       </Row>
       <Spacer y={4} />
       <Divider />
@@ -137,7 +149,7 @@ function ChartDatasets(props) {
             variant="bordered"
           />
           <Spacer y={2} />
-          <Row align="center" className={"gap-1"}>
+          <div className="flex flex-row gap-1 items-center">
             <Chip
               color={tag === "project" ? "primary" : "default"}
               variant={tag === "project" ? "solid" : "bordered"}
@@ -158,7 +170,7 @@ function ChartDatasets(props) {
             </Chip>
             <Spacer x={1} />
             <Text size="sm">{`${_filteredDatasets().length} datasets found`}</Text>
-          </Row>
+          </div>
           <Spacer y={4} />
 
           <ScrollShadow className="max-h-[500px] w-full">
