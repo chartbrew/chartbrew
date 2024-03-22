@@ -9,7 +9,7 @@ export default {
   ],
   theme: {
     fontFamily: {
-      sans: ["Inter", "-apple-system", "sans-serif"],
+      sans: ["Inter", "-apple-system", "system-ui", "sans-serif"],
     },
     screens: {
       "sm": "640px",

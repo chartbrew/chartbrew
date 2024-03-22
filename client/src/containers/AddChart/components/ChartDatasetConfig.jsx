@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  Avatar,
   Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
   PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors,
 } from "@nextui-org/react";
@@ -10,6 +11,7 @@ import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuInfo,
+  LuPlug,
   LuSettings,
   LuWand2, LuXCircle,
 } from "react-icons/lu";
@@ -25,9 +27,11 @@ import FormulaTips from "../../../components/FormulaTips";
 import canAccess from "../../../config/canAccess";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
+import connectionImages from "../../../config/connectionImages";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 function ChartDatasetConfig(props) {
-  const { chartId, datasetId } = props;
+  const { chartId, datasetId, dataRequests } = props;
 
   const [legend, setLegend] = useState("");
   const [formula, setFormula] = useState("");
@@ -45,6 +49,7 @@ function ChartDatasetConfig(props) {
   const dispatch = useDispatch();
   const params = useParams();
   const navigate = useNavigate();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     if (cdc.formula) {
@@ -253,7 +258,7 @@ function ChartDatasetConfig(props) {
       {canAccess("teamAdmin", user.id, team.TeamRoles) && (
         <>
           <Spacer y={2} />
-          <Row>
+          <div className="flex flex-row justify-between">
             <Button
               variant="ghost"
               size="sm"
@@ -262,7 +267,21 @@ function ChartDatasetConfig(props) {
             >
               Edit dataset
             </Button>
-          </Row>
+
+            <div className="flex flex-row gap-2 items-center">
+              {dataRequests?.map((dr) => (
+                <Tooltip content={dr?.Connection?.name} key={dr.id}>
+                  <Avatar
+                    key={dr.id}
+                    src={connectionImages(isDark)[dr?.Connection?.subType]}
+                    isBordered
+                    size="sm"
+                  />
+                </Tooltip>
+              ))}
+              <div><LuPlug /></div>
+            </div>
+          </div>
         </>
       )}
 
@@ -648,7 +667,7 @@ function ChartDatasetConfig(props) {
 
       <Modal isOpen={editConfirmation} onClose={() => setEditConfirmation(false)}>
         <ModalContent>
-          <ModalHeader>Editting dataset?</ModalHeader>
+          <ModalHeader>Edit dataset?</ModalHeader>
           <ModalBody>
             <Text>
               {"You are about to edit the dataset. This will affect all charts that use this dataset. Are you sure you want to continue?"}
@@ -680,6 +699,11 @@ function ChartDatasetConfig(props) {
 ChartDatasetConfig.propTypes = {
   datasetId: PropTypes.number.isRequired,
   chartId: PropTypes.number.isRequired,
+  dataRequests: PropTypes.array,
+};
+
+ChartDatasetConfig.defaultProps = {
+  dataRequests: [],
 };
 
 export default ChartDatasetConfig

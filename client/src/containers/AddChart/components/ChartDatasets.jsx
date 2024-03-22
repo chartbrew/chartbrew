@@ -248,7 +248,11 @@ function ChartDatasets(props) {
           >
             {chart?.ChartDatasetConfigs.map((cdc) => (
               <Tab title={`${cdc.legend}`} key={cdc.id}>
-                <ChartDatasetConfig chartId={chartId} datasetId={cdc.id} />
+                <ChartDatasetConfig
+                  chartId={chartId}
+                  datasetId={cdc.id}
+                  dataRequests={datasets.find((d) => d.id === cdc.dataset_id)?.DataRequests}
+                />
               </Tab>
             ))}
           </Tabs>
