@@ -36,11 +36,11 @@ function MongoQueryBuilder(props) {
   const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
   const [savingQuery, setSavingQuery] = useState(false);
   const [testSuccess, setTestSuccess] = useState(false);
-  const [testError, setTestError] = useState(false);
+  const [testError, setTestError] = useState("");
   const [testingQuery, setTestingQuery] = useState(false);
   const [result, setResult] = useState("");
   const [mongoRequest, setMongoRequest] = useState({
-    query: "collection('users').find()",
+    query: "collection('your_collection').find().limit(100)",
   });
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -145,11 +145,14 @@ function MongoQueryBuilder(props) {
           }
 
           const result = data.payload;
+          if (result?.status?.statusCode >= 400) {
+            setTestError(result.response);
+          }
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+            setTestSuccess(true);
           }
           setTestingQuery(false);
-          setTestSuccess(result.status);
         })
         .catch((error) => {
           setTestingQuery(false);
@@ -332,7 +335,7 @@ function MongoQueryBuilder(props) {
                 theme={isDark ? "one_dark" : "tomorrow"}
                 height="450px"
                 width="none"
-                value={result || ""}
+                value={testError || result || ""}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}

@@ -35,6 +35,7 @@ function CustomerioBuilder(props) {
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -119,6 +120,7 @@ function CustomerioBuilder(props) {
 
   const _onTest = () => {
     setRequestLoading(true);
+    setRequestError("");
 
     const drData = {
       ...cioRequest,
@@ -141,6 +143,9 @@ function CustomerioBuilder(props) {
           }
 
           const result = data.payload;
+          if (result?.status?.statusCode >= 400) {
+            setRequestError(result.response);
+          }
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
           }
@@ -336,11 +341,11 @@ function CustomerioBuilder(props) {
                   style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
-                  value={result || ""}
+                  value={requestError || result || ""}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
-                  className="Customerio-result-tut"
+                  className="Customerio-result-tut rounded-md border-1 border-solid border-content3"
                 />
               </div>
             </Row>

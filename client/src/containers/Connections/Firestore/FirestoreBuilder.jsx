@@ -110,6 +110,7 @@ function FirestoreBuilder(props) {
   const [limit, setLimit] = useState(0);
   const [orderBy, setOrderBy] = useState("");
   const [orderByDirection, setOrderByDirection] = useState("desc");
+  const [requestError, setRequestError] = useState("");
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -287,6 +288,7 @@ function FirestoreBuilder(props) {
 
   const _onRunRequest = (resetCache) => {
     setIndexUrl("");
+    setRequestError("");
     let getCache = !invalidateCache;
 
     if (resetCache) {
@@ -303,13 +305,17 @@ function FirestoreBuilder(props) {
         if (data?.error) {
           setRequestLoading(false);
           toast.error("The request failed. Please check your request 🕵️‍♂️");
-          setResult(JSON.stringify(data.error, null, 2));
+          setRequestError(data.error?.message);
 
           if (data.error?.message && data.error.message.indexOf("COLLECTION_GROUP_ASC") > -1) {
             setIndexUrl(data.error.message.substring(data.error.message.indexOf("https://")));
           }
         }
         const result = data.payload;
+        if (result?.status?.statusCode >= 400) {
+          toast.error("The request failed. Please check your request 🕵️‍♂️");          
+          setRequestError(result.response);
+        }
         if (result?.response?.dataRequest?.responseData?.data) {
           setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
           _populateFieldOptions(result.response.dataRequest.responseData.data, "main");
@@ -809,10 +815,11 @@ function FirestoreBuilder(props) {
                   style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
-                  value={result || ""}
+                  value={requestError || result || ""}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
+                  className="rounded-md border-1 border-solid border-content3"
                 />
               </div>
             </Row>

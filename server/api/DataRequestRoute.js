@@ -166,7 +166,7 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
 
-        return res.status(400).send(error);
+        return res.status(400).json({ error: error.message });
       });
   });
   // -------------------------------------------------

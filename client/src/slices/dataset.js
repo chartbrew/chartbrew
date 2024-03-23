@@ -566,6 +566,14 @@ export const datasetSlice = createSlice({
                     error: false,
                   };
 
+                  if (action.payload?.response?.status?.statusCode >= 300) {
+                    newDr = {
+                      ...newDr,
+                      error: true,
+                      response: action.payload.response,
+                    };
+                  }
+
                   if (action.payload?.response?.dataRequest?.dataRequest) {
                     newDr = {
                       ...newDr,

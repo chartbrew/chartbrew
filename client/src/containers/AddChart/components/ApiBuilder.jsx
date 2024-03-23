@@ -71,7 +71,7 @@ function ApiBuilder(props) {
   const [activeMenu, setActiveMenu] = useState("headers");
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
-  const [requestError, setRequestError] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
@@ -272,7 +272,7 @@ function ApiBuilder(props) {
 
     setRequestLoading(true);
     setRequestSuccess(false);
-    setRequestError(false);
+    setRequestError("");
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
@@ -284,11 +284,14 @@ function ApiBuilder(props) {
       }))
         .then((data) => {
           const result = data.payload;
+          if (result?.status?.statusCode >= 400) {
+            setRequestError(result);
+          }
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+            setRequestSuccess(result.status);
           }
           setRequestLoading(false);
-          setRequestSuccess(result.status);
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -349,7 +352,7 @@ function ApiBuilder(props) {
               startContent={(
                 <div className="pointer-events-none flex items-center">
                   <span className="text-default-400 text-small">
-                    {`${connection.host}`}
+                    {`${fullConnection.host}`}
                   </span>
                 </div>
               )}
@@ -495,7 +498,7 @@ function ApiBuilder(props) {
               <Spacer y={4} />
             </>
           )}
-          <Row className="apibuilder-menu-tut justify-between">
+          <Row className="apibuilder-menu-tut">
             <Tabs
               selectedKey={activeMenu}
               onSelectionChange={(key) => setActiveMenu(key)}
@@ -505,18 +508,6 @@ function ApiBuilder(props) {
               <Tab key="body" title="Body" />
               <Tab key="pagination" title="Pagination" />
             </Tabs>
-            {requestSuccess && (
-              <>
-                <Chip color="success" size="sm">
-                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                </Chip>
-              </>
-            )}
-            {requestError && (
-              <Chip color="danger" size="sm">
-                {`${requestError.statusCode} ${requestError.statusText}`}
-              </Chip>
-            )}
           </Row>
 
           <Spacer y={2} />
@@ -634,6 +625,7 @@ function ApiBuilder(props) {
                   }}
                   name="queryEditor"
                   editorProps={{ $blockScrolling: true }}
+                  className="rounded-md border-1 border-solid border-content3"
                 />
               </div>
             </Row>
@@ -681,27 +673,43 @@ function ApiBuilder(props) {
             </Button>
           </Row>
           <Spacer y={2} />
-          <Row align="center">
-            <Checkbox
-              isSelected={!invalidateCache}
-              onChange={() => setInvalidateCache(!invalidateCache)}
-              size="sm"
-            >
-              Use cache
-            </Checkbox>
-            <Spacer x={0.5} />
-            <Tooltip
-              content={(
+          <div className="flex flex-row justify-between items-center">
+            <div className="flex flex-row gap-2 items-center">
+              <Checkbox
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
+                size="sm"
+              >
+                Use cache
+              </Checkbox>
+              <Tooltip
+                content={(
+                  <>
+                    <p>{"Chartbrew will use cached data for extra editing speed ⚡️"}</p>
+                    <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
+                  </>
+                )}
+                placement="bottom"
+              >
+                <div><LuInfo /></div>
+              </Tooltip>
+            </div>
+
+            <div>
+              {requestSuccess && (
                 <>
-                  <p>{"Chartbrew will use cached data for extra editing speed ⚡️"}</p>
-                  <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
+                  <Chip color="success" size="sm" variant="flat">
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                  </Chip>
                 </>
               )}
-              placement="bottom"
-            >
-              <div><LuInfo /></div>
-            </Tooltip>
-          </Row>
+              {requestError && (
+                <Chip color="danger" size="sm" variant="flat">
+                  {`${requestError?.status?.statusCode} ${requestError?.status?.statusText}`}
+                </Chip>
+              )}
+            </div>
+          </div>
           <Spacer y={2} />
           <Row>
             <div className="w-full">
@@ -711,11 +719,11 @@ function ApiBuilder(props) {
                 style={{ borderRadius: 10 }}
                 height="450px"
                 width="none"
-                value={result || ""}
+                value={(requestError && JSON.stringify(requestError)) || result || ""}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="apibuilder-result-tut"
+                className="apibuilder-result-tut rounded-md border-1 border-solid border-content3"
               />
             </div>
           </Row>

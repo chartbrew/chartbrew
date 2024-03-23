@@ -41,7 +41,7 @@ function SqlBuilder(props) {
   const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
-  const [requestError, setRequestError] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -134,11 +134,14 @@ function SqlBuilder(props) {
       }))
         .then((data) => {
           const result = data.payload;
+          if (result?.status?.statusCode >= 400) {
+            setRequestError(result.response);
+          }
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+            setRequestSuccess(true);
           }
           setRequestLoading(false);
-          setRequestSuccess(result.status);
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -218,7 +221,7 @@ function SqlBuilder(props) {
                 }}
                 name="queryEditor"
                 editorProps={{ $blockScrolling: true }}
-                className="sqlbuilder-query-tut"
+                className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
               />
             </div>
           </Row>
@@ -313,11 +316,11 @@ function SqlBuilder(props) {
                 style={{ borderRadius: 10 }}
                 height="450px"
                 width="none"
-                value={result || ""}
+                value={requestError || result || ""}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="sqlbuilder-result-tut"
+                className="sqlbuilder-result-tut rounded-md border-1 border-solid border-content3"
               />
             </div>
           </Row>

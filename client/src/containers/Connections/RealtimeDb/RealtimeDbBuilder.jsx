@@ -29,7 +29,7 @@ function RealtimeDbBuilder(props) {
   const [result, setResult] = useState("");
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
-  const [requestError, setRequestError] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const [projectId, setProjectId] = useState("");
   const [limitValue, setLimitValue] = useState(100);
   const [invalidateCache, setInvalidateCache] = useState(false);
@@ -92,7 +92,7 @@ function RealtimeDbBuilder(props) {
   const _onTest = () => {
     setRequestLoading(true);
     setRequestSuccess(false);
-    setRequestError(false);
+    setRequestError("");
 
     onSave(firebaseRequest).then(() => {
       const getCache = !invalidateCache;
@@ -107,22 +107,25 @@ function RealtimeDbBuilder(props) {
             setRequestLoading(false);
             setRequestError(data.error);
             toast.error("The request failed. Please check your request 🕵️‍♂️");
-            setResult(JSON.stringify(data.error, null, 2));
+            setRequestError(data.error?.message || `${data.error}`);
             return;
           }
 
           const result = data.payload;
+          if (result?.status?.statusCode >= 400) {
+            setRequestError(result.response);
+          }
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+            setRequestSuccess(result.status);
           }
           setRequestLoading(false);
-          setRequestSuccess(result.status);
         })
         .catch((error) => {
           setRequestLoading(false);
           setRequestError(error);
           toast.error("The request failed. Please check your request 🕵️‍♂️");
-          setResult(JSON.stringify(error, null, 2));
+          setRequestError(error.message || `${error}`);
         });
     });
   };
@@ -476,7 +479,7 @@ function RealtimeDbBuilder(props) {
                 theme={isDark ? "one_dark" : "tomorrow"}
                 height="450px"
                 width="none"
-                value={result || ""}
+                value={requestError || result || ""}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}

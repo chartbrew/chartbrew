@@ -61,6 +61,7 @@ function GaBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   const isDark = useThemeDetector();
   const initRef = React.useRef(null);
@@ -237,6 +238,8 @@ function GaBuilder(props) {
   };
 
   const _onRunRequest = (dr) => {
+    setRequestError("");
+
     const getCache = !invalidateCache;
     dispatch(runDataRequest({
       team_id: params.teamId,
@@ -246,6 +249,9 @@ function GaBuilder(props) {
     }))
       .then((data) => {
         const result = data.payload;
+        if (result?.status?.statusCode >= 400) {
+          setRequestError(result.response);
+        }
         if (result?.response?.dataRequest?.responseData?.data) {
           setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
         }
@@ -254,7 +260,7 @@ function GaBuilder(props) {
       .catch((error) => {
         setRequestLoading(false);
         toast.error("The request failed. Please check your request 🕵️‍♂️");
-        setResult(JSON.stringify(error, null, 2));
+        setRequestError(error?.message);
       });
   };
 
@@ -682,7 +688,7 @@ function GaBuilder(props) {
                 theme={isDark ? "one_dark" : "tomorrow"}
                 height="450px"
                 width="none"
-                value={result || ""}
+                value={requestError || result || ""}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
