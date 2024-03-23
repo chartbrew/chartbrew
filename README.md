@@ -77,6 +77,7 @@ npm run start
 
 # backend
 cd server/
+npm run db:migrate (run this command first time only)
 npm run start-dev
 ```
 
