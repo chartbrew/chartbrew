@@ -29,7 +29,57 @@ const options = {
   },
 };
 
-if (config.cert) {
+if (config.ssl) {
+  let sslOptions = null;
+  switch (config.ssl) {
+    case "require":
+      sslOptions = {
+        require: true,
+        rejectUnauthorized: false,
+      };
+      break;
+
+    case "verify-ca":
+      sslOptions = {
+        require: true,
+        rejectUnauthorized: true,
+        ca: config.cert ? Buffer.from(config.cert, "base64").toString("ascii") : undefined,
+      };
+      break;
+
+    case "verify-full":
+      sslOptions = {
+        require: true,
+        rejectUnauthorized: true,
+        ca: config.cert ? Buffer.from(config.cert, "base64").toString("ascii") : undefined,
+        key: config.sslKey ? Buffer.from(config.cert, "base64").toString("ascii") : undefined,
+        cert: config.sslCert ? Buffer.from(config.cert, "base64").toString("ascii") : undefined,
+      };
+      break;
+    case "prefer":
+      sslOptions = {
+        require: false,
+        rejectUnauthorized: false,
+      };
+      break;
+    case "disable":
+      sslOptions = {
+        require: false,
+        rejectUnauthorized: false,
+      };
+      break;
+    default:
+      sslOptions = {
+        require: true,
+        rejectUnauthorized: false,
+      };
+      break;
+  }
+
+  options.dialectOptions.ssl = sslOptions;
+}
+
+if (config.cert && !config.ssl) {
   options.dialectOptions.ssl = {
     ca: Buffer.from(config.cert, "base64").toString("ascii")
   };
