@@ -27,7 +27,7 @@ import {
 import { connect, useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
 import { Helmet } from "react-helmet";
-import { clone } from "lodash";
+import { clone, set } from "lodash";
 import { useDropzone } from "react-dropzone";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -74,7 +74,6 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import ReportSettings from "./components/ReportSettings";
 import ThemeSettingsAside from "./components/ThemeSettingsAside";
 
-
 const ResponsiveGridLayout = WidthProvider(Responsive, {
   measureBeforeMount: true,
 });
@@ -101,7 +100,7 @@ function PublicDashboard(props) {
 
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
-  const [editingTitle, setEditingTitle] = useState(false);
+  // const [editingTitle, setEditingTitle] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -120,6 +119,7 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
+  const [showAsideSettings, setShowAsideSettings] = useState("");
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
@@ -389,6 +389,14 @@ function PublicDashboard(props) {
     setLogoAspectRatio(aspectRatio);
   };
 
+  const _onShowReportSetting = () => {
+    setShowAsideSettings("reportSettings");
+  };
+
+  const _onShowThemeSetting = () => {
+    setShowAsideSettings("themeColorSettings");
+  }
+
   if (loading && !project?.id && !noCharts) {
     return (
       <>
@@ -602,6 +610,15 @@ function PublicDashboard(props) {
                     </Tooltip>
                   </div>
                   <div>
+                    <Tooltip content="Theme Settings" placement="right-end">
+                      <div className="text-foreground cursor-pointer">
+                        <LuPalette size={26} 
+                        onClick={() => _onShowThemeSetting()}
+                        />
+                      </div>
+                    </Tooltip>
+                  </div>
+                  {/* <div>
                     <Popover placement="right-end">
                       <PopoverTrigger>
                         <Link className="text-foreground cursor-pointer">
@@ -660,13 +677,13 @@ function PublicDashboard(props) {
                         </div>
                       </PopoverContent>
                     </Popover>
-                  </div>
+                  </div> */}
 
                   <div>
                     <Tooltip content="Report settings" placement="right-end">
                       <Link
                         className="text-foreground cursor-pointer"
-                        onClick={() => setEditingTitle(true)}
+                        onClick={() => _onShowReportSetting()}
                       >
                         <LuClipboardEdit size={26} />
                       </Link>
@@ -687,14 +704,24 @@ function PublicDashboard(props) {
               )}
             </div>
             <div className="h-screen py-4 overflow-y-auto bg-white border-l border-r w-96 z-[50] dark:bg-gray-800">
-              <ReportSettings />
-              {/* <ThemeSettingsAside/> */}
+              {showAsideSettings === "reportSettings" && (
+                <>
+                  <ReportSettings 
+                    {...getRootProps()}
+                  />
+                </>
+              )}
+              {showAsideSettings === "themeColorSettings" && (
+                <>
+                  <ThemeSettingsAside />
+                </>
+              )}
             </div>
           </div>
         </aside>
       )}
 
-      <Modal
+      {/* <Modal
         isOpen={editingTitle}
         onClose={() => setEditingTitle(false)}
         size="2xl"
@@ -786,7 +813,7 @@ function PublicDashboard(props) {
             </Button>
           </ModalFooter>
         </ModalContent>
-      </Modal>
+      </Modal> */}
 
       <div className={editorVisible && !preview ? "ml-96" : ""}>
         <div className="">

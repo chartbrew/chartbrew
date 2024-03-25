@@ -7,7 +7,7 @@ import AceEditor from "react-ace";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
-function ReportSettings() {
+function ReportSettings({onGetRootProps}) {
   const [newChanges, setNewChanges] = useState({
     backgroundColor: "#FFFFFF",
     titleColor: "#000000",
@@ -27,9 +27,9 @@ function ReportSettings() {
           <Link className="text-foreground cursor-pointer">
             <div className="max-w-sm p-3 bg-content2 border-dashed border-2 border-gray-300 rounded-lg text-center">
               <div className="flex justify-center">
-                {/* <div {...getRootProps()}>
+                {/* <div onGetRootProps={onGetRootProps}>
                   <input {...getInputProps()} />
-                </div> */}
+                </div>  */}
                 <LuImagePlus size={30} />
               </div>
               <div>

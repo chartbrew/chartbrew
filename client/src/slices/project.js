@@ -143,7 +143,6 @@ export const removeProject = createAsyncThunk(
     if (!response.ok) {
       throw new Error(response.statusText);
     }
-
     const project = await response.json();
     return project;
   }
