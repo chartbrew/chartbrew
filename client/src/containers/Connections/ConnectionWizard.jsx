@@ -21,7 +21,7 @@ import RealtimeDbConnectionForm from "./RealtimeDb/RealtimeDbConnectionForm";
 import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
-import { addConnection, addFilesToConnection, getConnection, saveConnection } from "../../slices/connection";
+import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection, selectConnections } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { Link, useSearchParams } from "react-router-dom";
 import { generateInviteUrl } from "../../slices/team";
@@ -45,8 +45,10 @@ function ConnectionWizard() {
   const [searchParams] = useSearchParams();
 
   const connectionToEdit = useSelector((state) => state.connection.data.find((c) => c.id === parseInt(params.connectionId, 10)));
+  const connections = useSelector(selectConnections)
 
   useEffect(() => {
+    dispatch(getTeamConnections({ team_id: params.teamId }));
     dispatch(generateInviteUrl({
       team_id: params.teamId,
       projects: [],
@@ -397,6 +399,7 @@ function ConnectionWizard() {
 
       <Modal
         isOpen={completionModal}
+        backdrop="blur"
         onClose={() => setCompletionModal(false)}
         size="lg"
       >
@@ -406,17 +409,24 @@ function ConnectionWizard() {
             <span className="font-semibold">Your connection was saved!</span>
           </ModalHeader>
           <ModalBody>
-            What would you like to do next?
+            {connections.length > 1 && (
+              <div>What would you like to do next?</div>
+            )}
+            {connections.length < 2 && (
+              <div>Create your first dataset to start visualizing your data</div>
+            )}
           </ModalBody>
           <ModalFooter>
-            <Button
-              color="secondary"
-              fullWidth
-              onClick={() => navigate("/user")}
-              startContent={<LuLayoutDashboard />}
-            >
-              Return to dashboard
-            </Button>
+            {connections.length > 1 && (
+              <Button
+                variant="bordered"
+                fullWidth
+                onClick={() => navigate("/user")}
+                startContent={<LuLayoutDashboard />}
+              >
+                Return to dashboard
+              </Button>
+            )}
             <Button
               color="primary"
               fullWidth
