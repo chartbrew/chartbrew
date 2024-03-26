@@ -116,7 +116,7 @@ function ChartDatasets(props) {
       <Row align={"center"} className={"justify-between"}>
         <Text size="h4">Datasets</Text>
         <div className="flex flex-row gap-1 items-center">
-          {addMode && (
+          {addMode && canAccess("teamAdmin", user.id, team?.TeamRoles) && (
             <Button
               size="sm"
               color="primary"
@@ -258,7 +258,6 @@ function ChartDatasets(props) {
           <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
-          {}
           <Text>No datasets found. Create a dataset to get started.</Text>
           <Spacer y={4} />
           <Button
