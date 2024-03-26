@@ -617,6 +617,7 @@ export const datasetSlice = createSlice({
 export const { clearDatasets } = datasetSlice.actions;
 
 export const selectDatasets = (state) => state.dataset.data;
+export const selectDatasetsNoDrafts = (state) => state.dataset.data.filter((dataset) => !dataset.draft);
 export const selectResponses = (state) => state.dataset.responses;
 export const selectDataRequests = (state, datasetId) => {
   const dataset = state.dataset.data.find((dataset) => dataset.id === parseInt(datasetId, 10));

@@ -10,18 +10,20 @@ import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, 
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import connectionImages from "../../../config/connectionImages";
-import { getDatasets, selectDatasets } from "../../../slices/dataset";
+import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import ChartDatasetConfig from "./ChartDatasetConfig";
 import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
+import { selectProjects } from "../../../slices/project";
 
 function ChartDatasets(props) {
-  const { projects, chartId, user } = props;
+  const { chartId, user } = props;
 
   const chart = useSelector((state) => selectChart(state, chartId));
-  const datasets = useSelector(selectDatasets) || [];
+  const datasets = useSelector(selectDatasetsNoDrafts) || [];
+  const projects = useSelector(selectProjects);
 
   const [datasetSearch, setDatasetSearch] = useState("");
   const [tag, setTag] = useState("project");
@@ -250,6 +252,24 @@ function ChartDatasets(props) {
           <Spacer y={8} />
         </>
       )}
+
+      {datasets.length === 0 && canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+        <div>
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+          {}
+          <Text>No datasets found. Create a dataset to get started.</Text>
+          <Spacer y={4} />
+          <Button
+            color="primary"
+            onClick={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
+            fullWidth
+          >
+            Create dataset
+          </Button>
+        </div>
+      )}
       
       {chart?.ChartDatasetConfigs.length > 0 && (
         <div>
@@ -276,12 +296,10 @@ function ChartDatasets(props) {
 
 ChartDatasets.propTypes = {
   chartId: PropTypes.number.isRequired,
-  projects: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => ({
-  projects: state.project.data,
   user: state.user.data,
 });
 

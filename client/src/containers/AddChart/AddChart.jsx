@@ -24,6 +24,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectConnections } from "../../slices/connection";
+import { selectDatasetsNoDrafts } from "../../slices/dataset";
 
 /*
   Container used for setting up a new chart
@@ -47,6 +48,7 @@ function AddChart() {
   const charts = useSelector(selectCharts);
   const templates = useSelector(selectTemplates);
   const connections = useSelector(selectConnections);
+  const datasets = useSelector(selectDatasetsNoDrafts);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -334,6 +336,14 @@ function AddChart() {
           noConnections={connections.length === 0}
         />
         <Spacer y={2} />
+      </div>
+    );
+  }
+
+  if (datasets.length === 0 || newChart.ChartDatasetConfigs?.length === 0) {
+    return (
+      <div className={"bg-content1 rounded-lg mx-auto p-4 mt-4 max-w-lg"}>
+        <ChartDatasets chartId={newChart.id} />
       </div>
     );
   }
