@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button, Switch,
 } from "@nextui-org/react";
@@ -17,13 +16,6 @@ import ChartDescription from "./components/ChartDescription";
 import {
   createChart, updateChart, runQuery, runQueryWithFilters, selectCharts,
 } from "../../slices/chart";
-import {
-  getChartDatasets as getChartDatasetsAction,
-  saveNewDataset as saveNewDatasetAction,
-  updateDataset as updateDatasetAction,
-  deleteDataset as deleteDatasetAction,
-  clearDatasets as clearDatasetsAction,
-} from "../../actions/dataset";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import { getTemplates, selectTemplates } from "../../slices/template";
 import Row from "../../components/Row";
@@ -31,11 +23,12 @@ import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
+import { selectConnections } from "../../slices/connection";
 
 /*
   Container used for setting up a new chart
 */
-function AddChart(props) {
+function AddChart() {
   const [titleScreen, setTitleScreen] = useState(true);
   const [newChart, setNewChart] = useState({
     type: "line",
@@ -51,12 +44,9 @@ function AddChart(props) {
 
   const { height } = useWindowSize();
 
-  const {
-    getChartDatasets, datasets, clearDatasets, connections,
-  } = props;
-
   const charts = useSelector(selectCharts);
   const templates = useSelector(selectTemplates);
+  const connections = useSelector(selectConnections);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -64,7 +54,6 @@ function AddChart(props) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    clearDatasets();
     dispatch(clearAlerts());
 
     if (params.chartId) {
@@ -77,7 +66,6 @@ function AddChart(props) {
       setTitleScreen(false);
 
       // also fetch the chart's datasets and alerts
-      getChartDatasets(params.projectId, params.chartId);
       dispatch(getChartAlerts({
         project_id: params.projectId,
         chart_id: params.chartId
@@ -443,7 +431,6 @@ function AddChart(props) {
               onAddFilter={_onAddFilter}
               onClearFilter={_onClearFilter}
               conditions={conditions}
-              datasets={datasets}
               useCache={useCache}
               changeCache={() => setUseCache(!useCache)}
             />
@@ -518,39 +505,4 @@ const styles = {
   },
 };
 
-AddChart.propTypes = {
-  getChartDatasets: PropTypes.func.isRequired,
-  saveNewDataset: PropTypes.func.isRequired,
-  updateDataset: PropTypes.func.isRequired,
-  deleteDataset: PropTypes.func.isRequired,
-  datasets: PropTypes.array.isRequired,
-  clearDatasets: PropTypes.func.isRequired,
-  connections: PropTypes.array.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    datasets: state.dataset.data,
-    connections: state.connection.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    getChartDatasets: (projectId, chartId) => {
-      return dispatch(getChartDatasetsAction(projectId, chartId));
-    },
-    saveNewDataset: (projectId, chartId, data) => {
-      return dispatch(saveNewDatasetAction(projectId, chartId, data));
-    },
-    updateDataset: (projectId, chartId, datasetId, data) => {
-      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
-    },
-    deleteDataset: (projectId, chartId, datasetId) => {
-      return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
-    },
-    clearDatasets: () => dispatch(clearDatasetsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(AddChart);
+export default AddChart;
