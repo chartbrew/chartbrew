@@ -21,10 +21,14 @@ const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
+const setUpEncryptionKeys = require("./modules/setUpEncryptionKeys");
 
 // set up folders
 fs.mkdir(".cache", () => {});
 fs.mkdir("uploads", () => {});
+
+// set up the encryption keys
+setUpEncryptionKeys();
 
 const app = express();
 app.settings = settings;
