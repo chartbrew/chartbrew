@@ -1,4 +1,3 @@
-const simplecrypt = require("simplecrypt");
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
@@ -7,11 +6,6 @@ const db = require("../models/models");
 const UserController = require("./UserController");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
-
-const sc = simplecrypt({
-  password: settings.secret,
-  salt: "10",
-});
 
 class TeamController {
   constructor() {
@@ -208,7 +202,7 @@ class TeamController {
   isUserInTeam(teamId, email) {
     // checking if a user is already in the team
     const idsArray = [];
-    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
+    return db.User.findOne({ where: { email } })
       .then((invitedUser) => {
         if (!invitedUser) return [];
         return db.TeamRole.findAll({ where: { "user_id": invitedUser.id } })
@@ -348,7 +342,7 @@ class TeamController {
 
   getInviteByEmail(teamId, email) {
     return db.TeamInvitation.findOne({
-      where: { team_id: teamId, email: sc.encrypt(email) },
+      where: { team_id: teamId, email },
       include: [{ model: db.Team }],
     })
       .then((foundInvite) => {

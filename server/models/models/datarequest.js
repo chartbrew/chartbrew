@@ -1,5 +1,7 @@
 const simplecrypt = require("simplecrypt");
 
+const { encrypt, decrypt } = require("../../modules/cbCrypto");
+
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
 const sc = simplecrypt({
@@ -41,26 +43,34 @@ module.exports = (sequelize, DataTypes) => {
     headers: {
       type: DataTypes.TEXT,
       set(val) {
-        return this.setDataValue("headers", sc.encrypt(JSON.stringify(val)));
+        return this.setDataValue("headers", encrypt(JSON.stringify(val)));
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("headers")));
+          return JSON.parse(decrypt(this.getDataValue("headers")));
         } catch (e) {
-          return this.getDataValue("headers");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("headers")));
+          } catch (e) {
+            return this.getDataValue("headers");
+          }
         }
       }
     },
     body: {
       type: DataTypes.TEXT,
       set(val) {
-        return this.setDataValue("body", sc.encrypt(val));
+        return this.setDataValue("body", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("body"));
+          return decrypt(this.getDataValue("body"));
         } catch (e) {
-          return this.getDataValue("body");
+          try {
+            return sc.decrypt(this.getDataValue("body"));
+          } catch (e) {
+            return this.getDataValue("body");
+          }
         }
       }
     },
@@ -124,16 +134,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(val) {
         try {
-          return this.setDataValue("variables", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("variables", encrypt(JSON.stringify(val)));
         } catch (e) {
           return this.setDataValue("variables", val);
         }
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("variables")));
+          return JSON.parse(decrypt(this.getDataValue("variables")));
         } catch (e) {
-          return this.getDataValue("variables");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("variables")));
+          } catch (e) {
+            return this.getDataValue("variables");
+          }
         }
       },
     },

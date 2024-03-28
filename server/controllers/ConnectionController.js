@@ -318,7 +318,6 @@ class ConnectionController {
 
   testApi(data) {
     const testOpt = this.getApiTestOptions(data);
-
     return request(testOpt);
   }
 

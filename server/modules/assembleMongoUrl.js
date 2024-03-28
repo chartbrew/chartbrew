@@ -1,11 +1,4 @@
-const simplecrypt = require("simplecrypt");
-
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
-
-const sc = simplecrypt({
-  password: settings.secret,
-  salt: "10",
-});
+const { decrypt } = require("./cbCrypto");
 
 module.exports = (data) => {
   const connection = data;
@@ -30,11 +23,11 @@ module.exports = (data) => {
   }
 
   try {
-    connection.dbName = sc.decrypt(connection.dbName);
-    connection.host = sc.decrypt(connection.host);
-    connection.port = sc.decrypt(connection.port);
-    connection.username = sc.decrypt(connection.username);
-    connection.password = sc.decrypt(connection.password);
+    connection.dbName = decrypt(connection.dbName);
+    connection.host = decrypt(connection.host);
+    connection.port = decrypt(connection.port);
+    connection.username = decrypt(connection.username);
+    connection.password = decrypt(connection.password);
   } catch (e) {
     // info is not encrypted, must be a test
   }

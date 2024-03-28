@@ -1,5 +1,7 @@
 const simplecrypt = require("simplecrypt");
 
+const { encrypt, decrypt } = require("../../modules/cbCrypto");
+
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
 const sc = simplecrypt({
@@ -35,16 +37,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(val) {
         try {
-          return this.setDataValue("refreshToken", sc.encrypt(val));
+          return this.setDataValue("refreshToken", encrypt(val));
         } catch (e) {
           return this.setDataValue("refreshToken", val);
         }
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("refreshToken"));
+          return decrypt(this.getDataValue("refreshToken"));
         } catch (e) {
-          return this.getDataValue("refreshToken");
+          try {
+            return sc.decrypt(this.getDataValue("refreshToken"));
+          } catch (e) {
+            return this.getDataValue("refreshToken");
+          }
         }
       }
     },

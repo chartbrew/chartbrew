@@ -6,6 +6,8 @@ const ALGORITHM = "aes-256-cbc";
 const IV_LENGTH = 16; // AES block size in bytes
 
 function encrypt(text) {
+  // console.log("text", text);
+  if (!text) return text;
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(SECRET_KEY, "hex"), iv);
   let encrypted = cipher.update(text);
@@ -16,6 +18,9 @@ function encrypt(text) {
 }
 
 function decrypt(text) {
+  if (!text) return text;
+  // console.log("text decrypt", text);
+
   const textParts = text.split(":");
   const iv = Buffer.from(textParts.shift(), "hex");
   const encryptedText = Buffer.from(textParts.join(":"), "hex");

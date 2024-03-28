@@ -5,9 +5,11 @@ const bcrypt = require("bcrypt");
 const { nanoid } = require("nanoid");
 const { TOTP } = require("otpauth");
 const QRCode = require("qrcode");
+const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
+const { decrypt, encrypt } = require("../modules/cbCrypto");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -142,7 +144,7 @@ class UserController {
 
   async login(email, password) {
     try {
-      const foundUser = await db.User.findOne({ where: { "email": sc.encrypt(email) } });
+      const foundUser = await db.User.findOne({ where: { email: { [Op.like]: email } } });
 
       if (!foundUser) {
         throw new Error(401);
@@ -157,7 +159,7 @@ class UserController {
 
         if (isAuthenticated) {
           const bcryptHash = await bcrypt.hash(password, 10);
-          await db.User.update({ password: bcryptHash }, { where: { "email": sc.encrypt(email) } });
+          await db.User.update({ password: bcryptHash }, { where: { email } });
         }
       }
 
@@ -247,7 +249,7 @@ class UserController {
 
   findByEmail(email) {
     return db.User.findOne({
-      where: { "email": sc.encrypt(email) },
+      where: { email },
       include: [{ model: db.TeamRole }],
     }).then((user) => {
       if (!user) return new Promise((resolve, reject) => reject(new Error(404)));
@@ -258,7 +260,7 @@ class UserController {
   }
 
   emailExists(email) {
-    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
+    return db.User.findOne({ where: { email } })
       .then((user) => {
         if (user !== null) return true;
         return false;
@@ -279,7 +281,7 @@ class UserController {
 
   getTeamInvitesByUser(email) {
     return db.TeamInvitation.findAll({
-      where: { email: sc.encrypt(email) },
+      where: { email },
       include: [{ model: db.Team }],
     })
       .then((invites) => {
@@ -317,7 +319,7 @@ class UserController {
 
   requestPasswordReset(email) {
     const newToken = uuid();
-    return db.User.findOne({ where: { email: sc.encrypt(email) } })
+    return db.User.findOne({ where: { email } })
       .then((user) => {
         if (!user) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -326,7 +328,7 @@ class UserController {
         return this.update(user.id, { passwordResetToken: newToken });
       })
       .then((user) => {
-        const hash = sc.encrypt(JSON.stringify({
+        const hash = encrypt(JSON.stringify({
           id: user.id,
           email: user.email,
         }));
@@ -348,7 +350,7 @@ class UserController {
     // decrypt the hash to get the user information
     let user;
     try {
-      user = JSON.parse(sc.decrypt(hash));
+      user = JSON.parse(decrypt(hash));
     } catch (e) {
       return new Promise((resolve, reject) => reject(e));
     }

@@ -1,5 +1,7 @@
 const simplecrypt = require("simplecrypt");
 
+const { encrypt, decrypt } = require("../../modules/cbCrypto");
+
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
 const sc = simplecrypt({
@@ -23,16 +25,22 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       set(val) {
         try {
-          return this.setDataValue("token", sc.encrypt(val));
+          return this.setDataValue("token", encrypt(val));
         } catch (e) {
           return this.setDataValue("token", val);
         }
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("token"));
+          return decrypt(this.getDataValue("token"));
         } catch (e) {
-          return this.getDataValue("token");
+          // Fallback to old decryption if the new one fails
+          try {
+            return sc.decrypt(this.getDataValue("token"));
+          } catch (e) {
+            // Handle the case where neither method works
+            return this.getDataValue("token");
+          }
         }
       }
     },

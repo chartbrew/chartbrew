@@ -1,5 +1,7 @@
 const simplecrypt = require("simplecrypt");
 
+const { encrypt, decrypt } = require("../../modules/cbCrypto");
+
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
 const sc = simplecrypt({
@@ -109,13 +111,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT("long"),
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("fieldsSchema")));
+          return JSON.parse(decrypt(this.getDataValue("fieldsSchema")));
         } catch (e) {
-          return this.getDataValue("fieldsSchema");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("fieldsSchema")));
+          } catch (e) {
+            return this.getDataValue("fieldsSchema");
+          }
         }
       },
       set(val) {
-        return this.setDataValue("fieldsSchema", sc.encrypt(JSON.stringify(val)));
+        return this.setDataValue("fieldsSchema", encrypt(JSON.stringify(val)));
       },
     },
     excludedFields: {

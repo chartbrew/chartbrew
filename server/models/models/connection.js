@@ -1,5 +1,7 @@
 const simplecrypt = require("simplecrypt");
+
 const assembleMongoUrl = require("../../modules/assembleMongoUrl");
+const { encrypt, decrypt } = require("../../modules/cbCrypto");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
@@ -69,13 +71,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(val) {
         if (!val) return val;
-        return this.setDataValue("host", sc.encrypt(val));
+        return this.setDataValue("host", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("host"));
+          return decrypt(this.getDataValue("host"));
         } catch (e) {
-          return this.getDataValue("host");
+          try {
+            return sc.decrypt(this.getDataValue("host"));
+          } catch (e) {
+            return this.getDataValue("host");
+          }
         }
       },
     },
@@ -83,13 +89,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       set(val) {
         if (!val) return val;
-        return this.setDataValue("dbName", sc.encrypt(val));
+        return this.setDataValue("dbName", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("dbName"));
+          return decrypt(this.getDataValue("dbName"));
         } catch (e) {
-          return this.getDataValue("dbName");
+          try {
+            return sc.decrypt(this.getDataValue("dbName"));
+          } catch (e) {
+            return this.getDataValue("dbName");
+          }
         }
       },
     },
@@ -97,13 +107,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       set(val) {
         if (!val) return val;
-        return this.setDataValue("port", sc.encrypt(val));
+        return this.setDataValue("port", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("port"));
+          return decrypt(this.getDataValue("port"));
         } catch (e) {
-          return this.getDataValue("port");
+          try {
+            return sc.decrypt(this.getDataValue("port"));
+          } catch (e) {
+            return this.getDataValue("port");
+          }
         }
       },
     },
@@ -111,13 +125,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       set(val) {
         if (!val) return val;
-        return this.setDataValue("username", sc.encrypt(val));
+        return this.setDataValue("username", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("username"));
+          return decrypt(this.getDataValue("username"));
         } catch (e) {
-          return this.getDataValue("username");
+          try {
+            return sc.decrypt(this.getDataValue("username"));
+          } catch (e) {
+            return this.getDataValue("username");
+          }
         }
       },
     },
@@ -125,13 +143,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       set(val) {
         if (!val) return val;
-        return this.setDataValue("password", sc.encrypt(val));
+        return this.setDataValue("password", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("password"));
+          return decrypt(this.getDataValue("password"));
         } catch (e) {
-          return this.getDataValue("password");
+          try {
+            return sc.decrypt(this.getDataValue("password"));
+          } catch (e) {
+            return this.getDataValue("password");
+          }
         }
       },
     },
@@ -143,29 +165,37 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(val) {
         try {
-          return this.setDataValue("options", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("options", encrypt(JSON.stringify(val)));
         } catch (e) {
-          return this.setDataValue("options", sc.encrypt(val));
+          return this.setDataValue("options", encrypt(val));
         }
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("options")));
+          return JSON.parse(decrypt(this.getDataValue("options")));
         } catch (e) {
-          return this.getDataValue("options");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("options")));
+          } catch (e) {
+            return this.getDataValue("options");
+          }
         }
       },
     },
     connectionString: {
       type: DataTypes.TEXT,
       set(val) {
-        return this.setDataValue("connectionString", sc.encrypt(val));
+        return this.setDataValue("connectionString", encrypt(val));
       },
       get() {
         try {
-          return sc.decrypt(this.getDataValue("connectionString"));
+          return decrypt(this.getDataValue("connectionString"));
         } catch (e) {
-          return this.getDataValue("connectionString");
+          try {
+            return sc.decrypt(this.getDataValue("connectionString"));
+          } catch (e) {
+            return this.getDataValue("connectionString");
+          }
         }
       },
     },
@@ -173,16 +203,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(val) {
         try {
-          return this.setDataValue("authentication", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("authentication", encrypt(JSON.stringify(val)));
         } catch (e) {
           return this.setDataValue("authentication", val);
         }
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("authentication")));
+          return JSON.parse(decrypt(this.getDataValue("authentication")));
         } catch (e) {
-          return this.getDataValue("authentication");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("authentication")));
+          } catch (e) {
+            return this.getDataValue("authentication");
+          }
         }
       },
     },
@@ -198,16 +232,20 @@ module.exports = (sequelize, DataTypes) => {
 
         try {
           const parsedString = newVal.replace(/\r?\n|\r/, "");
-          return this.setDataValue("firebaseServiceAccount", sc.encrypt(parsedString));
+          return this.setDataValue("firebaseServiceAccount", encrypt(parsedString));
         } catch (e) {
           return this.setDataValue("firebaseServiceAccount", newVal);
         }
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("firebaseServiceAccount")));
+          return JSON.parse(decrypt(this.getDataValue("firebaseServiceAccount")));
         } catch (e) {
-          return this.getDataValue("firebaseServiceAccount");
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("firebaseServiceAccount")));
+          } catch (e) {
+            return this.getDataValue("firebaseServiceAccount");
+          }
         }
       },
     },
@@ -238,7 +276,15 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Connection.prototype.decryptField = (val) => {
-    return sc.decrypt(val);
+    try {
+      return decrypt(val);
+    } catch (e) {
+      try {
+        return sc.decrypt(val);
+      } catch (e) {
+        return val;
+      }
+    }
   };
 
   Connection.prototype.getMongoConnectionUrl = (connection) => {

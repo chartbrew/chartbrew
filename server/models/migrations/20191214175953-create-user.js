@@ -29,6 +29,10 @@ module.exports = {
         allowNull: false,
         unique: true,
         get() {
+          if (this.getDataValue("email") && this.getDataValue("email").indexOf("@") > -1) {
+            return this.getDataValue("email");
+          }
+
           try {
             return sc.decrypt(this.getDataValue("email"));
           } catch (e) {
