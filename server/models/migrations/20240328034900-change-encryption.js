@@ -63,7 +63,7 @@ async function migrateEncryptedFields(queryInterface, tableName, fields, noEncry
 module.exports = {
   async up(queryInterface) {
     // migrate ApiKey - token
-    await migrateEncryptedFields(queryInterface, "ApiKey", ["token"]);
+    await migrateEncryptedFields(queryInterface, "Apikey", ["token"]);
 
     // migrate Connection
     // - host, dbName, port, username, password, options, connectionString,
