@@ -1,3 +1,8 @@
+// set up the encryption keys first, then load .env file
+const setUpEncryptionKeys = require("./modules/setUpEncryptionKeys"); // eslint-disable-line
+
+setUpEncryptionKeys();
+
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
@@ -21,14 +26,10 @@ const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
-const setUpEncryptionKeys = require("./modules/setUpEncryptionKeys");
 
 // set up folders
 fs.mkdir(".cache", () => {});
 fs.mkdir("uploads", () => {});
-
-// set up the encryption keys
-setUpEncryptionKeys();
 
 const app = express();
 app.settings = settings;
