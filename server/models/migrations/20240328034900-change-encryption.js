@@ -66,13 +66,13 @@ module.exports = {
     await migrateEncryptedFields(queryInterface, "Apikey", ["token"]);
 
     // migrate Connection
-    // - host, dbName, port, username, password, options, connectionString,
+    // - host, dbName, port, username, options, connectionString,
     // - authentification, firebaseServiceAccount
 
     await migrateEncryptedFields(
       queryInterface,
       "Connection",
-      ["host", "dbName", "port", "username", "password", "options", "connectionString", "authentification", "firebaseServiceAccount"],
+      ["host", "dbName", "port", "username", "options", "connectionString", "authentification", "firebaseServiceAccount"],
     );
 
     // migrate DataRequest
