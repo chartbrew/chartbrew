@@ -140,7 +140,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       set(val) {
         if (!val) return val;
         return this.setDataValue("password", encrypt(val));
@@ -221,7 +221,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     firebaseServiceAccount: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       set(val) {
         let newVal = val;
         try {

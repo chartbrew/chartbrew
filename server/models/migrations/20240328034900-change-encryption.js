@@ -62,17 +62,28 @@ async function migrateEncryptedFields(queryInterface, tableName, fields, noEncry
 
 module.exports = {
   async up(queryInterface) {
+    // change column types
+    await queryInterface.changeColumn("Connection", "password", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "firebaseServiceAccount", {
+      type: Sequelize.TEXT("long"),
+      allowNull: true,
+    });
+
     // migrate ApiKey - token
     await migrateEncryptedFields(queryInterface, "Apikey", ["token"]);
 
     // migrate Connection
-    // - host, dbName, port, username, options, connectionString,
+    // - host, dbName, port, username, password, options, connectionString,
     // - authentification, firebaseServiceAccount
 
     await migrateEncryptedFields(
       queryInterface,
       "Connection",
-      ["host", "dbName", "port", "username", "options", "connectionString", "authentification", "firebaseServiceAccount"],
+      ["host", "dbName", "port", "username", "password", "options", "connectionString", "authentification", "firebaseServiceAccount"],
     );
 
     // migrate DataRequest
@@ -100,7 +111,17 @@ module.exports = {
     await migrateEncryptedFields(queryInterface, "User", ["email"], true);
   },
 
-  async down() {
+  async down(queryInterface) {
+    await queryInterface.changeColumn("Connection", "password", {
+      type: Sequelize.STRING,
+      allowNull: false,
+    });
+
+    await queryInterface.changeColumn("Connection", "firebaseServiceAccount", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
     // No need to decrypt the fields back since the old encryption method is still available
   }
 };
