@@ -73,6 +73,26 @@ module.exports = {
       allowNull: true,
     });
 
+    await queryInterface.changeColumn("Connection", "host", {
+      type: Sequelize.TEXT("long"),
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "dbName", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "username", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "port", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
     // migrate ApiKey - token
     await migrateEncryptedFields(queryInterface, "Apikey", ["token"]);
 
@@ -119,6 +139,26 @@ module.exports = {
 
     await queryInterface.changeColumn("Connection", "firebaseServiceAccount", {
       type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "host", {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "dbName", {
+      type: Sequelize.STRING,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "username", {
+      type: Sequelize.STRING,
+      allowNull: true,
+    });
+
+    await queryInterface.changeColumn("Connection", "port", {
+      type: Sequelize.STRING,
       allowNull: true,
     });
 

@@ -68,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
     },
     host: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       set(val) {
         if (!val) return val;
         return this.setDataValue("host", encrypt(val));
@@ -86,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     dbName: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       set(val) {
         if (!val) return val;
         return this.setDataValue("dbName", encrypt(val));
@@ -104,7 +104,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     port: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       set(val) {
         if (!val) return val;
         return this.setDataValue("port", encrypt(val));
@@ -122,7 +122,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     username: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       set(val) {
         if (!val) return val;
         return this.setDataValue("username", encrypt(val));
