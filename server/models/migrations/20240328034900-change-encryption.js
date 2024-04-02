@@ -3,10 +3,10 @@ const simplecrypt = require("simplecrypt");
 
 const { encrypt } = require("../../modules/cbCrypto");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const secret = process.env.NODE_ENV === "production" ? process.env.CB_SECRET : process.env.CB_SECRET_DEV;
 
 const sc = simplecrypt({
-  password: settings.secret,
+  password: secret,
   salt: "10",
 });
 
@@ -27,12 +27,14 @@ async function migrateEncryptedFields(queryInterface, tableName, fields, noEncry
     // Process each field to be encrypted
     for (const field of fields) {
       let decryptedValue;
-      try {
-        // Attempt to decrypt with the old algorithm
-        decryptedValue = sc.decrypt(record[field]);
-      } catch (e) {
-        // If decryption fails, assume it's in the new format or plaintext
-        decryptedValue = record[field];
+      if (record[field]) {
+        try {
+          // Attempt to decrypt with the old algorithm
+          decryptedValue = sc.decrypt(record[field]);
+        } catch (e) {
+          // If decryption fails, assume it's in the new format or plaintext
+          decryptedValue = record[field];
+        }
       }
 
       // Encrypt with the new algorithm
@@ -40,7 +42,7 @@ async function migrateEncryptedFields(queryInterface, tableName, fields, noEncry
         ? decryptedValue : encrypt(decryptedValue);
 
       // Check if encryption changed the value, indicating an update is needed
-      if (encryptedValue !== record[field]) {
+      if (encryptedValue !== record[field] && encryptedValue) {
         updates[field] = encryptedValue;
         needsUpdate = true;
       }
