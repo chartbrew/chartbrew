@@ -100,11 +100,13 @@ A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is bui
 
 Before running the commands below, make sure you have a MySQL server already running and an empty database that Chartbrew can use. The database name should match the value of the `CB_DB_NAME` variable.
 
+You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. [You can generate one here](https://generate-random.org/encryption-key-generator?count=1&bytes=32&cipher=aes-256-cbc&string=&password=).
+
 ```sh
 docker pull razvanilin/chartbrew
 
 docker run -p 4019:4019 -p 4018:4018 \
-  -e CB_SECRET=enter_a_secure_string \
+  -e CB_ENCRYPTION_KEY=your_32_bytes_key \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_API_PORT=4019 \
   -e CB_DB_HOST=host.docker.internal \

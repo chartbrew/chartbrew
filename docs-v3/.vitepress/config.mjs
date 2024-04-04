@@ -36,7 +36,7 @@ export default defineConfig({
       },
       {
         link: '/integrations/',
-        text: '🔌 Integrations',
+        text: 'Integrations',
         collapsable: false,
         sidebarDepth: 0,
         items: [
@@ -45,12 +45,13 @@ export default defineConfig({
         ],
       },
       {
-        link: '/backend/',
-        text: '🧪 Backend'
-      },
-      {
-        link: '/frontend/',
-        text: '✨ Frontend'
+        text: 'Architecture',
+        collapsable: false,
+        sidebarDepth: 0,
+        items: [
+          { link: '/backend/', text: 'Backend' },
+          { link: '/frontend/', text: 'Frontend' },
+        ]
       },
       {
         text: "🚧 Migrations",
