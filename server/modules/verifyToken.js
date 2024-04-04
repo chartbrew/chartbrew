@@ -13,29 +13,44 @@ module.exports = async (req, res, next) => {
       if (blacklisted) return res.status(401).send("Unauthorized access.");
     } catch (e) { /** */ }
 
-    return jwt.verify(token, settings.secret, (err, decoded) => {
-      if (err) return res.status(401).send("Unauthorized access.");
-      return db.User.findOne({
-        where: { id: decoded.id },
-        include: [{
-          model: db.User2fa,
-          attributes: ["id", "method"],
-          where: { isEnabled: true },
-          required: false
-        }]
+    let decoded;
+
+    try {
+      decoded = await jwt.verify(token, settings.encryptionKey);
+    } catch (err) {
+      //
+    }
+
+    if (!decoded?.id) {
+      try {
+        decoded = await jwt.verify(token, settings.secret);
+      } catch (err) {
+        return res.status(401).send("Unauthorized access.");
+      }
+    }
+
+    if (!decoded?.id) return res.status(401).send("Unauthorized access.");
+
+    return db.User.findOne({
+      where: { id: decoded.id },
+      include: [{
+        model: db.User2fa,
+        attributes: ["id", "method"],
+        where: { isEnabled: true },
+        required: false
+      }]
+    })
+      .then((user) => {
+        if (!user) return res.status(400).send("Could not process the request. Please try again.");
+
+        const userObj = userResponse(user);
+        userObj.token = token;
+        userObj.admin = user.admin;
+
+        req.user = userObj;
+        return next();
       })
-        .then((user) => {
-          if (!user) return res.status(400).send("Could not process the request. Please try again.");
-
-          const userObj = userResponse(user);
-          userObj.token = token;
-          userObj.admin = user.admin;
-
-          req.user = userObj;
-          return next();
-        })
-        .catch((error) => { return res.status(400).send(error); });
-    });
+      .catch((error) => { return res.status(400).send(error); });
   } else {
     return res.status(400).send("Token is missing.");
   }

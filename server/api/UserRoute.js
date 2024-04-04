@@ -24,7 +24,7 @@ module.exports = (app) => {
       id: user.id,
       email: user.email,
     };
-    jwt.sign(userToken, app.settings.secret, {
+    jwt.sign(userToken, app.settings.encryptionKey, {
       expiresIn: 2592000 // a month
     }, (err, token) => {
       if (err) return res.status(400).send(err);

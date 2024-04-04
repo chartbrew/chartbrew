@@ -154,7 +154,7 @@ module.exports = (app) => {
       user_id: req.user.id,
     };
 
-    const token = jwt.sign(payload, app.settings.secret, {
+    const token = jwt.sign(payload, app.settings.encryptionKey, {
       expiresIn: 2592000 // a month
     }, (err, token) => {
       if (err) throw new Error(err);
@@ -175,7 +175,7 @@ module.exports = (app) => {
     }
 
     let newRole = {};
-    return jwt.verify(req.body.token, app.settings.secret, (err, decoded) => {
+    return jwt.verify(req.body.token, app.settings.encryptionKey, (err, decoded) => {
       return teamController.addTeamRole(decoded.team_id, req.user.id, decoded.role || "projectViewer", decoded.projects, decoded.canExport)
         .then((role) => {
           newRole = role;

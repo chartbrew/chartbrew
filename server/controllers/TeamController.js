@@ -368,7 +368,7 @@ class TeamController {
       const token = jwt.sign({
         id: userData.id,
         email: userData.email,
-      }, settings.secret, { expiresIn: "9999 years" });
+      }, settings.encryptionKey, { expiresIn: "9999 years" });
 
       return await db.Apikey.create({
         name: body.name,

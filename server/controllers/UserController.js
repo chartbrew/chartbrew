@@ -409,7 +409,7 @@ class UserController {
           newEmail: email,
         };
 
-        const token = jwt.sign(tokenPayload, settings.secret, {
+        const token = jwt.sign(tokenPayload, settings.encryptionKey, {
           expiresIn: "3h",
         });
 
@@ -426,7 +426,7 @@ class UserController {
   updateEmail(id, token) {
     let decodedToken;
     try {
-      decodedToken = jwt.verify(token, settings.secret);
+      decodedToken = jwt.verify(token, settings.encryptionKey);
     } catch (e) {
       return new Promise((resolve, reject) => reject(e));
     }

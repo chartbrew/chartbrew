@@ -1,6 +1,7 @@
 module.exports = {
   port: process.env.CB_API_PORT,
-  secret: process.env.CB_ENCRYPTION_KEY,
+  secret: process.env.CB_SECRET,
+  encryptionKey: process.env.CB_ENCRYPTION_KEY,
   client: process.env.VITE_APP_CLIENT_HOST,
   api: process.env.CB_API_HOST,
   adminMail: process.env.CB_ADMIN_MAIL,
