@@ -18,7 +18,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!decoded) {
-    decoded = await jwt.verify(token, settings.secret);
+    try {
+      decoded = await jwt.verify(token, settings.secret);
+    } catch (err) {
+      //
+    }
   }
 
   if (!decoded?.id) return next();
