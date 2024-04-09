@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Link as LinkDom, useParams } from "react-router-dom";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
-  Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem, NavbarBrand,
+  Link, Image, CircularProgress, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarBrand,
 } from "@nextui-org/react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
@@ -588,7 +588,7 @@ function PublicDashboard(props) {
           isBordered
           maxWidth={"full"}
           isBlurred={false}
-          className={"flex-grow-0 justify-between"}
+          className={"header flex-grow-0 justify-between"}
           style={{ backgroundColor: newChanges.backgroundColor || project.backgroundColor || "#FFFFFF" }}
         >
           <NavbarBrand>
@@ -650,47 +650,48 @@ function PublicDashboard(props) {
               </div>
             </div>
           </NavbarBrand>
-          <NavbarContent justify="end">
-            {!isSaved && !preview && (
-              <div className="hidden sm:block">
-                <Button
-                  color="success"
-                  endContent={<LuCheckCircle />}
-                  isLoading={saveLoading}
-                  onClick={_onSaveChanges}
-                >
-                  Save changes
-                </Button>
-              </div>
-            )}
-            {preview && (
-              <NavbarItem>
-                <Button
-                  onClick={() => setPreview(false)}
-                  endContent={<LuXCircle />}
-                  color="primary"
-                  variant="faded"
-                >
-                  Exit preview
-                </Button>
-              </NavbarItem>
-            )}
-
-            {project?.Team?.allowReportRefresh && (
-              <NavbarItem className="hidden sm:block">
-                <Button
-                  onClick={() => _onRefreshCharts()}
-                  endContent={<LuRefreshCw />}
-                  isLoading={refreshLoading}
-                  size="sm"
-                  color="primary"
-                >
-                  Refresh charts
-                </Button>
-              </NavbarItem>
-            )}
-          </NavbarContent>
         </Navbar>
+
+        <div className="absolute top-4 right-4 z-50">
+          {!isSaved && !preview && (
+            <div className="hidden sm:block">
+              <Button
+                color="success"
+                endContent={<LuCheckCircle />}
+                isLoading={saveLoading}
+                onClick={_onSaveChanges}
+              >
+                Save changes
+              </Button>
+            </div>
+          )}
+          {preview && (
+            <div>
+              <Button
+                onClick={() => setPreview(false)}
+                endContent={<LuXCircle />}
+                color="primary"
+                variant="faded"
+              >
+                Exit preview
+              </Button>
+            </div>
+          )}
+
+          {project?.Team?.allowReportRefresh && (
+            <div className="hidden sm:block">
+              <Button
+                onClick={() => _onRefreshCharts()}
+                endContent={<LuRefreshCw />}
+                isLoading={refreshLoading}
+                size="sm"
+                color="primary"
+              >
+                Refresh charts
+              </Button>
+            </div>
+          )}
+        </div>
 
         {charts && charts.length > 0 && _isOnReport() && (
           <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
