@@ -81,7 +81,7 @@ function CampaignsQuery(props) {
             key: campaign.id,
             label: {
               content: campaign.active ? "Running" : "Stopped",
-              color: campaign.active ? "success" : "error",
+              color: campaign.active ? "success" : "danger",
             },
           };
         });
@@ -350,7 +350,7 @@ function CampaignsQuery(props) {
             <SelectItem
               key={campaign.key}
               startContent={(
-                <Chip color={campaign.label.color} className="min-w-[70px]">
+                <Chip color={campaign.label.color} size="sm" className="min-w-[70px] text-center" variant="flat">
                   {campaign.label.content}
                 </Chip>
               )}

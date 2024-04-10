@@ -8,13 +8,13 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 import { LuExternalLink, LuInfo } from "react-icons/lu";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
 
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
 import { testRequest } from "../../../slices/connection";
 
 /*
@@ -108,20 +108,18 @@ function CustomerioConnectionForm(props) {
       return;
     }
 
-    setTimeout(() => {
-      const newConnection = connection;
-      if (test === true) {
-        setTestLoading(true);
-        _onTestRequest(newConnection)
-          .then(() => setTestLoading(false))
-          .catch(() => setTestLoading(false));
-      } else {
-        setLoading(true);
-        onComplete(newConnection)
-          .then(() => setLoading(false))
-          .catch(() => setLoading(false));
-      }
-    }, 100);
+    const newConnection = { ...connection };
+    if (test === true) {
+      setTestLoading(true);
+      _onTestRequest(newConnection)
+        .then(() => setTestLoading(false))
+        .catch(() => setTestLoading(false));
+    } else {
+      setLoading(true);
+      onComplete(newConnection)
+        .then(() => setLoading(false))
+        .catch(() => setLoading(false));
+    }
   };
 
   const _getRegionText = (region) => {
@@ -204,7 +202,7 @@ function CustomerioConnectionForm(props) {
             value={_getRegionText(connection.host)}
             selectedKeys={[connection.host]}
             selectionMode="single"
-            onSelectionChange={(key) => setConnection({ ...connection, host: key })}
+            onSelectionChange={(keys) => setConnection({ ...connection, host: keys.currentKey })}
           >
             {regionOptions.map((option) => (
               <SelectItem key={option.value}>
