@@ -370,18 +370,10 @@ module.exports = (app) => {
   /*
   ** Route to run helper methods for different connections
   */
-  app.post("/project/:project_id/connection/:connection_id/helper/:method", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("dataRequest");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return connectionController.runHelperMethod(
-          req.params.connection_id, req.params.method, req.body,
-        );
-      })
+  app.post("/team/:team_id/connections/:connection_id/helper/:method", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return connectionController.runHelperMethod(
+      req.params.connection_id, req.params.method, req.body,
+    )
       .then((data) => {
         return res.status(200).send(data);
       })
