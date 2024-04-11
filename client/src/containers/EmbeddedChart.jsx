@@ -6,6 +6,12 @@ import moment from "moment";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { Helmet } from "react-helmet";
+import useDarkMode from "@fisch0920/use-dark-mode";
+import { useSearchParams } from "react-router-dom";
+import { LuListFilter, LuXCircle } from "react-icons/lu";
+import { useParams } from "react-router";
+import { useDispatch } from "react-redux";
+import { useLocalStorage } from "react-use";
 
 import {
   getEmbeddedChart, runQueryWithFilters,
@@ -22,9 +28,6 @@ import useInterval from "../modules/useInterval";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
-import { LuListFilter, LuXCircle } from "react-icons/lu";
-import { useParams } from "react-router";
-import { useDispatch } from "react-redux";
 import KpiMode from "./Chart/components/KpiMode";
 
 const pageHeight = window.innerHeight;
@@ -39,10 +42,13 @@ function EmbeddedChart() {
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
+  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false"); // eslint-disable-line
 
   const params = useParams();
   const dispatch = useDispatch();
-
+  const darkMode = useDarkMode(false);
+  const [searchParams] = useSearchParams();
+  
   useInterval(() => {
     setDataLoading(true);
     dispatch(getEmbeddedChart({ embed_id: params.chartId }))
@@ -72,6 +78,12 @@ function EmbeddedChart() {
           setChart({ error: "no chart" });
         });
     }, 1000);
+
+    if (searchParams.get("theme") && searchParams.get("theme") !== "os") {
+      _setTheme(searchParams.get("theme"));
+    } else {
+      _setOSTheme();
+    }
   }, []);
 
   const _getUpdatedTime = (chart) => {
@@ -141,6 +153,29 @@ function EmbeddedChart() {
     });
 
     return filterCount > 0;
+  };
+
+  const _setOSTheme = () => {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      darkMode.enable();
+    } else {
+      darkMode.disable();
+    }
+
+    window.localStorage.removeItem("darkMode");
+    setIsOsTheme(true);
+  };
+
+  const _setTheme = (mode) => {
+    setIsOsTheme(false);
+    if (mode === "dark") {
+      darkMode.enable();
+    } else {
+      darkMode.enable();
+      setTimeout(() => {
+        darkMode.disable();
+      }, 100);
+    }
   };
 
   if (loading) {

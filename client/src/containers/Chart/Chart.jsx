@@ -6,7 +6,7 @@ import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
   PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader,
-  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
+  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, RadioGroup, Radio,
 } from "@nextui-org/react";
 import {
   LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuFileDown,
@@ -82,6 +82,7 @@ function Chart(props) {
   const [customUpdateFreq, setCustomUpdateFreq] = useState("");
   const [autoUpdateError, setAutoUpdateError] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
+  const [embedTheme, setEmbedTheme] = useState("");
 
   useInterval(() => {
     dispatch(getChart({
@@ -408,13 +409,13 @@ function Chart(props) {
   const _getEmbedUrl = () => {
     if (!chart.Chartshares || !chart.Chartshares[0]) return "";
     const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `${SITE_HOST}/chart/${shareString}/embedded`;
+    return `${SITE_HOST}/chart/${shareString}/embedded${embedTheme ? `?theme=${embedTheme}` : ""}`;
   };
 
   const _getEmbedString = () => {
     if (!chart.Chartshares || !chart.Chartshares[0]) return "";
     const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
+    return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded${embedTheme ? `?theme=${embedTheme}` : ""}" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
   const _onCreateSharingString = async () => {
@@ -933,6 +934,7 @@ function Chart(props) {
                   onChange={_onToggleShareable}
                   isSelected={chart.shareable}
                   disabled={!_canAccess("projectAdmin")}
+                  size="sm"
                 />
                 <Spacer x={0.5} />
                 <Text>
@@ -994,6 +996,24 @@ function Chart(props) {
               && (chart.Chartshares && chart.Chartshares.length > 0)
               && (
                 <>
+                  <div className="flex items-center">
+                    <RadioGroup
+                      label="Select a theme"
+                      orientation="horizontal"
+                      size="sm"
+                    >
+                      <Radio value="os" onClick={() => setEmbedTheme("")} checked={embedTheme === ""}>
+                        System default
+                      </Radio>
+                      <Radio value="dark" onClick={() => setEmbedTheme("dark")} checked={embedTheme === "dark"}>
+                        Dark
+                      </Radio>
+                      <Radio value="light" onClick={() => setEmbedTheme("light")} checked={embedTheme === "light"}>
+                        Light
+                      </Radio>
+                    </RadioGroup>
+                  </div>
+                  <Spacer y={1} />
                   <Row>
                     <Textarea
                       label={"Copy the following code on the website you wish to add your chart in."}
