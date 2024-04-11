@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
-import { Link as LinkDom, useParams } from "react-router-dom";
+import { Link as LinkDom, useParams, useSearchParams } from "react-router-dom";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
   Link, Image, CircularProgress, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarBrand,
@@ -18,6 +18,8 @@ import {
   LuRefreshCw, LuShare, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
+import useDarkMode from "@fisch0920/use-dark-mode";
+import { useLocalStorage } from "react-use";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -74,11 +76,14 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
+  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false"); // eslint-disable-line
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
 
+  const [searchParams] = useSearchParams();
   const isDark = useThemeDetector();
+  const darkMode = useDarkMode(false);
   const params = useParams();
   const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
@@ -103,6 +108,12 @@ function PublicDashboard(props) {
   useEffect(() => {
     setLoading(true);
     _fetchProject(window.localStorage.getItem("reportPassword"));
+
+    if (searchParams.get("theme") && searchParams.get("theme") !== "os") {
+      _setTheme(searchParams.get("theme"));
+    } else {
+      _setOSTheme();
+    }
   }, []);
 
   useEffect(() => {
@@ -311,6 +322,29 @@ function PublicDashboard(props) {
   const _onLoadLogo = ({ target: img }) => {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     setLogoAspectRatio(aspectRatio);
+  };
+
+  const _setOSTheme = () => {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      darkMode.enable();
+    } else {
+      darkMode.disable();
+    }
+
+    window.localStorage.removeItem("darkMode");
+    setIsOsTheme(true);
+  };
+
+  const _setTheme = (mode) => {
+    setIsOsTheme(false);
+    if (mode === "dark") {
+      darkMode.enable();
+    } else {
+      darkMode.enable();
+      setTimeout(() => {
+        darkMode.disable();
+      }, 100);
+    }
   };
 
   if (loading && !project?.id && !noCharts) {

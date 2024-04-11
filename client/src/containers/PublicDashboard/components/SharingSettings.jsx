@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Textarea, Tooltip,
+  Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
+  Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
 } from "@nextui-org/react";
 import { LuClipboard, LuClipboardCheck, LuInfo } from "react-icons/lu";
 
@@ -19,6 +20,7 @@ function SharingSettings(props) {
   const [urlCopied, setUrlCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [embedTheme, setEmbedTheme] = useState("");
 
   useEffect(() => {
     if (project && project.id) {
@@ -42,7 +44,7 @@ function SharingSettings(props) {
   };
 
   const _getEmbedString = () => {
-    return `<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`;
+    return `<iframe src="${SITE_HOST}/b/${newBrewName}${embedTheme ? `?theme=${embedTheme}` : ""}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
   return (
@@ -162,6 +164,23 @@ function SharingSettings(props) {
           <Divider />
           <Spacer y={1} />
 
+          <div>
+            <RadioGroup
+              label="Select a theme"
+              orientation="horizontal"
+              size="sm"
+            >
+              <Radio value="os" onClick={() => setEmbedTheme("")} checked={embedTheme === ""}>
+                System default
+              </Radio>
+              <Radio value="dark" onClick={() => setEmbedTheme("dark")} checked={embedTheme === "dark"}>
+                Dark
+              </Radio>
+              <Radio value="light" onClick={() => setEmbedTheme("light")} checked={embedTheme === "light"}>
+                Light
+              </Radio>
+            </RadioGroup>
+          </div>
           <Row>
             <Textarea
               label="Embed this report"
