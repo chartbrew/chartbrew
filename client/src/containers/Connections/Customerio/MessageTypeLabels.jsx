@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Badge, Spacer } from "@nextui-org/react";
+import { Chip } from "@nextui-org/react";
 
 const messageTypes = {
   messages: [
@@ -43,74 +43,69 @@ function MessageTypeLabels(props) {
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <>
+    <div className="gap-1 flex flex-row flex-wrap">
       {messageTypes[mode].filter((m) => m.primary).map((message) => (
         <>
-          <Badge
+          <Chip
             key={message.value}
             onClick={() => onSelect(message.value)}
             color="primary"
-            variant={selected === message.value ? "default" : "bordered"}
-            css={{ cursor: "pointer", mb: 5 }}
+            variant={selected === message.value ? "solid" : "bordered"}
+            className="cursor-pointer"
           >
             {message.text}
-          </Badge>
-          <Spacer x={0.1} />
+          </Chip>
         </>
       ))}
       {!showAll
         && messageTypes[mode].filter((m) => !m.primary && selected === m.value).map((message) => (
           <>
-            <Badge
+            <Chip
               onClick={() => onSelect(message.value)}
               color="primary"
               variant="bordered"
               css={{ cursor: "pointer" }}
             >
               {message.text}
-            </Badge>
-            <Spacer x={0.1} />
+            </Chip>
           </>
         ))}
       {!showAll && showPrimary && (
         <>
-          <Badge
+          <Chip
             onClick={() => setShowAll(true)}
             color="secondary"
-            css={{ cursor: "pointer" }}
+            className="cursor-pointer"
           >
             {"Show all"}
-          </Badge>
-          <Spacer x={0.1} />
+          </Chip>
         </>
       )}
       {showAll && messageTypes[mode].filter((m) => !m.primary).map((message) => (
         <>
-          <Badge
+          <Chip
             key={message.value}
             onClick={() => onSelect(message.value)}
-            variant={selected === message.value ? "default" : "bordered"}
+            variant={selected === message.value ? "solid" : "bordered"}
             color="primary"
-            css={{ cursor: "pointer" }}
+            className="cursor-pointer"
           >
             {message.text}
-          </Badge>
-          <Spacer x={0.1} />
+          </Chip>
         </>
       ))}
       {showAll && (
         <>
-          <Badge
+          <Chip
             onClick={() => setShowAll(false)}
             color="secondary"
-            css={{ cursor: "pointer" }}
+            className="cursor-pointer"
           >
             {"Hide extra"}
-          </Badge>
-          <Spacer x={0.1} />
+          </Chip>
         </>
       )}
-    </>
+    </div>
   );
 }
 
