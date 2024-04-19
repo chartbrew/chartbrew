@@ -87,6 +87,9 @@ const router = createBrowserRouter([
           {
             path: "integrations",
           },
+          {
+            path: "variables",
+          }
         ],
       },
       {

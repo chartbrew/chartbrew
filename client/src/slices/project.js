@@ -207,6 +207,50 @@ export const generateDashboard = createAsyncThunk(
   }
 );
 
+export const createVariable = createAsyncThunk(
+  "project/createVariable",
+  async ({ project_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/variables`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const body = JSON.stringify(data);
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const variable = await response.json();
+    return variable;
+  }
+);
+
+export const deleteVariable = createAsyncThunk(
+  "project/deleteVariable",
+  async ({ project_id, variable_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/variables/${variable_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const variable = await response.json();
+    return variable;
+  }
+);
+
 export const projectSlice = createSlice({
   name: "project",
   initialState,
@@ -323,12 +367,54 @@ export const projectSlice = createSlice({
       state.loading = false;
       state.error = true;
     });
+
+    // createVariable
+    builder.addCase(createVariable.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(createVariable.fulfilled, (state, action) => {
+      state.loading = false;
+      state.active.Variables.push(action.payload);
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.Variables.push(action.payload);
+        }
+        return project;
+      });
+    })
+    builder.addCase(createVariable.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // deleteVariable
+    builder.addCase(deleteVariable.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(deleteVariable.fulfilled, (state, action) => {
+      state.loading = false;
+      state.active.Variables = state.active.Variables.filter((variable) => {
+        return variable.id !== action.meta.arg.variable_id;
+      });
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.Variables = project.Variables.filter((variable) => {
+            return variable.id !== action.meta.arg.variable_id;
+          });
+        }
+        return project;
+      });
+    });
+    builder.addCase(deleteVariable.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
   },
 });
 
 export const { changeActiveProject } = projectSlice.actions;
 
 export const selectProjects = (state) => state.project.data;
-export const selectProject = (state) => state.project.active;
+export const selectProject = (state) => state.project.active || {};
 
 export default projectSlice.reducer;

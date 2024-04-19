@@ -11,6 +11,7 @@ import {
   LuBarChartBig, LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
   LuTv2, LuUser, LuUsers2,
+  LuVariable,
 } from "react-icons/lu";
 
 import {
@@ -348,6 +349,35 @@ function ProjectNavigation(props) {
                       className="pointer-events-none"
                     >
                       Integrations
+                    </Button>
+                  )}
+                </Link>
+              </Row>
+
+              <Spacer y={1} />
+              <Row justify={menuSize === "large" ? "flex-start" : "center"}>
+                <Link to={`/${teamId}/${projectId}/variables`}>
+                  {menuSize === "small" && (
+                    <Tooltip content="Variables" placement="right">
+                      <div className="pointer-events-none">
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color={_checkIfActive("variables") ? "primary" : "default"}
+                        >
+                          <LuVariable size={28} />
+                        </Button>
+                      </div>
+                    </Tooltip>
+                  )}
+                  {menuSize === "large" && (
+                    <Button
+                      variant="light"
+                      color={_checkIfActive("variables") ? "primary" : "default"}
+                      startContent={<LuVariable size={24} />}
+                      className="pointer-events-none"
+                    >
+                      Variables
                     </Button>
                   )}
                 </Link>

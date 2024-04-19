@@ -26,6 +26,7 @@ import Dataset from "./Dataset/Dataset";
 // import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
 import LoadingScreen from "../components/LoadingScreen";
+import Variables from "./Variables/Variables";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -217,6 +218,11 @@ function Main(props) {
                   exact
                   path="integrations"
                   element={<Integrations />}
+                />
+                <Route
+                  exact
+                  path="variables"
+                  element={<Variables />}
                 />
               </Route>
 

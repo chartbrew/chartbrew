@@ -271,6 +271,61 @@ module.exports = (app) => {
   });
   // -------------------------------------------
 
+  /*
+  ** Route to get a project's variables
+  */
+  app.get("/project/:id/variables", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return projectController.getVariables(req.params.id)
+      .then((variables) => {
+        return res.status(200).send(variables);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to create a project variable
+  */
+  app.post("/project/:id/variables", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    return projectController.createVariable(req.params.id, req.body)
+      .then((variable) => {
+        return res.status(200).send(variable);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to update a project variable
+  */
+  app.put("/project/:id/variables/:variableId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.updateVariable(req.params.variableId, req.body)
+      .then((variable) => {
+        return res.status(200).send(variable);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+
+  /*
+  ** Route to delete a project variable
+  */
+  app.delete("/project/:id/variables/:variableId", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
+    return projectController.deleteVariable(req.params.variableId)
+      .then(() => {
+        return res.status(200).send({ removed: true });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
   return (req, res, next) => {
     next();
   };
