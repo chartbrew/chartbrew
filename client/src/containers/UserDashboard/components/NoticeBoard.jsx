@@ -18,7 +18,7 @@ function NoticeBoard() {
   const dispatch = useDispatch();
 
   const _onCompleteTutorials = (data) => {
-    dispatch(completeTutorial({ user_id: user.data.id, tutorial: data }));
+    dispatch(completeTutorial({ user_id: user.id, tutorial: data }));
   };
 
   return (
