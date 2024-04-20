@@ -122,6 +122,15 @@ function DatasetFilters(props) {
     setConditionModal(false);
   };
 
+  const _isVariableValid = (val) => {
+    const regex = /^[a-zA-Z_][a-zA-Z0-9_]{0,31}$/;
+    if (regex.test(val)) {
+      return true;
+    }
+
+    return false;
+  };
+
   return (
     <div className="flex flex-col gap-2">
       {conditions && conditions.length === 0 && (
@@ -250,7 +259,7 @@ function DatasetFilters(props) {
                 </Tooltip>
               )}
 
-              <Tooltip content="Remove condition">
+              <Tooltip content="Remove filter">
                 <Button
                   color="danger"
                   endContent={<LuXCircle size={18} />}
@@ -318,7 +327,7 @@ function DatasetFilters(props) {
                 </Tooltip>
               )}
               {condition.saved && (
-                <Tooltip content="Condition settings">
+                <Tooltip content="Filter settings">
                   <Button
                     variant="light"
                     size="sm"
@@ -340,10 +349,10 @@ function DatasetFilters(props) {
             variant="light"
             color="primary"
             onClick={_onAddCondition}
-            startContent={<LuPlus />}
+            endContent={<LuPlus />}
             size="sm"
           >
-            Add a new condition
+            Add a new filter
           </Button>
         </div>
       )}
@@ -383,7 +392,7 @@ function DatasetFilters(props) {
       <Modal isOpen={conditionModal} size="lg" onClose={() => setConditionModal(false)}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Condition settings</Text>
+            <Text size="h4">Filter settings</Text>
           </ModalHeader>
           <ModalBody>
             <Row>
@@ -400,6 +409,20 @@ function DatasetFilters(props) {
                 }
                 fullWidth
                 variant="bordered"
+              />
+            </Row>
+            <Row>
+              <Input
+                label="Assign a variable name to filter"
+                placeholder="Enter a variable name"
+                onChange={(e) => {
+                  setSelectedCondition({ ...selectedCondition, variable: e.target.value });
+                }}
+                value={selectedCondition.variable}
+                fullWidth
+                variant="bordered"
+                errorMessage={selectedCondition.variable && !_isVariableValid(selectedCondition.variable) && "Variables must start with a letter and contain only letters, numbers, and underscores"}
+                description="Variables are used to reference the filter value in when embedding the chart or filtering on the dashboard"
               />
             </Row>
             <Row>
@@ -429,12 +452,15 @@ function DatasetFilters(props) {
             <Button
               onClick={_onConfirmConditionSettings}
               color="primary"
+              isDisabled={selectedCondition.variable && !_isVariableValid(selectedCondition.variable)}
             >
               Save settings
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+
     </div>
   );
 }
