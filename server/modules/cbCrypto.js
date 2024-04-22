@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 
 // Assuming your secret key is stored in an environment variable for security reasons.
-const SECRET_KEY = process.env.CB_ENCRYPTION_KEY_DEV; // Make sure to set this in your environment.
+const SECRET_KEY = process.env.NODE_ENV === "production" ? process.env.CB_ENCRYPTION_KEY : process.env.CB_ENCRYPTION_KEY_DEV;
 const ALGORITHM = "aes-256-cbc";
 const IV_LENGTH = 16; // AES block size in bytes
 
