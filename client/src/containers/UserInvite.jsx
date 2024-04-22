@@ -1,42 +1,47 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
+import React, { useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Button, Spacer,
 } from "@nextui-org/react";
-import cookie from "react-cookies";
 import { useNavigate } from "react-router";
 
 import Text from "../components/Text";
 import Row from "../components/Row";
+import { clearUser, selectUser } from "../slices/user";
+import { removeAuthToken } from "../modules/auth";
 
 /*
   Component for inviting user to the team
 */
-function UserInvite(props) {
-  const { user } = props;
-
-  const [fetched, setFetched] = useState(false);
-
+function UserInvite() {
   const navigate = useNavigate();
+  const fetchRef = useRef(null);
+  const dispatch = useDispatch();
+
+  const user = useSelector(selectUser);
 
   useEffect(() => {
-    if (user.id && !fetched) {
-      setFetched(true);
+    if (user.id && !fetchRef.current) {
+      fetchRef.current = true;
       redirectUser("login");
     }
   }, [user]);
 
-  const redirectUser = (route) => {
+  const redirectUser = async (route) => {
     const params = new URLSearchParams(document.location.search);
     const token = params.get("token");
 
-    if (cookie.load("brewToken")) cookie.remove("brewToken");
-    if (route === "login") {
-      navigate(`/login?inviteToken=${token}`);
-    } else {
-      navigate(`/signup?inviteToken=${token}`);
-    }
+    removeAuthToken();
+    await dispatch(clearUser(true));
+
+    setTimeout(() => {
+      if (route === "login") {
+        navigate(`/login?inviteToken=${token}`);
+      } else {
+        navigate(`/signup?inviteToken=${token}`);
+      }
+    }, 100);
   };
 
   return (
@@ -82,16 +87,4 @@ UserInvite.propTypes = {
   user: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-    team: state.team,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(UserInvite);
+export default UserInvite;

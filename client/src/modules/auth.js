@@ -9,3 +9,8 @@ export function getAuthToken() {
   // }
   return token;
 }
+
+export function removeAuthToken() {
+  cookie.remove(tokenKey, { path: "/" });
+  return "done";
+}

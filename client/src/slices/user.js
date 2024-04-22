@@ -438,7 +438,10 @@ export const userSlice = createSlice({
       cookie.remove(tokenKey, { path: "/" });
       state.data = {};
       window.location.href = "/";
-    }
+    },
+    clearUser: (state) => {
+      state.data = {};
+    },
   },
   extraReducers: (builder) => {
     // createUser
@@ -576,7 +579,7 @@ export const userSlice = createSlice({
   },
 });
 
-export const { logout } = userSlice.actions;
+export const { logout, clearUser } = userSlice.actions;
 
 export const selectUser = (state) => state.user.data;
 
