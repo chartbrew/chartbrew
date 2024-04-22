@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, Spacer, CircularProgress, Chip, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
@@ -48,6 +48,7 @@ function EmbeddedChart() {
   const dispatch = useDispatch();
   const darkMode = useDarkMode(false);
   const [searchParams] = useSearchParams();
+  const filterRef = useRef(null);
   
   useInterval(() => {
     setDataLoading(true);
@@ -86,6 +87,56 @@ function EmbeddedChart() {
     }
   }, []);
 
+  useEffect(() => {
+    // check the search params and pass them to
+    if (chart.id && !filterRef.current) {
+      filterRef.current = true;
+      _checkSearchParamsForFilters();
+    }
+  }, [chart]);
+
+  const _checkSearchParamsForFilters = () => {
+    // check if there are any filters in the search params
+    // if so, add them to the conditions
+    const params = [];
+    searchParams.entries().forEach((entry) => {
+      const [key, value] = entry;
+      params.push({ variable: key, value });
+    });
+
+    let identifiedConditions = [];
+    chart.ChartDatasetConfigs.forEach((cdc) => {
+      if (Array.isArray(cdc.Dataset?.conditions)) {
+        identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+      }
+    });
+
+    // now check if any filters have the same variable name
+    let newConditions = [];
+    newConditions = identifiedConditions.map((c) => {
+      const newCondition = c;
+      const param = params.find((p) => p.variable === c.variable);
+      if (param) {
+        newCondition.value = param.value;
+      }
+      return newCondition;
+    });
+
+    if (newConditions.length === 0) return;
+
+    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+      .then((data) => {
+        if (data.payload) {
+          setChart(data.payload);
+        }
+
+        setDataLoading(false);
+      })
+      .catch(() => {
+        setDataLoading(false);
+      });
+  };
+
   const _getUpdatedTime = (chart) => {
     const updatedAt = chart.chartDataUpdated || chart.lastAutoUpdate;
     if (moment().diff(moment(updatedAt), "days") > 1) {
@@ -95,7 +146,7 @@ function EmbeddedChart() {
     return moment(updatedAt).fromNow();
   };
 
-  const _onAddFilter = (condition) => {
+  const _onAddFilter = async (condition) => {
     let found = false;
     const newConditions = conditions.map((c) => {
       let newCondition = c;
@@ -109,7 +160,7 @@ function EmbeddedChart() {
     setConditions(newConditions);
 
     setDataLoading(true);
-    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+    await dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
       .then((data) => {
         if (data.payload) {
           setChart(data.payload);
