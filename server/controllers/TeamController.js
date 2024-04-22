@@ -53,8 +53,9 @@ class TeamController {
       .then((teamRole) => {
         if (teamRole) {
           gRole = teamRole;
-          // don't update if the role is the owner
-          if (teamRole.role === "teamOwner") return teamRole;
+          // don't update if the role is the owner or teamAdmin
+          if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
+
           return db.TeamRole.update(teamRoleObj, { where: { id: teamRole.id } });
         }
 
