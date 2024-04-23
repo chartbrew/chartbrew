@@ -187,7 +187,11 @@ A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is bui
 
 Before running the commands below, make sure you have a MySQL server already running and an empty database that Chartbrew can use. The database name should match the value of the `CB_DB_NAME` variable.
 
-You will need a 32 bytes aes encryption key for the `CB_ENCRYPTION_KEY` variable. [You can generate one here](https://generate-random.org/encryption-key-generator?count=1&bytes=32&cipher=aes-256-cbc&string=&password=).
+You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. Run the following command to generate one:
+
+```sh
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ```sh
 docker pull razvanilin/chartbrew
@@ -221,7 +225,7 @@ docker exec -it -w /code/client your_container_name npm run build
 
 The `4019` port is used by the API and `4018` for the client app (UI). Feel free to map these to any other ports on your system (e.g `4523:4019`).
 
-* `CB_ENCRYPTION_KEY` this string will be used to encrypt passwords and tokens. Use a secure 32 bytes string. [You can generate one here](https://generate-random.org/encryption-key-generator?count=1&bytes=32&cipher=aes-256-cbc&string=&password=).
+* `CB_ENCRYPTION_KEY` this string will be used to encrypt passwords and tokens. Use a secure 32 bytes string. [You can generate one here](/#generate-the-encryption-key).
 
 * `CB_API_HOST` needs to point to the home address of the system. Usually for a docker image this is `0.0.0.0`.
 
