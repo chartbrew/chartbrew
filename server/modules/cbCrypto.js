@@ -32,4 +32,26 @@ function decrypt(text) {
   return decrypted.toString();
 }
 
-module.exports = { encrypt, decrypt };
+function isValidAES256Key(key) {
+  // Check if the key length is 64 hexadecimal characters (which represents 32 bytes)
+  return /^[a-f0-9]{64}$/i.test(key);
+}
+
+function checkEncryptionKeys() {
+  const productionKey = process.env.CB_ENCRYPTION_KEY;
+  const developmentKey = process.env.CB_ENCRYPTION_KEY_DEV;
+
+  // Validate production key
+  if (!isValidAES256Key(productionKey) && process.env.NODE_ENV === "production") {
+    console.error("Invalid AES-256 encryption key in CB_ENCRYPTION_KEY. It must be a 64-character hexadecimal string."); // eslint-disable-line
+    process.exit(1); // Exit with an error code
+  }
+
+  // Validate development key
+  if (!isValidAES256Key(developmentKey) && process.env.NODE_ENV !== "production") {
+    console.error("Invalid AES-256 encryption key in CB_ENCRYPTION_KEY_DEV. It must be a 64-character hexadecimal string."); // eslint-disable-line
+    process.exit(1); // Exit with an error code
+  }
+}
+
+module.exports = { encrypt, decrypt, checkEncryptionKeys };
