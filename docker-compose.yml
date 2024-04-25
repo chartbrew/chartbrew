@@ -18,7 +18,8 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      # Feel free to remap these ports on the left side to your desired ports
+      # Feel free to remap these ports on the left side to your desired ports.
+      # If you do change these ports you also need to update them in the VITE_APP_CLIENT_HOST and VITE_APP_API_HOST variables in your .env file
       - 4018:4018 # Frontend
       - 4019:4019 # API
     depends_on:
