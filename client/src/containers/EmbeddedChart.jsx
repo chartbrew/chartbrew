@@ -104,6 +104,8 @@ function EmbeddedChart() {
       params.push({ variable: key, value });
     });
 
+    if (params.length === 0) return;
+
     let identifiedConditions = [];
     chart.ChartDatasetConfigs.forEach((cdc) => {
       if (Array.isArray(cdc.Dataset?.conditions)) {
@@ -121,6 +123,9 @@ function EmbeddedChart() {
       }
       return newCondition;
     });
+
+    // remove conditions that don't have a value
+    newConditions = newConditions.filter((c) => c.value);
 
     if (newConditions.length === 0) return;
 
