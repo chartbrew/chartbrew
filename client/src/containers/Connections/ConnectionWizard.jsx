@@ -33,6 +33,7 @@ function ConnectionWizard() {
   const [newConnection, setNewConnection] = useState(null);
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [connectionToEdit, setConnectionToEdit] = useState(null);
 
   const isDark = useThemeDetector();
   const bottomRef = useRef(null);
@@ -44,7 +45,6 @@ function ConnectionWizard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const connectionToEdit = useSelector((state) => state.connection.data.find((c) => c.id === parseInt(params.connectionId, 10)));
   const connections = useSelector(selectConnections)
 
   useEffect(() => {
@@ -81,7 +81,12 @@ function ConnectionWizard() {
   useEffect(() => {
     if (params.connectionId && params.connectionId !== "new" && !paramsInitRef.current) {
       paramsInitRef.current = true;
-      dispatch(getConnection({ team_id: params.teamId, connection_id: params.connectionId }));
+      dispatch(getConnection({ team_id: params.teamId, connection_id: params.connectionId }))
+        .then((res) => {
+          if (res?.payload) {
+            setConnectionToEdit(res.payload);
+          }
+        });
     }
   }, [params]);
 

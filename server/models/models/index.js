@@ -107,7 +107,7 @@ db.sequelize = sequelize;
 
 const umzug = new Umzug({
   migrations: {
-    glob: path.join(__dirname, "../migrations", "*.js"),
+    glob: ["./migrations/*.js", { cwd: path.join(__dirname, "..") }],
     resolve: (params) => {
       // Custom resolver function to require and run migration files
       const migration = require(params.path); // eslint-disable-line

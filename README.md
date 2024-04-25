@@ -100,7 +100,11 @@ A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is bui
 
 Before running the commands below, make sure you have a MySQL server already running and an empty database that Chartbrew can use. The database name should match the value of the `CB_DB_NAME` variable.
 
-You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. [You can generate one here](https://generate-random.org/encryption-key-generator?count=1&bytes=32&cipher=aes-256-cbc&string=&password=).
+You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. Run the following command to generate one:
+
+```sh
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ```sh
 docker pull razvanilin/chartbrew

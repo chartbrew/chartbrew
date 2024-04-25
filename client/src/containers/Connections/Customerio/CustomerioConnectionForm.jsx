@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, Divider,
@@ -38,6 +38,7 @@ function CustomerioConnectionForm(props) {
   const isDark = useThemeDetector();
   const dispatch = useDispatch();
   const params = useParams();
+  const initRef = useRef(null);
 
   const regionOptions = [
     {
@@ -49,12 +50,9 @@ function CustomerioConnectionForm(props) {
   ];
 
   useEffect(() => {
-    _init();
-  }, []);
-
-  useEffect(() => {
-    if (editConnection) {
-      setConnection(editConnection);
+    if (!initRef.current && editConnection?.id) {
+      initRef.current = true;
+      _init();
     }
   }, [editConnection]);
 
@@ -80,7 +78,7 @@ function CustomerioConnectionForm(props) {
 
   const _init = () => {
     if (editConnection) {
-      const newConnection = editConnection;
+      const newConnection = { ...editConnection };
 
       setConnection(newConnection);
     }
@@ -139,11 +137,11 @@ function CustomerioConnectionForm(props) {
           <Input
             label="Name your connection"
             placeholder="Enter a name that you can recognise later"
-            value={connection.name || ""}
+            value={connection.name}
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            color={errors.name ? "danger" : "primary"}
+            color={errors.name ? "danger" : "default"}
             description={errors.name}
             variant="bordered"
             fullWidth
@@ -156,11 +154,11 @@ function CustomerioConnectionForm(props) {
             type="password"
             label="Your Customer.io API key"
             placeholder="Enter your Customer.io API key"
-            value={connection.password || ""}
+            value={connection.password}
             onChange={(e) => {
               setConnection({ ...connection, password: e.target.value });
             }}
-            color={errors.password ? "danger" : "primary"}
+            color={errors.password ? "danger" : "default"}
             description={errors.password}
             variant="bordered"
             fullWidth
@@ -203,9 +201,15 @@ function CustomerioConnectionForm(props) {
             selectedKeys={[connection.host]}
             selectionMode="single"
             onSelectionChange={(keys) => setConnection({ ...connection, host: keys.currentKey })}
+            renderValue={(items) => (
+              <div className="flex items-center gap-1">
+                <span>{regionOptions.find((r) => r.key === items[0].key).flag === "eu" ? "🇪🇺" : "🇺🇸"}</span>
+                <span>{items[0].textValue}</span>
+              </div>
+            )}
           >
             {regionOptions.map((option) => (
-              <SelectItem key={option.value}>
+              <SelectItem key={option.value} startContent={option.flag === "eu" ? "🇪🇺" : "🇺🇸"}>
                 {option.text}
               </SelectItem>
             ))}

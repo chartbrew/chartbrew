@@ -26,6 +26,10 @@ const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
+const { checkEncryptionKeys } = require("./modules/cbCrypto");
+
+// check if the encryption keys are valid 32-byte hex strings
+checkEncryptionKeys();
 
 // set up folders
 fs.mkdir(".cache", () => {});

@@ -107,7 +107,7 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_DB_PORT | `3306` | The port of the hosting address |
 | CB_DB_DIALECT <br /><br /> `required` | `mysql` | Which database to use between `mysql` and `postgres` |
 | CB_DB_CERT | No default | If your DB requires an SSL connection, use this variable to provide the string value of the certificate |
-| CB_ENCRYPTION_KEY <br /><br /> `required` | A key will be generate for you during the first run | A secure 32 bytes string which is used to encrypt the data in the database. [Click here to generate one](https://generate-random.org/encryption-key-generator?count=1&bytes=32&cipher=aes-256-cbc&string=&password=) |
+| CB_ENCRYPTION_KEY <br /><br /> `required` | A key will be generate for you during the first run | A secure 32 bytes string which is used to encrypt the data in the database. [Click here](#generate-the-encryption-key) to see how you can generate a key. |
 | CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /> **This value is overwritten by the PORT variable (if set)**|
 | CB_API_PORT <br /><br /> `required` | `4019` | The port where the `server` app is running from. This variable is used internally by the `server` app |
 | VITE_APP_CLIENT_HOST <br /><br /> `required` | `http://localhost:4018` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
@@ -124,3 +124,13 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_GOOGLE_CLIENT_ID | No default | Google app Client ID generated from the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer noopener">Console</a> <br /><br />(Needed for Google integrations) |
 | CB_GOOGLE_CLIENT_SECRET | No default | Google app Client Secret generated from the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer noopener">Console</a> <br /><br />(Needed for Google integrations) |
 | CB_BACKEND_WORKERS | `4` | Some background tasks in Chartbrew will use workers to spread work on multiple threads. Still testing, but for best performance, set this to the number of threads your CPU has |
+
+### Generate the encryption key
+
+You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. Chartbrew generates both `CB_ENCRYPTION_KEY` and `CB_ENCRYPTION_KEY_DEV` for you during the first run, but if yu wish to have control over the value, you can generate it yourself.
+
+Run the following command to generate a valid key:
+
+```sh
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```

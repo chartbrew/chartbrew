@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
+  CircularProgress,
 } from "@nextui-org/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
@@ -61,27 +62,29 @@ function MysqlConnectionForm(props) {
   const isDark = useThemeDetector();
   const dispatch = useDispatch();
   const params = useParams();
+  const initRef = useRef(null);
 
   useEffect(() => {
-    _init();
-  }, []);
+    if (editConnection?.id && !initRef.current) {
+      initRef.current = true;
+      _init();
+    }
+  }, [editConnection]);
 
   useEffect(() => {
-    if (connection.subType !== subType) {
+    if (connection.subType !== subType && !editConnection) {
       setConnection({ ...connection, subType });
     }
   }, [subType]);
 
   const _init = () => {
-    if (editConnection) {
-      const newConnection = editConnection;
+    const newConnection = { ...editConnection };
 
-      if (!newConnection.connectionString && newConnection.host) {
-        setFormStyle("form");
-      }
-
-      setConnection(newConnection);
+    if (!newConnection.connectionString && newConnection.host) {
+      setFormStyle("form");
     }
+
+    setConnection({ ...newConnection });
   };
 
   const _onTestRequest = async (data) => {
@@ -211,6 +214,10 @@ function MysqlConnectionForm(props) {
       setConnection({ ...connection, ssl: checked });
     }
   };
+
+  if (editConnection && !connection.id) {
+    return <CircularProgress />;
+  }
 
   return (
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
