@@ -29,7 +29,9 @@ class ProjectController {
           model: db.Chart,
           include: [{
             model: db.ChartDatasetConfig, include: [{ model: db.Dataset }]
-          }]
+          }, {
+            model: db.Chartshare,
+          }],
         },
         {
           model: db.Variable,
