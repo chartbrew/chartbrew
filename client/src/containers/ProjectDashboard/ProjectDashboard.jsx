@@ -37,6 +37,7 @@ import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { TbChevronDownRight } from "react-icons/tb";
 import { widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
+import gridBreakpoints from "../../config/gridBreakpoints";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -697,7 +698,7 @@ function ProjectDashboard(props) {
             className="layout dashboard-tutorial"
             layouts={layouts}
             margin={{ lg: [12, 12], md: [12, 12], sm: [12, 12], xs: [12, 12], xxs: [12, 12] }}
-            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            breakpoints={gridBreakpoints}
             cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
             rowHeight={150}
             onLayoutChange={_onChangeLayout}

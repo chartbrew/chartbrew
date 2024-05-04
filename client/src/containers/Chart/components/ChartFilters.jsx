@@ -1,28 +1,24 @@
 import React, { Fragment, useState } from "react";
 import PropTypes from "prop-types";
-import { Calendar } from "react-date-range";
-import { enGB } from "date-fns/locale";
-import { format, formatISO } from "date-fns";
 import {
-  Button, Spacer, Input, Autocomplete, AutocompleteItem,
+  Button, Spacer, Input, Autocomplete, AutocompleteItem, DatePicker,
 } from "@nextui-org/react";
-import { LuCalendarDays, LuXCircle } from "react-icons/lu";
+import { I18nProvider } from "@react-aria/i18n";
+import { LuX } from "react-icons/lu";
+import { parseDate } from "@internationalized/date";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-import { secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
-import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
 function ChartFilters(props) {
   const {
-    chart, onAddFilter, onClearFilter, conditions,
+    chart, onAddFilter, onClearFilter, conditions, inline, size, amount,
   } = props;
 
-  const [calendarOpen, setCalendarOpen] = useState("");
   const [optionFilter, setOptionFilter] = useState({});
 
   const _getDropdownOptions = (dataset, condition) => {
@@ -41,7 +37,6 @@ function ChartFilters(props) {
   };
 
   const _onOptionSelected = (value, condition) => {
-    setCalendarOpen("");
     if (!value) onClearFilter(condition);
     else onAddFilter({ ...condition, value });
   };
@@ -85,117 +80,151 @@ function ChartFilters(props) {
     }
   };
 
+  const _getAllFilters = () => {
+    const filters = [];
+    chart.ChartDatasetConfigs.forEach((cdc) => {
+      if (Array.isArray(cdc.Dataset?.conditions)) {
+        cdc.Dataset.conditions.forEach((c) => {
+          if (c.exposed) {
+            filters.push({ ...c, Dataset: cdc.Dataset });
+          }
+        });
+      }
+    });
+
+    if (amount) return filters.slice(0, amount);
+
+    return filters;
+  };
+
   return (
-    <div className="min-w-[200px]">
+    <div>
       {!_checkIfFilters() && (
         <Row>
           <p>No filters available</p>
         </Row>
       )}
-      {chart && chart.ChartDatasetConfigs.filter((d) => d?.Dataset?.conditions && d?.Dataset?.conditions?.length).map((cdc) => {
-        return cdc.Dataset?.conditions.filter((c) => c.exposed).map((condition) => {
-          const filterOptions = _getDropdownOptions(cdc.Dataset, condition);
-          return (
-            <Fragment key={condition.id}>
-              <div className="flex flex-col">
-                <Row align="center">
-                  <Text b>
-                    {condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)}
-                  </Text>
-                  <Spacer x={0.5} />
-                  <Text>
-                    {operations
-                      .operators?.find((o) => condition.operator === o.value)?.text}
-                  </Text>
-                </Row>
-                <Spacer y={1} />
-                {condition.type !== "date" && !condition.hideValues && (
-                  <>
-                    <Autocomplete
-                      variant="bordered"
-                      selectedKey={_getConditionValue(condition.id)}
-                      onSelectionChange={(key) => {
-                        _onOptionSelected(key, condition);
-                      }}
-                      onInputChange={(value) => _onOptionValueChange(value, condition)}
-                      onKeyDown={(e) => _onKeyDown(e, condition)}
-                      labelPlacement="outside"
-                      placeholder={_getConditionValue(condition.id) || "Search here"}
-                      allowsCustomValue
-                    >
-                      {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
-                        <AutocompleteItem key={opt.value}>
-                          {opt.text}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                    <Spacer y={1} />
-                  </>
-                )}
-                {condition.type !== "date" && condition.hideValues && (
-                  <>
-                    <Input
-                      type="text"
-                      value={optionFilter[condition.id]}
-                      placeholder="Enter a value here"
-                      labelPlacement="outside"
-                      onChange={(e) => {
-                        setOptionFilter({
-                          ...optionFilter, [condition.id]: e.target.value
-                        });
-                      }}
-                      variant="bordered"
-                      onKeyDown={(e) => _onKeyDown(e, condition)}
-                    />
-                    <Spacer y={1} />
-                  </>
-                )}
-                {condition.type === "date" && calendarOpen !== condition.id && (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <Button
+      {chart && _getAllFilters().map((condition) => {
+        const filterOptions = _getDropdownOptions(condition.Dataset, condition);
+        return (
+          <Fragment key={condition.id}>
+            <div className={`flex ${!inline ? "flex-col gap-1" : ""}`}>
+              {condition.type !== "date" && !condition.hideValues && (
+                <>
+                  <Autocomplete
+                    variant="bordered"
+                    selectedKey={_getConditionValue(condition.id)}
+                    onSelectionChange={(key) => {
+                      _onOptionSelected(key, condition);
+                    }}
+                    onInputChange={(value) => _onOptionValueChange(value, condition)}
+                    onKeyDown={(e) => _onKeyDown(e, condition)}
+                    labelPlacement="outside"
+                    placeholder={inline
+                      ? _getConditionValue(condition.id) || `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
+                      : _getConditionValue(condition.id) || "Search here"
+                    }
+                    inputProps={{
+                      classNames: { input: "placeholder:text-xs" },
+                    }}
+                    allowsCustomValue
+                    size={size}
+                  >
+                    {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
+                      <AutocompleteItem key={opt.value}>
+                        {opt.text}
+                      </AutocompleteItem>
+                    ))}
+                  </Autocomplete>
+                  <Spacer y={1} />
+                </>
+              )}
+              {condition.type !== "date" && condition.hideValues && (
+                <>
+                  <Input
+                    type="text"
+                    value={optionFilter[condition.id]}
+                    label={!inline ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}` : null}
+                    placeholder={inline
+                      ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
+                      : "Enter a value here"
+                    }
+                    onChange={(e) => {
+                      setOptionFilter({
+                        ...optionFilter, [condition.id]: e.target.value
+                      });
+                    }}
+                    variant="bordered"
+                    onKeyDown={(e) => _onKeyDown(e, condition)}
+                    size={size}
+                    classNames={{ input: "placeholder:text-xs" }}
+                  />
+                  <Spacer y={1} />
+                </>
+              )}
+              {condition.type === "date" && !inline && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <I18nProvider locale="en-GB">
+                      <DatePicker
+                        label={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
                         variant="bordered"
-                        endContent={<LuCalendarDays />}
-                        onClick={() => setCalendarOpen(condition.id)}
-                      >
-                        {(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
-                      </Button>
-                      {_getConditionValue(condition.id) && (
-                        <Button
-                          variant="light"
-                          color="danger"
-                          isIconOnly
-                          onClick={() => _onOptionSelected("", condition)}
-                        >
-                          <LuXCircle />
-                        </Button>
-                      )}
-                    </div>
-                    <Spacer y={1} />
-                  </>
-                )}
-                {condition.type === "date" && calendarOpen === condition.id && (
-                  <>
-                    <div>
-                      <Calendar
-                        date={(
+                        showMonthAndYearPickers
+                        value={(
                           _getConditionValue(condition.id)
-                          && new Date(_getConditionValue(condition.id))
-                        )
-                          || new Date()}
-                        onChange={(date) => _onOptionSelected(formatISO(date), condition)}
-                        locale={enGB}
-                        color={secondary}
+                          && parseDate(_getConditionValue(condition.id))
+                        ) || null}
+                        onChange={(date) => _onOptionSelected(date.toString(), condition)}
+                        size="sm"
                       />
-                    </div>
-                    <Spacer y={1} />
-                  </>
-                )}
-              </div>
-              <Spacer y={1} />
-            </Fragment>
-          );
-        });
+                    </I18nProvider>
+
+                    {_getConditionValue(condition.id) && (
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        onClick={() => _onOptionSelected("", condition)}
+                        size={size}
+                      >
+                        <LuX />
+                      </Button>
+                    )}
+                  </div>
+                  <Spacer y={1} />
+                </>
+              )}
+              {condition.type === "date" && inline && (
+                <>
+                  <div className="flex flex-row items-center gap-1">
+                    <I18nProvider locale="en-GB">
+                      <DatePicker
+                        placeholder={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
+                        variant="bordered"
+                        showMonthAndYearPickers
+                        value={(
+                          _getConditionValue(condition.id)
+                          && parseDate(_getConditionValue(condition.id))
+                        ) || null}
+                        onChange={(date) => _onOptionSelected(date.toString(), condition)}
+                        size="sm"
+                      />
+                    </I18nProvider>
+                    {_getConditionValue(condition.id) && (
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        onClick={() => _onOptionSelected("", condition)}
+                        size={size}
+                      >
+                        <LuX />
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </Fragment>
+        );
       })}
     </div>
   );
@@ -206,10 +235,16 @@ ChartFilters.propTypes = {
   onAddFilter: PropTypes.func.isRequired,
   onClearFilter: PropTypes.func.isRequired,
   conditions: PropTypes.array,
+  inline: PropTypes.bool,
+  size: PropTypes.string,
+  amount: PropTypes.number,
 };
 
 ChartFilters.defaultProps = {
   conditions: [],
+  inline: false,
+  size: "md",
+  amount: 0,
 };
 
 export default ChartFilters;
