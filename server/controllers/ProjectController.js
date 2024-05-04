@@ -198,7 +198,11 @@ class ProjectController {
           model: db.Chart,
           attributes: { exclude: ["query"] },
           where: { onReport: true },
-          include: [{ model: db.ChartDatasetConfig, order: [["order", "ASC"]] }],
+          include: [{
+            model: db.ChartDatasetConfig,
+            order: [["order", "ASC"]],
+            include: [{ model: db.Dataset, attributes: ["id", "conditions"] }],
+          }],
         },
         {
           model: db.Team,

@@ -32,7 +32,7 @@ import {
   getPublicDashboard, getProject, updateProject, updateProjectLogo,
 } from "../../slices/project";
 import { selectTeams, updateTeam } from "../../slices/team";
-import { runQueryOnPublic, selectCharts } from "../../slices/chart";
+import { runQueryOnPublic, runQueryWithFilters, selectCharts } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -168,6 +168,12 @@ function PublicDashboard(props) {
     }
   }, [charts]);
 
+  useEffect(() => {
+    if (project?.id) {
+      _checkSearchParamsForFilters();
+    }
+  }, [project]);
+
   const _fetchProject = (password) => {
     if (password) window.localStorage.setItem("reportPassword", password);
 
@@ -203,12 +209,60 @@ function PublicDashboard(props) {
               if (authenticatedProject.password) {
                 setProject({ ...data.payload, password: authenticatedProject.password });
               }
-
               setEditorVisible(true);
             })
             .catch(() => {});
           }
       });
+  };
+
+  const _checkSearchParamsForFilters = () => {
+    charts.forEach((chart) => {
+      // check if there are any filters in the search params
+      // if so, add them to the conditions
+      const params = [];
+      searchParams.entries().forEach((entry) => {
+        const [key, value] = entry;
+        params.push({ variable: key, value });
+      });
+
+      if (params.length === 0) return;
+
+      let identifiedConditions = [];
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+        }
+      });
+
+      // now check if any filters have the same variable name
+      let newConditions = [];
+      newConditions = identifiedConditions.map((c) => {
+        const newCondition = { ...c };
+        const param = params.find((p) => p.variable === c.variable);
+        if (param) {
+          newCondition.value = param.value;
+        }
+        return newCondition;
+      });
+
+      // remove conditions that don't have a value
+      newConditions = newConditions.filter((c) => c.value);
+
+      if (newConditions.length === 0) return;
+
+      dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+        // .then((data) => {
+        //   if (data.payload) {
+        //     setChart(data.payload);
+        //   }
+
+        //   setDataLoading(false);
+        // })
+        // .catch(() => {
+        //   setDataLoading(false);
+        // });
+    });
   };
 
   const _isOnReport = () => {
