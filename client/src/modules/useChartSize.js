@@ -18,6 +18,10 @@ const useChartSize = (layouts) => {
       }
     });
 
+    if (!layouts?.[selectedKey]) {
+      return;
+    }
+
     setCurrentLayout(layouts[selectedKey]);
   }, [layouts]);
 

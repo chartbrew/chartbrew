@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, Spacer, CircularProgress, Chip, PopoverTrigger, PopoverContent,
+  Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
 import moment from "moment";
-import { format } from "date-fns";
-import { enGB } from "date-fns/locale";
 import { Helmet } from "react-helmet";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useSearchParams } from "react-router-dom";
-import { LuListFilter, LuXCircle } from "react-icons/lu";
+import { LuListFilter } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";
 import { useLocalStorage } from "react-use";
@@ -29,6 +27,7 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
 import KpiMode from "./Chart/components/KpiMode";
+import useChartSize from "../modules/useChartSize";
 
 const pageHeight = window.innerHeight;
 
@@ -49,6 +48,7 @@ function EmbeddedChart() {
   const darkMode = useDarkMode(false);
   const [searchParams] = useSearchParams();
   const filterRef = useRef(null);
+  const chartSize = useChartSize(chart.layout);
   
   useInterval(() => {
     setDataLoading(true);
@@ -285,64 +285,57 @@ function EmbeddedChart() {
       </Helmet>
       <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
         <Row justify="space-between">
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div>
             <Text b>{chart.name}</Text>
-            <Spacer x={0.5} />
-            {chart.ChartDatasetConfigs && conditions.map((c) => {
-              return (
-                <Chip
-                  color="primary"
-                  variant={"flat"}
-                  key={c.id}
-                  size="sm"
-                  className={"py-0 px-5"}
-                  endContent={(
-                    <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
-                      <LuXCircle />
-                    </Link>
-                  )}
-                >
-                  {c.type !== "date" && `${c.value}`}
-                  {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                </Chip>
-              );
-            })}
+            <div className="flex flex-row items-center">
+              {!dataLoading && (
+                <>
+                  <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
+                </>
+              )}
+              {dataLoading && (
+                <>
+                  <CircularProgress classNames={{ svg: "w-4 h-4" }} />
+                  <Spacer x={1} />
+                  <span className="text-[10px] text-default-500">{"Updating..."}</span>
+                </>
+              )}
+            </div>
           </div>
 
           {chart.chartData && (
             <div>
               {_checkIfFilters() && (
-                <Popover>
-                  <PopoverTrigger>
-                    <Link className="text-gray-500">
-                      <LuListFilter />
-                    </Link>
-                  </PopoverTrigger>
-                  <PopoverContent>
+                <div className="flex items-start gap-1">
+                  {chartSize?.[2] > 3 && (
                     <ChartFilters
                       chart={chart}
                       onAddFilter={_onAddFilter}
                       onClearFilter={_onClearFilter}
                       conditions={conditions}
+                      inline
+                      size="sm"
+                      amount={1}
                     />
-                  </PopoverContent>
-                </Popover>
+                  )}
+                  <Popover>
+                    <PopoverTrigger>
+                      <Link className="text-gray-500">
+                        <LuListFilter />
+                      </Link>
+                    </PopoverTrigger>
+                    <PopoverContent className="pt-2">
+                      <ChartFilters
+                        chart={chart}
+                        onAddFilter={_onAddFilter}
+                        onClearFilter={_onClearFilter}
+                        conditions={conditions}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               )}
             </div>
-          )}
-        </Row>
-        <Row justify="flex-start" align="center" className={"gap-1"}>
-          {!dataLoading && (
-            <>
-              <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
-            </>
-          )}
-          {dataLoading && (
-            <>
-              <CircularProgress classNames={{ svg: "w-4 h-4" }} />
-              <Spacer x={1} />
-              <span className="text-[10px] text-default-500">{"Updating..."}</span>
-            </>
           )}
         </Row>
       </div>
