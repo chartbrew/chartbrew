@@ -133,12 +133,16 @@ function ProjectDashboard(props) {
     }
   }, [charts]);
 
-  const _onEditFilterGroup = (chartId) => {
+  const _onEditFilterGroup = (chartId, selectAll = false, deselectAll = false) => {
     const { projectId } = params;
     const newFilterGroups = _.clone(filterGroups) || {};
     if (!newFilterGroups[projectId]) newFilterGroups[projectId] = [];
 
-    if (newFilterGroups[projectId].find((c) => c === chartId)) {
+    if (selectAll) {
+      newFilterGroups[projectId] = charts.filter((c) => c.project_id === parseInt(projectId, 10)).map((c) => c.id);
+    } else if (deselectAll) {
+      newFilterGroups[projectId] = [];
+    } else if (newFilterGroups[projectId].find((c) => c === chartId)) {
       newFilterGroups[projectId] = newFilterGroups[projectId].filter((c) => c !== chartId);
     } else {
       newFilterGroups[projectId].push(chartId);

@@ -117,7 +117,7 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <NextUIProvider>
+      <NextUIProvider locale="en-GB">
         <RouterProvider router={router} />
       </NextUIProvider>
     </Provider>

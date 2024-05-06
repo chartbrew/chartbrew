@@ -4,18 +4,21 @@ import moment from "moment";
 import _ from "lodash";
 import { v4 as uuid } from "uuid";
 import { formatISO, format } from "date-fns";
-import { Calendar, DateRange } from "react-date-range";
+import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import {
   Dropdown, Spacer, Link as LinkNext, Input, Popover,
   Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem, ModalContent, Select, SelectItem,
+  DateRangePicker,
+  Code,
 } from "@nextui-org/react";
-import { LuCalendarDays, LuInfo, LuPlus } from "react-icons/lu";
+import { LuCalendarDays, LuCheckSquare, LuInfo, LuPlus, LuX } from "react-icons/lu";
 
 import { operators } from "../../../modules/filterOperations";
-import { primary, secondary } from "../../../config/colors";
+import { secondary } from "../../../config/colors";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { parseDate, parseDateTime } from "@internationalized/date";
 
 function Filters(props) {
   const {
@@ -36,7 +39,21 @@ function Filters(props) {
     endDate: moment().endOf("month").toISOString(),
     key: "selection",
   });
+  const [initNewSelectionRange] = useState({
+    start: parseDate(moment().startOf("month").format("YYYY-MM-DD")),
+    end: parseDate(moment().endOf("month").format("YYYY-MM-DD")),
+  });
   const [dateRange, setDateRange] = useState(initSelectionRange);
+  const [newDateRange, setNewDateRange] = useState(initNewSelectionRange);
+
+  useEffect(() => {
+    if (dateRange.startDate && dateRange.endDate) {
+      setNewDateRange({
+        start: parseDateTime(moment(dateRange.startDate).format("YYYY-MM-DDTHH:mm:ss")),
+        end: parseDateTime(moment(dateRange.endDate).format("YYYY-MM-DDTHH:mm:ss")),
+      });
+    }
+  }, [dateRange]);
 
   useEffect(() => {
     if (charts) {
@@ -197,14 +214,6 @@ function Filters(props) {
     }
   };
 
-  const _onChangeDateRange = (ranges) => {
-    const range = ranges.selection;
-    setDateRange({
-      startDate: moment(range.startDate).toISOString(),
-      endDate: moment(range.endDate).toISOString(),
-    });
-  };
-
   const _onApplyFilter = () => {
     if (filterType === "date") {
       onAddFilter({
@@ -234,140 +243,125 @@ function Filters(props) {
               <Tab key="custom" title="Custom" />
             </Tabs>
           </Row>
-          <Spacer y={1} />
+
           <Divider />
-          <Spacer y={1} />
 
           {filterType === "date" && (
             <>
               <Row>
-                <Text>
+                <span>
                   {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-                  <code>{"{{start_date}}"}</code>
+                  <Code size="sm">{"{{start_date}}"}</Code>
                   {" and "}
-                  <code>{"{{end_date}}"}</code>
+                  <Code size="sm">{"{{end_date}}"}</Code>
                   {" variables in the queries."}
-                </Text>
+                </span>
               </Row>
               <Row wrap="wrap" className={"gap-1"}>
                 <LinkNext onPress={() => _onSelectRange("this_month")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     This month
                   </Chip>
                 </LinkNext>
 
                 <LinkNext onPress={() => _onSelectRange("last_month")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last month
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_7_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last 7 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_30_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last 30 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_90_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last 90 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_year")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last year
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("quarter_to_date")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Quarter to date
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_quarter")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Last quarter
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("year_to_date")}>
-                  <Chip color="primary" size="sm" variant={"bordered"}>
+                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
                     Year to date
                   </Chip>
                 </LinkNext>
               </Row>
-              <Spacer y={2} />
-              <Row align="center">
-                <Popover className={"z-[99999]"}>
-                  <PopoverTrigger>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                      <Input
-                        placeholder="Start date"
-                        label="Start date"
-                        value={dateRange.startDate && moment(dateRange.startDate).format("Do MMM YYYY")}
-                        readOnly
-                        variant="bordered"
-                      />
-                      <Spacer x={1} />
-                      <Input
-                        placeholder="End date"
-                        label="End date"
-                        value={dateRange.endDate && moment(dateRange.endDate).format("Do MMM YYYY")}
-                        readOnly
-                        variant="bordered"
-                      />
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <DateRange
-                      direction="horizontal"
-                      rangeColors={[secondary, primary]}
-                      ranges={[
-                        dateRange.startDate && dateRange.endDate ? {
-                          startDate: new Date(dateRange.startDate),
-                          endDate: new Date(dateRange.endDate),
-                          key: "selection",
-                        } : initSelectionRange
-                      ]}
-                      onChange={_onChangeDateRange}
-                      months={2}
-                      showPreview={false}
-                      showDateDisplay={false}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </Row>
-              <Spacer y={2} />
+              <div>
+                <DateRangePicker
+                  variant="bordered"
+                  label="Select a date range"
+                  labelPlacement="inside"
+                  visibleMonths={2}
+                  value={newDateRange}
+                  onChange={(value) => setNewDateRange(value)}
+                  color="primary"
+                />
+              </div>
               <Row>
                 <Text>
                   Select the charts that will be affected by the date filter
                 </Text>
               </Row>
-              <Row wrap="wrap" className={"gap-1"}>
+              <div className={"flex flex-row flex-wrap gap-1"}>
+                <Button
+                  variant="light"
+                  startContent={<LuCheckSquare />}
+                  size="sm"
+                  onClick={() => onEditFilterGroup(null, true)}
+                >
+                  Select all
+                </Button>
+                <Button
+                  variant="light"
+                  startContent={<LuX />}
+                  size="sm"
+                  onClick={() => onEditFilterGroup(null, false, true)}
+                >
+                  Deselect all
+                </Button>
+              </div>
+              <div className={"flex flex-row flex-wrap gap-1"}>
                 {charts.map((chart) => (
                   <Fragment key={chart.id}>
                     <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
                       <Chip
                         className="cursor-pointer"
-                        color="primary"
+                        color={filterGroups.find(c => c === chart.id) ? "primary" : "default"}
                         radius="sm"
-                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "bordered"}
+                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "flat"}
                       >
                         {chart.name}
                       </Chip>
                     </LinkNext>
-                    <Spacer x={0.6} />
                   </Fragment>
                 ))}
-              </Row>
+              </div>
             </>
           )}
 
