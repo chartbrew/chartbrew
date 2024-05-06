@@ -3,22 +3,18 @@ import PropTypes from "prop-types";
 import moment from "moment";
 import _ from "lodash";
 import { v4 as uuid } from "uuid";
-import { formatISO, format } from "date-fns";
-import { Calendar } from "react-date-range";
-import { enGB } from "date-fns/locale";
 import {
-  Dropdown, Spacer, Link as LinkNext, Input, Popover,
-  Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem, ModalContent, Select, SelectItem,
-  DateRangePicker,
-  Code,
+  Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Modal, Chip,
+  Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, DropdownTrigger,
+  DropdownMenu, DropdownItem, ModalContent, Select, SelectItem, DateRangePicker,
+  Code, DatePicker,
 } from "@nextui-org/react";
-import { LuCalendarDays, LuCheckSquare, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { LuCheckSquare, LuInfo, LuPlus, LuX } from "react-icons/lu";
 
 import { operators } from "../../../modules/filterOperations";
-import { secondary } from "../../../config/colors";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { parseDate, parseDateTime } from "@internationalized/date";
+import { parseDate, parseDateTime, today } from "@internationalized/date";
 
 function Filters(props) {
   const {
@@ -240,7 +236,8 @@ function Filters(props) {
               onSelectionChange={(selection) => setFilterType(selection)}
             >
               <Tab key="date" title="Date" />
-              <Tab key="custom" title="Custom" />
+              <Tab key="variables" title="Variables" />
+              <Tab key="field" title="Matching field" />
             </Tabs>
           </Row>
 
@@ -365,13 +362,13 @@ function Filters(props) {
             </>
           )}
 
-          {filterType === "custom" && (
+          {filterType === "field" && (
             <>
               <Row align="center" className={"gap-2"}>
                 <Select
                   label="Select a field"
-                  renderValue={() => (
-                    <Text>{(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}</Text>
+                  value={() => (
+                    <span>{(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}</span>
                   )}
                   selectedKeys={[filter.field]}
                   selectionMode="single"
@@ -383,7 +380,7 @@ function Filters(props) {
                     <SelectItem
                       key={field.value}
                       startContent={(
-                        <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px]">
+                        <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px] text-center">
                           {field.type}
                         </Chip>
                       )}
@@ -421,33 +418,25 @@ function Filters(props) {
                   || (_.find(fieldOptions, { value: filter.field })
                     && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
                     <Input
-                      placeholder="Enter a value"
+                      label="Enter a value"
+                      labelPlacement="inside"
                       value={filter.value}
                       onChange={(e) => _updateFilter(e.target.value, "value")}
                       variant="bordered"
+                      size="sm"
                     />
                 )}
                 {_.find(fieldOptions, { value: filter.field })
                   && _.find(fieldOptions, { value: filter.field }).type === "date" && (
-                    <Popover placement="bottom">
-                      <PopoverTrigger>
-                        <Input
-                          placeholder="Click to open calendar"
-                          startContent={<LuCalendarDays />}
-                          value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
-                          variant="bordered"
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent>
-                        <Calendar
-                          date={(filter.value && new Date(filter.value)) || new Date()}
-                          onChange={(date) => _updateFilter(formatISO(date), "value")}
-                          locale={enGB}
-                          color={secondary}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                )}
+                    <DatePicker
+                      label="Select a date"
+                      value={(filter.value && parseDate(filter.value)) || today()}
+                      onChange={(date) => _updateFilter(date.toString(), "value")}
+                      variant="bordered"
+                      showMonthAndYearPickers
+                      calendarProps={{ color: "primary" }}
+                    />
+                  )}
                 <Spacer x={0.5} />
                 <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
                   <LinkNext className="text-primary-400">
@@ -455,45 +444,41 @@ function Filters(props) {
                   </LinkNext>
                 </Tooltip>
               </Row>
-              <Spacer y={2} />
               {filter.field && (
                 <>
                   <Row align="center">
                     <Text b>The filter will affect the following charts:</Text>
                   </Row>
-                  <Spacer y={1} />
                   <Row wrap="wrap" className={"gap-1"}>
                     {_getChartsWithField(filter.field).map((chart) => (
                       <>
                         <Chip color="primary" key={chart.id} radius="sm" variant="flat">
                           {chart.name}
                         </Chip>
-                        <Spacer x={0.3} />
                       </>
                     ))}
                   </Row>
                 </>
               )}
-              <Spacer y={2} />
-              <Row>
-                <Button
-                  endContent={<LuPlus />}
-                  disabled={!filter.value}
-                  onClick={_onAddFilter}
-                  color="primary"
-                >
-                  Apply filter
-                </Button>
-              </Row>
             </>
           )}
         </ModalBody>
         <ModalFooter>
-          <Button auto onClick={onClose} color="warning" variant="flat">
+          <Button auto onClick={onClose} variant="bordered">
             Close
           </Button>
           {filterType === "date" && (
             <Button color="primary" onClick={_onApplyFilter}>
+              Apply filter
+            </Button>
+          )}
+          {filterType === "field" && (
+            <Button
+              endContent={<LuPlus />}
+              disabled={!filter.value}
+              onClick={_onAddFilter}
+              color="primary"
+            >
               Apply filter
             </Button>
           )}
