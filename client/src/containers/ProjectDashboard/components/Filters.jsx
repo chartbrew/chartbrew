@@ -8,6 +8,8 @@ import {
   Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, DropdownTrigger,
   DropdownMenu, DropdownItem, ModalContent, Select, SelectItem, DateRangePicker,
   Code, DatePicker,
+  Autocomplete,
+  AutocompleteItem,
 } from "@nextui-org/react";
 import { LuCheckSquare, LuInfo, LuPlus, LuX } from "react-icons/lu";
 
@@ -15,10 +17,13 @@ import { operators } from "../../../modules/filterOperations";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { parseDate, parseDateTime, today } from "@internationalized/date";
+import { useSelector } from "react-redux";
+import { selectProject } from "../../../slices/project";
+import { Link } from "react-router-dom";
 
 function Filters(props) {
   const {
-    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup,
+    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup, onAddVariableFilter,
   } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -41,6 +46,11 @@ function Filters(props) {
   });
   const [dateRange, setDateRange] = useState(initSelectionRange);
   const [newDateRange, setNewDateRange] = useState(initNewSelectionRange);
+  const [variableCondition, setVariableCondition] = useState({
+    variable: "", value: ""
+  });
+
+  const project = useSelector(selectProject);
 
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -223,6 +233,10 @@ function Filters(props) {
     }
   };
 
+  const _onAddVariableFilter = () => {
+    onAddVariableFilter(variableCondition);
+  };
+
   return (
     <Modal isOpen={open} onClose={onClose} closeButton size="3xl">
       <ModalContent>
@@ -362,6 +376,38 @@ function Filters(props) {
             </>
           )}
 
+          {filterType === "variables" && (
+            <>
+              <div className="flex flex-row gap-2 items-center">
+                <Autocomplete
+                  label="Select a variable"
+                  variant="bordered"
+                  selectedKey={variableCondition.variable}
+                  onSelectionChange={(key) => setVariableCondition({ ...variableCondition, variable: key })}
+                >
+                  {project?.Variables?.map((variable) => (
+                    <AutocompleteItem key={variable.name} textValue={variable.name}>
+                      {variable.name}
+                    </AutocompleteItem>
+                  ))}
+                </Autocomplete>
+                
+                <Input
+                  label="Enter a value"
+                  variant="bordered"
+                  value={variableCondition.value}
+                  onChange={(e) => setVariableCondition({ ...variableCondition, value: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Link to="../variables" className="text-primary-400">
+                  Missing a variable? Click here to create new variables for this project.
+                </Link>
+              </div>
+            </>
+          )}
+
           {filterType === "field" && (
             <>
               <Row align="center" className={"gap-2"}>
@@ -475,11 +521,21 @@ function Filters(props) {
           {filterType === "field" && (
             <Button
               endContent={<LuPlus />}
-              disabled={!filter.value}
+              isDisabled={!filter.value}
               onClick={_onAddFilter}
               color="primary"
             >
               Apply filter
+            </Button>
+          )}
+          {filterType === "variables" && (
+            <Button
+              endContent={<LuPlus />}
+              isDisabled={!variableCondition.variable || !variableCondition.value}
+              onClick={_onAddVariableFilter}
+              color="primary"
+            >
+              Add variable filter
             </Button>
           )}
         </ModalFooter>
@@ -496,6 +552,7 @@ Filters.propTypes = {
   onClose: PropTypes.func.isRequired,
   filterGroups: PropTypes.array.isRequired,
   onEditFilterGroup: PropTypes.func.isRequired,
+  onAddVariableFilter: PropTypes.func.isRequired,
 };
 
 Filters.defaultProps = {

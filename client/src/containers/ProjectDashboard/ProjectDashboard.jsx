@@ -14,7 +14,7 @@ import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
+  LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuVariable, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -56,6 +56,15 @@ const getFiltersFromStorage = () => {
   }
 };
 
+const getVariablesFromStorage = () => {
+  try {
+    const variables = JSON.parse(window.localStorage.getItem("_cb_variables"));
+    return variables || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 const getFilterGroupsFromStorage = () => {
   try {
     const filterGroups = JSON.parse(window.localStorage.getItem("_cb_filter_groups"));
@@ -84,6 +93,7 @@ function ProjectDashboard(props) {
   const [templateVisible, setTemplateVisible] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
+  const [variables, setVariables] = useState(getVariablesFromStorage());
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -108,6 +118,12 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [filters, initLayoutRef.current]);
+
+  useEffect(() => {
+    if (variables?.[params.projectId] && initLayoutRef.current) {
+      _checkVariablesForFilters(variables[params.projectId]);
+    }
+  }, [variables]);
 
   useEffect(() => {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
@@ -170,6 +186,56 @@ function ProjectDashboard(props) {
     setShowFilters(false);
   };
 
+  const _onAddVariableFilter = (variableFilter) => {
+    const { projectId } = params;
+
+    const newVariables = _.clone(variables) || {};
+    if (!newVariables[projectId]) newVariables[projectId] = [];
+
+    newVariables[projectId].push(variableFilter);
+    setVariables(newVariables);
+
+    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
+
+    _checkVariablesForFilters(newVariables[projectId]);
+    setShowFilters(false);
+  };
+
+  const _checkVariablesForFilters = (variables) => {
+    if (!variables || variables.length === 0) return;
+
+    charts.forEach((chart) => {
+      // check if there are any filters in the search params
+      // if so, add them to the conditions
+      let identifiedConditions = [];
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+        }
+      });
+
+      // now check if any filters have the same variable name
+      let newConditions = [];
+      variables.forEach((variable) => {
+        const found = identifiedConditions.find((c) => c.variable === variable.variable);
+        if (found) {
+          newConditions.push({
+            ...found,
+            value: variable.value,
+          });
+        }
+      });
+
+      if (newConditions.length > 0) {
+        dispatch(runQueryWithFilters({
+          project_id: chart.project_id,
+          chart_id: chart.id,
+          filters: newConditions,
+        }));
+      }
+    });
+  };
+
   const _onRemoveFilter = (filterId) => {
     const { projectId } = params;
     if (filters && filters[projectId].length === 1) {
@@ -191,10 +257,30 @@ function ProjectDashboard(props) {
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
   };
 
+  const _onRemoveVariable = (variable) => {
+    const { projectId } = params;
+    const index = _.findIndex(variables[projectId], { variable });
+    if (!index && index !== 0) return;
+
+    const newVariables = _.cloneDeep(variables);
+    newVariables[projectId].splice(index, 1);
+
+    setVariables(newVariables);
+    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
+
+    _checkVariablesForFilters([{
+      variable: variable,
+      remove: true,
+    }]);
+  };
+
   const _runFiltering = (currentFilters = filters) => {
     setFilterLoading(true);
     setTimeout(() => {
-      _onFilterCharts(currentFilters);
+      _onFilterCharts(currentFilters)
+        .then(() => {
+          _checkVariablesForFilters(variables[params.projectId]);
+        });
     }, 500);
   };
 
@@ -294,7 +380,10 @@ function ProjectDashboard(props) {
           && filters[projectId].length > 0
           && filters[projectId].find((o) => o.type !== "date")
         ) {
-          _onFilterCharts();
+          _onFilterCharts()
+            .then(() => {
+              _checkVariablesForFilters(variables[params.projectId]);
+            });
         }
         setRefreshLoading(false);
       })
@@ -548,43 +637,64 @@ function ProjectDashboard(props) {
                     <LuListFilter size={24} />
                   </Button>
                   <Spacer x={1} />
-                  <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:block">
-                    {filters
-                      && filters[params.projectId]
-                      && filters[params.projectId].map((filter) => (
-                        <Fragment key={filter.id}>
-                          {filter.type === "date" && (
-                            <Chip
-                              color="primary"
-                              variant={"faded"}
-                              radius="sm"
-                              endContent={(
-                                <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                  <LuXCircle />
-                                </LinkNext>
-                              )}
-                            >
-                              {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                            </Chip>
-                          )}
-                          {filter.type !== "date" && filter.field && (
-                            <Chip
-                              color="primary"
-                              variant={"flat"}
-                              radius="sm"
-                              endContent={(
-                                <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                  <LuXCircle />
-                                </LinkNext>
-                              )}
-                            >
-                              <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                              <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                              <span>{`${filter.value}`}</span>
-                            </Chip>
-                          )}
-                        </Fragment>
-                      ))}
+                  <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:flex-row sm:flex gap-1">
+                    <>
+                      {filters
+                        && filters[params.projectId]
+                        && filters[params.projectId].map((filter) => (
+                          <Fragment key={filter.id}>
+                            {filter.type === "date" && (
+                              <Chip
+                                color="primary"
+                                variant={"faded"}
+                                radius="sm"
+                                endContent={(
+                                  <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
+                                    <LuXCircle />
+                                  </LinkNext>
+                                )}
+                              >
+                                {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
+                              </Chip>
+                            )}
+                            {filter.type !== "date" && filter.field && (
+                              <Chip
+                                color="primary"
+                                variant={"flat"}
+                                radius="sm"
+                                endContent={(
+                                  <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
+                                    <LuXCircle />
+                                  </LinkNext>
+                                )}
+                              >
+                                <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
+                                <strong>{` ${_getOperator(filter.operator)} `}</strong>
+                                <span>{`${filter.value}`}</span>
+                              </Chip>
+                            )}
+                          </Fragment>
+                        ))}
+
+                      {variables
+                        && variables[params.projectId]
+                        && variables[params.projectId].map((variable) => (
+                          <Chip
+                            color="primary"
+                            variant={"faded"}
+                            radius="sm"
+                            endContent={(
+                              <LinkNext onClick={() => _onRemoveVariable(variable.variable)} className="text-default-500">
+                                <LuXCircle />
+                              </LinkNext>
+                            )}
+                            key={variable.variable}
+                            startContent={<LuVariable />}
+                          >
+                            {`${variable.variable} - ${variable.value}`}
+                          </Chip>
+                        ))}
+                    </>
                   </div>
                 </Row>
                 <Row justify="flex-end" align="center">
@@ -739,6 +849,7 @@ function ProjectDashboard(props) {
         onClose={() => setShowFilters(false)}
         filterGroups={filterGroups?.[params?.projectId] || []}
         onEditFilterGroup={_onEditFilterGroup}
+        onAddVariableFilter={_onAddVariableFilter}
       />
 
       <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl" scrollBehavior="outside">
