@@ -33,7 +33,7 @@ export const getProjects = createAsyncThunk(
 
 export const getProject = createAsyncThunk(
   "project/getProject",
-  async ({ project_id }, thunkAPI) => {
+  async ({ project_id }) => {
     const token = getAuthToken();
     const url = `${API_HOST}/project/${project_id}`;
     const method = "GET";
@@ -48,10 +48,6 @@ export const getProject = createAsyncThunk(
     }
 
     const project = await response.json();
-
-    if (project.Charts) {
-      thunkAPI.dispatch(setCharts(project.Charts));
-    }
 
     return project;
   }
