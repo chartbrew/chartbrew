@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 import { cloneDeep } from "lodash";
+import { createSelector } from "@reduxjs/toolkit";
 
 const initialState = {
   loading: false,
@@ -370,13 +371,17 @@ export const { saveActiveTeam, saveTeamList, addNewTeam } = teamSlice.actions;
 export const selectTeam = (state) => state.team.active;
 export const selectTeams = (state) => state.team.data;
 export const selectTeamMembers = (state) => state.team.teamMembers;
-export const selectProjectMembers = (state, projectId) => {
-  if (!state.team.teamMembers || state.team.teamMembers.length === 0) return [];
-  const projectMembers = state.team.teamMembers.filter((tm) => {
-    return tm.TeamRoles.find((tr) => tr?.projects?.length > 0 && tr.projects.includes(parseInt(projectId, 10)) && tr.role !== "teamOwner" && tr.role !== "teamAdmin");
-  });
+export const selectProjectMembers = createSelector(
+  (state) => state.team.teamMembers,
+  (_, projectId) => projectId,
+  (teamMembers, projectId) => {
+    if (!teamMembers || teamMembers.length === 0) return [];
+    const projectMembers = teamMembers.filter((tm) => {
+      return tm.TeamRoles.find((tr) => tr?.projects?.length > 0 && tr.projects.includes(parseInt(projectId, 10)) && tr.role !== "teamOwner" && tr.role !== "teamAdmin");
+    });
 
-  return projectMembers;
-};
+    return projectMembers;
+  }
+);
 
 export default teamSlice.reducer;
