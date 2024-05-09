@@ -543,8 +543,8 @@ function FirestoreBuilder(props) {
             {collectionData?.length > 0 && collectionData?.map((collection) => (
               <Fragment key={collection._queryOptions.collectionId}>
                 <Chip
-                  variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "bordered" : "solid"}
-                  color="primary"
+                  variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "flat" : "solid"}
+                  color={firestoreRequest.query !== collection._queryOptions.collectionId ? "default" : "primary"}
                   onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                   className="min-w-[50px] text-center cursor-pointer"
                   radius="sm"
