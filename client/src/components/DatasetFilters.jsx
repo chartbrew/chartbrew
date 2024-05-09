@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer, Tooltip } from "@nextui-org/react";
-import { LuCalendarDays, LuCheckCircle, LuEye, LuEyeOff, LuFilter, LuPlus, LuRedo, LuSettings, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuCheckCircle, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo, LuSettings, LuXCircle } from "react-icons/lu";
 import { format, formatISO } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -137,7 +137,7 @@ function DatasetFilters(props) {
         <div className="datasetdata-filters-tut">
           <Button
             variant="bordered"
-            startContent={<LuFilter />}
+            startContent={<LuListFilter />}
             onClick={_onAddCondition}
             auto
             size={"sm"}
