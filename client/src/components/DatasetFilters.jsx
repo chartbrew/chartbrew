@@ -346,19 +346,19 @@ function DatasetFilters(props) {
       {conditions?.length > 0 && (
         <div className="col-span-12">
           <Button
-            variant="light"
-            color="primary"
+            variant="flat"
             onClick={_onAddCondition}
             endContent={<LuPlus />}
             size="sm"
           >
             Add a new filter
           </Button>
+          <Spacer y={2} />
         </div>
       )}
       {conditions.filter((c) => c.exposed).length > 0 && (
         <div>
-          <div><Text>{"Exposed filters on the chart"}</Text></div>
+          <div>{"Exposed filters on the chart"}</div>
           <Spacer y={1} />
           <div className="flex gap-1">
             {conditions.filter((c) => c.exposed).map((condition) => {

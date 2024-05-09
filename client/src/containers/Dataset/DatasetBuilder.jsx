@@ -521,6 +521,11 @@ function DatasetBuilder(props) {
         <Divider />
         <Spacer y={4} />
 
+        <div className="">
+          Filter settings
+        </div>
+        <Spacer y={2} />
+
         <DatasetFilters
           onUpdate={_onUpdateDataset}
           fieldOptions={fieldOptions}

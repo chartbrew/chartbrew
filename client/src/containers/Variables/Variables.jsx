@@ -79,7 +79,13 @@ function Variables() {
         </Button>
       </div>
       <Spacer y={4} />
-      <Table shadow="none">
+
+      <div className="text-sm text-gray-500">
+        Variables are used to create dashboard filters that interact with your charts. First, make sure your chart filters have variables defined, then you can variable filters from your dashboard.
+      </div>
+
+      <Spacer y={4} />
+      <Table shadow="none" className="border-1 border-divider rounded-lg">
         <TableHeader>
           <TableColumn key="name">Name</TableColumn>
           <TableColumn key="createdAt">Created At</TableColumn>

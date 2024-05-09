@@ -9,8 +9,10 @@ import {
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";
+import { Link as LinkNext } from "react-router-dom";
 import {
   LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuInfo,
+  LuListFilter,
   LuPlug,
   LuSettings,
   LuWand2, LuXCircle,
@@ -535,6 +537,18 @@ function ChartDatasetConfig(props) {
               projectId={params.projectId}
             />
           </Row>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+          
+          <div>
+            <LinkNext to={`/${params.teamId}/dataset/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}&editFilters=true`} className="flex items-center cursor-pointer chart-cdc-goal">
+              <LuListFilter size={24} className="text-primary" />
+              <Spacer x={0.5} />
+              <Text>Edit filters</Text>
+            </LinkNext>
+          </div>
         </>
       )}
 

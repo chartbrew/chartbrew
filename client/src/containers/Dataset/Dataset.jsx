@@ -162,6 +162,9 @@ function Dataset() {
       if (!query.has("create") && query.has("chart_id") && query.has("project_id")) {
         setFromChart("edit");
       }
+      if (query.has("editFilters")) {
+        setDatasetMenu("configure");
+      }
     }
   }, [query]);
 
