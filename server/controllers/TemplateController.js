@@ -25,12 +25,23 @@ module.exports.delete = (id) => {
   return db.Template.destroy({ where: { id } });
 };
 
-module.exports.getDashboardModel = (projectId) => {
+module.exports.getDashboardModel = async (projectId) => {
   const template = {
     Charts: [],
     Connections: [],
     Datasets: [],
   };
+
+  const project = await db.Project.findByPk(projectId, {
+    include: [{
+      model: db.Variable,
+    }],
+  });
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
+
   return db.Chart.findAll({
     where: { project_id: projectId },
     attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
@@ -87,6 +98,7 @@ module.exports.getDashboardModel = (projectId) => {
         template.Charts.push(newChart);
         template.Connections = template.Connections.concat(connections);
         template.Datasets = template.Datasets.concat(datasets);
+        template.Variables = project.Variables;
       });
 
       return template;

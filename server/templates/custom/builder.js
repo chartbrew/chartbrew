@@ -102,5 +102,13 @@ module.exports = async (teamId, projectId, {
     chartPromises.push(createChart(newChart));
   });
 
+  if (model?.Variables?.length > 0) {
+    model.Variables.forEach((variable) => {
+      const newVariable = { ...variable, project_id: projectId };
+      delete newVariable.id;
+      db.Variable.create(newVariable);
+    });
+  }
+
   return Promise.all(chartPromises);
 };
