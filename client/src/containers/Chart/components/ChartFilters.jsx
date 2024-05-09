@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Spacer, Input, Autocomplete, AutocompleteItem, DatePicker,
@@ -20,6 +20,14 @@ function ChartFilters(props) {
   } = props;
 
   const [optionFilter, setOptionFilter] = useState({});
+
+  useEffect(() => {
+    const filterOptions = {};
+    conditions.forEach((c) => {
+      filterOptions[c.id] = c.value || "";
+    });
+    setOptionFilter(filterOptions);
+  }, [conditions]);
 
   const _getDropdownOptions = (dataset, condition) => {
     const conditionOpt = dataset.conditions.find((c) => c.field === condition.field);
