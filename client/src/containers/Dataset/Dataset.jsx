@@ -134,7 +134,7 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    if (datasetMenu === "configure" && !datasetResponse) {
+    if (datasetMenu === "configure" && !datasetResponse && dataset?.id) {
       dispatch(runRequest({
         team_id: params.teamId,
         dataset_id: dataset.id,
