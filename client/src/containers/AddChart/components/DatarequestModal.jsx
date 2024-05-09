@@ -422,7 +422,7 @@ function DatarequestModal(props) {
                           onClick={() => _onCreateNewRequest(c)}
                           fullWidth
                         >
-                          <CardBody className="p-unit-4 pl-unit-8">
+                          <CardBody className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">
                               <Text size="h4">{c.name}</Text>
                               <Spacer x={0.5} />

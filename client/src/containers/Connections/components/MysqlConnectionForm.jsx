@@ -220,7 +220,7 @@ function MysqlConnectionForm(props) {
   }
 
   return (
-    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
         <p className="font-semibold">
           {!editConnection && "Add a new MySQL connection"}
