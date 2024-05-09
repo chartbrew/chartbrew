@@ -3,26 +3,25 @@ version: '3.3'
 services:
   db:
     image: mysql:5.7
-    restart: always
+    restart: unless-stopped
     environment:
+      # These values are taken from the .env file
       MYSQL_DATABASE: ${CB_DB_NAME}
       MYSQL_USER: ${CB_DB_USERNAME}
       MYSQL_PASSWORD: ${CB_DB_PASSWORD}
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
-    ports:
-      - 3306:3306
+      MYSQL_RANDOM_ROOT_PASSWORD: true
     volumes:
       - chartbrew-db:/var/lib/mysql
 
   chartbrew:
     build: .
-    restart: always
+    restart: unless-stopped
+    env_file: .env
     ports:
-      - 4018:4018
-      - 4019:4019
-    expose:
-      - 4018
-      - 4019
+      # Feel free to remap these ports on the left side to your desired ports.
+      # If you do change these ports you also need to update them in the VITE_APP_CLIENT_HOST and VITE_APP_API_HOST variables in your .env file
+      - 4018:4018 # Frontend
+      - 4019:4019 # API
     depends_on:
       - db
     links:
