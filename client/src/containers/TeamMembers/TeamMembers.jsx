@@ -306,7 +306,7 @@ function TeamMembers(props) {
                             </>
                           )}
                           {user.id !== member.id
-                            && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole !== "teamOwner"))
+                            && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
                             && (
                               <Tooltip content="Remove user from the team">
                                 <Button
