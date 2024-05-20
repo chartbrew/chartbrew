@@ -226,8 +226,15 @@ module.exports = (app) => {
   // route to delete a team member
   app.delete("/team/:id/member/:userId", verifyToken, checkPermissions("deleteAny", "teamRole"), (req, res) => {
     return teamController.getTeamRole(req.params.id, req.params.userId)
-      .then((teamRole) => {
+      .then(async (teamRole) => {
         if (!teamRole) return res.status(404).send("Did not find a team member");
+
+        const roleToDelete = await teamController.getTeamRole(req.params.id, req.params.userId);
+
+        if (roleToDelete.role === "teamOwner") {
+          return new Promise((resolve, reject) => reject("Cannot delete a team owner"));
+        }
+
         return teamController.deleteTeamMember(teamRole.id);
       })
       .then((success) => {
