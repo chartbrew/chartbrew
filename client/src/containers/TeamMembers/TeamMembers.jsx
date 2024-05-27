@@ -382,7 +382,7 @@ function TeamMembers(props) {
                 <Spacer y={0.5} />
 
                 <div className="grid grid-cols-12 gap-1">
-                  {projects && projects.map((project) => (
+                  {projects && projects.filter((p) => !p.ghost).map((project) => (
                     <div className="col-span-12 sm:col-span-6 md:col-span-4" key={project.id}>
                       <Checkbox
                         isSelected={
