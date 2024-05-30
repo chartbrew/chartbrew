@@ -468,11 +468,11 @@ function DatasetBuilder(props) {
             <div className="flex flex-col">
               <Popover>
                 <PopoverTrigger>
-                  <div className="flex flex-row gap-1 items-center">
+                  <div className="flex flex-row gap-1 items-center cursor-pointer">
                     <span className="text-sm">
                       {"Metric formula"}
                     </span>
-                    <LuInfo size={18} />
+                    <LuInfo size={18} className="hover:text-primary" />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent>
