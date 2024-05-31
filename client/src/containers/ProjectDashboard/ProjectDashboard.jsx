@@ -788,22 +788,25 @@ function ProjectDashboard(props) {
               </span>
             </Row>
             <Spacer y={1} />
-            <Row justify="center" align="center">
-              <span>
-                {"It looks empty over here. Let's create a chart to get started."}
-              </span>
-            </Row>
-            <Spacer y={4} />
-            <Row justify="center" align="center">
-              <Button
-                endContent={<LuPlusCircle size={24} />}
-                size="lg"
-                color="primary"
-                onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
-              >
-                Create a chart
-              </Button>
-            </Row>
+            {_canAccess("projectAdmin") && (
+              <>
+                <Row justify="center" align="center">
+                  <span>
+                    {"It looks empty over here. Let's create a chart to get started."}
+                  </span>
+                </Row>
+                <Spacer y={4} /><Row justify="center" align="center">
+                  <Button
+                    endContent={<LuPlusCircle size={24} />}
+                    size="lg"
+                    color="primary"
+                    onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                  >
+                    Create a chart
+                  </Button>
+                </Row>
+              </>
+            )}
           </div>
         )}
 
