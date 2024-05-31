@@ -1,7 +1,7 @@
 import moment from "moment";
 
 // regex to check if the string is made only of numbers
-const checkNumbersOnly = /^\d+$/;
+const checkNumbersOnly = /^\d+(\.\d+)?$/;
 // regex to check if numbers only and if length is 10 or 13
 const checkNumbersOnlyAndLength = /^\d{10,13}$/;
 
