@@ -47,3 +47,6 @@ module.exports = async () => {
 
   return true;
 };
+
+updateKeys("CB_ENCRYPTION_KEY_DEV");
+updateKeys("CB_ENCRYPTION_KEY");
