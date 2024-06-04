@@ -110,8 +110,8 @@ function DatasetAlerts(props) {
       return teamMembers;
     }
 
-    if (userRole.role === "projectAdmin") {
-      return teamMembers.filter((tm) => tm.TeamRoles?.find((tr) => tr.projects.includes(parseInt(projectId, 10)) && (tr.role === "projectAdmin" || tr.role === "projectViewer")));
+    if (userRole.role === "projectEditor") {
+      return teamMembers.filter((tm) => tm.TeamRoles?.find((tr) => tr.projects.includes(parseInt(projectId, 10)) && (tr.role === "projectAdmin" || tr.role === "projectEditor" || tr.role === "projectViewer")));
     }
 
     return [{ ...user }];

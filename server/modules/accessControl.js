@@ -333,7 +333,7 @@ const grantList = [
   },
   // resource: connection ---> Team Perspective
   {
-    role: "projectAdmin", resource: "connection", action: "read:own", attributes: "*",
+    role: "projectAdmin", resource: "connection", action: "read:own", attributes: ["id", "name", "type", "subType", "createdAt", "updatedAt"],
   },
   // resource: teamRole ---> Team Perspective
   {
@@ -395,6 +395,77 @@ const grantList = [
   },
   {
     role: "projectAdmin", resource: "integration", action: "delete:own", attributes: "*",
+  },
+  //
+  // --------------------
+  //    PROJECT EDITOR
+  // --------------------
+  //
+  {
+    role: "projectEditor", resource: "team", action: "read:own", attributes: ["id", "name"],
+  },
+  // resource: project ---> Team Perspective
+  {
+    role: "projectEditor", resource: "project", action: "read:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "project", action: "update:own", attributes: "*",
+  },
+  // resource: connection ---> Team Perspective
+  {
+    role: "projectEditor", resource: "connection", action: "read:own", attributes: ["id", "name", "type", "subType", "createdAt", "updatedAt"],
+  },
+  // resource: teamRole ---> Team Perspective
+  {
+    role: "projectEditor", resource: "teamRole", action: "read:own", attributes: "*",
+  },
+  // resource: teamInvite ---> Team Perspective
+  //
+  // resource: projectRole  ---> Team Perspective
+  //
+  // resource: chart
+  {
+    role: "projectEditor", resource: "chart", action: "create:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "chart", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "chart", action: "update:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "chart", action: "delete:own", attributes: "*",
+  },
+  // resource: savedQuery ---> Team Perspective
+  //
+  // resource: dataset ---> Team Perspective
+  {
+    role: "projectEditor", resource: "dataset", action: "create:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "dataset", action: "read:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "dataset", action: "update:own", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "projectEditor", resource: "dataRequest", action: "read:own", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  //
+  // resource: integration ---> Team Perspective
+  {
+    role: "projectEditor", resource: "integration", action: "create:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "integration", action: "read:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "integration", action: "update:own", attributes: "*",
+  },
+  {
+    role: "projectEditor", resource: "integration", action: "delete:own", attributes: "*",
   },
   //
   // --------------------

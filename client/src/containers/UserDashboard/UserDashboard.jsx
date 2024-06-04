@@ -494,7 +494,7 @@ function UserDashboard(props) {
                   >
                     <span className="text-lg">Dashboards</span>
                   </ListboxItem>
-                  {_canAccess("projectAdmin", team.TeamRoles) && (
+                  {_canAccess("teamAdmin", team.TeamRoles) && (
                     <ListboxItem
                       key="connections"
                       startContent={<LuPlug size={24} />}
@@ -505,7 +505,7 @@ function UserDashboard(props) {
                       <span className="text-lg">Connections</span>
                     </ListboxItem>
                   )}
-                  {_canAccess("projectAdmin", team.TeamRoles) && (
+                  {_canAccess("projectEditor", team.TeamRoles) && (
                     <ListboxItem
                       key="datasets"
                       showDivider={_canAccess("teamAdmin", team.TeamRoles)}
@@ -763,7 +763,7 @@ function UserDashboard(props) {
                       )}
                     </Table>
                   )}
-                  {projects && projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles) && (
+                  {projects && projects.length === 0 && !_canAccess("projectEditor", team.TeamRoles) && (
                     <Container>
                     <Text size="h3">
                         {"No project over here"}

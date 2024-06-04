@@ -9,7 +9,7 @@ import {
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import { useParams } from "react-router";
-import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
+import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuXCircle } from "react-icons/lu";
 
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -122,10 +122,10 @@ function TeamMembers(props) {
         const newProjectAccess = _.cloneDeep(projectAccess);
         newProjectAccess[changedMember.id].projects = newAccess;
         setProjectAccess(newProjectAccess);
-        toast.success("Updated the user access 👨‍🎓");
+        toast.success("Updated the user access 🔑");
       })
       .catch(() => {
-        toast.error("Oh no! There's a server issue 🙈 Please try again");
+        toast.error("Oh no! There's a server issue. Please try again");
       });
   };
 
@@ -221,10 +221,11 @@ function TeamMembers(props) {
                       <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
                     </TableCell>
                     <TableCell key="role">
-                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm">Team Owner</Chip>}
-                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm">Team Admin</Chip>}
-                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm">Project admin</Chip>}
-                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm">Project viewer</Chip>}
+                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm" startContent={<LuStar size={18} />}>Team Owner</Chip>}
+                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm" startContent={<LuStar size={18} />}>Team Admin</Chip>}
+                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client admin</Chip>}
+                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client editor</Chip>}
+                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client viewer</Chip>}
                     </TableCell>
                     <TableCell key="projectAccess">
                       {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
@@ -239,15 +240,15 @@ function TeamMembers(props) {
                         <Row className={"gap-2"}>
                           {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole !== "teamAdmin" && (
                             <>
-                              <Tooltip content="Adjust project access">
+                              <Tooltip content="Change dashboard access">
                                 <Button
                                   variant="light"
-                                  color="primary"
                                   isIconOnly
                                   auto
                                   onClick={() => _openProjectAccess(member)}
+                                  size="sm"
                                 >
-                                  <LuBookKey />
+                                  <LuFolderKey />
                                 </Button>
                               </Tooltip>
                             </>
@@ -255,53 +256,70 @@ function TeamMembers(props) {
                           {_canAccess("teamAdmin") && user.id !== member.id && (
                             <>
                               <Tooltip content="Change member role">
-                                <Dropdown>
-                                  <DropdownTrigger>
-                                    <Button variant="light" auto isIconOnly color="secondary">
-                                      <LuUsers2 />
-                                    </Button>
-                                  </DropdownTrigger>
-                                  <DropdownMenu
-                                    variant="bordered"
-                                    onAction={(key) => _onChangeRole(key, member)}
-                                    selectedKeys={[memberRole.role]}
-                                    selectionMode="single"
-                                  >
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="teamAdmin"
-                                          textValue="Team Admin"
-                                          description={"Full access, but can't delete the team"}
-                                        >
-                                          <Text>Team Admin</Text>
-                                        </DropdownItem>
-                                      )}
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="projectAdmin"
-                                          textValue="Project Admin"
-                                          description={"Can create, edit, and remove charts and connections in assigned projects"}
-                                        >
-                                          <Text>Project Admin</Text>
-                                        </DropdownItem>
-                                      )}
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="projectViewer"
-                                          textValue="Project Viewer"
-                                          description={"Can view charts in assigned projects"}
-                                        >
-                                          <Text>Project Viewer</Text>
-                                        </DropdownItem>
-                                      )}
-                                  </DropdownMenu>
-                                </Dropdown>
+                                <div>
+                                  <Dropdown>
+                                    <DropdownTrigger>
+                                      <Button variant="light" auto isIconOnly size="sm">
+                                        <LuContact />
+                                      </Button>
+                                    </DropdownTrigger>
+                                    <DropdownMenu
+                                      onAction={(key) => _onChangeRole(key, member)}
+                                      selectedKeys={[memberRole.role]}
+                                      selectionMode="single"
+                                      aria-label="Change member role"
+                                    >
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="teamAdmin"
+                                            textValue="Team Admin"
+                                            description={"Full access, but can't delete the team"}
+                                            className="max-w-[400px]"
+                                          >
+                                            <Text>Team Admin</Text>
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectAdmin"
+                                            textValue="Client admin"
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query and admin filters."}
+                                            className="max-w-[400px]"
+                                          >
+                                            <Text>Client admin</Text>
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectEditor"
+                                            textValue="Client editor"
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query and admin filters."}
+                                            className="max-w-[400px]"
+                                          >
+                                            <Text>Client editor</Text>
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectViewer"
+                                            textValue="Dashboard viewer"
+                                            description={"Can view charts in assigned projects, but cannot edit or remove anything."}
+                                            className="max-w-[400px]"
+                                          >
+                                            <Text>Dashboard viewer</Text>
+                                          </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                  </Dropdown>
+                                </div>
                               </Tooltip>
                             </>
                           )}
@@ -314,6 +332,7 @@ function TeamMembers(props) {
                                   onClick={() => _onDeleteConfirmation(member.id)}
                                   isIconOnly
                                   color="danger"
+                                  size="sm"
                                 >
                                   <LuXCircle />
                                 </Button>

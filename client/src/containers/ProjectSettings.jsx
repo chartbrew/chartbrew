@@ -154,7 +154,7 @@ function ProjectSettings(props) {
           <Button
             type="submit"
             color={success ? "success" : error ? "danger" : "primary"}
-            isDisabled={!_canAccess("projectAdmin")}
+            isDisabled={!_canAccess("projectEditor")}
             onClick={_onSaveName}
             isLoading={loading}
           >
@@ -188,7 +188,7 @@ function ProjectSettings(props) {
         <Button
           color="primary"
           variant="light"
-          disabled={!_canAccess("projectAdmin")}
+          disabled={!_canAccess("projectEditor")}
           onClick={() => _onGetMachineTimezone()}
           startContent={<LuClock4 />}
         >
@@ -200,7 +200,7 @@ function ProjectSettings(props) {
       <Spacer y={2} />
       <Row>
         <Button
-          isDisabled={!_canAccess("projectAdmin") || !projectTimezone || projectTimezone === project.timezone}
+          isDisabled={!_canAccess("projectEditor") || !projectTimezone || projectTimezone === project.timezone}
           onClick={() => _onSaveTimezone()}
           isLoading={loadingTimezone}
           color="primary"
@@ -212,7 +212,7 @@ function ProjectSettings(props) {
           <Button
             color="warning"
             variant="flat"
-            disabled={!_canAccess("projectAdmin")}
+            disabled={!_canAccess("projectEditor")}
             endContent={<LuX />}
             onClick={() => _onSaveTimezone(true)}
           >

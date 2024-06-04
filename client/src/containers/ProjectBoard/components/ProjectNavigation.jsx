@@ -101,7 +101,7 @@ function ProjectNavigation(props) {
                   <LuPresentation color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
-              {canAccess("projectAdmin")
+              {canAccess("projectEditor")
                 && (
                   <Link to={`/${teamId}/${projectId}/members`}>
                     <LinkNext className="pointer-events-none">
@@ -109,7 +109,7 @@ function ProjectNavigation(props) {
                     </LinkNext>
                   </Link>
                 )}
-              {canAccess("projectAdmin")
+              {canAccess("projectEditor")
                 && (
                   <Link to={`/${teamId}/${projectId}/settings`}>
                     <LinkNext className="pointer-events-none">
@@ -166,7 +166,7 @@ function ProjectNavigation(props) {
             </Popover>
           </Row>
           <Spacer y={8} />
-          {canAccess("projectAdmin")
+          {canAccess("projectEditor")
             && (
               <Row justify="center" align="center">
                 {menuSize === "small" && (
@@ -262,7 +262,7 @@ function ProjectNavigation(props) {
             </Link>
           </Row>
 
-          {canAccess("projectAdmin") && (
+          {canAccess("projectEditor") && (
             <>
               <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
@@ -295,7 +295,7 @@ function ProjectNavigation(props) {
               </Row>
             </>
           )}
-          {canAccess("projectAdmin") && (
+          {canAccess("projectEditor") && (
             <>
               <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>

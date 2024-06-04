@@ -20,7 +20,7 @@ module.exports = (app) => {
       }
 
       let permission;
-      if (teamRole.role === "projectAdmin" && actionType.indexOf("Any") > -1) {
+      if ((teamRole.role === "projectAdmin" || teamRole.role === "projectEditor") && actionType.indexOf("Any") > -1) {
         permission = accessControl.can(teamRole.role)[actionType.replace("Any", "Own")]("dataset");
       } else {
         permission = accessControl.can(teamRole.role)[actionType]("dataset");
@@ -37,7 +37,7 @@ module.exports = (app) => {
         return next();
       }
 
-      if (role === "projectAdmin" || role === "projectViewer") {
+      if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
         const datasets = await datasetController.findByProjects(team_id, projects);
         if (!datasets || datasets.length === 0) {
           return res.status(404).json({ message: "No datasets found" });

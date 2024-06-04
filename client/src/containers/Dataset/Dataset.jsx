@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
   Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
@@ -28,6 +27,9 @@ import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import useQuery from "../../modules/useQuery";
+import { selectUser } from "../../slices/user";
+import { getTeams, selectTeam } from "../../slices/team";
+import canAccess from "../../config/canAccess";
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -56,6 +58,8 @@ function Dataset() {
   const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
   const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset?.id)?.data);
   const projects = useSelector(selectProjects);
+  const user = useSelector(selectUser);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     async function fetchData() {
@@ -68,6 +72,20 @@ function Dataset() {
     }
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user?.id && !team) {
+      dispatch(getTeams(user.id));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.id && team?.id) {
+      if (!canAccess("projectAdmin", user.id, team.TeamRoles)) {
+        setDatasetMenu("configure");
+      }
+    }
+  }, [user, team]);
 
   useEffect(() => {
     if (!dataset) {
@@ -377,27 +395,31 @@ function Dataset() {
               selectedKey={datasetMenu}
               onSelectionChange={(key) => setDatasetMenu(key)}
             >
-              <Tab
-                key="query"
-                title={(
-                  <div className="flex items-center gap-2">
-                    <LuDatabase size={24} />
-                    <span>Query</span>
-                  </div>
-                )}
-                textValue="Query"
-              />
-              <Tab
-                key="configure"
-                title={(
-                  <div className="flex items-center gap-2">
-                    <LuAreaChart size={24} />
-                    <span>Configure</span>
-                  </div>
-                )}
-                textValue="Configure"
-                isDisabled={dataset?.DataRequests.length === 0}
-              />
+              {canAccess("projectAdmin", user.id, team.TeamRoles) && (
+                <Tab
+                  key="query"
+                  title={(
+                    <div className="flex items-center gap-2">
+                      <LuDatabase size={24} />
+                      <span>Query</span>
+                    </div>
+                  )}
+                  textValue="Query"
+                />
+              )}
+              {canAccess("projectEditor", user.id, team.TeamRoles) && (
+                <Tab
+                  key="configure"
+                  title={(
+                    <div className="flex items-center gap-2">
+                      <LuAreaChart size={24} />
+                      <span>Configure</span>
+                    </div>
+                  )}
+                  textValue="Configure"
+                  isDisabled={dataset?.DataRequests.length === 0}
+                />
+              )}
             </Tabs>
           </div>
 
@@ -538,22 +560,4 @@ function Dataset() {
   );
 }
 
-Dataset.propTypes = {
-  dataset: PropTypes.object.isRequired,
-  requests: PropTypes.array.isRequired,
-  datasetResponses: PropTypes.array.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    requests: state.dataset.requests,
-    datasetResponses: state.dataset.responses,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Dataset);
+export default Dataset;

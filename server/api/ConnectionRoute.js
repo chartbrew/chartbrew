@@ -74,7 +74,7 @@ module.exports = (app) => {
         return next();
       }
 
-      if (role === "projectAdmin" || role === "projectViewer") {
+      if (role === "projectAdmin" || role === "projectViewer" || role === "projectEditor") {
         const connections = await connectionController.findByProjects(team_id, projects);
         if (!connections || connections.length === 0) {
           return res.status(404).json({ message: "No connections found" });
@@ -82,6 +82,7 @@ module.exports = (app) => {
 
         // save the projects in the user object
         req.user.projects = projects;
+        req.user.permittedFields = permission.attributes;
 
         return next();
       }
@@ -126,12 +127,24 @@ module.exports = (app) => {
       }
 
       if (req.user.projects) {
-        const filteredConnections = connections.filter((connection) => {
+        let filteredConnections = connections.filter((connection) => {
           if (!connection.project_ids) return false;
           return connection.project_ids.some((projectId) => {
             return req.user.projects.includes(projectId);
           });
         });
+
+        if (req.user.permittedFields) {
+          filteredConnections = filteredConnections.map((connection) => {
+            const newConnection = connection.toJSON();
+            Object.keys(newConnection).forEach((key) => {
+              if (!req.user.permittedFields.includes(key)) {
+                newConnection[key] = null;
+              }
+            });
+            return newConnection;
+          });
+        }
 
         return res.status(200).send(filteredConnections);
       }
@@ -168,10 +181,20 @@ module.exports = (app) => {
   app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return connectionController.findById(req.params.connection_id)
       .then((connection) => {
-        const newConnection = connection;
+        let newConnection = connection;
         if (!req.user.isEditor) {
           newConnection.password = "";
         }
+
+        if (req.user.permittedFields) {
+          newConnection = connection.toJSON();
+          Object.keys(newConnection).forEach((key) => {
+            if (!req.user.permittedFields.includes(key)) {
+              newConnection[key] = null;
+            }
+          });
+        }
+
         return res.status(200).send(newConnection);
       })
       .catch((error) => {
@@ -199,7 +222,20 @@ module.exports = (app) => {
         return connectionController.findByProject(req.params.project_id);
       })
       .then((connections) => {
-        return res.status(200).send(connections);
+        let filteredConnections = connections;
+        if (req.user.permittedFields) {
+          filteredConnections = connections.map((connection) => {
+            const newConnection = connection.toJSON();
+            Object.keys(newConnection).forEach((key) => {
+              if (!req.user.permittedFields.includes(key)) {
+                newConnection[key] = null;
+              }
+            });
+            return newConnection;
+          });
+        }
+
+        return res.status(200).send(filteredConnections);
       })
       .catch((error) => {
         if (error.message === "401") {

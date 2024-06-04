@@ -5,7 +5,7 @@ import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@nextui-org/react";
 import _ from "lodash";
-import { LuCheckCheck, LuClipboard, LuClipboardCheck, LuInfo, LuX } from "react-icons/lu";
+import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import { generateInviteUrl } from "../slices/team";
@@ -92,6 +92,9 @@ function InviteMembersForm(props) {
   const _onCopyUrl = () => {
     setUrlCopied(true);
     navigator.clipboard.writeText(inviteUrl);
+    setTimeout(() => {
+      setUrlCopied(false);
+    }, 2000);
   };
 
   return (
@@ -118,15 +121,21 @@ function InviteMembersForm(props) {
               </Radio>
               <Radio
                 value="projectAdmin"
-                description={"Can manage all charts in the selected dashboards"}
+                description={"Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and admin filters."}
               >
-                Dashboard Editor
+                Client Admin
+              </Radio>
+              <Radio
+                value="projectEditor"
+                description={"Can view and edit all charts and reports in the selected dashboard. Can also edit tagged datasets but cannot edit admin filters."}
+              >
+                Client Editor
               </Radio>
               <Radio
                 value="projectViewer"
                 description={"Can view all charts and reports in the selected dashboard"}
               >
-                Dashboard Viewer
+                Client Viewer
               </Radio>
             </RadioGroup>
           </Row>
@@ -227,23 +236,24 @@ function InviteMembersForm(props) {
               label="Share this link with your team"
               id="url-text"
               value={inviteUrl}
-              fullWidth
               readOnly
               variant="bordered"
+              endContent={(
+                <Button
+                  color={urlCopied ? "success" : "default"}
+                  onClick={_onCopyUrl}
+                  size="sm"
+                  isIconOnly
+                  variant="light"
+                >
+                  {urlCopied ? <LuCheck /> : <LuCopy />}
+                </Button>
+              )}
+              className="max-w-[400px]"
             />
           </Row>
           <Spacer y={2} />
           <Row wrap="wrap" align="center">
-            <Button
-              endContent={urlCopied ? <LuClipboardCheck /> : <LuClipboard />}
-              color={urlCopied ? "success" : "primary"}
-              onClick={_onCopyUrl}
-              variant={urlCopied ? "flat" : "solid"}
-              size="sm"
-            >
-              {urlCopied ? "Copied" : "Copy to clipboard"}
-            </Button>
-            <Spacer x={4} />
             <Chip color="warning" variant={"flat"} size="sm">
               {`${role} role`}
             </Chip>

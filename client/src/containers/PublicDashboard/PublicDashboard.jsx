@@ -578,7 +578,7 @@ function PublicDashboard(props) {
                 </Tooltip>
               </div>
 
-              {project?.id && _canAccess("projectAdmin") && (
+              {project?.id && _canAccess("projectEditor") && (
                 <>
                   <div>
                     <Tooltip content="Change logo" placement="right-end">
