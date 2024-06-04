@@ -121,13 +121,13 @@ function InviteMembersForm(props) {
               </Radio>
               <Radio
                 value="projectAdmin"
-                description={"Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and admin filters."}
+                description={"Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and queries."}
               >
                 Client Admin
               </Radio>
               <Radio
                 value="projectEditor"
-                description={"Can view and edit all charts and reports in the selected dashboard. Can also edit tagged datasets but cannot edit admin filters."}
+                description={"Can view and edit all charts and reports in the selected dashboard. Can also edit tagged datasets but cannot edit data queries."}
               >
                 Client Editor
               </Radio>

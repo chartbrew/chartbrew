@@ -287,7 +287,7 @@ function TeamMembers(props) {
                                           <DropdownItem
                                             key="projectAdmin"
                                             textValue="Client admin"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query and admin filters."}
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
                                             className="max-w-[400px]"
                                           >
                                             <Text>Client admin</Text>
@@ -299,7 +299,7 @@ function TeamMembers(props) {
                                           <DropdownItem
                                             key="projectEditor"
                                             textValue="Client editor"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query and admin filters."}
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
                                             className="max-w-[400px]"
                                           >
                                             <Text>Client editor</Text>
