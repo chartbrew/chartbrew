@@ -333,7 +333,7 @@ const grantList = [
   },
   // resource: connection ---> Team Perspective
   {
-    role: "projectAdmin", resource: "connection", action: "read:own", attributes: "*",
+    role: "projectAdmin", resource: "connection", action: "read:own", attributes: ["id", "name", "type", "subType", "createdAt", "updatedAt"],
   },
   // resource: teamRole ---> Team Perspective
   {
@@ -413,7 +413,7 @@ const grantList = [
   },
   // resource: connection ---> Team Perspective
   {
-    role: "projectEditor", resource: "connection", action: "read:own", attributes: "*",
+    role: "projectEditor", resource: "connection", action: "read:own", attributes: ["id", "name", "type", "subType", "createdAt", "updatedAt"],
   },
   // resource: teamRole ---> Team Perspective
   {

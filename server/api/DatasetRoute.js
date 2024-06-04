@@ -20,7 +20,7 @@ module.exports = (app) => {
       }
 
       let permission;
-      if (teamRole.role === "projectAdmin" && actionType.indexOf("Any") > -1) {
+      if ((teamRole.role === "projectAdmin" || teamRole.role === "projectEditor") && actionType.indexOf("Any") > -1) {
         permission = accessControl.can(teamRole.role)[actionType.replace("Any", "Own")]("dataset");
       } else {
         permission = accessControl.can(teamRole.role)[actionType]("dataset");
