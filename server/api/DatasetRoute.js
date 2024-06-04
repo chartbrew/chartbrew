@@ -37,7 +37,7 @@ module.exports = (app) => {
         return next();
       }
 
-      if (role === "projectAdmin" || role === "projectViewer") {
+      if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
         const datasets = await datasetController.findByProjects(team_id, projects);
         if (!datasets || datasets.length === 0) {
           return res.status(404).json({ message: "No datasets found" });

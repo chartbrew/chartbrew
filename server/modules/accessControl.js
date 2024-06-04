@@ -446,20 +446,11 @@ const grantList = [
     role: "projectEditor", resource: "dataset", action: "read:own", attributes: "*",
   },
   {
-    role: "projectEditor", resource: "dataset", action: "update:own", attributes: ["*", "!query"],
+    role: "projectEditor", resource: "dataset", action: "update:own", attributes: "*",
   },
   // resource: request ---> Team Perspective
   {
-    role: "projectEditor", resource: "dataRequest", action: "create:own", attributes: "*",
-  },
-  {
     role: "projectEditor", resource: "dataRequest", action: "read:own", attributes: "*",
-  },
-  {
-    role: "projectEditor", resource: "dataRequest", action: "update:own", attributes: "*",
-  },
-  {
-    role: "projectEditor", resource: "dataRequest", action: "delete:own", attributes: "*",
   },
   // resource: apiKey ---> Team Perspective
   //

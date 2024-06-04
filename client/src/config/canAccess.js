@@ -22,8 +22,11 @@ export default function canAccess(role, userId, teamRoles) {
     case "projectAdmin":
       if (teamRole === "teamOwner" || teamRole === "teamAdmin" || teamRole === "projectAdmin") return true;
       break;
+    case "projectEditor":
+      if (teamRole === "teamOwner" || teamRole === "teamAdmin" || teamRole === "projectAdmin" || teamRole === "projectEditor") return true;
+      break;
     case "projectViewer":
-      if (teamRole === "teamOwner" || teamRole === "teamAdmin" || teamRole === "projectAdmin" || teamRole === "projectViewer") return true;
+      if (teamRole === "teamOwner" || teamRole === "teamAdmin" || teamRole === "projectAdmin" || teamRole === "projectEditor" || teamRole === "projectViewer") return true;
       break;
     default:
       return false;

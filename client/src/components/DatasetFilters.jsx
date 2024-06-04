@@ -6,12 +6,12 @@ import { format, formatISO } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { find } from "lodash";
+import { nanoid } from "@reduxjs/toolkit";
 
 import Row from "./Row";
 import Text from "./Text";
 import { secondary } from "../config/colors";
 import { operators } from "../modules/filterOperations";
-import { nanoid } from "@reduxjs/toolkit";
 
 function DatasetFilters(props) {
   const { onUpdate, fieldOptions, dataset } = props;
@@ -161,6 +161,7 @@ function DatasetFilters(props) {
                 selectedKey={condition.field}
                 onSelectionChange={(key) => _updateCondition(condition.id, key, "field")}
                 labelPlacement="outside"
+                size="sm"
               >
                 {fieldOptions.filter((f) => !f.isObject).map((field) => (
                   <AutocompleteItem
@@ -189,6 +190,7 @@ function DatasetFilters(props) {
                       variant="bordered"
                       labelPlacement="outside"
                       className="max-w-[100px]"
+                      size="sm"
                     />
                   </DropdownTrigger>
                   <DropdownMenu
@@ -214,6 +216,7 @@ function DatasetFilters(props) {
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         labelPlacement="outside"
                         variant="bordered"
+                        size="sm"
                       />
                     )}
                   {find(fieldOptions, { value: condition.field })
@@ -227,6 +230,7 @@ function DatasetFilters(props) {
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                             labelPlacement="outside"
                             variant="bordered"
+                            size="sm"
                           />
                         </PopoverTrigger>
                         <PopoverContent>

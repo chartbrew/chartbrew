@@ -864,7 +864,7 @@ function ProjectDashboard(props) {
               loading={exportLoading}
               error={exportError}
               onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
-              showDisabled={_canAccess("projectAdmin")}
+              showDisabled={_canAccess("projectEditor")}
             />
           </ModalBody>
         </ModalContent>

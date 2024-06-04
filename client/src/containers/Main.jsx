@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from "react";
+import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
@@ -10,8 +10,9 @@ import UserDashboard from "./UserDashboard/UserDashboard";
 
 import {
   relog, areThereAnyUsers,
+  selectUser,
 } from "../slices/user";
-import { getTeams, selectTeam } from "../slices/team";
+import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import useThemeDetector from "../modules/useThemeDetector";
 import { IconContext } from "react-icons";
@@ -68,7 +69,10 @@ function authenticatePage() {
 function Main(props) {
   const { cleanErrors } = props;
 
+  const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
+  const teams = useSelector(selectTeams);
+  const teamsRef = useRef(null);
 
   const isDark = useThemeDetector();
   const location = useLocation();
@@ -103,6 +107,22 @@ function Main(props) {
         });
     }
   }, []);
+
+  useEffect(() => {
+    if (teams && teams.length > 0 && !teamsRef.current) {
+      teamsRef.current = true;
+      let selectedTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.id));
+
+      const storageActiveTeam = window.localStorage.getItem("__cb_active_team");
+      if (storageActiveTeam) {
+        const storageTeam = teams.find((t) => `${t.id}` === `${storageActiveTeam}`);
+        if (storageTeam) selectedTeam = storageTeam;
+      }
+
+      if (!selectedTeam) return;
+      dispatch(saveActiveTeam(selectedTeam));
+    }
+  }, [teams]);
 
   return (
     <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
