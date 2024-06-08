@@ -4,10 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Chip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash, LuX } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -21,6 +22,39 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
+
+import { Parser } from "node-sql-parser";
+import Container from "../../../components/Container";
+
+const parser = new Parser();
+
+const flattenConditions = (condition, result = []) => {
+  if (condition.type === "binary_expr") {
+    if (condition.left.type === "binary_expr") {
+      flattenConditions(condition.left, result);
+    } else {
+      result.push({
+        operator: condition.operator,
+        left: condition.left,
+        right: condition.right
+      });
+    }
+
+    if (condition.right.type === "binary_expr") {
+      flattenConditions(condition.right, result);
+    } else {
+      // Only push the right condition if it's not already added
+      result.push({
+        operator: condition.operator,
+        left: condition.left.type === "binary_expr" ? condition.right.left : condition.left,
+        right: condition.right
+      });
+    }
+  }
+  return result;
+};
+
+
 
 /*
   The query builder for Mysql and Postgres
@@ -45,6 +79,7 @@ function SqlBuilder(props) {
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [ast, setAst] = useState({});
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -123,6 +158,14 @@ function SqlBuilder(props) {
     setRequestLoading(true);
     setRequestSuccess(false);
     setRequestError(false);
+
+    console.log("dr.query", dr.query);
+    const newAst = parser.astify(dr.query);
+    setAst(newAst);
+    console.log("ast", newAst);
+
+    const flat = flattenConditions(newAst.where)
+    console.log("flat", flat);
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
@@ -280,6 +323,89 @@ function SqlBuilder(props) {
               <div><LuInfo /></div>
             </Tooltip>
           </Row>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+
+          <Container className={"flex flex-col gap-2"}>
+            {ast?.from?.[0]?.table && (
+              <div className="flex gap-1 items-center">
+                <Chip variant="flat" radius="sm">Get data from</Chip>
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                >
+                  {ast?.from?.[0]?.table}
+                </Button>
+              </div>
+            )}
+            {ast?.columns && (
+              <div className="flex gap-1 items-center">
+                <Chip variant="flat" radius="sm">Select columns</Chip>
+                {ast.columns.map((col) => (
+                  <Button
+                    key={col.expr.column}
+                    size="sm"
+                    color="primary"
+                    variant="flat"
+                  >
+                    {col.expr.column}
+                  </Button>
+                ))}
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                >
+                  <LuPlus />
+                </Button>
+              </div>
+            )}
+            <div className="flex gap-1 items-center">
+              <Chip variant="flat" radius="sm">Filter data</Chip>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+              >
+                <LuPlus />
+              </Button>
+            </div>
+            {ast?.where && flattenConditions(ast.where).map((condition, index) => (
+              <div key={index} className="flex gap-1 items-center">
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                >
+                  {condition.left.column}
+                </Button>
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                >
+                  {condition.operator}
+                </Button>
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                >
+                  {condition.right.value}
+                </Button>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                >
+                  <LuX />
+                </Button>
+              </div>
+            ))}
+          </Container>
 
           <Spacer y={4} />
           <Divider />
