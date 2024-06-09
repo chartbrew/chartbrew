@@ -3,12 +3,11 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
-  ModalHeader, ModalBody, ModalFooter, ModalContent,
-  Chip,
+  ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash, LuX } from "react-icons/lu";
+import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuSparkles, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -24,36 +23,9 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 import { Parser } from "node-sql-parser";
-import Container from "../../../components/Container";
+import VisualSQL from "./VisualSQL";
 
 const parser = new Parser();
-
-const flattenConditions = (condition, result = []) => {
-  if (condition.type === "binary_expr") {
-    if (condition.left.type === "binary_expr") {
-      flattenConditions(condition.left, result);
-    } else {
-      result.push({
-        operator: condition.operator,
-        left: condition.left,
-        right: condition.right
-      });
-    }
-
-    if (condition.right.type === "binary_expr") {
-      flattenConditions(condition.right, result);
-    } else {
-      // Only push the right condition if it's not already added
-      result.push({
-        operator: condition.operator,
-        left: condition.left.type === "binary_expr" ? condition.right.left : condition.left,
-        right: condition.right
-      });
-    }
-  }
-  return result;
-};
-
 
 
 /*
@@ -80,6 +52,7 @@ function SqlBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [ast, setAst] = useState({});
+  const [activeTab, setActiveTab] = useState("visual");
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -159,13 +132,8 @@ function SqlBuilder(props) {
     setRequestSuccess(false);
     setRequestError(false);
 
-    console.log("dr.query", dr.query);
     const newAst = parser.astify(dr.query);
     setAst(newAst);
-    console.log("ast", newAst);
-
-    const flat = flattenConditions(newAst.where)
-    console.log("flat", flat);
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
@@ -239,35 +207,56 @@ function SqlBuilder(props) {
             </div>
           </Row>
           <Spacer y={2} />
-          <Row>
-            <Divider />
-          </Row>
+          <Divider />
+          <Spacer y={2} />
+          <Tabs variant="light" selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key)}>
+            <Tab
+              title={(
+                <div className="flex items-center gap-1">
+                  <Text>Visual Query</Text>
+                  <LuSparkles className="text-secondary" title="New!" />
+                </div>
+              )}
+              key="visual"
+            />
+            <Tab
+              title="SQL Query"
+              key="sql"
+            />
+          </Tabs>
+          <Spacer y={2} />
+          <Divider />
           <Spacer y={4} />
-          <Row align="center">
-            <Text>
-              {connection.type === "mysql" && "Enter your MySQL query here"}
-              {connection.type === "postgres" && "Enter your PostgreSQL query here"}
-            </Text>
-          </Row>
-          <Spacer y={1} />
-          <Row>
-            <div className="w-full">
-              <AceEditor
-                mode="pgsql"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                style={{ borderRadius: 10 }}
-                height="300px"
-                width="none"
-                value={sqlRequest.query || ""}
-                onChange={(value) => {
-                  _onChangeQuery(value);
-                }}
-                name="queryEditor"
-                editorProps={{ $blockScrolling: true }}
-                className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
-              />
+          {activeTab === "visual" && (
+            <div>
+              <VisualSQL ast={ast} />
+              <Spacer y={4} />
+              <Divider />
+              <Spacer y={2} />
             </div>
-          </Row>
+          )}
+          {activeTab === "sql" && (
+            <div>
+              <Row>
+                <div className="w-full">
+                  <AceEditor
+                    mode="pgsql"
+                    theme={isDark ? "one_dark" : "tomorrow"}
+                    style={{ borderRadius: 10 }}
+                    height="300px"
+                    width="none"
+                    value={sqlRequest.query || ""}
+                    onChange={(value) => {
+                      _onChangeQuery(value);
+                    }}
+                    name="queryEditor"
+                    editorProps={{ $blockScrolling: true }}
+                    className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
+                  />
+                </div>
+              </Row>
+            </div>
+          )}
           <Spacer y={2} />
           <Row align="center" className="sqlbuilder-buttons-tut gap-1">
             <Button
@@ -323,89 +312,6 @@ function SqlBuilder(props) {
               <div><LuInfo /></div>
             </Tooltip>
           </Row>
-
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-
-          <Container className={"flex flex-col gap-2"}>
-            {ast?.from?.[0]?.table && (
-              <div className="flex gap-1 items-center">
-                <Chip variant="flat" radius="sm">Get data from</Chip>
-                <Button
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                >
-                  {ast?.from?.[0]?.table}
-                </Button>
-              </div>
-            )}
-            {ast?.columns && (
-              <div className="flex gap-1 items-center">
-                <Chip variant="flat" radius="sm">Select columns</Chip>
-                {ast.columns.map((col) => (
-                  <Button
-                    key={col.expr.column}
-                    size="sm"
-                    color="primary"
-                    variant="flat"
-                  >
-                    {col.expr.column}
-                  </Button>
-                ))}
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                >
-                  <LuPlus />
-                </Button>
-              </div>
-            )}
-            <div className="flex gap-1 items-center">
-              <Chip variant="flat" radius="sm">Filter data</Chip>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-              >
-                <LuPlus />
-              </Button>
-            </div>
-            {ast?.where && flattenConditions(ast.where).map((condition, index) => (
-              <div key={index} className="flex gap-1 items-center">
-                <Button
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                >
-                  {condition.left.column}
-                </Button>
-                <Button
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                >
-                  {condition.operator}
-                </Button>
-                <Button
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                >
-                  {condition.right.value}
-                </Button>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                >
-                  <LuX />
-                </Button>
-              </div>
-            ))}
-          </Container>
 
           <Spacer y={4} />
           <Divider />
