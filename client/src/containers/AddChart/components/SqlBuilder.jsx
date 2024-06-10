@@ -24,6 +24,7 @@ import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 import { Parser } from "node-sql-parser";
 import VisualSQL from "./VisualSQL";
+import { getConnection } from "../../../slices/connection";
 
 const parser = new Parser();
 
@@ -143,7 +144,7 @@ function SqlBuilder(props) {
         dataRequest_id: dr.id,
         getCache
       }))
-        .then((data) => {
+        .then(async (data) => {
           const result = data.payload;
           if (result?.status?.statusCode >= 400) {
             setRequestError(result.response);
@@ -152,6 +153,12 @@ function SqlBuilder(props) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
             setRequestSuccess(true);
           }
+
+          await dispatch(getConnection({
+            team_id: params.teamId,
+            connection_id: dr.connection_id,
+          }));
+
           setRequestLoading(false);
         })
         .catch((error) => {

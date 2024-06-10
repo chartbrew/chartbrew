@@ -266,6 +266,23 @@ module.exports = (sequelize, DataTypes) => {
     sslKey: {
       type: DataTypes.STRING,
     },
+    schema: {
+      type: DataTypes.TEXT("long"),
+      set(val) {
+        try {
+          return this.setDataValue("schema", JSON.stringify(val));
+        } catch (e) {
+          return this.setDataValue("schema", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("schema"));
+        } catch (e) {
+          return this.getDataValue("schema");
+        }
+      },
+    },
   }, {
     freezeTableName: true,
   });

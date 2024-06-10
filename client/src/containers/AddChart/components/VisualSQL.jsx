@@ -64,9 +64,9 @@ const flattenFrom = (fromArray, result = []) => {
   return result;
 };
 
-function VisualSQL({ ast }) {
+function VisualSQL({ schema, ast }) {
   return (
-    <Container className={"flex flex-col gap-2"}>
+    <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
         <div key={index} className="flex gap-1 items-center">
           {fromItem.type === "main" && <Code variant="flat">Get data from</Code>}
@@ -165,13 +165,15 @@ function VisualSQL({ ast }) {
         <Button variant="flat" size="sm">sort</Button>
         <Button variant="flat" size="sm">group</Button>
         <Button variant="flat" size="sm">limit</Button>
+        <Button variant="flat" size="sm">join</Button>
       </div>
     </Container>
   )
 }
 
 VisualSQL.propTypes = {
-  ast: PropTypes.object.isRequired
+  ast: PropTypes.object.isRequired,
+  schema: PropTypes.object.isRequired
 }
 
 export default VisualSQL
