@@ -1,7 +1,7 @@
 {
   "name": "client-new",
   "private": true,
-  "version": "v3.5.1",
+  "version": "v3.5.2",
   "type": "module",
   "scripts": {
     "start": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
