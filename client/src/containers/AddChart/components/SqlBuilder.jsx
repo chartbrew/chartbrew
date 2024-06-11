@@ -22,19 +22,15 @@ import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
-import { Parser } from "node-sql-parser";
 import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
-
-const parser = new Parser();
-
 
 /*
   The query builder for Mysql and Postgres
 */
 function SqlBuilder(props) {
   const {
-    dataRequest, onChangeRequest, onSave, connection,
+    dataRequest, onChangeRequest, onSave,
     onDelete,
   } = props;
 
@@ -52,13 +48,13 @@ function SqlBuilder(props) {
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [ast, setAst] = useState({});
   const [activeTab, setActiveTab] = useState("visual");
 
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
 
   useEffect(() => {
     if (dataRequest) {
@@ -132,9 +128,6 @@ function SqlBuilder(props) {
     setRequestLoading(true);
     setRequestSuccess(false);
     setRequestError(false);
-
-    const newAst = parser.astify(dr.query);
-    setAst(newAst);
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
@@ -236,7 +229,11 @@ function SqlBuilder(props) {
           <Spacer y={4} />
           {activeTab === "visual" && (
             <div>
-              <VisualSQL ast={ast} />
+              <VisualSQL
+                query={sqlRequest.query}
+                schema={connection.schema}
+                updateQuery={_onChangeQuery}
+              />
               <Spacer y={4} />
               <Divider />
               <Spacer y={2} />

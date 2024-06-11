@@ -1,9 +1,12 @@
-import { Button, Code } from "@nextui-org/react"
-import React from "react"
+import { Button, Code, Select, SelectItem } from "@nextui-org/react"
+import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuChevronRight, LuPlus, LuX } from "react-icons/lu"
+import { Parser } from "node-sql-parser";
 
 import Container from "../../../components/Container"
+
+const parser = new Parser();
 
 const flattenConditions = (condition, result = []) => {
   if (condition.type === "binary_expr") {
@@ -64,7 +67,31 @@ const flattenFrom = (fromArray, result = []) => {
   return result;
 };
 
-function VisualSQL({ schema, ast }) {
+function VisualSQL({ schema, query, updateQuery }) {
+  const [ast, setAst] = useState(null);
+
+  // useEffect(() => {
+  //   console.log(schema)
+  // }, [schema]);
+
+  useEffect(() => {
+    const newAst = parser.astify(query);
+    setAst(newAst);
+  }, [query]);
+
+  const _onChangeMainTable = (table) => {
+    const newFrom = ast.from.map((fromItem) => {
+      if (!fromItem.on) {
+        fromItem.table = table;
+      }
+      return fromItem;
+    });
+
+    const newAst = { ...ast, from: newFrom };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -72,13 +99,24 @@ function VisualSQL({ schema, ast }) {
           {fromItem.type === "main" && <Code variant="flat">Get data from</Code>}
           {fromItem.type === "join" && <Code variant="flat">Join</Code>}
           {fromItem.table && (
-            <Button
+            <Select
               size="sm"
               color="primary"
               variant="flat"
+              selectedKeys={[fromItem.table]}
+              selectionMode="single"
+              aria-label="Select main database table"
+              onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
             >
-              {fromItem.table}
-            </Button>
+              {schema?.tables.map((table) => (
+                <SelectItem
+                  key={table}
+                  textValue={table}
+                >
+                  {table}
+                </SelectItem>
+              ))}
+            </Select>
           )}
           {fromItem.joinTable && (
             <Button
@@ -172,8 +210,9 @@ function VisualSQL({ schema, ast }) {
 }
 
 VisualSQL.propTypes = {
-  ast: PropTypes.object.isRequired,
-  schema: PropTypes.object.isRequired
+  query: PropTypes.string.isRequired,
+  schema: PropTypes.object.isRequired,
+  updateQuery: PropTypes.func.isRequired
 }
 
 export default VisualSQL
