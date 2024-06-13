@@ -1,4 +1,4 @@
-import { Button, Code, Select, SelectItem } from "@nextui-org/react"
+import { Button, Chip, Code, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuChevronRight, LuPlus, LuX } from "react-icons/lu"
@@ -7,6 +7,49 @@ import { Parser } from "node-sql-parser";
 import Container from "../../../components/Container"
 
 const parser = new Parser();
+
+const operations = [
+  {
+    name: "equals",
+    operator: "=",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "BOOLEAN", "CHAR", "VARCHAR", "TEXT", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "not equals",
+    operator: "!=",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "BOOLEAN", "CHAR", "VARCHAR", "TEXT", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "greater than",
+    operator: ">",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "less than",
+    operator: "<",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "greater than or equal to",
+    operator: ">=",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "less than or equal to",
+    operator: "<=",
+    types: ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "DATE", "TIME", "DATETIME", "TIMESTAMP"]
+  },
+  {
+    name: "contains",
+    operator: "LIKE",
+    types: ["CHAR", "VARCHAR", "TEXT"]
+  },
+  {
+    name: "not contains",
+    operator: "NOT LIKE",
+    types: ["CHAR", "VARCHAR", "TEXT"]
+  }
+];
 
 const flattenConditions = (condition, result = []) => {
   if (condition.type === "binary_expr") {
@@ -49,15 +92,20 @@ const flattenFrom = (fromArray, result = []) => {
       mainTable = { db, table, as, type: "main" };
       result.push(mainTable);
     } else if (join && on) {
+      const leftTable = on.left.table?.value || on.left.table;
+      const rightTable = on.right.table?.value || on.right.table;
+
       const joinCondition = {
         type: "join",
         joinType: join,
         mainTable: mainTable.table,
+        mainTableAs: mainTable.as,
         joinTable: table,
+        joinTableAs: as,
         on: {
           operator: on.operator,
-          left: `${on.left.table}.${on.left.column}`,
-          right: `${on.right.table}.${on.right.column}`
+          left: `${leftTable}.${on.left.column}`,
+          right: `${rightTable}.${on.right.column}`
         }
       };
       result.push(joinCondition);
@@ -69,6 +117,7 @@ const flattenFrom = (fromArray, result = []) => {
 
 function VisualSQL({ schema, query, updateQuery }) {
   const [ast, setAst] = useState(null);
+  const [viewJoin, setViewJoin] = useState(false);
 
   // useEffect(() => {
   //   console.log(schema)
@@ -92,6 +141,120 @@ function VisualSQL({ schema, query, updateQuery }) {
     updateQuery(parser.sqlify(newAst));
   };
 
+  const _onChangeJoin = () => {
+    const newFrom = {
+      as: viewJoin.joinTableAs || viewJoin.joinTable,
+      db: viewJoin.db,
+      join: viewJoin.joinType,
+      table: viewJoin.joinTable,
+      on: {
+        operator: viewJoin.on.operator,
+        left: {
+          table: viewJoin.joinTableAs || viewJoin.joinTable,
+          column: _getColumnName(viewJoin.on.left),
+          type: "column_ref"
+        },
+        right: {
+          table: viewJoin.mainTableAs || viewJoin.table,
+          column: _getColumnName(viewJoin.on.right),
+          type: "column_ref"
+        },
+        type: "binary_expr"
+      }
+    };
+
+    let newAstFroms;
+    if (!viewJoin.index) {
+      newAstFroms = [...ast.from, newFrom];
+    } else {
+      newAstFroms = ast.from.map((fromItem, index) => {
+        if (index === viewJoin.index) {
+          return newFrom;
+        }
+
+        return fromItem;
+      });
+    }
+
+    const newAst = { ...ast, from: newAstFroms };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+
+    setViewJoin(false);
+  };
+
+  const _onAddJoin = () => {
+    const newJoin = {
+      joinTableAs: "",
+      joinTable: "",
+      joinType: "INNER JOIN",
+      mainTable: "",
+      mainTableAs: "",
+      db: null,
+      on: {
+        operator: "=",
+        left: "",
+        right: "",
+      }
+    };
+
+    setViewJoin(newJoin);
+  };
+
+  const _getColumnName = (column, table) => {
+    if (!column || column === null) return "";
+    if (table) {
+      const newColumn = column.lastIndexOf(".") === -1 ? column : column.substring(column.lastIndexOf(".") + 1);
+      return `${table}.${newColumn}`;
+    }
+    if (column.indexOf(".") === -1) return column;
+
+    return column.substring(column.indexOf(".") + 1);
+  };
+
+  const _getJoinColumns = (withTable) => {
+    const flatFrom = flattenFrom(ast.from);
+    let joinColumns = [];
+    const processedTables = [];
+    flatFrom.forEach((fromItem) => {
+      const joinTable = fromItem.joinTable || fromItem.table;
+      if (joinTable && joinTable !== withTable && !processedTables.includes(joinTable)) {
+        processedTables.push(joinTable);
+        joinColumns = joinColumns
+          .concat(Object.keys(schema.description[joinTable])
+          .map((column) => ({
+            table: joinTable,
+            column
+          })));
+      }
+    });
+
+    return joinColumns;
+  };
+
+  const _onSelectJoinTable = (join) => {
+    const table = join.split(".")[0];
+    const column = join.split(".")[1];
+
+    let rightAlias = viewJoin?.mainTableAs;
+    // get the right alias for the main table
+    if (!viewJoin?.mainTableAs) {
+      const mainTable = ast.from.find(item => item.table === table);
+      if (mainTable?.as) {
+        rightAlias = mainTable.as;
+      }
+    }
+
+    const newViewJoin = {
+      ...viewJoin,
+      mainTable: table,
+      mainTableAs: rightAlias,
+      on: { ...viewJoin.on, right: `${rightAlias || table}.${column}` }
+    };
+
+    setViewJoin(newViewJoin);
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -103,7 +266,7 @@ function VisualSQL({ schema, query, updateQuery }) {
               size="sm"
               color="primary"
               variant="flat"
-              selectedKeys={[fromItem.table]}
+              selectedKeys={fromItem.table ? [fromItem.table] : []}
               selectionMode="single"
               aria-label="Select main database table"
               onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
@@ -123,6 +286,7 @@ function VisualSQL({ schema, query, updateQuery }) {
               size="sm"
               color="primary"
               variant="flat"
+              onClick={() => setViewJoin({ ...fromItem, index })}
             >
               {`${fromItem.joinTable} on ${fromItem.on.left} ${fromItem.on.operator} ${fromItem.on.right}`}
             </Button>
@@ -130,7 +294,7 @@ function VisualSQL({ schema, query, updateQuery }) {
         </div>
       ))}
       {ast?.columns && (
-        <div className="flex gap-1 items-center">
+        <div className="flex flex-wrap gap-1 items-center">
           <Code variant="flat">Select columns</Code>
           {ast.columns.map((col) => (
             <Button
@@ -203,8 +367,108 @@ function VisualSQL({ schema, query, updateQuery }) {
         <Button variant="flat" size="sm">sort</Button>
         <Button variant="flat" size="sm">group</Button>
         <Button variant="flat" size="sm">limit</Button>
-        <Button variant="flat" size="sm">join</Button>
+        <Button
+          variant="flat"
+          size="sm"
+          onClick={() => _onAddJoin()}
+        >
+          join
+        </Button>
       </div>
+
+      <Modal isOpen={viewJoin} onClose={() => setViewJoin(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Join data</div>
+          </ModalHeader>
+          <ModalBody>
+            <div className="flex flex-col gap-4">
+              <div>
+                <Select
+                  label="Select a table to join"
+                  variant="bordered"
+                  selectedKeys={viewJoin?.joinTable ? [viewJoin.joinTable] : []}
+                  selectionMode="single"
+                  aria-label="Select table to join"
+                  autoFocus
+                  placeholder="Click to select a table"
+                  onSelectionChange={(keys) => setViewJoin({ ...viewJoin, joinTable: keys.currentKey })}
+                >
+                  {schema?.tables.map((table) => (
+                    <SelectItem
+                      key={table}
+                      textValue={table}
+                    >
+                      {table}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+
+              {viewJoin?.joinTable && (
+                <div className="flex flex-row gap-2 items-center">
+                  <div>On</div>
+                  <Select
+                    placeholder="Select column"
+                    variant="bordered"
+                    selectedKeys={[_getColumnName(viewJoin.on?.left)]}
+                    aria-label="Select column to join on"
+                    onSelectionChange={(keys) => setViewJoin({ ...viewJoin, on: { ...viewJoin.on, left: keys.currentKey } })}
+                    selectionMode="single"
+                    size="sm"
+                    disallowEmptySelection
+                  >
+                    {Object.keys(schema.description?.[viewJoin.joinTable] || {}).map((column) => (
+                      <SelectItem
+                        key={column}
+                        textValue={column}
+                        startContent={<Chip size="sm" variant="flat">{viewJoin.joinTable}</Chip>}
+                      >
+                        {column}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                  <div>=</div>
+                  <Select
+                    placeholder="Select column"
+                    variant="bordered"
+                    selectedKeys={[_getColumnName(viewJoin?.on?.right, viewJoin.mainTable)]}
+                    aria-label="Select table to join"
+                    onSelectionChange={(keys) => _onSelectJoinTable(keys.currentKey)}
+                    selectionMode="single"
+                    size="sm"
+                    disallowEmptySelection
+                  >
+                    {_getJoinColumns(viewJoin.joinTable).map((column) => (
+                      <SelectItem
+                        key={`${column.table}.${column.column}`}
+                        textValue={column.column}
+                        startContent={<Chip size="sm" variant="flat">{column.table}</Chip>}
+                      >
+                        {column.column}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewJoin(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onChangeJoin(viewJoin)}
+            >
+              Save
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Container>
   )
 }

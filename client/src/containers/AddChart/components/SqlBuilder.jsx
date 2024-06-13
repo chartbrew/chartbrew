@@ -197,7 +197,7 @@ function SqlBuilder(props) {
                     isIconOnly
                     auto
                     size="sm"
-                    variant="bordered"
+                    variant="flat"
                     onClick={() => onDelete()}
                   >
                     <LuTrash />
