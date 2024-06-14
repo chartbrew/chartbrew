@@ -255,6 +255,12 @@ function VisualSQL({ schema, query, updateQuery }) {
     setViewJoin(newViewJoin);
   };
 
+  const _onRemoveJoin = (index) => {
+    const newAst = { ...ast, from: ast.from.filter((_, i) => i !== index) };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -289,6 +295,16 @@ function VisualSQL({ schema, query, updateQuery }) {
               onClick={() => setViewJoin({ ...fromItem, index })}
             >
               {`${fromItem.joinTable} on ${fromItem.on.left} ${fromItem.on.operator} ${fromItem.on.right}`}
+            </Button>
+          )}
+          {fromItem.joinTable && (
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onClick={() => _onRemoveJoin(index)}
+            >
+              <LuX />
             </Button>
           )}
         </div>
