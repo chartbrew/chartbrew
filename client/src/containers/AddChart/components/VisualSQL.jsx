@@ -1,4 +1,4 @@
-import { Button, Chip, Code, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react"
+import { Button, Chip, Code, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Select, SelectItem } from "@nextui-org/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuChevronRight, LuPlus, LuX } from "react-icons/lu"
@@ -118,6 +118,8 @@ const flattenFrom = (fromArray, result = []) => {
 function VisualSQL({ schema, query, updateQuery }) {
   const [ast, setAst] = useState(null);
   const [viewJoin, setViewJoin] = useState(false);
+  const [viewAddColumn, setViewAddColumn] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState([]);
 
   // useEffect(() => {
   //   console.log(schema)
@@ -261,6 +263,66 @@ function VisualSQL({ schema, query, updateQuery }) {
     updateQuery(parser.sqlify(newAst));
   };
 
+  const _onRemoveColumn = (column) => {
+    const newAst = { ...ast, columns: ast.columns.filter((col) => col.expr.column !== column) };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+  };
+
+  const _onAddColumn = () => {
+    const newColumns = selectedColumns.values().map((selectedColumn) => {
+      const table = selectedColumn.split(".")[0];
+      const column = selectedColumn.split(".")[1];
+
+      return {
+        expr: {
+          column,
+          type: "column_ref",
+          table: { value: table, type: "backticks_quote_string" }
+        },
+        as: null
+      };
+    });
+
+    const newAst = {
+      ...ast,
+      columns: [
+        ...ast.columns,
+        ...newColumns
+      ]
+    };
+
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+    setViewAddColumn(false);
+    setSelectedColumns([]);
+  };
+
+  const _getAvailableColumns = () => {
+    if (!ast?.from) return [];
+    let availableColumns = [];
+    const processedTables = [];
+    const selectedColumnNames = ast.columns.map(col => `${col.expr.table.value}.${col.expr.column}`);
+
+    flattenFrom(ast.from).forEach((fromItem) => {
+      if (!processedTables.includes(fromItem.table) && schema.description[fromItem.table]) {
+        processedTables.push(fromItem.table);
+        const tableColumns = Object.keys(schema.description[fromItem.table])
+          .map((column) => `${fromItem.as || fromItem.table}.${column}`)
+          .filter((fullColumnName) => !selectedColumnNames.includes(fullColumnName));
+        availableColumns = availableColumns.concat(tableColumns);
+      }
+      if (!processedTables.includes(fromItem.joinTable) && schema.description[fromItem.joinTable]) {
+        processedTables.push(fromItem.joinTable);
+        const joinTableColumns = Object.keys(schema.description[fromItem.joinTable])
+          .map((column) => `${fromItem.joinTableAs || fromItem.joinTable}.${column}`)
+          .filter((fullColumnName) => !selectedColumnNames.includes(fullColumnName));
+        availableColumns = availableColumns.concat(joinTableColumns);
+      }
+    });
+    return availableColumns;
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -313,19 +375,34 @@ function VisualSQL({ schema, query, updateQuery }) {
         <div className="flex flex-wrap gap-1 items-center">
           <Code variant="flat">Select columns</Code>
           {ast.columns.map((col) => (
-            <Button
-              key={col.expr.column}
-              size="sm"
-              color="primary"
-              variant="flat"
-            >
-              {col.expr.column}
-            </Button>
+            <Popover key={col.expr.column}>
+              <PopoverTrigger>
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                >
+                  {col.expr.column}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <Button
+                  size="sm"
+                  color="danger"
+                  variant="light"
+                  endContent={<LuX />}
+                  onClick={() => _onRemoveColumn(col.expr.column)}
+                >
+                  Remove
+                </Button>
+              </PopoverContent>
+            </Popover>
           ))}
           <Button
             isIconOnly
             size="sm"
             variant="light"
+            onClick={() => setViewAddColumn(true)}
           >
             <LuPlus />
           </Button>
@@ -481,6 +558,64 @@ function VisualSQL({ schema, query, updateQuery }) {
               onClick={() => _onChangeJoin(viewJoin)}
             >
               Save
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={viewAddColumn} onClose={() => setViewAddColumn(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Add column</div>
+          </ModalHeader>
+          <ModalBody>
+            <Select
+              placeholder="Select column"
+              variant="bordered"
+              selectedKeys={selectedColumns}
+              aria-label="Select column to join on"
+              onSelectionChange={(keys) => setSelectedColumns(keys)}
+              disallowEmptySelection
+              selectionMode="multiple"
+            >
+              {_getAvailableColumns().map((column) => (
+                <SelectItem
+                  key={column}
+                  textValue={column}
+                >
+                  {column}
+                </SelectItem>
+              ))}
+            </Select>
+            <div className="flex flex-row gap-1">
+              <Button
+                variant="flat"
+                size="sm"
+                onClick={() => setSelectedColumns(_getAvailableColumns())}
+              >
+                Select all
+              </Button>
+              <Button
+                variant="flat"
+                size="sm"
+                onClick={() => setSelectedColumns([])}
+              >
+                Select none
+              </Button>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewAddColumn(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onAddColumn()}
+            >
+              Add
             </Button>
           </ModalFooter>
         </ModalContent>
