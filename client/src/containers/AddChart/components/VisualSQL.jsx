@@ -1,7 +1,7 @@
-import { Button, Chip, Code, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Select, SelectItem } from "@nextui-org/react"
+import { Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Select, SelectItem } from "@nextui-org/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
-import { LuChevronRight, LuPlus, LuX } from "react-icons/lu"
+import { LuPlus, LuX } from "react-icons/lu"
 import { Parser } from "node-sql-parser";
 
 import Container from "../../../components/Container"
@@ -79,6 +79,7 @@ const flattenConditions = (condition, result = []) => {
       }
     }
   }
+
   return result;
 };
 
@@ -120,6 +121,12 @@ function VisualSQL({ schema, query, updateQuery }) {
   const [viewJoin, setViewJoin] = useState(false);
   const [viewAddColumn, setViewAddColumn] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [viewFilter, setViewFilter] = useState(false);
+  const [newFilter, setNewFilter] = useState({
+    column: "",
+    operator: "",
+    value: ""
+  });
 
   // useEffect(() => {
   //   console.log(schema)
@@ -323,6 +330,141 @@ function VisualSQL({ schema, query, updateQuery }) {
     return availableColumns;
   };
 
+  const _determineValueTypeFromSchema = (column) => {
+    const columnType = schema[column]?.type;
+    if (!columnType) {
+      return "double_quote_string";
+    }
+
+    if (columnType.includes("CHAR") || columnType.includes("VARCHAR") || columnType.includes("TEXT") || columnType.includes("LONGTEXT")) {
+      return "double_quote_string";
+    } else if (columnType.includes("INT") || columnType.includes("TINYINT")) {
+      return "number";
+    } else if (columnType.includes("DATETIME") || columnType.includes("DATE") || columnType.includes("TIMESTAMP")) {
+      return "date";
+    }
+
+    return "double_quote_string";
+  };
+
+  const _getColumnsForFilter = () => {
+    if (!ast?.from) return [];
+
+    let allColumns = [];
+    flattenFrom(ast.from).forEach((fromItem) => {
+      if (schema.description[fromItem.table]) {
+        const tableColumns = Object.keys(schema.description[fromItem.table])
+          .map((column) => ({
+            name: `${fromItem.as || fromItem.table}.${column}`,
+            type: schema.description[fromItem.table][column].type,
+            table: { value: fromItem.as || fromItem.table, type: "backticks_quote_string" }
+          }));
+        allColumns = allColumns.concat(tableColumns);
+      }
+      if (schema.description[fromItem.joinTable]) {
+        const joinTableColumns = Object.keys(schema.description[fromItem.joinTable])
+          .map((column) => ({
+            name: `${fromItem.joinTableAs || fromItem.joinTable}.${column}`,
+            type: schema.description[fromItem.joinTable][column].type,
+            table: { value: fromItem.joinTableAs || fromItem.joinTable, type: "backticks_quote_string" }
+          }));
+        allColumns = allColumns.concat(joinTableColumns);
+      }
+    });
+    return allColumns;
+  };
+
+  const _onAddFilter = () => {
+    const newFilterCondition = {
+      type: "binary_expr",
+      operator: newFilter.operator,
+      left: {
+        type: "column_ref",
+        table: newFilter.column.table,
+        column: newFilter.column.name.indexOf(".") === -1 ? newFilter.column.name : newFilter.column.name.split(".")[1]
+      },
+      right: {
+        type: _determineValueTypeFromSchema(newFilter.column.name),
+        value: newFilter.value
+      }
+    };
+
+    const updatedWhere = ast.where ? {
+      type: "binary_expr",
+      operator: ast.where.operator === "OR" ? "OR" : "AND",
+      left: ast.where,
+      right: newFilterCondition
+    } : newFilterCondition;
+
+    const newAst = { ...ast, where: updatedWhere };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+  };
+
+  const _onRemoveFilter = (condition) => {
+    const isConditionMatch = (node, condition) => {
+      return node.operator === condition.operator &&
+        node.left.type === condition.left.type &&
+        node.left.column === condition.left.column &&
+        ((!condition.left.table && !node.left.table) ||
+          (node.left.table && node.left.table.value === condition.left.table.value)) &&
+        node.right.type === condition.right.type &&
+        node.right.value === condition.right.value;
+    };
+
+    const removeConditionRecursively = (node) => {
+      if (!node) return null;
+
+      // Check if the node is a binary expression with the condition to remove
+      if (node.type === "binary_expr" && isConditionMatch(node, condition)) {
+        return null;
+      }
+
+      // If the node is a binary expression, recursively process its left and right
+      if (node.type === "binary_expr") {
+        const newLeft = removeConditionRecursively(node.left);
+        const newRight = removeConditionRecursively(node.right);
+
+        // If both left and right are null, this node should be removed
+        if (!newLeft && !newRight) return null;
+
+        // If one of them is null, return the other
+        if (!newLeft) return newRight;
+        if (!newRight) return newLeft;
+
+        // Otherwise, update the node with the new left and right
+        return {
+          ...node,
+          left: newLeft,
+          right: newRight
+        };
+      }
+
+      // If the node is not a binary expression, return it unchanged
+      return node;
+    };
+
+    const newWhere = removeConditionRecursively(ast.where);
+    setAst({ ...ast, where: newWhere });
+    updateQuery(parser.sqlify({ ...ast, where: newWhere }));
+  };
+
+  const _onChangeOperator = (operator) => {
+    const toggleOperator = (node) => {
+      if (node.type === "binary_expr" && (node.operator === "AND" || node.operator === "OR")) {
+        node.operator = operator === "AND" ? "OR" : "AND";
+        if (node.left) toggleOperator(node.left);
+        if (node.right) toggleOperator(node.right);
+      }
+    };
+
+    const newWhere = { ...ast.where };
+    toggleOperator(newWhere);
+    const newAst = { ...ast, where: newWhere };
+    setAst(newAst);
+    updateQuery(parser.sqlify(newAst));
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -338,6 +480,7 @@ function VisualSQL({ schema, query, updateQuery }) {
               selectionMode="single"
               aria-label="Select main database table"
               onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
+              className="max-w-[300px]"
             >
               {schema?.tables.map((table) => (
                 <SelectItem
@@ -409,24 +552,29 @@ function VisualSQL({ schema, query, updateQuery }) {
         </div>
       )}
       <div className="flex gap-1 items-center">
-        <Code variant="flat">Filter data</Code>
+        <Code variant="flat">Filter</Code>
         <Button
           isIconOnly
           size="sm"
           variant="light"
+          onClick={() => setViewFilter(true)}
         >
           <LuPlus />
         </Button>
       </div>
       {ast?.where && flattenConditions(ast.where).map((condition, index) => (
         <div key={index} className="flex gap-1 items-center ml-4">
-          <LuChevronRight />
+          {index > 0 && ast?.where?.operator && (
+            <Chip size="sm" variant="faded" color="primary" radius="sm" className="cursor-pointer" onClick={() => _onChangeOperator(ast?.where?.operator)}>
+              {ast?.where?.operator}
+            </Chip>
+          )}
           <Button
             size="sm"
             color="primary"
             variant="flat"
           >
-            {condition.left.column}
+            {condition.left?.column}
           </Button>
           <Button
             size="sm"
@@ -440,12 +588,13 @@ function VisualSQL({ schema, query, updateQuery }) {
             color="primary"
             variant="flat"
           >
-            {condition.right.value}
+            {condition.right?.value}
           </Button>
           <Button
             isIconOnly
             size="sm"
             variant="light"
+            onClick={() => _onRemoveFilter(condition)}
           >
             <LuX />
           </Button>
@@ -614,6 +763,74 @@ function VisualSQL({ schema, query, updateQuery }) {
             <Button
               color="primary"
               onClick={() => _onAddColumn()}
+            >
+              Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={viewFilter} onClose={() => setViewFilter(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Filter data</div>
+          </ModalHeader>
+          <ModalBody className="flex flex-col gap-2">
+            <Select
+              label="Column"
+              placeholder="Select column"
+              variant="bordered"
+              selectedKeys={[newFilter.column?.name || ""]}
+              aria-label="Select column to filter on"
+              onSelectionChange={(keys) => {
+                const selectedColumn = _getColumnsForFilter().find(col => col.name === keys.currentKey);
+                setNewFilter({ ...newFilter, column: selectedColumn });
+              }}
+            >
+              {_getColumnsForFilter().map((column) => (
+                <SelectItem
+                  key={column.name}
+                  textValue={column.name}
+                >
+                  {column.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              label="Operator"
+              placeholder="Select operator"
+              variant="bordered"
+              selectedKeys={[newFilter.operator]}
+              aria-label="Select operator"
+              onSelectionChange={(keys) => setNewFilter({ ...newFilter, operator: keys.currentKey })}
+            >
+              {operations.map((operation) => (
+                <SelectItem
+                  key={operation.operator}
+                  textValue={operation.name}
+                >
+                  {operation.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Input
+              label="Value"
+              placeholder="Enter value"
+              variant="bordered"
+              value={newFilter.value}
+              onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value })}
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewFilter(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onAddFilter(newFilter)}
             >
               Add
             </Button>
