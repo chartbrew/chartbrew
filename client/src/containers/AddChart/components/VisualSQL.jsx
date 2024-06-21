@@ -128,10 +128,6 @@ function VisualSQL({ schema, query, updateQuery }) {
     value: ""
   });
 
-  // useEffect(() => {
-  //   console.log(schema)
-  // }, [schema]);
-
   useEffect(() => {
     const newAst = parser.astify(query);
     setAst(newAst);
@@ -399,6 +395,9 @@ function VisualSQL({ schema, query, updateQuery }) {
     const newAst = { ...ast, where: updatedWhere };
     setAst(newAst);
     updateQuery(parser.sqlify(newAst));
+
+    setViewFilter(false);
+    setNewFilter({});
   };
 
   const _onRemoveFilter = (condition) => {
@@ -432,7 +431,6 @@ function VisualSQL({ schema, query, updateQuery }) {
         if (!newLeft) return newRight;
         if (!newRight) return newLeft;
 
-        // Otherwise, update the node with the new left and right
         return {
           ...node,
           left: newLeft,
@@ -463,6 +461,13 @@ function VisualSQL({ schema, query, updateQuery }) {
     const newAst = { ...ast, where: newWhere };
     setAst(newAst);
     updateQuery(parser.sqlify(newAst));
+  };
+
+  const _filterOperations = () => {
+    if (!newFilter.column?.type) return operations;
+    return operations.filter(op => {
+      return op.types.find(type => newFilter.column?.type.indexOf(type) !== -1);
+    });
   };
 
   return (
@@ -804,7 +809,7 @@ function VisualSQL({ schema, query, updateQuery }) {
               aria-label="Select operator"
               onSelectionChange={(keys) => setNewFilter({ ...newFilter, operator: keys.currentKey })}
             >
-              {operations.map((operation) => (
+              {_filterOperations().map((operation) => (
                 <SelectItem
                   key={operation.operator}
                   textValue={operation.name}
@@ -831,6 +836,7 @@ function VisualSQL({ schema, query, updateQuery }) {
             <Button
               color="primary"
               onClick={() => _onAddFilter(newFilter)}
+              isDisabled={!newFilter.column || !newFilter.operator || !newFilter.value}
             >
               Add
             </Button>
