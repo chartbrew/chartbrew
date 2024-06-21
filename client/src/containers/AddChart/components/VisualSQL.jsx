@@ -132,11 +132,14 @@ function VisualSQL({ schema, query, updateQuery }) {
   const [viewOrderBy, setViewOrderBy] = useState(false);
   const [orderByColumn, setOrderByColumn] = useState("");
   const [orderByOrder, setOrderByOrder] = useState("ASC");
+  const [viewLimit, setViewLimit] = useState(false);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     try {
       const newAst = parser.astify(query);
       setAst(newAst);
+      // console.log(newAst);
     } catch {
       //
     }
@@ -327,7 +330,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     if (!ast?.from) return [];
     let availableColumns = [];
     const processedTables = [];
-    const selectedColumnNames = ast.columns.map(col => `${col.expr.table.value}.${col.expr.column}`);
+    const selectedColumnNames = ast.columns.map(col => `${col.expr.table?.value}.${col.expr.column}`);
 
     flattenFrom(ast.from).forEach((fromItem) => {
       if (!processedTables.includes(fromItem.table) && schema.description[fromItem.table]) {
@@ -558,6 +561,26 @@ function VisualSQL({ schema, query, updateQuery }) {
     setOrderByOrder("ASC");
   };
 
+  const _onAddLimit = () => {
+    const newAst = { ...ast, limit: {
+      separator: "",
+      value: [{
+        type: "number",
+        value: limit
+      }],
+    }};
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+    setViewLimit(false);
+    setLimit(10);
+  };
+
+  const _onRemoveLimit = () => {
+    const newAst = { ...ast, limit: null };
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+  };
+
   return (
     <Container className={"flex flex-col gap-4"}>
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
@@ -736,6 +759,27 @@ function VisualSQL({ schema, query, updateQuery }) {
         </div>
       ))}
 
+      {ast?.limit && (
+        <div className="flex gap-1 items-center">
+          <Code variant="flat">Limit</Code>
+          <Button
+            size="sm"
+            color="primary"
+            variant="flat"
+          >
+            {ast.limit.value[0].value}
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant="light"
+            onClick={() => _onRemoveLimit()}
+          >
+            <LuX />
+          </Button>
+        </div>
+      )}
+
       <div>
         Add additional steps
       </div>
@@ -743,7 +787,7 @@ function VisualSQL({ schema, query, updateQuery }) {
       <div className="flex gap-1 items-center">
         <Button variant="flat" size="sm" onClick={() => setViewGroupBy(true)}>group</Button>
         <Button variant="flat" size="sm" onClick={() => setViewOrderBy(true)}>order</Button>
-        <Button variant="flat" size="sm">limit</Button>
+        <Button variant="flat" size="sm" onClick={() => setViewLimit(true)}>limit</Button>
         <Button
           variant="flat"
           size="sm"
@@ -1059,6 +1103,38 @@ function VisualSQL({ schema, query, updateQuery }) {
               onClick={() => _onAddOrderBy()}
             >
               Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={viewLimit} onClose={() => setViewLimit(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Limit</div>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              type="number"
+              label="Limit"
+              placeholder="Enter limit"
+              variant="bordered"
+              value={limit}
+              onChange={(e) => setLimit(e.target.value)}
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewLimit(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onAddLimit()}
+            >
+              Save limit
             </Button>
           </ModalFooter>
         </ModalContent>
