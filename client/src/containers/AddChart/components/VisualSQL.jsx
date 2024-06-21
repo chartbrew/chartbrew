@@ -1,4 +1,4 @@
-import { Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Select, SelectItem } from "@nextui-org/react"
+import { Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@nextui-org/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuX } from "react-icons/lu"
@@ -127,11 +127,33 @@ function VisualSQL({ schema, query, updateQuery }) {
     operator: "",
     value: ""
   });
+  const [viewGroupBy, setViewGroupBy] = useState(false);
+  const [groupByColumn, setGroupByColumn] = useState("");
+  const [viewOrderBy, setViewOrderBy] = useState(false);
+  const [orderByColumn, setOrderByColumn] = useState("");
+  const [orderByOrder, setOrderByOrder] = useState("ASC");
 
   useEffect(() => {
-    const newAst = parser.astify(query);
-    setAst(newAst);
+    try {
+      const newAst = parser.astify(query);
+      setAst(newAst);
+    } catch {
+      //
+    }
   }, [query]);
+
+  const _onUpdateQuery = (newQuery) => {
+    // before updating the query, enter new lines after major operations
+    // INNER JOIN, WHERE, GROUP BY, ORDER BY, LIMIT
+  const formattedQuery = newQuery
+    .replace(/ INNER JOIN /g, "\nINNER JOIN ")
+    .replace(/ WHERE /g, "\nWHERE ")
+    .replace(/ GROUP BY /g, "\nGROUP BY ")
+    .replace(/ ORDER BY /g, "\nORDER BY ")
+    .replace(/ LIMIT /g, "\nLIMIT ");
+    
+    updateQuery(formattedQuery);
+  };
 
   const _onChangeMainTable = (table) => {
     const newFrom = ast.from.map((fromItem) => {
@@ -143,7 +165,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newAst = { ...ast, from: newFrom };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
   };
 
   const _onChangeJoin = () => {
@@ -183,7 +205,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newAst = { ...ast, from: newAstFroms };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
 
     setViewJoin(false);
   };
@@ -263,13 +285,13 @@ function VisualSQL({ schema, query, updateQuery }) {
   const _onRemoveJoin = (index) => {
     const newAst = { ...ast, from: ast.from.filter((_, i) => i !== index) };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
   };
 
   const _onRemoveColumn = (column) => {
     const newAst = { ...ast, columns: ast.columns.filter((col) => col.expr.column !== column) };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
   };
 
   const _onAddColumn = () => {
@@ -296,7 +318,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     };
 
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
     setViewAddColumn(false);
     setSelectedColumns([]);
   };
@@ -394,7 +416,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newAst = { ...ast, where: updatedWhere };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
 
     setViewFilter(false);
     setNewFilter({});
@@ -444,7 +466,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newWhere = removeConditionRecursively(ast.where);
     setAst({ ...ast, where: newWhere });
-    updateQuery(parser.sqlify({ ...ast, where: newWhere }));
+    _onUpdateQuery(parser.sqlify({ ...ast, where: newWhere }));
   };
 
   const _onChangeOperator = (operator) => {
@@ -460,7 +482,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     toggleOperator(newWhere);
     const newAst = { ...ast, where: newWhere };
     setAst(newAst);
-    updateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(parser.sqlify(newAst));
   };
 
   const _filterOperations = () => {
@@ -468,6 +490,72 @@ function VisualSQL({ schema, query, updateQuery }) {
     return operations.filter(op => {
       return op.types.find(type => newFilter.column?.type.indexOf(type) !== -1);
     });
+  };
+
+  const _onAddGroupBy = () => {
+    const newColumn = {
+      column: groupByColumn.name.split(".")[1] || groupByColumn.name,
+      type: "column_ref",
+      table: groupByColumn.table
+    };
+
+    const newAst = { ...ast, groupby: [...(ast.groupby || []), newColumn] };
+
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+    setViewGroupBy(false);
+    setGroupByColumn("");
+  };
+
+  const _onRemoveGroup = (group) => {
+    const newAst = { 
+      ...ast, 
+      groupby: ast.groupby.filter((g) => {
+        if (group.table && g.table) {
+          return !(g.table.value === group.table.value && g.column === group.column);
+        } else {
+          return g.column !== group.column;
+        }
+      })
+    };
+
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+  };
+
+  const _onRemoveOrder = (order) => {
+    const newAst = { 
+      ...ast, 
+      orderby: ast.orderby.filter((o) => {
+        if (order.expr.table && o.expr.table) {
+          return !(o.expr.table.value === order.expr.table.value && o.expr.column === order.expr.column);
+        } else {
+          return o.expr.column !== order.expr.column;
+        }
+      })
+    };
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+  };
+
+  const _onAddOrderBy = () => {
+    const newOrder = {
+      expr: {
+        column: orderByColumn.name.split(".")[1] || orderByColumn.name,
+        table: orderByColumn.table,
+        type: "column_ref"
+      },
+      type: orderByOrder
+    };
+
+    const newAst = { ...ast, orderby: [...(ast.orderby || []), newOrder] };
+
+    setAst(newAst);
+    _onUpdateQuery(parser.sqlify(newAst));
+
+    setViewOrderBy(false);
+    setOrderByColumn("");
+    setOrderByOrder("ASC");
   };
 
   return (
@@ -606,13 +694,55 @@ function VisualSQL({ schema, query, updateQuery }) {
         </div>
       ))}
 
+      {ast?.groupby && ast.groupby.map((group) => (
+        <div key={`${group?.table?.value}.${group.column}`} className="flex flex-wrap gap-1 items-center">
+          <Code variant="flat">Group by</Code>
+          <Button
+            size="sm"
+            color="primary"
+            variant="flat"
+          >
+            {`${group.table.value ? `${group.table.value}.` : ""}${group.column}`}
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant="light"
+            onClick={() => _onRemoveGroup(group)}
+          >
+            <LuX />
+          </Button>
+        </div>
+      ))}
+
+      {ast?.orderby && ast.orderby.map((order) => (
+        <div key={`${order.expr?.table?.value}.${order.expr.column}`} className="flex gap-1 items-center">
+          <Code variant="flat">Order by</Code>
+          <Button
+            size="sm"
+            color="primary"
+            variant="flat"
+          >
+            {`${order.expr?.table?.value ? `${order.expr.table.value}.` : ""}${order.expr.column} ${order.type}`}
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant="light"
+            onClick={() => _onRemoveOrder(order)}
+          >
+            <LuX />
+          </Button>
+        </div>
+      ))}
+
       <div>
         Add additional steps
       </div>
 
       <div className="flex gap-1 items-center">
-        <Button variant="flat" size="sm">sort</Button>
-        <Button variant="flat" size="sm">group</Button>
+        <Button variant="flat" size="sm" onClick={() => setViewGroupBy(true)}>group</Button>
+        <Button variant="flat" size="sm" onClick={() => setViewOrderBy(true)}>order</Button>
         <Button variant="flat" size="sm">limit</Button>
         <Button
           variant="flat"
@@ -837,6 +967,96 @@ function VisualSQL({ schema, query, updateQuery }) {
               color="primary"
               onClick={() => _onAddFilter(newFilter)}
               isDisabled={!newFilter.column || !newFilter.operator || !newFilter.value}
+            >
+              Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={viewGroupBy} onClose={() => setViewGroupBy(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Group by</div>
+          </ModalHeader>
+          <ModalBody>
+            <Select
+              placeholder="Select column"
+              variant="bordered"
+              selectedKeys={[groupByColumn?.name || ""]}
+              aria-label="Select column to group by"
+              onSelectionChange={(keys) => setGroupByColumn(_getColumnsForFilter().find(col => col.name === keys.currentKey))}
+              selectionMode="single"
+            >
+              {_getColumnsForFilter().map((column) => (
+                <SelectItem
+                  key={column.name}
+                  textValue={column.name}
+                >
+                  {column.name}
+                </SelectItem>
+              ))}
+            </Select>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewGroupBy(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onAddGroupBy()}
+            >
+              Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={viewOrderBy} onClose={() => setViewOrderBy(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Order by</div>
+          </ModalHeader>
+          <ModalBody>
+            <Select
+              placeholder="Select column"
+              variant="bordered"
+              selectedKeys={[orderByColumn?.name || ""]}
+              selectionMode="single"
+              onSelectionChange={(keys) => setOrderByColumn(_getColumnsForFilter().find(col => col.name === keys.currentKey))}
+              aria-label="Select column to order by"
+            >
+              {_getColumnsForFilter().map((column) => (
+                <SelectItem
+                  key={column.name}
+                  textValue={column.name}
+                >
+                  {column.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <RadioGroup
+              label="Order"
+              value={orderByOrder}
+              onChange={(e) => setOrderByOrder(e.target.value)}
+            >
+              <Radio value="ASC">Ascending</Radio>
+              <Radio value="DESC">Descending</Radio>
+            </RadioGroup>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setViewOrderBy(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => _onAddOrderBy()}
             >
               Add
             </Button>
