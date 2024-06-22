@@ -340,7 +340,7 @@ function VisualSQL({ schema, query, updateQuery }) {
   };
 
   const _onAddColumn = () => {
-    const newColumns = selectedColumns.values().map((selectedColumn) => {
+    let newColumns = selectedColumns.values().map((selectedColumn) => {
       const table = selectedColumn.split(".")[0];
       const column = selectedColumn.split(".")[1];
 
@@ -354,12 +354,20 @@ function VisualSQL({ schema, query, updateQuery }) {
       };
     });
 
+    newColumns = Array.from(newColumns);
+    newColumns = [
+      ...ast.columns,
+      ...newColumns
+    ];
+
+    // remove the "*" column if present at the start (newColumns is an Iterator)
+    if (newColumns[0].expr.column === "*") {
+      newColumns = newColumns.slice(1);
+    }
+
     const newAst = {
       ...ast,
-      columns: [
-        ...ast.columns,
-        ...newColumns
-      ]
+      columns: newColumns,
     };
 
     setAst(newAst);
