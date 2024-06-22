@@ -1,4 +1,4 @@
-import { Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@nextui-org/react"
+import { Autocomplete, AutocompleteItem, Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@nextui-org/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuX } from "react-icons/lu"
@@ -134,39 +134,81 @@ function VisualSQL({ schema, query, updateQuery }) {
   const [orderByOrder, setOrderByOrder] = useState("ASC");
   const [viewLimit, setViewLimit] = useState(false);
   const [limit, setLimit] = useState(10);
+  const [queryError, setQueryError] = useState(false);
 
   useEffect(() => {
     try {
       const newAst = parser.astify(query);
       setAst(newAst);
-      // console.log(newAst);
     } catch {
-      //
+      setQueryError(true);
     }
   }, [query]);
 
   const _onUpdateQuery = (newQuery) => {
     // before updating the query, enter new lines after major operations
     // INNER JOIN, WHERE, GROUP BY, ORDER BY, LIMIT
-  const formattedQuery = newQuery
-    .replace(/ INNER JOIN /g, "\nINNER JOIN ")
-    .replace(/ WHERE /g, "\nWHERE ")
-    .replace(/ GROUP BY /g, "\nGROUP BY ")
-    .replace(/ ORDER BY /g, "\nORDER BY ")
-    .replace(/ LIMIT /g, "\nLIMIT ");
+    const formattedQuery = newQuery
+      .replace(/ INNER JOIN /g, "\nINNER JOIN ")
+      .replace(/ WHERE /g, "\nWHERE ")
+      .replace(/ GROUP BY /g, "\nGROUP BY ")
+      .replace(/ ORDER BY /g, "\nORDER BY ")
+      .replace(/ LIMIT /g, "\nLIMIT ");
     
     updateQuery(formattedQuery);
   };
 
   const _onChangeMainTable = (table) => {
-    const newFrom = ast.from.map((fromItem) => {
-      if (!fromItem.on) {
-        fromItem.table = table;
-      }
-      return fromItem;
-    });
+    let newFrom;
+    let selects;
+    let newAst;
 
-    const newAst = { ...ast, from: newFrom };
+    if (!ast?.from) {
+      newFrom = [{
+        table,
+        as: table,
+        db: null,
+        join: null,
+        on: null
+      }];
+      selects = [{
+        expr: {
+          column: "*",
+          type: "column_ref",
+          table: null
+        },
+        as: null
+      }];
+      newAst = {
+        from: newFrom,
+        type: "select",
+        distinct: null,
+        groupby: null,
+        having: null,
+        limit: null,
+        orderby: null,
+        where: null,
+        with: null,
+        options: null,
+        locking_read: null,
+        into: {
+          position: null,
+        },
+      };
+    } else {
+      newFrom = ast.from.map((fromItem) => {
+        if (!fromItem.on) {
+          fromItem.table = table;
+        }
+        return fromItem;
+      });
+      newAst = { ...ast };
+    }
+
+    newAst.from = newFrom;
+
+    if (selects) newAst.columns = selects;
+
     setAst(newAst);
     _onUpdateQuery(parser.sqlify(newAst));
   };
@@ -327,7 +369,7 @@ function VisualSQL({ schema, query, updateQuery }) {
   };
 
   const _getAvailableColumns = () => {
-    if (!ast?.from) return [];
+    if (!ast?.from || !ast?.columns) return [];
     let availableColumns = [];
     const processedTables = [];
     const selectedColumnNames = ast.columns.map(col => `${col.expr.table?.value}.${col.expr.column}`);
@@ -581,8 +623,83 @@ function VisualSQL({ schema, query, updateQuery }) {
     _onUpdateQuery(parser.sqlify(newAst));
   };
 
+  const _onResetQuery = () => {
+    setQueryError(false);
+    _onUpdateQuery("");
+  };
+
+  if (queryError) {
+    return (
+      <Container className={"flex flex-col gap-4"}>
+        <div className="bg-warning-100 p-4 rounded-md flex flex-col gap-2">
+          <div className="text-warning-6000">
+            We could not parse your query. Modify the query manually or reset by pressing the button below.
+          </div>
+          <div>
+            <Button
+              variant="faded"
+              color="secondary"
+              size="sm"
+              onClick={() => _onResetQuery()}
+            >
+              Reset query
+            </Button>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (!ast?.from) {
+    return (
+      <Container className={"flex flex-col gap-4"}>
+        <Autocomplete
+          label="Select a table to get started"
+          size="sm"
+          variant="bordered"
+          selectedKey={""}
+          aria-label="Select main database table"
+          onSelectionChange={(key) => _onChangeMainTable(key)}
+          className="max-w-[300px]"
+        >
+          {schema?.tables.map((table) => (
+            <AutocompleteItem
+              key={table}
+              textValue={table}
+            >
+              {table}
+            </AutocompleteItem>
+          ))}
+        </Autocomplete>
+      </Container>
+    );
+  }
+
   return (
     <Container className={"flex flex-col gap-4"}>
+      {!ast?.from && (
+        <div className="flex flex-col gap-2">
+          <Select
+            label="Select a table to get started"
+            size="sm"
+            variant="bordered"
+            selectedKeys={[]}
+            selectionMode="single"
+            aria-label="Select main database table"
+            onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
+            className="max-w-[300px]"
+          >
+            {schema?.tables.map((table) => (
+              <SelectItem
+                key={table}
+                textValue={table}
+              >
+                {table}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+      )}
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
         <div key={index} className="flex gap-1 items-center">
           {fromItem.type === "main" && <Code variant="flat">Get data from</Code>}
@@ -641,7 +758,7 @@ function VisualSQL({ schema, query, updateQuery }) {
                   color="primary"
                   variant="flat"
                 >
-                  {col.expr.column}
+                  {col.expr.column === "*" ? "All" : col.expr.column}
                 </Button>
               </PopoverTrigger>
               <PopoverContent>

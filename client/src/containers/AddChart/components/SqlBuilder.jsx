@@ -120,8 +120,13 @@ function SqlBuilder(props) {
       });
   };
 
-  const _onChangeQuery = (value) => {
-    setSqlRequest({ ...sqlRequest, query: value });
+  const _onChangeQuery = (value, testAfter = false) => {
+    const newSqlRequest = { ...sqlRequest, query: value };
+    setSqlRequest(newSqlRequest);
+    
+    if (testAfter) {
+      _onTest(newSqlRequest);
+    }
   };
 
   const _onTest = (dr = dataRequest) => {
@@ -232,7 +237,7 @@ function SqlBuilder(props) {
               <VisualSQL
                 query={sqlRequest.query}
                 schema={connection.schema}
-                updateQuery={_onChangeQuery}
+                updateQuery={(query) => _onChangeQuery(query, true)}
               />
               <Spacer y={4} />
               <Divider />
