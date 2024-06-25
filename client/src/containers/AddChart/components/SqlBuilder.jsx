@@ -207,6 +207,8 @@ function SqlBuilder(props) {
         });
       });
 
+      if (headers.length === 0) return ["Results"];
+
       return headers;
     } catch (e) {
       return ["Results"];
@@ -413,11 +415,13 @@ function SqlBuilder(props) {
             <div>
               <div className="w-full">
                 <Table isStriped className="sqlbuilder-result-tut" aria-label="Resuts table">
-                  <TableHeader>
-                    {_getResultHeaderRows().map((h) => (
-                      <TableColumn key={h}>{h}</TableColumn>
-                    ))}
-                  </TableHeader>
+                  {_getResultHeaderRows()?.length > 0 && (
+                    <TableHeader>
+                      {_getResultHeaderRows().map((h) => (
+                        <TableColumn key={h}>{h}</TableColumn>
+                      ))}
+                    </TableHeader>
+                  )}
                   <TableBody emptyContent={"Run a query to see the results"}>
                     {_getResultBodyRows(resultsPage).map((row, i) => (
                       <TableRow key={i}>
