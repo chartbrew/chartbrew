@@ -138,7 +138,10 @@ function VisualSQL({ schema, query, updateQuery, type }) {
 
   useEffect(() => {
     try {
-      const newAst = parser.astify(query);
+      const opt = {
+        database: type === "mysql" ? "MySQL" : "postgresql",
+      };
+      const newAst = parser.astify(query, opt);
       setAst(newAst);
     } catch {
       setQueryError(true);
@@ -146,8 +149,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
   }, [query]);
 
   const _onUpdateQuery = (newQuery) => {
+    if (!newQuery) {
+      updateQuery("");
+      return;
+    }
+
     const opt = {
-      database: type === "mysql" ? "MySQL" : "Postgres",
+      database: type === "mysql" ? "MySQL" : "postgresql",
     };
     const parsedQuery = parser.sqlify(newQuery, opt);
 
@@ -353,7 +361,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         expr: {
           column,
           type: "column_ref",
-          table: { value: table, type: "backticks_quote_string" }
+          table: { value: table, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
         },
         as: null
       };
@@ -433,7 +441,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           .map((column) => ({
             name: `${fromItem.as || fromItem.table}.${column}`,
             type: schema.description[fromItem.table][column].type,
-            table: { value: fromItem.as || fromItem.table, type: "backticks_quote_string" }
+            table: { value: fromItem.as || fromItem.table, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
           }));
         allColumns = allColumns.concat(tableColumns);
       }
@@ -442,7 +450,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           .map((column) => ({
             name: `${fromItem.joinTableAs || fromItem.joinTable}.${column}`,
             type: schema.description[fromItem.joinTable][column].type,
-            table: { value: fromItem.joinTableAs || fromItem.joinTable, type: "backticks_quote_string" }
+            table: { value: fromItem.joinTableAs || fromItem.joinTable, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
           }));
         allColumns = allColumns.concat(joinTableColumns);
       }
@@ -889,7 +897,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         </div>
       ))}
 
-      {ast?.limit && (
+      {ast?.limit && ast.limit?.value?.[0]?.value && (
         <div className="flex gap-1 items-center">
           <Code variant="flat">Limit</Code>
           <Button
@@ -897,7 +905,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             color="primary"
             variant="flat"
           >
-            {ast.limit.value[0].value}
+            {ast.limit.value[0]?.value}
           </Button>
           <Button
             isIconOnly
