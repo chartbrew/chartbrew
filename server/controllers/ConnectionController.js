@@ -168,9 +168,20 @@ class ConnectionController {
       });
   }
 
-  create(data) {
+  async create(data) {
+    const dataToSave = { ...data };
+
     if (!data.type) data.type = "mongodb"; // eslint-disable-line
-    return db.Connection.create(data)
+    if (data.type === "mysql" || data.type === "postgres") {
+      try {
+        const testData = await this.testMysql(data);
+        dataToSave.schema = testData.schema;
+      } catch (e) {
+        //
+      }
+    }
+
+    return db.Connection.create(dataToSave)
       .then((connection) => {
         return connection;
       })

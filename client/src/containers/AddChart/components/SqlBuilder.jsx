@@ -464,7 +464,7 @@ function SqlBuilder(props) {
               </div>
             </div>
           )}
-          <Spacer y={1} />
+          <Spacer y={2} />
           {result && (
             <Row>
               <Text size="sm">This is a sample response and might not show all the data.</Text>
