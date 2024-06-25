@@ -4,10 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
+  Chip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuSparkles, LuTrash } from "react-icons/lu";
+import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -48,7 +49,7 @@ function SqlBuilder(props) {
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("visual");
+  const [activeTab, setActiveTab] = useState("sql");
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -216,17 +217,17 @@ function SqlBuilder(props) {
           <Spacer y={2} />
           <Tabs variant="light" selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key)}>
             <Tab
+              title="SQL Query"
+              key="sql"
+            />
+            <Tab
               title={(
                 <div className="flex items-center gap-1">
                   <Text>Visual Query</Text>
-                  <LuSparkles className="text-secondary" title="New!" />
+                  <Chip variant="flat" radius="sm" size="sm" color="secondary">New!</Chip>
                 </div>
               )}
               key="visual"
-            />
-            <Tab
-              title="SQL Query"
-              key="sql"
             />
           </Tabs>
           <Spacer y={2} />
@@ -269,7 +270,7 @@ function SqlBuilder(props) {
           <Spacer y={2} />
           <Row align="center" className="sqlbuilder-buttons-tut gap-1">
             <Button
-              color={requestSuccess ? "success" : requestError ? "danger" : "primary"}
+              color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
               endContent={<LuPlay />}
               onClick={() => _onTest()}
               isLoading={requestLoading}
@@ -278,31 +279,6 @@ function SqlBuilder(props) {
               {!requestSuccess && !requestError && "Run query"}
               {(requestSuccess || requestError) && "Run again"}
             </Button>
-
-            <Button
-              endContent={<LuPlus />}
-              isLoading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
-              fullWidth
-              variant="ghost"
-            >
-              {!savedQuery && "Save query"}
-              {savedQuery && "Save as new"}
-            </Button>
-
-            {savedQuery && (
-              <>
-                <Button
-                  variant="ghost"
-                  startContent={<LuPencilLine />}
-                  onClick={_onUpdateSavedQuery}
-                  isLoading={updatingSavedQuery}
-                  fullWidth
-                >
-                  {"Update the query"}
-                </Button>
-              </>
-            )}
           </Row>
           <Spacer y={2} />
           <Row align="center">
@@ -315,7 +291,7 @@ function SqlBuilder(props) {
             </Checkbox>
             <Spacer x={0.5} />
             <Tooltip
-              content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
+              content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings."}
               className="max-w-[400px]"
             >
               <div><LuInfo /></div>
@@ -328,7 +304,34 @@ function SqlBuilder(props) {
           <Row>
             <Text b>Saved queries</Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
+          <div className="flex flex-row gap-2">
+            <Button
+              endContent={<LuPlus />}
+              isLoading={savingQuery}
+              onClick={_onSaveQueryConfirmation}
+              variant="flat"
+              size="sm"
+            >
+              {!savedQuery && "Save this query"}
+              {savedQuery && "Save as new"}
+            </Button>
+
+            {savedQuery && (
+              <>
+                <Button
+                  variant="flat"
+                  endContent={<LuCheck />}
+                  onClick={_onUpdateSavedQuery}
+                  isLoading={updatingSavedQuery}
+                  size="sm"
+                >
+                  {"Update current query"}
+                </Button>
+              </>
+            )}
+          </div>
+          <Spacer y={4} />
           <Row className="sqlbuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
@@ -377,8 +380,9 @@ function SqlBuilder(props) {
       {/* Save query modal */}
       <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
         <ModalContent>
-          <ModalHeader>
-            <Text b>{"Save your query and use it later in this project"}</Text>
+          <ModalHeader className="flex flex-col">
+            <div className="font-bold">{"Save your query for later"}</div>
+            <div className="text-sm font-normal">{"You can then re-use this query for other datasets"}</div>
           </ModalHeader>
           <ModalBody>
             <Input
@@ -386,14 +390,12 @@ function SqlBuilder(props) {
               placeholder="Type a summary here"
               fullWidth
               onChange={(e) => setSavedQuerySummary(e.target.value)}
-              size="lg"
               variant="bordered"
             />
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="flat"
-              color="warning"
+              variant="bordered"
               onClick={() => setSaveQueryModal(false)}
             >
               Close
