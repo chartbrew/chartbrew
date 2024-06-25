@@ -116,7 +116,7 @@ const flattenFrom = (fromArray, result = []) => {
   return result;
 };
 
-function VisualSQL({ schema, query, updateQuery }) {
+function VisualSQL({ schema, query, updateQuery, type }) {
   const [ast, setAst] = useState(null);
   const [viewJoin, setViewJoin] = useState(false);
   const [viewAddColumn, setViewAddColumn] = useState(false);
@@ -146,9 +146,14 @@ function VisualSQL({ schema, query, updateQuery }) {
   }, [query]);
 
   const _onUpdateQuery = (newQuery) => {
+    const opt = {
+      database: type === "mysql" ? "MySQL" : "Postgres",
+    };
+    const parsedQuery = parser.sqlify(newQuery, opt);
+
     // before updating the query, enter new lines after major operations
     // INNER JOIN, WHERE, GROUP BY, ORDER BY, LIMIT
-    const formattedQuery = newQuery
+    const formattedQuery = parsedQuery
       .replace(/ INNER JOIN /g, "\nINNER JOIN ")
       .replace(/ WHERE /g, "\nWHERE ")
       .replace(/ GROUP BY /g, "\nGROUP BY ")
@@ -210,7 +215,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     if (selects) newAst.columns = selects;
 
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onChangeJoin = () => {
@@ -250,7 +255,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newAst = { ...ast, from: newAstFroms };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
 
     setViewJoin(false);
   };
@@ -330,13 +335,13 @@ function VisualSQL({ schema, query, updateQuery }) {
   const _onRemoveJoin = (index) => {
     const newAst = { ...ast, from: ast.from.filter((_, i) => i !== index) };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onRemoveColumn = (column) => {
     const newAst = { ...ast, columns: ast.columns.filter((col) => col.expr.column !== column) };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onAddColumn = () => {
@@ -371,7 +376,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     };
 
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
     setViewAddColumn(false);
     setSelectedColumns([]);
   };
@@ -469,7 +474,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newAst = { ...ast, where: updatedWhere };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
 
     setViewFilter(false);
     setNewFilter({});
@@ -519,7 +524,7 @@ function VisualSQL({ schema, query, updateQuery }) {
 
     const newWhere = removeConditionRecursively(ast.where);
     setAst({ ...ast, where: newWhere });
-    _onUpdateQuery(parser.sqlify({ ...ast, where: newWhere }));
+    _onUpdateQuery({ ...ast, where: newWhere });
   };
 
   const _onChangeOperator = (operator) => {
@@ -535,7 +540,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     toggleOperator(newWhere);
     const newAst = { ...ast, where: newWhere };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _filterOperations = () => {
@@ -555,7 +560,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     const newAst = { ...ast, groupby: [...(ast.groupby || []), newColumn] };
 
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
     setViewGroupBy(false);
     setGroupByColumn("");
   };
@@ -573,7 +578,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     };
 
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onRemoveOrder = (order) => {
@@ -588,7 +593,7 @@ function VisualSQL({ schema, query, updateQuery }) {
       })
     };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onAddOrderBy = () => {
@@ -604,7 +609,7 @@ function VisualSQL({ schema, query, updateQuery }) {
     const newAst = { ...ast, orderby: [...(ast.orderby || []), newOrder] };
 
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
 
     setViewOrderBy(false);
     setOrderByColumn("");
@@ -620,7 +625,7 @@ function VisualSQL({ schema, query, updateQuery }) {
       }],
     }};
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
     setViewLimit(false);
     setLimit(10);
   };
@@ -628,7 +633,7 @@ function VisualSQL({ schema, query, updateQuery }) {
   const _onRemoveLimit = () => {
     const newAst = { ...ast, limit: null };
     setAst(newAst);
-    _onUpdateQuery(parser.sqlify(newAst));
+    _onUpdateQuery(newAst);
   };
 
   const _onResetQuery = () => {
@@ -1271,7 +1276,8 @@ function VisualSQL({ schema, query, updateQuery }) {
 VisualSQL.propTypes = {
   query: PropTypes.string.isRequired,
   schema: PropTypes.object.isRequired,
-  updateQuery: PropTypes.func.isRequired
+  updateQuery: PropTypes.func.isRequired,
+  type: PropTypes.string.isRequired,
 }
 
 export default VisualSQL

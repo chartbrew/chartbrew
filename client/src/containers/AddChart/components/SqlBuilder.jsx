@@ -239,6 +239,7 @@ function SqlBuilder(props) {
                 query={sqlRequest.query}
                 schema={connection.schema}
                 updateQuery={(query) => _onChangeQuery(query, true)}
+                type={connection.type}
               />
               <Spacer y={4} />
               <Divider />
