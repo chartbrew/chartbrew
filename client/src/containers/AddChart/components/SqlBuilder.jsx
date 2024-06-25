@@ -5,6 +5,13 @@ import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
   Chip,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Pagination,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -50,6 +57,8 @@ function SqlBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("sql");
+  const [activeResultsTab, setActiveResultsTab] = useState("table");
+  const [resultsPage, setResultsPage] = useState(1);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -75,6 +84,12 @@ function SqlBuilder(props) {
       }
     }
   }, [stateDrs, sqlRequest]);
+
+  useEffect(() => {
+    if (requestError) {
+      setActiveResultsTab("json");
+    }
+  }, [requestError]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -178,10 +193,51 @@ function SqlBuilder(props) {
     });
   };
 
+  const _getResultHeaderRows = () => {
+    if (!result) return ["Results"];
+
+    try {
+      const parsedResult = JSON.parse(result);
+      const headers = [];
+      parsedResult.forEach((o) => {
+        Object.keys(o).forEach((attr) => {
+          if (!headers.includes(attr)) {
+            headers.push(attr);
+          }
+        });
+      });
+
+      return headers;
+    } catch (e) {
+      return ["Results"];
+    }
+  };
+
+  const _getResultBodyRows = (page) => {
+    if (!result) return [];
+
+    const perPage = 10;
+
+    try {
+      const parsedResult = JSON.parse(result);
+      const allRows = page ? parsedResult.slice((page - 1) * perPage, page * perPage) : parsedResult;
+      const headers = _getResultHeaderRows();
+      return allRows.map((row) => {
+        const newRow = {};
+        headers.forEach((header) => {
+          newRow[header] = row[header] || "";
+        });
+        return newRow;
+      });
+    } catch (e) {
+      return [];
+    }
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
       <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 md:col-span-6">
+        <div className="col-span-12 sm:col-span-6 md:col-span-5">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
             <div>
@@ -346,29 +402,64 @@ function SqlBuilder(props) {
           </Row>
           <Spacer y={8} />
         </div>
-        <div className="col-span-12 md:col-span-6">
-          <Row>
-            <Text b>
-              {"Query result"}
-            </Text>
-          </Row>
-          <Spacer y={1} />
-          <Row>
-            <div className="w-full">
-              <AceEditor
-                mode="json"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                style={{ borderRadius: 10 }}
-                height="450px"
-                width="none"
-                value={requestError || result || ""}
-                name="resultEditor"
-                readOnly
-                editorProps={{ $blockScrolling: false }}
-                className="sqlbuilder-result-tut rounded-md border-1 border-solid border-content3"
-              />
+        <div className="col-span-12 sm:col-span-6 md:col-span-7">
+          <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
+            <Tab title="Table" key="table" />
+            <Tab title="JSON" key="json" />
+          </Tabs>
+          <Spacer y={2} />
+
+          {activeResultsTab === "table" && (
+            <div>
+              <div className="w-full">
+                <Table isStriped className="sqlbuilder-result-tut" aria-label="Resuts table">
+                  <TableHeader>
+                    {_getResultHeaderRows().map((h) => (
+                      <TableColumn key={h}>{h}</TableColumn>
+                    ))}
+                  </TableHeader>
+                  <TableBody emptyContent={"Run a query to see the results"}>
+                    {_getResultBodyRows(resultsPage).map((row, i) => (
+                      <TableRow key={i}>
+                        {Object.keys(row).map((key) => (
+                          <TableCell key={key}>{row[key]}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Spacer y={2} />
+              <div>
+                <Pagination
+                  total={_getResultBodyRows().length > 0 ? Math.ceil(_getResultBodyRows().length / 10) : 1}
+                  onChange={(page) => setResultsPage(page)}
+                  page={resultsPage}
+                  size="sm"
+                  aria-label="Pagination"
+                />
+              </div>
             </div>
-          </Row>
+          )}
+
+          {activeResultsTab === "json" && (
+            <div>
+              <div className="w-full">
+                <AceEditor
+                  mode="json"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
+                  height="450px"
+                  width="none"
+                  value={requestError || result || ""}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                  className="sqlbuilder-result-tut rounded-md border-1 border-solid border-content3"
+                />
+              </div>
+            </div>
+          )}
           <Spacer y={1} />
           {result && (
             <Row>
