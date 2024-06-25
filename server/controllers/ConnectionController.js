@@ -346,13 +346,33 @@ class ConnectionController {
       });
   }
 
+  async getSchema(dbConnection) {
+    const tables = await dbConnection.getQueryInterface().showAllTables();
+    const schemaPromises = tables.map((table) => {
+      return dbConnection.getQueryInterface().describeTable(table)
+        .then((description) => ({ table, description }));
+    });
+
+    const schemas = await Promise.all(schemaPromises);
+    const schema = schemas.reduce((acc, { table, description }) => {
+      acc[table] = description;
+      return acc;
+    }, {});
+
+    return {
+      tables,
+      description: schema,
+    };
+  }
+
   async testMysql(data) {
     try {
       const sqlDb = await externalDbConnection(data);
-      const tables = await sqlDb.getQueryInterface().showAllTables();
+      const schema = await this.getSchema(sqlDb);
+
       return Promise.resolve({
         success: true,
-        tables,
+        schema
       });
     } catch (err) {
       return Promise.reject(err.message || err);
@@ -621,8 +641,12 @@ class ConnectionController {
     }
 
     return this.findById(id)
-      .then((connection) => {
-        return externalDbConnection(connection);
+      .then(async (connection) => {
+        const dbConnection = await externalDbConnection(connection);
+        const schema = await this.getSchema(dbConnection);
+        db.Connection.update({ schema }, { where: { id } });
+
+        return dbConnection;
       })
       .then((dbConnection) => {
         return dbConnection.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
