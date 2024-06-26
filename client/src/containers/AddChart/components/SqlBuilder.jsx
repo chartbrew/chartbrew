@@ -293,12 +293,14 @@ function SqlBuilder(props) {
           <Spacer y={4} />
           {activeTab === "visual" && (
             <div>
-              <VisualSQL
-                query={sqlRequest.query}
-                schema={connection.schema}
-                updateQuery={(query) => _onChangeQuery(query, true)}
-                type={connection.type}
-              />
+              {connection.schema && (
+                <VisualSQL
+                  query={sqlRequest.query}
+                  schema={connection.schema}
+                  updateQuery={(query) => _onChangeQuery(query, true)}
+                  type={connection.type}
+                />
+              )}
               <Spacer y={4} />
               <Divider />
               <Spacer y={2} />
