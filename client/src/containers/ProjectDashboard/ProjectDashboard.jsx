@@ -108,22 +108,30 @@ function ProjectDashboard(props) {
   const { width } = useWindowSize();
   const isDark = useThemeDetector();
   const initLayoutRef = useRef(null);
+  const hasRunInitialFiltering = useRef(false);
 
   useEffect(() => {
     cleanErrors();
   }, []);
 
   useEffect(() => {
-    if (!filterLoading && filters && initLayoutRef.current) {
+    if (!filterLoading && filters && charts.length > 0 && !hasRunInitialFiltering.current) {
+      hasRunInitialFiltering.current = true;
       _runFiltering();
     }
-  }, [filters, initLayoutRef.current]);
+  }, [filters, charts]);
+
+  useEffect(() => {
+    if (!filterLoading && filters && hasRunInitialFiltering.current) {
+      _runFiltering();
+    }
+  }, [filters]);
 
   useEffect(() => {
     if (variables?.[params.projectId] && initLayoutRef.current) {
       _checkVariablesForFilters(variables[params.projectId]);
     }
-  }, [variables]);
+  }, [variables, initLayoutRef.current]);
 
   useEffect(() => {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
@@ -278,12 +286,10 @@ function ProjectDashboard(props) {
     if (!variables?.[params.projectId]) return;
 
     setFilterLoading(true);
-    setTimeout(() => {
-      _onFilterCharts(currentFilters)
-        .then(() => {
-          _checkVariablesForFilters(variables[params.projectId]);
-        });
-    }, 500);
+    _onFilterCharts(currentFilters)
+      .then(() => {
+        _checkVariablesForFilters(variables[params.projectId]);
+      });
   };
 
   const _throttleRefreshes = (refreshes, index) => {
