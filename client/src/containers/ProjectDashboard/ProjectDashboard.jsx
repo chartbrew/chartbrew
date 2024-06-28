@@ -275,6 +275,8 @@ function ProjectDashboard(props) {
   };
 
   const _runFiltering = (currentFilters = filters) => {
+    if (!variables?.[params.projectId]) return;
+
     setFilterLoading(true);
     setTimeout(() => {
       _onFilterCharts(currentFilters)
