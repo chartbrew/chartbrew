@@ -44,8 +44,8 @@ function ChartFilters(props) {
     });
   };
 
-  const _onOptionSelected = (value, condition) => {
-    if (!value) onClearFilter(condition);
+  const _onOptionSelected = (value, condition, clear = false) => {
+    if (clear) onClearFilter(condition);
     else onAddFilter({ ...condition, value });
   };
 
@@ -192,7 +192,7 @@ function ChartFilters(props) {
                       <Button
                         variant="light"
                         isIconOnly
-                        onClick={() => _onOptionSelected("", condition)}
+                        onClick={() => _onOptionSelected("", condition, true)}
                         size={size}
                       >
                         <LuX />
@@ -222,7 +222,7 @@ function ChartFilters(props) {
                       <Button
                         variant="light"
                         isIconOnly
-                        onClick={() => _onOptionSelected("", condition)}
+                        onClick={() => _onOptionSelected("", condition, true)}
                         size={size}
                       >
                         <LuX />
