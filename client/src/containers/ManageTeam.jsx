@@ -74,7 +74,7 @@ function ManageTeam(props) {
     return (
       <Container size="sm" justify="center" style={{ paddingTop: 100 }}>
         <Row justify="center" align="center">
-          <CircularProgress size="lg">Loading your team</CircularProgress>
+          <CircularProgress aria-label="Loading your team" size="lg">Loading your team</CircularProgress>
         </Row>
       </Container>
     );
@@ -94,6 +94,7 @@ function ManageTeam(props) {
               selectionMode="single"
               variant="faded"
               className="p-0"
+              aria-label="Select a team option"
             >
               <ListboxSection title="Manage the team" className="p-0" classNames={{ heading: "p-0 text-sm" }}>
                 {_canAccess("teamOwner") && (

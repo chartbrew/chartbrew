@@ -216,7 +216,7 @@ function MysqlConnectionForm(props) {
   };
 
   if (editConnection && !connection.id) {
-    return <CircularProgress />;
+    return <CircularProgress aria-label="Loading connection" />;
   }
 
   return (

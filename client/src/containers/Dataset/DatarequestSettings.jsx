@@ -247,6 +247,7 @@ function DatarequestSettings(props) {
               selectedKeys={[`${dataset?.main_dr_id}`]}
               onSelectionChange={(keys) => _onChangeMainSource(keys.currentKey)}
               selectionMode="single"
+              aria-label="Select a main source"
             >
               {dataRequests.map((request) => (
                 <SelectItem
@@ -298,6 +299,7 @@ function DatarequestSettings(props) {
                     selectionMode="single"
                     color="primary"
                     isDisabled
+                    aria-label="Select a source"
                   >
                     {_getAllowedDataRequests(index).map((request) => (
                       <SelectItem
@@ -340,6 +342,7 @@ function DatarequestSettings(props) {
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { join_id: parseInt(keys.currentKey, 10) })}
                     selectionMode="single"
                     color="secondary"
+                    aria-label="Select a source"
                   >
                     {dataRequests.map((request) => (
                       <SelectItem
@@ -377,6 +380,7 @@ function DatarequestSettings(props) {
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { dr_field: keys.currentKey })}
                     selectionMode="single"
                     color="primary"
+                    aria-label="Select a field"
                   >
                     {_getFieldOptions(join.key, "dr_id").map((f) => (
                       <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>
@@ -398,6 +402,7 @@ function DatarequestSettings(props) {
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { join_field: keys.currentKey })}
                     selectionMode="single"
                     color="secondary"
+                    aria-label="Select a field"
                   >
                     {_getFieldOptions(join.key, "join_id").map((f) => (
                       <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>

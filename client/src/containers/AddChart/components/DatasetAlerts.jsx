@@ -360,6 +360,7 @@ function DatasetAlerts(props) {
                   selectedKeys={[newAlert.type]}
                   onSelectionChange={(keys) => setNewAlert({ ...newAlert, type: keys.currentKey })}
                   selectionMode="single"
+                  aria-label="Select an alert type"
                 >
                   {ruleTypes.map((rule) => (
                     <SelectItem key={rule.value}>
@@ -549,6 +550,7 @@ function DatasetAlerts(props) {
                       selectedKeys={[timeoutUnit]}
                       onSelectionChange={(keys) => setTimeoutUnit(keys.currentKey)}
                       selectionMode="single"
+                      aria-label="Select a time unit"
                     >
                       {timePeriods.map((period) => (
                         <SelectItem key={period.value}>

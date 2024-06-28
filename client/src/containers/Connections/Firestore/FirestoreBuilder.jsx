@@ -632,6 +632,7 @@ function FirestoreBuilder(props) {
               selectionMode="single"
               label="Direction"
               size="sm"
+              aria-label="Select a direction"
             >
               <SelectItem key="desc" textValue="Descending">
                 Descending
@@ -881,6 +882,7 @@ function Conditions(props) {
                 onSelectionChange={(keys) => updateCondition(condition.id, keys.currentKey, "field")}
                 label="Field"
                 placeholder="Select a field"
+                aria-label="Select a field"
               >
                 {fieldOptions.map((option) => (
                   <SelectItem
@@ -905,6 +907,7 @@ function Conditions(props) {
                 selectionMode="single"
                 label="Operator"
                 placeholder="Select an operator"
+                aria-label="Select an operator"
               >
                 {operators.map((option) => (
                   <SelectItem key={option.value} textValue={option.key}>

@@ -85,7 +85,7 @@ function Variables() {
       </div>
 
       <Spacer y={4} />
-      <Table shadow="none" className="border-1 border-divider rounded-lg">
+      <Table shadow="none" className="border-1 border-divider rounded-lg" aria-label="Variables">
         <TableHeader>
           <TableColumn key="name">Name</TableColumn>
           <TableColumn key="createdAt">Created At</TableColumn>

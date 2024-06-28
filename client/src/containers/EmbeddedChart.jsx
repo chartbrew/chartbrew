@@ -252,7 +252,7 @@ function EmbeddedChart() {
         </Helmet>
         <div className="container mx-auto pt-10">
           <Row justify="center" align="center">
-            <CircularProgress color="default" />
+            <CircularProgress color="default" aria-label="Loading chart" />
           </Row>
         </div>
       </>
@@ -295,7 +295,7 @@ function EmbeddedChart() {
               )}
               {dataLoading && (
                 <>
-                  <CircularProgress classNames={{ svg: "w-4 h-4" }} />
+                  <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
                   <Spacer x={1} />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>

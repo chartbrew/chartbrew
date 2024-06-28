@@ -412,7 +412,7 @@ function ChartPreview(props) {
             {chartLoading && (
               <>
                 <Row>
-                  <CircularProgress size="lg" />
+                  <CircularProgress size="lg" aria-label="Loading chart data" />
                 </Row>
                 <Row>
                   <Text b>Loading chart data...</Text>

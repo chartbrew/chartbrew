@@ -345,6 +345,7 @@ function CampaignsQuery(props) {
           selectedKeys={[config.campaignId]}
           selectionMode="single"
           isLoading={loading}
+          aria-label="Select a campaign"
         >
           {campaigns.map((campaign) => (
             <SelectItem
@@ -392,6 +393,7 @@ function CampaignsQuery(props) {
             onSelectionChange={(keys) => _onSelectAction(keys.currentKey)}
             selectedKeys={[config.actionId]}
             selectionMode="single"
+            aria-label="Select an action"
           >
             {availableActions.map((action) => (
               <SelectItem key={action.key} textValue={action.text}>
@@ -457,6 +459,7 @@ function CampaignsQuery(props) {
               onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
               selectedKeys={[config.period]}
               selectionMode="single"
+              aria-label="Select a period"
             >
               {periodOptions.map((period) => (
                 <SelectItem key={period.key} textValue={period.text}>
@@ -470,6 +473,7 @@ function CampaignsQuery(props) {
               onSelectionChange={(keys) => _onChangeSteps(keys.currentKey)}
               selectedKeys={[config.steps]}
               selectionMode="single"
+              aria-label="Select the number of steps"
             >
               {stepsOptions.map((steps) => (
                 <SelectItem key={steps.key} textValue={steps.text}>
@@ -503,6 +507,7 @@ function CampaignsQuery(props) {
                 }}
                 selectedKeys={config.type || []}
                 selectionMode="multiple"
+                aria-label="Select message types"
               >
                 {messageOptions.map((message) => (
                   <SelectItem key={message.key} textValue={message.text}>
@@ -563,6 +568,7 @@ function CampaignsQuery(props) {
                           onSelectionChange={(keys) => setConfig({ ...config, selectedLink: keys.currentKey })}
                           selectedKeys={[config.selectedLink]}
                           selectionMode="single"
+                          aria-label="Select a link"
                         >
                           {availableLinks.map((link) => (
                             <SelectItem key={link.key} textValue={link.text}>
@@ -630,6 +636,7 @@ function CampaignsQuery(props) {
               onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
               selectedKeys={[config.period]}
               selectionMode="single"
+              aria-label="Select a period"
             >
               {periodOptions.map((period) => (
                 <SelectItem key={period.value} textValue={period.text}>
@@ -662,6 +669,7 @@ function CampaignsQuery(props) {
               }}
               selectedKeys={config.type || []}
               selectionMode="multiple"
+              aria-label="Select message types"
             >
               {messageOptions.map((message) => (
                 <SelectItem key={message.key} textValue={message.text}>

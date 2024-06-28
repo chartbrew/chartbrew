@@ -416,7 +416,11 @@ function SqlBuilder(props) {
           {activeResultsTab === "table" && (
             <div>
               <div className="w-full">
-                <Table isStriped className="sqlbuilder-result-tut" aria-label="Resuts table">
+                <Table
+                  isStriped
+                  className="sqlbuilder-result-tut"
+                  aria-label="Results table"
+                >
                   {_getResultHeaderRows()?.length > 0 && (
                     <TableHeader>
                       {_getResultHeaderRows().map((h) => (

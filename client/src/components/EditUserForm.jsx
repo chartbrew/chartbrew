@@ -376,7 +376,7 @@ function EditUserForm() {
       )}
 
       {authMethods?.length > 0 && (
-        <Table>
+        <Table aria-label="Two-factor authentication methods">
           <TableHeader>
             <TableColumn key="method" align="center">Method</TableColumn>
             <TableColumn key="isEnabled" align="center">Enabled</TableColumn>

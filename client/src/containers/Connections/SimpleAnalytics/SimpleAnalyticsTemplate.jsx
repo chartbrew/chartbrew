@@ -205,6 +205,7 @@ function SimpleAnalyticsTemplate(props) {
               value={
                 availableConnections.find((c) => c.value === selectedConnection)?.text
               }
+              aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
                 <SelectItem key={connection.key}>

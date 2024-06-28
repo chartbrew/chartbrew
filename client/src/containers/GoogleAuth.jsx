@@ -80,7 +80,7 @@ function GoogleAuth() {
     >
       {loading && (
         <Row>
-          <CircularProgress>Authenticating with Google...</CircularProgress>
+          <CircularProgress aria-label="Authenticating with Google">Authenticating with Google...</CircularProgress>
         </Row>
       )}
 

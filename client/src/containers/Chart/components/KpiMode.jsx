@@ -95,6 +95,7 @@ function KpiMode(props) {
               background: color
             }
           }}
+          aria-label="Goal progress"
         />
         <Row justify="space-between">
           <Text size="sm">{`${((value / max) * 100).toFixed()}%`}</Text>

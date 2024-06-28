@@ -254,7 +254,7 @@ function DatarequestModal(props) {
           {initialising && (
             <>
               <Spacer x={1} />
-              <CircularProgress size="xl" />
+              <CircularProgress size="xl" aria-label="Loading dataset data" />
             </>
           )}
         </ModalHeader>

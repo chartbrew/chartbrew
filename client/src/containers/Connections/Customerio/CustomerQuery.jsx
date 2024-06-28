@@ -223,7 +223,7 @@ function CustomerQuery(props) {
     return (
       <Container>
         <Row>
-          <CircularProgress size="xl" />
+          <CircularProgress size="xl" aria-label="Loading segments" />
         </Row>
       </Container>
     );
@@ -241,6 +241,7 @@ function CustomerQuery(props) {
             onSelectionChange={(keys) => _onChangeOperation(keys.currentKey)}
             selectedKeys={[mainOperation]}
             selectionMode="single"
+            aria-label="Select an operation"
           >
             {customerOperations.map((operation) => (
               <SelectItem key={operation.key} textValue={operation.text}>
@@ -438,6 +439,7 @@ function CustomerQuery(props) {
             selectedKeys={[segmentConfig.operation || "in"]}
             selectionMode="single"
             defaultSelectedKeys={["in"]}
+            aria-label="Select an operation"
           >
             {filterOperations.map((operation) => (
               <SelectItem key={operation.value} textValue={operation.text}>
@@ -464,6 +466,7 @@ function CustomerQuery(props) {
                 </Chip>
               </div>
             )}
+            aria-label="Select segments"
           >
             {segments.map((segment) => (
               <SelectItem
@@ -523,6 +526,7 @@ function CustomerQuery(props) {
             )}
             defaultSelectedKeys={["eq"]}
             labelPlacement="outsite"
+            aria-label="Select an operation"
           >
             {attributeOperations.map((operation) => (
               <SelectItem key={operation.value} textValue={operation.text}>

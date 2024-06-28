@@ -174,7 +174,7 @@ function TeamMembers(props) {
   if (!team) {
     return (
       <Container size="sm" justify="center">
-        <CircularProgress size="lg" />
+        <CircularProgress size="lg" aria-label="Loading team" />
       </Container>
     );
   }
@@ -196,7 +196,7 @@ function TeamMembers(props) {
         <Spacer y={2} />
 
         {_canAccess("teamAdmin") && (
-          <Table shadow="none" isStriped>
+          <Table shadow="none" isStriped aria-label="Team members">
             <TableHeader>
               <TableColumn key="member">Member</TableColumn>
               <TableColumn key="role">Role</TableColumn>
@@ -257,7 +257,7 @@ function TeamMembers(props) {
                             <>
                               <Tooltip content="Change member role">
                                 <div>
-                                  <Dropdown>
+                                  <Dropdown aria-label="Select a role">
                                     <DropdownTrigger>
                                       <Button variant="light" auto isIconOnly size="sm">
                                         <LuContact />

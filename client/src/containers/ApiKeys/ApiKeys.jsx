@@ -89,7 +89,7 @@ function ApiKeys(props) {
       <Spacer y={4} />
       {loading && (
         <Row justify="center">
-          <CircularProgress>Loading keys...</CircularProgress>
+          <CircularProgress aria-label="Loading keys">Loading keys...</CircularProgress>
         </Row>
       )}
       <Row>
@@ -103,7 +103,7 @@ function ApiKeys(props) {
       </Row>
       <Spacer y={2} />
 
-      <Table shadow={"none"}>
+      <Table shadow={"none"} aria-label="API keys">
         <TableHeader>
           <TableColumn key="token">API Tokens list</TableColumn>
           <TableColumn key="created" hideHeader align="flex-end">Date created</TableColumn>

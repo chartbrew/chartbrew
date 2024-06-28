@@ -176,6 +176,7 @@ function CustomTemplateForm(props) {
                       variant="bordered"
                       labelPlacement="outside"
                       onKeyDown={(e) => e.continuePropagation()}
+                      aria-label="Select connection"
                     >
                       {connections.map((c) => (
                         <AutocompleteItem

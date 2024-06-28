@@ -146,7 +146,7 @@ function ProjectBoard(props) {
       <Container style={styles.container}>
         <Spacer y={10} />
         <Row align="center" justify="center">
-          <CircularProgress color="primary" size="xl" />
+          <CircularProgress color="primary" size="xl" aria-label="Loading the dashboard" />
         </Row>
         <Spacer y={3} />
         <Row align="center" justify="center">

@@ -162,6 +162,7 @@ function DatasetFilters(props) {
                 onSelectionChange={(key) => _updateCondition(condition.id, key, "field")}
                 labelPlacement="outside"
                 size="sm"
+                aria-label="Field"
               >
                 {fieldOptions.filter((f) => !f.isObject).map((field) => (
                   <AutocompleteItem
@@ -177,7 +178,7 @@ function DatasetFilters(props) {
               </Autocomplete>
               <Spacer y={1} />
               <Row warp="wrap" className={"flex gap-2"} align="center">
-                <Dropdown>
+                <Dropdown aria-label="Select an operator">
                   <DropdownTrigger>
                     <Input
                       value={

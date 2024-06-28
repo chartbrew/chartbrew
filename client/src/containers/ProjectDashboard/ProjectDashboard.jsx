@@ -593,7 +593,7 @@ function ProjectDashboard(props) {
                             <Text>
                               {"Users with project access"}
                             </Text>
-                            <Listbox>
+                            <Listbox aria-label="Select a user">
                               {projectMembers.map((member) => (
                                 <ListboxItem
                                   key={member.id}

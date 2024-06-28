@@ -655,6 +655,7 @@ function ApiBuilder(props) {
               selectedKeys={[apiRequest.method]}
               selectionMode="single"
               labelPlacement="ouside"
+              aria-label="Select a method"
             >
               {methods.map((method) => (
                 <SelectItem key={method.value}>

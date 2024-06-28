@@ -98,6 +98,7 @@ function ApiPagination(props) {
           selectionMode="single"
           label="Pagination type"
           isDisabled={!pagination}
+          aria-label="Pagination type"
         >
           {templates.map((t) => (
             <SelectItem key={t.value} textValue={t.text}>
@@ -190,6 +191,7 @@ function ApiPagination(props) {
                 label="Select a field"
                 placeholder="Select a field"
                 isDisabled={!result || !pagination}
+                aria-label="Select a field"
               >
                 {fieldOptions.map((o) => (
                   <SelectItem key={o.key} textValue={o.text}>

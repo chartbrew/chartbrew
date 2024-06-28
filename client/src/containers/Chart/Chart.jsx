@@ -471,7 +471,7 @@ function Chart(props) {
                     )}
                     {(chartLoading || chart.loading) && (
                       <>
-                        <CircularProgress classNames={{ svg: "w-4 h-4" }} />
+                        <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
                         <Spacer x={1} />
                         <span className="text-[10px] text-default-500">{"Updating..."}</span>
                       </>
@@ -540,7 +540,7 @@ function Chart(props) {
                 </div>
               )}
               {projectId && !print && (
-                <Dropdown>
+                <Dropdown aria-label="Select a chart option">
                   <DropdownTrigger>
                     <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
                       <LuMoreVertical />
@@ -548,7 +548,7 @@ function Chart(props) {
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <LuRefreshCw />}
+                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       onClick={_onGetChartData}
                     >
                       Refresh chart
@@ -578,7 +578,7 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" /> : <LuFileDown />}
+                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onClick={_onExport}
                     >
                       Export to Excel
@@ -616,7 +616,7 @@ function Chart(props) {
               )}
 
               {showExport && (
-                <Dropdown>
+                <Dropdown aria-label="Select an export option">
                   <DropdownTrigger>
                     <LinkNext color="foreground">
                       <LuMoreHorizontal size={24} />
@@ -624,7 +624,7 @@ function Chart(props) {
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" /> : <LuFileDown />}
+                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onClick={() => _onPublicExport(chart)}
                       textValue="Export to Excel"
                     >
@@ -795,6 +795,7 @@ function Chart(props) {
                     setUpdateFrequency(parseInt(key[0].value));
                   }}
                   variant="bordered"
+                  aria-label="Select a preset"
                 >
                     <SelectItem key="0" onClick={() => setUpdateFrequency(0)}>
                       {"Don't auto update"}
@@ -849,7 +850,7 @@ function Chart(props) {
                   disableAnimation
                   min={updateFreqType === "seconds" ? 10 : 1}
                 />
-                <Dropdown>
+                <Dropdown aria-label="Select a time unit">
                   <DropdownTrigger>
                     <Button
                       variant="bordered"
@@ -945,7 +946,7 @@ function Chart(props) {
                   {chart.shareable ? "Disable sharing" : "Enable sharing"}
                 </Text>
                 <Spacer x={0.5} />
-                {shareLoading && (<CircularProgress size="sm" />)}
+                {shareLoading && (<CircularProgress size="sm" aria-label="Sharing chart" />)}
               </Row>
               <Spacer y={2} />
               {chart.public && !chart.shareable && (
@@ -992,7 +993,7 @@ function Chart(props) {
                 </>
               )}
               {shareLoading && (
-                <Row><CircularProgress /></Row>
+                <Row><CircularProgress aria-label="Creating sharing code" /></Row>
               )}
 
               {(chart.shareable || chart.public)

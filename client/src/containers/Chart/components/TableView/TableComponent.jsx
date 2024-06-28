@@ -59,6 +59,7 @@ function TableComponent(props) {
         && (
         <>
           <Table
+            aria-label="Table data"
             {...getTableProps()}
             isStriped
             shadow="none"
@@ -75,7 +76,7 @@ function TableComponent(props) {
                     size="sm"
                   />
                   <Spacer x={0.5} />
-                  <Dropdown>
+                  <Dropdown aria-label="Select a page size">
                     <DropdownTrigger>
                       <Button variant="bordered" size="sm" endContent={<LuChevronDown size={18} />}>
                         {paginationOptions.find((option) => option.value === pageSize).text}

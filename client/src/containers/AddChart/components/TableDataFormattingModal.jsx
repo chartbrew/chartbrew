@@ -156,6 +156,7 @@ function TableDataFormattingModal(props) {
               selectedKeys={[dataType]}
               onSelectionChange={(keys) => setDataType(keys.currentKey)}
               selectionMode="single"
+              aria-label="Select a data type"
             >
               {dataTypes.map((d) => (
                 <SelectItem key={d.value} textValue={d.text}>
@@ -179,6 +180,7 @@ function TableDataFormattingModal(props) {
                 selectedKeys={[formatValue]}
                 onSelectionChange={(keys) => setFormatValue(keys.currentKey)}
                 selectionMode="single"
+                aria-label="Select a date format"
               >
                 {dateFormats.map((d) => (
                   <SelectItem key={d.value} textValue={d.text}>

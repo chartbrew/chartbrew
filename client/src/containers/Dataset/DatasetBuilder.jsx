@@ -365,6 +365,7 @@ function DatasetBuilder(props) {
           selectedKey={dataset.xAxis}
           onSelectionChange={(key) => _onUpdateDataset({ xAxis: key })}
           isLoading={loadingFields}
+          aria-label="Select a dimension"
         >
           {_filterOptions("x").map((option) => (
             <AutocompleteItem
@@ -389,6 +390,7 @@ function DatasetBuilder(props) {
           selectedKey={dataset.yAxis}
           onSelectionChange={(key) => _onUpdateDataset({ yAxis: key })}
           isLoading={loadingFields}
+          aria-label="Select a metric"
         >
           {_getYFieldOptions().map((option) => (
             <AutocompleteItem
@@ -419,6 +421,7 @@ function DatasetBuilder(props) {
                 || "Operation"}
             </Text>
           )}
+          aria-label="Select an operation"
         >
           {operations.map((option) => (
             <SelectItem key={option.value}>
@@ -438,6 +441,7 @@ function DatasetBuilder(props) {
             selectedKey={dataset.dateField}
             onSelectionChange={(key) => _onUpdateDataset({ dateField: key })}
             isLoading={loadingFields}
+            aria-label="Select a date field used for filtering"
           >
             {_getDateFieldOptions().map((option) => (
               <AutocompleteItem

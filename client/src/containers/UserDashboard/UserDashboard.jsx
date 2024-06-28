@@ -441,7 +441,7 @@ function UserDashboard(props) {
                 justify={"space-between"}
               >
                 <Row justify="flex-start" align="center" className={"w-full"}>
-                  <Dropdown>
+                  <Dropdown aria-label="Select a team option">
                     <DropdownTrigger>
                       <Button
                         startContent={<LuUsers2 size={28} />}
@@ -796,7 +796,7 @@ function UserDashboard(props) {
                     />
                   </Row>
                   <Spacer y={4} />
-                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl" aria-label="Connection list">
                     <TableHeader>
                       <TableColumn key="name">Connection</TableColumn>
                       <TableColumn key="tags" className="tutorial-tags">
@@ -867,7 +867,7 @@ function UserDashboard(props) {
                           <TableCell key="actions">
                             {_canAccess("teamAdmin", team.TeamRoles) && (
                               <Row justify="flex-end" align="center">
-                                <Dropdown>
+                                <Dropdown aria-label="Select a connection option">
                                   <DropdownTrigger>
                                     <Button
                                       isIconOnly
@@ -941,7 +941,7 @@ function UserDashboard(props) {
                     </Switch>
                   </Row>
                   <Spacer y={4} />
-                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl" aria-label="Dataset list">
                     <TableHeader>
                       <TableColumn key="name">Dataset name</TableColumn>
                       <TableColumn key="connections" textValue="Connections" align="center" justify="center">
@@ -1031,7 +1031,7 @@ function UserDashboard(props) {
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
-                              <Dropdown>
+                              <Dropdown aria-label="Select a dataset option">
                                 <DropdownTrigger>
                                   <Button
                                     isIconOnly
@@ -1161,7 +1161,7 @@ function UserDashboard(props) {
               </div>
               {fetchingRelatedCharts && (
                 <div className="flex flex-row items-center gap-1">
-                  <CircularProgress size="sm" />
+                  <CircularProgress size="sm" aria-label="Checking related charts" />
                   <Text className={"italic"}>Checking related charts...</Text>
                 </div>
               )}

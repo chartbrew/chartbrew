@@ -158,7 +158,7 @@ function TableConfiguration(props) {
                         </Link>
                       )}
                       endContent={dataset?.configuration ? (
-                        <Dropdown>
+                        <Dropdown aria-label="Select a data formatting option">
                           <DropdownTrigger>
                             <Link
                               className="flex items-center"

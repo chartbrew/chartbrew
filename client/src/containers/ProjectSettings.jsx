@@ -177,6 +177,7 @@ function ProjectSettings(props) {
           }}
           selectedKey={projectTimezone || project.timezone}
           className="max-w-md"
+          aria-label="Timezone"
         >
           {timezones.map((timezone) => (
             <AutocompleteItem key={timezone} textValue={timezone}>

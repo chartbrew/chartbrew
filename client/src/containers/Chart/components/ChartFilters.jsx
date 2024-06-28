@@ -137,6 +137,7 @@ function ChartFilters(props) {
                     }}
                     allowsCustomValue
                     size={size}
+                    aria-label="Filter"
                   >
                     {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
                       <AutocompleteItem key={opt.value}>

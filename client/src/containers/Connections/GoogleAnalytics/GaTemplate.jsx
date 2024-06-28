@@ -320,6 +320,7 @@ function GaTemplate(props) {
               selectionMode="single"
               variant="bordered"
               fullWidth
+              aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
                 <SelectItem key={connection.key}>
@@ -351,6 +352,7 @@ function GaTemplate(props) {
                     selectedKeys={[configuration.accountId]}
                     onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
                     selectionMode="single"
+                    aria-label="Select an account"
                   >
                     {accountOptions.map((option) => (
                       <SelectItem key={option.key}>
@@ -369,6 +371,7 @@ function GaTemplate(props) {
                     selectedKeys={[configuration.propertyId]}
                     onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
                     selectionMode="single"
+                    aria-label="Select a property"
                   >
                     {propertyOptions.map((option) => (
                       <SelectItem key={option.key}>

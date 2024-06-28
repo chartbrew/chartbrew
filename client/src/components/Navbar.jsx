@@ -196,7 +196,7 @@ function NavbarContainer() {
               </span>
             </LinkNext>
           </NavbarItem>
-          <Dropdown>
+          <Dropdown aria-label="Select a help option">
             <NavbarItem>
               <DropdownTrigger>
                 <Button
@@ -229,7 +229,7 @@ function NavbarContainer() {
             </DropdownMenu>
           </Dropdown>
 
-          <Dropdown>
+          <Dropdown aria-label="Select a user option">
             <NavbarItem>
               <DropdownTrigger>
                 <div>

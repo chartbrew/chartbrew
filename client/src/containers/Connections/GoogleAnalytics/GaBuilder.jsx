@@ -429,6 +429,7 @@ function GaBuilder(props) {
                 isLoading={collectionsLoading}
                 onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
                 selectionMode="single"
+                aria-label="Select an account"
               >
                 {accountOptions.map((account) => (
                   <SelectItem key={account.value} textValue={account.text}>
@@ -447,6 +448,7 @@ function GaBuilder(props) {
                 label="Property"
                 onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
                 selectionMode="single"
+                aria-label="Select a property"
               >
                 {propertyOptions.map((property) => (
                   <SelectItem key={property.value} textValue={property.text}>
@@ -480,6 +482,7 @@ function GaBuilder(props) {
                 color={formErrors.metrics ? "danger" : "default"}
                 onSelectionChange={(key) => setConfiguration({ ...configuration, metrics: key })}
                 selectionMode="single"
+                aria-label="Select a metric"
               >
                 {metricsOptions.map((item) => {
                   return (
@@ -513,6 +516,7 @@ function GaBuilder(props) {
                 placeholder="Select a dimension"
                 errorMessage={formErrors.dimensions}
                 color={formErrors.dimensions ? "danger" : "default"}
+                aria-label="Select a dimension"
               >
                 {dimensionsOptions.map((item) => {
                   return (

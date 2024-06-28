@@ -207,6 +207,7 @@ function ChartMogulTemplate(props) {
               selectionMode="single"
               variant="bordered"
               className="max-w-[400px]"
+              aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
                 <SelectItem key={connection.key}>

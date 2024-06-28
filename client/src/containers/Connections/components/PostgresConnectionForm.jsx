@@ -406,6 +406,7 @@ function PostgresConnectionForm(props) {
                 size="sm"
                 selectionMode="single"
                 disallowEmptySelection
+                aria-label="Select an SSL mode"
               >
                 <SelectItem key="require">{"Require"}</SelectItem>
                 <SelectItem key="disable">{"Disable"}</SelectItem>

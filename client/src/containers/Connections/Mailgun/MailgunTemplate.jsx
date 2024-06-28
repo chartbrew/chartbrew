@@ -239,6 +239,7 @@ function MailgunTemplate(props) {
               variant="bordered"
               selectionMode="single"
               selectedKeys={[selectedConnection]}
+              aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
                 <SelectItem key={connection.key}>
@@ -305,6 +306,7 @@ function MailgunTemplate(props) {
               onSelectionChange={(keys) => setConnection({ ...connection, domainLocation: keys.currentKey })}
               selectionMode="single"
               className="max-w-[400px]"
+              aria-label="Select a domain location"
             >
               {countryOptions.map((location) => (
                 <SelectItem key={location.key}>

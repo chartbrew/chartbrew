@@ -167,7 +167,7 @@ function WebhookIntegrations(props) {
         <Spacer y={2} />
         {integrations.length > 0 && (
           <Row>
-            <Table shadow={"none"}>
+            <Table shadow={"none"} aria-label="Webhook integrations">
               <TableHeader>
                 <TableColumn key="name">Name</TableColumn>
                 <TableColumn key="url">URL</TableColumn>
