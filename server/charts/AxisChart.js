@@ -8,6 +8,8 @@ const PieChart = require("./PieChart");
 const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
 
+const checkNumbersOnlyAndLength = /^\d{10,13}$/;
+
 momentObj.suppressDeprecationWarnings = true;
 
 const parser = new FormulaParser();
@@ -760,15 +762,11 @@ class AxisChart {
     let pairedData = [];
     data.forEach((item, index) => {
       let xItem;
-      if (
-        item
-        && parseInt(item, 10).toString() === item.toString()
-        && item.toString().length === 10
-      ) {
+      if (item && checkNumbersOnlyAndLength.test(item)) {
         if (this.timezone) {
-          xItem = this.moment(item, "X");
+          xItem = this.moment(item, item.length === 10 ? "X" : "x");
         } else {
-          xItem = momentObj.utc(item, "X");
+          xItem = momentObj.utc(item, item.length === 10 ? "X" : "x");
         }
       } else if (item) {
         if (this.timezone) {
