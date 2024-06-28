@@ -140,7 +140,7 @@ function ChartFilters(props) {
                     aria-label="Filter"
                   >
                     {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
-                      <AutocompleteItem key={opt.value}>
+                      <AutocompleteItem key={opt.value} textValue={opt.text}>
                         {opt.text}
                       </AutocompleteItem>
                     ))}

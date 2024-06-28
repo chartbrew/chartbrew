@@ -242,7 +242,7 @@ function MailgunTemplate(props) {
               aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
-                <SelectItem key={connection.key}>
+                <SelectItem key={connection.key} textValue={connection.text}>
                   {connection.text}
                 </SelectItem>
               ))}
@@ -309,7 +309,7 @@ function MailgunTemplate(props) {
               aria-label="Select a domain location"
             >
               {countryOptions.map((location) => (
-                <SelectItem key={location.key}>
+                <SelectItem key={location.key} textValue={location.text}>
                   {location.text}
                 </SelectItem>
               ))}

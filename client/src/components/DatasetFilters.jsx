@@ -200,7 +200,7 @@ function DatasetFilters(props) {
                     selectionMode="single"
                   >
                     {operators.map((operator) => (
-                      <DropdownItem key={operator.value}>
+                      <DropdownItem key={operator.value} textValue={operator.text}>
                         {operator.text}
                       </DropdownItem>
                     ))}

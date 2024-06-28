@@ -363,7 +363,7 @@ function DatasetAlerts(props) {
                   aria-label="Select an alert type"
                 >
                   {ruleTypes.map((rule) => (
-                    <SelectItem key={rule.value}>
+                    <SelectItem key={rule.value} textValue={rule.label}>
                       {rule.label}
                     </SelectItem>
                   ))}
@@ -553,7 +553,7 @@ function DatasetAlerts(props) {
                       aria-label="Select a time unit"
                     >
                       {timePeriods.map((period) => (
-                        <SelectItem key={period.value}>
+                        <SelectItem key={period.value} textValue={period.label}>
                           {period.label}
                         </SelectItem>
                       ))}

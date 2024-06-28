@@ -658,7 +658,7 @@ function ApiBuilder(props) {
               aria-label="Select a method"
             >
               {methods.map((method) => (
-                <SelectItem key={method.value}>
+                <SelectItem key={method.value} textValue={method.text}>
                   {method.text}
                 </SelectItem>
               ))}

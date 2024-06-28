@@ -210,7 +210,7 @@ function CustomerioConnectionForm(props) {
             aria-label="Select a region"
           >
             {regionOptions.map((option) => (
-              <SelectItem key={option.value} startContent={option.flag === "eu" ? "🇪🇺" : "🇺🇸"}>
+              <SelectItem key={option.value} startContent={option.flag === "eu" ? "🇪🇺" : "🇺🇸"} textValue={option.text}>
                 {option.text}
               </SelectItem>
             ))}

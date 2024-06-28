@@ -363,7 +363,7 @@ function ChartSettings(props) {
             aria-label="Select a time interval"
           >
             {timeIntervalOptions.map((option) => (
-              <SelectItem key={option.value}>
+              <SelectItem key={option.value} textValue={option.text}>
                 {option.text}
               </SelectItem>
             ))}
@@ -547,7 +547,7 @@ function ChartSettings(props) {
             aria-label="Select the number of labels"
           >
             {xLabelOptions.map((option) => (
-              <SelectItem key={option.value}>
+              <SelectItem key={option.value} textValue={option.text}>
                 {option.text}
               </SelectItem>
             ))}

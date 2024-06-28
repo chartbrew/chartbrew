@@ -211,19 +211,19 @@ function NavbarContainer() {
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
-              <DropdownItem startContent={<TbBrandDiscord />} key="discord">
+              <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuBook />} key="tutorials">
+              <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">
                 <Text>{"Blog tutorials"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuCode2 />} key="documentation">
+              <DropdownItem startContent={<LuCode2 />} key="documentation" textValue="Documentation">
                 <Text>{"Documentation"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuGithub />} key="github">
+              <DropdownItem startContent={<LuGithub />} key="github" textValue="GitHub">
                 <Text>{"GitHub"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuSmile />} key="feedback">
+              <DropdownItem startContent={<LuSmile />} key="feedback" textValue="Feedback">
                 <Text>{"Feedback"}</Text>
               </DropdownItem>
             </DropdownMenu>
@@ -275,7 +275,7 @@ function NavbarContainer() {
                 </div>
               </DropdownItem>
 
-              <DropdownItem startContent={<LuLogOut />} onClick={() => dispatch(logout())}>
+              <DropdownItem startContent={<LuLogOut />} onClick={() => dispatch(logout())} textValue="Sign out">
                 Sign out
               </DropdownItem>
             </DropdownMenu>

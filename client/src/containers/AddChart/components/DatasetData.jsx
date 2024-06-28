@@ -842,7 +842,7 @@ function DatasetData(props) {
                   aria-label="Select an operation"
                 >
                   {operations.map((option) => (
-                    <SelectItem key={option.value}>
+                    <SelectItem key={option.value} textValue={option.text}>
                       {option.text}
                     </SelectItem>
                   ))}
@@ -1076,12 +1076,12 @@ function DatasetData(props) {
                                     </Link>
                                   </DropdownTrigger>
                                   <DropdownMenu variant="bordered">
-                                    <DropdownItem startContent={<LuSettings />}>
+                                    <DropdownItem startContent={<LuSettings />} textValue="Data formatting">
                                       <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
                                         <Text>Data formatting</Text>
                                       </Link>
                                     </DropdownItem>
-                                    <DropdownItem startContent={<LuPlus />}>
+                                    <DropdownItem startContent={<LuPlus />} textValue="Enable sum calculation">
                                       <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
                                         {dataset.configuration
                                           && dataset.configuration.sum === field.accessor
@@ -1300,7 +1300,7 @@ function DatasetData(props) {
                       selectionMode="single"
                     >
                       {operators.map((operator) => (
-                        <DropdownItem key={operator.value}>
+                        <DropdownItem key={operator.value} textValue={operator.text}>
                           {operator.text}
                         </DropdownItem>
                       ))}

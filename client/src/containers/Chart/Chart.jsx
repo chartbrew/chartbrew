@@ -550,6 +550,7 @@ function Chart(props) {
                     <DropdownItem
                       startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       onClick={_onGetChartData}
+                      textValue="Refresh chart"
                     >
                       Refresh chart
                     </DropdownItem>
@@ -557,6 +558,7 @@ function Chart(props) {
                       <DropdownItem
                         startContent={<LuSettings />}
                         onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
+                        textValue="Edit chart"
                       >
                         Edit chart
                       </DropdownItem>
@@ -566,6 +568,7 @@ function Chart(props) {
                         startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
                         onClick={onEditLayout}
                         showDivider
+                        textValue={editingLayout ? "Complete layout" : "Edit layout"}
                       >
                         <span className={editingLayout ? "text-primary" : ""}>
                           {editingLayout ? "Complete layout" : "Edit layout"}
@@ -573,18 +576,19 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal}>
+                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal} textValue="Auto-update">
                         Auto-update
                       </DropdownItem>
                     )}
                     <DropdownItem
                       startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onClick={_onExport}
+                      textValue="Export to Excel"
                     >
                       Export to Excel
                     </DropdownItem>
                     {!chart.draft && _canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuTv2 />} onClick={_onChangeReport}>
+                      <DropdownItem startContent={<LuTv2 />} onClick={_onChangeReport} textValue={chart.onReport ? "Remove from report" : "Add to report"}>
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
@@ -592,22 +596,23 @@ function Chart(props) {
                       <DropdownItem
                         startContent={chart.public ? <LuUnlock /> : <LuLock />}
                         onClick={_onPublicConfirmation}
+                        textValue={chart.public ? "Make private" : "Make public"}
                       >
                         {"Make private"}
                       </DropdownItem>
                     )}
                     {!chart.draft && (
-                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed} showDivider>
+                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed} showDivider textValue="Embed & Share">
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.shareable && (
-                      <DropdownItem startContent={<LuLink />} onClick={_onOpenEmbed}>
+                      <DropdownItem startContent={<LuLink />} onClick={_onOpenEmbed} textValue="Open in a new tab">
                         {"Open in a new tab"}
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuTrash />} color="danger" onClick={_onDeleteChartConfirmation}>
+                      <DropdownItem startContent={<LuTrash />} color="danger" onClick={_onDeleteChartConfirmation} textValue="Delete chart">
                         Delete chart
                       </DropdownItem>
                     )}
@@ -797,40 +802,40 @@ function Chart(props) {
                   variant="bordered"
                   aria-label="Select a preset"
                 >
-                    <SelectItem key="0" onClick={() => setUpdateFrequency(0)}>
+                    <SelectItem key="0" onClick={() => setUpdateFrequency(0)} textValue="Don't auto update">
                       {"Don't auto update"}
                     </SelectItem>
-                    <SelectItem key="60" onClick={() => setUpdateFrequency(60)}>
+                    <SelectItem key="60" onClick={() => setUpdateFrequency(60)} textValue="Every minute">
                       Every minute
                     </SelectItem>
-                    <SelectItem key="300" onClick={() => setUpdateFrequency(300)}>
+                      <SelectItem key="300" onClick={() => setUpdateFrequency(300)} textValue="Every 5 minutes">
                       Every 5 minutes
                     </SelectItem>
-                    <SelectItem key="900" onClick={() => setUpdateFrequency(900)}>
+                    <SelectItem key="900" onClick={() => setUpdateFrequency(900)} textValue="Every 15 minutes">
                       Every 15 minutes
                     </SelectItem>
-                    <SelectItem key="1800" onClick={() => setUpdateFrequency(1800)}>
+                    <SelectItem key="1800" onClick={() => setUpdateFrequency(1800)} textValue="Every 30 minutes">
                       Every 30 minutes
                     </SelectItem>
-                    <SelectItem key="3600" onClick={() => setUpdateFrequency(3600)}>
+                    <SelectItem key="3600" onClick={() => setUpdateFrequency(3600)} textValue="Every hour">
                       Every hour
                     </SelectItem>
-                    <SelectItem key="10800" onClick={() => setUpdateFrequency(10800)}>
+                    <SelectItem key="10800" onClick={() => setUpdateFrequency(10800)} textValue="Every 3 hours">
                       Every 3 hours
                     </SelectItem>
-                    <SelectItem key="21600" onClick={() => setUpdateFrequency(21600)}>
+                    <SelectItem key="21600" onClick={() => setUpdateFrequency(21600)} textValue="Every 6 hours">
                       Every 6 hours
                     </SelectItem>
-                    <SelectItem key="43200" onClick={() => setUpdateFrequency(43200)}>
+                    <SelectItem key="43200" onClick={() => setUpdateFrequency(43200)} textValue="Every 12 hours">
                       Every 12 hours
                     </SelectItem>
-                    <SelectItem key="86400" onClick={() => setUpdateFrequency(86400)}>
+                    <SelectItem key="86400" onClick={() => setUpdateFrequency(86400)} textValue="Every day">
                       Every day
                     </SelectItem>
-                    <SelectItem key="604800" onClick={() => setUpdateFrequency(604800)}>
+                    <SelectItem key="604800" onClick={() => setUpdateFrequency(604800)} textValue="Every week">
                       Every week
                     </SelectItem>
-                    <SelectItem key="2592000" onClick={() => setUpdateFrequency(2592000)}>
+                    <SelectItem key="2592000" onClick={() => setUpdateFrequency(2592000)} textValue="Every month">
                       Every month
                     </SelectItem>
                 </Select>
@@ -865,16 +870,16 @@ function Chart(props) {
                     </Button>
                   </DropdownTrigger>
                   <DropdownMenu>
-                    <DropdownItem key="seconds" onClick={() => setUpdateFreqType("seconds")}>
+                    <DropdownItem key="seconds" onClick={() => setUpdateFreqType("seconds")} textValue="Seconds">
                       <Text>Seconds</Text>
                     </DropdownItem>
-                    <DropdownItem key="minutes" onClick={() => setUpdateFreqType("minutes")}>
+                    <DropdownItem key="minutes" onClick={() => setUpdateFreqType("minutes")} textValue="Minutes">
                       <Text>Minutes</Text>
                     </DropdownItem>
-                    <DropdownItem key="hours" onClick={() => setUpdateFreqType("hours")}>
+                    <DropdownItem key="hours" onClick={() => setUpdateFreqType("hours")} textValue="Hours">
                       <Text>Hours</Text>
                     </DropdownItem>
-                    <DropdownItem key="days" onClick={() => setUpdateFreqType("days")}>
+                    <DropdownItem key="days" onClick={() => setUpdateFreqType("days")} textValue="Days">
                       <Text>Days</Text>
                     </DropdownItem>
                   </DropdownMenu>

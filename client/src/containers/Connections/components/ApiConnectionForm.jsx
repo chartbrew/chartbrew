@@ -257,7 +257,7 @@ function ApiConnectionForm(props) {
                   variant="bordered"
                 >
                   {authTypes.map((type) => (
-                    <SelectItem key={type.value}>
+                    <SelectItem key={type.value} textValue={type.text}>
                       {type.text}
                     </SelectItem>
                   ))}

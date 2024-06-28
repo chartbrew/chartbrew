@@ -432,6 +432,7 @@ function Filters(props) {
                           {field.type}
                         </Chip>
                       )}
+                      textValue={field.text}
                     >
                       {field.text}
                     </SelectItem>
@@ -455,7 +456,7 @@ function Filters(props) {
                     onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "operator")}
                   >
                     {operators.map((op) => (
-                      <DropdownItem key={op.value}>
+                      <DropdownItem key={op.value} textValue={op.text}>
                         {op.text}
                       </DropdownItem>
                     ))}

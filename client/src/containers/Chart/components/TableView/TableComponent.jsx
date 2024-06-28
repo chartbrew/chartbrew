@@ -91,7 +91,7 @@ function TableComponent(props) {
                       }}
                     >
                       {paginationOptions.map((option) => (
-                        <DropdownItem key={`${option.value}`}>
+                        <DropdownItem key={`${option.value}`} textValue={option.text}>
                           <Text>{option.text}</Text>
                         </DropdownItem>
                       ))}

@@ -374,6 +374,7 @@ function DatasetBuilder(props) {
                 <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
               )}
               description={option.isObject ? "Key-Value visualization" : null}
+              textValue={option.text}
             >
               {option.text}
             </AutocompleteItem>
@@ -399,6 +400,7 @@ function DatasetBuilder(props) {
                 <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
               )}
               description={option.isObject ? "Key-Value visualization" : null}
+              textValue={option.text}
             >
               {option.text}
             </AutocompleteItem>
@@ -424,7 +426,7 @@ function DatasetBuilder(props) {
           aria-label="Select an operation"
         >
           {operations.map((option) => (
-            <SelectItem key={option.value}>
+            <SelectItem key={option.value} textValue={option.text}>
               {option.text}
             </SelectItem>
           ))}
@@ -449,6 +451,7 @@ function DatasetBuilder(props) {
                 startContent={(
                   <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                 )}
+                textValue={option.text}
               >
                 {option.text}
               </AutocompleteItem>

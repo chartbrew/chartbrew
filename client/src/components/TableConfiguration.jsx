@@ -168,7 +168,7 @@ function TableConfiguration(props) {
                             </Link>
                           </DropdownTrigger>
                           <DropdownMenu variant="bordered">
-                            <DropdownItem startContent={<LuSettings />}>
+                            <DropdownItem startContent={<LuSettings />} textValue="Data formatting">
                               <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
                                 <Text>Data formatting</Text>
                               </Link>

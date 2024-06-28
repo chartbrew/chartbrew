@@ -265,6 +265,7 @@ function DatarequestSettings(props) {
                     )) || null
                   )}
                   endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                  textValue={request.Connection?.name || ""}
                 >
                   {request.Connection?.name || ""}
                 </SelectItem>
@@ -313,6 +314,7 @@ function DatarequestSettings(props) {
                           />
                         )}
                         endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                        textValue={request.Connection.name}
                       >
                         {request.Connection.name}
                       </SelectItem>
@@ -356,6 +358,7 @@ function DatarequestSettings(props) {
                           />
                         )}
                         endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                        textValue={request.Connection.name}
                       >
                         {request.Connection.name}
                       </SelectItem>
@@ -383,7 +386,9 @@ function DatarequestSettings(props) {
                     aria-label="Select a field"
                   >
                     {_getFieldOptions(join.key, "dr_id").map((f) => (
-                      <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>
+                      <SelectItem key={f.field} textValue={_renderHumanField(f.field)}>
+                        {_renderHumanField(f.field)}
+                      </SelectItem>
                     ))}
                   </Select>
                 </div>
@@ -405,7 +410,9 @@ function DatarequestSettings(props) {
                     aria-label="Select a field"
                   >
                     {_getFieldOptions(join.key, "join_id").map((f) => (
-                      <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>
+                      <SelectItem key={f.field} textValue={_renderHumanField(f.field)}>
+                        {_renderHumanField(f.field)}
+                      </SelectItem>
                     ))}
                   </Select>
                 </div>

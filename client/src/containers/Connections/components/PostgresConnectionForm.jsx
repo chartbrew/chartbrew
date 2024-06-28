@@ -408,11 +408,11 @@ function PostgresConnectionForm(props) {
                 disallowEmptySelection
                 aria-label="Select an SSL mode"
               >
-                <SelectItem key="require">{"Require"}</SelectItem>
-                <SelectItem key="disable">{"Disable"}</SelectItem>
-                <SelectItem key="prefer">{"Prefer"}</SelectItem>
-                <SelectItem key="verify-ca">{"Verify CA"}</SelectItem>
-                <SelectItem key="verify-full">{"Verify Full"}</SelectItem>
+                <SelectItem key="require" textValue="Require">{"Require"}</SelectItem>
+                <SelectItem key="disable" textValue="Disable">{"Disable"}</SelectItem>
+                <SelectItem key="prefer" textValue="Prefer">{"Prefer"}</SelectItem>
+                <SelectItem key="verify-ca" textValue="Verify CA">{"Verify CA"}</SelectItem>
+                <SelectItem key="verify-full" textValue="Verify Full">{"Verify Full"}</SelectItem>
               </Select>
             </Row>
             <Spacer y={2} />

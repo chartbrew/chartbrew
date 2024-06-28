@@ -323,7 +323,7 @@ function GaTemplate(props) {
               aria-label="Select a connection"
             >
               {availableConnections.map((connection) => (
-                <SelectItem key={connection.key}>
+                <SelectItem key={connection.key} textValue={connection.text}>
                   {connection.text}
                 </SelectItem>
               ))}
@@ -355,7 +355,7 @@ function GaTemplate(props) {
                     aria-label="Select an account"
                   >
                     {accountOptions.map((option) => (
-                      <SelectItem key={option.key}>
+                      <SelectItem key={option.key} textValue={option.text}>
                         {option.text}
                       </SelectItem>
                     ))}
@@ -374,7 +374,7 @@ function GaTemplate(props) {
                     aria-label="Select a property"
                   >
                     {propertyOptions.map((option) => (
-                      <SelectItem key={option.key}>
+                      <SelectItem key={option.key} textValue={option.text}>
                         {option.text}
                       </SelectItem>
                     ))}

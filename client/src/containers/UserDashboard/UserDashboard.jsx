@@ -609,6 +609,7 @@ function UserDashboard(props) {
                                     onClick={() => _onEditProject(project)}
                                     startContent={<LuPencilLine />}
                                     showDivider
+                                    textValue="Rename"
                                   >
                                     Rename
                                   </DropdownItem>
@@ -616,6 +617,7 @@ function UserDashboard(props) {
                                     onClick={() => _onDeleteProject(project)}
                                     startContent={<LuTrash />}
                                     color="danger"
+                                    textValue="Delete"
                                   >
                                     Delete
                                   </DropdownItem>
@@ -1049,6 +1051,7 @@ function UserDashboard(props) {
                                     onClick={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
                                     startContent={<LuPencilLine />}
                                     key="dataset"
+                                    textValue="Edit dataset"
                                   >
                                     Edit dataset
                                   </DropdownItem>
@@ -1057,6 +1060,7 @@ function UserDashboard(props) {
                                     onClick={() => setDatasetToEdit(dataset)}
                                     startContent={<LuTags />}
                                     showDivider
+                                    textValue="Edit tags"
                                   >
                                     Edit tags
                                   </DropdownItem>
@@ -1065,6 +1069,7 @@ function UserDashboard(props) {
                                     onClick={() => _onPressDeleteDataset(dataset)}
                                     startContent={<LuTrash />}
                                     color="danger"
+                                    textValue="Delete"
                                   >
                                     Delete
                                   </DropdownItem>
