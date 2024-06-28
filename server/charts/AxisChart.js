@@ -762,11 +762,12 @@ class AxisChart {
     let pairedData = [];
     data.forEach((item, index) => {
       let xItem;
-      if (item && checkNumbersOnlyAndLength.test(item)) {
+      const stringItem = item.toString();
+      if (stringItem && checkNumbersOnlyAndLength.test(stringItem)) {
         if (this.timezone) {
-          xItem = this.moment(item, item.length === 10 ? "X" : "x");
+          xItem = this.moment(stringItem, stringItem.length === 10 ? "X" : "x");
         } else {
-          xItem = momentObj.utc(item, item.length === 10 ? "X" : "x");
+          xItem = momentObj.utc(stringItem, stringItem.length === 10 ? "X" : "x");
         }
       } else if (item) {
         if (this.timezone) {
