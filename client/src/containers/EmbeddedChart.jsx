@@ -99,10 +99,12 @@ function EmbeddedChart() {
     // check if there are any filters in the search params
     // if so, add them to the conditions
     const params = [];
-    searchParams.entries().forEach((entry) => {
-      const [key, value] = entry;
-      params.push({ variable: key, value });
-    });
+    if (searchParams && searchParams.entries()?.length > 0) {
+      searchParams.entries().forEach((entry) => {
+        const [key, value] = entry;
+        params.push({ variable: key, value });
+      });
+    }
 
     if (params.length === 0) return;
 
