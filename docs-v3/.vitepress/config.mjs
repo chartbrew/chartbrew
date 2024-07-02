@@ -32,7 +32,15 @@ export default defineConfig({
       },
       {
         link: '/deployment/',
-        text: '🌍 Deployment',
+        text: 'Build and deploy',
+        collapsable: false,
+        sidebarDepth: 0,
+        items: [
+          { link: '/deployment/deploy-with-apache/', text: 'Deploy with Apache' },
+          { link: '/deployment/deploy-on-heroku-and-vercel/', text: 'Deploy on Heroku and Vercel' },
+          { link: '/deployment/deploy-on-render/', text: 'Deploy on Render' },
+          { link: '/deployment/deploy-on-digitalocean/', text: 'Deploy on DigitalOcean' },
+        ],
       },
       {
         link: '/integrations/',
