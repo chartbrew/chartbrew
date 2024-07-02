@@ -77,5 +77,8 @@ export default defineConfig({
       { icon: 'x', link: 'https://twitter.com/chartbrew' },
       { icon: 'discord', link: 'https://discord.gg/KwGEbFk' }
     ]
-  }
+  },
+  sitemap: {
+    hostname: 'https://docs.chartbrew.com',
+  },
 })
