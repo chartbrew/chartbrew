@@ -82,6 +82,15 @@ if (process.env.NODE_ENV === "production") {
       port: process.env.CB_REDIS_PORT,
       password: process.env.CB_REDIS_PASSWORD
     }
+  }, {
+    defaultJobOptions: {
+      timeout: 60000,
+      attempts: 3,
+      backoff: {
+        type: "fixed",
+        delay: 5000
+      },
+    }
   });
 } else {
   updateChartsQueue = new Queue("updateChartsQueue", {
