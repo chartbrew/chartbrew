@@ -40,7 +40,7 @@ function updateCharts(queue) {
 }
 
 module.exports = (queue) => {
-  queue.process("updateChart", 5, path.join(__dirname, "/workers/updateChart.js")); // process 5 jobs concurrently
+  queue.process("updateChart", 5, path.join(__dirname, "workers", "updateChart.js"));
   // run once initially to cover for server downtime
   updateCharts(queue);
 
