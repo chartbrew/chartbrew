@@ -8,7 +8,8 @@ const db = require("../models/models");
 function addChartsToQueue(charts, queue) {
   charts.forEach((chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
-    queue.add(chartToUpdate);
+    const jobId = `chart_${chartToUpdate.id}`;
+    queue.add(chartToUpdate, { jobId });
   });
 }
 
