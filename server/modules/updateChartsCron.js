@@ -9,7 +9,7 @@ function addChartsToQueue(charts, queue) {
   charts.forEach((chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
     const jobId = `chart_${chartToUpdate.id}`;
-    queue.add(chartToUpdate, { jobId });
+    queue.add("updateChart", chartToUpdate, { jobId });
   });
 }
 
@@ -40,7 +40,7 @@ function updateCharts(queue) {
 }
 
 module.exports = (queue) => {
-  queue.process(path.join(__dirname, "/workers/updateChart.js"));
+  queue.process("updateChart", 5, path.join(__dirname, "/workers/updateChart.js")); // process 5 jobs concurrently
   // run once initially to cover for server downtime
   updateCharts(queue);
 
