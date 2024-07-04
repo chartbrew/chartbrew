@@ -1,42 +1,18 @@
 const cron = require("node-cron");
 const moment = require("moment");
 const { Op } = require("sequelize");
-const { Worker } = require("worker_threads");
 const path = require("path");
 
 const db = require("../models/models");
 
-function assignChartsPerWorker(charts) {
-  const workers = [];
-  const workerCount = process.env.CB_BACKEND_WORKERS || 4;
-  const chartsPerWorker = Math.ceil(charts.length / workerCount);
-
-  for (let i = 0; i < workerCount; i++) {
-    let workerCharts = charts.slice(i * chartsPerWorker, (i + 1) * chartsPerWorker);
-    // transform the data to json
-    workerCharts = workerCharts.map((chart) => chart.toJSON());
-
-    const workerPath = path.join(__dirname, "/workers/updateChart.js");
-    workers.push(new Worker(workerPath, { workerData: { charts: workerCharts } }));
-  }
-
-  /** TO ACTIVATE FOR DEBUGGING */
-  // workers.forEach((worker) => {
-  //   worker.on("message", (message) => {
-  //     console.log("worker message", message);
-  //   });
-  //   worker.on("error", (error) => {
-  //     console.log("worker error", error);
-  //   });
-  //   worker.on("exit", (code) => {
-  //     console.log("worker exit code", code);
-  //   });
-  // });
-
-  return Promise.all(workers);
+function addChartsToQueue(charts, queue) {
+  charts.forEach((chart) => {
+    const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
+    queue.add(chartToUpdate);
+  });
 }
 
-function updateCharts() {
+function updateCharts(queue) {
   const conditions = {
     where: {
       autoUpdate: { [Op.gt]: 0 }
@@ -53,9 +29,7 @@ function updateCharts() {
 
       const filteredCharts = charts.filter((chart) => moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment()));
 
-      // throttleUpdateDates(filteredCharts, 0);
-      // throttleUpdates(filteredCharts, 0);
-      assignChartsPerWorker(filteredCharts);
+      addChartsToQueue(filteredCharts, queue);
 
       return { completed: true };
     })
@@ -64,13 +38,14 @@ function updateCharts() {
     });
 }
 
-module.exports = () => {
+module.exports = (queue) => {
+  queue.process(path.join(__dirname, "/workers/updateChart.js"));
   // run once initially to cover for server downtime
-  updateCharts();
+  updateCharts(queue);
 
   // now run the cron job
   cron.schedule("*/1 * * * *", () => {
-    updateCharts();
+    updateCharts(queue);
   });
 
   return true;

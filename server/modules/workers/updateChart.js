@@ -1,6 +1,4 @@
 const moment = require("moment");
-const { workerData, parentPort } = require("worker_threads");
-
 const ChartController = require("../../controllers/ChartController");
 const { checkChartForAlerts } = require("../alerts/checkAlerts");
 
@@ -36,21 +34,15 @@ function runUpdate(chart) {
     });
 }
 
-// configure the worker
-const { charts } = workerData;
-const updatePromises = [];
-charts.forEach((chart) => {
+module.exports = async (job) => {
+  const chart = job.data;
   const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
 
-  updatePromises.push(
-    updateDate(chartToUpdate).then(() => runUpdate(chartToUpdate))
-  );
-});
-
-Promise.all(updatePromises)
-  .then((results) => {
-    parentPort.postMessage(results);
-  })
-  .catch((err) => {
-    parentPort.postMessage(err);
-  });
+  try {
+    await updateDate(chartToUpdate);
+    await runUpdate(chartToUpdate);
+    return Promise.resolve(true);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};

@@ -17,6 +17,11 @@ const helmet = require("helmet");
 const fs = require("fs");
 const busboy = require("connect-busboy");
 
+const Queue = require("bull");
+const { createBullBoard } = require("@bull-board/api");
+const { BullAdapter } = require("@bull-board/api/bullAdapter");
+const { ExpressAdapter } = require("@bull-board/express");
+
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
@@ -32,8 +37,8 @@ const { checkEncryptionKeys } = require("./modules/cbCrypto");
 checkEncryptionKeys();
 
 // set up folders
-fs.mkdir(".cache", () => {});
-fs.mkdir("uploads", () => {});
+fs.mkdir(".cache", () => { });
+fs.mkdir("uploads", () => { });
 
 const app = express();
 app.settings = settings;
@@ -67,6 +72,42 @@ _.each(routes, (controller, route) => {
   app.use(route, controller(app));
 });
 
+// set up bull queues
+let updateChartsQueue;
+
+if (process.env.NODE_ENV === "production") {
+  updateChartsQueue = new Queue("updateChartsQueue", {
+    redis: {
+      host: process.env.CB_REDIS_HOST,
+      port: process.env.CB_REDIS_PORT,
+      password: process.env.CB_REDIS_PASSWORD
+    }
+  });
+} else {
+  updateChartsQueue = new Queue("updateChartsQueue", {
+    redis: {
+      host: process.env.CB_REDIS_HOST_DEV,
+      port: process.env.CB_REDIS_PORT_DEV,
+      password: process.env.CB_REDIS_PASSWORD_DEV
+    }
+  });
+}
+
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath("/apps/queues");
+
+createBullBoard({
+  queues: [new BullAdapter(updateChartsQueue)],
+  serverAdapter,
+  options: {
+    uiConfig: {
+      boardTitle: "Chartbrew Jobs",
+    },
+  },
+});
+
+app.use("/apps/queues", serverAdapter.getRouter());
+
 const port = process.env.PORT || app.settings.port || 4019;
 
 db.migrate()
@@ -93,7 +134,7 @@ db.migrate()
       if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
         // start CronJob, making sure the database is populated for the first time
         setTimeout(() => {
-          updateChartsCron();
+          updateChartsCron(updateChartsQueue);
           cleanChartCache();
           cleanAuthCache();
           cleanGhostChartsCron();
