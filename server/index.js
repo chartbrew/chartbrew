@@ -73,43 +73,42 @@ _.each(routes, (controller, route) => {
 });
 
 // set up bull queues
-let updateChartsQueue;
+let redisOptions;
 
 if (process.env.NODE_ENV === "production") {
-  updateChartsQueue = new Queue("updateChartsQueue", {
-    redis: {
-      host: process.env.CB_REDIS_HOST,
-      port: process.env.CB_REDIS_PORT,
-      password: process.env.CB_REDIS_PASSWORD
-    }
-  }, {
-    defaultJobOptions: {
-      timeout: 60000,
-      attempts: 3,
-      backoff: {
-        type: "fixed",
-        delay: 5000
-      },
-    }
-  });
+  redisOptions = {
+    host: process.env.CB_REDIS_HOST,
+    port: process.env.CB_REDIS_PORT,
+    password: process.env.CB_REDIS_PASSWORD
+  };
 } else {
-  updateChartsQueue = new Queue("updateChartsQueue", {
-    redis: {
-      host: process.env.CB_REDIS_HOST_DEV,
-      port: process.env.CB_REDIS_PORT_DEV,
-      password: process.env.CB_REDIS_PASSWORD_DEV
-    }
-  }, {
-    defaultJobOptions: {
-      timeout: 60000,
-      attempts: 3,
-      backoff: {
-        type: "fixed",
-        delay: 5000
-      },
-    }
-  });
+  redisOptions = {
+    host: process.env.CB_REDIS_HOST_DEV,
+    port: process.env.CB_REDIS_PORT_DEV,
+    password: process.env.CB_REDIS_PASSWORD_DEV
+  };
 }
+
+const queueOptions = {
+  defaultJobOptions: {
+    timeout: 60000,
+    attempts: 3,
+    backoff: {
+      type: "fixed",
+      delay: 5000
+    },
+  },
+  settings: {
+    stalledInterval: 30000,
+    maxStalledCount: 3,
+  }
+};
+
+const updateChartsQueue = new Queue(
+  "updateChartsQueue",
+  { redis: redisOptions },
+  queueOptions
+);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/apps/queues");
@@ -120,15 +119,14 @@ createBullBoard({
   options: {
     uiConfig: {
       boardTitle: "Chartbrew Jobs",
-      boardLogo: {
-        path: "http://chartbrew-static.b-cdn.net/logos/app_icon_dark.png"
-      }
-
     },
   },
 });
 
-app.use("/apps/queues", serverAdapter.getRouter());
+app.use("/apps/queues", (req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; img-src *;"); // Allow images to load from any source
+  next();
+}, serverAdapter.getRouter());
 
 const port = process.env.PORT || app.settings.port || 4019;
 

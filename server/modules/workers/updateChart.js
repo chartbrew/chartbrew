@@ -11,7 +11,7 @@ function updateDate(chart) {
         return true;
       })
       .catch(() => {
-        return true;
+        return false;
       });
   }
 
@@ -22,15 +22,14 @@ function runUpdate(chart) {
   return chartController.updateChartData(chart.id, null, {})
     .then(async (chartData) => {
       checkChartForAlerts(chartData);
-      try {
-        await updateDate(chart);
-      } catch (err) {
-        //
+      const dateUpdated = await updateDate(chart);
+      if (!dateUpdated) {
+        throw new Error(`Failed to update date for chart ${chart.id}`);
       }
       return true;
     })
-    .catch(() => {
-      return true;
+    .catch((err) => {
+      throw err;
     });
 }
 
@@ -39,7 +38,10 @@ module.exports = async (job) => {
   const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
 
   try {
-    await updateDate(chartToUpdate);
+    const dateUpdated = await updateDate(chartToUpdate);
+    if (!dateUpdated) {
+      throw new Error(`Failed to update date for chart ${chartToUpdate.id}`);
+    }
     await runUpdate(chartToUpdate);
     return Promise.resolve(true);
   } catch (err) {
