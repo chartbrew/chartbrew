@@ -128,6 +128,35 @@ app.use("/apps/queues", (req, res, next) => {
   next();
 }, serverAdapter.getRouter());
 
+async function cleanActiveJobs() {
+  try {
+    const activeJobs = await updateChartsQueue.clean(0, "active");
+    console.log(`Cleaned ${activeJobs.length} active jobs.`); // eslint-disable-line
+  } catch (err) {
+    console.error(`Failed to clean active jobs: ${err.message}`); // eslint-disable-line
+  }
+}
+
+// Handle PM2 shutdown/reload
+process.on("SIGINT", async () => {
+  console.log("SIGINT received. Cleaning active jobs..."); // eslint-disable-line
+  await cleanActiveJobs();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received. Cleaning active jobs..."); // eslint-disable-line
+  await cleanActiveJobs();
+  process.exit(0);
+});
+
+// Handle Nodemon reload
+process.on("SIGUSR2", async () => {
+  console.log("SIGUSR2 received. Cleaning active jobs..."); // eslint-disable-line
+  await cleanActiveJobs();
+  process.exit(0);
+});
+
 const port = process.env.PORT || app.settings.port || 4019;
 
 db.migrate()
