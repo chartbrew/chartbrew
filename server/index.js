@@ -90,6 +90,15 @@ if (process.env.NODE_ENV === "production") {
       port: process.env.CB_REDIS_PORT_DEV,
       password: process.env.CB_REDIS_PASSWORD_DEV
     }
+  }, {
+    defaultJobOptions: {
+      timeout: 60000,
+      attempts: 3,
+      backoff: {
+        type: "fixed",
+        delay: 5000
+      },
+    }
   });
 }
 
@@ -102,6 +111,10 @@ createBullBoard({
   options: {
     uiConfig: {
       boardTitle: "Chartbrew Jobs",
+      boardLogo: {
+        path: "http://chartbrew-static.b-cdn.net/logos/app_icon_dark.png"
+      }
+
     },
   },
 });
