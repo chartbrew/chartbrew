@@ -39,14 +39,38 @@ function updateCharts(queue) {
     });
 }
 
+async function checkActiveJobs(updateChartsQueue) {
+  try {
+    const activeJobs = await updateChartsQueue.getActive();
+
+    const jobPromises = activeJobs.map(async (job) => {
+      const jobTimestamp = moment(job.timestamp);
+      const currentTime = moment();
+      const duration = moment.duration(currentTime.diff(jobTimestamp));
+      const minutes = duration.asMinutes();
+      if (minutes > 5) {
+        await updateChartsQueue.add("updateChart", job.data, { jobId: job.id });
+        await job.remove();
+      }
+    });
+
+    await Promise.all(jobPromises);
+  } catch (err) {
+    //
+  }
+}
+
 module.exports = (queue) => {
   queue.process("updateChart", 5, path.join(__dirname, "workers", "updateChart.js"));
+
   // run once initially to cover for server downtime
   updateCharts(queue);
+  checkActiveJobs(queue);
 
   // now run the cron job
   cron.schedule("*/1 * * * *", () => {
     updateCharts(queue);
+    checkActiveJobs(queue);
   });
 
   return true;
