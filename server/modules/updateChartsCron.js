@@ -5,12 +5,21 @@ const path = require("path");
 
 const db = require("../models/models");
 
-function addChartsToQueue(charts, queue) {
-  charts.forEach((chart) => {
+async function addChartsToQueue(charts, queue) {
+  const addJobPromises = charts.map(async (chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
     const jobId = `chart_${chartToUpdate.id}`;
-    queue.add("updateChart", chartToUpdate, { jobId });
+    console.log("Adding job to queue with jobId:", jobId);
+    try {
+      await queue.add("updateChart", chartToUpdate, { jobId });
+      console.log(`Successfully added job with jobId: ${jobId}`);
+    } catch (error) {
+      console.error(`Failed to add job with jobId: ${jobId}`, error);
+    }
   });
+
+  await Promise.all(addJobPromises);
+  console.log("All jobs have been processed.");
 }
 
 function updateCharts(queue) {

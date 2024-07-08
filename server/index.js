@@ -97,6 +97,8 @@ const queueOptions = {
       type: "fixed",
       delay: 5000
     },
+    removeOnComplete: true,
+    removeOnFail: true,
   },
   settings: {
     stalledInterval: 30000,
