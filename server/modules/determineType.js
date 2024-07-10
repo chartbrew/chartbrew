@@ -11,11 +11,12 @@ const dateFormats = [
   "YYYY-MM-DD HH:mm:ss", "MM-DD-YYYY HH:mm:ss", "DD-MM-YYYY HH:mm:ss", "YYYY/MM/DD HH:mm:ss", "MM/DD/YYYY HH:mm:ss", "DD/MM/YYYY HH:mm:ss",
   "YYYY-MM-DDTHH:mm:ssZ", "YYYY-MM-DDTHH:mm:ss.SSSZ", moment.ISO_8601, moment.RFC_2822, // ISO 8601
   "YYYY-MM-DDTHH:mm:ss.SSS[Z]", "YYYY-MM-DDTHH:mm:ss.SSSZ", // ISO 8601 with milliseconds
-  "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ (zz)",
+  "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ (zz)", "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ [(]zz[)]", "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ",
 ];
 
 function isLikelyDate(value, type) {
-  const data = type === "object" ? value.toISOString() : String(value);
+  const rawData = type === "object" ? value.toISOString() : String(value);
+  const data = rawData.replace(/\(.*\)/, "").trim();
 
   if (data
     && ((!Number.isNaN(new Date(data).getTime()) && data.length > 9 && data.replace(/\D/g, "").length > 3 && data.replace(/\D/g, "").length < 14 && (data[0] === "1" || data[0] === "2"))
