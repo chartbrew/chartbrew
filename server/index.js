@@ -128,7 +128,15 @@ app.use("/apps/queues", (req, res, next) => {
 
 async function cleanActiveJobs() {
   try {
-    const activeJobs = await updateChartsQueue.clean(0, "active");
+    const activeJobs = await updateChartsQueue.getJobs(["active"]);
+
+    const jobPromises = activeJobs.map(async (job) => {
+      await job.moveToFailed({ message: "Job manually failed due to server restart" });
+      await job.remove();
+    });
+
+    await Promise.all(jobPromises);
+
     console.log(`Cleaned ${activeJobs.length} active jobs.`); // eslint-disable-line
   } catch (err) {
     console.error(`Failed to clean active jobs: ${err.message}`); // eslint-disable-line
