@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const moment = require("moment");
 const { Op } = require("sequelize");
 const path = require("path");
+const { Worker } = require("bullmq");
 
 const db = require("../models/models");
 
@@ -9,17 +10,10 @@ async function addChartsToQueue(charts, queue) {
   const addJobPromises = charts.map(async (chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
     const jobId = `chart_${chartToUpdate.id}`;
-    console.log("Adding job to queue with jobId:", jobId);
-    try {
-      await queue.add("updateChart", chartToUpdate, { jobId });
-      console.log(`Successfully added job with jobId: ${jobId}`);
-    } catch (error) {
-      console.error(`Failed to add job with jobId: ${jobId}`, error);
-    }
+    await queue.add("updateChart", chartToUpdate, { jobId });
   });
 
   await Promise.all(addJobPromises);
-  console.log("All jobs have been processed.");
 }
 
 function updateCharts(queue) {
@@ -50,7 +44,7 @@ function updateCharts(queue) {
 
 async function checkActiveJobs(updateChartsQueue) {
   try {
-    const activeJobs = await updateChartsQueue.getActive();
+    const activeJobs = await updateChartsQueue.getJobs(["active"]);
 
     const jobPromises = activeJobs.map(async (job) => {
       const jobTimestamp = moment(job.timestamp);
@@ -69,8 +63,16 @@ async function checkActiveJobs(updateChartsQueue) {
   }
 }
 
+function createWorker(queue) {
+  return new Worker(queue.name, async (job) => {
+    const updateChartPath = path.join(__dirname, "workers", "updateChart.js");
+    const updateChart = require(updateChartPath); // eslint-disable-line
+    await updateChart(job);
+  }, { connection: queue.opts.connection });
+}
+
 module.exports = (queue) => {
-  queue.process("updateChart", 5, path.join(__dirname, "workers", "updateChart.js"));
+  createWorker(queue);
 
   // run once initially to cover for server downtime
   updateCharts(queue);

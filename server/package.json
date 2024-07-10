@@ -25,7 +25,7 @@
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.19.0",
-    "bull": "^4.15.0",
+    "bullmq": "^5.8.5",
     "compare-versions": "^6.1.0",
     "connect-busboy": "^1.0.0",
     "cookie-parser": "^1.4.5",

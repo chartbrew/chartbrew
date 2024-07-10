@@ -17,9 +17,9 @@ const helmet = require("helmet");
 const fs = require("fs");
 const busboy = require("connect-busboy");
 
-const Queue = require("bull");
+const { Queue } = require("bullmq");
 const { createBullBoard } = require("@bull-board/api");
-const { BullAdapter } = require("@bull-board/api/bullAdapter");
+const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
@@ -72,7 +72,7 @@ _.each(routes, (controller, route) => {
   app.use(route, controller(app));
 });
 
-// set up bull queues
+// set up bullmq queues
 let redisOptions;
 
 if (process.env.NODE_ENV === "production") {
@@ -90,8 +90,8 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const queueOptions = {
+  connection: redisOptions,
   defaultJobOptions: {
-    timeout: 60000,
     attempts: 3,
     backoff: {
       type: "fixed",
@@ -106,17 +106,13 @@ const queueOptions = {
   }
 };
 
-const updateChartsQueue = new Queue(
-  "updateChartsQueue",
-  { redis: redisOptions },
-  queueOptions
-);
+const updateChartsQueue = new Queue("updateChartsQueue", queueOptions);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/apps/queues");
 
 createBullBoard({
-  queues: [new BullAdapter(updateChartsQueue)],
+  queues: [new BullMQAdapter(updateChartsQueue)],
   serverAdapter,
   options: {
     uiConfig: {
