@@ -52,7 +52,7 @@ async function checkActiveJobs(updateChartsQueue) {
       const duration = moment.duration(currentTime.diff(jobTimestamp));
       const minutes = duration.asMinutes();
       if (minutes > 5) {
-        await updateChartsQueue.add("updateChart", job.data, { jobId: job.id });
+        await job.moveToFailed({ message: "Job manually failed due to being stuck" });
         await job.remove();
       }
     });

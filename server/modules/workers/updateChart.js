@@ -9,8 +9,8 @@ async function updateDate(chart) {
     try {
       await chartController.update(chart.id, { lastAutoUpdate: moment() });
       return true;
-    } catch (error) {
-      return false;
+    } catch (e) {
+      throw new Error(e);
     }
   }
 
@@ -18,23 +18,31 @@ async function updateDate(chart) {
 }
 
 async function runUpdate(chart) {
-  const chartData = await chartController.updateChartData(chart.id, null, {});
-  checkChartForAlerts(chartData);
-  const dateUpdated = await updateDate(chart);
-  if (!dateUpdated) {
-    throw new Error(`Failed to update date for chart ${chart.id}`);
+  try {
+    const chartData = await chartController.updateChartData(chart.id, null, {});
+    checkChartForAlerts(chartData);
+    const dateUpdated = await updateDate(chart);
+    if (!dateUpdated) {
+      throw new Error(`Failed to update date for chart ${chart.id}`);
+    }
+    return true;
+  } catch (error) {
+    throw new Error(`Error running update for chart ${chart.id}: ${error.message}`);
   }
-  return true;
 }
 
 module.exports = async (job) => {
-  const chart = job.data;
-  const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
+  try {
+    const chart = job.data;
+    const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
 
-  const dateUpdated = await updateDate(chartToUpdate);
-  if (!dateUpdated) {
-    throw new Error(`Failed to update date for chart ${chartToUpdate.id}`);
+    const dateUpdated = await updateDate(chartToUpdate);
+    if (!dateUpdated) {
+      throw new Error(`Failed to update date for chart ${chartToUpdate.id}`);
+    }
+    await runUpdate(chartToUpdate);
+    return true;
+  } catch (e) {
+    throw new Error(e);
   }
-  await runUpdate(chartToUpdate);
-  return true;
 };
