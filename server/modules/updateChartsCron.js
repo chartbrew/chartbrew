@@ -68,7 +68,7 @@ function createWorker(queue) {
     const updateChartPath = path.join(__dirname, "workers", "updateChart.js");
     const updateChart = require(updateChartPath); // eslint-disable-line
     await updateChart(job);
-  }, { connection: queue.opts.connection });
+  }, { connection: queue.opts.connection, concurrency: 5 });
 }
 
 module.exports = (queue) => {
