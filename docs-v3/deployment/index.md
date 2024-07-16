@@ -86,7 +86,7 @@ Now you can start the front-end app with `pm2 start app.config.json`
 
 Using the methods above, the app can be accessed on localhost. To serve it on a domain, continue reading on.
 
-# Run the application with Docker
+## Run the application with Docker
 
 ::: warning WARNING
 The setup is not yet updated for PostgreSQL. Please [open a PR](https://github.com/chartbrew/chartbrew/compare) or [a new issue](https://github.com/chartbrew/chartbrew/issues/new) if you have a solution or encounter any problems that can help us with the support.
@@ -114,6 +114,9 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_DB_NAME=chartbrew \
   -e CB_DB_USERNAME=root \
   -e CB_DB_PASSWORD=password \
+  -e CB_REDIS_HOST=host.docker.internal \
+  -e CB_REDIS_PORT=6379 \
+  -e CB_REDIS_PASSWORD=password \
   -e VITE_APP_CLIENT_HOST=http://localhost:4018 \
   -e VITE_APP_CLIENT_PORT=4018 \
   -e VITE_APP_API_HOST=http://localhost:4019 \
@@ -135,21 +138,14 @@ docker exec -it -w /code/client your_container_name npm run build
 The `4019` port is used by the API and `4018` for the client app (UI). Feel free to map these to any other ports on your system (e.g `4523:4019`).
 
 * `CB_ENCRYPTION_KEY` this string will be used to encrypt passwords and tokens. Use a secure 32 bytes string. [You can generate one here](/#generate-the-encryption-key).
-
 * `CB_API_HOST` needs to point to the home address of the system. Usually for a docker image this is `0.0.0.0`.
-
 * `CB_DB_HOST` is the host of your database and determines how the application can reach it. `host.docker.internal` is used when you want the container to connect to a service on your host such as a database running on your server already.
-
 * `CB_DB_PORT` is the port number of your database.
-
 * `CB_DB_NAME` the name of the database (make sure the database exists before running the image).
-
 * `CB_DB_USERNAME` and `CB_DB_PASSWORD` are used for authentication with the DB.
-
+* `CB_REDIS_HOST`, `CB_REDIS_PORT`, and `CB_REDIS_PASSWORD` are used for the Redis queue.
 * `VITE_APP_CLIENT_HOST` is the address of the client application and is used by the client to be aware of its own address (not as important)
-
 * `VITE_APP_CLIENT_PORT` The port number where your client application will run from.
-
 * `VITE_APP_API_HOST` this is used for the client application to know where to make the API requests. This is the address of the API (backend).
 
 If the setup fails in any way, please double-check that the environmental variables are set correctly. Check that both API and Client apps are running, and if you can't get it running, please [open a new issue](https://github.com/chartbrew/chartbrew/issues/new) with as much info as you can share (logs, vars).

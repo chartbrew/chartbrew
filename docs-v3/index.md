@@ -32,7 +32,7 @@ The setup doesn't work in Windows PowerShell or cmd.exe. If you're using Windows
 
 Chartbrew works with both MySQL and PostgreSQL. You can use any of the two, but you need to create a database first.
 
-[Follow the instruction here >>](/database/#mysql)
+[Follow the instruction here.](/database/#mysql)
 
 #### Get and setup the project
 
@@ -64,14 +64,11 @@ cd server/
 npm run start-dev
 ```
 
-### Changing the docs
+### Set up Redis for automatic dataset updates
 
-Chartbrew uses [Vuepress](https://vuepress.vuejs.org/) and you can check their documentation to see how it works. You can start the documentation development using the command below:
+Chartbrew uses queues to update datasets automatically and it uses [Redis](https://redis.io/) to achieve this. In order for your datasets and charts to update automatically, you need to set up Redis first.
 
-```sh
-cd chartbrew
-npm run docs:dev
-```
+[Find out how to set up Redis on various platforms here.](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
 
 ## Tech stack
 
@@ -81,7 +78,8 @@ npm run docs:dev
 * [ExpressJS](https://expressjs.com/)
 * [Sequelize ORM](https://sequelize.org/)
 * [Nodemailer](https://nodemailer.com/about/)
-* [Mongoose](https://mongoosejs.com/) for mongoDB data sources
+* [BullMQ](https://github.com/OptimalBits/bull)
+* [Redis](https://redis.io/)
 
 **Frontend**
 
@@ -92,7 +90,7 @@ npm run docs:dev
 
 **Docs**
 
-* [Vuepress](https://vuepress.vuejs.org/)
+* [Vitepress](https://github.com/vuejs/vitepress)
 
 ## Environmental variables
 
@@ -108,6 +106,11 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_DB_DIALECT <br /><br /> `required` | `mysql` | Which database to use between `mysql` and `postgres` |
 | CB_DB_CERT | No default | If your DB requires an SSL connection, use this variable to provide the string value of the certificate |
 | CB_ENCRYPTION_KEY <br /><br /> `required` | A key will be generate for you during the first run | A secure 32 bytes string which is used to encrypt the data in the database. [Click here](#generate-the-encryption-key) to see how you can generate a key. |
+| CB_REDIS_HOST | `localhost` | The host address where the Redis server is located |
+| CB_REDIS_PORT | `6379` | The port of the Redis server |
+| CB_REDIS_PASSWORD | No default | The password for the Redis server, if required |
+| CB_REDIS_DB | `0` | The Redis database number to use |
+| CB_REDIS_CA | No default | The string value of the certificate |
 | CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /> **This value is overwritten by the PORT variable (if set)**|
 | CB_API_PORT <br /><br /> `required` | `4019` | The port where the `server` app is running from. This variable is used internally by the `server` app |
 | VITE_APP_CLIENT_HOST <br /><br /> `required` | `http://localhost:4018` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |

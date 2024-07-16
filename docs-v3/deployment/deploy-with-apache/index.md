@@ -20,6 +20,8 @@ As you already guessed, you will need Apache for this one. Below is guide on how
 
 * [Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-22-04)
 
+## Set up VirtualHosts
+
 Create a new Apache configuration file for the Chartbrew site.
 
 ```sh
@@ -82,7 +84,7 @@ sudo service apache2 reload
 
 If you're making your site public, it's strongly recommended that you enable `https` on it. Some providers offer that automatically, but in case that's not happening have a look at [Certbot](https://certbot.eff.org/instructions) as it's super simple to set up and it's free.
 
-### Troubleshooting the Chart Embedding feature
+## Troubleshooting the Chart Embedding feature
 
 A problem that might arrise with embedding charts on other website is to do with the `X-Frame-Options` header being set as `deny` by the server. If your charts can't load on other sites because of this problem make sure you add the following configuration to the `VirtualHost` that serves your frontend:
 
