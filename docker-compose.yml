@@ -13,6 +13,14 @@ services:
     volumes:
       - chartbrew-db:/var/lib/mysql
 
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${CB_REDIS_PASSWORD}
+    ports:
+      - 6379:6379
+
   chartbrew:
     build: .
     restart: unless-stopped
@@ -24,8 +32,10 @@ services:
       - 4019:4019 # API
     depends_on:
       - db
+      - redis
     links:
       - db
+      - redis
 
 volumes:
   chartbrew-db:
