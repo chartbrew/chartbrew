@@ -32,6 +32,7 @@ const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
+const { getQueueOptions } = require("./redisConnection");
 
 // check if the encryption keys are valid 32-byte hex strings
 checkEncryptionKeys();
@@ -73,40 +74,7 @@ _.each(routes, (controller, route) => {
 });
 
 // set up bullmq queues
-let redisOptions;
-
-if (process.env.NODE_ENV === "production") {
-  redisOptions = {
-    host: process.env.CB_REDIS_HOST,
-    port: process.env.CB_REDIS_PORT,
-    password: process.env.CB_REDIS_PASSWORD
-  };
-} else {
-  redisOptions = {
-    host: process.env.CB_REDIS_HOST_DEV,
-    port: process.env.CB_REDIS_PORT_DEV,
-    password: process.env.CB_REDIS_PASSWORD_DEV
-  };
-}
-
-const queueOptions = {
-  connection: redisOptions,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: "fixed",
-      delay: 5000
-    },
-    removeOnComplete: true,
-    removeOnFail: true,
-  },
-  settings: {
-    stalledInterval: 30000,
-    maxStalledCount: 3,
-  }
-};
-
-const updateChartsQueue = new Queue("updateChartsQueue", queueOptions);
+const updateChartsQueue = new Queue("updateChartsQueue", getQueueOptions());
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/apps/queues");
