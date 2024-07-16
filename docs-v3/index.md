@@ -20,6 +20,8 @@ link:
 
 **MySQL** (v5+) or **PostgreSQL** (12.5+)
 
+**Redis** (v7+)
+
 ## Getting Started
 
 ### Installation & Setup

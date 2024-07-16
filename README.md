@@ -44,6 +44,7 @@
 
 * NodeJS v20
 * MySQL (5+) or PostgreSQL (12.5+)
+* Redis (v7+)
 
 ## Start
 
@@ -118,6 +119,8 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_DB_NAME=chartbrew \
   -e CB_DB_USERNAME=root \
   -e CB_DB_PASSWORD=password \
+  -e CB_REDIS_HOST=host.docker.internal \
+  -e CB_REDIS_PORT=6379 \
   -e VITE_APP_CLIENT_HOST=http://localhost:4018 \
   -e VITE_APP_CLIENT_PORT=4018 \
   -e VITE_APP_API_HOST=http://localhost:4019 \
