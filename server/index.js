@@ -75,9 +75,11 @@ _.each(routes, (controller, route) => {
 
 // set up bullmq queues
 const updateChartsQueue = new Queue("updateChartsQueue", getQueueOptions());
-updateChartsQueue.on("error", () => {
-  console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
-  process.exit(1);
+updateChartsQueue.on("error", (error) => {
+  if (error.code === "ECONNREFUSED") {
+    console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+    process.exit(1);
+  }
 });
 
 const serverAdapter = new ExpressAdapter();
