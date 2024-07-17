@@ -16,7 +16,7 @@ import {
 import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -27,7 +27,8 @@ function PolarChart(props) {
     chart, redraw, redrawComplete,
   } = props;
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
 
   useEffect(() => {
     if (redraw) {

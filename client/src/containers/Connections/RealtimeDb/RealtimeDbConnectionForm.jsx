@@ -18,7 +18,7 @@ import realtimeDbImage from "../../../assets/realtime-db-url.webp";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { testRequest } from "../../../slices/connection";
@@ -40,7 +40,7 @@ function RealtimeDbConnectionForm(props) {
   const [jsonVisible, setJsonVisible] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const dispatch = useDispatch();
   const params = useParams();
 

@@ -16,7 +16,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 /*
@@ -36,7 +36,7 @@ function RealtimeDbBuilder(props) {
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));

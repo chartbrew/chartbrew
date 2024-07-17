@@ -31,7 +31,7 @@ import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 export const operators = [{
@@ -112,7 +112,7 @@ function FirestoreBuilder(props) {
   const [orderByDirection, setOrderByDirection] = useState("desc");
   const [requestError, setRequestError] = useState("");
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
 

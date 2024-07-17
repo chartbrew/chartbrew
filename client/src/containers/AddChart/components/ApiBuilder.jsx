@@ -29,7 +29,7 @@ import {
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 
 const methods = [{
   key: 1,
@@ -90,7 +90,7 @@ function ApiBuilder(props) {
     },
   });
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(null);

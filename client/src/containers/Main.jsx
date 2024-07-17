@@ -14,7 +14,7 @@ import {
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import useThemeDetector from "../modules/useThemeDetector";
+import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
 import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
@@ -74,11 +74,21 @@ function Main(props) {
   const teams = useSelector(selectTeams);
   const teamsRef = useRef(null);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.add("dark");
+      document.body.classList.remove("light");
+    } else {
+      document.body.classList.add("light");
+      document.body.classList.remove("dark");
+    }
+  }, [isDark]);
 
   useEffect(() => {
     cleanErrors();

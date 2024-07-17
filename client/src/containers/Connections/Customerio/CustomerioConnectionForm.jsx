@@ -14,7 +14,7 @@ import { useParams } from "react-router";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
 
 /*
@@ -35,7 +35,7 @@ function CustomerioConnectionForm(props) {
   const [loading, setLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const dispatch = useDispatch();
   const params = useParams();
   const initRef = useRef(null);

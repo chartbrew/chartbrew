@@ -30,7 +30,7 @@ import canAccess from "../../../config/canAccess";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import connectionImages from "../../../config/connectionImages";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function ChartDatasetConfig(props) {
   const { chartId, datasetId, dataRequests } = props;
@@ -51,7 +51,7 @@ function ChartDatasetConfig(props) {
   const dispatch = useDispatch();
   const params = useParams();
   const navigate = useNavigate();
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (cdc.formula) {

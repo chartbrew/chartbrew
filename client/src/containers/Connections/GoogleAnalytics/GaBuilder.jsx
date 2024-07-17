@@ -26,7 +26,7 @@ import { getMetadata } from "./apiBoilerplate";
 import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -63,7 +63,7 @@ function GaBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const initRef = React.useRef(null);
   const params = useParams();
   const dispatch = useDispatch();

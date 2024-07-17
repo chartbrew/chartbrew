@@ -20,7 +20,7 @@ import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import { getTemplates, selectTemplates } from "../../slices/template";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectConnections } from "../../slices/connection";
@@ -50,7 +50,7 @@ function AddChart() {
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();

@@ -22,7 +22,7 @@ import canAccess from "../../config/canAccess";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import Segment from "../../components/Segment";
 
 /*
@@ -43,7 +43,7 @@ function TeamMembers(props) {
   const team = useSelector(selectTeam);
   const teamMembers = useSelector(selectTeamMembers);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
 

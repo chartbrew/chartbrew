@@ -11,7 +11,7 @@ import { cloneDeep } from "lodash";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 
 ChartJS.register(
@@ -43,7 +43,8 @@ function LineChart(props) {
     chart, redraw, redrawComplete, editMode,
   } = props;
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
   const chartRef = useRef(null);
 
   useEffect(() => {

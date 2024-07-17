@@ -9,7 +9,7 @@ import { useLocation, useNavigate, useParams } from "react-router";
 
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import {
   createCdc,
   createChart,
@@ -43,7 +43,8 @@ function Dataset() {
   const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
   const [fromChart, setFromChart] = useState("");
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();

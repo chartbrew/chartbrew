@@ -28,7 +28,7 @@ import CustomerioBuilder from "../Connections/Customerio/CustomerioBuilder";
 import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import Text from "../../components/Text";
 import { selectProjects } from "../../slices/project";
 
@@ -41,7 +41,8 @@ function DatasetQuery(props) {
   const [dataRequests, setDataRequests] = useState([]);
   const [connectionSearch, setConnectionSearch] = useState("");
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
   const dispatch = useDispatch();
   const params = useParams();
 

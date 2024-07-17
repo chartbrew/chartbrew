@@ -27,7 +27,7 @@ import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 import VisualSQL from "./VisualSQL";
@@ -60,7 +60,7 @@ function SqlBuilder(props) {
   const [activeResultsTab, setActiveResultsTab] = useState("table");
   const [resultsPage, setResultsPage] = useState(1);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));

@@ -22,7 +22,7 @@ import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/useTheme";
 
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -52,7 +52,8 @@ function DatarequestModal(props) {
   const [createMode, setCreateMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
   const params = useParams();
 
   useEffect(() => {

@@ -14,7 +14,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { LuCheckCircle2, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
 
@@ -66,7 +66,7 @@ function PostgresConnectionForm(props) {
     sslKey: null,
   });
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const dispatch = useDispatch();
   const params = useParams();
 

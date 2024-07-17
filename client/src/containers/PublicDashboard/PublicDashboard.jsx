@@ -18,8 +18,6 @@ import {
   LuRefreshCw, LuShare, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
-import useDarkMode from "@fisch0920/use-dark-mode";
-import { useLocalStorage } from "react-use";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -43,7 +41,7 @@ import instructionDashboard from "../../assets/instruction-dashboard-report.png"
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -76,14 +74,12 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
-  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false"); // eslint-disable-line
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
 
   const [searchParams] = useSearchParams();
-  const isDark = useThemeDetector();
-  const darkMode = useDarkMode(false);
+  const { setTheme, isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
@@ -109,10 +105,10 @@ function PublicDashboard(props) {
     setLoading(true);
     _fetchProject(window.localStorage.getItem("reportPassword"));
 
-    if (searchParams.get("theme") && searchParams.get("theme") !== "os") {
-      _setTheme(searchParams.get("theme"));
+    if (searchParams.get("theme") === "light" || searchParams.get("theme") === "dark") {
+      setTheme(searchParams.get("theme"));
     } else {
-      _setOSTheme();
+      setTheme("system");
     }
   }, []);
 
@@ -368,29 +364,6 @@ function PublicDashboard(props) {
   const _onLoadLogo = ({ target: img }) => {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     setLogoAspectRatio(aspectRatio);
-  };
-
-  const _setOSTheme = () => {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      darkMode.enable();
-    } else {
-      darkMode.disable();
-    }
-
-    window.localStorage.removeItem("darkMode");
-    setIsOsTheme(true);
-  };
-
-  const _setTheme = (mode) => {
-    setIsOsTheme(false);
-    if (mode === "dark") {
-      darkMode.enable();
-    } else {
-      darkMode.enable();
-      setTimeout(() => {
-        darkMode.disable();
-      }, 100);
-    }
   };
 
   if (loading && !project?.id && !noCharts) {

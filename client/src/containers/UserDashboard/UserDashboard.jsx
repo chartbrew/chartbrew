@@ -33,7 +33,7 @@ import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import connectionImages from "../../config/connectionImages";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
 } from "../../slices/team";
@@ -88,7 +88,7 @@ function UserDashboard(props) {
   const teamsRef = useRef(null);
   const initRef = useRef(null);
   const { height } = useWindowSize();
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

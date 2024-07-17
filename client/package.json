@@ -12,7 +12,6 @@
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"
   },
   "dependencies": {
-    "@fisch0920/use-dark-mode": "^2.4.0",
     "@internationalized/date": "^3.5.3",
     "@nextui-org/react": "^2.1.5",
     "@reduxjs/toolkit": "^2.2.1",

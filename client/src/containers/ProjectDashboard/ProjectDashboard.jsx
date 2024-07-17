@@ -30,7 +30,7 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
@@ -106,7 +106,7 @@ function ProjectDashboard(props) {
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
   const { width } = useWindowSize();
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(false);
 

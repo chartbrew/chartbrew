@@ -4,12 +4,12 @@ import {
 } from "@nextui-org/react";
 
 import Text from "./Text";
-import useThemeDetector from "../modules/useThemeDetector";
+import { useTheme } from "../modules/ThemeContext";
 import cbLogoDark from "../assets/logo_full_dark.png";
 import cbLogoLight from "../assets/logo_full_light.png";
 
 function SimpleNavbar() {
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
 
   return (
     <Navbar maxWidth={"full"} className="z-50">

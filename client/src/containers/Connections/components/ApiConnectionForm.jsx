@@ -16,7 +16,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
 import { LuEye, LuEyeOff } from "react-icons/lu";
 
@@ -53,7 +53,7 @@ function ApiConnectionForm(props) {
   const [testResult, setTestResult] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const initRef = useRef(null);
   const dispatch = useDispatch();
   const params = useParams();

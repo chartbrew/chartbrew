@@ -18,7 +18,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { selectConnections } from "../../../slices/connection";
 import connectionImages from "../../../config/connectionImages";
-import useThemeDector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 
 
 function CustomTemplateForm(props) {
@@ -38,7 +38,7 @@ function CustomTemplateForm(props) {
 
   const dispatch = useDispatch();
   const connections = useSelector(selectConnections);
-  const isDark = useThemeDector();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (template && template.model && template.model.Charts) {

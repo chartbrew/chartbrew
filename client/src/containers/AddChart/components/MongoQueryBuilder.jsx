@@ -19,7 +19,7 @@ import SavedQueries from "../../../components/SavedQueries";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 /*
@@ -45,7 +45,7 @@ function MongoQueryBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));

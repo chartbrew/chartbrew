@@ -18,7 +18,7 @@ import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import useThemeDetector from "../modules/useThemeDetector";
+import { useTheme } from "../modules/ThemeContext";
 import Segment from "../components/Segment";
 import { selectTeam } from "../slices/team";
 
@@ -44,7 +44,7 @@ function ProjectSettings(props) {
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

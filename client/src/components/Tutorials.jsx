@@ -6,7 +6,7 @@ import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import Segment from "./Segment";
 import Row from "./Row";
-import useThemeDetector from "../modules/useThemeDetector";
+import { useTheme } from "../modules/useTheme";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, updateUser } from "../slices/user";
 
@@ -235,7 +235,8 @@ function Tutorials({ currentPage }) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [tutorial, setTutorial] = React.useState(configs[currentPage]);
 
-  const theme = useThemeDetector() ? "dark" : "light";
+  const { isDark } = useTheme();
+  const theme = isDark ? "dark" : "light";
   const user = useSelector(selectUser);
 
   const dispatch = useDispatch();

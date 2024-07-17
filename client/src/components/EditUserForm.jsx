@@ -13,7 +13,7 @@ import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 import Callout from "./Callout";
-import useThemeDetector from "../modules/useThemeDetector";
+import { useTheme } from "../modules/ThemeContext";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -43,7 +43,7 @@ function EditUserForm() {
   const userProp = useSelector(selectUser);
   const authMethods = useSelector((state) => state.user.auths);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

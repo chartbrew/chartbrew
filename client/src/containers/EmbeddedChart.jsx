@@ -4,12 +4,10 @@ import {
 } from "@nextui-org/react";
 import moment from "moment";
 import { Helmet } from "react-helmet";
-import useDarkMode from "@fisch0920/use-dark-mode";
 import { useSearchParams } from "react-router-dom";
 import { LuListFilter } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";
-import { useLocalStorage } from "react-use";
 
 import {
   getEmbeddedChart, runQueryWithFilters,
@@ -28,6 +26,7 @@ import Text from "../components/Text";
 import Callout from "../components/Callout";
 import KpiMode from "./Chart/components/KpiMode";
 import useChartSize from "../modules/useChartSize";
+import { useTheme } from "../modules/ThemeContext";
 
 const pageHeight = window.innerHeight;
 
@@ -41,11 +40,10 @@ function EmbeddedChart() {
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
-  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false"); // eslint-disable-line
 
   const params = useParams();
   const dispatch = useDispatch();
-  const darkMode = useDarkMode(false);
+  const { setTheme } = useTheme();
   const [searchParams] = useSearchParams();
   const filterRef = useRef(null);
   const chartSize = useChartSize(chart.layout);
@@ -80,10 +78,10 @@ function EmbeddedChart() {
         });
     }, 1000);
 
-    if (searchParams.get("theme") && searchParams.get("theme") !== "os") {
-      _setTheme(searchParams.get("theme"));
+    if (searchParams.get("theme") === "light" || searchParams.get("theme") === "dark") {
+      setTheme(searchParams.get("theme"));
     } else {
-      _setOSTheme();
+      setTheme("system");
     }
   }, []);
 
@@ -211,29 +209,6 @@ function EmbeddedChart() {
     });
 
     return filterCount > 0;
-  };
-
-  const _setOSTheme = () => {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      darkMode.enable();
-    } else {
-      darkMode.disable();
-    }
-
-    window.localStorage.removeItem("darkMode");
-    setIsOsTheme(true);
-  };
-
-  const _setTheme = (mode) => {
-    setIsOsTheme(false);
-    if (mode === "dark") {
-      darkMode.enable();
-    } else {
-      darkMode.enable();
-      setTimeout(() => {
-        darkMode.disable();
-      }, 100);
-    }
   };
 
   if (loading) {

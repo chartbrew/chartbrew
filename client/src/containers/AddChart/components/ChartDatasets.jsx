@@ -11,7 +11,7 @@ import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import ChartDatasetConfig from "./ChartDatasetConfig";
 import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
@@ -32,7 +32,7 @@ function ChartDatasets(props) {
 
   const dispatch = useDispatch();
   const params = useParams();
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const team = useSelector(selectTeam);
   const navigate = useNavigate();
 

@@ -17,7 +17,7 @@ import { API_HOST } from "../../../config/settings";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { useTheme } from "../../../modules/ThemeContext";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { testRequest } from "../../../slices/connection";
@@ -39,7 +39,7 @@ function GaConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [testResult, setTestResult] = useState(null);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const dispatch = useDispatch();
   const params = useParams();
 

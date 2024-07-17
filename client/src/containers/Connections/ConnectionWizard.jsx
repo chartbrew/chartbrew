@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.min.css";
 import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
 import connectionImages from "../../config/connectionImages";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 import Navbar from "../../components/Navbar";
 import ApiConnectionForm from "./components/ApiConnectionForm";
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -35,7 +35,7 @@ function ConnectionWizard() {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [connectionToEdit, setConnectionToEdit] = useState(null);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const bottomRef = useRef(null);
   const asideRef = useRef(null);
   const paramsInitRef = useRef(null);

@@ -22,7 +22,7 @@ import connectionImages from "../../config/connectionImages";
 import fieldFinder from "../../modules/fieldFinder";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import useThemeDetector from "../../modules/useThemeDetector";
+import { useTheme } from "../../modules/ThemeContext";
 
 function DatarequestSettings(props) {
   const {
@@ -36,7 +36,7 @@ function DatarequestSettings(props) {
   const [isSaved, setIsSaved] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
 
-  const isDark = useThemeDetector();
+  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(null);
