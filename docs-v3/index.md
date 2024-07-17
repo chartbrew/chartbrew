@@ -20,7 +20,7 @@ link:
 
 **MySQL** (v5+) or **PostgreSQL** (12.5+)
 
-**Redis** (v7+)
+**Redis** (v6+)
 
 ## Getting Started
 
@@ -132,7 +132,7 @@ The table below shows the `production` variables. The `development` variables ha
 
 ### Generate the encryption key
 
-You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. Chartbrew generates both `CB_ENCRYPTION_KEY` and `CB_ENCRYPTION_KEY_DEV` for you during the first run, but if yu wish to have control over the value, you can generate it yourself.
+You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable. Chartbrew generates both `CB_ENCRYPTION_KEY` and `CB_ENCRYPTION_KEY_DEV` for you during the first run, but if you wish to have control over the value, you can generate it yourself.
 
 Run the following command to generate a valid key:
 

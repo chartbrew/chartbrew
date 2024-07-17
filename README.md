@@ -44,7 +44,7 @@
 
 * NodeJS v20
 * MySQL (5+) or PostgreSQL (12.5+)
-* Redis (v7+)
+* Redis (v6+)
 
 ## Start
 
