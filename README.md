@@ -121,6 +121,7 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_DB_PASSWORD=password \
   -e CB_REDIS_HOST=host.docker.internal \
   -e CB_REDIS_PORT=6379 \
+  -e CB_REDIS_PASSWORD=password \
   -e VITE_APP_CLIENT_HOST=http://localhost:4018 \
   -e VITE_APP_CLIENT_PORT=4018 \
   -e VITE_APP_API_HOST=http://localhost:4019 \
