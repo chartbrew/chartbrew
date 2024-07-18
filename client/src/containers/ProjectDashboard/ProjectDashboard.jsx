@@ -13,6 +13,7 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
+  LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuVariable, LuXCircle,
 } from "react-icons/lu";
@@ -38,6 +39,8 @@ import { TbChevronDownRight } from "react-icons/tb";
 import { widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
 import gridBreakpoints from "../../config/gridBreakpoints";
+import UpdateSchedule from "./components/UpdateSchedule";
+import { selectProject } from "../../slices/project";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -94,6 +97,7 @@ function ProjectDashboard(props) {
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
   const [variables, setVariables] = useState(getVariablesFromStorage());
+  const [scheduleVisible, setScheduleVisible] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -102,6 +106,7 @@ function ProjectDashboard(props) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const charts = useSelector(selectCharts);
+  const project = useSelector(selectProject);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
@@ -706,8 +711,23 @@ function ProjectDashboard(props) {
                   </div>
                 </Row>
                 <Row justify="flex-end" align="center">
+                  {_canAccess("projectEditor") && (
+                    <>
+                      <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
+                        <Button
+                          variant="light"
+                          isIconOnly
+                          onClick={() => setScheduleVisible(true)}
+                          size="sm"
+                        >
+                          <LuCalendarClock size={22} />
+                        </Button>
+                      </Tooltip>
+                    </>
+                  )}
                   {_canAccess("teamAdmin") && (
                     <>
+                      <Spacer x={0.5} />
                       <Tooltip content="Create a template from this dashboard" placement="bottom">
                         <Button
                           variant="light"
@@ -880,6 +900,12 @@ function ProjectDashboard(props) {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      <UpdateSchedule
+        isOpen={scheduleVisible}
+        onClose={() => setScheduleVisible(false)}
+        timezone={project.timezone}
+      />
 
       <CreateTemplateForm
         teamId={params.teamId}
