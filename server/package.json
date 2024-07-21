@@ -42,6 +42,7 @@
     "hot-formula-parser": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.20",
+    "luxon": "^3.4.4",
     "method-override": "^3.0.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.41",

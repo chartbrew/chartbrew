@@ -1,6 +1,6 @@
 const moment = require("moment");
 const ChartController = require("../../controllers/ChartController");
-const { checkChartForAlerts } = require("../alerts/checkAlerts");
+const { checkChartForAlerts } = require("../../modules/alerts/checkAlerts");
 
 const chartController = new ChartController();
 

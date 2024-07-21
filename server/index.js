@@ -17,14 +17,9 @@ const helmet = require("helmet");
 const fs = require("fs");
 const busboy = require("connect-busboy");
 
-const { Queue } = require("bullmq");
-const { createBullBoard } = require("@bull-board/api");
-const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
-const { ExpressAdapter } = require("@bull-board/express");
-
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
-const updateChartsCron = require("./modules/updateChartsCron");
+
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const parseQueryParams = require("./middlewares/parseQueryParams");
@@ -32,7 +27,7 @@ const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
-const { getQueueOptions } = require("./redisConnection");
+const setUpQueues = require("./setUpQueues");
 
 // check if the encryption keys are valid 32-byte hex strings
 checkEncryptionKeys();
@@ -73,70 +68,6 @@ _.each(routes, (controller, route) => {
   app.use(route, controller(app));
 });
 
-// set up bullmq queues
-const updateChartsQueue = new Queue("updateChartsQueue", getQueueOptions());
-updateChartsQueue.on("error", (error) => {
-  if (error.code === "ECONNREFUSED") {
-    console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
-    process.exit(1);
-  }
-});
-
-const serverAdapter = new ExpressAdapter();
-serverAdapter.setBasePath("/apps/queues");
-
-createBullBoard({
-  queues: [new BullMQAdapter(updateChartsQueue)],
-  serverAdapter,
-  options: {
-    uiConfig: {
-      boardTitle: "Chartbrew Jobs",
-    },
-  },
-});
-
-app.use("/apps/queues", (req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; img-src *;"); // Allow images to load from any source
-  next();
-}, serverAdapter.getRouter());
-
-async function cleanActiveJobs() {
-  try {
-    const activeJobs = await updateChartsQueue.getJobs(["active"]);
-
-    const jobPromises = activeJobs.map(async (job) => {
-      await job.moveToFailed({ message: "Job manually failed due to server restart" });
-      await job.remove();
-    });
-
-    await Promise.all(jobPromises);
-
-    console.log(`Cleaned ${activeJobs.length} active jobs.`); // eslint-disable-line
-  } catch (err) {
-    console.error(`Failed to clean active jobs: ${err.message}`); // eslint-disable-line
-  }
-}
-
-// Handle PM2 shutdown/reload
-process.on("SIGINT", async () => {
-  console.log("SIGINT received. Cleaning active jobs..."); // eslint-disable-line
-  await cleanActiveJobs();
-  process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received. Cleaning active jobs..."); // eslint-disable-line
-  await cleanActiveJobs();
-  process.exit(0);
-});
-
-// Handle Nodemon reload
-process.on("SIGUSR2", async () => {
-  console.log("SIGUSR2 received. Cleaning active jobs..."); // eslint-disable-line
-  await cleanActiveJobs();
-  process.exit(0);
-});
-
 const port = process.env.PORT || app.settings.port || 4019;
 
 db.migrate()
@@ -163,7 +94,7 @@ db.migrate()
       if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
         // start CronJob, making sure the database is populated for the first time
         setTimeout(() => {
-          updateChartsCron(updateChartsQueue);
+          setUpQueues(app);
           cleanChartCache();
           cleanAuthCache();
           cleanGhostChartsCron();
