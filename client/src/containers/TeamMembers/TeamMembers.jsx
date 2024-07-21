@@ -7,11 +7,9 @@ import {
   DropdownTrigger, ModalHeader, ModalBody, ModalFooter, ModalContent, Code,
 } from "@nextui-org/react";
 import _ from "lodash";
-import { ToastContainer, toast, Flip } from "react-toastify";
+import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuXCircle } from "react-icons/lu";
-
-import "react-toastify/dist/ReactToastify.min.css";
 
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
@@ -22,7 +20,6 @@ import canAccess from "../../config/canAccess";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import { useTheme } from "../../modules/ThemeContext";
 import Segment from "../../components/Segment";
 
 /*
@@ -43,7 +40,6 @@ function TeamMembers(props) {
   const team = useSelector(selectTeam);
   const teamMembers = useSelector(selectTeamMembers);
 
-  const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
 
@@ -451,20 +447,6 @@ function TeamMembers(props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
-      />
     </div>
   );
 }

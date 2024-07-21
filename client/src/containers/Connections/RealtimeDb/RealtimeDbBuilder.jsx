@@ -5,7 +5,7 @@ import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { LuInfo, LuPlay, LuTrash, LuX } from "react-icons/lu";
 import { useParams } from "react-router";
 

@@ -6,8 +6,7 @@ import {
   AutocompleteItem,
   Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@nextui-org/react";
-import { ToastContainer, toast, Flip } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
 import { useNavigate } from "react-router";
 
@@ -18,7 +17,6 @@ import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import { useTheme } from "../modules/ThemeContext";
 import Segment from "../components/Segment";
 import { selectTeam } from "../slices/team";
 
@@ -44,7 +42,6 @@ function ProjectSettings(props) {
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
 
-  const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -283,20 +280,6 @@ function ProjectSettings(props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
-      />
     </Segment>
   );
 }

@@ -10,8 +10,7 @@ import { TwitterPicker } from "react-color";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
-import { ToastContainer, toast, Flip } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import toast from "react-hot-toast";
 import {
   LuArrowLeftSquare,
   LuCheckCircle, LuChevronLeft, LuClipboardEdit, LuEye, LuImagePlus, LuPalette,
@@ -441,20 +440,6 @@ function PublicDashboard(props) {
             </Row>
           </div>
         )}
-
-        <ToastContainer
-          position="bottom-center"
-          autoClose={1500}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnVisibilityChange
-          draggable
-          pauseOnHover
-          transition={Flip}
-          theme={isDark ? "dark" : "light"}
-        />
       </div>
     );
   }
@@ -914,20 +899,6 @@ function PublicDashboard(props) {
           onSavePassword={_onSavePassword}
         />
       )}
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
-      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import _ from "lodash";
-import { Flip, toast, ToastContainer } from "react-toastify";
+import toast from "react-hot-toast";
 import {
   Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card,
   CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody,
@@ -461,20 +461,6 @@ function DatarequestModal(props) {
               </div>
             )}
           </div>
-
-          <ToastContainer
-            position="top-right"
-            autoClose={1500}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnVisibilityChange
-            draggable
-            pauseOnHover
-            transition={Flip}
-            theme={theme}
-          />
         </ModalBody>
         <ModalFooter className="bg-content1">
           <Button

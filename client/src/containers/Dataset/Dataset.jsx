@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flip, toast, ToastContainer } from "react-toastify";
+import toast from "react-hot-toast";
 import {
   Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
 } from "@nextui-org/react";
@@ -9,7 +9,6 @@ import { useLocation, useNavigate, useParams } from "react-router";
 
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import { useTheme } from "../../modules/ThemeContext";
 import {
   createCdc,
   createChart,
@@ -43,8 +42,6 @@ function Dataset() {
   const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
   const [fromChart, setFromChart] = useState("");
 
-  const { isDark } = useTheme();
-  const theme = isDark ? "dark" : "light";
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -543,20 +540,6 @@ function Dataset() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={theme}
-      />
     </div>
   );
 }

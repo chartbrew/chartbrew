@@ -28,6 +28,7 @@ import Dataset from "./Dataset/Dataset";
 import ConnectionWizard from "./Connections/ConnectionWizard";
 import LoadingScreen from "../components/LoadingScreen";
 import Variables from "./Variables/Variables";
+import { Toaster } from "react-hot-toast";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -277,6 +278,18 @@ function Main(props) {
           </Suspense>
         </div>
       </div>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 2500,
+          style: {
+            borderRadius: "8px",
+            background: isDark ? "#333" : "#fff",
+            color: isDark ? "#fff" : "#000",
+          },
+        }}
+      />
     </IconContext.Provider>
   );
 }

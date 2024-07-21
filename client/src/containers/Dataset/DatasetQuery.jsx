@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
 import moment from "moment";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 import { selectConnections } from "../../slices/connection";
 import {
