@@ -65,6 +65,28 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    updateSchedule: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: "{}",
+      set(value) {
+        try {
+          this.setDataValue("updateSchedule", JSON.stringify(value));
+        } catch (error) {
+          this.setDataValue("updateSchedule", "{}");
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("updateSchedule"));
+        } catch (error) {
+          return {};
+        }
+      },
+    },
+    lastUpdatedAt: {
+      type: DataTypes.DATE,
+    },
   }, {
     freezeTableName: true,
   });

@@ -924,7 +924,6 @@ function ProjectDashboard(props) {
         newestOnTop={false}
         closeOnClick
         rtl={false}
-        pauseOnVisibilityChange
         draggable
         pauseOnHover
         transition={Flip}

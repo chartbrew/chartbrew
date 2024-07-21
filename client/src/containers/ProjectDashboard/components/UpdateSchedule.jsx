@@ -1,17 +1,39 @@
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import { Autocomplete, AutocompleteItem, Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@nextui-org/react";
 import timezones from "../../../modules/timezones";
 import { LuMapPin } from "react-icons/lu";
+import { selectProject, updateProject } from "../../../slices/project";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { Time } from "@internationalized/date";
 
 const getMachineTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-function UpdateSchedule({ isOpen, onClose, timezone }) {
+function UpdateSchedule({ isOpen, onClose }) {
+  const project = useSelector(selectProject);
+
   const [schedule, setSchedule] = useState({
-    timezone: timezone || getMachineTimezone(),
+    timezone: project.timezone || getMachineTimezone(),
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const initRef = useRef(null);
+
+  useEffect(() => {
+    if (project?.updateSchedule && !initRef.current) {
+      initRef.current = true;
+      setSchedule({
+        timezone: project.timezone || getMachineTimezone(),
+        frequency: project.updateSchedule?.frequency || undefined,
+        dayOfWeek: project.updateSchedule?.dayOfWeek || undefined,
+        frequencyNumber: project.updateSchedule?.frequencyNumber || undefined,
+        time: project.updateSchedule?.time ? new Time(project.updateSchedule.time?.hour, project.updateSchedule.time?.minute) : undefined,
+      });
+    }
+  }, [project]);
 
   const frequencies = [
     { label: "Daily", value: "daily" },
@@ -31,8 +53,21 @@ function UpdateSchedule({ isOpen, onClose, timezone }) {
     { label: "Sunday", value: "sunday" },
   ];
 
-  const _onSave = () => {
-    // console.log("schedule", schedule);
+  const _onSave = async () => {
+    setIsLoading(true);
+    const response = await dispatch(updateProject({
+      project_id: project.id,
+      data: { updateSchedule: schedule },
+    }));
+
+    if (response?.error?.message) {
+      toast.error(response.error.message, { autoClose: 2000 });
+    } else {
+      toast.success("Schedule updated", { autoClose: 2000 });
+      onClose();
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -137,7 +172,7 @@ function UpdateSchedule({ isOpen, onClose, timezone }) {
           <Button variant="bordered" onClick={onClose}>
             {"Cancel"}
           </Button>
-          <Button onClick={_onSave} color="primary">
+          <Button onClick={_onSave} color="primary" isLoading={isLoading}>
             {"Save"}
           </Button>
         </ModalFooter>
