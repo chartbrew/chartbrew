@@ -7,7 +7,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
 import { endOfDay, startOfDay, sub } from "date-fns";

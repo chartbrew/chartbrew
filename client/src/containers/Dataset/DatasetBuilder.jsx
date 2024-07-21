@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { TbMathFunctionY } from "react-icons/tb";
 import { LuCheckCircle, LuInfo, LuWand2, LuXCircle } from "react-icons/lu";
 

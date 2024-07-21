@@ -9,8 +9,7 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _, { isEqual } from "lodash";
-import { ToastContainer, toast, Flip } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import toast from "react-hot-toast";
 import moment from "moment";
 import {
   LuCalendarClock,
@@ -31,7 +30,6 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
-import { useTheme } from "../../modules/ThemeContext";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
@@ -111,7 +109,6 @@ function ProjectDashboard(props) {
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
   const { width } = useWindowSize();
-  const { isDark } = useTheme();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(false);
 
@@ -915,19 +912,6 @@ function ProjectDashboard(props) {
           setTemplateVisible(false);
         }}
         visible={templateVisible}
-      />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
       />
     </div>
   );

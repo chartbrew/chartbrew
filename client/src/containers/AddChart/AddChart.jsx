@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button, Switch,
 } from "@nextui-org/react";
-import { ToastContainer, toast, Flip } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import toast from "react-hot-toast";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
 import { LuCheck, LuPencilLine } from "react-icons/lu";
@@ -20,7 +19,6 @@ import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import { getTemplates, selectTemplates } from "../../slices/template";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import { useTheme } from "../../modules/ThemeContext";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectConnections } from "../../slices/connection";
@@ -50,7 +48,6 @@ function AddChart() {
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
 
-  const { isDark } = useTheme();
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -350,19 +347,6 @@ function AddChart() {
 
   return (
     <div style={styles.container(height)} className="md:pl-4 md:pr-4">
-      <ToastContainer
-        position="bottom-right"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
-      />
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row align="center" wrap="wrap" justify="space-between">

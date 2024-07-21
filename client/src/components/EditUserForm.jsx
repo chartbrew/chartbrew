@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
 } from "@nextui-org/react";
-import { ToastContainer, toast, Flip } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import toast, { Toaster } from "react-hot-toast";
 import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react-icons/lu";
 
 import {
@@ -79,6 +78,7 @@ function EditUserForm() {
       .then(() => {
         setSuccess(true);
         setLoading(false);
+        toast.success("Your account has been updated.");
       })
       .catch(() => {
         setSubmitError(true);
@@ -540,18 +540,17 @@ function EditUserForm() {
         </ModalContent>
       </Modal>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 2500,
+          style: {
+            borderRadius: "8px",
+            background: isDark ? "#333" : "#fff",
+            color: isDark ? "#fff" : "#000",
+          },
+        }}
       />
     </div>
   );

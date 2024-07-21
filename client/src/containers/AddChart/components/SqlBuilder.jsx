@@ -14,7 +14,7 @@ import {
   Pagination,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 

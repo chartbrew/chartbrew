@@ -7,7 +7,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { v4 as uuid } from "uuid";
 import { Calendar } from "react-date-range";
 import { format, formatISO } from "date-fns";

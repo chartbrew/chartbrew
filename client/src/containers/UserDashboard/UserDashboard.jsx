@@ -14,7 +14,6 @@ import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuInfo, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
   LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2,
 } from "react-icons/lu";
-import { Flip, ToastContainer } from "react-toastify";
 
 import { relog } from "../../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -1401,20 +1400,6 @@ function UserDashboard(props) {
           </>
         )}
       </div>
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnVisibilityChange
-        draggable
-        pauseOnHover
-        transition={Flip}
-        theme={isDark ? "dark" : "light"}
-      />
     </div>
   );
 }
