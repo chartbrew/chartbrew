@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
-import { Autocomplete, AutocompleteItem, Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@nextui-org/react";
+import { Autocomplete, AutocompleteItem, Button, Chip, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@nextui-org/react";
 import timezones from "../../../modules/timezones";
 import { LuMapPin } from "react-icons/lu";
-import { selectProject, updateProject } from "../../../slices/project";
+import { getProject, selectProject, updateProject } from "../../../slices/project";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { Time } from "@internationalized/date";
+import { selectCharts, updateChart } from "../../../slices/chart";
 
 const getMachineTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -14,11 +15,13 @@ const getMachineTimezone = () => {
 
 function UpdateSchedule({ isOpen, onClose }) {
   const project = useSelector(selectProject);
+  const charts = useSelector(selectCharts)?.filter((chart) => chart.project_id === project.id);
 
   const [schedule, setSchedule] = useState({
     timezone: project.timezone || getMachineTimezone(),
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [removingUpdates, setRemovingUpdates] = useState(false);
   const dispatch = useDispatch();
   const initRef = useRef(null);
 
@@ -70,11 +73,41 @@ function UpdateSchedule({ isOpen, onClose }) {
     setIsLoading(false);
   };
 
+  const _areChartsUpdating = () => {
+    if (!charts) return false;
+    return charts.some((chart) => chart.autoUpdate && chart.autoUpdate > 0);
+  };
+
+  const _disableIndividualChartUpdates = async () => {
+    setRemovingUpdates(true);
+    await Promise.all(charts.map(async (chart) => {
+      if (chart.autoUpdate && chart.autoUpdate > 0) {
+        await dispatch(updateChart({
+          project_id: project.id,
+          chart_id: chart.id,
+          data: { autoUpdate: 0 },
+          justUpdates: true,
+        }));
+      }
+    }));
+
+    await dispatch(getProject({ project_id: project.id }));
+    setRemovingUpdates(false);
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
       <ModalContent>
-        <ModalHeader>
-          <div className='text-lg font-bold'>Schedule dashboard updates</div>
+        <ModalHeader className="flex flex-col">
+          <div className="flex flex-row gap-2 items-center">
+            <div className="text-lg font-bold">Schedule dashboard updates</div>
+            <Chip color="secondary" radius="sm" size="sm" variant="flat">
+              New!
+            </Chip>
+          </div>
+          <div className="text-sm text-gray-500">
+            {"All the charts in this dashboard will be updated at the appointed time"}
+          </div>
         </ModalHeader>
         <ModalBody>
           <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
@@ -169,6 +202,16 @@ function UpdateSchedule({ isOpen, onClose }) {
           )}
         </ModalBody>
         <ModalFooter>
+          {_areChartsUpdating() && (
+            <Button
+              variant="light"
+              color="primary"
+              isLoading={removingUpdates}
+              onClick={_disableIndividualChartUpdates}
+            >
+              Disable individual chart updates
+            </Button>
+          )}
           <Button variant="bordered" onClick={onClose}>
             {"Cancel"}
           </Button>

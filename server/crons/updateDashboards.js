@@ -1,13 +1,17 @@
 const cron = require("node-cron");
 const { DateTime } = require("luxon");
 const { Op } = require("sequelize");
+const { Worker } = require("bullmq");
+const path = require("path");
+
 const db = require("../models/models");
 
-async function updateDashboard(dashboard) {
-  console.log(`Updating dashboard with ID: ${dashboard.id}`); // eslint-disable-line
+async function addDashboardToQueue(queue, dashboardId) {
+  const jobId = `dashboard_${dashboardId}`;
+  await queue.add("updateDashboard", { id: dashboardId }, { jobId });
 }
 
-async function updateDashboards() {
+async function updateDashboards(queue) {
   const conditions = {
     where: {
       updateSchedule: { [Op.ne]: "" }
@@ -21,7 +25,7 @@ async function updateDashboards() {
       return;
     }
 
-    dashboards.forEach((dashboard) => {
+    dashboards.forEach(async (dashboard) => {
       const {
         timezone,
         frequency,
@@ -36,11 +40,15 @@ async function updateDashboards() {
       }
 
       const now = DateTime.now().setZone(timezone);
-      const lastUpdated = DateTime.fromISO(dashboard.lastUpdatedAt, { zone: timezone });
+      const lastUpdated = dashboard.lastUpdatedAt
+        ? DateTime.fromJSDate(dashboard.lastUpdatedAt, { zone: timezone })
+        : null;
 
       let shouldUpdate = false;
 
-      if (frequency === "daily") {
+      if (!lastUpdated) {
+        shouldUpdate = true;
+      } else if (frequency === "daily") {
         const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
         shouldUpdate = now > updateTime && now.diff(lastUpdated, "days") >= 1;
       } else if (frequency === "weekly") {
@@ -55,7 +63,7 @@ async function updateDashboards() {
       }
 
       if (shouldUpdate) {
-        updateDashboard(dashboard);
+        await addDashboardToQueue(queue, dashboard.id);
       }
     });
   } catch (error) {
@@ -63,6 +71,41 @@ async function updateDashboards() {
   }
 }
 
-cron.schedule("* * * * *", updateDashboards);
+async function checkActiveJobs(updateChartsQueue) {
+  try {
+    const activeJobs = await updateChartsQueue.getJobs(["active"]);
 
-module.exports = updateDashboards;
+    const jobPromises = activeJobs.map(async (job) => {
+      const jobTimestamp = DateTime.fromMillis(job.timestamp);
+      const currentTime = DateTime.now();
+      const duration = currentTime.diff(jobTimestamp);
+      const minutes = duration.as("minutes");
+      if (minutes > 5) {
+        await job.moveToFailed({ message: "Job manually failed due to being stuck" });
+        await job.remove();
+      }
+    });
+
+    await Promise.all(jobPromises);
+  } catch (err) {
+    //
+  }
+}
+
+function createWorker(queue) {
+  return new Worker(queue.name, async (job) => {
+    const updateDashboardPath = path.join(__dirname, "workers", "updateDashboard.js");
+    const updateDashboard = require(updateDashboardPath); // eslint-disable-line
+    await updateDashboard(job);
+  }, { connection: queue.opts.connection, concurrency: 5 });
+}
+
+module.exports = (queue) => {
+  const worker = createWorker(queue);
+  updateDashboards(queue);
+  checkActiveJobs(worker);
+
+  cron.schedule("* * * * *", () => {
+    updateDashboards(queue);
+  });
+};

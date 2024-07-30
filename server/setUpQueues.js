@@ -34,11 +34,22 @@ module.exports = (app) => {
     }
   });
 
+  const updateDashboardsQueue = new Queue("updateDashboardsQueue", getQueueOptions());
+  updateDashboardsQueue.on("error", (error) => {
+    if (error.code === "ECONNREFUSED") {
+      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      process.exit(1);
+    }
+  });
+
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/apps/queues");
 
   createBullBoard({
-    queues: [new BullMQAdapter(updateChartsQueue)],
+    queues: [
+      new BullMQAdapter(updateChartsQueue),
+      new BullMQAdapter(updateDashboardsQueue),
+    ],
     serverAdapter,
     options: {
       uiConfig: {
@@ -54,18 +65,20 @@ module.exports = (app) => {
 
   // set up cron jobs
   updateCharts(updateChartsQueue);
-  updateDashboards();
+  updateDashboards(updateDashboardsQueue);
 
   // Handle PM2 shutdown/reload
   process.on("SIGINT", async () => {
     console.log("SIGINT received. Cleaning active jobs..."); // eslint-disable-line
     await cleanActiveJobs(updateChartsQueue);
+    await cleanActiveJobs(updateDashboardsQueue);
     process.exit(0);
   });
 
   process.on("SIGTERM", async () => {
     console.log("SIGTERM received. Cleaning active jobs..."); // eslint-disable-line
     await cleanActiveJobs(updateChartsQueue);
+    await cleanActiveJobs(updateDashboardsQueue);
     process.exit(0);
   });
 
@@ -73,6 +86,7 @@ module.exports = (app) => {
   process.on("SIGUSR2", async () => {
     console.log("SIGUSR2 received. Cleaning active jobs..."); // eslint-disable-line
     await cleanActiveJobs(updateChartsQueue);
+    await cleanActiveJobs(updateDashboardsQueue);
     process.exit(0);
   });
 };

@@ -708,16 +708,19 @@ function ProjectDashboard(props) {
                   </div>
                 </Row>
                 <Row justify="flex-end" align="center">
-                  {_canAccess("projectEditor") && (
+                  {!mobile && (
                     <>
-                      <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
+                      <Spacer x={0.5} />
+                      <Tooltip content="Edit dashboard layout" placement="bottom-end">
                         <Button
                           variant="light"
                           isIconOnly
-                          onClick={() => setScheduleVisible(true)}
+                          onClick={() => setEditingLayout(!editingLayout)}
+                          color={editingLayout ? "primary" : "default"}
                           size="sm"
+                          className="dashboard-layout-tutorial"
                         >
-                          <LuCalendarClock size={22} />
+                          <LuLayoutDashboard size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -754,19 +757,16 @@ function ProjectDashboard(props) {
                       </Tooltip>
                     </>
                   )}
-                  {!mobile && (
+                  {_canAccess("projectEditor") && (
                     <>
-                      <Spacer x={0.5} />
-                      <Tooltip content="Edit dashboard layout" placement="bottom-end">
+                      <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
                         <Button
                           variant="light"
                           isIconOnly
-                          onClick={() => setEditingLayout(!editingLayout)}
-                          color={editingLayout ? "primary" : "default"}
+                          onClick={() => setScheduleVisible(true)}
                           size="sm"
-                          className="dashboard-layout-tutorial"
                         >
-                          <LuLayoutDashboard size={22} />
+                          <LuCalendarClock size={22} />
                         </Button>
                       </Tooltip>
                     </>
