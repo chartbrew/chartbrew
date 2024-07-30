@@ -95,6 +95,35 @@ function UpdateSchedule({ isOpen, onClose }) {
     setRemovingUpdates(false);
   };
 
+  const _canSave = () => {
+    // validate if any information is missing from the schedule
+    if (!schedule.frequency) {
+      return false;
+    }
+
+    if (schedule.frequency === "weekly" && (!schedule.dayOfWeek || !schedule.time)) {
+      return false;
+    }
+
+    if (schedule.frequency === "daily" && !schedule.time) {
+      return false;
+    }
+
+    if (schedule.frequency === "every_x_days" && (!schedule.frequencyNumber || !schedule.time)) {
+      return false;
+    }
+
+    if (schedule.frequency === "every_x_hours" && !schedule.frequencyNumber) {
+      return false;
+    }
+
+    if (schedule.frequency === "every_x_minutes" && !schedule.frequencyNumber) {
+      return false;
+    }
+
+    return true;
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
       <ModalContent>
@@ -215,7 +244,12 @@ function UpdateSchedule({ isOpen, onClose }) {
           <Button variant="bordered" onClick={onClose}>
             {"Cancel"}
           </Button>
-          <Button onClick={_onSave} color="primary" isLoading={isLoading}>
+          <Button
+            onClick={_onSave}
+            color="primary"
+            isLoading={isLoading}
+            isDisabled={!_canSave()}
+          >
             {"Save"}
           </Button>
         </ModalFooter>
