@@ -49,11 +49,23 @@ async function updateDashboards(queue) {
       if (!lastUpdated) {
         shouldUpdate = true;
       } else if (frequency === "daily") {
-        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
-        shouldUpdate = now > updateTime && now.diff(lastUpdated, "days") >= 1;
+        if (formattedTime) {
+          const updateTime = DateTime
+            .fromFormat(formattedTime, DateTime.TIME_24_SIMPLE, { zone: timezone })
+            .set({ weekday: dayOfTheWeek });
+          shouldUpdate = now > updateTime && now.diff(lastUpdated, "days") >= 1;
+        } else {
+          shouldUpdate = now.diff(lastUpdated, "days") >= 1;
+        }
       } else if (frequency === "weekly") {
-        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: dayOfTheWeek });
-        shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks") >= 1;
+        if (formattedTime && dayOfTheWeek) {
+          const updateTime = DateTime
+            .fromFormat(formattedTime, DateTime.TIME_24_SIMPLE, { zone: timezone })
+            .set({ weekday: dayOfTheWeek });
+          shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks") >= 1;
+        } else {
+          shouldUpdate = now.diff(lastUpdated, "weeks") >= 1;
+        }
       } else if (frequency === "every_x_days") {
         shouldUpdate = now.diff(lastUpdated, "days") >= frequencyNumber;
       } else if (frequency === "every_x_hours") {
