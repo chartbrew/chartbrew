@@ -29,14 +29,14 @@ async function updateDashboards(queue) {
       const {
         timezone,
         frequency,
-        dayOfTheWeek,
+        dayOfWeek,
         time,
         frequencyNumber,
       } = dashboard.updateSchedule;
 
       let formattedTime;
-      if (time?.hour && time?.minute) {
-        formattedTime = `${time.hour}:${time.minute}`;
+      if (time?.hour !== undefined && time?.minute !== undefined) {
+        formattedTime = `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}`;
       }
 
       const now = DateTime.now().setZone(timezone);
@@ -49,23 +49,11 @@ async function updateDashboards(queue) {
       if (!lastUpdated) {
         shouldUpdate = true;
       } else if (frequency === "daily") {
-        if (formattedTime) {
-          const updateTime = DateTime
-            .fromFormat(formattedTime, DateTime.TIME_24_SIMPLE, { zone: timezone })
-            .set({ weekday: dayOfTheWeek });
-          shouldUpdate = now > updateTime && now.diff(lastUpdated, "days") >= 1;
-        } else {
-          shouldUpdate = now.diff(lastUpdated, "days") >= 1;
-        }
+        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
+        shouldUpdate = now > updateTime && now.diff(lastUpdated, "days") >= 1;
       } else if (frequency === "weekly") {
-        if (formattedTime && dayOfTheWeek) {
-          const updateTime = DateTime
-            .fromFormat(formattedTime, DateTime.TIME_24_SIMPLE, { zone: timezone })
-            .set({ weekday: dayOfTheWeek });
-          shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks") >= 1;
-        } else {
-          shouldUpdate = now.diff(lastUpdated, "weeks") >= 1;
-        }
+        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: dayOfWeek });
+        shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks") >= 1;
       } else if (frequency === "every_x_days") {
         shouldUpdate = now.diff(lastUpdated, "days") >= frequencyNumber;
       } else if (frequency === "every_x_hours") {
