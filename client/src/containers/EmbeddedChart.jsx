@@ -58,7 +58,7 @@ function EmbeddedChart() {
       .catch(() => {
         setDataLoading(false);
       });
-  }, chart?.autoUpdate ? chart.autoUpdate * 1000 : null);
+  }, chart?.autoUpdate && chart.autoUpdate < 60000 ? chart.autoUpdate * 1000 : 60000);
 
   useEffect(() => {
     // change the background color to transparent
