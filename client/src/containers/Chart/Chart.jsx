@@ -93,7 +93,7 @@ function Chart(props) {
       password: isPublic ? window.localStorage.getItem("reportPassword") : null,
       fromInterval: true
     }));
-  }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 60000);
+  }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
   useEffect(() => {
     setIframeCopied(false);
