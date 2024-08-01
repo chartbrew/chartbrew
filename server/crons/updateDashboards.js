@@ -32,7 +32,7 @@ async function updateDashboards(queue) {
         dayOfWeek,
         time,
         frequencyNumber,
-      } = dashboard.updateSchedule;
+      } = dashboard.updateSchedule || {};
 
       let formattedTime;
       if (time?.hour !== undefined && time?.minute !== undefined) {

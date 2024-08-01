@@ -63,6 +63,8 @@ function UpdateSchedule({ isOpen, onClose }) {
       data: { updateSchedule: schedule },
     }));
 
+    await dispatch(getProject({ project_id: project.id, active: true }));
+
     if (response?.error?.message) {
       toast.error(response.error.message, { autoClose: 2000 });
     } else {
@@ -91,7 +93,8 @@ function UpdateSchedule({ isOpen, onClose }) {
       }
     }));
 
-    await dispatch(getProject({ project_id: project.id }));
+    await dispatch(getProject({ project_id: project.id, active: true }));
+
     setRemovingUpdates(false);
   };
 
@@ -123,6 +126,19 @@ function UpdateSchedule({ isOpen, onClose }) {
 
     return true;
   }
+
+  const _disableAutomaticUpdates = async () => {
+    await dispatch(updateProject({
+      project_id: project.id,
+      data: { updateSchedule: {} },
+    }));
+    await dispatch(getProject({ project_id: project.id, active: true }));
+    setSchedule({
+      timezone: project.timezone || getMachineTimezone(),
+    });
+    toast.success("Automatic updates disabled");
+    onClose();
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
@@ -241,9 +257,11 @@ function UpdateSchedule({ isOpen, onClose }) {
               Disable individual chart updates
             </Button>
           )}
-          <Button variant="bordered" onClick={onClose}>
-            {"Cancel"}
-          </Button>
+          {project.updateSchedule?.frequency && (
+            <Button variant="flat" onClick={_disableAutomaticUpdates}>
+              {"Disable the schedule"}
+            </Button>
+          )}
           <Button
             onClick={_onSave}
             color="primary"
