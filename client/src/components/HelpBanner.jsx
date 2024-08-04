@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Card, CardBody, CardFooter, CardHeader, Divider, Image, Link, Spacer,
+  Card, CardBody, CardFooter, CardHeader, Divider, Link, Spacer,
 } from "@nextui-org/react";
 import { LuGraduationCap } from "react-icons/lu";
 
@@ -110,12 +110,14 @@ function HelpBanner(props) {
       shadow="sm"
     >
       <CardHeader className="flex gap-3">
-        <Image
-          src={imageUrl}
-          width={80}
-          height={80}
-          radius="sm"
-        />
+        <div>
+          <img
+            src={imageUrl}
+            width={100}
+            height={80}
+            radius="sm"
+          />
+        </div>
         <div>
           <Link
             className={"font-bold text-start"}
