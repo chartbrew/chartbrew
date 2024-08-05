@@ -39,6 +39,7 @@ module.exports = {
     // Update all charts to have the new layout
     const projects = await db.Project.findAll({
       include: [{ model: db.Chart, attributes: ["id", "chartSize", "dashboardOrder"] }],
+      attributes: ["id"],
     });
 
     const updatePromises = [];
