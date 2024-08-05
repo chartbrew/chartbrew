@@ -353,6 +353,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
   };
 
   const _onAddColumn = () => {
+    console.log("selectedColumns", selectedColumns.values());
     let newColumns = selectedColumns.values().map((selectedColumn) => {
       const table = selectedColumn.split(".")[0];
       const column = selectedColumn.split(".")[1];

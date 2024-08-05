@@ -67,8 +67,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     updateSchedule: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: "{}",
       set(value) {
         try {
           this.setDataValue("updateSchedule", JSON.stringify(value));
