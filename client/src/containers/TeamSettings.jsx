@@ -1,24 +1,25 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Input, Checkbox, Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
 
-import { getTeam, updateTeam } from "../slices/team";
+import { getTeam, selectTeam, updateTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import { useParams } from "react-router";
 import Segment from "../components/Segment";
+import toast from "react-hot-toast";
 
 /*
   Contains team update functionality
 */
 function TeamSettings(props) {
   const {
-    team, cleanErrors, style,
+    cleanErrors, style,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,7 @@ function TeamSettings(props) {
 
   const params = useParams();
   const dispatch = useDispatch();
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     cleanErrors();
@@ -53,8 +55,13 @@ function TeamSettings(props) {
       });
   };
 
-  const _onToggleBranding = () => {
-    updateTeam(team.id, { showBranding: !team.showBranding });
+  const _onToggleBranding = async (selected) => {
+    const response = await dispatch(updateTeam({ team_id: team.id, data: { showBranding: selected } }));
+    if (response?.error) {
+      toast.error("Error updating branding settings");
+    } else {
+      toast.success("Branding settings updated");
+    }
   };
 
   if (!team) {
@@ -104,7 +111,7 @@ function TeamSettings(props) {
         <Row>
           <Checkbox
             isSelected={team.showBranding}
-            onChange={_onToggleBranding}
+            onValueChange={(selected) => _onToggleBranding(selected)}
           >
             Show Chartbrew branding
           </Checkbox>
