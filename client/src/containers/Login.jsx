@@ -45,7 +45,7 @@ function Login(props) {
       <div className="sm:flex m-4 justify-center">
         <Card>
           <CardHeader className={"flex justify-center"}>
-            <Text size="h3" className={"mt-4"}>{"Welcome back to Chartbrew"}</Text>
+            <h1 className={"mt-4 text-xl font-bold"}>{"Welcome back to Chartbrew"}</h1>
           </CardHeader>
           <CardBody>
             <LoginForm />

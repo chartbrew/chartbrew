@@ -100,9 +100,9 @@ function Signup() {
         <div className="flex flex-col justify-center w-full">
           <div className="mx-auto max-w-[400px] sm:max-w-[500px] sm:px-10">
             <Row>
-              <Text size="h2">
+              <h1 className={"text-2xl font-bold"}>
                 {"Create your Chartbrew account"}
-              </Text>
+              </h1>
             </Row>
             <Spacer y={4} />
 
