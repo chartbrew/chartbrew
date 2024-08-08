@@ -766,7 +766,10 @@ function ProjectDashboard(props) {
                           onClick={() => setScheduleVisible(true)}
                           size="sm"
                         >
-                          <LuCalendarClock size={22} />
+                          <LuCalendarClock
+                            className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
+                            size={22}
+                          />
                         </Button>
                       </Tooltip>
                     </>
