@@ -5,9 +5,10 @@ import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar, Breadcrumbs, BreadcrumbItem,
+  Chip,
 } from "@nextui-org/react";
 import {
-  LuBook, LuChevronDown, LuCode2, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuBook, LuChevronDown, LuCode2, LuContrast, LuGithub, LuHeartHandshake, LuKanbanSquare, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
@@ -109,6 +110,13 @@ function NavbarContainer() {
         setShowAppearance(true);
         break;
       }
+      case "roadmap": {
+        window.open("https://chartbrew.com/roadmap", "_blank");
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
 
@@ -160,13 +168,13 @@ function NavbarContainer() {
         <NavbarContent justify="end">
           <NavbarItem>
             <LinkNext
-              className="changelog-trigger items-center text-foreground"
+              className="changelog-trigger flex flex-row items-center text-foreground"
               title="Changelog"
             >
-              <Text className={"hidden sm:block"}>Updates</Text>
               <span className="changelog-badge">
                 {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
               </span>
+              <div className={"hidden sm:block text-sm"}>Updates</div>
             </LinkNext>
           </NavbarItem>
           <Dropdown aria-label="Select a help option">
@@ -176,16 +184,19 @@ function NavbarContainer() {
                   variant="light"
                   disableRipple
                   className="p-0 bg-transparent data-[hover=true]:bg-transparent"
-                  startContent={<LuHeartHandshake />}
+                  startContent={<LuHeartHandshake size={18} />}
                   radius="sm"
                 >
-                  Help
+                  Support
                 </Button>
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
               <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
                 <Text>{"Join our Discord"}</Text>
+              </DropdownItem>
+              <DropdownItem startContent={<LuKanbanSquare />} key="roadmap" textValue="Roadmap" endContent={<Chip variant="flat" color="secondary" size="sm" radius="sm">New</Chip>}>
+                <Text>{"Roadmap"}</Text>
               </DropdownItem>
               <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">
                 <Text>{"Blog tutorials"}</Text>
