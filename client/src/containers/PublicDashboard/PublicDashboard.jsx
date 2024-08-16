@@ -166,6 +166,7 @@ function PublicDashboard(props) {
   useEffect(() => {
     if (project?.id) {
       _checkSearchParamsForFilters();
+      _checkSearchParamsForFields();
     }
   }, [project]);
 
@@ -250,6 +251,56 @@ function PublicDashboard(props) {
 
       dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
     });
+  };
+
+  const _checkSearchParamsForFields = () => {
+    if (!searchParams || searchParams.entries()?.length === 0) return;
+
+    const filters = [];
+    searchParams.entries().forEach((entry) => {
+      const [key, value] = entry;
+      if (key.startsWith("fields[")) {
+        let field = key.replace("fields[", "");
+        field = field.substring(0, field.length - 1);
+        if (!field.includes("root[].")) {
+          field = `root[].${field}`;
+        }
+
+        filters.push({ field, value, operator: "is", project_id: project.id });
+      }
+    });
+
+    const refreshPromises = [];
+    charts.forEach((chart) => {
+      if (_chartHasFilter(chart, filters)) {
+        refreshPromises.push(
+          dispatch(runQueryWithFilters({
+            project_id: project.id,
+            chart_id: chart.id,
+            filters
+          }))
+        );
+      }
+    });
+
+    return Promise.all(refreshPromises);
+  };
+
+  const _chartHasFilter = (chart, filters) => {
+    let found = false;
+    if (chart.ChartDatasetConfigs) {
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (cdc.Dataset?.fieldsSchema) {
+          Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
+            if (filters && filters.some(o => o.field === key || `root[].${o.field}` === key || `root.${o.field}` === key)) {
+              found = true;
+            }
+          });
+        }
+      });
+    }
+
+    return found;
   };
 
   const _isOnReport = () => {

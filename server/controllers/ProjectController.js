@@ -192,7 +192,7 @@ class ProjectController {
           include: [{
             model: db.ChartDatasetConfig,
             order: [["order", "ASC"]],
-            include: [{ model: db.Dataset, attributes: ["id", "conditions"] }],
+            include: [{ model: db.Dataset, attributes: ["id", "conditions", "fieldsSchema"] }],
           }],
         },
         {
