@@ -126,18 +126,9 @@ class ProjectController {
       });
   }
 
-  remove(id, userId) {
-    let gProject;
+  remove(id) {
     // remove the project and any associated items alongs with that
-    return db.Project.findByPk(id)
-      .then((project) => {
-        gProject = project;
-        return db.Project.destroy({ where: { id } });
-      })
-      .then(() => {
-        // update the user's teamRole
-        return this.teamController.removeProjectAccess(gProject.team_id, userId, gProject.id);
-      })
+    return db.Project.destroy({ where: { id } })
       .then(() => {
         // make sure all charts from this project are deleted as well
         return db.Chart.destroy({ where: { project_id: id } });
