@@ -128,7 +128,10 @@ class ProjectController {
 
   remove(id) {
     // remove the project and any associated items alongs with that
-    return db.Project.destroy({ where: { id } })
+    return db.Variable.destroy({ where: { project_id: id } })
+      .then(() => {
+        return db.Project.destroy({ where: { id } });
+      })
       .then(() => {
         // make sure all charts from this project are deleted as well
         return db.Chart.destroy({ where: { project_id: id } });
