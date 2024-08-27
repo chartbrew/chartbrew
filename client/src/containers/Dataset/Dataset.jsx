@@ -54,7 +54,6 @@ function Dataset() {
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
   const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
-  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset?.id)?.data);
   const projects = useSelector(selectProjects);
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
@@ -150,7 +149,7 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    if (datasetMenu === "configure" && !datasetResponse && dataset?.id) {
+    if (datasetMenu === "configure" && dataset?.id) {
       dispatch(runRequest({
         team_id: params.teamId,
         dataset_id: dataset.id,
