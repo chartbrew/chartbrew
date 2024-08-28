@@ -94,7 +94,7 @@ function DatarequestSettings(props) {
   }, [joins]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
+    if (responses && responses.length > 0 && dataset && dataset.id) {
       const selectedResponse = responses.find((o) => o.dataset_id === dataset.id);
       if (selectedResponse?.data) {
         setResult(JSON.stringify(selectedResponse.data, null, 2));
