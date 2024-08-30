@@ -225,7 +225,7 @@ function DatasetBuilder(props) {
   };
 
   const _onUpdateDataset = (data) => {
-    dispatch(updateDataset({
+    return dispatch(updateDataset({
       team_id: dataset.team_id,
       dataset_id: dataset.id,
       data,

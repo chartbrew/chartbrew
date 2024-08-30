@@ -19,6 +19,7 @@ function DatasetFilters(props) {
   const [conditions, setConditions] = useState([]);
   const [selectedCondition, setSelectedCondition] = useState({});
   const [conditionModal, setConditionModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (dataset.conditions) {
@@ -107,7 +108,7 @@ function DatasetFilters(props) {
     setConditionModal(true);
   };
 
-  const _onConfirmConditionSettings = () => {
+  const _onConfirmConditionSettings = async () => {
     const newConditions = conditions.map((item) => {
       let newItem = { ...item };
       if (item.id === selectedCondition.id) {
@@ -117,7 +118,9 @@ function DatasetFilters(props) {
       return newItem;
     });
 
-    onUpdate({ conditions: newConditions });
+    setIsLoading(true);
+    await onUpdate({ conditions: newConditions });
+    setIsLoading(false);
     setSelectedCondition({});
     setConditionModal(false);
   };
@@ -458,6 +461,7 @@ function DatasetFilters(props) {
               onClick={_onConfirmConditionSettings}
               color="primary"
               isDisabled={selectedCondition.variable && !_isVariableValid(selectedCondition.variable)}
+              isLoading={isLoading}
             >
               Save settings
             </Button>
