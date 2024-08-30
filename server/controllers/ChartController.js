@@ -396,7 +396,8 @@ class ChartController {
                   const optCondition = opt.conditions.find((o) => o.field === c.field);
                   const values = (optCondition && optCondition.values) || [];
 
-                  return { ...c, values };
+                  // limit the values to 100
+                  return { ...c, values: values.slice(0, 100) };
                 });
 
                 datasetsPromises.push(
