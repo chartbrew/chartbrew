@@ -232,13 +232,15 @@ function DatasetBuilder(props) {
     }))
       .then(() => {
         toast.success("Dataset updated successfully.");
-        return dispatch(runQuery({
+        dispatch(runQuery({
           project_id: projectId,
           chart_id: chart.id,
           noSource: false,
           skipParsing: false,
           getCache: true,
         }));
+
+        return true;
       })
       .catch(() => {
         toast.error("Could not refresh the dataset. Please check your query.");
