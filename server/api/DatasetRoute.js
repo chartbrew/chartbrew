@@ -79,8 +79,8 @@ module.exports = (app) => {
   /*
   ** Route to get a dataset by ID
   */
-  app.get(`${root}/:id`, verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return datasetController.findById(req.params.id)
+  app.get(`${root}/:dataset_id`, verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return datasetController.findById(req.params.dataset_id)
       .then((dataset) => {
         return res.status(200).send(dataset);
       })
@@ -137,8 +137,8 @@ module.exports = (app) => {
   /*
   ** Route to update a dataset
   */
-  app.put(`${root}/:id`, verifyToken, checkPermissions("updateAny"), (req, res) => {
-    return datasetController.update(req.params.id, req.body)
+  app.put(`${root}/:dataset_id`, verifyToken, checkPermissions("updateAny"), (req, res) => {
+    return datasetController.update(req.params.dataset_id, req.body)
       .then((dataset) => {
         return res.status(200).send(dataset);
       })
@@ -155,8 +155,8 @@ module.exports = (app) => {
   /*
   ** Route to delete a dataset
   */
-  app.delete(`${root}/:id`, verifyToken, checkPermissions("deleteAny"), (req, res) => {
-    return datasetController.remove(req.params.id)
+  app.delete(`${root}/:dataset_id`, verifyToken, checkPermissions("deleteAny"), (req, res) => {
+    return datasetController.remove(req.params.dataset_id)
       .then((result) => {
         return res.status(200).send(result);
       })
@@ -169,9 +169,9 @@ module.exports = (app) => {
   /*
   ** Route to run the request attached to the dataset
   */
-  app.get(`${root}/:id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
     return datasetController.runRequest(
-      req.params.id, req.params.chart_id, req.query.noSource, req.query.getCache
+      req.params.dataset_id, req.params.chart_id, req.query.noSource, req.query.getCache
     )
       .then((dataset) => {
         const newDataset = dataset;
@@ -210,8 +210,8 @@ module.exports = (app) => {
   /*
   ** Route to get the charts associated with the dataset
   */
-  app.get(`${root}/:id/charts`, verifyToken, checkPermissions("readAny"), (req, res) => {
-    return datasetController.findRelatedCharts(req.params.id)
+  app.get(`${root}/:dataset_id/charts`, verifyToken, checkPermissions("readAny"), (req, res) => {
+    return datasetController.findRelatedCharts(req.params.dataset_id)
       .then((charts) => {
         return res.status(200).send(charts);
       })
