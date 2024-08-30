@@ -394,10 +394,10 @@ class ChartController {
               if (dataset?.conditions) {
                 const newConditions = dataset.conditions.map((c) => {
                   const optCondition = opt.conditions.find((o) => o.field === c.field);
-                  const values = (optCondition && optCondition.values) || [];
+                  let values = (optCondition && optCondition.values) || [];
+                  values = optCondition?.hideValues ? [] : values.slice(0, 100);
 
-                  // limit the values to 100
-                  return { ...c, values: values.slice(0, 100) };
+                  return { ...c, values };
                 });
 
                 datasetsPromises.push(
