@@ -120,6 +120,7 @@ function ChartFilters(props) {
               {condition.type !== "date" && !condition.hideValues && (
                 <>
                   <Autocomplete
+                    label={!inline ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}` : null}
                     variant="bordered"
                     selectedKey={_getConditionValue(condition.id)}
                     onSelectionChange={(key) => {
@@ -127,7 +128,6 @@ function ChartFilters(props) {
                     }}
                     onInputChange={(value) => _onOptionValueChange(value, condition)}
                     onKeyDown={(e) => _onKeyDown(e, condition)}
-                    labelPlacement="outside"
                     placeholder={inline
                       ? _getConditionValue(condition.id) || `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
                       : _getConditionValue(condition.id) || "Search here"
