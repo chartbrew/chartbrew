@@ -1014,7 +1014,7 @@ class ConnectionController {
     }
 
     let cioRoute = "customers";
-    if (dataRequest.route.indexOf("campaigns") === 0) {
+    if (dataRequest?.route?.indexOf("campaigns") === 0) {
       cioRoute = "campaigns";
     }
 
