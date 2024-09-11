@@ -1013,7 +1013,12 @@ class ConnectionController {
       }
     }
 
-    if (dataRequest.route.indexOf("customers") === 0) {
+    let cioRoute = "customers";
+    if (dataRequest.route.indexOf("campaigns") === 0) {
+      cioRoute = "campaigns";
+    }
+
+    if (cioRoute === "customers") {
       return CustomerioConnection.getCustomers(connection, dataRequest)
         .then(async (responseData) => {
           // cache the data for later use
@@ -1032,7 +1037,7 @@ class ConnectionController {
         .catch((err) => {
           return new Promise((resolve, reject) => reject(err));
         });
-    } else if (dataRequest.route.indexOf("campaigns") === 0) {
+    } else if (cioRoute === "campaigns") {
       return CustomerioConnection.getCampaignMetrics(connection, dataRequest)
         .then(async (responseData) => {
           // cache the data for later use
