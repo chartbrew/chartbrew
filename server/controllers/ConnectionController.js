@@ -617,6 +617,9 @@ class ConnectionController {
       })
       .then(async (data) => {
         let finalData = data;
+        if (data && typeof data?.next === "function") {
+          finalData = await data.toArray();
+        }
         // MonogoDB returns a plain number when count() is used, transform this into an object
         if (formattedQuery.indexOf("count(") > -1) {
           finalData = { count: data };
