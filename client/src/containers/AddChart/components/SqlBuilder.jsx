@@ -12,6 +12,7 @@ import {
   TableRow,
   TableCell,
   Pagination,
+  CircularProgress,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -235,6 +236,14 @@ function SqlBuilder(props) {
       return [];
     }
   };
+
+  if (!connection) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <CircularProgress aria-label="Loading connection..." />
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
