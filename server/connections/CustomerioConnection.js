@@ -319,10 +319,13 @@ function getCampaignMetrics(connection, dr) {
       resolution: dr.configuration.period,
       type: dr.configuration.type,
       unique: dr.configuration.unique,
-      start: dr.configuration.start,
-      end: dr.configuration.end,
       limit: 100,
     };
+
+    if (options.url.lastIndexOf("/journey_metrics") > -1) {
+      options.qs.start = dr.configuration.start;
+      options.qs.end = dr.configuration.end;
+    }
   }
 
   return request(options)
