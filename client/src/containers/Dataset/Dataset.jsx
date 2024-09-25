@@ -230,7 +230,7 @@ function Dataset() {
     }));
 
     let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
-    let cdcData = { ...dataset, ...ghostCdc };
+    let cdcData = { ...dataset, ...ghostCdc, legend };
     delete cdcData.id;
 
     if (fromChart === "create") {
