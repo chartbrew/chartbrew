@@ -1,4 +1,4 @@
-version: '3.3'
+name: chartbrew
 
 services:
   db:
@@ -10,6 +10,7 @@ services:
       MYSQL_USER: ${CB_DB_USERNAME}
       MYSQL_PASSWORD: ${CB_DB_PASSWORD}
       MYSQL_RANDOM_ROOT_PASSWORD: true
+      CB_DB_HOST: db
     volumes:
       - chartbrew-db:/var/lib/mysql
 
@@ -17,6 +18,7 @@ services:
     image: redis:latest
     restart: unless-stopped
     environment:
+      CB_REDIS_HOST: redis
       REDIS_PASSWORD: ${CB_REDIS_PASSWORD}
     ports:
       - 6379:6379
