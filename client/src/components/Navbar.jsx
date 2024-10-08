@@ -18,7 +18,6 @@ import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_blue.png";
 import cbLogoInverted from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
-import { DOCUMENTATION_HOST } from "../config/settings";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
@@ -87,7 +86,7 @@ function NavbarContainer() {
         break;
       }
       case "documentation": {
-        window.open(DOCUMENTATION_HOST, "_blank");
+        window.open("https://docs.chartbrew.com", "_blank");
         break;
       }
       case "github": {

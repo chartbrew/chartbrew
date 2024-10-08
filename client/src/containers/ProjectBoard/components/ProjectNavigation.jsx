@@ -133,19 +133,17 @@ function ProjectNavigation(props) {
               <PopoverTrigger>
                 <div>
                   {menuSize === "small" && (
-                    // <Tooltip content="Switch project" placement="right">
                     <div>
                       <Text className={"text-default-800"}><LuMenu size={28} /></Text>
                     </div>
-                    // </Tooltip>
                   )}
                   {menuSize === "large" && (
                     <Text b className={"text-sm text-blue-600"}>{_formatProjectName(project.name)}</Text>
                   )}
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="max-w-[200px] max-h-[400px]">
-                <div className="flex flex-col gap-2 overflow-y-auto px-4">
+              <PopoverContent className="max-w-[200px] max-h-[400px] px-2 py-4">
+                <div className="flex flex-col gap-2 overflow-y-auto">
                   <Input
                     placeholder="Search"
                     fullWidth
