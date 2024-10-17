@@ -329,7 +329,6 @@ class ChartController {
             );
           }
         });
-
         return Promise.all(requestPromises);
       })
       .then(async (datasets) => {

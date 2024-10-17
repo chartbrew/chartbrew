@@ -153,7 +153,7 @@ function Dataset() {
       dispatch(runRequest({
         team_id: params.teamId,
         dataset_id: dataset.id,
-        useCache: true,
+        getCache: true,
       }));
     }
   }, [datasetMenu]);

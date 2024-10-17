@@ -762,7 +762,7 @@ class AxisChart {
     let pairedData = [];
     data.forEach((item, index) => {
       let xItem;
-      const stringItem = item.toString();
+      const stringItem = (item && item.toString()) || "";
       if (stringItem && checkNumbersOnlyAndLength.test(stringItem)) {
         if (this.timezone) {
           xItem = this.moment(stringItem, stringItem.length === 10 ? "X" : "x");

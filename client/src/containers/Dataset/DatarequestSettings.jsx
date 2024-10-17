@@ -218,7 +218,7 @@ function DatarequestSettings(props) {
         return dispatch(runRequest({
           team_id: params.teamId,
           dataset_id: dataset.id,
-          useCache
+          getCache: useCache
         }));
       })
       .then(() => {
