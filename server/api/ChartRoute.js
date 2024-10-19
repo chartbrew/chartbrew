@@ -411,6 +411,17 @@ module.exports = (app) => {
           showGrowth: chart.showGrowth,
           timeInterval: chart.timeInterval,
           autoUpdate: chart.autoUpdate,
+          xLabelTicks: chart.xLabelTicks,
+          pointRadius: chart.pointRadius,
+          currentEndDate: chart.currentEndDate,
+          dataLabels: chart.dataLabels,
+          displayLegend: chart.displayLegend,
+          maxValue: chart.maxValue,
+          minValue: chart.minValue,
+          horizontal: chart.horizontal,
+          stacked: chart.stacked,
+          startDate: chart.startDate,
+          endDate: chart.endDate,
         });
       })
       .catch((error) => {
