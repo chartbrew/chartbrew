@@ -93,7 +93,8 @@ function ApiBuilder(props) {
   const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
-  const initRef = useRef(null);
+  const initRef = useRef(false);
+  const connectionInitRef = useRef(false);
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
@@ -145,17 +146,19 @@ function ApiBuilder(props) {
     // automate the pagination template here (to a possible extent)
     if (connection && apiRequest && !apiRequest.template) {
       if (connection?.host?.indexOf("api.stripe.com") > -1) {
-        apiRequest.template = "stripe";
+        newApiRequest.template = "stripe";
+        onChangeRequest(newApiRequest);
       }
     }
 
-    dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
-      .then((data) => {
-        setFullConnection(data.payload);
-      })
-      .catch(() => {});
-
-    onChangeRequest(newApiRequest);
+    if (connection && !connectionInitRef.current) {
+      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
+        .then((data) => {
+          setFullConnection(data.payload);
+        })
+        .catch(() => {});
+      connectionInitRef.current = true;
+    }
   }, [apiRequest, connection]);
 
   useEffect(() => {
@@ -258,8 +261,8 @@ function ApiBuilder(props) {
     toast.success("Variables saved 👌");
   };
 
-  const _onTest = (dr = dataRequest) => {
-    const { formattedHeaders } = apiRequest;
+  const _onTest = (dr = apiRequest) => {
+    const { formattedHeaders } = dr;
     let newHeaders = {};
     for (let i = 0; i < formattedHeaders.length; i++) {
       if (formattedHeaders[i].key && formattedHeaders[i].value) {
@@ -267,7 +270,7 @@ function ApiBuilder(props) {
       }
     }
 
-    const finalApiRequest = { dataRequest: apiRequest };
+    const finalApiRequest = { dataRequest: dr };
     finalApiRequest.dataRequest.headers = newHeaders;
 
     setRequestLoading(true);
