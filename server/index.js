@@ -50,7 +50,11 @@ app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
 app.use(json());
 app.use(methodOverride("X-HTTP-Method-Override"));
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
+}));
+// app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(cors());
 //---------------------------------------
 
