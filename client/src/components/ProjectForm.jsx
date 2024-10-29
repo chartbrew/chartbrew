@@ -24,7 +24,10 @@ import PlausibleTemplate from "../containers/Connections/Plausible/PlausibleTemp
 */
 function ProjectForm(props) {
   const {
-    onComplete, hideType, onClose, open,
+    onComplete = () => {},
+    hideType = false,
+    onClose,
+    open,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -241,11 +244,6 @@ function ProjectForm(props) {
     </Modal>
   );
 }
-
-ProjectForm.defaultProps = {
-  onComplete: () => {},
-  hideType: false,
-};
 
 ProjectForm.propTypes = {
   onComplete: PropTypes.func,

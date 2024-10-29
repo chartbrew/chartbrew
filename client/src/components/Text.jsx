@@ -61,7 +61,17 @@ const text = tv({
 
 function Text(props) {
   const {
-    children, size, color, h1, h2, h3, h4, small, b, variant, className,
+    children,
+    size = "md",
+    color = "default",
+    h1 = false,
+    h2 = false,
+    h3 = false,
+    h4 = false,
+    small = false,
+    b = false,
+    variant = "",
+    className = "",
   } = props;
   return (
     <span className={`${text({ size, color, h1, h2, h3, h4, small, b, variant })} ${className}`}>
@@ -82,19 +92,6 @@ Text.propTypes = {
   b: PropTypes.bool,
   className: PropTypes.string,
   variant: PropTypes.oneOf(["", "b", "i", "small"]),
-};
-
-Text.defaultProps = {
-  size: "md",
-  color: "default",
-  h1: false,
-  h2: false,
-  h3: false,
-  h4: false,
-  small: false,
-  b: false,
-  className: "",
-  variant: "",
 };
 
 export default Text

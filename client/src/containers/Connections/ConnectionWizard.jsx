@@ -231,7 +231,7 @@ function ConnectionWizard() {
 
           {newConnection && (
             <div className="flex flex-row items-center gap-2">
-              <Link to="/user" className="text-xl text-secondary font-semibold">
+              <Link to="/connections" className="text-xl text-secondary font-semibold">
                 <LuArrowLeftCircle size={24} />
               </Link>
               <span className="text-xl font-semibold">Edit your connection</span>
@@ -425,7 +425,7 @@ function ConnectionWizard() {
               <Button
                 variant="bordered"
                 fullWidth
-                onClick={() => navigate("/user")}
+                onClick={() => navigate("/")}
                 startContent={<LuLayoutDashboard />}
               >
                 Return to dashboard

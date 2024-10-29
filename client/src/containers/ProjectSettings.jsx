@@ -85,7 +85,7 @@ function ProjectSettings(props) {
     setRemoveError(false);
     dispatch(removeProject({ project_id: project.id }))
       .then(() => {
-        navigate("/user");
+        navigate("/");
       })
       .catch(() => {
         setRemoveLoading(false);

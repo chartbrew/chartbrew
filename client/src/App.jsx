@@ -26,6 +26,15 @@ const router = createBrowserRouter([
         }]
       },
       {
+        path: "dashboards",
+      },
+      {
+        path: "connections",
+      },
+      {
+        path: "datasets",
+      },
+      {
         path: "chart/:chartId/embedded",
       },
       {

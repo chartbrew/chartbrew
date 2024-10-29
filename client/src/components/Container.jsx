@@ -7,7 +7,7 @@ const container = tv({
 })
 
 function Container(props) {
-  const { children, size, className } = props;
+  const { children, size = "md", className = "" } = props;
   return (
     <div className={`${container({ size })} ${className}`}>
       {children}
@@ -19,11 +19,6 @@ Container.propTypes = {
   children: PropTypes.node.isRequired,
   size: PropTypes.oneOf(["sm", "md", "lg", "xl", "fluid"]),
   className: PropTypes.string,
-};
-
-Container.defaultProps = {
-  size: "md",
-  className: "",
 };
 
 export default Container;

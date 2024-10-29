@@ -49,7 +49,14 @@ const row = tv({
 });
 
 function Row(props) {
-  const { children, align, justify, content, wrap, className } = props;
+  const {
+    children,
+    align = "start",
+    justify = "start",
+    content = "start",
+    wrap = "none",
+    className = ""
+  } = props;
   return (
     <div className={`${row({ align, justify, content, wrap })} ${className}`}>
       {children}
@@ -64,14 +71,6 @@ Row.propTypes = {
   content: PropTypes.oneOf(["start", "center", "end", "between", "around", "evenly", "stretch"]),
   wrap: PropTypes.oneOf(["none", "reverse", "wrap"]),
   className: PropTypes.string,
-};
-
-Row.defaultProps = {
-  align: "start",
-  justify: "start",
-  content: "start",
-  wrap: "none",
-  className: "",
 };
 
 export default Row

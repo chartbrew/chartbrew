@@ -7,7 +7,7 @@ const segment = tv({
 })
 
 function Segment(props) {
-  const { children, size, className } = props;
+  const { children, size = "md", className = "" } = props;
   return (
     <div className={`${segment({ size })} ${className}`}>
       {children}
@@ -19,11 +19,6 @@ Segment.propTypes = {
   children: PropTypes.node.isRequired,
   size: PropTypes.oneOf(["sm", "md", "lg", "xl", "fluid"]),
   className: PropTypes.string,
-};
-
-Segment.defaultProps = {
-  size: "md",
-  className: "",
 };
 
 export default Segment;
