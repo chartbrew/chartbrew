@@ -217,7 +217,7 @@ function WebhookIntegrations(props) {
         )}
       </Container>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="2xl">
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <ModalContent>
           <ModalHeader>
             <Text size="h4">
@@ -240,7 +240,6 @@ function WebhookIntegrations(props) {
                 description={`${newIntegration.name?.length || 0}/20 characters`}
               />
             </Row>
-            <Spacer y={1} />
             <Row>
               <Input
                 label="The URL where Chartbrew sends a POST request to"
@@ -263,14 +262,12 @@ function WebhookIntegrations(props) {
               >
                 {"This is a Slack webhook"}
               </Checkbox>
-              <Spacer x={1} />
-              <Text size="small">
-                <Link onClick={() => setSlackModalOpen(true)}>
-                  <LuInfo />
-                  <Spacer x={1} />
-                  {"What is this?"}
-                </Link>
-              </Text>
+              <Spacer x={3} />
+              <Link onClick={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
+                <LuInfo size={16} />
+                <Spacer x={1} />
+                {"What is this?"}
+              </Link>
             </Row>
             {error && (
               <Row>
@@ -282,8 +279,7 @@ function WebhookIntegrations(props) {
             <Button
               auto
               onClick={() => setCreateOpen(false)}
-              color="warning"
-              variant="flat"
+              variant="bordered"
             >
               Close
             </Button>
@@ -343,7 +339,7 @@ function WebhookIntegrations(props) {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={slackModalOpen} size="full" onClose={() => setSlackModalOpen(false)}>
+      <Modal isOpen={slackModalOpen} size="5xl" onClose={() => setSlackModalOpen(false)}>
         <ModalContent>
           <ModalHeader>
             <Text size="h4">How to set up Slack alerts</Text>

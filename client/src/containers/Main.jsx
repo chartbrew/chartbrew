@@ -183,6 +183,7 @@ function Main(props) {
                 <Route index element={<DashboardList />} />
                 <Route path="connections" element={<ConnectionList />} />
                 <Route path="datasets" element={<DatasetList />} />
+                <Route path="integrations" element={<Integrations />} />
               </Route>
               <Route exact path="/b/:brewName" element={<PublicDashboard />} />
               <Route

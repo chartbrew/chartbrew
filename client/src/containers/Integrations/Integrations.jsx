@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import {
   Spacer,
 } from "@nextui-org/react";
@@ -13,20 +13,23 @@ import {
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Segment from "../../components/Segment";
-import { useParams } from "react-router";
+import { selectTeam } from "../../slices/team";
 
 function Integrations(props) {
   const { integrations, getTeamIntegrations } = props;
 
-  const params = useParams();
+  const team = useSelector(selectTeam);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    getTeamIntegrations(params.teamId);
-  }, []);
+    if (team?.id && !initRef.current) {
+      getTeamIntegrations(team?.id);
+      initRef.current = true;
+    }
+  }, [team]);
 
   return (
     <div>
-      <Spacer y={4} />
       <Segment className="container mx-auto bg-background">
         <Row>
           <Text size="h3">Integrations</Text>
@@ -42,7 +45,7 @@ function Integrations(props) {
         <Row>
           <WebhookIntegrations
             integrations={integrations ? integrations.filter((i) => i.type === "webhook") : []}
-            teamId={params.teamId}
+            teamId={team?.id}
           />
         </Row>
         <Spacer y={4} />

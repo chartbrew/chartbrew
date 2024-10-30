@@ -35,6 +35,9 @@ const router = createBrowserRouter([
         path: "datasets",
       },
       {
+        path: "integrations",
+      },
+      {
         path: "chart/:chartId/embedded",
       },
       {

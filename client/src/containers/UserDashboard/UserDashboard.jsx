@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
   Button, Spacer, Chip, CircularProgress,
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
 } from "@nextui-org/react";
 import {
-  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuSettings, LuUsers2,
+  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers2,
 } from "react-icons/lu";
 
 import { relog } from "../../slices/user";
@@ -229,7 +229,6 @@ function UserDashboard(props) {
                   {_canAccess("projectEditor", team.TeamRoles) && (
                     <ListboxItem
                       key="datasets"
-                      showDivider={_canAccess("teamAdmin", team.TeamRoles)}
                       startContent={<LuDatabase size={24} />}
                       textValue="Datasets"
                       color={_getActiveMenu() === "datasets" ? "primary" : "default"}
@@ -241,13 +240,25 @@ function UserDashboard(props) {
                   )}
                   {_canAccess("teamAdmin", team.TeamRoles) && (
                     <ListboxItem
-                      as={Link}
-                      to={`/manage/${team.id}/settings`}
+                      key="integrations"
+                      showDivider={_canAccess("teamAdmin", team.TeamRoles)}
+                      startContent={<LuPuzzle size={24} />}
+                      textValue="Integrations"
+                      color={_getActiveMenu() === "integrations" ? "primary" : "default"}
+                      className={_getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"}
+                      onClick={() => navigate("/integrations")}
+                    >
+                      <span className="text-lg">Integrations</span>
+                    </ListboxItem>
+                  )}
+                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                    <ListboxItem
                       key="teamSettings"
                       startContent={<LuSettings size={24} />}
                       textValue="Team settings"
                       color={"default"}
                       className={"text-foreground team-settings-tutorial"}
+                      onClick={() => navigate(`/manage/${team.id}/settings`)}
                     >
                       <span className="text-lg">Team settings</span>
                     </ListboxItem>
