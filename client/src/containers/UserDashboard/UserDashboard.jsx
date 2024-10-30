@@ -151,9 +151,9 @@ function UserDashboard(props) {
   };
 
   return (
-    <div className="dashboard bg-content2" style={styles.container(height)}>
+    <div className="dashboard bg-content2 flex flex-col h-screen">
       <Navbar hideTeam transparent />
-      <div className="container mx-auto">
+      <div className="container mx-auto px-4">
         <Spacer y={4} />
 
         {team?.id && (
