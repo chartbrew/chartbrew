@@ -65,7 +65,7 @@ function Signup() {
       dispatch(createUser({ name, email, password }))
         .then(() => {
           setLoading(false);
-          navigate("/user?welcome=true");
+          navigate("/?welcome=true");
         })
         .catch((err) => {
           setLoading(false);
@@ -84,7 +84,7 @@ function Signup() {
             setLoading(false);
             setAddedToTeam(true);
             setTimeout(() => {
-              navigate("/user");
+              navigate("/");
             }, 3000);
           });
       })

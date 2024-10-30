@@ -257,7 +257,7 @@ function Dataset() {
     }
 
     if (completeProjects.length === 0) {
-      navigate("/user");
+      navigate("/");
       return;
     }
 
@@ -323,7 +323,7 @@ function Dataset() {
             if (completeProjects.length === 1) {
               navigate(`/${params.teamId}/${completeProjects[0]}/dashboard`);
             } else {
-              navigate("/user");
+              navigate("/");
             }
           }
         })
@@ -335,7 +335,7 @@ function Dataset() {
               toast.error("Could not create chart. Please try again");
               setCompleteModal(false);
             } else {
-              navigate("/user");
+              navigate("/");
             }
           }
         });

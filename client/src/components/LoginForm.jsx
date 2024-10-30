@@ -101,7 +101,7 @@ function LoginForm() {
           return;
         }
         setLoading(false);
-        navigate("/user");
+        navigate("/");
       })
       .catch((err) => {
         setErrors({ ...errors, login: err.message });
@@ -132,7 +132,7 @@ function LoginForm() {
       })
       .then(() => {
         setLoading(false);
-        navigate("/user");
+        navigate("/");
       })
       .catch(() => {
         setErrors({ ...errors, otpToken: "Invalid token" });

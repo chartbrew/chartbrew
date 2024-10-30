@@ -29,6 +29,9 @@ import ConnectionWizard from "./Connections/ConnectionWizard";
 import LoadingScreen from "../components/LoadingScreen";
 import Variables from "./Variables/Variables";
 import { Toaster } from "react-hot-toast";
+import ConnectionList from "./UserDashboard/ConnectionList";
+import DatasetList from "./UserDashboard/DatasetList";
+import DashboardList from "./UserDashboard/DashboardList";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -176,7 +179,12 @@ function Main(props) {
         <div>
           <Suspense fallback={<SuspenseLoader />}>
             <Routes>
-              <Route exact path="/" element={<UserDashboard />} />
+              <Route path="/" element={<UserDashboard />}>
+                <Route index element={<DashboardList />} />
+                <Route path="connections" element={<ConnectionList />} />
+                <Route path="datasets" element={<DatasetList />} />
+                <Route path="integrations" element={<Integrations />} />
+              </Route>
               <Route exact path="/b/:brewName" element={<PublicDashboard />} />
               <Route
                 exact

@@ -21,7 +21,7 @@ function ProjectRedirect() {
         navigate(`/${project.team_id}/${project.id}/dashboard`);
       })
       .catch(() => {
-        navigate("/user");
+        navigate("/");
       });
   }, []);
 

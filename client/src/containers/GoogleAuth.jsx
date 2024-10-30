@@ -93,7 +93,7 @@ function GoogleAuth() {
           </Row>
           <Spacer y={1} />
           <Row>
-            <Link to="/user">
+            <Link to="/connections">
               <Button
                 color="success"
                 endContent={<LuArrowRight />}
@@ -119,7 +119,7 @@ function GoogleAuth() {
           </Row>
           <Spacer y={1} />
           <Row>
-            <Link to="/user">
+            <Link to="/connections">
               <Button
                 color="secondary"
                 endContent={<LuArrowRight />}

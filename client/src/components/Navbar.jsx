@@ -136,19 +136,19 @@ function NavbarContainer() {
     <>
       <Navbar isBordered maxWidth="full" height={"3rem"} style={{ zIndex: 999 }}>
         <NavbarBrand>
-          <Link to="/user">
+          <Link to="/">
             <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
           </Link>
           <Spacer x={4} />
           <Row align="center" className={"gap-1 hidden sm:flex"}>
             <Breadcrumbs variant="solid">
               {!params.teamId && (
-                <BreadcrumbItem key="home" onClick={() => navigate("/user")}>
+                <BreadcrumbItem key="home" onClick={() => navigate("/")}>
                   <Text>{"Home"}</Text>
                 </BreadcrumbItem>
               )}
               {params.teamId && (
-                <BreadcrumbItem key="team" onClick={() => navigate("/user")} isCurrent={!params.projectId}>
+                <BreadcrumbItem key="team" onClick={() => navigate("/")} isCurrent={!params.projectId}>
                   {team.name}
                 </BreadcrumbItem>
               )}
