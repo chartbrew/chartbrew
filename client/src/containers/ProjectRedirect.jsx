@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Spacer, CircularProgress
 } from "@nextui-org/react";
@@ -15,15 +15,24 @@ function ProjectRedirect() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const initRef = useRef(false);
+
   useEffect(() => {
-    dispatch(getProject({ project_id: params.projectId, active: true }))
-      .then((project) => {
-        navigate(`/${project.team_id}/${project.id}/dashboard`);
-      })
-      .catch(() => {
-        navigate("/");
-      });
-  }, []);
+    if (params.projectId && !initRef.current) {
+      dispatch(getProject({ project_id: params.projectId, active: true }))
+        .then((project) => {
+          if (project?.payload) {
+            navigate(`/${project.payload.team_id}/${project.payload.id}/dashboard`);
+          } else {
+            navigate("/");
+          }
+        })
+        .catch(() => {
+          navigate("/");
+        });
+      initRef.current = true;
+    }
+  }, [params]);
 
   return (
     <Container>

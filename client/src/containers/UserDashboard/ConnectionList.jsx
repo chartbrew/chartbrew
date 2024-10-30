@@ -100,6 +100,7 @@ function ConnectionList() {
             color="primary"
             endContent={<LuPlus />}
             onClick={() => navigate(`/${team.id}/connection/new`)}
+            isDisabled={user.temporary}
           >
             Create connection
           </Button>

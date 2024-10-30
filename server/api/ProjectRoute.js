@@ -33,6 +33,10 @@ module.exports = (app) => {
         teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
       }
 
+      if (!teamRole?.role) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType]("project");
         if (!permission.granted) {

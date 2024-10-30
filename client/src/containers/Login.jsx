@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { connect, useSelector } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -12,7 +12,7 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import { selectUser } from "../slices/user";
+import { relog } from "../slices/user";
 
 /*
   Login container with an embedded login form
@@ -20,19 +20,20 @@ import { selectUser } from "../slices/user";
 function Login(props) {
   const { errors, cleanErrors } = props;
   const loginError = _.find(errors, { pathname: window.location.pathname });
-  const user = useSelector(selectUser);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
-  }, []);
 
-  useEffect(() => {
-    if (user?.id) {
-      navigate("/");
-    }
-  }, [user]);
+    dispatch(relog())
+      .then((data) => {
+        if (data?.payload?.id) {
+          navigate("/");
+        }
+      });
+  }, []);
 
   return (
     <div style={styles.container} className="pt-20">
