@@ -6,7 +6,7 @@ import {
 } from "@nextui-org/react";
 import { LuDatabase, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -31,6 +31,7 @@ import Row from "../../components/Row";
 import { useTheme } from "../../modules/ThemeContext";
 import Text from "../../components/Text";
 import { selectProjects } from "../../slices/project";
+import { selectTeam } from "../../slices/team";
 
 
 function DatasetQuery(props) {
@@ -45,11 +46,13 @@ function DatasetQuery(props) {
   const theme = isDark ? "dark" : "light";
   const dispatch = useDispatch();
   const params = useParams();
+  const navigate = useNavigate();
 
   const stateDataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
   const connections = useSelector(selectConnections);
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const projects = useSelector(selectProjects);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     dispatch(getDataRequestsByDataset({
@@ -394,22 +397,39 @@ function DatasetQuery(props) {
         </div>
       )}
       {createMode && (
-        <div className="col-span-12 md:col-span-11 container mx-auto">
+        <div className="col-span-12 md:col-span-11 container mx-auto px-4">
           <Spacer y={1} />
           <Text size="h2">Select a connection</Text>
           <Spacer y={2} />
-          <div>
-            <Input
-              startContent={<LuSearch />}
-              placeholder="Search connections"
-              onChange={(e) => setConnectionSearch(e.target.value)}
-              className="max-w-[300px]"
-              labelPlacement="outside"
-              variant="bordered"
-            />
-          </div>
+          {_filteredConnections().length > 0 && (
+            <div>
+              <Input
+                startContent={<LuSearch />}
+                placeholder="Search connections"
+                onChange={(e) => setConnectionSearch(e.target.value)}
+                className="max-w-[300px]"
+                labelPlacement="outside"
+                variant="bordered"
+              />
+            </div>
+          )}
           <Spacer y={4} />
           <div className="grid grid-cols-12 gap-4">
+            {_filteredConnections().length === 0 && (
+              <div className="col-span-12 flex flex-col">
+                <p className="text-default-500">{"No connections found. Please create a connection first."}</p>
+                <Spacer y={2} />
+                <div>
+                  <Button
+                    onClick={() => navigate(`/${team.id}/connection/new`)}
+                    color="primary"
+                  >
+                    Create a connection
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {_filteredConnections().map((c) => {
               return (
                 <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
