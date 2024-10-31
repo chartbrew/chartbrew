@@ -40,13 +40,14 @@ function EmbeddedChart() {
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
+  const [isSnapshot, setIsSnapshot] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
   const { setTheme } = useTheme();
   const [searchParams] = useSearchParams();
   const filterRef = useRef(null);
-  const chartSize = useChartSize(chart.layout);
+  const chartSize = useChartSize(chart?.layout);
   
   useInterval(() => {
     setDataLoading(true);
@@ -64,11 +65,20 @@ function EmbeddedChart() {
     // change the background color to transparent
     document.body.style.backgroundColor = "transparent";
 
+    const urlParams = new URLSearchParams(document.location.search);
+
+    setIsSnapshot(urlParams.has("isSnapshot"));
+
     setLoading(true);
     setTimeout(() => {
       dispatch(getEmbeddedChart({ embed_id: params.chartId }))
         .then((chart) => {
-          setChart(chart.payload);
+          if (chart?.error) {
+            setError(true);
+            setChart({ error: "no chart" });
+          } else {
+            setChart(chart.payload);
+          }
           setLoading(false);
         })
         .catch(() => {
@@ -87,7 +97,7 @@ function EmbeddedChart() {
 
   useEffect(() => {
     // check the search params and pass them to
-    if (chart.id && !filterRef.current) {
+    if (chart?.id && !filterRef.current) {
       filterRef.current = true;
       _checkSearchParamsForFilters();
     }
@@ -211,7 +221,7 @@ function EmbeddedChart() {
     return filterCount > 0;
   };
 
-  if (loading) {
+  if (loading || !chart) {
     return (
       <>
         <Helmet>
@@ -246,7 +256,7 @@ function EmbeddedChart() {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} id="chart-container">
       <Helmet>
         <style type="text/css">
           {`
@@ -265,12 +275,12 @@ function EmbeddedChart() {
           <div>
             <Text b>{chart.name}</Text>
             <div className="flex flex-row items-center">
-              {!dataLoading && (
+              {!dataLoading && !isSnapshot && (
                 <>
                   <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
                 </>
               )}
-              {dataLoading && (
+              {dataLoading && !isSnapshot && (
                 <>
                   <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
                   <Spacer x={1} />
@@ -280,7 +290,7 @@ function EmbeddedChart() {
             </div>
           </div>
 
-          {chart.chartData && (
+          {chart.chartData && !isSnapshot && (
             <div>
               {_checkIfFilters() && (
                 <div className="flex items-start gap-1">

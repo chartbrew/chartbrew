@@ -12,6 +12,7 @@ const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
+const { snapChart } = require("../modules/chartSnapshot");
 
 // charts
 const AxisChart = require("../charts/AxisChart");
@@ -774,6 +775,17 @@ class ChartController {
       .catch((err) => {
         return Promise.reject(err);
       });
+  }
+
+  async takeSnapshot(id) {
+    let chartShare = await db.Chartshare.findOne({ where: { chart_id: id } });
+
+    if (!chartShare) {
+      chartShare = await this.createShare(id);
+      chartShare = chartShare.get({ plain: true });
+    }
+
+    return snapChart(chartShare.shareString);
   }
 }
 

@@ -1,12 +1,15 @@
 const { add, isPast } = require("date-fns");
 const request = require("request-promise");
 const moment = require("moment");
+const ChartController = require("../../controllers/ChartController");
 
 const db = require("../../models/models");
 const mail = require("../mail");
 const webhookAlerts = require("./webhookAlerts");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+
+const fullApiUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_API_HOST : process.env.VITE_APP_API_HOST_DEV;
 
 async function processAlert(chart, alert, alerts) {
   const {
@@ -15,6 +18,8 @@ async function processAlert(chart, alert, alerts) {
   const {
     value, lower, upper
   } = rules;
+
+  const chartController = new ChartController();
 
   let alertsFound = alerts;
 
@@ -52,6 +57,15 @@ async function processAlert(chart, alert, alerts) {
     thresholdText = `Chartbrew found some values your thresholds of ${lower} and ${upper}.`;
   }
 
+  // take a snapshot of the chart
+  let snapshotUrl = null;
+  try {
+    snapshotUrl = await chartController.takeSnapshot(chart.id);
+    snapshotUrl = `${fullApiUrl}/${snapshotUrl}`;
+  } catch (err) {
+    console.log("Could not take snapshot", err); // eslint-disable-line no-console
+  }
+
   // first process the mediums
   const stringAlerts = [];
   Object.keys(mediums).forEach((medium) => {
@@ -68,6 +82,7 @@ async function processAlert(chart, alert, alerts) {
         thresholdText,
         alerts: stringAlerts,
         dashboardUrl,
+        snapshotUrl,
       });
     }
   });
@@ -89,6 +104,7 @@ async function processAlert(chart, alert, alerts) {
             chart,
             alertsFound,
             alert,
+            snapshotUrl,
           }));
         }
       });

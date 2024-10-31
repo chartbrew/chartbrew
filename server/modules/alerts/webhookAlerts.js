@@ -4,7 +4,7 @@ const settings = process.env.NODE_ENV === "production" ? require("../../settings
 
 function send(data) {
   const {
-    integration, chart, alert, alertsFound,
+    integration, chart, alert, alertsFound, snapshotUrl,
   } = data;
 
   const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
@@ -59,6 +59,15 @@ function send(data) {
     }
   }];
 
+  // localhost is not a valid url for the image_url
+  if (snapshotUrl && snapshotUrl?.indexOf("localhost") === -1) {
+    blocks.push({
+      type: "image",
+      image_url: snapshotUrl,
+      alt_text: `${chart.name} snapshot`,
+    });
+  }
+
   const options = {
     url: integration.config.url,
     method: "POST",
@@ -73,6 +82,7 @@ function send(data) {
       },
       alertsFound,
       dashboardUrl,
+      snapshotUrl,
       blocks: integration.config.slackMode ? blocks : [],
     }),
   };

@@ -247,9 +247,9 @@
                 <tr>
                   <td align="left" valign="bottom">
                     <a href="https://chartbrew.com" target="_blank" style="text-decoration:none;">
-                      <img src="https://chartbrew-static.b-cdn.net/logo_v2.png" height="40" alt="Chartbrew logo"
+                      <img src="https://chartbrew-static.b-cdn.net/logo_v2.png" height="40" width="40" alt="Chartbrew logo"
                         border="0"
-                        style="display:block; font-family:Arial, sans-serif; font-size:18px; line-height:25px; text-align:center; color:#1d4685; font-weight:bold; max-width:40px;"
+                        style="display:block; font-family:Arial, sans-serif; font-size:18px; line-height:25px; text-align:center; color:#1d4685; font-weight:bold; width:40px;"
                       />
                     </a>
                   </td>
@@ -315,6 +315,15 @@
                 <tr>
                   <td height="26" style="height:26px;" class="em_h20">&nbsp;</td>
                 </tr>
+
+                <% if (snapshotUrl) { %>
+                  <tr>
+                    <td align="left" valign="top">
+                      <img src="<%= snapshotUrl %>" alt="<%= chartName %> snapshot" style="max-width:100%; height:auto; display:block;" />
+                    </td>
+                  </tr>
+                <% } %>
+
                 <tr>
                   <td height="26" style="height:26px;" class="em_h20">---</td>
                 </tr>
