@@ -19,7 +19,7 @@ module.exports.snapChart = async (shareString) => {
 
     await browser.close();
 
-    return snapshotPath;
+    return `uploads/snapshots/snap-${shareString}.png`;
   } catch (err) {
     console.log("Could not take snapshot", err); // eslint-disable-line no-console
     return null;
