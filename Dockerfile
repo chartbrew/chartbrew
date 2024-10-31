@@ -3,7 +3,7 @@ FROM node:20-slim
 WORKDIR /code
 COPY . .
 
-RUN cd client && npm install && cd ../server && npm install && npx playwright install
+RUN cd client && npm install && cd ../server && npm install && npx playwright install-deps && npx playwright install
 RUN npm run prepareSettings
 
 RUN echo -e "\nBuilding the UI. This might take a couple of minutes...\n"

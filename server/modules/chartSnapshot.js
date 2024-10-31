@@ -1,4 +1,5 @@
 const { chromium } = require("playwright");
+const path = require("path");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -13,7 +14,7 @@ module.exports.snapChart = async (shareString) => {
     await page.waitForSelector("div#chart-container");
     await page.waitForTimeout(500);
 
-    const snapshotPath = `uploads/snapshots/snap-${shareString}.png`;
+    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${shareString}.png`);
     await page.screenshot({ path: snapshotPath, omitBackground: true });
 
     await browser.close();
