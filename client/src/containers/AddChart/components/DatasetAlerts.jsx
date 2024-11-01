@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
@@ -16,7 +16,7 @@ import {
 import {
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../../actions/integration";
-import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
+import autoUpdatePicture from "../../../assets/chartbrew-auto-update.webp";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
@@ -56,7 +56,7 @@ const timePeriods = [{
 
 function DatasetAlerts(props) {
   const {
-    chartId, cdcId, projectId, getTeamIntegrations, integrations,
+    chartId, cdcId, projectId, getTeamIntegrations, integrations, onChanged = () => {},
   } = props;
 
   const team = useSelector(selectTeam);
@@ -90,10 +90,21 @@ function DatasetAlerts(props) {
 
   const dispatch = useDispatch();
   const alerts = useSelector(selectAlerts).filter((a) => a.cdc_id === cdcId);
+  const project = useSelector((state) => state.project?.active);
+
+  const initRef = useRef(false);
 
   useEffect(() => {
     dispatch(getTeamMembers({ team_id: team.id }));
     getTeamIntegrations(team.id);
+
+    if (!initRef.current && alerts?.length === 0) {
+      dispatch(getChartAlerts({
+        project_id: projectId,
+        chart_id: chartId
+      }));
+      initRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -122,7 +133,7 @@ function DatasetAlerts(props) {
   };
 
   const _onCreateNewIntegration = () => {
-    window.open(`/${team.id}/${projectId}/integrations`, "_blank");
+    window.open("/integrations", "_blank");
   };
 
   const _onChangeRecipient = (email) => {
@@ -175,6 +186,8 @@ function DatasetAlerts(props) {
         .catch(() => {
           setLoading(false);
         });
+
+      onChanged();
       return;
     }
 
@@ -191,6 +204,8 @@ function DatasetAlerts(props) {
       .catch(() => {
         setLoading(false);
       });
+
+    onChanged();
   };
 
   const _onEdit = (alert) => {
@@ -291,7 +306,7 @@ function DatasetAlerts(props) {
   return (
     <div className="dataset-alerts-tut chart-cdc-alert">
       <Container className={"pl-0 pr-0"}>
-        <Row wrap="wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {alerts.length === 0 && (
             <Link onClick={_onOpen} className="flex items-center cursor-pointer">
               <LuBellPlus size={24} />
@@ -302,11 +317,10 @@ function DatasetAlerts(props) {
           {alerts.length > 0 && alerts.map((alert) => (
             <Fragment key={alert.id}>
               <Button
-                color={alert.active ? "primary" : "secondary"}
+                color={alert.active ? "primary" : "default"}
                 auto
                 variant="bordered"
                 size="sm"
-                className="mb-5"
                 onClick={() => _onEdit(alert)}
                 endContent={alert.active ? <LuBellRing /> : <LuBellOff />}
               >
@@ -317,25 +331,21 @@ function DatasetAlerts(props) {
                 {alert.type === "threshold_outside" && "Outside thresholds"}
                 {alert.type === "anomaly" && "Anomaly detection"}
               </Button>
-              <Spacer x={0.5} />
             </Fragment>
           ))}
-        </Row>
+        </div>
         {alerts.length > 0 && (
-          <>
-            <Row>
-              <Button
-                color="primary"
-                auto
-                startContent={<LuPlus />}
-                size="sm"
-                onClick={_onOpen}
-                variant="light"
-              >
-                Set up new alert
-              </Button>
-            </Row>
-          </>
+          <div className="mt-2">
+            <Button
+              auto
+              startContent={<LuPlus />}
+              size="sm"
+              onClick={_onOpen}
+              variant="light"
+            >
+              Set up new alert
+            </Button>
+          </div>
         )}
       </Container>
       <Modal isOpen={open} onClose={() => setOpen(false)} size="2xl">
@@ -426,11 +436,9 @@ function DatasetAlerts(props) {
               )}
 
               {newAlert.type === "anomaly" && (
-                <Row>
-                  <Text i>
-                    {"The anomaly detection is done automatically. Best to use this if you want to be notified when a time series is behaving differently than usual."}
-                  </Text>
-                </Row>
+                <div className="text-sm text-gray-500">
+                  {"The anomaly detection is done automatically. Best to use this if you want to be notified when a time series is behaving differently than usual."}
+                </div>
               )}
 
               <Spacer y={4} />
@@ -440,7 +448,7 @@ function DatasetAlerts(props) {
                     <Text b>Where should we send the alerts?</Text>
                   </Row>
                   <Spacer y={1} />
-                  <Row wrap="wrap" align="center" className={"gap-1"}>
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       auto
                       startContent={<LuMail />}
@@ -451,7 +459,6 @@ function DatasetAlerts(props) {
                     >
                       Email
                     </Button>
-                    <Spacer x={1} />
                     {integrations && integrations.map((integration) => (
                       <>
                         <Button
@@ -493,7 +500,7 @@ function DatasetAlerts(props) {
                     >
                       Refresh list
                     </Button>
-                  </Row>
+                  </div>
                   {newAlert.mediums.email?.enabled && (
                   <>
                     <Spacer y={4} />
@@ -576,19 +583,19 @@ function DatasetAlerts(props) {
                 </>
               )}
 
-              {chart && !chart.autoUpdate && (
+              {chart && !chart?.autoUpdate && !project?.updateSchedule && (
                 <>
                   <Spacer y={4} />
                   <Row>
-                    <Container className={"bg-primary-50 p-5 rounded-md"}>
+                    <Container className={"border-2 border-primary p-5 rounded-md"}>
                       <Row>
-                        <Text size="sm">
-                          {"In order for the alert to trigger, you must enable automatic chart updates from the dashboard."}
+                        <div className="text-sm">
+                          {"In order for the alert to trigger, you must enable automatic dashboard or chart updates."}
                           <Spacer y={0.5} />
-                          <Link onClick={_toggleAutoUpdate}>
+                          <Link onClick={_toggleAutoUpdate} className="text-sm">
                             {showAutoUpdate ? "Hide picture" : "Show how to do it"}
                           </Link>
-                        </Text>
+                        </div>
                       </Row>
                     </Container>
                   </Row>
@@ -599,7 +606,7 @@ function DatasetAlerts(props) {
                 <>
                   <Spacer y={2} />
                   <Row justify="center">
-                    <img width="400" src={autoUpdatePicture} alt="Auto update tutorial" />
+                    <img width="100%" src={autoUpdatePicture} alt="Auto update tutorial" />
                   </Row>
                 </>
               )}
@@ -651,6 +658,7 @@ DatasetAlerts.propTypes = {
   projectId: PropTypes.string.isRequired,
   getTeamIntegrations: PropTypes.func.isRequired,
   integrations: PropTypes.array.isRequired,
+  onChanged: PropTypes.func,
 };
 
 const mapStateToProps = (state) => ({

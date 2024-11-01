@@ -31,6 +31,8 @@ class ProjectController {
             model: db.ChartDatasetConfig, include: [{ model: db.Dataset }]
           }, {
             model: db.Chartshare,
+          }, {
+            model: db.Alert,
           }],
         },
         {

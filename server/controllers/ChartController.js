@@ -57,7 +57,8 @@ class ChartController {
       order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
       include: [
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
-        { model: db.Chartshare }
+        { model: db.Chartshare },
+        { model: db.Alert },
       ],
     })
       .then((charts) => {
@@ -73,7 +74,8 @@ class ChartController {
       where: { id },
       include: [
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
-        { model: db.Chartshare }
+        { model: db.Chartshare },
+        { model: db.Alert },
       ],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     };
