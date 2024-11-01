@@ -104,6 +104,7 @@ function WebhookIntegrations(props) {
       name: newIntegration.name,
       config: {
         url: newIntegration.url,
+        slackMode: newIntegration.slackMode,
       },
     })
       .then(() => {
