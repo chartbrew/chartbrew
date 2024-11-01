@@ -8,8 +8,10 @@ import {
   PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader,
   ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, RadioGroup, Radio,
   Badge,
+  Divider,
 } from "@nextui-org/react";
 import {
+  LuBell,
   LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuFileDown,
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuMoreHorizontal, LuMoreVertical,
   LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2, LuUnlock, LuX,
@@ -38,6 +40,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
+import DatasetAlerts from "../AddChart/components/DatasetAlerts";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -83,7 +86,8 @@ function Chart(props) {
   const [autoUpdateError, setAutoUpdateError] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
   const [embedTheme, setEmbedTheme] = useState("");
-  
+  const [alertsModal, setAlertsModal] = useState(false);
+  const [alertsDatasetId, setAlertsDatasetId] = useState(null);
   const chartSize = useChartSize(chart.layout);
 
   useInterval(() => {
@@ -141,6 +145,10 @@ function Chart(props) {
           setError(true);
         }
       });
+  };
+
+  const _onGetChart = () => {
+    dispatch(getChart({ project_id: params.projectId, chart_id: chart.id }));
   };
 
   const _onDeleteChartConfirmation = () => {
@@ -226,6 +234,11 @@ function Chart(props) {
   const _openUpdateModal = () => {
     setUpdateModal(true);
     setUpdateFrequency(chart.autoUpdate);
+  };
+
+  const _openAlertsModal = () => {
+    setAlertsModal(true);
+    setAlertsDatasetId(chart?.ChartDatasetConfigs?.[0]?.id);
   };
 
   const _getUpdateFreqText = (value) => {
@@ -479,21 +492,28 @@ function Chart(props) {
                     {chart.autoUpdate > 0 && (
                       <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                         <div>
-                          <LuCalendarClock size={14} />
+                          <LuCalendarClock size={12} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.public && !isPublic && !print && (
                       <Tooltip content="This chart is public">
                         <div>
-                          <LuUnlock size={14} />
+                          <LuUnlock size={12} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.onReport && !isPublic && !print && (
                       <Tooltip content="This chart is on a report">
                         <div>
-                          <LuTv2 size={14} />
+                          <LuTv2 size={12} />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {chart?.Alerts?.length > 0 && (
+                      <Tooltip content="This chart has alerts">
+                        <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
+                          <LuBell size={12} />
                         </div>
                       </Tooltip>
                     )}
@@ -578,6 +598,11 @@ function Chart(props) {
                     {_canAccess("projectEditor") && (
                       <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal} textValue="Auto-update">
                         Auto-update
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectEditor") && (
+                      <DropdownItem startContent={<LuBell />} onClick={_openAlertsModal} textValue="Alerts">
+                        Alerts
                       </DropdownItem>
                     )}
                     <DropdownItem
@@ -1086,6 +1111,60 @@ function Chart(props) {
           </ModalContent>
         </Modal>
       )}
+
+
+      {/* ALERTS MODAL */}
+      <Modal isOpen={alertsModal} onClose={() => setAlertsModal(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">{"Alerts"}</div>
+          </ModalHeader>
+          <ModalBody>
+            <div className="text-sm">{"Select a dataset to set up alerts for"}</div>
+            <Select
+              selectionMode="single"
+              selectedKeys={[`${alertsDatasetId}`]}
+              onSelectionChange={(keys) => {
+                setAlertsDatasetId(keys.currentKey);
+              }}
+              variant="bordered"
+              aria-label="Select a dataset"
+            >
+              {chart?.ChartDatasetConfigs?.map((config) => (
+                <SelectItem key={config.id} value={config.id} textValue={config.legend}>
+                  {config.legend}
+                </SelectItem>
+              ))}
+            </Select>
+
+            {alertsDatasetId && (
+              <>
+                <Divider />
+                {chart?.Alerts?.length > 0 && (
+                  <div className="text-sm">{"Your current alerts:"}</div>
+                )}
+
+                <DatasetAlerts
+                  chartType={chart.type}
+                  chartId={chart.id}
+                  cdcId={alertsDatasetId}
+                  projectId={chart.project_id}
+                  onChanged={_onGetChart}
+                />
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setAlertsModal(false)}
+              auto
+            >
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </motion.div>
   );
 }

@@ -5,6 +5,7 @@ const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const spreadsheetExport = require("../modules/spreadsheetExport");
 const alertController = require("../controllers/AlertController");
+const { checkChartForAlerts } = require("../modules/alerts/checkAlerts");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -143,6 +144,28 @@ module.exports = (app) => {
         }
         return res.status(400).send(error);
       });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to take a snapshot of a chart
+  */
+  app.get("/project/:project_id/chart/:id/snapshot", (req, res) => {
+    return chartController.takeSnapshot(req.params.id)
+      .then((chart) => {
+        return res.status(200).send(chart);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to take a snapshot of a chart
+  */
+  app.get("/project/:project_id/chart/:id/alerts", async (req, res) => {
+    const chartData = await chartController.updateChartData(req.params.id, null, {});
+    await checkChartForAlerts(chartData);
+
+    return res.status(200).send(chartData);
   });
   // --------------------------------------------------------
 

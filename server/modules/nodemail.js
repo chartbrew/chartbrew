@@ -92,6 +92,7 @@ module.exports.sendChartAlert = (data) => {
     thresholdText: data.thresholdText,
     alerts: data.alerts,
     dashboardUrl: data.dashboardUrl,
+    snapshotUrl: data.snapshotUrl,
   }, (err, str) => {
     if (err) {
       console.log(err); // eslint-disable-line no-console
