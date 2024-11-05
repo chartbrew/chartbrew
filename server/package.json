@@ -9,7 +9,8 @@
     "start": "NODE_ENV=production node index",
     "lint": "eslint .",
     "db:migrate": "cd models && npx sequelize-cli db:migrate",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "postinstall": "npx playwright install && npx playwright install-deps"
   },
   "author": {
     "email": "hello@chartbrew.com",
