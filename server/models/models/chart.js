@@ -165,7 +165,11 @@ module.exports = (sequelize, DataTypes) => {
           return this.getDataValue("layout");
         }
       },
-    }
+    },
+    snapshotToken: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+    },
   }, {
     freezeTableName: true,
   });

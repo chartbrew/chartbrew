@@ -6,6 +6,7 @@ const accessControl = require("../modules/accessControl");
 const spreadsheetExport = require("../modules/spreadsheetExport");
 const alertController = require("../controllers/AlertController");
 const { checkChartForAlerts } = require("../modules/alerts/checkAlerts");
+const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -380,22 +381,7 @@ module.exports = (app) => {
           const project = await projectController.findById(chart.project_id);
           const team = await teamController.findById(project.team_id);
 
-          return res.status(200).send({
-            id: chart.id,
-            name: chart.name,
-            type: chart.type,
-            subType: chart.subType,
-            chartDataUpdated: chart.chartDataUpdated,
-            chartData: chart.chartData,
-            ChartDatasetConfigs: chart.ChartDatasetConfigs,
-            mode: chart.mode,
-            chartSize: chart.chartSize,
-            project_id: chart.project_id,
-            showBranding: team.showBranding,
-            showGrowth: chart.showGrowth,
-            timeInterval: chart.timeInterval,
-            autoUpdate: chart.autoUpdate,
-          });
+          return res.status(200).send(getEmbeddedChartData(chart, team));
         })
         .catch((error) => {
           if (error.message === "401") {
@@ -409,7 +395,7 @@ module.exports = (app) => {
     }
 
     // New! taking advantage of the share strings
-    return chartController.findByShareString(req.params.share_string)
+    return chartController.findByShareString(req.params.share_string, req.query.snapshot)
       .then(async (chart) => {
         if (!chart.public && !chart.shareable) {
           return new Promise((resolve, reject) => reject(new Error("401")));
@@ -419,33 +405,7 @@ module.exports = (app) => {
         const project = await projectController.findById(chart.project_id);
         const team = await teamController.findById(project.team_id);
 
-        return res.status(200).send({
-          id: chart.id,
-          name: chart.name,
-          type: chart.type,
-          subType: chart.subType,
-          chartDataUpdated: chart.chartDataUpdated,
-          chartData: chart.chartData,
-          ChartDatasetConfigs: chart.ChartDatasetConfigs,
-          mode: chart.mode,
-          chartSize: chart.chartSize,
-          project_id: chart.project_id,
-          showBranding: team.showBranding,
-          showGrowth: chart.showGrowth,
-          timeInterval: chart.timeInterval,
-          autoUpdate: chart.autoUpdate,
-          xLabelTicks: chart.xLabelTicks,
-          pointRadius: chart.pointRadius,
-          currentEndDate: chart.currentEndDate,
-          dataLabels: chart.dataLabels,
-          displayLegend: chart.displayLegend,
-          maxValue: chart.maxValue,
-          minValue: chart.minValue,
-          horizontal: chart.horizontal,
-          stacked: chart.stacked,
-          startDate: chart.startDate,
-          endDate: chart.endDate,
-        });
+        return res.status(200).send(getEmbeddedChartData(chart, team));
       })
       .catch((error) => {
         if (error.message === "401") {

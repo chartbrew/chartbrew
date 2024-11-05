@@ -71,7 +71,7 @@ function EmbeddedChart() {
 
     setLoading(true);
     setTimeout(() => {
-      dispatch(getEmbeddedChart({ embed_id: params.chartId }))
+      dispatch(getEmbeddedChart({ embed_id: params.chartId, snapshot: urlParams.has("isSnapshot") }))
         .then((chart) => {
           if (chart?.error) {
             setError(true);

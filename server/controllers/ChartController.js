@@ -705,7 +705,16 @@ class ChartController {
       });
   }
 
-  findByShareString(shareString) {
+  async findByShareString(shareString, snapshot = false) {
+    if (snapshot) {
+      const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
+      if (!chart) {
+        return Promise.reject("Chart not found");
+      }
+
+      return this.findById(chart.id);
+    }
+
     return db.Chartshare.findOne({ where: { shareString } })
       .then((share) => {
         return this.findById(share.chart_id);
@@ -780,14 +789,13 @@ class ChartController {
   }
 
   async takeSnapshot(id) {
-    let chartShare = await db.Chartshare.findOne({ where: { chart_id: id } });
+    const chart = await this.findById(id);
 
-    if (!chartShare) {
-      chartShare = await this.createShare(id);
-      chartShare = chartShare.get({ plain: true });
+    if (!chart?.snapshotToken) {
+      return Promise.reject("Chart does not have a snapshot token");
     }
 
-    return snapChart(chartShare.shareString);
+    return snapChart(chart.snapshotToken);
   }
 }
 
