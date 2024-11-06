@@ -58,6 +58,7 @@ function Chart(props) {
   const {
     team, user, chart, isPublic, print, height,
     showExport, password, editingLayout, onEditLayout,
+    variables,
   } = props;
 
   const params = useParams();
@@ -127,15 +128,11 @@ function Chart(props) {
         setChartLoading(false);
 
         setDashboardFilters(getFiltersFromStorage(projectId));
-        setTimeout(() => {
-          if (dashboardFilters && _chartHasFilter()) {
-            dispatch(runQueryWithFilters({
-              project_id: chart.project_id,
-              chart_id: chart.id,
-              filters: dashboardFilters,
-            }));
-          }
-        }, 100);
+        if (getFiltersFromStorage(projectId) && _chartHasFilter()) {
+          _runFiltering(getFiltersFromStorage(projectId));
+        } else {
+          _runFiltering();
+        }
       })
       .catch((error) => {
         if (error === 413) {
@@ -145,6 +142,43 @@ function Chart(props) {
           setError(true);
         }
       });
+  };
+
+  const _runFiltering = async (filters) => {
+    if (filters) {
+      await dispatch(runQueryWithFilters({
+        project_id: chart.project_id,
+        chart_id: chart.id,
+        filters,
+      }));
+    }
+
+    // if variables exist, run query again with variables
+    if (variables?.[params.projectId]) {
+      // check if any filters have the same variable name and run query with filters
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          const newConditions = [];
+          variables[params.projectId].forEach((variable) => {
+            const found = cdc.Dataset.conditions.find((c) => c.variable === variable.variable);
+            if (found) {
+              newConditions.push({
+                ...found,
+                value: variable.value,
+              });
+            }
+          });
+
+          if (newConditions.length > 0) {
+            dispatch(runQueryWithFilters({
+              project_id: chart.project_id,
+              chart_id: chart.id,
+              filters: newConditions,
+            }));
+          }
+        }
+      });
+    }
   };
 
   const _onGetChart = () => {
@@ -401,11 +435,7 @@ function Chart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
-    dispatch(runQueryWithFilters({
-      project_id: chart.project_id,
-      chart_id: chart.id,
-      filters: newConditions
-    }));
+    _runFiltering(newConditions);
   };
 
   const _onClearFilter = (condition) => {
@@ -414,11 +444,7 @@ function Chart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    dispatch(runQueryWithFilters({
-      project_id: chart.project_id,
-      chart_id: chart.id,
-      filters: newConditions
-    }));
+    _runFiltering(newConditions);
   };
 
   const _getEmbedUrl = () => {
@@ -1212,6 +1238,7 @@ Chart.propTypes = {
   password: PropTypes.string,
   editingLayout: PropTypes.bool,
   onEditLayout: PropTypes.func,
+  variables: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {

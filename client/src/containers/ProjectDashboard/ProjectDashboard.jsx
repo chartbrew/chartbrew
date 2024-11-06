@@ -110,7 +110,8 @@ function ProjectDashboard(props) {
 
   const { width } = useWindowSize();
   const initLayoutRef = useRef(null);
-  const hasRunInitialFiltering = useRef(false);
+  const hasRunInitialFiltering = useRef(null);
+  const hasRunVariableFiltering = useRef(null);
 
   useEffect(() => {
     cleanErrors();
@@ -130,7 +131,8 @@ function ProjectDashboard(props) {
   }, [filters]);
 
   useEffect(() => {
-    if (variables?.[params.projectId] && initLayoutRef.current) {
+    if (variables?.[params.projectId] && initLayoutRef.current && !hasRunVariableFiltering.current) {
+      hasRunVariableFiltering.current = true;
       _checkVariablesForFilters(variables[params.projectId]);
     }
   }, [variables, initLayoutRef.current]);
@@ -284,36 +286,48 @@ function ProjectDashboard(props) {
     }]);
   };
 
-  const _runFiltering = (currentFilters = filters) => {
+  const _runFiltering = (currentFilters = filters, chartIds = null) => {
     if (!variables?.[params.projectId]) return;
 
     setFilterLoading(true);
-    _onFilterCharts(currentFilters)
+    _onFilterCharts(currentFilters, chartIds)
       .then(() => {
         _checkVariablesForFilters(variables[params.projectId]);
       });
   };
 
-  const _throttleRefreshes = (refreshes, index) => {
+  const _throttleRefreshes = (refreshes, index, batchSize = 5) => {
     if (index >= refreshes.length) return Promise.resolve("done");
 
-    return dispatch(runQuery({
-      project_id: refreshes[index].projectId,
-      chart_id: refreshes[index].chartId,
-      noSource: false,
-      skipParsing: false,
-      getCache: false,
-      filters: refreshes[index].dateFilter,
-    }))
-      .then(() => {
-        return _throttleRefreshes(refreshes, index + 1);
-      })
+    // Get the next batch of refreshes to process
+    const batch = refreshes.slice(index, index + batchSize);
+    const batchPromises = batch.map((refresh) => {
+      return dispatch(runQuery({
+        project_id: refresh.projectId,
+        chart_id: refresh.chartId,
+        noSource: false,
+        skipParsing: false,
+        getCache: false,
+        filters: refresh.dateFilter,
+      }))
       .catch(() => {
-        return _throttleRefreshes(refreshes, index + 1);
+        // Continue even if one request fails
+        return null;
+      });
+    });
+
+    return Promise.all(batchPromises)
+      .then(() => {
+        // Run filters on the batch that just completed
+        const batchChartIds = batch.map(refresh => refresh.chartId);
+        return _runFiltering(filters, batchChartIds);
+      })
+      .then(() => {
+        return _throttleRefreshes(refreshes, index + batchSize, batchSize);
       });
   };
 
-  const _onFilterCharts = (currentFilters = filters) => {
+  const _onFilterCharts = (currentFilters = filters, chartIds = null) => {
     const { projectId } = params;
 
     if (!currentFilters || !currentFilters[projectId]) {
@@ -324,15 +338,21 @@ function ProjectDashboard(props) {
 
     const refreshPromises = [];
     const queries = [];
-    for (let i = 0; i < charts.length; i++) {
+
+    // Filter charts based on chartIds if provided
+    const chartsToProcess = chartIds 
+      ? charts.filter(chart => chartIds.includes(chart.id))
+      : charts;
+
+    chartsToProcess.forEach((chart) => {
       if (currentFilters && currentFilters[projectId]) {
         setFilterLoading(true);
         // first, discard the charts on which the filters don't apply
-        if (_chartHasFilter(charts[i])) {
+        if (_chartHasFilter(chart)) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: projectId,
-              chart_id: charts[i].id,
+              chart_id: chart.id,
               filters: currentFilters[projectId]
             }))
           );
@@ -340,16 +360,16 @@ function ProjectDashboard(props) {
 
         if (currentFilters?.[projectId]?.length > 0
           && currentFilters?.[projectId]?.find((o) => o.type === "date")
-          && filterGroups?.[projectId]?.find((c) => c === charts[i].id)
+          && filterGroups?.[projectId]?.find((c) => c === chart.id)
         ) {
           queries.push({
             projectId,
-            chartId: charts[i].id,
+            chartId: chart.id,
             dateFilter: currentFilters?.[projectId]?.find((o) => o.type === "date"),
           });
         }
       }
-    }
+    });
 
     return Promise.all(refreshPromises)
       .then(() => {
@@ -386,15 +406,6 @@ function ProjectDashboard(props) {
 
     return _throttleRefreshes(queries, 0)
       .then(() => {
-        if (filters && filters[projectId]
-          && filters[projectId].length > 0
-          && filters[projectId].find((o) => o.type !== "date")
-        ) {
-          _onFilterCharts()
-            .then(() => {
-              _checkVariablesForFilters(variables[params.projectId]);
-            });
-        }
         setRefreshLoading(false);
       })
       .catch(() => {
@@ -865,6 +876,7 @@ function ProjectDashboard(props) {
                   height={() => _onGetChartHeight(chart)}
                   editingLayout={editingLayout}
                   onEditLayout={() => setEditingLayout(!editingLayout)}
+                  variables={variables}
                 />
               </div>
             ))}
