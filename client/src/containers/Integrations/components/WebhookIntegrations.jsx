@@ -19,6 +19,8 @@ import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash } from "react-icons/lu";
 
+const urlRegex = /^https?:\/\/.+/;
+
 function WebhookIntegrations(props) {
   const {
     integrations, teamId, createIntegration, deleteIntegration, updateIntegration,
@@ -33,6 +35,7 @@ function WebhookIntegrations(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
   const [slackModalOpen, setSlackModalOpen] = useState(false);
+  const [urlError, setUrlError] = useState(false);
 
   useEffect(() => {
     if (newIntegration.url?.indexOf("https://hooks.slack.com") > -1) {
@@ -44,7 +47,15 @@ function WebhookIntegrations(props) {
   }, [newIntegration.url]);
 
   const _onCreate = () => {
+    setUrlError(false);
+
     if (newIntegration.name === "" || newIntegration.url === "") {
+      return;
+    }
+
+    // Validate URL format
+    if (!urlRegex.test(newIntegration.url)) {
+      setUrlError(true);
       return;
     }
 
@@ -94,7 +105,15 @@ function WebhookIntegrations(props) {
   };
 
   const _onEdit = () => {
+    setUrlError(false);
+
     if (newIntegration.name === "" || newIntegration.url === "") {
+      return;
+    }
+
+    // Validate URL format
+    if (!urlRegex.test(newIntegration.url)) {
+      setUrlError(true);
       return;
     }
 
@@ -135,8 +154,9 @@ function WebhookIntegrations(props) {
               setCreateOpen(true);
             }}
             startContent={<LuPlus />}
-            variant="light"
+            variant="flat"
             color={"primary"}
+            size="sm"
           >
             Add a new webhook
           </Button>
@@ -147,28 +167,28 @@ function WebhookIntegrations(props) {
         </Row>
         <Spacer y={2} />
         <Row>
-          <Text>
-            <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
-              <LuInfo />
+          <div className="text-sm">
+            <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
+              <LuInfo size={16} />
               <Spacer x={1} />
               {"Click to see what Chartbrew sends over the webhook"}
             </Link>
-          </Text>
+          </div>
         </Row>
         <Spacer y={1} />
         <Row>
-          <Text>
-            <Link onClick={() => setSlackModalOpen(true)}>
-              <LuSlack />
+          <div className="text-sm">
+            <Link onClick={() => setSlackModalOpen(true)} className="text-sm">
+              <LuSlack size={16} />
               <Spacer x={1} />
               {"Want to send events to Slack? Check out how to do it here"}
             </Link>
-          </Text>
+          </div>
         </Row>
         <Spacer y={2} />
         {integrations.length > 0 && (
           <Row>
-            <Table shadow={"none"} aria-label="Webhook integrations">
+            <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
               <TableHeader>
                 <TableColumn key="name">Name</TableColumn>
                 <TableColumn key="url">URL</TableColumn>
@@ -176,7 +196,7 @@ function WebhookIntegrations(props) {
                 <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
               </TableHeader>
 
-              <TableBody>
+              <TableBody emptyContent={"No integrations found"}>
                 {integrations.map((i) => (
                   <TableRow key={i.id}>
                     <TableCell key="name">
@@ -195,18 +215,19 @@ function WebhookIntegrations(props) {
                         <Button
                           isIconOnly
                           variant="light"
-                          color="primary"
                           onClick={() => _onEditOpen(i)}
+                          size="sm"
                         >
-                          <LuPencilLine />
+                          <LuPencilLine size={18} />
                         </Button>
                         <Button
                           isIconOnly
                           variant="light"
                           color="danger"
                           onClick={() => setIntegrationToDelete(i.id)}
+                          size="sm"
                         >
-                          <LuTrash />
+                          <LuTrash size={18} />
                         </Button>
                       </Row>
                     </TableCell>
@@ -249,7 +270,7 @@ function WebhookIntegrations(props) {
                 value={newIntegration.url}
                 onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
                 variant="bordered"
-                required
+                color={urlError ? "danger" : "default"}
               />
             </Row>
             <Row align={"center"}>
