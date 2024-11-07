@@ -10,7 +10,7 @@ meta:
 
 # Webhooks
 
-Currently webhooks are used by Chartbrew to send chart alerts.
+Webhooks are used by Chartbrew to send chart alerts. Chartbrew also supports sending data to Slack through the [Incoming Webhook integration](https://api.slack.com/messaging/webhooks).
 
 ## Webhook chart alerts
 
@@ -32,6 +32,11 @@ Example payload:
   "alertsFound": [
     { "label": "2023 Jan 13", "value": 47 }
   ],
-  "dashboardUrl": "https://app.chartbrew.com/project/1"
+  "dashboardUrl": "https://app.chartbrew.com/project/1",
+  "snapshotUrl": "https://api.chartbrew.com/uploads/1234567890.png"
 }
 ```
+
+## Slack webhook
+
+When sending data to Slack, Chartbrew will also attach a `blocks` property to the payload. This is an array of `objects` that contain the [Slack blocks](https://api.slack.com/block-kit) to be rendered in the message.
