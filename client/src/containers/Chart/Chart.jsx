@@ -98,6 +98,12 @@ function Chart(props) {
       password: isPublic ? window.localStorage.getItem("reportPassword") : null,
       fromInterval: true
     }));
+
+    if (params.projectId) {
+      _runFiltering(getFiltersFromStorage(params.projectId));
+    } else {
+      _runFiltering();
+    }
   }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
   useEffect(() => {
