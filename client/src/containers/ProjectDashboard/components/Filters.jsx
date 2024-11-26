@@ -222,10 +222,15 @@ function Filters(props) {
 
   const _onApplyFilter = () => {
     if (filterType === "date") {
+      const startDate = moment([newDateRange.start.year, newDateRange.start.month - 1, newDateRange.start.day])
+        .utcOffset(0, true).format();
+      const endDate = moment([newDateRange.end.year, newDateRange.end.month - 1, newDateRange.end.day, 23, 59, 59])
+        .utcOffset(0, true).format();
+
       onAddFilter({
         id: uuid(),
-        startDate: moment(dateRange.startDate).utcOffset(0, true).format(),
-        endDate: moment(dateRange.endDate).utcOffset(0, true).format(),
+        startDate,
+        endDate,
         type: "date",
       });
     } else {
