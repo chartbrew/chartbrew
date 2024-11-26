@@ -96,6 +96,7 @@ function ProjectDashboard(props) {
   const [editingLayout, setEditingLayout] = useState(false);
   const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
+  const [prevFilters, setPrevFilters] = useState(null);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -126,7 +127,11 @@ function ProjectDashboard(props) {
 
   useEffect(() => {
     if (!filterLoading && filters && hasRunInitialFiltering.current) {
-      _runFiltering();
+      // Only run filtering if filters have actually changed
+      if (!isEqual(filters, prevFilters)) {
+        setPrevFilters(filters);
+        _runFiltering();
+      }
     }
   }, [filters]);
 
@@ -292,7 +297,10 @@ function ProjectDashboard(props) {
     setFilterLoading(true);
     _onFilterCharts(currentFilters, chartIds)
       .then(() => {
-        _checkVariablesForFilters(variables[params.projectId]);
+        // Only check variables if we have them and they've changed
+        if (variables?.[params.projectId]) {
+          _checkVariablesForFilters(variables[params.projectId]);
+        }
       });
   };
 
@@ -319,8 +327,7 @@ function ProjectDashboard(props) {
     return Promise.all(batchPromises)
       .then(() => {
         // Run filters on the batch that just completed
-        const batchChartIds = batch.map(refresh => refresh.chartId);
-        return _runFiltering(filters, batchChartIds);
+        return Promise.resolve("done");
       })
       .then(() => {
         return _throttleRefreshes(refreshes, index + batchSize, batchSize);
@@ -407,6 +414,10 @@ function ProjectDashboard(props) {
     return _throttleRefreshes(queries, 0)
       .then(() => {
         setRefreshLoading(false);
+        // Apply variable filters after refresh is complete
+        if (variables?.[projectId]) {
+          _checkVariablesForFilters(variables[projectId]);
+        }
       })
       .catch(() => {
         setRefreshLoading(false);
