@@ -275,7 +275,7 @@ module.exports = (app) => {
   /*
   ** Route to run the query for a chart
   */
-  app.post("/project/:project_id/chart/:id/query", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.post("/project/:project_id/chart/:id/query", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return chartController.updateChartData(
       req.params.id,
       req.user,
