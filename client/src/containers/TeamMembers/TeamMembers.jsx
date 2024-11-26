@@ -306,11 +306,11 @@ function TeamMembers(props) {
                                         && (
                                           <DropdownItem
                                             key="projectViewer"
-                                            textValue="Dashboard viewer"
+                                            textValue="Client viewer"
                                             description={"Can view charts in assigned projects, but cannot edit or remove anything."}
                                             className="max-w-[400px]"
                                           >
-                                            <Text>Dashboard viewer</Text>
+                                            <Text>Client viewer</Text>
                                           </DropdownItem>
                                         )}
                                     </DropdownMenu>
