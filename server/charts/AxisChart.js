@@ -271,7 +271,7 @@ class AxisChart {
           yData.forEach((item, index) => {
             const yValue = _.get(item, yAxis);
             if (yValue || yValue === 0) {
-              yType = determineType(yValue);
+              yType = determineType(yValue, yAxisOperation);
               // only add the yValue if it corresponds to one of the x values found above
               const selectorValue = xAxis.indexOf(".") > -1 ? _.get(yData[index], xAxis) : yData[index][xAxisFieldName];
 
@@ -289,7 +289,7 @@ class AxisChart {
               } else if (yAxis && yAxis.split("[]").length > 1) {
                 const nestedArray = _.get(item, yAxis.split("[]")[0]);
                 const arrayField = _.get(nestedArray[0], yAxis.split("[]")[1].slice(1));
-                yType = determineType(arrayField);
+                yType = determineType(arrayField, yAxisOperation);
               }
               yAxisData.push({ x: xAxisData.filtered[index], y: newItem });
             }
@@ -1012,7 +1012,9 @@ class AxisChart {
         }
       } else {
         finalItem = finalItem[yData[key].length - 1];
-        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + (n instanceof Object ? 0 : n), 0);
+        if (op === "sum" && yType === "number") {
+          finalItem = _.reduce(yData[key], (sum, n) => sum + (n instanceof Object ? 0 : n), 0);
+        }
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
             totalNumberOfItems += yData[key].length;

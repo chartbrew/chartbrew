@@ -31,7 +31,7 @@ function isLikelyDate(value, type) {
   return false;
 }
 
-function determineType(data) {
+function determineType(data, operation) {
   let dataType;
   if (data !== null && typeof data === "object" && data instanceof Array) {
     dataType = "array";
@@ -55,6 +55,10 @@ function determineType(data) {
     }
   } catch (e) {
     //
+  }
+
+  if (checkNumbersOnly.test(data) && (operation === "sum" || operation === "avg")) {
+    dataType = "number";
   }
 
   return dataType;
