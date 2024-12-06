@@ -14,7 +14,7 @@ ChartBrew is an open-source project under the MIT license. This is the official 
 
 2. Clone from your repository and make sure you stay on the `master` branch
 
-3. [Follow the setup guide](https://docs.chartbrew.com/#developing-and-extending-the-application)
+3. [Follow the setup guide](https://docs.chartbrew.com/quickstart)
 
 4. Run the project in development using the guide above and make sure everything works
 
@@ -28,8 +28,8 @@ It is recommended to check the [project roadmap](https://github.com/orgs/chartbr
 
 Read the following:
 
-- [ ] [Frontend](https://docs.chartbrew.com/frontend/) - if you change anything in the `client`
-- [ ] [Backend](https://docs.chartbrew.com/backend/) - if you change anything in `server` 
+- [ ] [Frontend](https://docs.chartbrew.com/architecture/frontend/) - if you change anything in the `client`
+- [ ] [Backend](https://docs.chartbrew.com/architecture/backend/) - if you change anything in `server` 
 
 Make sure that you work with the code on the `master` branch. There might be some cases when you contribute to an active development on another branch, but all other cases will result in your PR getting closed.
 
@@ -37,12 +37,12 @@ If your PR is more complex and it requires multiple commits, [create a draft PR]
 
 For any backend changes, make sure you have some chart data recorded in the application before submitting the PR, to help detect any bugs.
 
-For any model change in the database schema, [consult the documentation](https://docs.chartbrew.com/backend/#models) and make sure that migrations are in place to modify the schema accordingly.
+For any model change in the database schema, [consult the documentation](https://docs.chartbrew.com/architecture/backend/#models) and make sure that migrations are in place to modify the schema accordingly.
 
 ### General checks
 
 - [ ] The PR is adding value
-- [ ] The PR contains code that respects the [code style in the documentation examples](https://docs.chartbrew.com/backend)
+- [ ] The PR contains code that respects the [code style in the documentation examples](https://docs.chartbrew.com/architecture/backend/#code-style)
 - [ ] The PR doesn't have any ESLint errors
 - [ ] The PR contains any documentation updates if needed
 - [ ] The PR has an appropriate title that explains the change concisely

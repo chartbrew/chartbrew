@@ -29,7 +29,7 @@ module.exports = (app) => {
   const updateChartsQueue = new Queue("updateChartsQueue", getQueueOptions());
   updateChartsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
       process.exit(1);
     }
   });
@@ -37,7 +37,7 @@ module.exports = (app) => {
   const updateDashboardsQueue = new Queue("updateDashboardsQueue", getQueueOptions());
   updateDashboardsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
       process.exit(1);
     }
   });
