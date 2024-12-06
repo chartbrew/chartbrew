@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="./docs/.vuepress/public/assets/logo_full_3.png" alt="ChartBrew logo" width="250"/>
+    <img src="https://chartbrew.com/Cuplogo.svg" alt="ChartBrew logo" width="50"/>
   </a>
 </a>
 
