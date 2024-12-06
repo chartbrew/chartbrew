@@ -116,15 +116,9 @@ module.exports = (app) => {
   */
   app.get("/team/:team_id/connections", verifyToken, checkPermissions("readOwn"), async (req, res) => {
     const { team_id } = req.params;
-    const { project_id } = req.query;
 
     try {
-      let connections;
-      if (project_id) {
-        connections = await connectionController.findByProject(req.query.project_id);
-      } else {
-        connections = await connectionController.findByTeam(team_id);
-      }
+      const connections = await connectionController.findByTeam(team_id);
 
       if (req.user.projects) {
         let filteredConnections = connections.filter((connection) => {
@@ -288,7 +282,7 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
-  ** Route to remove a connection from a project
+  ** Route to remove a connection
   */
   app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
     return connectionController.removeConnection(req.params.connection_id, req.query.removeDatasets)
