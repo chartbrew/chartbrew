@@ -1,8 +1,6 @@
-name: chartbrew
-
 services:
   db:
-    image: mysql:5.7
+    image: mysql:8.4
     restart: unless-stopped
     environment:
       # These values are taken from the .env file
@@ -10,12 +8,17 @@ services:
       MYSQL_USER: ${CB_DB_USERNAME}
       MYSQL_PASSWORD: ${CB_DB_PASSWORD}
       MYSQL_RANDOM_ROOT_PASSWORD: true
-      CB_DB_HOST: db
+      MYSQL_DEFAULT_AUTH: caching_sha2_password
     volumes:
       - chartbrew-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:latest
+    image: redis:alpine
     restart: unless-stopped
     environment:
       CB_REDIS_HOST: redis
@@ -33,8 +36,10 @@ services:
       - 4018:4018 # Frontend
       - 4019:4019 # API
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     links:
       - db
       - redis
