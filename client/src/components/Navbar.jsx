@@ -113,6 +113,10 @@ function NavbarContainer() {
         window.open("https://chartbrew.com/roadmap", "_blank");
         break;
       }
+      case "api": {
+        window.open("https://docs.chartbrew.com/api-reference/introduction", "_blank");
+        break;
+      }
       default: {
         break;
       }
