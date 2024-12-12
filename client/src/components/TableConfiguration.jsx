@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Accordion, AccordionItem, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Spacer } from "@nextui-org/react";
-import { LuChevronDownCircle, LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuXCircle } from "react-icons/lu";
+import { LuCircleChevronDown, LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
@@ -164,7 +164,7 @@ function TableConfiguration(props) {
                               className="flex items-center"
                               title="Sum values on this field"
                             >
-                              <LuChevronDownCircle />
+                              <LuCircleChevronDown />
                             </Link>
                           </DropdownTrigger>
                           <DropdownMenu variant="bordered">
@@ -260,7 +260,7 @@ function TableConfiguration(props) {
                     title="Cancel ordering"
                     size="sm"
                   >
-                    <LuXCircle />
+                    <LuCircleX />
                   </Button>
                 </>
               )}

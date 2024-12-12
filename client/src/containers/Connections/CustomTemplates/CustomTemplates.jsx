@@ -4,7 +4,7 @@ import {
   Button, Card, Spacer, CircularProgress, CardHeader, CardBody, CardFooter, Divider,
 } from "@nextui-org/react";
 import moment from "moment";
-import { LuBarChart3 } from "react-icons/lu";
+import { LuChartColumn } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
@@ -112,7 +112,7 @@ function CustomTemplates(props) {
             <Divider />
             <CardBody className="flex flex-col align-middle justify-center">
               <Row>
-                <LuBarChart3 />
+                <LuChartColumn />
                 <Spacer x={0.5} />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>

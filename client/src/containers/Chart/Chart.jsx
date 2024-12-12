@@ -12,9 +12,9 @@ import {
 } from "@nextui-org/react";
 import {
   LuBell,
-  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuFileDown,
-  LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuMoreHorizontal, LuMoreVertical,
-  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2, LuUnlock, LuX,
+  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsis, LuEllipsisVertical, LuFileDown,
+  LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
+  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTvMinimal, LuX,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -531,14 +531,14 @@ function Chart(props) {
                     {chart.public && !isPublic && !print && (
                       <Tooltip content="This chart is public">
                         <div>
-                          <LuUnlock size={12} />
+                          <LuLockOpen size={12} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.onReport && !isPublic && !print && (
                       <Tooltip content="This chart is on a report">
                         <div>
-                          <LuTv2 size={12} />
+                          <LuTvMinimal size={12} />
                         </div>
                       </Tooltip>
                     )}
@@ -595,7 +595,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select a chart option">
                   <DropdownTrigger>
                     <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
-                      <LuMoreVertical />
+                      <LuEllipsisVertical />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
@@ -645,13 +645,13 @@ function Chart(props) {
                       Export to Excel
                     </DropdownItem>
                     {!chart.draft && _canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuTv2 />} onClick={_onChangeReport} textValue={chart.onReport ? "Remove from report" : "Add to report"}>
+                      <DropdownItem startContent={<LuTvMinimal />} onClick={_onChangeReport} textValue={chart.onReport ? "Remove from report" : "Add to report"}>
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.public && _canAccess("projectEditor") && (
                       <DropdownItem
-                        startContent={chart.public ? <LuUnlock /> : <LuLock />}
+                        startContent={chart.public ? <LuLockOpen /> : <LuLock />}
                         onClick={_onPublicConfirmation}
                         textValue={chart.public ? "Make private" : "Make public"}
                       >
@@ -681,7 +681,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select an export option">
                   <DropdownTrigger>
                     <LinkNext color="foreground">
-                      <LuMoreHorizontal size={24} />
+                      <LuEllipsis size={24} />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
@@ -831,7 +831,7 @@ function Chart(props) {
             <Button
               isLoading={publicLoading}
               color="primary"
-              endContent={<LuUnlock />}
+              endContent={<LuLockOpen />}
               onClick={_onPublic}
             >
               Make the chart public

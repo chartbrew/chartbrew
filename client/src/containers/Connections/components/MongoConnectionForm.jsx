@@ -7,7 +7,7 @@ import {
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
-import { LuChevronRight, LuInfo, LuPlus, LuXCircle } from "react-icons/lu";
+import { LuChevronRight, LuInfo, LuPlus, LuCircleX } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -419,7 +419,7 @@ function MongoConnectionForm(props) {
                         variant="flat"
                         color="danger"
                       >
-                        <LuXCircle />
+                        <LuCircleX />
                       </Button>
                     </div>
                     <div className="md:col-span-4" />

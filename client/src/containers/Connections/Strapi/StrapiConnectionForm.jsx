@@ -4,7 +4,7 @@ import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
 import { v4 as uuid } from "uuid";
-import { LuPlusCircle, LuXCircle } from "react-icons/lu";
+import { LuCirclePlus, LuCircleX } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 
@@ -282,7 +282,7 @@ function StrapiConnectionForm(props) {
                     variant="flat"
                     color="warning"
                   >
-                    <LuXCircle />
+                    <LuCircleX />
                   </Button>
                 </Row>
               );
@@ -291,7 +291,7 @@ function StrapiConnectionForm(props) {
           {connection.optionsArray?.length > 0 && (<Spacer y={2} />)}
           <Button
             size="sm"
-            startContent={<LuPlusCircle />}
+            startContent={<LuCirclePlus />}
             onClick={_addOption}
             variant="faded"
             color="primary"

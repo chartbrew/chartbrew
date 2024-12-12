@@ -8,7 +8,7 @@ import {
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
 } from "@nextui-org/react";
 import {
-  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers2,
+  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers,
 } from "react-icons/lu";
 
 import { relog } from "../../slices/user";
@@ -167,7 +167,7 @@ function UserDashboard(props) {
                   <Dropdown aria-label="Select a team option">
                     <DropdownTrigger>
                       <Button
-                        startContent={<LuUsers2 size={28} />}
+                        startContent={<LuUsers size={28} />}
                         variant="bordered"
                         className="bg-background"
                         endContent={<LuChevronDown />}

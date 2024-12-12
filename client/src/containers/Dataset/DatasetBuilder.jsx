@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { TbMathFunctionY } from "react-icons/tb";
-import { LuCheckCircle, LuInfo, LuWand2, LuXCircle } from "react-icons/lu";
+import { LuCircleCheck, LuInfo, LuWandSparkles, LuCircleX } from "react-icons/lu";
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
@@ -506,18 +506,18 @@ function DatasetBuilder(props) {
                       content={"Apply the formula"}
                     >
                       <Link onClick={_onApplyFormula}>
-                        <LuCheckCircle className={"text-success"} />
+                        <LuCircleCheck className={"text-success"} />
                       </Link>
                     </Tooltip>
                   )}
                   <Tooltip content="Remove formula">
                     <Link onClick={_onRemoveFormula}>
-                      <LuXCircle className="text-danger" />
+                      <LuCircleX className="text-danger" />
                     </Link>
                   </Tooltip>
                   <Tooltip content="Click for an example">
                     <Link onClick={_onExampleFormula}>
-                      <LuWand2 className="text-primary" />
+                      <LuWandSparkles className="text-primary" />
                     </Link>
                   </Tooltip>
                 </div>

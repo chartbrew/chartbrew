@@ -5,7 +5,7 @@ import { Outlet, useNavigate, useParams } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem, Spacer,
 } from "@nextui-org/react";
-import { LuCode2, LuSettings, LuUsers2 } from "react-icons/lu";
+import { LuCode, LuSettings, LuUsers } from "react-icons/lu";
 
 import { getTeam, saveActiveTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -102,13 +102,13 @@ function ManageTeam(props) {
                     Settings
                   </ListboxItem>
                 )}
-                <ListboxItem key="members" startContent={<LuUsers2 size={24} />} classNames={{ title: "text-lg" }}>
+                <ListboxItem key="members" startContent={<LuUsers size={24} />} classNames={{ title: "text-lg" }}>
                   Members
                 </ListboxItem>
               </ListboxSection>
               {_canAccess("teamAdmin") && (
                 <ListboxSection title="Developers" classNames={{ heading: "p-0 text-sm" }}>
-                  <ListboxItem key="api-keys" startContent={<LuCode2 size={24} />} classNames={{ title: "text-lg" }}>
+                  <ListboxItem key="api-keys" startContent={<LuCode size={24} />} classNames={{ title: "text-lg" }}>
                     API Keys
                   </ListboxItem>
                 </ListboxSection>

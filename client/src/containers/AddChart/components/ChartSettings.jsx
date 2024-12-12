@@ -6,7 +6,7 @@ import {
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
-import { LuCalendarDays, LuCheck, LuInfo, LuSettings, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -248,7 +248,7 @@ function ChartSettings(props) {
                   onClick={() => _onRemoveDateFiltering()}
                   size="sm"
                 >
-                  <LuXCircle />
+                  <LuCircleX />
                 </Button>
               </Tooltip>
             )}

@@ -15,7 +15,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { LuCheckCircle2, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
+import { LuCircleCheck, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
 
 const formStrings = {
@@ -440,7 +440,7 @@ function PostgresConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslCa && connection.sslCa && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -468,7 +468,7 @@ function PostgresConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslCert && connection.sslCert && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -496,7 +496,7 @@ function PostgresConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslKey && connection.sslKey && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />

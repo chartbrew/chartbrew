@@ -5,7 +5,7 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
 } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
-import { LuBarChart, LuLayoutGrid, LuMoreHorizontal, LuPencilLine, LuPlus, LuSearch, LuTable, LuTrash, LuUsers2 } from "react-icons/lu";
+import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
@@ -205,7 +205,7 @@ function DashboardList() {
                   <Dropdown size="sm">
                     <DropdownTrigger>
                       <LinkNext className="text-foreground-400">
-                        <LuMoreHorizontal />
+                        <LuEllipsis />
                       </LinkNext>
                     </DropdownTrigger>
                     <DropdownMenu>
@@ -248,7 +248,7 @@ function DashboardList() {
                     </Chip>
                   )}
                   <div className="flex flex-row items-center gap-1 text-sm">
-                    <LuBarChart />
+                    <LuChartNoAxesColumnIncreasing />
                     <span>{project?.Charts?.length || 0}</span>
                   </div>
                 </div>
@@ -277,13 +277,13 @@ function DashboardList() {
             <TableColumn key="name">Dashboard name</TableColumn>
             <TableColumn key="members">
               <div className="flex flex-row items-end gap-1">
-                <LuUsers2 />
+                <LuUsers />
                 <span>Dashboard members</span>
               </div>
             </TableColumn>
             <TableColumn key="charts">
               <div className="flex flex-row items-end justify-center gap-1">
-                <LuBarChart />
+                <LuChartNoAxesColumnIncreasing />
                 <span>Charts</span>
               </div>
             </TableColumn>

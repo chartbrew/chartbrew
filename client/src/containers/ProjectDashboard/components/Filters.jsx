@@ -11,7 +11,7 @@ import {
   Autocomplete,
   AutocompleteItem,
 } from "@nextui-org/react";
-import { LuCheckSquare, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
 
 import { operators } from "../../../modules/filterOperations";
 import Text from "../../../components/Text";
@@ -347,7 +347,7 @@ function Filters(props) {
               <div className={"flex flex-row flex-wrap gap-1"}>
                 <Button
                   variant="light"
-                  startContent={<LuCheckSquare />}
+                  startContent={<LuSquareCheck />}
                   size="sm"
                   onClick={() => onEditFilterGroup(null, true)}
                 >

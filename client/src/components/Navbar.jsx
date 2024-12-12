@@ -8,7 +8,7 @@ import {
   Chip,
 } from "@nextui-org/react";
 import {
-  LuBook, LuChevronDown, LuCode2, LuContrast, LuGithub, LuHeartHandshake, LuKanbanSquare, LuLogOut,
+  LuBook, LuBookOpenText, LuChevronDown, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
@@ -186,7 +186,7 @@ function NavbarContainer() {
                   startContent={<LuHeartHandshake size={18} />}
                   radius="sm"
                 >
-                  Support
+                  Resources
                 </Button>
               </DropdownTrigger>
             </NavbarItem>
@@ -194,14 +194,17 @@ function NavbarContainer() {
               <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuKanbanSquare />} key="roadmap" textValue="Roadmap" endContent={<Chip variant="flat" color="secondary" size="sm" radius="sm">New</Chip>}>
+              <DropdownItem startContent={<LuSquareKanban />} key="roadmap" textValue="Roadmap" endContent={<Chip variant="flat" color="secondary" size="sm" radius="sm">New</Chip>}>
                 <Text>{"Roadmap"}</Text>
               </DropdownItem>
               <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">
                 <Text>{"Blog tutorials"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuCode2 />} key="documentation" textValue="Documentation">
+              <DropdownItem startContent={<LuBookOpenText />} key="documentation" textValue="Documentation">
                 <Text>{"Documentation"}</Text>
+              </DropdownItem>
+              <DropdownItem startContent={<LuFileCode2 />} key="api" textValue="API Reference">
+                <Text>{"API Reference"}</Text>
               </DropdownItem>
               <DropdownItem startContent={<LuGithub />} key="github" textValue="GitHub">
                 <Text>{"GitHub"}</Text>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer, Tooltip } from "@nextui-org/react";
-import { LuCalendarDays, LuCheckCircle, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo, LuSettings, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo, LuSettings, LuCircleX } from "react-icons/lu";
 import { format, formatISO } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -256,7 +256,7 @@ function DatasetFilters(props) {
                 <Tooltip content="Apply this condition">
                   <Button
                     color="success"
-                    endContent={<LuCheckCircle size={18} />}
+                    endContent={<LuCircleCheck size={18} />}
                     variant="light"
                     size="sm"
                     onClick={() => _onApplyCondition(condition.id, condition.exposed)}
@@ -270,7 +270,7 @@ function DatasetFilters(props) {
               <Tooltip content="Remove filter">
                 <Button
                   color="danger"
-                  endContent={<LuXCircle size={18} />}
+                  endContent={<LuCircleX size={18} />}
                   variant="light"
                   size="sm"
                   onClick={() => _onRemoveCondition(condition.id)}
@@ -385,7 +385,7 @@ function DatasetFilters(props) {
                       )}
                       color="danger"
                     >
-                      <LuXCircle size={16} />
+                      <LuCircleX size={16} />
                     </Link>
                   )}
                 >

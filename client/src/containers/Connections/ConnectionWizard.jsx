@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuAreaChart, LuArrowLeftCircle, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
+import { LuChartArea, LuCircleArrowLeft, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
 import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
@@ -232,7 +232,7 @@ function ConnectionWizard() {
           {newConnection && (
             <div className="flex flex-row items-center gap-2">
               <Link to="/connections" className="text-xl text-secondary font-semibold">
-                <LuArrowLeftCircle size={24} />
+                <LuCircleArrowLeft size={24} />
               </Link>
               <span className="text-xl font-semibold">Edit your connection</span>
             </div>
@@ -435,7 +435,7 @@ function ConnectionWizard() {
               color="primary"
               fullWidth
               onClick={() => navigate(`/${params.teamId}/dataset/new`)}
-              startContent={<LuAreaChart />}
+              startContent={<LuChartArea />}
             >
               Create dataset
             </Button>

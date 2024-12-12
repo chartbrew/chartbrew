@@ -19,7 +19,7 @@ import { RiArrowRightSLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
-import { LuCheckCircle2, LuUpload } from "react-icons/lu";
+import { LuCircleCheck, LuUpload } from "react-icons/lu";
 
 const formStrings = {
   mysql: {
@@ -436,7 +436,7 @@ function MysqlConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslCa && connection.sslCa && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -464,7 +464,7 @@ function MysqlConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslCert && connection.sslCert && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -492,7 +492,7 @@ function MysqlConnectionForm(props) {
                 </span>
               )}
               {!sslCertsErrors.sslKey && connection.sslKey && (
-                <LuCheckCircle2 className="text-success" size={20} />
+                <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />

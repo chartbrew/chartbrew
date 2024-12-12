@@ -1,6 +1,6 @@
 import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import React, { useState } from "react"
-import { LuInfo, LuMoreHorizontal, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -232,7 +232,7 @@ function DatasetList() {
                         variant="light"
                         size="sm"
                       >
-                        <LuMoreHorizontal />
+                        <LuEllipsis />
                       </Button>
                     </DropdownTrigger>
                     <DropdownMenu

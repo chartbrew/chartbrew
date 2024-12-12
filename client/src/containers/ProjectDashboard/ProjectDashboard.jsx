@@ -14,7 +14,7 @@ import moment from "moment";
 import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuVariable, LuXCircle,
+  LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -607,7 +607,7 @@ function ProjectDashboard(props) {
                             {_canAccess("teamAdmin") && (
                               <div className="w-full">
                                 <Button
-                                  endContent={<LuUsers2 />}
+                                  endContent={<LuUsers />}
                                   color="primary"
                                   size="sm"
                                   as={Link}
@@ -682,7 +682,7 @@ function ProjectDashboard(props) {
                                 radius="sm"
                                 endContent={(
                                   <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                    <LuXCircle />
+                                    <LuCircleX />
                                   </LinkNext>
                                 )}
                               >
@@ -696,7 +696,7 @@ function ProjectDashboard(props) {
                                 radius="sm"
                                 endContent={(
                                   <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                    <LuXCircle />
+                                    <LuCircleX />
                                   </LinkNext>
                                 )}
                               >
@@ -717,7 +717,7 @@ function ProjectDashboard(props) {
                             radius="sm"
                             endContent={(
                               <LinkNext onClick={() => _onRemoveVariable(variable.variable)} className="text-default-500">
-                                <LuXCircle />
+                                <LuCircleX />
                               </LinkNext>
                             )}
                             key={variable.variable}
@@ -847,7 +847,7 @@ function ProjectDashboard(props) {
                 </Row>
                 <Spacer y={4} /><Row justify="center" align="center">
                   <Button
-                    endContent={<LuPlusCircle size={24} />}
+                    endContent={<LuCirclePlus size={24} />}
                     size="lg"
                     color="primary"
                     onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}

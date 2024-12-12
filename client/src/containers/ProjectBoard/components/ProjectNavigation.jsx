@@ -8,9 +8,9 @@ import {
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@nextui-org/react";
 import {
-  LuBarChartBig, LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
-  LuPanelLeftOpen, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
-  LuTv2, LuUser, LuUsers2,
+  LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
+  LuPanelLeftOpen, LuCirclePlus, LuPresentation, LuPuzzle, LuSettings,
+  LuTvMinimal, LuUser, LuUsers,
   LuVariable,
 } from "react-icons/lu";
 
@@ -93,7 +93,7 @@ function ProjectNavigation(props) {
             <Row justify="space-around" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
                 <LinkNext className="pointer-events-none">
-                  <LuBarChartBig color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
+                  <LuMenu color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               <Link to={`/b/${project.brewName}`}>
@@ -177,7 +177,7 @@ function ProjectNavigation(props) {
                           color="primary"
                           className="pointer-events-none cursor-pointer create-chart-tutorial"
                         >
-                          <LuPlusCircle size={28} />
+                          <LuCirclePlus size={28} />
                         </Button>
                       </Link>
                     </div>
@@ -186,7 +186,7 @@ function ProjectNavigation(props) {
                 {menuSize === "large" && (
                   <Link to={`/${teamId}/${projectId}/chart`} className={"w-full pl-4 pr-4"}>
                     <Button
-                      endContent={<LuPlusCircle />}
+                      endContent={<LuCirclePlus />}
                       fullWidth
                       color="primary"
                       className="pointer-events-none cursor-pointer create-chart-tutorial"
@@ -241,7 +241,7 @@ function ProjectNavigation(props) {
                         color={_checkIfActive("public") ? "primary" : "default"}
                         className="dashboard-report-tutorial"
                       >
-                        <LuTv2 size={28} />
+                        <LuTvMinimal size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -250,7 +250,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("public") ? "primary" : "default"}
-                    startContent={<LuTv2 size={24} />}
+                    startContent={<LuTvMinimal size={24} />}
                     className="pointer-events-none dashboard-report-tutorial"
                   >
                     Dashboard report
@@ -306,7 +306,7 @@ function ProjectNavigation(props) {
                           variant="light"
                           color={_checkIfActive("members") ? "primary" : "default"}
                         >
-                          <LuUsers2 size={28} />
+                          <LuUsers size={28} />
                         </Button>
                       </div>
                     </Tooltip>
@@ -315,7 +315,7 @@ function ProjectNavigation(props) {
                     <Button
                       variant="light"
                       color={_checkIfActive("members") ? "primary" : "default"}
-                      startContent={<LuUsers2 size={24} />}
+                      startContent={<LuUsers size={24} />}
                       className="pointer-events-none"
                     >
                       Team members

@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers2 } from "react-icons/lu";
+import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -244,7 +244,7 @@ function CustomerioBuilder(props) {
                   key="customers"
                   title={(
                     <div className="flex items-center space-x-2">
-                      <LuUsers2 />
+                      <LuUsers />
                       <span>Customers</span>
                     </div>
                   )}

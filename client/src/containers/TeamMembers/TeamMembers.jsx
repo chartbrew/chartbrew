@@ -9,7 +9,7 @@ import {
 import _ from "lodash";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuXCircle } from "react-icons/lu";
+import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX } from "react-icons/lu";
 
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
@@ -330,7 +330,7 @@ function TeamMembers(props) {
                                   color="danger"
                                   size="sm"
                                 >
-                                  <LuXCircle />
+                                  <LuCircleX />
                                 </Button>
                               </Tooltip>
                             )}

@@ -13,8 +13,8 @@ import { Calendar } from "react-date-range";
 import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import {
-  LuAlertTriangle, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle,
-  LuRefreshCw, LuTrash, LuUndo, LuX, LuXCircle,
+  LuTriangleAlert, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuCirclePlus,
+  LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX,
 } from "react-icons/lu";
 import { useParams } from "react-router";
 
@@ -872,7 +872,7 @@ function Conditions(props) {
                 <Tooltip
                   content="This condition might not work on the current collection."
                 >
-                  <div><LuAlertTriangle className="text-secondary" /></div>
+                  <div><LuTriangleAlert className="text-secondary" /></div>
                 </Tooltip>
               )}
               <Select
@@ -975,7 +975,7 @@ function Conditions(props) {
                             form="condition-values"
                             size="sm"
                           >
-                            <LuPlusCircle />
+                            <LuCirclePlus />
                           </Button>
                         )}
                       />
@@ -985,7 +985,7 @@ function Conditions(props) {
                       {condition.values && condition.values.map((v) => (
                         <Chip
                           key={v}
-                          endContent={<LuXCircle />}
+                          endContent={<LuCircleX />}
                           size="sm"
                           onClick={() => _onRemoveConditionValue(condition, v)}
                           variant="faded"
@@ -1011,7 +1011,7 @@ function Conditions(props) {
                       variant="faded"
                       color="success"
                     >
-                      <LuPlusCircle />
+                      <LuCirclePlus />
                     </Button>
                   </Tooltip>
                 </>
@@ -1044,7 +1044,7 @@ function Conditions(props) {
                   size="sm"
                   variant="faded"
                 >
-                  <LuXCircle />
+                  <LuCircleX />
                 </Button>
               </Tooltip>
             </Row>

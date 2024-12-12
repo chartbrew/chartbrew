@@ -9,7 +9,7 @@ import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuCirclePlus, LuTrash, LuCircleX } from "react-icons/lu";
 import { endOfDay, startOfDay, sub } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -384,7 +384,7 @@ function ApiBuilder(props) {
                   variant="faded"
                   endContent={(
                     <a onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
-                      <LuPlusCircle />
+                      <LuCirclePlus />
                     </a>
                   )}
                 >
@@ -402,7 +402,7 @@ function ApiBuilder(props) {
                   variant="faded"
                   endContent={(
                     <a onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
-                      <LuPlusCircle />
+                      <LuCirclePlus />
                     </a>
                   )}
                 >
@@ -594,7 +594,7 @@ function ApiBuilder(props) {
                           color="danger"
                           variant="light"
                         >
-                          <LuXCircle />
+                          <LuCircleX />
                         </Button>
                       </Row>
                       <Spacer y={1} />

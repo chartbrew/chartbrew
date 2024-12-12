@@ -10,7 +10,7 @@ import {
   Button,
   DropdownItem,
 } from "@nextui-org/react";
-import { LuChevronDown, LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
+import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp } from "react-icons/lu";
 
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
@@ -112,8 +112,8 @@ function TableComponent(props) {
                     <Row align="center">
                       {column.isSorted
                         ? column.isSortedDesc
-                          ? (<LuChevronDownCircle />)
-                          : (<LuChevronUpCircle />)
+                          ? (<LuCircleChevronDown />)
+                          : (<LuCircleChevronUp />)
                         : ""}
 
                       {(column.isSorted || column.isSortedDesc) && <Spacer x={1} />}

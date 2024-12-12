@@ -19,9 +19,9 @@ import {
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
-  LuAlertTriangle, LuArrowDown01, LuArrowDown10, LuCalendarDays, LuCheckCircle,
-  LuChevronDown, LuChevronDownCircle, LuChevronRight, LuEye, LuEyeOff, LuFilter,
-  LuInfo, LuPlus, LuRedo, LuSearch, LuSettings, LuWand2, LuXCircle,
+  LuTriangleAlert, LuArrowDown01, LuArrowDown10, LuCalendarDays, LuCircleCheck,
+  LuChevronDown, LuCircleChevronDown, LuChevronRight, LuEye, LuEyeOff, LuFilter,
+  LuInfo, LuPlus, LuRedo, LuSearch, LuSettings, LuWandSparkles, LuCircleX,
 } from "react-icons/lu";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
@@ -621,7 +621,7 @@ function DatasetData(props) {
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <LuAlertTriangle className="text-warning" />
+                    <LuTriangleAlert className="text-warning" />
                   </div>
                 </Tooltip>
               </>
@@ -697,7 +697,7 @@ function DatasetData(props) {
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <LuAlertTriangle className="text-warning" />
+                    <LuTriangleAlert className="text-warning" />
                   </div>
                 </Tooltip>
               </>
@@ -754,7 +754,7 @@ function DatasetData(props) {
             {dataset.dateField && (
               <Tooltip content="Clear field">
                 <Link onClick={() => onUpdate({ dateField: "" })} className="text-danger">
-                  <LuXCircle />
+                  <LuCircleX />
                 </Link>
               </Tooltip>
             )}
@@ -771,7 +771,7 @@ function DatasetData(props) {
                   <>
                     <Spacer x={0.6} />
                     <Tooltip content="The selected field is not available in the data. Please select another.">
-                      <div><LuAlertTriangle className="text-danger" /></div>
+                      <div><LuTriangleAlert className="text-danger" /></div>
                     </Tooltip>
                   </>
                 )}
@@ -892,7 +892,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Clear sorting">
                       <Link className="text-danger" onClick={() => onUpdate({ sort: "" })}>
-                        <LuXCircle className="text-danger" />
+                        <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip>
                   </>
@@ -926,7 +926,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Save">
                       <Link className="text-success" onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
-                        <LuCheckCircle className="text-success" />
+                        <LuCircleCheck className="text-success" />
                       </Link>
                     </Tooltip>
                     <Spacer x={0.5} />
@@ -938,7 +938,7 @@ function DatasetData(props) {
                           setDatasetMaxRecords(null);
                         }}
                       >
-                        <LuXCircle className="text-danger" />
+                        <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip>
                   </div>
@@ -984,17 +984,17 @@ function DatasetData(props) {
                 content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
               >
                 <Link onClick={formula === dataset.formula ? () => { } : _onApplyFormula}>
-                  <LuCheckCircle className={`${formula === dataset.formula ? "text-default-foreground" : "text-success"}`} />
+                  <LuCircleCheck className={`${formula === dataset.formula ? "text-default-foreground" : "text-success"}`} />
                 </Link>
               </Tooltip>
               <Tooltip content="Remove formula">
                 <Link onClick={_onRemoveFormula}>
-                  <LuXCircle className="text-danger" />
+                  <LuCircleX className="text-danger" />
                 </Link>
               </Tooltip>
               <Tooltip content="Click for an example">
                 <Link onClick={_onExampleFormula}>
-                  <LuWand2 className="text-primary" />
+                  <LuWandSparkles className="text-primary" />
                 </Link>
               </Tooltip>
             </div>
@@ -1029,12 +1029,12 @@ function DatasetData(props) {
                 content={goal === dataset.goal ? "The goal is already applied" : "Save goal"}
               >
                 <Link onClick={goal === dataset.goal ? () => { } : _onApplyGoal}>
-                  <LuCheckCircle className={goal === dataset.goal ? "text-foreground" : "text-success"} />
+                  <LuCircleCheck className={goal === dataset.goal ? "text-foreground" : "text-success"} />
                 </Link>
               </Tooltip>
               <Tooltip content="Remove goal">
                 <Link onClick={_onRemoveGoal}>
-                  <LuXCircle className="text-danger" />
+                  <LuCircleX className="text-danger" />
                 </Link>
               </Tooltip>
             </Row>
@@ -1072,7 +1072,7 @@ function DatasetData(props) {
                                       className="flex items-center"
                                       title="Sum values on this field"
                                     >
-                                      <LuChevronDownCircle />
+                                      <LuCircleChevronDown />
                                     </Link>
                                   </DropdownTrigger>
                                   <DropdownMenu variant="bordered">
@@ -1180,7 +1180,7 @@ function DatasetData(props) {
                             title="Cancel ordering"
                             size="sm"
                           >
-                            <LuXCircle />
+                            <LuCircleX />
                           </Button>
                         </>
                       )}
@@ -1343,7 +1343,7 @@ function DatasetData(props) {
                   </div>
                   <Tooltip content="Remove condition">
                     <Link color="danger" onClick={() => _onRemoveCondition(condition.id)}>
-                      <LuXCircle className="text-danger" />
+                      <LuCircleX className="text-danger" />
                     </Link>
                   </Tooltip>
 
@@ -1385,7 +1385,7 @@ function DatasetData(props) {
                         color="success"
                         onClick={() => _onApplyCondition(condition.id, condition.exposed)}
                       >
-                        <LuCheckCircle className="text-success" />
+                        <LuCircleCheck className="text-success" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1441,7 +1441,7 @@ function DatasetData(props) {
                     size="sm"
                     endContent={(
                       <Link onClick={() => _onHideCondition(condition.id)} color="danger">
-                        <LuXCircle />
+                        <LuCircleX />
                       </Link>
                     )}
                   >

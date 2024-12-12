@@ -11,11 +11,11 @@ import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";
 import { Link as LinkNext } from "react-router-dom";
 import {
-  LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuInfo,
+  LuArrowDown01, LuArrowDown10, LuCheck, LuCircleCheck, LuInfo,
   LuListFilter,
   LuPlug,
   LuSettings,
-  LuWand2, LuXCircle,
+  LuWandSparkles, LuCircleX,
 } from "react-icons/lu";
 
 import Text from "../../../components/Text";
@@ -339,7 +339,7 @@ function ChartDatasetConfig(props) {
                   <Spacer x={0.5} />
                   <Tooltip content="Clear sorting">
                     <Link className="text-danger" onClick={() => _onUpdateCdc({ sort: "" })}>
-                      <LuXCircle className="text-danger" />
+                      <LuCircleX className="text-danger" />
                     </Link>
                   </Tooltip>
                 </>
@@ -367,7 +367,7 @@ function ChartDatasetConfig(props) {
                       <>
                         <Tooltip content="Save">
                           <Link className="text-success" onClick={() => _onUpdateCdc({ maxRecords: maxRecords })}>
-                            <LuCheckCircle className="text-success" />
+                            <LuCircleCheck className="text-success" />
                           </Link>
                         </Tooltip>
                         <Spacer x={1} />
@@ -381,7 +381,7 @@ function ChartDatasetConfig(props) {
                           setMaxRecords("");
                         }}
                       >
-                        <LuXCircle className="text-danger" />
+                        <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip>
                 </>
@@ -447,18 +447,18 @@ function ChartDatasetConfig(props) {
                         content={"Apply the formula"}
                       >
                         <Link onClick={_onApplyFormula}>
-                          <LuCheckCircle className={"text-success"} />
+                          <LuCircleCheck className={"text-success"} />
                         </Link>
                       </Tooltip>
                     )}
                     <Tooltip content="Remove formula">
                       <Link onClick={_onRemoveFormula}>
-                        <LuXCircle className="text-danger" />
+                        <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip>
                     <Tooltip content="Click for an example">
                       <Link onClick={_onExampleFormula}>
-                        <LuWand2 className="text-primary" />
+                        <LuWandSparkles className="text-primary" />
                       </Link>
                     </Tooltip>
                   </div>
@@ -503,7 +503,7 @@ function ChartDatasetConfig(props) {
                       content={"Save goal"}
                     >
                       <Link onClick={() => _onUpdateCdc({ goal })}>
-                        <LuCheckCircle className={"text-success"} />
+                        <LuCircleCheck className={"text-success"} />
                       </Link>
                     </Tooltip>
                   )}
@@ -512,7 +512,7 @@ function ChartDatasetConfig(props) {
                       _onUpdateCdc({ goal: null });
                       setGoal("");
                     }}>
-                      <LuXCircle className="text-danger" />
+                      <LuCircleX className="text-danger" />
                     </Link>
                   </Tooltip>
                 </Row>

@@ -8,7 +8,7 @@ import {
 } from "@nextui-org/react";
 import { Helmet } from "react-helmet";
 import { v4 as uuid } from "uuid";
-import { LuCheck, LuChevronLeftCircle, LuPrinter, LuRedo } from "react-icons/lu";
+import { LuCheck, LuCircleChevronLeft, LuPrinter, LuRedo } from "react-icons/lu";
 
 import Chart from "../Chart/Chart";
 import Container from "../../components/Container";
@@ -118,7 +118,7 @@ function PrintView(props) {
               variant="bordered"
               onClick={_togglePrint}
             >
-              <LuChevronLeftCircle />
+              <LuCircleChevronLeft />
             </Button>
             <Spacer x={0.5} />
             <Button

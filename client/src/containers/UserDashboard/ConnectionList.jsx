@@ -1,6 +1,6 @@
 import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react"
 import React, { useState } from "react"
-import { LuCalendarDays, LuInfo, LuMoreHorizontal, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
+import { LuCalendarDays, LuEllipsis, LuInfo, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -194,7 +194,7 @@ function ConnectionList() {
                           variant="light"
                           size="sm"
                         >
-                          <LuMoreHorizontal />
+                          <LuEllipsis />
                         </Button>
                       </DropdownTrigger>
                       <DropdownMenu variant="flat">

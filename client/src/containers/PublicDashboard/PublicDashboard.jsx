@@ -12,9 +12,10 @@ import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
 import {
-  LuArrowLeftSquare,
-  LuCheckCircle, LuChevronLeft, LuClipboardEdit, LuEye, LuImagePlus, LuPalette,
-  LuRefreshCw, LuShare, LuXCircle,
+  LuSquareArrowLeft,
+  LuCircleCheck, LuChevronLeft, LuEye, LuImagePlus, LuPalette,
+  LuRefreshCw, LuShare, LuCircleX,
+  LuClipboardPen,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -571,7 +572,7 @@ function PublicDashboard(props) {
                 <Tooltip content="Back to your dashboard" placement="right-end">
                   <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
                     <Link className="text-foreground cursor-pointer">
-                      <LuArrowLeftSquare size={26} />
+                      <LuSquareArrowLeft size={26} />
                     </Link>
                   </LinkDom>
                 </Tooltip>
@@ -653,7 +654,7 @@ function PublicDashboard(props) {
                   <div>
                     <Tooltip content="Report settings" placement="right-end">
                       <Link className="text-foreground cursor-pointer" onClick={() => setEditingTitle(true)}>
-                        <LuClipboardEdit size={26} />
+                        <LuClipboardPen size={26} />
                       </Link>
                     </Tooltip>
                   </div>
@@ -746,7 +747,7 @@ function PublicDashboard(props) {
             <div className="hidden sm:block">
               <Button
                 color="success"
-                endContent={<LuCheckCircle />}
+                endContent={<LuCircleCheck />}
                 isLoading={saveLoading}
                 onClick={_onSaveChanges}
               >
@@ -758,7 +759,7 @@ function PublicDashboard(props) {
             <div>
               <Button
                 onClick={() => setPreview(false)}
-                endContent={<LuXCircle />}
+                endContent={<LuCircleX />}
                 color="primary"
                 variant="faded"
               >

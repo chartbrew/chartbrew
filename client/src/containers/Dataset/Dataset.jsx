@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import {
   Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
 } from "@nextui-org/react";
-import { LuAreaChart, LuArrowRight, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
+import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
 import Row from "../../components/Row";
@@ -409,7 +409,7 @@ function Dataset() {
                   key="configure"
                   title={(
                     <div className="flex items-center gap-2">
-                      <LuAreaChart size={24} />
+                      <LuChartArea size={24} />
                       <span>Configure</span>
                     </div>
                   )}

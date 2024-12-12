@@ -10,7 +10,7 @@ import {
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import { LuInfo, LuListFilter, LuRefreshCw, LuXCircle } from "react-icons/lu";
+import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX } from "react-icons/lu";
 import { findIndex } from "lodash";
 
 import LineChart from "../../Chart/components/LineChart";
@@ -197,7 +197,7 @@ function ChartPreview(props) {
                       size="sm"
                       endContent={(
                         <Link onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                          <LuXCircle size={14} />
+                          <LuCircleX size={14} />
                         </Link>
                       )}
                     >

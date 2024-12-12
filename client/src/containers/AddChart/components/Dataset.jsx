@@ -7,7 +7,7 @@ import {
   Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { LuDownloadCloud, LuPencilLine } from "react-icons/lu";
+import { LuCloudDownload, LuPencilLine } from "react-icons/lu";
 
 import { chartColors, primary } from "../../../config/colors";
 import DatarequestModal from "./DatarequestModal";
@@ -238,7 +238,7 @@ function Dataset(props) {
         )}
         <div className="col-span-12 md:col-span-6 dataset-manage-tut">
           <Button
-            endContent={<LuDownloadCloud />}
+            endContent={<LuCloudDownload />}
             onClick={_openConfigModal}
             color="primary"
             fullWidth

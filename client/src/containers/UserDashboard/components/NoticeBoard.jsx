@@ -2,7 +2,7 @@ import {
   Button, Card, CardBody, CardFooter, CardHeader, Divider, Image, Tooltip,
 } from "@nextui-org/react";
 import React, { useState } from "react"
-import { LuPlayCircle, LuShieldCheck, LuX } from "react-icons/lu";
+import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import { completeTutorial, selectUser } from "../../../slices/user";
@@ -47,7 +47,7 @@ function NoticeBoard() {
                   variant="flat"
                   color="primary"
                   onClick={() => setShowQuickStart(true)}
-                  endContent={<LuPlayCircle />}
+                  endContent={<LuCirclePlay />}
                   size="lg"
                 >
                   Watch video
