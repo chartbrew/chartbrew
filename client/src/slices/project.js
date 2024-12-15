@@ -294,6 +294,10 @@ export const projectSlice = createSlice({
       if (state.data.length === 0) {
         state.data.push(action.payload);
       }
+
+      if (state.active.id === action.payload.id || !state.active.id) {
+        state.active = action.payload;
+      }
     })
     builder.addCase(getProject.rejected, (state) => {
       state.loading = false;
@@ -325,6 +329,10 @@ export const projectSlice = createSlice({
         }
         return project;
       });
+
+      if (state.active.id === action.payload.id) {
+        state.active = action.payload;
+      }
     })
     builder.addCase(updateProject.rejected, (state) => {
       state.loading = false;

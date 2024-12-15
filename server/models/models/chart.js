@@ -128,7 +128,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     onReport: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      defaultValue: true,
     },
     xLabelTicks: {
       type: DataTypes.STRING,

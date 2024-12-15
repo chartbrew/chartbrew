@@ -14,7 +14,8 @@ import {
   LuBell,
   LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsis, LuEllipsisVertical, LuFileDown,
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
-  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTvMinimal, LuX,
+  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
+  LuCircleCheck,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -41,6 +42,7 @@ import Text from "../../components/Text";
 import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
+import toast from "react-hot-toast";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -471,6 +473,20 @@ function Chart(props) {
     setShareLoading(false);
   };
 
+  const _onPublishChart = async () => {
+    const res = await dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { draft: false },
+    }));
+
+    if (res.error) {
+      toast.error("There was a problem publishing your chart");
+    } else {
+      toast.success("Chart published successfully");
+    }
+  };
+
   const { projectId } = params;
 
   return (
@@ -535,10 +551,19 @@ function Chart(props) {
                         </div>
                       </Tooltip>
                     )}
-                    {chart.onReport && !isPublic && !print && (
-                      <Tooltip content="This chart is on a report">
+                    {(chart.onReport && !isPublic && !print && !chart.draft) && (
+                      <Tooltip content="This chart is visible on your report">
                         <div>
-                          <LuTvMinimal size={12} />
+                          <LuMonitor size={12} />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {(!chart.onReport || chart.draft) && (
+                      <Tooltip
+                        content={chart.draft ? "Draft charts are not visible on your report" : "This chart is not visible on your report"}
+                      >
+                        <div>
+                          <LuMonitorX size={12} />
                         </div>
                       </Tooltip>
                     )}
@@ -601,7 +626,7 @@ function Chart(props) {
                   <DropdownMenu>
                     <DropdownItem
                       startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
-                      onClick={_onGetChartData}
+                      onPress={_onGetChartData}
                       textValue="Refresh chart"
                     >
                       Refresh chart
@@ -609,10 +634,19 @@ function Chart(props) {
                     {_canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuSettings />}
-                        onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
+                        onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
                         textValue="Edit chart"
                       >
                         Edit chart
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectEditor") && chart.draft && (
+                      <DropdownItem
+                        startContent={<LuCircleCheck />}
+                        onPress={_onPublishChart}
+                        textValue="Publish chart"
+                      >
+                        Publish chart
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
@@ -628,48 +662,75 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal} textValue="Auto-update">
+                      <DropdownItem
+                        startContent={<LuCalendarClock />}
+                        onPress={_openUpdateModal}
+                        textValue="Auto-update"
+                      >
                         Auto-update
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuBell />} onClick={_openAlertsModal} textValue="Alerts">
+                      <DropdownItem
+                        startContent={<LuBell />}
+                        onPress={_openAlertsModal}
+                        textValue="Alerts"
+                      >
                         Alerts
                       </DropdownItem>
                     )}
                     <DropdownItem
                       startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
-                      onClick={_onExport}
+                      onPress={_onExport}
                       textValue="Export to Excel"
                     >
                       Export to Excel
                     </DropdownItem>
                     {!chart.draft && _canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuTvMinimal />} onClick={_onChangeReport} textValue={chart.onReport ? "Remove from report" : "Add to report"}>
+                      <DropdownItem
+                        startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
+                        onPress={_onChangeReport}
+                        textValue={chart.onReport ? "Remove from report" : "Add to report"}
+                        showDivider
+                      >
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.public && _canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={chart.public ? <LuLockOpen /> : <LuLock />}
-                        onClick={_onPublicConfirmation}
+                        onPress={_onPublicConfirmation}
                         textValue={chart.public ? "Make private" : "Make public"}
                       >
                         {"Make private"}
                       </DropdownItem>
                     )}
                     {!chart.draft && (
-                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed} showDivider textValue="Embed & Share">
+                      <DropdownItem
+                        startContent={<LuShare />}
+                        onPress={_onEmbed}
+                        textValue="Embed & Share"
+                      >
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.shareable && (
-                      <DropdownItem startContent={<LuLink />} onClick={_onOpenEmbed} textValue="Open in a new tab">
+                      <DropdownItem
+                        startContent={<LuLink />}
+                        onPress={_onOpenEmbed}
+                        textValue="Open in a new tab"
+                        showDivider
+                      >
                         {"Open in a new tab"}
                       </DropdownItem>
                     )}
                     {_canAccess("projectEditor") && (
-                      <DropdownItem startContent={<LuTrash />} color="danger" onClick={_onDeleteChartConfirmation} textValue="Delete chart">
+                      <DropdownItem
+                        startContent={<LuTrash />}
+                        color="danger"
+                        onPress={_onDeleteChartConfirmation}
+                        textValue="Delete chart"
+                      >
                         Delete chart
                       </DropdownItem>
                     )}

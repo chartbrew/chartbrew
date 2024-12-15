@@ -29,12 +29,12 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import {
   getPublicDashboard, getProject, updateProject, updateProjectLogo,
 } from "../../slices/project";
-import { selectTeams, updateTeam } from "../../slices/team";
+import { selectTeams } from "../../slices/team";
 import { runQueryOnPublic, runQueryWithFilters, selectCharts } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
-import { API_HOST, SITE_HOST } from "../../config/settings";
+import { API_HOST } from "../../config/settings";
 import canAccess from "../../config/canAccess";
 import SharingSettings from "./components/SharingSettings";
 import instructionDashboard from "../../assets/instruction-dashboard-report.png";
@@ -65,7 +65,6 @@ function PublicDashboard(props) {
   });
   const [logoPreview, setLogoPreview] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [error, setError] = useState("");
   const [noCharts, setNoCharts] = useState(false);
   const [preview, setPreview] = useState(false);
   const [passwordRequired, setPasswordRequired] = useState(false);
@@ -201,11 +200,8 @@ function PublicDashboard(props) {
           dispatch(getProject({ project_id: data.payload?.id }))
             .then((projectData) => {
               if (!projectData.payload) throw new Error(404);
-              const authenticatedProject = projectData.payload;
 
-              if (authenticatedProject.password) {
-                setProject({ ...data.payload, password: authenticatedProject.password });
-              }
+              setProject({ ...projectData.payload });
               setEditorVisible(true);
             })
             .catch(() => {});
@@ -308,28 +304,6 @@ function PublicDashboard(props) {
     return charts.filter((c) => c.onReport).length > 0;
   };
 
-  const _onSaveBrewName = (newBrewName) => {
-    if (!newBrewName) return;
-
-    if (newBrewName.indexOf("/") > -1) {
-      setError("The route contains invalid characters. Try removing the '/'");
-      return;
-    }
-
-    setSaveLoading(true);
-    const processedName = encodeURI(newBrewName);
-    dispatch(updateProject({ project_id: project.id, data: { brewName: processedName } }))
-      .then((project) => {
-        setSaveLoading(false);
-        setIsSaved(true);
-        window.location.href = `${SITE_HOST}/b/${project.payload.brewName}`;
-      })
-      .catch(() => {
-        setSaveLoading(false);
-        setError("This dashboard URL is already taken. Please try another one.");
-      });
-  };
-
   const _onSaveChanges = () => {
     setSaveLoading(true);
     const updateData = clone(newChanges);
@@ -349,42 +323,6 @@ function PublicDashboard(props) {
       .catch(() => {
         toast.error("Oh no! We couldn't update the dashboard. Please try again");
       });
-  };
-
-  const _onTogglePublic = (value) => {
-    dispatch(updateProject({ project_id: project.id, data: { public: value } }))
-      .then(() => {
-        _fetchProject();
-        toast.success("The report has been updated!");
-      })
-      .catch(() => { });
-  };
-
-  const _onTogglePassword = (value) => {
-    dispatch(updateProject({ project_id: project.id, data: { passwordProtected: value } }))
-      .then(() => {
-        _fetchProject();
-        toast.success("The report has been updated!");
-      })
-      .catch(() => { });
-  };
-
-  const _onSavePassword = (value) => {
-    dispatch(updateProject({ project_id: project.id, data: { password: value } }))
-      .then(() => {
-        _fetchProject();
-        toast.success("The report has been updated!");
-      })
-      .catch(() => { });
-  };
-
-  const _onToggleBranding = () => {
-    dispatch(updateTeam({ team_id: project.team_id, data: { showBranding: !project.Team.showBranding } }))
-      .then(() => {
-        _fetchProject();
-        toast.success("The branding settings are saved!");
-      })
-      .catch(() => {});
   };
 
   const _onRefreshCharts = () => {
@@ -941,14 +879,7 @@ function PublicDashboard(props) {
         <SharingSettings
           open={showSettings}
           onClose={() => setShowSettings(false)}
-          project={project}
-          error={error}
-          onSaveBrewName={_onSaveBrewName}
-          brewLoading={saveLoading}
-          onToggleBranding={_onToggleBranding}
-          onTogglePublic={_onTogglePublic}
-          onTogglePassword={_onTogglePassword}
-          onSavePassword={_onSavePassword}
+          onReport={true}
         />
       )}
     </div>

@@ -37,6 +37,10 @@ class ProjectController {
         },
         {
           model: db.Variable,
+        },
+        {
+          model: db.Team,
+          attributes: ["showBranding"],
         }
       ],
     })
