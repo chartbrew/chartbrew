@@ -162,7 +162,7 @@ function SharingSettings(props) {
         )}
         {!onReport && (
           <DrawerHeader
-            className="flex flex-row items-center border-b-1 border-gray-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
               <Button

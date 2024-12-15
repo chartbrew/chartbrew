@@ -816,14 +816,15 @@ function ProjectDashboard(props) {
                       <DropdownMenu>
                         <DropdownItem
                           startContent={<LuShare />}
-                          onClick={() => setShowShare(true)}
+                          onPress={() => setShowShare(true)}
+                          endContent={<Chip size="sm" color="secondary" variant="flat" radius="sm">{"New!"}</Chip>}
                         >
                           {"Share dashboard"}
                         </DropdownItem>
                         {_canAccess("teamAdmin") && (
                           <DropdownItem
                             startContent={<LuCopyPlus />} 
-                            onClick={() => setTemplateVisible(true)}
+                            onPress={() => setTemplateVisible(true)}
                           >
                             {"Create a template"}
                           </DropdownItem>
@@ -831,7 +832,7 @@ function ProjectDashboard(props) {
                         {_canExport() && (
                           <DropdownItem
                             startContent={<LuFileDown />}
-                            onClick={() => _openExport()}
+                            onPress={() => _openExport()}
                           >
                             {"Export to Excel"}
                           </DropdownItem>
