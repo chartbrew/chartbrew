@@ -5,6 +5,10 @@ import {
   Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@nextui-org/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -15,6 +19,8 @@ import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
+  LuEllipsisVertical,
+  LuShare,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -39,6 +45,7 @@ import { selectUser } from "../../slices/user";
 import gridBreakpoints from "../../config/gridBreakpoints";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
+import SharingSettings from "../PublicDashboard/components/SharingSettings";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -97,6 +104,7 @@ function ProjectDashboard(props) {
   const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [prevFilters, setPrevFilters] = useState(null);
+  const [showShare, setShowShare] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -747,38 +755,6 @@ function ProjectDashboard(props) {
                       </Tooltip>
                     </>
                   )}
-                  {_canAccess("teamAdmin") && (
-                    <>
-                      <Spacer x={0.5} />
-                      <Tooltip content="Create a template from this dashboard" placement="bottom">
-                        <Button
-                          variant="light"
-                          isIconOnly
-                          onClick={() => setTemplateVisible(true)}
-                          size="sm"
-                          className="dashboard-template-tutorial"
-                        >
-                          <LuCopyPlus size={22} />
-                        </Button>
-                      </Tooltip>
-                    </>
-                  )}
-                  {_canExport() && (
-                    <>
-                      <Spacer x={0.5} />
-                      <Tooltip content="Export charts to Excel" placement="bottom">
-                        <Button
-                          variant="light"
-                          isIconOnly
-                          onClick={_openExport}
-                          className="dashboard-export-tutorial"
-                          size="sm"
-                        >
-                          <LuFileDown size={22} />
-                        </Button>
-                      </Tooltip>
-                    </>
-                  )}
                   {_canAccess("projectEditor") && (
                     <>
                       <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
@@ -823,6 +799,45 @@ function ProjectDashboard(props) {
                         <LuRefreshCw size={24} />
                       </Button>
                     </Tooltip>
+                  </>
+
+                  <>
+                    <Spacer x={2} />
+                    <Dropdown aria-label="Dashboard actions">
+                      <DropdownTrigger>
+                        <Button
+                          variant="ghost"
+                          isIconOnly
+                          size="sm"
+                        >
+                          <LuEllipsisVertical size={20} />
+                        </Button>
+                      </DropdownTrigger>
+                      <DropdownMenu>
+                        <DropdownItem
+                          startContent={<LuShare />}
+                          onClick={() => setShowShare(true)}
+                        >
+                          {"Share dashboard"}
+                        </DropdownItem>
+                        {_canAccess("teamAdmin") && (
+                          <DropdownItem
+                            startContent={<LuCopyPlus />} 
+                            onClick={() => setTemplateVisible(true)}
+                          >
+                            {"Create a template"}
+                          </DropdownItem>
+                        )}
+                        {_canExport() && (
+                          <DropdownItem
+                            startContent={<LuFileDown />}
+                            onClick={() => _openExport()}
+                          >
+                            {"Export to Excel"}
+                          </DropdownItem>
+                        )}
+                      </DropdownMenu>
+                    </Dropdown>
                   </>
                 </Row>
               </Row>
@@ -938,6 +953,19 @@ function ProjectDashboard(props) {
           setTemplateVisible(false);
         }}
         visible={templateVisible}
+      />
+
+      <SharingSettings
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        project={project}
+        // error={error}
+        // onSaveBrewName={_onSaveBrewName}
+        // brewLoading={saveLoading}
+        // onToggleBranding={_onToggleBranding}
+        // onTogglePublic={_onTogglePublic}
+        // onTogglePassword={_onTogglePassword}
+        // onSavePassword={_onSavePassword}
       />
     </div>
   );
