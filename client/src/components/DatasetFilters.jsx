@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer, Tooltip } from "@nextui-org/react";
-import { LuCalendarDays, LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo, LuSettings, LuCircleX } from "react-icons/lu";
-import { format, formatISO } from "date-fns";
-import { Calendar } from "react-date-range";
-import { enGB } from "date-fns/locale";
+import {
+  Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader,
+  Checkbox, Chip, DatePicker, Divider, Dropdown, DropdownItem, DropdownMenu,
+  DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
+  ModalHeader, Spacer, Tooltip,
+} from "@nextui-org/react";
+import {
+  LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
+  LuSettings, LuCircleX,
+} from "react-icons/lu";
 import { find } from "lodash";
 import { nanoid } from "@reduxjs/toolkit";
+import { parseDate } from "@internationalized/date";
+import { I18nProvider } from "@react-aria/i18n";
 
 import Row from "./Row";
 import Text from "./Text";
-import { secondary } from "../config/colors";
 import { operators } from "../modules/filterOperations";
 
 function DatasetFilters(props) {
@@ -223,29 +229,21 @@ function DatasetFilters(props) {
                         size="sm"
                       />
                     )}
+
                   {find(fieldOptions, { value: condition.field })
                     && find(fieldOptions, { value: condition.field }).type === "date" && (
-                      <Popover>
-                        <PopoverTrigger>
-                          <Input
-                            endContent={<LuCalendarDays />}
-                            placeholder="Enter a value"
-                            value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
-                            disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                            labelPlacement="outside"
-                            variant="bordered"
-                            size="sm"
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent>
-                          <Calendar
-                            date={(condition.value && new Date(condition.value)) || new Date()}
-                            onChange={(date) => _updateCondition(condition.id, formatISO(date), "value", find(fieldOptions, { value: condition.field }).type)}
-                            locale={enGB}
-                            color={secondary}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <I18nProvider locale="en-GB">
+                        <DatePicker
+                          variant="bordered"
+                          showMonthAndYearPickers
+                          value={(
+                            condition.value
+                            && parseDate(condition.value)
+                          ) || null}
+                          onChange={(date) => _updateCondition(condition.id, date.toString(), "value", find(fieldOptions, { value: condition.field }).type)}
+                          size="sm"
+                        />
+                      </I18nProvider>
                     )}
                 </div>
               </Row>

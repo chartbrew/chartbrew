@@ -43,36 +43,80 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
 
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? val.startOf(timeInterval).isSame(moment(condition.value).startOf(timeInterval))
+            : false;
+        }
+
         return val ? val.isSame(condition.value, timeInterval) : false;
       });
       break;
     case "isNot":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
+
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? !val.startOf(timeInterval).isSame(moment(condition.value).startOf(timeInterval))
+            : false;
+        }
+
         return val ? !val.isSame(condition.value, timeInterval) : false;
       });
       break;
     case "greaterThan":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
+        // When comparing dates with day granularity, compare the start of each day
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? val.startOf(timeInterval).isAfter(moment(condition.value).startOf(timeInterval))
+            : false;
+        }
+
         return val ? val.isAfter(condition.value, timeInterval) : false;
       });
       break;
     case "greaterOrEqual":
       newData = newData.filter((o) => {
         const val = getValue(o);
+
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? val.startOf(timeInterval).isSameOrAfter(moment(condition.value).startOf(timeInterval))
+            : false;
+        }
+
         return val ? val.isSameOrAfter(condition.value, timeInterval) : false;
       });
       break;
     case "lessThan":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
+
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? val.startOf(timeInterval).isBefore(moment(condition.value).startOf(timeInterval))
+            : false;
+        }
+
         return val ? val.isBefore(condition.value, timeInterval) : false;
       });
       break;
     case "lessOrEqual":
       newData = newData.filter((o) => {
         const val = getValue(o);
+
+        if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
+          return val
+            ? val
+              .startOf(timeInterval)
+              .isSameOrBefore(moment(condition.value)
+                .startOf(timeInterval))
+            : false;
+        }
+
         return val ? val.isSameOrBefore(condition.value, timeInterval) : false;
       });
       break;
