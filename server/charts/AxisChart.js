@@ -118,7 +118,9 @@ class AxisChart {
         let yAxisData = [];
         let alreadyDateFiltered = false;
 
-        const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+        const filterData = dataFilter(
+          dataset.data, xAxis, dataset.options.conditions, this.timezone, this.chart.timeInterval
+        );
         if (filterData.conditionsOptions) {
           conditionsOptions.push({
             dataset_id: dataset.options.id,
@@ -159,7 +161,9 @@ class AxisChart {
             operator: "lessOrEqual",
           }];
 
-          filteredData = dataFilter(filteredData, dateField, dateConditions, this.timezone).data;
+          filteredData = dataFilter(
+            filteredData, dateField, dateConditions, this.timezone, this.chart.timeInterval
+          ).data;
         }
 
         if (filters && filters.length > 0) {
@@ -173,7 +177,9 @@ class AxisChart {
 
             if (found) {
               filters.map((filter) => {
-                filteredData = dataFilter(filteredData, filter.field, filters).data;
+                filteredData = dataFilter(
+                  filteredData, filter.field, filters, this.timezone, this.chart.timeInterval
+                ).data;
                 return filter;
               });
             }

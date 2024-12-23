@@ -3,7 +3,7 @@ const momentObj = require("moment");
 
 const determineType = require("../modules/determineType");
 
-function compareDates(data, field, condition, timezone = "") {
+function compareDates(data, field, condition, timezone = "", timeInterval = "day") {
   let newData = data;
   let moment = null;
   if (timezone) {
@@ -43,37 +43,37 @@ function compareDates(data, field, condition, timezone = "") {
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
 
-        return val ? val.isSame(condition.value) : false;
+        return val ? val.isSame(condition.value, timeInterval) : false;
       });
       break;
     case "isNot":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
-        return val ? !val.isSame(condition.value) : false;
+        return val ? !val.isSame(condition.value, timeInterval) : false;
       });
       break;
     case "greaterThan":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
-        return val ? val.isAfter(condition.value) : false;
+        return val ? val.isAfter(condition.value, timeInterval) : false;
       });
       break;
     case "greaterOrEqual":
       newData = newData.filter((o) => {
         const val = getValue(o);
-        return val ? val.isSameOrAfter(condition.value) : false;
+        return val ? val.isSameOrAfter(condition.value, timeInterval) : false;
       });
       break;
     case "lessThan":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
-        return val ? val.isBefore(condition.value) : false;
+        return val ? val.isBefore(condition.value, timeInterval) : false;
       });
       break;
     case "lessOrEqual":
       newData = newData.filter((o) => {
         const val = getValue(o);
-        return val ? val.isSameOrBefore(condition.value) : false;
+        return val ? val.isSameOrBefore(condition.value, timeInterval) : false;
       });
       break;
     case "isNotNull":
@@ -309,7 +309,7 @@ function compareBooleans(data, field, condition) {
   return newData;
 }
 
-module.exports = (data, selectedField, conditions, timezone = "") => {
+module.exports = (data, selectedField, conditions, timezone = "", timeInterval = "day") => {
   if (!conditions || conditions.length < 1) {
     return { data };
   }
@@ -367,7 +367,7 @@ module.exports = (data, selectedField, conditions, timezone = "") => {
         foundData = compareBooleans(foundData, exactField, condition);
         break;
       case "date":
-        foundData = compareDates(foundData, exactField, condition, timezone);
+        foundData = compareDates(foundData, exactField, condition, timezone, timeInterval);
         break;
       default:
         break;
