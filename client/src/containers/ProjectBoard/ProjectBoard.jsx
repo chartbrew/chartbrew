@@ -77,6 +77,7 @@ function ProjectBoard(props) {
   const _init = (id) => {
     _getProject(id);
     dispatch(getProjectCharts({ project_id: id || params.projectId }));
+    window.localStorage.setItem("__cb_active_team", team.id);
   };
 
   const _getProject = (id) => {
@@ -88,6 +89,7 @@ function ProjectBoard(props) {
       .then(() => {
         dispatch(getTeamMembers({ team_id: teamId }));
         dispatch(getProjects({ team_id: teamId }));
+        window.localStorage.setItem("__cb_active_team", teamId);
         return dispatch(getProject({ project_id: projectId }));
       })
       .then(() => {

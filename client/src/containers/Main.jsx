@@ -127,12 +127,6 @@ function Main(props) {
       teamsRef.current = true;
       let selectedTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.id));
 
-      const storageActiveTeam = window.localStorage.getItem("__cb_active_team");
-      if (storageActiveTeam) {
-        const storageTeam = teams.find((t) => `${t.id}` === `${storageActiveTeam}`);
-        if (storageTeam) selectedTeam = storageTeam;
-      }
-
       if (!selectedTeam) return;
       dispatch(saveActiveTeam(selectedTeam));
     }

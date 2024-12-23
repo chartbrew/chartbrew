@@ -705,7 +705,7 @@ function Chart(props) {
                         {"Make private"}
                       </DropdownItem>
                     )}
-                    {!chart.draft && (
+                    {!chart.draft && _canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuShare />}
                         onPress={_onEmbed}
