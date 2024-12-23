@@ -225,7 +225,7 @@ function ChartSettings(props) {
       <Spacer y={4} />
 
       <Row>
-        <Text>Global date settings</Text>
+        <Text>Date settings</Text>
       </Row>
       <Spacer y={1} />
       <div className="grid grid-cols-12 gap-2 justify-between">
@@ -283,60 +283,59 @@ function ChartSettings(props) {
           </Row>
         </div>
         <div className="col-span-12 lg:col-span-6">
-          <Checkbox
-            isSelected={currentEndDate}
-            isDisabled={!dateRange.endDate}
-            onChange={() => {
-              onChange({ currentEndDate: !currentEndDate });
-            }}
-            size="sm"
-            className="chart-settings-relative"
-          >
-            <Row align={"center"}>
+          <div className="flex flex-row items-center gap-2">
+            <Checkbox
+              isSelected={currentEndDate}
+              isDisabled={!dateRange.endDate}
+              onChange={() => {
+                onChange({ currentEndDate: !currentEndDate });
+              }}
+              size="sm"
+              className="chart-settings-relative"
+            >
               Auto-update the date range
-              <Spacer x={1} />
-              <Tooltip
-                content={(
-                  <div style={{ padding: 5 }}>
-                    <Text>
-                      {"When this is enabled, the end date will be automatically updated to the current date and the date range length will be preserved."}
-                    </Text>
-                    <Spacer y={0.6} />
-                    <Text>
-                      {"This option takes into account the date interval as well."}
-                    </Text>
-                    <Spacer y={0.6} />
-                    <ul>
-                      <li>
-                        <Text b>
-                          {"Daily interval: the end date will be the end of the present day"}
-                        </Text>
-                      </li>
-                      <li>
-                        <Text b>
-                          {"Weekly interval: the end date will be the end of the present week"}
-                        </Text>
-                      </li>
-                      <li>
-                        <Text b>
-                          {"Monthly interval: the end date will be the end of the present month"}
-                        </Text>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              >
-                <div>
-                  <LuInfo />
+            </Checkbox>
+            <Tooltip
+              content={(
+                <div style={{ padding: 5 }}>
+                  <Text>
+                    {"When this is enabled, the date range will be preserved but shifted to the present date."}
+                  </Text>
+                  <Spacer y={1} />
+                  <Text>
+                    {"This option takes into account the date interval as well."}
+                  </Text>
+                  <Spacer y={2} />
+                  <ul>
+                    <li>
+                      <Text b>
+                        {"Daily interval: the end date will be the end of the present day"}
+                      </Text>
+                    </li>
+                    <li>
+                      <Text b>
+                        {"Weekly interval: the end date will be the end of the present week"}
+                      </Text>
+                    </li>
+                    <li>
+                      <Text b>
+                        {"Monthly interval: the end date will be the end of the present month"}
+                      </Text>
+                    </li>
+                  </ul>
                 </div>
-              </Tooltip>
-            </Row>
-          </Checkbox>
+              )}
+            >
+              <div>
+                <LuInfo />
+              </div>
+            </Tooltip>
+          </div>
           <Spacer y={1} />
           <Checkbox
             isSelected={fixedStartDate}
             isDisabled={!currentEndDate}
-            onChange={(selected) => {
+            onValueChange={(selected) => {
               onChange({ fixedStartDate: selected });
             }}
             size="sm"
@@ -622,15 +621,14 @@ function ChartSettings(props) {
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="flat"
-              color="warning"
-              onClick={() => setDateRangeModal(false)}
+              variant="bordered"
+              onPress={() => setDateRangeModal(false)}
             >
               Cancel
             </Button>
             <Button
               endContent={<LuCheck />}
-              onClick={_onComplete}
+              onPress={_onComplete}
               color="primary"
             >
               Apply date filter
@@ -723,15 +721,14 @@ function ChartSettings(props) {
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="flat"
-              color="warning"
-              onClick={() => setDateFormattingModal(false)}
+              variant="bordered"
+              onPress={() => setDateFormattingModal(false)}
             >
               Cancel
             </Button>
             <Button
               endContent={<LuCheck />}
-              onClick={_onChangeDateFormat}
+              onPress={_onChangeDateFormat}
               color="primary"
             >
               Apply date format
