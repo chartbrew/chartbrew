@@ -45,7 +45,7 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
 
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
-            ? val.startOf(timeInterval).isSame(moment(condition.value).startOf(timeInterval))
+            ? val.startOf("day").isSame(moment(condition.value).startOf("day"))
             : false;
         }
 
@@ -58,7 +58,7 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
 
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
-            ? !val.startOf(timeInterval).isSame(moment(condition.value).startOf(timeInterval))
+            ? !val.startOf("day").isSame(moment(condition.value).startOf("day"))
             : false;
         }
 
@@ -71,7 +71,7 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
         // When comparing dates with day granularity, compare the start of each day
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
-            ? val.startOf(timeInterval).isAfter(moment(condition.value).startOf(timeInterval))
+            ? val.startOf("day").isAfter(moment(condition.value).startOf("day"))
             : false;
         }
 
@@ -84,7 +84,7 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
 
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
-            ? val.startOf(timeInterval).isSameOrAfter(moment(condition.value).startOf(timeInterval))
+            ? val.startOf("day").isSameOrAfter(moment(condition.value).startOf("day"))
             : false;
         }
 
@@ -97,7 +97,7 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
 
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
-            ? val.startOf(timeInterval).isBefore(moment(condition.value).startOf(timeInterval))
+            ? val.startOf("day").isBefore(moment(condition.value).startOf("day"))
             : false;
         }
 
@@ -111,9 +111,9 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
         if (timeInterval === "day" || timeInterval === "week" || timeInterval === "month" || timeInterval === "year") {
           return val
             ? val
-              .startOf(timeInterval)
+              .startOf("day")
               .isSameOrBefore(moment(condition.value)
-                .startOf(timeInterval))
+                .startOf("day"))
             : false;
         }
 
