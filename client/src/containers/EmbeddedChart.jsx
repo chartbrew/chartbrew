@@ -107,11 +107,15 @@ function EmbeddedChart() {
     // check if there are any filters in the search params
     // if so, add them to the conditions
     const params = [];
-    if (searchParams && searchParams.entries()?.length > 0) {
-      searchParams.entries().forEach((entry) => {
-        const [key, value] = entry;
-        params.push({ variable: key, value });
-      });
+
+    if (searchParams?.entries) {
+      // Convert searchParams to array and filter out empty entries
+      const searchParamsArray = Array.from(searchParams.entries());
+      if (searchParamsArray.length > 0) {
+        searchParamsArray.forEach(([key, value]) => {
+          params.push({ variable: key, value });
+        });
+      }
     }
 
     if (params.length === 0) return;
