@@ -254,7 +254,7 @@ function PublicDashboard(props) {
   };
 
   const _checkSearchParamsForFields = () => {
-    if (!searchParams || searchParams.entries()?.length === 0) return;
+    if (!searchParams || !searchParams.entries || searchParams.entries()?.length === 0) return;
 
     const filters = [];
     searchParams.entries().forEach((entry) => {
