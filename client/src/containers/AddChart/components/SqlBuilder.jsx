@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -67,6 +67,8 @@ function SqlBuilder(props) {
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
   const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
 
+  const schemaInitRef = useRef(false);
+
   useEffect(() => {
     if (dataRequest) {
       setSqlRequest({ ...sqlRequest, ...dataRequest });
@@ -91,6 +93,13 @@ function SqlBuilder(props) {
       setActiveResultsTab("json");
     }
   }, [requestError]);
+
+  useEffect(() => {
+    if (connection?.id && !connection.schema && !schemaInitRef.current) {
+      schemaInitRef.current = true;
+      _onTest(dataRequest, true);
+    }
+  }, [connection]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -137,16 +146,16 @@ function SqlBuilder(props) {
       });
   };
 
-  const _onChangeQuery = (value, testAfter = false) => {
+  const _onChangeQuery = (value, testAfter = false, noError = false) => {
     const newSqlRequest = { ...sqlRequest, query: value };
     setSqlRequest(newSqlRequest);
     
     if (testAfter) {
-      _onTest(newSqlRequest);
+      _onTest(newSqlRequest, noError);
     }
   };
 
-  const _onTest = (dr = dataRequest) => {
+  const _onTest = (dr = dataRequest, noError = false) => {
     setRequestLoading(true);
     setRequestSuccess(false);
     setRequestError(false);
@@ -161,7 +170,7 @@ function SqlBuilder(props) {
       }))
         .then(async (data) => {
           const result = data.payload;
-          if (result?.status?.statusCode >= 400) {
+          if (!noError && result?.status?.statusCode >= 400) {
             setRequestError(result.response);
           }
           if (result?.response?.dataRequest?.responseData?.data) {
@@ -302,14 +311,12 @@ function SqlBuilder(props) {
           <Spacer y={4} />
           {activeTab === "visual" && (
             <div>
-              {connection.schema && (
-                <VisualSQL
-                  query={sqlRequest.query}
-                  schema={connection.schema}
-                  updateQuery={(query) => _onChangeQuery(query, true)}
-                  type={connection.type}
-                />
-              )}
+              <VisualSQL
+                query={sqlRequest.query}
+                schema={connection.schema}
+                updateQuery={(query) => _onChangeQuery(query, true)}
+                type={connection.type}
+              />
               <Spacer y={4} />
               <Divider />
               <Spacer y={2} />
@@ -342,7 +349,7 @@ function SqlBuilder(props) {
             <Button
               color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
               endContent={<LuPlay />}
-              onClick={() => _onTest()}
+              onPress={() => _onTest()}
               isLoading={requestLoading}
               fullWidth
             >
