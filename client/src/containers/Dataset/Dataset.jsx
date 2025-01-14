@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
+  Button, Link, Spacer, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
 } from "@nextui-org/react";
 import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -444,8 +444,7 @@ function Dataset() {
             )}
           </div>
         </Row>
-        <Spacer y={2} />
-        <Divider />
+
         <Spacer y={4} />
 
         {datasetMenu === "query" && (

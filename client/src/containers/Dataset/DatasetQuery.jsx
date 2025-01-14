@@ -4,7 +4,7 @@ import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
   CardFooter, Spinner, Input, Divider, Chip,
 } from "@nextui-org/react";
-import { LuDatabase, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
+import { LuGitMerge, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -60,16 +60,20 @@ function DatasetQuery(props) {
       dataset_id: params.datasetId,
     }))
       .then((drs) => {
-        if (drs.payload?.[0]) {
+        if (drs.payload?.length > 1) {
           setDataRequests(drs.payload);
           setSelectedRequest({ isSettings: true });
+        } else if (drs.payload?.length === 1) {
+          setDataRequests(drs.payload);
+          setSelectedRequest(drs.payload[0]);
+          setCreateMode(false);
         }
 
         if (drs.payload?.[0] > 0 && !dataset.main_dr_id) {
           dispatch(updateDataset({
             team_id: params.teamId,
             dataset_id: dataset.id,
-            data: { main_dr_id: drs[0].payload.id },
+            data: { main_dr_id: drs.payload[0].id },
           }));
         }
 
@@ -234,260 +238,268 @@ function DatasetQuery(props) {
   };
 
   return (
-    <div className="grid grid-cols-12">
-      <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r-1 md:border-solid md:border-content3 gap-2">
-        {selectedRequest && (
-          <>
-            <Row>
-              <Tooltip content="Query dataset" css={{ zIndex: 99999 }} placement="right-start">
-                <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
+    <>
+      <aside className="fixed top-50 left-0 z-40 w-16 h-screen">
+        <div className="h-full items-center py-2 overflow-y-auto flex flex-col gap-2">
+          {selectedRequest && (
+            <>
+              <Row>
+                <Tooltip content="Join data sources" css={{ zIndex: 99999 }} placement="right-start">
+                  <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
+                    <Avatar
+                      isBordered
+                      icon={(
+                        <LuGitMerge />
+                      )}
+                      radius="sm"
+                      className="cursor-pointer"
+                      color={selectedRequest.isSettings ? "primary" : "default"}
+                    />
+                  </Link>
+                </Tooltip>
+              </Row>
+              <Spacer y={2} />
+            </>
+          )}
+          {dataRequests.map((dr, index) => (
+            <Fragment key={dr.id}>
+              <Row align="center">
+                <Badge
+                  variant={"faded"}
+                  color={
+                    dataRequests.find((r) => r.id === dr.id)?.error
+                      ? "danger"
+                      : dataRequests.find((r) => r.id === dr.id) ? "success" : "primary"
+                  }
+                  content={stateDataRequests.find((o) => o.id === dr.id)?.loading ? (<Spinner size="sm" />) : `${index + 1}`}
+                  shape="rectangle"
+                >
                   <Avatar
                     isBordered
-                    icon={(
-                      <LuDatabase />
-                    )}
                     radius="sm"
-                    className="cursor-pointer"
-                    color={selectedRequest.isSettings ? "primary" : "default"}
+                    src={
+                      dr.Connection
+                        ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
+                        : null
+                    }
+                    icon={!dr.Connection ? <LuMonitorX /> : null}
+                    color={dr.id === selectedRequest?.id ? "primary" : "default"}
+                    onClick={() => _onSelectDataRequest(dr)}
                   />
-                </Link>
-              </Tooltip>
-            </Row>
-            <Spacer y={2} />
-          </>
-        )}
-        {dataRequests.map((dr, index) => (
-          <Fragment key={dr.id}>
-            <Row align="center">
-              <Badge
-                variant={"faded"}
-                color={
-                  dataRequests.find((r) => r.id === dr.id)?.error
-                    ? "danger"
-                    : dataRequests.find((r) => r.id === dr.id) ? "success" : "primary"
-                }
-                content={stateDataRequests.find((o) => o.id === dr.id)?.loading ? (<Spinner size="sm" />) : `${index + 1}`}
-                shape="rectangle"
-              >
-                <Avatar
-                  isBordered
-                  radius="sm"
-                  src={
-                    dr.Connection
-                      ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
-                      : null
-                  }
-                  icon={!dr.Connection ? <LuMonitorX /> : null}
-                  color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                  onClick={() => _onSelectDataRequest(dr)}
-                />
-              </Badge>
-            </Row>
-            <Spacer y={0.6} />
-          </Fragment>
-        ))}
-        <Spacer y={1.5} />
-        <Row>
-          <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
-            <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
-              <Avatar
-                icon={<LuPlus />}
-                isBordered
-                className="cursor-pointer"
-                color="secondary"
-              />
-            </Link>
-          </Tooltip>
-        </Row>
-      </div>
-      {!createMode && selectedRequest?.isSettings && (
-        <div className="col-span-12 md:col-span-11">
-          <DatarequestSettings
-            dataset={dataset}
-            dataRequests={dataRequests}
-            onChange={onUpdateDataset}
-          />
-        </div>
-      )}
-      {!createMode && selectedRequest && (
-        <div className="col-span-12 md:col-span-11">
-          {dataRequests.map((dr) => (
-            <Fragment key={dr.id}>
-              {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
-                <ApiBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  // chart={chart}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {(selectedRequest.Connection?.type === "mysql" || selectedRequest.Connection?.type === "postgres") && selectedRequest.id === dr.id && (
-                <SqlBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {selectedRequest.Connection?.type === "mongodb" && selectedRequest.id === dr.id && (
-                <MongoQueryBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {selectedRequest.Connection?.type === "realtimedb" && selectedRequest.id === dr.id && (
-                <RealtimeDbBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {selectedRequest.Connection?.type === "firestore" && selectedRequest.id === dr.id && (
-                <FirestoreBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {selectedRequest.Connection?.type === "googleAnalytics" && selectedRequest.id === dr.id && (
-                <GaBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-              {selectedRequest.Connection?.type === "customerio" && selectedRequest.id === dr.id && (
-                <CustomerioBuilder
-                  dataRequest={dr}
-                  connection={dr.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  onDelete={() => _onDeleteRequest(dr.id)}
-                />
-              )}
-
-              {!selectedRequest.Connection && selectedRequest.id === dr.id && (
-                <div className="p-4">
-                  <p className="font-semibold">This data request does not have a connection.</p>
-                  <p className="text-sm text-default-500">{"You can safely delete this and create a new data request by clicking the '+' button."}</p>
-                  <Spacer y={2} />
-                  <Button
-                    onClick={() => _onDeleteRequest(selectedRequest.id)}
-                    color="danger"
-                    size="sm"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
+                </Badge>
+              </Row>
+              <Spacer y={0.6} />
             </Fragment>
           ))}
+          <Spacer y={1.5} />
+          <Row>
+            <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
+              <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
+                <Avatar
+                  icon={<LuPlus />}
+                  isBordered
+                  className="cursor-pointer"
+                  color="secondary"
+                />
+              </Link>
+            </Tooltip>
+          </Row>
         </div>
-      )}
-      {createMode && (
-        <div className="col-span-12 md:col-span-11 container mx-auto px-4">
-          <Spacer y={1} />
-          <Text size="h2">Select a connection</Text>
-          <Spacer y={2} />
-          {_filteredConnections().length > 0 && (
-            <div>
-              <Input
-                startContent={<LuSearch />}
-                placeholder="Search connections"
-                onChange={(e) => setConnectionSearch(e.target.value)}
-                className="max-w-[300px]"
-                labelPlacement="outside"
-                variant="bordered"
-              />
-            </div>
-          )}
+      </aside>
+      <div className="grid grid-cols-12 ml-16">
+        <div className="col-span-12">
+          <Divider />
           <Spacer y={4} />
-          <div className="grid grid-cols-12 gap-4">
-            {_filteredConnections().length === 0 && (
-              <div className="col-span-12 flex flex-col">
-                <p className="text-default-500">{"No connections found. Please create a connection first."}</p>
-                <Spacer y={2} />
-                <div>
-                  <Button
-                    onClick={() => navigate(`/${team.id}/connection/new`)}
-                    color="primary"
-                  >
-                    Create a connection
-                  </Button>
-                </div>
+        </div>
+        {!createMode && selectedRequest?.isSettings && (
+          <div className="col-span-12">
+            <DatarequestSettings
+              dataset={dataset}
+              dataRequests={dataRequests}
+              onChange={onUpdateDataset}
+            />
+          </div>
+        )}
+        {!createMode && selectedRequest && (
+          <div className="col-span-12">
+            {dataRequests.map((dr) => (
+              <Fragment key={dr.id}>
+                {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
+                  <ApiBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    // chart={chart}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {(selectedRequest.Connection?.type === "mysql" || selectedRequest.Connection?.type === "postgres") && selectedRequest.id === dr.id && (
+                  <SqlBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "mongodb" && selectedRequest.id === dr.id && (
+                  <MongoQueryBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "realtimedb" && selectedRequest.id === dr.id && (
+                  <RealtimeDbBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "firestore" && selectedRequest.id === dr.id && (
+                  <FirestoreBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "googleAnalytics" && selectedRequest.id === dr.id && (
+                  <GaBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "customerio" && selectedRequest.id === dr.id && (
+                  <CustomerioBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+
+                {!selectedRequest.Connection && selectedRequest.id === dr.id && (
+                  <div className="p-4">
+                    <p className="font-semibold">This data request does not have a connection.</p>
+                    <p className="text-sm text-default-500">{"You can safely delete this and create a new data request by clicking the '+' button."}</p>
+                    <Spacer y={2} />
+                    <Button
+                      onPress={() => _onDeleteRequest(selectedRequest.id)}
+                      color="danger"
+                      size="sm"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        )}
+        {createMode && (
+          <div className="col-span-12 md:col-span-12 container mx-auto px-4">
+            <Spacer y={1} />
+            <Text size="h2">Select a connection</Text>
+            <Spacer y={2} />
+            {_filteredConnections().length > 0 && (
+              <div>
+                <Input
+                  startContent={<LuSearch />}
+                  placeholder="Search connections"
+                  onChange={(e) => setConnectionSearch(e.target.value)}
+                  className="max-w-[300px]"
+                  labelPlacement="outside"
+                  variant="bordered"
+                />
               </div>
             )}
-
-            {_filteredConnections().map((c) => {
-              return (
-                <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
-                  <Card
-                    isPressable
-                    isHoverable
-                    onClick={() => _onCreateNewRequest(c)}
-                    fullWidth
-                    shadow="sm"
-                    className="h-full"
-                  >
-                    <CardBody className="p-4 pl-unit-8">
-                      <Row align="center" justify="space-between">
-                        <Text size="h4">{c.name}</Text>
-                        <Spacer x={0.5} />
-                        <Avatar
-                          radius="sm"
-                          src={connectionImages(theme === "dark")[c.subType || c.type]}
-                          alt={`${c.type} logo`}
-                        />
-                      </Row>
-                      <Row align={"center"} className={"gap-1 flex-wrap"}>
-                        {_getConnectionTags(c.project_ids).map((tag) => (
-                          <Chip key={tag} color="primary" variant="flat" size="sm">
-                            {tag}
-                          </Chip>
-                        ))}
-                      </Row>
-                      <Spacer y={2} />
-                      <Row>
-                        <span className={"text-xs text-default-400"}>
-                          {`Created on ${moment(c.createdAt).format("LLL")}`}
-                        </span>
-                      </Row>
-                    </CardBody>
-                    <Divider />
-                    <CardFooter>
-                      <Container>
-                        <Row justify="center">
-                          <Button
-                            variant="flat"
-                            onClick={() => _onCreateNewRequest(c)}
-                            size="sm"
-                            fullWidth
-                          >
-                            Select
-                          </Button>
-                        </Row>
-                      </Container>
-                    </CardFooter>
-                  </Card>
+            <Spacer y={4} />
+            <div className="grid grid-cols-12 gap-4">
+              {_filteredConnections().length === 0 && (
+                <div className="col-span-12 flex flex-col">
+                  <p className="text-default-500">{"No connections found. Please create a connection first."}</p>
+                  <Spacer y={2} />
+                  <div>
+                    <Button
+                      onClick={() => navigate(`/${team.id}/connection/new`)}
+                      color="primary"
+                    >
+                      Create a connection
+                    </Button>
+                  </div>
                 </div>
-              );
-            })}
+              )}
+
+              {_filteredConnections().map((c) => {
+                return (
+                  <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
+                    <Card
+                      isPressable
+                      isHoverable
+                      onClick={() => _onCreateNewRequest(c)}
+                      fullWidth
+                      shadow="sm"
+                      className="h-full"
+                    >
+                      <CardBody className="p-4 pl-unit-8">
+                        <Row align="center" justify="space-between">
+                          <Text size="h4">{c.name}</Text>
+                          <Spacer x={0.5} />
+                          <Avatar
+                            radius="sm"
+                            src={connectionImages(theme === "dark")[c.subType || c.type]}
+                            alt={`${c.type} logo`}
+                          />
+                        </Row>
+                        <Row align={"center"} className={"gap-1 flex-wrap"}>
+                          {_getConnectionTags(c.project_ids).map((tag) => (
+                            <Chip key={tag} color="primary" variant="flat" size="sm">
+                              {tag}
+                            </Chip>
+                          ))}
+                        </Row>
+                        <Spacer y={2} />
+                        <Row>
+                          <span className={"text-xs text-default-400"}>
+                            {`Created on ${moment(c.createdAt).format("LLL")}`}
+                          </span>
+                        </Row>
+                      </CardBody>
+                      <Divider />
+                      <CardFooter>
+                        <Container>
+                          <Row justify="center">
+                            <Button
+                              variant="flat"
+                              onClick={() => _onCreateNewRequest(c)}
+                              size="sm"
+                              fullWidth
+                            >
+                              Select
+                            </Button>
+                          </Row>
+                        </Container>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   )
 }
 
