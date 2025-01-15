@@ -171,6 +171,20 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to ask AI a question
+  */
+  app.post(`${root}/:id/askAi`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.askAi(req.params.id, req.body.question)
+      .then((query) => {
+        return res.status(200).send({ query });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

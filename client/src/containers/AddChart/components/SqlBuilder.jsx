@@ -13,10 +13,11 @@ import {
   TableCell,
   Pagination,
   CircularProgress,
+  Textarea,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuBrainCircuit, LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -33,6 +34,8 @@ import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
+import { API_HOST } from "../../../config/settings";
+import { getAuthToken } from "../../../modules/auth";
 
 /*
   The query builder for Mysql and Postgres
@@ -60,6 +63,9 @@ function SqlBuilder(props) {
   const [activeTab, setActiveTab] = useState("sql");
   const [activeResultsTab, setActiveResultsTab] = useState("table");
   const [resultsPage, setResultsPage] = useState(1);
+  const [aiMode, setAiMode] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [askAiLoading, setAskAiLoading] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -246,6 +252,33 @@ function SqlBuilder(props) {
     }
   };
 
+  const _onAskAi = () => {
+    setAskAiLoading(true);
+    const url = `${API_HOST}/team/${params.teamId}/datasets/${params.datasetId}/dataRequests/${dataRequest.id}/askAi`;
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getAuthToken()}`,
+    });
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify({ question: aiQuestion }),
+      headers,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setAskAiLoading(false);
+        setAiMode(false);
+        setActiveTab("sql");
+        _onChangeQuery(data.query);
+      })
+      .catch(() => {
+        setAskAiLoading(false);
+        setAiMode(false);
+        toast.error("There was an error asking the AI. Please try again.");
+      });
+  };
+
   if (!connection) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -266,7 +299,7 @@ function SqlBuilder(props) {
                   color="primary"
                   auto
                   size="sm"
-                  onClick={() => _onSavePressed()}
+                  onPress={() => _onSavePressed()}
                   isLoading={saveLoading || requestLoading}
                   variant="flat"
                 >
@@ -280,7 +313,7 @@ function SqlBuilder(props) {
                     auto
                     size="sm"
                     variant="flat"
-                    onClick={() => onDelete()}
+                    onPress={() => onDelete()}
                   >
                     <LuTrash />
                   </Button>
@@ -309,54 +342,102 @@ function SqlBuilder(props) {
           <Spacer y={2} />
           <Divider />
           <Spacer y={4} />
-          {activeTab === "visual" && (
+          {aiMode && (
             <div>
-              <VisualSQL
-                query={sqlRequest.query}
-                schema={connection.schema}
-                updateQuery={(query) => _onChangeQuery(query, true)}
-                type={connection.type}
-              />
-              <Spacer y={4} />
-              <Divider />
+              <div className="flex flex-row items-center gap-1">
+                <LuBrainCircuit />
+                <div className="font-bold">{"AI mode"}</div>
+              </div>
+              <div className="text-sm">
+                {"Ask our AI a question about your data and it will generate a query for you."}
+              </div>
               <Spacer y={2} />
+              <div className="flex flex-row items-center gap-1">
+                <Textarea
+                  placeholder="Ask AI a question (e.g. 'Top 10 users by number of orders')"
+                  value={aiQuestion}
+                  onChange={(e) => setAiQuestion(e.target.value)}
+                  variant="bordered"
+                />
+              </div>
             </div>
           )}
-          {activeTab === "sql" && (
-            <div>
-              <Row>
-                <div className="w-full">
-                  <AceEditor
-                    mode="pgsql"
-                    theme={isDark ? "one_dark" : "tomorrow"}
-                    style={{ borderRadius: 10 }}
-                    height="300px"
-                    width="none"
-                    value={sqlRequest.query || ""}
-                    onChange={(value) => {
-                      _onChangeQuery(value);
-                    }}
-                    name="queryEditor"
-                    editorProps={{ $blockScrolling: true }}
-                    className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
+          {!aiMode && (
+            <>
+              {activeTab === "visual" && (
+                <div>
+                  <VisualSQL
+                    query={sqlRequest.query}
+                    schema={connection.schema}
+                    updateQuery={(query) => _onChangeQuery(query, true)}
+                    type={connection.type}
                   />
+                  <Spacer y={4} />
+                  <Divider />
+                  <Spacer y={2} />
                 </div>
-              </Row>
-            </div>
+              )}
+              {activeTab === "sql" && (
+                <div>
+                  <Row>
+                    <div className="w-full">
+                      <AceEditor
+                        mode="pgsql"
+                        theme={isDark ? "one_dark" : "tomorrow"}
+                        style={{ borderRadius: 10 }}
+                        height="300px"
+                        width="none"
+                        value={sqlRequest.query || ""}
+                        onChange={(value) => {
+                          _onChangeQuery(value);
+                        }}
+                        name="queryEditor"
+                        editorProps={{ $blockScrolling: true }}
+                        className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
+                      />
+                    </div>
+                  </Row>
+                </div>
+              )}
+            </>
           )}
           <Spacer y={2} />
-          <Row align="center" className="sqlbuilder-buttons-tut gap-1">
+          <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
             <Button
-              color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
-              endContent={<LuPlay />}
-              onPress={() => _onTest()}
+              color={aiMode ? "default" : "secondary"}
+              endContent={aiMode ? null : <LuBrainCircuit />}
+              onPress={() => setAiMode(!aiMode)}
               isLoading={requestLoading}
               fullWidth
             >
-              {!requestSuccess && !requestError && "Run query"}
-              {(requestSuccess || requestError) && "Run again"}
+              {aiMode ? "Disable AI mode" : "Enable AI mode"}
             </Button>
-          </Row>
+
+            {!aiMode && (
+              <Button
+                color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
+                endContent={<LuPlay />}
+                onPress={() => _onTest()}
+                isLoading={requestLoading}
+                fullWidth
+              >
+                {!requestSuccess && !requestError && "Run query"}
+                {(requestSuccess || requestError) && "Run again"}
+              </Button>
+            )}
+
+            {aiMode && (
+              <Button
+                color="primary"
+                endContent={<LuBrainCircuit />}
+                onPress={() => _onAskAi()}
+                isLoading={askAiLoading}
+                fullWidth
+              >
+                {"Ask AI"}
+              </Button>
+            )}
+          </div>
           <Spacer y={2} />
           <Row align="center">
             <Checkbox
@@ -386,7 +467,7 @@ function SqlBuilder(props) {
             <Button
               endContent={<LuPlus />}
               isLoading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
+              onPress={_onSaveQueryConfirmation}
               variant="flat"
               size="sm"
             >
@@ -399,7 +480,7 @@ function SqlBuilder(props) {
                 <Button
                   variant="flat"
                   endContent={<LuCheck />}
-                  onClick={_onUpdateSavedQuery}
+                  onPress={_onUpdateSavedQuery}
                   isLoading={updatingSavedQuery}
                   size="sm"
                 >
@@ -514,14 +595,14 @@ function SqlBuilder(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setSaveQueryModal(false)}
+              onPress={() => setSaveQueryModal(false)}
             >
               Close
             </Button>
             <Button
               disabled={!savedQuerySummary}
               endContent={<LuCheck />}
-              onClick={_onSaveQuery}
+              onPress={_onSaveQuery}
               color="primary"
             >
               Save the query

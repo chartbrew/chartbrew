@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuChartArea, LuCircleArrowLeft, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
+import { LuBrainCircuit, LuChartArea, LuCircleArrowLeft, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
+import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
-
+import { Link, useSearchParams } from "react-router-dom";
 
 import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
@@ -22,7 +22,6 @@ import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection, selectConnections } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
-import { Link, useSearchParams } from "react-router-dom";
 import { generateInviteUrl } from "../../slices/team";
 
 function ConnectionWizard() {
@@ -189,12 +188,12 @@ function ConnectionWizard() {
                 <Spacer y={4} />
                 <div className="grid grid-cols-12 gap-4">
                   {_filteredConnections.map((conn) => (
-                    <div key={conn.name} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
+                    <div key={conn.name} className="col-span-12 sm:col-span-6 md:col-span-6 lg:col-span-3 xl:col-span-2">
                       <Card
                         shadow="none"
                         isPressable
-                        className={`w-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
-                        onClick={() => setSelectedType(conn.type)}
+                        className={`w-full h-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
+                        onPress={() => setSelectedType(conn.type)}
                       >
                         <CardBody className="overflow-visible p-0">
                           <Image
@@ -205,7 +204,14 @@ function ConnectionWizard() {
                             src={connectionImages(isDark)[conn.type]}
                           />
                         </CardBody>
-                        <CardFooter className="justify-center">
+                        <CardFooter className="justify-center flex flex-col gap-1">
+                          {conn.ai && (
+                            <Tooltip content="This connection allows you to use our AI to create datasets and queries">
+                              <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
+                                {"AI-powered"}
+                              </Chip>
+                            </Tooltip>
+                          )}
                           <span className="text-sm font-semibold">{conn.name}</span>
                         </CardFooter>
                       </Card>

@@ -7,9 +7,11 @@ export default [{
 }, {
   type: "postgres",
   name: "PostgreSQL",
+  ai: true,
 }, {
   type: "mysql",
   name: "MySQL",
+  ai: true,
 }, {
   type: "firestore",
   name: "Firestore",
@@ -28,13 +30,18 @@ export default [{
 }, {
   type: "timescaledb",
   name: "Timescale",
+  ai: true,
 }, {
   type: "supabasedb",
   name: "Supabase DB",
+  ai: true,
 }, {
   type: "rdsPostgres",
   name: "RDS Postgres",
+  ai: true,
 }, {
   type: "rdsMysql",
   name: "RDS MySQL",
+  ai: true,
 }];
+

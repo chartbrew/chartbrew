@@ -1,6 +1,7 @@
 const ConnectionController = require("./ConnectionController");
 const drCacheController = require("./DataRequestCacheController");
 const db = require("../models/models");
+const { generateSqlQuery } = require("../modules/ai/generateSqlQuery");
 
 class RequestController {
   constructor() {
@@ -199,6 +200,22 @@ class RequestController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  askAi(id, question) {
+    return this.findById(id)
+      .then(async (dataRequest) => {
+        const connection = await db.Connection.findByPk(dataRequest.Connection.id);
+        if (!connection?.schema) {
+          return Promise.reject(new Error("No schema found. Please test your connection first."));
+        }
+
+        const sqlQuery = await generateSqlQuery(connection.schema, question);
+        return sqlQuery;
+      })
+      .catch((error) => {
+        return Promise.reject(error);
       });
   }
 }
