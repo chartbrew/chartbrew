@@ -410,7 +410,7 @@ function SqlBuilder(props) {
               isLoading={requestLoading}
               fullWidth
             >
-              {aiMode ? "Disable AI mode" : "Enable AI mode"}
+              {aiMode ? "Back to SQL" : "Ask AI"}
             </Button>
 
             {!aiMode && (
