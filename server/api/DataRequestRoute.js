@@ -1,7 +1,16 @@
+const rateLimit = require("express-rate-limit");
+
 const DataRequestController = require("../controllers/DataRequestController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const DatasetController = require("../controllers/DatasetController");
+
+const apiLimiter = (max = 10) => {
+  return rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max,
+  });
+};
 
 module.exports = (app) => {
   const dataRequestController = new DataRequestController();
@@ -174,7 +183,7 @@ module.exports = (app) => {
   /*
   ** Route to ask AI a question
   */
-  app.post(`${root}/:id/askAi`, verifyToken, checkPermissions, (req, res) => {
+  app.post(`${root}/:id/askAi`, verifyToken, checkPermissions, apiLimiter(10), (req, res) => {
     return dataRequestController.askAi(
       req.params.id,
       req.body.question,
