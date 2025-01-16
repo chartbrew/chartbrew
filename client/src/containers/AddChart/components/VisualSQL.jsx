@@ -142,8 +142,9 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         database: type === "mysql" ? "MySQL" : "postgresql",
       };
       const newAst = parser.astify(query, opt);
-      setAst(newAst);
-    } catch {
+      const formattedAst = newAst?.[0] || newAst;
+      setAst(formattedAst);
+    } catch(e) {
       setQueryError(true);
     }
   }, [query]);
@@ -567,7 +568,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
       table: groupByColumn.table
     };
 
-    const newAst = { ...ast, groupby: [...(ast.groupby || []), newColumn] };
+    const newAst = { ...ast, groupby: { columns: [...(ast.groupby?.columns || []), newColumn] } };
 
     setAst(newAst);
     _onUpdateQuery(newAst);
@@ -578,13 +579,16 @@ function VisualSQL({ schema, query, updateQuery, type }) {
   const _onRemoveGroup = (group) => {
     const newAst = { 
       ...ast, 
-      groupby: ast.groupby.filter((g) => {
-        if (group.table && g.table) {
-          return !(g.table.value === group.table.value && g.column === group.column);
-        } else {
-          return g.column !== group.column;
-        }
-      })
+      groupby: {
+        ...ast.groupby,
+        columns: ast.groupby?.columns?.filter((g) => {
+          if (group.table && g.table) {
+            return !(g.table.value === group.table.value && g.column === group.column);
+          } else {
+            return g.column !== group.column;
+          }
+        })
+      }
     };
 
     setAst(newAst);
@@ -857,7 +861,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         </div>
       ))}
 
-      {ast?.groupby && ast.groupby.map((group) => (
+      {ast?.groupby?.columns && ast.groupby.columns.map((group) => (
         <div key={`${group?.table?.value}.${group.column}`} className="flex flex-wrap gap-1 items-center">
           <Code variant="flat">Group by</Code>
           <Button
