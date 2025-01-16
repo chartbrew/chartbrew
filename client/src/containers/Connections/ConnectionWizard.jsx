@@ -206,7 +206,7 @@ function ConnectionWizard() {
                         </CardBody>
                         <CardFooter className="justify-center flex flex-col gap-1">
                           {conn.ai && (
-                            <Tooltip content="This connection allows you to use our AI to create datasets and queries">
+                            <Tooltip content="You can use AI to ask questions about your data">
                               <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
                                 {"AI-powered"}
                               </Chip>
