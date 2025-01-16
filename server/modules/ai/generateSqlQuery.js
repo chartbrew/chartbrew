@@ -1,10 +1,20 @@
 const OpenAI = require("openai");
 
-const openaiClient = new OpenAI({
-  apiKey: process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV,
-});
+const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
+const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
+let openaiClient;
+
+if (openAiKey) {
+  openaiClient = new OpenAI({
+    apiKey: openAiKey,
+  });
+}
 
 async function generateSqlQuery(schema, question, conversationHistory = [], currentQuery = "") {
+  if (!openaiClient) {
+    throw new Error("OpenAI client is not initialized. Please check your environment variables.");
+  }
+
   const formattedSchema = JSON.stringify(schema).replace(/\\/g, "").replace(/"/g, "");
 
   try {
@@ -36,7 +46,7 @@ async function generateSqlQuery(schema, question, conversationHistory = [], curr
     }
 
     const response = await openaiClient.chat.completions.create({
-      model: process.env.CB_OPENAI_MODEL || "gpt-4o-mini",
+      model: openAiModel || "gpt-4o-mini",
       messages,
     });
 

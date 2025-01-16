@@ -37,7 +37,12 @@ function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
       }),
       headers,
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to ask the AI. Please try again.");
+        }
+        return response.json();
+      })
       .then((data) => {
         setAskAiLoading(false);
         onChangeQuery(data.query);
@@ -81,7 +86,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
             icon={<LuBrainCircuit />}
             variant="flat"
             color="primary"
-              description="Hi! I can help you write SQL queries. Just ask me a question about your data."
+              description="Hi! I can help you write SQL queries. Ask me a question about your data and I'll generate a query for you."
           />
         ) : (
           <Alert
