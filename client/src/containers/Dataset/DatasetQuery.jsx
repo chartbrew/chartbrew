@@ -4,7 +4,7 @@ import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
   CardFooter, Spinner, Input, Divider, Chip,
 } from "@nextui-org/react";
-import { LuGitMerge, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
+import { LuBrainCircuit, LuGitMerge, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -447,48 +447,61 @@ function DatasetQuery(props) {
                     <Card
                       isPressable
                       isHoverable
-                      onClick={() => _onCreateNewRequest(c)}
+                      onPress={() => _onCreateNewRequest(c)}
                       fullWidth
                       shadow="sm"
                       className="h-full"
                     >
                       <CardBody className="p-4 pl-unit-8">
-                        <Row align="center" justify="space-between">
-                          <Text size="h4">{c.name}</Text>
-                          <Spacer x={0.5} />
+                        <div className="flex flex-row items-center justify-between">
+                          <div className="flex flex-col gap-1">
+                            <Text size="h4">{c.name}</Text>
+                            {(c.type === "mysql" || c.type === "postgres") && (
+                              <Chip color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
+                                {"AI-powered"}
+                              </Chip>
+                            )}
+                          </div>
                           <Avatar
                             radius="sm"
                             src={connectionImages(theme === "dark")[c.subType || c.type]}
                             alt={`${c.type} logo`}
                           />
-                        </Row>
-                        <Row align={"center"} className={"gap-1 flex-wrap"}>
-                          {_getConnectionTags(c.project_ids).map((tag) => (
-                            <Chip key={tag} color="primary" variant="flat" size="sm">
-                              {tag}
-                            </Chip>
-                          ))}
-                        </Row>
+                        </div>
                         <Spacer y={2} />
-                        <Row>
-                          <span className={"text-xs text-default-400"}>
+                        <div className="flex flex-row items-center">
+                          <span className="text-xs text-default-400">
                             {`Created on ${moment(c.createdAt).format("LLL")}`}
                           </span>
-                        </Row>
+                        </div>
                       </CardBody>
                       <Divider />
+                      {_getConnectionTags(c.project_ids).length > 0 && (
+                        <>
+                          <CardBody>
+                            <div className="flex flex-row items-center gap-1 flex-wrap">
+                              {_getConnectionTags(c.project_ids).map((tag) => (
+                                <Chip key={tag} color="primary" variant="flat" size="sm">
+                                  {tag}
+                                </Chip>
+                              ))}
+                            </div>
+                          </CardBody>
+                          <Divider />
+                        </>
+                      )}
                       <CardFooter>
                         <Container>
-                          <Row justify="center">
+                          <div className="flex flex-row justify-center">
                             <Button
                               variant="flat"
-                              onClick={() => _onCreateNewRequest(c)}
+                              onPress={() => _onCreateNewRequest(c)}
                               size="sm"
                               fullWidth
                             >
                               Select
                             </Button>
-                          </Row>
+                          </div>
                         </Container>
                       </CardFooter>
                     </Card>

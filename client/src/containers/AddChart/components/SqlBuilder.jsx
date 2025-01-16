@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
-  Chip,
   Table,
   TableHeader,
   TableColumn,
@@ -33,6 +32,7 @@ import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
+import AiQuery from "../../Dataset/AiQuery";
 
 /*
   The query builder for Mysql and Postgres
@@ -60,7 +60,6 @@ function SqlBuilder(props) {
   const [activeTab, setActiveTab] = useState("sql");
   const [activeResultsTab, setActiveResultsTab] = useState("table");
   const [resultsPage, setResultsPage] = useState(1);
-
   const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
@@ -266,7 +265,7 @@ function SqlBuilder(props) {
                   color="primary"
                   auto
                   size="sm"
-                  onClick={() => _onSavePressed()}
+                  onPress={() => _onSavePressed()}
                   isLoading={saveLoading || requestLoading}
                   variant="flat"
                 >
@@ -280,7 +279,7 @@ function SqlBuilder(props) {
                     auto
                     size="sm"
                     variant="flat"
-                    onClick={() => onDelete()}
+                    onPress={() => onDelete()}
                   >
                     <LuTrash />
                   </Button>
@@ -300,7 +299,6 @@ function SqlBuilder(props) {
               title={(
                 <div className="flex items-center gap-1">
                   <Text>Visual Query</Text>
-                  <Chip variant="flat" radius="sm" size="sm" color="secondary">New!</Chip>
                 </div>
               )}
               key="visual"
@@ -309,43 +307,45 @@ function SqlBuilder(props) {
           <Spacer y={2} />
           <Divider />
           <Spacer y={4} />
-          {activeTab === "visual" && (
-            <div>
-              <VisualSQL
-                query={sqlRequest.query}
-                schema={connection.schema}
-                updateQuery={(query) => _onChangeQuery(query, true)}
-                type={connection.type}
-              />
-              <Spacer y={4} />
-              <Divider />
-              <Spacer y={2} />
-            </div>
-          )}
-          {activeTab === "sql" && (
-            <div>
-              <Row>
-                <div className="w-full">
-                  <AceEditor
-                    mode="pgsql"
-                    theme={isDark ? "one_dark" : "tomorrow"}
-                    style={{ borderRadius: 10 }}
-                    height="300px"
-                    width="none"
-                    value={sqlRequest.query || ""}
-                    onChange={(value) => {
-                      _onChangeQuery(value);
-                    }}
-                    name="queryEditor"
-                    editorProps={{ $blockScrolling: true }}
-                    className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
-                  />
-                </div>
-              </Row>
-            </div>
-          )}
+          <>
+            {activeTab === "visual" && (
+              <div>
+                <VisualSQL
+                  query={sqlRequest.query}
+                  schema={connection.schema}
+                  updateQuery={(query) => _onChangeQuery(query, true)}
+                  type={connection.type}
+                />
+                <Spacer y={4} />
+                <Divider />
+                <Spacer y={2} />
+              </div>
+            )}
+            {activeTab === "sql" && (
+              <div>
+                <Row>
+                  <div className="w-full">
+                    <AceEditor
+                      mode="pgsql"
+                      theme={isDark ? "one_dark" : "tomorrow"}
+                      style={{ borderRadius: 10 }}
+                      height="300px"
+                      width="none"
+                      value={sqlRequest.query || ""}
+                      onChange={(value) => {
+                        _onChangeQuery(value);
+                      }}
+                      name="queryEditor"
+                      editorProps={{ $blockScrolling: true }}
+                      className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
+                    />
+                  </div>
+                </Row>
+              </div>
+            )}
+          </>
           <Spacer y={2} />
-          <Row align="center" className="sqlbuilder-buttons-tut gap-1">
+          <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
             <Button
               color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
               endContent={<LuPlay />}
@@ -353,10 +353,9 @@ function SqlBuilder(props) {
               isLoading={requestLoading}
               fullWidth
             >
-              {!requestSuccess && !requestError && "Run query"}
-              {(requestSuccess || requestError) && "Run again"}
+              Run query
             </Button>
-          </Row>
+          </div>
           <Spacer y={2} />
           <Row align="center">
             <Checkbox
@@ -375,6 +374,16 @@ function SqlBuilder(props) {
             </Tooltip>
           </Row>
 
+          {activeTab === "sql" && (
+            <div className="flex flex-col gap-2">
+              <AiQuery
+                query={sqlRequest.query}
+                dataRequest={dataRequest}
+                onChangeQuery={_onChangeQuery}
+              />
+            </div>
+          )}
+
           <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
@@ -386,7 +395,7 @@ function SqlBuilder(props) {
             <Button
               endContent={<LuPlus />}
               isLoading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
+              onPress={_onSaveQueryConfirmation}
               variant="flat"
               size="sm"
             >
@@ -399,7 +408,7 @@ function SqlBuilder(props) {
                 <Button
                   variant="flat"
                   endContent={<LuCheck />}
-                  onClick={_onUpdateSavedQuery}
+                  onPress={_onUpdateSavedQuery}
                   isLoading={updatingSavedQuery}
                   size="sm"
                 >
@@ -514,14 +523,14 @@ function SqlBuilder(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setSaveQueryModal(false)}
+              onPress={() => setSaveQueryModal(false)}
             >
               Close
             </Button>
             <Button
               disabled={!savedQuerySummary}
               endContent={<LuCheck />}
-              onClick={_onSaveQuery}
+              onPress={_onSaveQuery}
               color="primary"
             >
               Save the query
