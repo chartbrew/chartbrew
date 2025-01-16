@@ -203,7 +203,7 @@ class RequestController {
       });
   }
 
-  askAi(id, question) {
+  askAi(id, question, conversationHistory, currentQuery) {
     return this.findById(id)
       .then(async (dataRequest) => {
         const connection = await db.Connection.findByPk(dataRequest.Connection.id);
@@ -211,8 +211,10 @@ class RequestController {
           return Promise.reject(new Error("No schema found. Please test your connection first."));
         }
 
-        const sqlQuery = await generateSqlQuery(connection.schema, question);
-        return sqlQuery;
+        const aiResponse = await generateSqlQuery(
+          connection.schema, question, conversationHistory, currentQuery
+        );
+        return aiResponse;
       })
       .catch((error) => {
         return Promise.reject(error);
