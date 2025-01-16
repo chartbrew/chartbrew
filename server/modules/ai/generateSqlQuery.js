@@ -1,7 +1,7 @@
 const OpenAI = require("openai");
 
 const openaiClient = new OpenAI({
-  apiKey: process.env.CB_OPENAI_API_KEY,
+  apiKey: process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV,
 });
 
 async function generateSqlQuery(schema, question, conversationHistory = [], currentQuery = "") {
