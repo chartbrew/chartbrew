@@ -381,9 +381,6 @@ function SqlBuilder(props) {
                 dataRequest={dataRequest}
                 onChangeQuery={_onChangeQuery}
               />
-              <Spacer y={2} />
-              <Divider />
-              <Spacer y={2} />
             </div>
           )}
 
