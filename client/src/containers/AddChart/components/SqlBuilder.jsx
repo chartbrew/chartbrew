@@ -421,8 +421,7 @@ function SqlBuilder(props) {
                 isLoading={requestLoading}
                 fullWidth
               >
-                {!requestSuccess && !requestError && "Run query"}
-                {(requestSuccess || requestError) && "Run again"}
+                Run query
               </Button>
             )}
 
