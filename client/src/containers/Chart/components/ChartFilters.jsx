@@ -39,7 +39,7 @@ function ChartFilters(props) {
       return {
         key: v,
         value: isBoolean || v === null ? `${v}` : v,
-        text: isBoolean || v === null ? `${v}` : v,
+        text: `${v}`,
       };
     });
   };
