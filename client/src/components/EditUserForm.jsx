@@ -104,8 +104,15 @@ function EditUserForm() {
   const _onUpdateEmailConfirm = () => {
     setLoading(true);
     setSuccessEmail(false);
-    dispatch(updateEmail({ user_id: userProp.id, email: updateEmailToken }))
-      .then(() => {
+    dispatch(updateEmail({ user_id: userProp.id, token: updateEmailToken }))
+      .then((res) => {
+        if (res?.error) {
+          toast.error("Error updating your email. Please try again or check if the email is correct.");
+          setUpdateEmailToken("");
+          setLoading(false);
+          return;
+        }
+
         setSuccessEmail(true);
         setLoading(false);
         toast.success("Your email has been updated.");
@@ -449,14 +456,14 @@ function EditUserForm() {
           </ModalBody>
           <ModalFooter>
             <Button
-              onClick={() => setOpenDeleteModal(false)}
+              onPress={() => setOpenDeleteModal(false)}
               variant="bordered"
             >
               {"Go back"}
             </Button>
             <Button
               color="danger"
-              onClick={_onDeleteUser}
+              onPress={_onDeleteUser}
               isLoading={loading}
               auto
             >
@@ -476,17 +483,14 @@ function EditUserForm() {
           </ModalBody>
           <ModalFooter>
             <Button
-              color="warning"
-              flat
-              auto
-              onClick={() => setUpdateEmailToken("")}
+              variant="bordered"
+              onPress={() => setUpdateEmailToken("")}
             >
               Cancel
             </Button>
             <Button
               color="primary"
-              auto
-              onClick={_onUpdateEmailConfirm}
+              onPress={_onUpdateEmailConfirm}
             >
               Confirm
             </Button>

@@ -269,16 +269,16 @@ export const requestEmailUpdate = createAsyncThunk(
 
 export const updateEmail = createAsyncThunk(
   "user/updateEmail",
-  async ({ user_id, updateToken }) => {
+  async ({ user_id, token }) => {
     const url = `${API_HOST}/user/${user_id}/email/update`;
-    const body = JSON.stringify({ token: updateToken });
+    const body = JSON.stringify({ token });
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",
       "Authorization": `Bearer ${getAuthToken()}`,
     });
 
-    const response = await fetch(url, { body, headers, method: "POST" });
+    const response = await fetch(url, { body, headers, method: "PUT" });
     if (!response.ok) {
       throw new Error("Error updating email");
     }
