@@ -26,6 +26,9 @@ const router = createBrowserRouter([
         }]
       },
       {
+        path: "edit",
+      },
+      {
         path: "dashboards",
       },
       {
