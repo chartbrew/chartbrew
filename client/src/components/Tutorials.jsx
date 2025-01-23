@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import Joyride, { ACTIONS, EVENTS, STATUS } from "react-joyride";
 import PropTypes from "prop-types";
-import { Button, Spacer, semanticColors } from "@nextui-org/react";
+import { Button, Spacer, semanticColors } from "@heroui/react";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import Segment from "./Segment";

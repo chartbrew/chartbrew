@@ -5,7 +5,7 @@ import {
   Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
   DropdownTrigger, ModalHeader, ModalBody, ModalFooter, ModalContent, Code,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import _ from "lodash";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";

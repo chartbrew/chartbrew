@@ -9,7 +9,7 @@ import {
   DropdownMenu,
   Button,
   DropdownItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp } from "react-icons/lu";
 
 import Row from "../../../../components/Row";

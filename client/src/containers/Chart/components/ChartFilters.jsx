@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Spacer, Input, Autocomplete, AutocompleteItem, DatePicker,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { I18nProvider } from "@react-aria/i18n";
 import { LuX } from "react-icons/lu";
 import { parseDate } from "@internationalized/date";

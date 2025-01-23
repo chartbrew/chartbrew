@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Spacer, Checkbox, Tooltip, Divider, Tabs, Tab,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
 import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers } from "react-icons/lu";

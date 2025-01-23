@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import cookie from "react-cookies";
 import _ from "lodash";
 import { LuArrowLeft, LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";

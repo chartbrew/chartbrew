@@ -9,7 +9,7 @@ import {
   ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, RadioGroup, Radio,
   Badge,
   Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   LuBell,
   LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsis, LuEllipsisVertical, LuFileDown,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Progress, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import determineType from "../../../modules/determineType";
 import Row from "../../../components/Row";

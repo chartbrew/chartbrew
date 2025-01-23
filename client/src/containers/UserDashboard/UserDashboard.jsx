@@ -6,7 +6,7 @@ import { useWindowSize } from "react-use";
 import {
   Button, Spacer, Chip, CircularProgress,
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers,
 } from "react-icons/lu";

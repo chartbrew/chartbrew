@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet";
 import { useSearchParams } from "react-router-dom";

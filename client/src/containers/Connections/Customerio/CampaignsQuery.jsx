@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Chip, Button, Divider, Input, Popover, Spacer, Switch, Tooltip, Select,
   SelectItem, Tabs, Tab, PopoverTrigger, PopoverContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
 } from "date-fns";

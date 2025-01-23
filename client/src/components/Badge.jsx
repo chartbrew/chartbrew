@@ -1,4 +1,4 @@
-import { styled } from "@nextui-org/react";
+import { styled } from "@heroui/react";
 
 // Badge component will be available as part of the core library soon
 const Badge = styled("span", {

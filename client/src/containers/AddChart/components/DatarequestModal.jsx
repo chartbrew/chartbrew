@@ -7,7 +7,7 @@ import {
   Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card,
   CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody,
   CardFooter, ModalContent, Spinner,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import moment from "moment";
 import { LuLink2, LuMonitorX, LuPlus } from "react-icons/lu";
 

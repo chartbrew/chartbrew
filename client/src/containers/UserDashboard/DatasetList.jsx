@@ -1,4 +1,4 @@
-import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
+import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
 import { LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
@@ -106,7 +106,7 @@ function DatasetList() {
   };
 
   return (
-    <div className="flex flex-col">
+    (<div className="flex flex-col">
       <div className="flex flex-row items-center gap-4">
         {connections.length > 0 && (
           <Button
@@ -273,7 +273,6 @@ function DatasetList() {
           ))}
         </TableBody>
       </Table>
-
       <Modal isOpen={datasetToDelete?.id} onClose={() => setDatasetToDelete(null)}>
         <ModalContent>
           <ModalHeader>
@@ -335,7 +334,6 @@ function DatasetList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
       <Modal isOpen={!!datasetToEdit} onClose={() => setDatasetToEdit(null)} size="xl">
         <ModalContent>
           <ModalHeader>
@@ -354,7 +352,7 @@ function DatasetList() {
                     if (datasetToEdit?.project_ids?.includes(project.id)) {
                       setDatasetToEdit({ ...datasetToEdit, project_ids: datasetToEdit?.project_ids?.filter((p) => p !== project.id) });
                     } else {
-                      setDatasetToEdit({ ...datasetToEdit, project_ids: [...datasetToEdit?.project_ids || [], project.id] });
+                      setDatasetToEdit({ ...datasetToEdit, project_ids: [...(datasetToEdit?.project_ids || []), project.id] });
                     }
                   }}
                 >
@@ -387,7 +385,7 @@ function DatasetList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>
+    </div>)
   );
 }
 

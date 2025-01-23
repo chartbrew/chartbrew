@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab, Card, CardBody, Image, CardFooter
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
 import { createProject } from "../slices/project";

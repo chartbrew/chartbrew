@@ -6,7 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import moment from "moment";
 
 import { createCdc, runQuery, selectChart } from "../../../slices/chart";
-import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs, Tooltip } from "@nextui-org/react";
+import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs, Tooltip } from "@heroui/react";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import connectionImages from "../../../config/connectionImages";

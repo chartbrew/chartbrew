@@ -5,7 +5,7 @@ import {
   Avatar,
   Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
   PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";

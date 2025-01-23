@@ -4,7 +4,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
   Select, SelectItem, PopoverTrigger, PopoverContent, Code, Autocomplete, AutocompleteItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
 import toast from "react-hot-toast";

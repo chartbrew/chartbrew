@@ -1,5 +1,5 @@
 import React from "react"
-import { Code, Spacer } from "@nextui-org/react";
+import { Code, Spacer } from "@heroui/react";
 import { LuChevronRight, LuExternalLink } from "react-icons/lu";
 
 import Text from "./Text";

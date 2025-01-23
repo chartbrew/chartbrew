@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import {
   Link as LinkNext, Tooltip, Spacer, Button, Modal, ModalHeader, ModalBody,ModalFooter,
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuCirclePlus, LuPresentation, LuPuzzle, LuSettings,

@@ -12,7 +12,7 @@ import {
   TableCell,
   Pagination,
   CircularProgress,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
 import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";

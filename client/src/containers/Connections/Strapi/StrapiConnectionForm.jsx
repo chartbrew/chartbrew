@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import { LuCirclePlus, LuCircleX } from "react-icons/lu";
 import { useDispatch } from "react-redux";

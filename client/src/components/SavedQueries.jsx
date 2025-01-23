@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
 import { useParams } from "react-router-dom";
 

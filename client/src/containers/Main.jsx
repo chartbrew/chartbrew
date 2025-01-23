@@ -2,7 +2,7 @@ import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
-import { semanticColors } from "@nextui-org/theme";
+import { semanticColors } from "@heroui/theme";
 import { Helmet } from "react-helmet";
 
 import SuspenseLoader from "../components/SuspenseLoader";

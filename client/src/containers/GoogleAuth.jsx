@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Spacer, Button, CircularProgress,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import cookie from "react-cookies";
 import { LuArrowRight } from "react-icons/lu";
 

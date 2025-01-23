@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { v4 as uuid } from "uuid";

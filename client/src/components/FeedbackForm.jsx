@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Textarea,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import { selectUser, sendFeedback } from "../slices/user";
 import Container from "./Container";

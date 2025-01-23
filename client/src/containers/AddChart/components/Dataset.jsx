@@ -6,7 +6,7 @@ import moment from "moment";
 import {
   Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuCloudDownload, LuPencilLine } from "react-icons/lu";
 
 import { chartColors, primary } from "../../../config/colors";

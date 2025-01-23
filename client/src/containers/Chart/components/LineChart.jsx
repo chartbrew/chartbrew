@@ -6,7 +6,7 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title,
   Tooltip, Legend, Filler,
 } from "chart.js";
-import { semanticColors } from "@nextui-org/react";
+import { semanticColors } from "@heroui/react";
 import { cloneDeep } from "lodash";
 
 import KpiChartSegment from "./KpiChartSegment";

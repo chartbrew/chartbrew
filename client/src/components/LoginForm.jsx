@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 import { useNavigate } from "react-router";
 

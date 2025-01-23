@@ -1,6 +1,6 @@
 import React from "react"
 import PropTypes from "prop-types";
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/react"
 
 function QuickStartVideo({ isOpen, onClose }) {
   return (

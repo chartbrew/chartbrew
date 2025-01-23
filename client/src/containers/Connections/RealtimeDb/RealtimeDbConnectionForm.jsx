@@ -4,7 +4,7 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Image, Chip, semanticColors, Accordion, AccordionItem, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
 import { LuFileCode2, LuExternalLink } from "react-icons/lu";

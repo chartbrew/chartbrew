@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";

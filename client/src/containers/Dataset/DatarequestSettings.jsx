@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
   Select, SelectItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import { nanoid } from "nanoid";
 import _ from "lodash";

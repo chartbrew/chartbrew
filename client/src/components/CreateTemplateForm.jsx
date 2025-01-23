@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useDispatch } from "react-redux";
 
 import { createTemplate } from "../slices/template";

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, CircularProgress, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
 import { useDispatch } from "react-redux";

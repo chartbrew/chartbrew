@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Divider, Input, Spacer, Switch, Tooltip, Chip, SelectItem, Select,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuInfo } from "react-icons/lu";
 
 import fieldFinder from "../../../modules/fieldFinder";

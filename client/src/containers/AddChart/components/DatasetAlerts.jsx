@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
   Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   LuBellOff, LuBellPlus, LuBellRing, LuMail, LuPlus, LuRefreshCw, LuSlack, LuTrash, LuWebhook

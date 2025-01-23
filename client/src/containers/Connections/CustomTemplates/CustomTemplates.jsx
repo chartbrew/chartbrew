@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Card, Spacer, CircularProgress, CardHeader, CardBody, CardFooter, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import moment from "moment";
 import { LuChartColumn } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";

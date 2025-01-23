@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Button, Checkbox, Chip, CircularProgress, Divider, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg,
 } from "react-icons/tb";

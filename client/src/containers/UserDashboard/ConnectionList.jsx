@@ -1,4 +1,4 @@
-import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react"
+import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCalendarDays, LuEllipsis, LuInfo, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -93,7 +93,7 @@ function ConnectionList() {
   };
 
   return (
-    <div className="flex flex-col">
+    (<div className="flex flex-col">
       <div className={"flex flex-row items-center gap-4"}>
         {_canAccess("teamAdmin", team.TeamRoles) && (
           <Button
@@ -228,7 +228,6 @@ function ConnectionList() {
         </TableBody>
       </Table>
       <Spacer y={2} />
-
       <Modal isOpen={connectionToDelete?.id} onClose={() => setConnectionToDelete(null)}>
         <ModalContent>
           <ModalHeader>
@@ -293,7 +292,6 @@ function ConnectionList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
       <Modal isOpen={!!connectionToEdit} onClose={() => setConnectionToEdit(null)} size="xl">
         <ModalContent>
           <ModalHeader>
@@ -313,7 +311,7 @@ function ConnectionList() {
                       setConnectionToEdit({ ...connectionToEdit, project_ids: connectionToEdit?.project_ids?.filter((p) => p !== project.id) });
                     }
                     else {
-                      setConnectionToEdit({ ...connectionToEdit, project_ids: [...connectionToEdit?.project_ids || [], project.id] });
+                      setConnectionToEdit({ ...connectionToEdit, project_ids: [...(connectionToEdit?.project_ids || []), project.id] });
                     }
                   }}
                 >
@@ -346,8 +344,8 @@ function ConnectionList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>
-  )
+    </div>)
+  );
 }
 
 export default ConnectionList

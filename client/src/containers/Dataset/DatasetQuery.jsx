@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
   CardFooter, Spinner, Input, Divider, Chip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuBrainCircuit, LuGitMerge, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";

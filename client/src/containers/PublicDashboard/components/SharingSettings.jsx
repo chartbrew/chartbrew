@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Divider, Input, Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuSettings } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";

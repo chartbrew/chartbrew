@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import {
   Card, CardBody, CardFooter, CardHeader, Divider, Link, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuGraduationCap } from "react-icons/lu";
 
 import Row from "./Row";

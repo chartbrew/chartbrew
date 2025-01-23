@@ -1,6 +1,6 @@
 import {
   Button, Card, CardBody, CardFooter, CardHeader, Divider, Image, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import React, { useState } from "react"
 import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";

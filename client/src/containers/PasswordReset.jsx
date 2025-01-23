@@ -4,7 +4,7 @@ import { PropTypes } from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Button, Input, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import { changePasswordWithToken } from "../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";

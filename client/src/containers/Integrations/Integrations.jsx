@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useSelector } from "react-redux";
 import {
   Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 
 import WebhookIntegrations from "./components/WebhookIntegrations";

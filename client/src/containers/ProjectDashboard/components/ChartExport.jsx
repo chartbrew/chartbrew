@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import {
   Button, Checkbox, Divider, Spacer, Tooltip, Link as LinkNext,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
 
 import Row from "../../../components/Row";

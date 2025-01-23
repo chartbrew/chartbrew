@@ -5,7 +5,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
 import { useNavigate } from "react-router";

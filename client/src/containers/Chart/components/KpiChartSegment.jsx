@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Chip,
   Spacer, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";

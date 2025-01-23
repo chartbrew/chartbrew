@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Card, CardBody, CardFooter, CardHeader, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";

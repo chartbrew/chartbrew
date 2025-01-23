@@ -3,7 +3,7 @@ import {
   Link as LinkNext, DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
   Avatar, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
-} from "@nextui-org/react";
+} from "@heroui/react";
 import React, { useEffect, useState } from "react";
 import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";

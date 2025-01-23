@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { Button, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react"
+import { Button, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createVariable, deleteVariable, selectProject } from "../../slices/project"

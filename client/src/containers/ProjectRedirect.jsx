@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import {
   Spacer, CircularProgress
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useNavigate, useParams } from "react-router";
 import { useDispatch } from "react-redux";
 

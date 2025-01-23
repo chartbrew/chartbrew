@@ -7,7 +7,7 @@ import { useWindowSize } from "react-use";
 import {
   CircularProgress,
   Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import "allotment/dist/style.css";
 

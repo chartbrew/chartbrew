@@ -4,7 +4,7 @@ import { connect, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useParams } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuCode, LuSettings, LuUsers } from "react-icons/lu";
 
 import { getTeam, saveActiveTeam } from "../slices/team";

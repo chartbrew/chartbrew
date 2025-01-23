@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Input, Checkbox, Spacer, Button, CircularProgress,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import { getTeam, selectTeam, updateTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";

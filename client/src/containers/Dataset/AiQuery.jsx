@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types";
-import { Spacer, Textarea, Button, Alert } from "@nextui-org/react";
+import { Spacer, Textarea, Button, Alert } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuBrainCircuit, LuSend } from "react-icons/lu";

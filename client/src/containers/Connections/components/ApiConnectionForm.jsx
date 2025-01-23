@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import {
   Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
 import { useParams } from "react-router";

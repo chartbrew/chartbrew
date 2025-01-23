@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Button, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useNavigate } from "react-router";
 
 import Text from "../components/Text";

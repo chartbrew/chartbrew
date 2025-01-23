@@ -7,7 +7,7 @@ import {
   Avatar,
   Button, Checkbox, Chip, Divider, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Switch,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
 } from "react-icons/lu";

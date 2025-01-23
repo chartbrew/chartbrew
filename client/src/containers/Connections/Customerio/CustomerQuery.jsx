@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Chip, Checkbox, Divider,
   CircularProgress, Select, SelectItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { isEqual } from "lodash";
 import { LuCheck, LuCloud, LuFolder, LuUser, LuWrench, LuX } from "react-icons/lu";
 import { useDispatch } from "react-redux";

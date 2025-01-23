@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/react";
 
 const messageTypes = {
   messages: [

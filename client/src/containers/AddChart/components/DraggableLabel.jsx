@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDrag, useDrop } from "react-dnd";
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/react";
 import { LuGripVertical } from "react-icons/lu";
 
 function DraggableLabel({ field, index, onMove }) {

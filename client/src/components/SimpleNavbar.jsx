@@ -1,7 +1,7 @@
 import React from "react";
 import {
   Image, Navbar, Link as LinkNext, NavbarBrand, NavbarContent, NavbarItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import Text from "./Text";
 import { useTheme } from "../modules/ThemeContext";

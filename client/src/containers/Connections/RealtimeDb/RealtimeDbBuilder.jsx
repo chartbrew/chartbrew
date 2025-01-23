@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
 import { LuInfo, LuPlay, LuTrash, LuX } from "react-icons/lu";

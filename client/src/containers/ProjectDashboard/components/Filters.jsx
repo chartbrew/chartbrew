@@ -10,7 +10,7 @@ import {
   Code, DatePicker,
   Autocomplete,
   AutocompleteItem,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
 
 import { operators } from "../../../modules/filterOperations";

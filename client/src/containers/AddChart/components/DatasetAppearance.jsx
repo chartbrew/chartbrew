@@ -2,7 +2,7 @@ import React, { Fragment } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Checkbox, Popover, Spacer, PopoverTrigger, PopoverContent,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { SketchPicker } from "react-color";
 
 import { primary, chartColors } from "../../../config/colors";

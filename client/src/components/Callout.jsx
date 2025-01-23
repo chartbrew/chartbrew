@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import {
   Link, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import Row from "./Row";
 import Text from "./Text";

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
   Select, SelectItem, Spacer,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";

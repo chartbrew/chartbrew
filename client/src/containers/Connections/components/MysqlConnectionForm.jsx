@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
   CircularProgress,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 

@@ -5,7 +5,7 @@ import {
   Checkbox, Chip, DatePicker, Divider, Dropdown, DropdownItem, DropdownMenu,
   DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
   LuSettings, LuCircleX,

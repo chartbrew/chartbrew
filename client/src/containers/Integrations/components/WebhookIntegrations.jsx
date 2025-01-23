@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { TbWebhook } from "react-icons/tb";
 import { formatRelative } from "date-fns";
 

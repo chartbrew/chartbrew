@@ -16,7 +16,7 @@ import {
   Chip, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem,
   PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
   ModalContent, Select, Listbox, ListboxItem, SelectItem, ScrollShadow,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
   LuTriangleAlert, LuArrowDown01, LuArrowDown10, LuCalendarDays, LuCircleCheck,

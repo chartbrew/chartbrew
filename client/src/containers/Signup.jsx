@@ -3,7 +3,7 @@ import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Button, Card, Spacer, Input, Link as LinkNext, Avatar, CardHeader, CardBody, Divider,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
 import { addTeamMember } from "../slices/team";
