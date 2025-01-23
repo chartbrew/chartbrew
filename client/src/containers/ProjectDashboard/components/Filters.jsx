@@ -243,7 +243,7 @@ function Filters(props) {
   };
 
   return (
-    <Modal isOpen={open} onClose={onClose} closeButton size="3xl">
+    <Modal isOpen={open} onClose={onClose} closeButton size="3xl" className="dashboard-filters-modal">
       <ModalContent>
         <ModalHeader>
           <Text size="h3">Dashboard filters</Text>
@@ -253,6 +253,7 @@ function Filters(props) {
             <Tabs
               selectedKey={filterType}
               onSelectionChange={(selection) => setFilterType(selection)}
+              disableAnimation
             >
               <Tab key="date" title="Date" />
               <Tab key="variables" title="Variables" />
