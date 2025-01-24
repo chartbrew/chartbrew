@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
@@ -9,6 +9,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Kbd,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -27,7 +28,6 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 import Chart from "../Chart/Chart";
-import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import Filters from "./components/Filters";
 import { operators } from "../../modules/filterOperations";
 import {
@@ -86,9 +86,7 @@ const getFilterGroupsFromStorage = () => {
   Dashboard container (for the charts)
 */
 function ProjectDashboard(props) {
-  const {
-    cleanErrors, mobile,
-  } = props;
+  const { mobile } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
   const [filterGroups, setFilterGroups] = useState(getFilterGroupsFromStorage());
@@ -123,7 +121,21 @@ function ProjectDashboard(props) {
   const hasRunVariableFiltering = useRef(null);
 
   useEffect(() => {
-    cleanErrors();
+    const handleKeyPress = (event) => {
+      // Only trigger if no input/textarea is focused
+      if (event.target.tagName.toLowerCase() === "input" || event.target.tagName.toLowerCase() === "textarea") return;
+
+      if (event.key.toLowerCase() === "e") {
+        setEditingLayout((prev) => !prev);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress);
+    };
   }, []);
 
   useEffect(() => {
@@ -741,11 +753,19 @@ function ProjectDashboard(props) {
                   {!mobile && (
                     <>
                       <Spacer x={0.5} />
-                      <Tooltip content="Edit dashboard layout" placement="bottom-end">
+                      <Tooltip
+                        placement="bottom-end"
+                        content={
+                          <div className="flex flex-row items-center gap-2">
+                            Edit dashboard layout
+                            <Kbd>E</Kbd>
+                          </div>
+                        }
+                      >
                         <Button
                           variant="light"
                           isIconOnly
-                          onClick={() => setEditingLayout(!editingLayout)}
+                          onPress={() => setEditingLayout(!editingLayout)}
                           color={editingLayout ? "primary" : "default"}
                           size="sm"
                           className="dashboard-layout-tutorial"
@@ -761,7 +781,7 @@ function ProjectDashboard(props) {
                         <Button
                           variant="light"
                           isIconOnly
-                          onClick={() => setScheduleVisible(true)}
+                          onPress={() => setScheduleVisible(true)}
                           size="sm"
                         >
                           <LuCalendarClock
@@ -1017,20 +1037,7 @@ ProjectDashboard.defaultProps = {
 };
 
 ProjectDashboard.propTypes = {
-  cleanErrors: PropTypes.func.isRequired,
-  onPrint: PropTypes.func.isRequired,
   mobile: PropTypes.bool,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    cleanErrors: () => dispatch(cleanErrorsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard);
+export default ProjectDashboard;

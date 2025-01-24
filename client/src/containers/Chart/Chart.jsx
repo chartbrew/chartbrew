@@ -652,9 +652,10 @@ function Chart(props) {
                     {_canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
-                        onClick={onEditLayout}
+                        onPress={onEditLayout}
                         showDivider
                         textValue={editingLayout ? "Complete layout" : "Edit layout"}
+                        shortcut="E"
                       >
                         <span className={editingLayout ? "text-primary" : ""}>
                           {editingLayout ? "Complete layout" : "Edit layout"}
