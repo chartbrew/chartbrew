@@ -556,24 +556,9 @@ function DatasetBuilder(props) {
 
         {chart?.id && (
           <ChartSettings
-            type={chart.type}
-            pointRadius={chart.pointRadius}
-            startDate={chart.startDate}
-            endDate={chart.endDate}
-            displayLegend={chart.displayLegend}
-            includeZeros={chart.includeZeros}
-            currentEndDate={chart.currentEndDate}
-            fixedStartDate={chart.fixedStartDate}
-            timeInterval={chart.timeInterval}
+            chart={chart}
             onChange={_onChangeGlobalSettings}
             onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
-            maxValue={chart.maxValue}
-            minValue={chart.minValue}
-            xLabelTicks={chart.xLabelTicks}
-            stacked={chart.stacked}
-            horizontal={chart.horizontal}
-            dateVarsFormat={chart.dateVarsFormat}
-            dataLabels={chart.dataLabels}
           />
         )}
       </div>

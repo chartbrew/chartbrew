@@ -433,24 +433,9 @@ function AddChart() {
           <Row>
             {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings
-                type={newChart.type}
-                pointRadius={newChart.pointRadius}
-                startDate={newChart.startDate}
-                endDate={newChart.endDate}
-                displayLegend={newChart.displayLegend}
-                includeZeros={newChart.includeZeros}
-                currentEndDate={newChart.currentEndDate}
-                fixedStartDate={newChart.fixedStartDate}
-                timeInterval={newChart.timeInterval}
+                chart={newChart}
                 onChange={_onChangeGlobalSettings}
                 onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
-                maxValue={newChart.maxValue}
-                minValue={newChart.minValue}
-                xLabelTicks={newChart.xLabelTicks}
-                stacked={newChart.stacked}
-                horizontal={newChart.horizontal}
-                dateVarsFormat={newChart.dateVarsFormat}
-                dataLabels={newChart.dataLabels}
               />
             )}
           </Row>
