@@ -24,4 +24,5 @@ module.exports = (chart, team = {}) => ({
   stacked: chart.stacked,
   startDate: chart.startDate,
   endDate: chart.endDate,
+  isLogarithmic: chart.isLogarithmic,
 });

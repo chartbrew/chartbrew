@@ -161,6 +161,9 @@ class NewLineChart {
     if (this.chart.minValue) {
       chartJsData.options.scales.y.min = this.chart.minValue;
     }
+    if (this.chart.isLogarithmic) {
+      chartJsData.options.scales.y.type = "logarithmic";
+    }
 
     // check how many ticks should the X Axis have
     let maxTicksLimit = 10;

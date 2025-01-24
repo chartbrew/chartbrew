@@ -170,6 +170,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
+    isLogarithmic: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     freezeTableName: true,
   });

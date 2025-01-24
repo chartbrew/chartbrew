@@ -375,9 +375,9 @@ function ChartSettings({ chart, onChange, onComplete }) {
       <Divider />
       <Spacer y={4} />
 
-      <div className="grid grid-cols-12 gap-2">          
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {chart.type === "line" && (
-          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+          <div>
             <Checkbox
               isSelected={chart.pointRadius > 0}
               onChange={() => {
@@ -394,7 +394,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
           </div>
         )}
         {chart.type === "bar" && (
-          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+          <div>
             <Checkbox
               isSelected={chart.stacked}
               onChange={_onChangeStacked}
@@ -405,7 +405,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
           </div>
         )}
         {chart.type === "bar" && (
-          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+          <div>
             <Checkbox
               isSelected={chart.horizontal}
               onChange={_onChangeHorizontal}
@@ -415,7 +415,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
             </Checkbox>
           </div>
         )}
-        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+        <div>
           <Checkbox
             isSelected={chart.displayLegend}
             onChange={() => onChange({ displayLegend: !chart.displayLegend })}
@@ -424,7 +424,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
             Legend
           </Checkbox>
         </div>
-        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+        <div>
           <Checkbox
             isSelected={chart.dataLabels}
             onChange={() => onChange({ dataLabels: !chart.dataLabels })}
@@ -433,6 +433,17 @@ function ChartSettings({ chart, onChange, onComplete }) {
             Data labels
           </Checkbox>
         </div>
+        {(chart.type === "line" || chart.type === "bar") && (
+          <div>
+            <Checkbox
+              isSelected={chart.isLogarithmic}
+              onValueChange={(selected) => onChange({ isLogarithmic: selected })}
+              size="sm"
+            >
+              Logarithmic scale
+            </Checkbox>
+          </div>
+        )}
       </div>
 
       <Spacer y={4} />

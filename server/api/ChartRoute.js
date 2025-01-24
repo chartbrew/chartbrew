@@ -438,6 +438,7 @@ module.exports = (app) => {
           showBranding: team.showBranding,
           showGrowth: chart.showGrowth,
           timeInterval: chart.timeInterval,
+          isLogarithmic: chart.isLogarithmic,
         });
       })
       .catch((err) => {
