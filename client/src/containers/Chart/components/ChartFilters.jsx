@@ -185,6 +185,7 @@ function ChartFilters(props) {
                         ) || null}
                         onChange={(date) => _onOptionSelected(date.toString(), condition)}
                         size="sm"
+                        aria-label="Date filter"
                       />
                     </I18nProvider>
 
@@ -192,7 +193,7 @@ function ChartFilters(props) {
                       <Button
                         variant="light"
                         isIconOnly
-                        onClick={() => _onOptionSelected("", condition, true)}
+                        onPress={() => _onOptionSelected("", condition, true)}
                         size={size}
                       >
                         <LuX />
@@ -207,6 +208,7 @@ function ChartFilters(props) {
                   <div className="flex flex-row items-center gap-1">
                     <I18nProvider locale="en-GB">
                       <DatePicker
+                        aria-label="Date filter"
                         placeholder={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
                         variant="bordered"
                         showMonthAndYearPickers
@@ -222,7 +224,7 @@ function ChartFilters(props) {
                       <Button
                         variant="light"
                         isIconOnly
-                        onClick={() => _onOptionSelected("", condition, true)}
+                        onPress={() => _onOptionSelected("", condition, true)}
                         size={size}
                       >
                         <LuX />
