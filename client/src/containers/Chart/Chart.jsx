@@ -9,6 +9,7 @@ import {
   ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, RadioGroup, Radio,
   Badge,
   Divider,
+  Kbd,
 } from "@heroui/react";
 import {
   LuBell,
@@ -21,6 +22,9 @@ import {
 import moment from "moment";
 import _ from "lodash";
 import { motion } from "framer-motion";
+
+const platform = navigator.userAgentData.platform;
+const isMac = platform.toLowerCase().includes("mac");
 
 import {
   removeChart, runQuery, runQueryWithFilters, getChart, exportChart,
@@ -657,7 +661,7 @@ function Chart(props) {
                         onPress={onEditLayout}
                         showDivider
                         textValue={editingLayout ? "Complete layout" : "Edit layout"}
-                        shortcut="E"
+                        endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
                       >
                         <span className={editingLayout ? "text-primary" : ""}>
                           {editingLayout ? "Complete layout" : "Edit layout"}

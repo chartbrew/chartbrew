@@ -49,6 +49,9 @@ import SharingSettings from "../PublicDashboard/components/SharingSettings";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
+const platform = navigator.userAgentData.platform;
+const isMac = platform.toLowerCase().includes("mac");
+
 const breakpoints = {
   mobile: 0,
   tablet: 640,
@@ -124,7 +127,8 @@ function ProjectDashboard(props) {
       // Only trigger if no input/textarea is focused
       if (event.target.tagName.toLowerCase() === "input" || event.target.tagName.toLowerCase() === "textarea") return;
 
-      if (event.key.toLowerCase() === "e") {
+      if (event.metaKey && event.key.toLowerCase() === "e") {
+        event.preventDefault();
         setEditingLayout((prev) => !prev);
       }
     };
@@ -752,7 +756,7 @@ function ProjectDashboard(props) {
                         content={
                           <div className="flex flex-row items-center gap-2">
                             Edit dashboard layout
-                            <Kbd>E</Kbd>
+                            <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
                           </div>
                         }
                       >
