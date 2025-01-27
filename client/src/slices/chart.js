@@ -591,16 +591,18 @@ export const chartSlice = createSlice({
       })
       .addCase(runQuery.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = state.data.map((chart) => {
-          if (chart.id === action.payload.id) {
-            return {
-              ...chart,
-              ...action.payload,
-              loading: false,
-            };
-          }
-          return chart;
-        });
+        if (!action.meta.arg.skipStateUpdate) {
+          state.data = state.data.map((chart) => {
+            if (chart.id === action.payload.id) {
+              return {
+                ...chart,
+                ...action.payload,
+                loading: false,
+              };
+            }
+            return chart;
+          });
+        }
       })
       .addCase(runQuery.rejected, (state, action) => {
         state.loading = false;

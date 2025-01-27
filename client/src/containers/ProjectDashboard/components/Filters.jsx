@@ -6,7 +6,7 @@ import { v4 as uuid } from "uuid";
 import {
   Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Modal, Chip,
   Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, DropdownTrigger,
-  DropdownMenu, DropdownItem, ModalContent, Select, SelectItem, DateRangePicker,
+  DropdownMenu, DropdownItem, ModalContent, DateRangePicker,
   Code, DatePicker,
   Autocomplete,
   AutocompleteItem,
@@ -350,7 +350,7 @@ function Filters(props) {
                   variant="light"
                   startContent={<LuSquareCheck />}
                   size="sm"
-                  onClick={() => onEditFilterGroup(null, true)}
+                  onPress={() => onEditFilterGroup(null, true)}
                 >
                   Select all
                 </Button>
@@ -358,7 +358,7 @@ function Filters(props) {
                   variant="light"
                   startContent={<LuX />}
                   size="sm"
-                  onClick={() => onEditFilterGroup(null, false, true)}
+                  onPress={() => onEditFilterGroup(null, false, true)}
                 >
                   Deselect all
                 </Button>
@@ -418,20 +418,19 @@ function Filters(props) {
           {filterType === "field" && (
             <>
               <Row align="center" className={"gap-2"}>
-                <Select
+                <Autocomplete
                   label="Select a field"
                   value={() => (
                     <span>{(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}</span>
                   )}
-                  selectedKeys={[filter.field]}
-                  selectionMode="single"
-                  onSelectionChange={(keys) => _updateFilter(keys.currentKey, "field")}
+                  selectedKey={filter.field}
+                  onSelectionChange={(key) => _updateFilter(key, "field")}
                   size="sm"
                   variant="bordered"
                   aria-label="Select a field"
                 >
                   {fieldOptions.map((field) => (
-                    <SelectItem
+                    <AutocompleteItem
                       key={field.value}
                       startContent={(
                         <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px] text-center">
@@ -441,9 +440,9 @@ function Filters(props) {
                       textValue={field.text}
                     >
                       {field.text}
-                    </SelectItem>
+                    </AutocompleteItem>
                   ))}
-                </Select>
+                </Autocomplete>
                 <Spacer x={0.5} />
                 <Dropdown aria-label="Select an operator">
                   <DropdownTrigger>
@@ -519,11 +518,11 @@ function Filters(props) {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button auto onClick={onClose} variant="bordered">
+          <Button auto onPress={onClose} variant="bordered">
             Close
           </Button>
           {filterType === "date" && (
-            <Button color="primary" onClick={_onApplyFilter}>
+            <Button color="primary" onPress={_onApplyFilter}>
               Apply filter
             </Button>
           )}
@@ -531,7 +530,7 @@ function Filters(props) {
             <Button
               endContent={<LuPlus />}
               isDisabled={!filter.value}
-              onClick={_onAddFilter}
+              onPress={_onAddFilter}
               color="primary"
             >
               Apply filter
@@ -541,7 +540,7 @@ function Filters(props) {
             <Button
               endContent={<LuPlus />}
               isDisabled={!variableCondition.variable || !variableCondition.value}
-              onClick={_onAddVariableFilter}
+              onPress={_onAddVariableFilter}
               color="primary"
             >
               Add variable filter
@@ -557,15 +556,11 @@ Filters.propTypes = {
   charts: PropTypes.array.isRequired,
   projectId: PropTypes.number.isRequired,
   onAddFilter: PropTypes.func.isRequired,
-  open: PropTypes.bool,
+  open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   filterGroups: PropTypes.array.isRequired,
   onEditFilterGroup: PropTypes.func.isRequired,
   onAddVariableFilter: PropTypes.func.isRequired,
-};
-
-Filters.defaultProps = {
-  open: false,
 };
 
 export default Filters;

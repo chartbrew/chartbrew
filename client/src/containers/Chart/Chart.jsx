@@ -130,8 +130,10 @@ function Chart(props) {
   const _onGetChartData = () => {
     const { projectId } = params;
 
+    const skipStateUpdate = getFiltersFromStorage(projectId)?.length > 0;
+
     setChartLoading(true);
-    dispatch(runQuery({ project_id: projectId, chart_id: chart.id }))
+    dispatch(runQuery({ project_id: projectId, chart_id: chart.id, skipStateUpdate }))
       .then(() => {
         setChartLoading(false);
 

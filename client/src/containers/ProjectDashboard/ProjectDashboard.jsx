@@ -101,7 +101,6 @@ function ProjectDashboard(props) {
   const [editingLayout, setEditingLayout] = useState(false);
   const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
-  const [prevFilters, setPrevFilters] = useState(null);
   const [showShare, setShowShare] = useState(false);
 
   const params = useParams();
@@ -144,16 +143,6 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [filters, charts]);
-
-  useEffect(() => {
-    if (!filterLoading && filters && hasRunInitialFiltering.current) {
-      // Only run filtering if filters have actually changed
-      if (!isEqual(filters, prevFilters)) {
-        setPrevFilters(filters);
-        _runFiltering();
-      }
-    }
-  }, [filters]);
 
   useEffect(() => {
     if (variables?.[params.projectId] && initLayoutRef.current && !hasRunVariableFiltering.current) {
@@ -221,6 +210,7 @@ function ProjectDashboard(props) {
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
 
     setShowFilters(false);
+    _onFilterCharts(newFilters);
   };
 
   const _onAddVariableFilter = (variableFilter) => {
@@ -312,7 +302,7 @@ function ProjectDashboard(props) {
   };
 
   const _runFiltering = (currentFilters = filters, chartIds = null) => {
-    if (!variables?.[params.projectId]) return;
+    if ((!variables?.[params.projectId] && !currentFilters?.[params.projectId]) || charts.length === 0) return;
 
     setFilterLoading(true);
     _onFilterCharts(currentFilters, chartIds)
@@ -370,12 +360,12 @@ function ProjectDashboard(props) {
     const chartsToProcess = chartIds 
       ? charts.filter(chart => chartIds.includes(chart.id))
       : charts;
-
+    
     chartsToProcess.forEach((chart) => {
       if (currentFilters && currentFilters[projectId]) {
         setFilterLoading(true);
         // first, discard the charts on which the filters don't apply
-        if (_chartHasFilter(chart)) {
+        if (_chartHasFilter(chart, currentFilters)) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: projectId,
@@ -414,6 +404,10 @@ function ProjectDashboard(props) {
       });
   };
 
+  const _checkIfAnyKindOfFiltersAreAvailable = () => {
+    return filters?.[params.projectId]?.length > 0 || variables?.[params.projectId]?.length > 0;
+  };
+
   const _onRefreshData = () => {
     const { projectId } = params;
 
@@ -435,8 +429,8 @@ function ProjectDashboard(props) {
       .then(() => {
         setRefreshLoading(false);
         // Apply variable filters after refresh is complete
-        if (variables?.[projectId]) {
-          _checkVariablesForFilters(variables[projectId]);
+        if (_checkIfAnyKindOfFiltersAreAvailable()) {
+          _runFiltering();
         }
       })
       .catch(() => {
@@ -444,13 +438,13 @@ function ProjectDashboard(props) {
       });
   };
 
-  const _chartHasFilter = (chart) => {
+  const _chartHasFilter = (chart, currentFilters = filters) => {
     let found = false;
     if (chart.ChartDatasetConfigs) {
       chart.ChartDatasetConfigs.forEach((cdc) => {
         if (cdc.Dataset?.fieldsSchema) {
           Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
-            if (_.find(filters[params.projectId], (o) => o.field === key)) {
+            if (_.find(currentFilters[params.projectId], (o) => o.field === key)) {
               found = true;
             }
           });
@@ -798,7 +792,7 @@ function ProjectDashboard(props) {
                     <Tooltip content="Refresh data" placement="bottom-start">
                       <Button
                         variant="ghost"
-                        onClick={() => _onRefreshData()}
+                        onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
                         endContent={<LuRefreshCw />}
