@@ -125,7 +125,7 @@ function ProjectDashboard(props) {
       // Only trigger if no input/textarea is focused
       if (event.target.tagName.toLowerCase() === "input" || event.target.tagName.toLowerCase() === "textarea") return;
 
-      if (event.metaKey && event.key.toLowerCase() === "e") {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
         event.preventDefault();
         setEditingLayout((prev) => !prev);
       }
