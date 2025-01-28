@@ -46,11 +46,9 @@ import gridBreakpoints from "../../config/gridBreakpoints";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
+import isMac from "../../modules/isMac";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
-
-const platform = navigator.userAgentData.platform;
-const isMac = platform.toLowerCase().includes("mac");
 
 const breakpoints = {
   mobile: 0,

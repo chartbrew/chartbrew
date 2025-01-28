@@ -22,9 +22,7 @@ import {
 import moment from "moment";
 import _ from "lodash";
 import { motion } from "framer-motion";
-
-const platform = navigator.userAgentData.platform;
-const isMac = platform.toLowerCase().includes("mac");
+import toast from "react-hot-toast";
 
 import {
   removeChart, runQuery, runQueryWithFilters, getChart, exportChart,
@@ -46,7 +44,7 @@ import Text from "../../components/Text";
 import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
-import toast from "react-hot-toast";
+import isMac from "../../modules/isMac";
 
 const getFiltersFromStorage = (projectId) => {
   try {
