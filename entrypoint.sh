@@ -17,4 +17,4 @@ cd ../client
 nohup sh -c 'echo "The UI is rebuilding. Please wait..." && npm run build && echo "UI built successfully!"' &
 
 # Serve the UI
-npm run preview
+npx serve -s dist -l ${VITE_APP_CLIENT_PORT}

@@ -1,8 +1,10 @@
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://chartbrew.com/Cuplogo.svg" alt="ChartBrew logo" width="50"/>
+    <img src="https://chartbrew.com/logo_primary.svg" alt="ChartBrew logo" width="300"/>
   </a>
 </a>
+
+<br />
 
 <p align="center">
   <a href="https://circleci.com/gh/chartbrew/chartbrew" target="_blank"><img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" /></a>
