@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
@@ -14,21 +14,20 @@ import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX } from "
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
 } from "../../slices/team";
-import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import Segment from "../../components/Segment";
+import { selectProjects } from "../../slices/project";
+import { selectUser } from "../../slices/user";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
 */
 function TeamMembers(props) {
-  const {
-    cleanErrors, user, style, projects,
-  } = props;
+  const { style = {} } = props;
 
   const [loading, setLoading] = useState(true);
   const [changedMember, setChangedMember] = useState(null);
@@ -39,12 +38,13 @@ function TeamMembers(props) {
 
   const team = useSelector(selectTeam);
   const teamMembers = useSelector(selectTeamMembers);
+  const projects = useSelector(selectProjects);
+  const user = useSelector(selectUser);
 
   const params = useParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    cleanErrors();
     _getTeam();
   }, []);
 
@@ -224,12 +224,12 @@ function TeamMembers(props) {
                       {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client viewer</Chip>}
                     </TableCell>
                     <TableCell key="projectAccess">
-                      {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
-                      {memberRole.role === "teamOwner" || memberRole.role === "teamAdmin" ? "All" : ""}
+                      {memberRole?.role !== "teamOwner" && memberRole?.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
+                      {memberRole?.role === "teamOwner" || memberRole?.role === "teamAdmin" ? "All" : ""}
                     </TableCell>
                     <TableCell key="export">
-                      {(memberRole.canExport || (memberRole.role.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
-                      {(!memberRole.canExport && memberRole.role.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
+                      {(memberRole?.canExport || (memberRole?.role?.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
+                      {(!memberRole?.canExport && memberRole?.role?.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
                     </TableCell>
                     <TableCell key="actions">
                       <div>
@@ -456,23 +456,7 @@ TeamMembers.defaultProps = {
 };
 
 TeamMembers.propTypes = {
-  user: PropTypes.object.isRequired,
   style: PropTypes.object,
-  cleanErrors: PropTypes.func.isRequired,
-  projects: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-    projects: state.project.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    cleanErrors: () => dispatch(cleanErrorsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default TeamMembers;

@@ -202,6 +202,10 @@ export const getApiKeys = createAsyncThunk(
     });
 
     const response = await fetch(`${API_HOST}/team/${team_id}/apikey`, { method: "GET", headers });
+    if (!response.ok) {
+      throw new Error("Error getting api keys");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;

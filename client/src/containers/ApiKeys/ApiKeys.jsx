@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
+  Alert,
   Button, CircularProgress, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
-import { getApiKeys, createApiKey, deleteApiKey } from "../../slices/team";
+import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { useParams } from "react-router";
+import canAccess from "../../config/canAccess";
+import { selectUser } from "../../slices/user";
 
 function ApiKeys(props) {
   const { teamId } = props;
@@ -27,6 +30,9 @@ function ApiKeys(props) {
   const dispatch = useDispatch();
   const params = useParams();
 
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
+
   useEffect(() => {
     _fetchApiKeys();
   }, []);
@@ -35,6 +41,10 @@ function ApiKeys(props) {
     setLoading(true);
     dispatch(getApiKeys({ team_id: params.teamId }))
       .then((keys) => {
+        if (keys?.error) {
+          setLoading(false);
+          return;
+        }
         setApiKeys(keys.payload);
         setLoading(false);
       })
@@ -81,6 +91,18 @@ function ApiKeys(props) {
     navigator.clipboard.writeText(createdKey.token);
   };
 
+  if (!canAccess("teamAdmin", user.id, team.TeamRoles)) {
+    return (
+      <div className="container mx-auto">
+        <Alert
+          color="default"
+          title="You don't have access to this page"
+          description="Please contact your team admin or change the team from the sidebar"
+        />
+      </div>
+    )
+  }
+
   return (
     <div>
       <Row>
@@ -94,7 +116,7 @@ function ApiKeys(props) {
       )}
       <Row>
         <Button
-          onClick={_onCreateRequested}
+          onPress={_onCreateRequested}
           endContent={<LuPlus />}
           color="primary"
         >
@@ -133,7 +155,7 @@ function ApiKeys(props) {
                   isIconOnly
                   variant="light"
                   color="danger"
-                  onClick={() => _onRemoveConfirmation(key)}
+                  onPress={() => _onRemoveConfirmation(key)}
                 >
                   <LuTrash />
                 </Button>
@@ -169,7 +191,7 @@ function ApiKeys(props) {
                 startContent={tokenCopied ? <LuClipboardCheck /> : <LuClipboard />}
                 color={tokenCopied ? "success" : "primary"}
                 variant={tokenCopied ? "flat" : "solid"}
-                onClick={_onCopyToken}
+                onPress={_onCopyToken}
               >
                 {tokenCopied ? "Copied!" : "Copy to clipboard"}
               </Button>
@@ -178,7 +200,7 @@ function ApiKeys(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setCreatedKey({})}
+              onPress={() => setCreatedKey({})}
             >
               Close
             </Button>
@@ -210,12 +232,12 @@ function ApiKeys(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setCreateMode(false)}
+              onPress={() => setCreateMode(false)}
             >
               Close
             </Button>
             <Button
-              onClick={_onCreateKey}
+              onPress={_onCreateKey}
               isDisabled={!newKey}
               isLoading={createLoading}
               color="primary"
@@ -237,13 +259,13 @@ function ApiKeys(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setConfirmDelete(false)}
+              onPress={() => setConfirmDelete(false)}
             >
               Go back
             </Button>
             <Button
               color="danger"
-              onClick={_onRemoveKey}
+              onPress={_onRemoveKey}
               isLoading={createLoading}
             >
               Remove key permanently

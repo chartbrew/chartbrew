@@ -1,35 +1,35 @@
 import React, { useEffect, useState } from "react";
-import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate, useParams } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem, Spacer,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import { LuCode, LuSettings, LuUsers } from "react-icons/lu";
 
-import { getTeam, saveActiveTeam } from "../slices/team";
-import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import { getTeam, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import { getProjects } from "../slices/project";
+import { selectUser } from "../slices/user";
 
 /*
   Description
 */
-function ManageTeam(props) {
-  const {
-    cleanErrors, user, team,
-  } = props;
+function ManageTeam() {
   const [loading, setLoading] = useState(true);
 
+  const teams = useSelector(selectTeams);
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    cleanErrors();
     _getTeam();
   }, []);
 
@@ -70,6 +70,15 @@ function ManageTeam(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  const _onTeamSelect = (teamId) => {
+    const selectedTeam = teams.find((t) => t.id === parseInt(teamId, 10));
+    if (selectedTeam) {
+      dispatch(saveActiveTeam(selectedTeam));
+      const path = window.location.pathname.split("/").pop();
+      window.location.href = `/manage/${selectedTeam.id}/${path}`;
+    }
+  };
+
   if (!team.id || loading) {
     return (
       <Container size="sm" justify="center" style={{ paddingTop: 100 }}>
@@ -86,7 +95,20 @@ function ManageTeam(props) {
       <div className="grid grid-cols-12 gap-4 container mx-auto">
         <div className="col-span-12 sm:col-span-4 md:col-span-2">
           <div className="pt-4">
-            <h2 className="text-xl font-bold">{team.name}</h2>
+            <Select
+              // label="Your selected team"
+              selectedKeys={[`${team.id}`]}
+              onSelectionChange={(keys) => _onTeamSelect(keys.currentKey)}
+              selectionMode="single"
+              variant="faded"
+              className="p-0"
+              aria-label="Select a team option"
+              size="lg"
+            >
+              {teams.map((t) => (
+                <SelectItem key={t.id} textValue={t.name}>{t.name}</SelectItem>
+              ))}
+            </Select>
             <Spacer y={4} />
             <Listbox
               selectedKeys={[checkActive()]}
@@ -127,25 +149,4 @@ function ManageTeam(props) {
   );
 }
 
-ManageTeam.propTypes = {
-  getTeam: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
-  cleanErrors: PropTypes.func.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    team: state.team.active,
-    user: state.user.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    getTeam: (id) => dispatch(getTeam(id)),
-    cleanErrors: () => dispatch(cleanErrorsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ManageTeam);
+export default ManageTeam;
