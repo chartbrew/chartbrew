@@ -1,9 +1,16 @@
 import React from "react";
-import { CircularProgress } from "@heroui/react";
+import cbLogoInverted from "../assets/logo_inverted.png";
 
 function SuspenseLoader() {
   return (
-    <CircularProgress aria-label="Loading" />
+    <div className="flex flex-col items-center justify-center h-screen">
+      <img 
+        src={cbLogoInverted} 
+        alt="Chartbrew Logo" 
+        width={80} 
+        className="animate-pulse"
+      />
+    </div>
   );
 }
 
