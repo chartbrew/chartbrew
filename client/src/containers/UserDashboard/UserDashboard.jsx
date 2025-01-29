@@ -130,8 +130,6 @@ function UserDashboard(props) {
     dispatch(getDatasets({ team_id: team.id }));
 
     navigate("/");
-
-    window.localStorage.setItem("__cb_active_team", team.id);
   };
 
   if (!user.data.id) {

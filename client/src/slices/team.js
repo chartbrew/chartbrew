@@ -248,6 +248,7 @@ export const teamSlice = createSlice({
   reducers: {
     saveActiveTeam(state, action) {
       state.active = action.payload;
+      window.localStorage.setItem("__cb_active_team", action.payload.id);
     },
     addNewTeam(state, action) {
       state.data.push(action.payload);
