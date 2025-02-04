@@ -352,6 +352,54 @@ class DatasetController {
       return new Promise((resolve, reject) => reject(error));
     }
   }
+
+  async duplicateDataset(id, name) {
+    const dataset = await db.Dataset.findByPk(id);
+    const datasetToSave = dataset.toJSON();
+    delete datasetToSave.id;
+    delete datasetToSave.createdAt;
+    delete datasetToSave.updatedAt;
+
+    if (name) {
+      datasetToSave.legend = name;
+    }
+
+    // Create the new dataset
+    const newDataset = await db.Dataset.create(datasetToSave);
+
+    // Get all data requests for the original dataset
+    const dataRequests = await db.DataRequest.findAll({
+      where: { dataset_id: id }
+    });
+
+    // Create new data requests and map them to the new dataset
+    const newDataRequests = await Promise.all(
+      dataRequests.map(async (dr) => {
+        const drToSave = dr.toJSON();
+        delete drToSave.id;
+        delete drToSave.createdAt;
+        delete drToSave.updatedAt;
+        drToSave.dataset_id = newDataset.id;
+
+        return db.DataRequest.create(drToSave);
+      })
+    );
+
+    // Set the mainSource if it exists in the original dataset
+    if (dataset.main_dr_id) {
+      const mainSourceDr = dataRequests.find((dr) => dr.id === dataset.main_dr_id);
+      if (mainSourceDr) {
+        const newMainSourceDr = newDataRequests.find(
+          (dr) => dr.query === mainSourceDr.query
+        );
+        if (newMainSourceDr) {
+          await newDataset.update({ main_dr_id: newMainSourceDr.id });
+        }
+      }
+    }
+
+    return this.findById(newDataset.id);
+  }
 }
 
 module.exports = DatasetController;

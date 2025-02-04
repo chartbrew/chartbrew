@@ -1,13 +1,14 @@
 import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
-import { LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 import connectionImages from "../../config/connectionImages";
 import { selectTeam } from "../../slices/team";
 import { selectConnections } from "../../slices/connection";
-import { deleteDataset, getRelatedCharts, selectDatasets, updateDataset } from "../../slices/dataset";
+import { deleteDataset, duplicateDataset, getRelatedCharts, selectDatasets, updateDataset } from "../../slices/dataset";
 import { useTheme } from "../../modules/ThemeContext";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
@@ -22,6 +23,9 @@ function DatasetList() {
   const [datasetToDelete, setDatasetToDelete] = useState(null);
   const [fetchingRelatedCharts, setFetchingRelatedCharts] = useState(false);
   const [relatedCharts, setRelatedCharts] = useState([]);
+  const [datasetToDuplicate, setDatasetToDuplicate] = useState(null);
+  const [duplicateDatasetName, setDuplicateDatasetName] = useState("");
+  const [duplicateDatasetLoading, setDuplicateDatasetLoading] = useState(false);
 
   const team = useSelector(selectTeam);
   const connections = useSelector(selectConnections);
@@ -105,14 +109,41 @@ function DatasetList() {
       });
   };
 
+  const _onDuplicateDataset = () => {
+    setDuplicateDatasetLoading(true);
+    dispatch(duplicateDataset({
+      team_id: team.id,
+      dataset_id: datasetToDuplicate.id,
+      name: duplicateDatasetName,
+    }))
+      .then((response) => {
+        if (response?.error) {
+          toast.error("Failed to duplicate dataset");
+        }
+        else {
+          toast.success("Dataset duplicated successfully");
+        }
+
+        setDuplicateDatasetLoading(false);
+        setDatasetToDuplicate(null);
+        setDuplicateDatasetName("");
+      })
+      .catch(() => {
+        setDuplicateDatasetLoading(false);
+        setDatasetToDuplicate(null);
+        setDuplicateDatasetName("");
+        toast.error("Failed to duplicate dataset");
+      });
+  };
+
   return (
-    (<div className="flex flex-col">
+    <div className="flex flex-col">
       <div className="flex flex-row items-center gap-4">
         {connections.length > 0 && (
           <Button
             color="primary"
             endContent={<LuPlus />}
-            onClick={() => _onCreateDataset()}
+            onPress={() => _onCreateDataset()}
           >
             Create dataset
           </Button>
@@ -213,7 +244,7 @@ function DatasetList() {
                     startContent={<LuPlus size={18} />}
                     size="sm"
                     className="opacity-0 hover:opacity-100"
-                    onClick={() => {
+                    onPress={() => {
                       if (_canAccess("teamAdmin", team.TeamRoles)) {
                         setDatasetToEdit(dataset);
                       }
@@ -240,7 +271,7 @@ function DatasetList() {
                       disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
                     >
                       <DropdownItem
-                        onClick={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
+                        onPress={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
                         startContent={<LuPencilLine />}
                         key="dataset"
                         textValue="Edit dataset"
@@ -248,8 +279,19 @@ function DatasetList() {
                         Edit dataset
                       </DropdownItem>
                       <DropdownItem
+                        key="duplicate"
+                        onPress={() => {
+                          setDatasetToDuplicate(dataset);
+                          setDuplicateDatasetName(dataset.legend);
+                        }}
+                        startContent={<LuCopy />}
+                        textValue="Duplicate dataset"
+                      >
+                        Duplicate dataset
+                      </DropdownItem>
+                      <DropdownItem
                         key="tags"
-                        onClick={() => setDatasetToEdit(dataset)}
+                        onPress={() => setDatasetToEdit(dataset)}
                         startContent={<LuTags />}
                         showDivider
                         textValue="Edit tags"
@@ -258,7 +300,7 @@ function DatasetList() {
                       </DropdownItem>
                       <DropdownItem
                         key="delete"
-                        onClick={() => _onPressDeleteDataset(dataset)}
+                        onPress={() => _onPressDeleteDataset(dataset)}
                         startContent={<LuTrash />}
                         color="danger"
                         textValue="Delete"
@@ -317,7 +359,7 @@ function DatasetList() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setDatasetToDelete(null)}
+              onPress={() => setDatasetToDelete(null)}
               auto
             >
               Cancel
@@ -326,7 +368,7 @@ function DatasetList() {
               auto
               color="danger"
               endContent={<LuTrash />}
-              onClick={() => _onDeleteDataset()}
+              onPress={() => _onDeleteDataset()}
               isLoading={deletingDataset}
             >
               Delete
@@ -371,13 +413,13 @@ function DatasetList() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setDatasetToEdit(null)}
+              onPress={() => setDatasetToEdit(null)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onEditDatasetTags()}
+              onPress={() => _onEditDatasetTags()}
               isLoading={modifyingDataset}
             >
               Save
@@ -385,7 +427,39 @@ function DatasetList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>)
+
+      <Modal isOpen={!!datasetToDuplicate} onClose={() => setDatasetToDuplicate(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Duplicate dataset</div>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              label="New dataset name"
+              placeholder="Dataset name"
+              value={duplicateDatasetName}
+              onChange={(e) => setDuplicateDatasetName(e.target.value)}
+              variant="bordered"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              onPress={() => setDatasetToDuplicate(null)}
+              variant="bordered"
+            >
+              Cancel
+            </Button>
+            <Button
+              onPress={() => _onDuplicateDataset()}
+              isLoading={duplicateDatasetLoading}
+              color="primary"
+            >
+              Duplicate
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </div>
   );
 }
 

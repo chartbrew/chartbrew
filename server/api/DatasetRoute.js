@@ -117,6 +117,24 @@ module.exports = (app) => {
   // ----------------------------------------------------
 
   /*
+  ** Route to duplicate a dataset
+  */
+  app.post(`${root}/:dataset_id/duplicate`, verifyToken, checkPermissions("createAny"), (req, res) => {
+    return datasetController.duplicateDataset(req.params.dataset_id, req.body.name)
+      .then((dataset) => {
+        return res.status(200).send(dataset);
+      })
+      .catch((err) => {
+        if (err && err.message && err.message === "401") {
+          return res.status(401).send(err);
+        }
+
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
+
+  /*
   ** Route to get the datasets by Chart ID
   */
   app.get(`${root}`, verifyToken, checkPermissions("readyAny"), (req, res) => {

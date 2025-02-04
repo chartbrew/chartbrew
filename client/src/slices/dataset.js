@@ -309,6 +309,31 @@ export const getRelatedCharts = createAsyncThunk(
   }
 );
 
+export const duplicateDataset = createAsyncThunk(
+  "dataset/duplicateDataset",
+  async ({ team_id, dataset_id, name }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/duplicate`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const body = JSON.stringify({ name });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error("Failed to duplicate dataset");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const datasetSlice = createSlice({
   name: "dataset",
   initialState,
@@ -611,6 +636,19 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
+
+      // duplicateDataset
+      .addCase(duplicateDataset.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(duplicateDataset.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = [action.payload, ...state.data];
+      })
+      .addCase(duplicateDataset.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      });
   },
 });
 
