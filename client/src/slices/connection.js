@@ -179,6 +179,27 @@ export const runHelperMethod = createAsyncThunk(
   }
 );
 
+export const duplicateConnection = createAsyncThunk(
+  "connection/duplicateConnection",
+  async ({ team_id, connection_id, name }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/connections/${connection_id}/duplicate`;
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const body = JSON.stringify({ name });
+    const response = await fetch(url, { headers, method: "POST", body });
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
 export const connectionSlice = createSlice({
   name: "dataset",
   initialState,
@@ -299,6 +320,19 @@ export const connectionSlice = createSlice({
       state.loading = false;
     })
     builder.addCase(runHelperMethod.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // duplicateConnection
+    builder.addCase(duplicateConnection.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(duplicateConnection.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = [action.payload, ...state.data];
+    })
+    builder.addCase(duplicateConnection.rejected, (state) => {
       state.loading = false;
       state.error = true;
     });

@@ -170,6 +170,20 @@ module.exports = (app) => {
   // -----------------------------------------
 
   /*
+  ** Route to duplicate a connection
+  */
+  app.post("/team/:team_id/connections/:connection_id/duplicate", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    return connectionController.duplicateConnection(req.params.connection_id, req.body.name)
+      .then((connection) => {
+        return res.status(200).send(connection);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -----------------------------------------
+
+  /*
   ** Route to get a connection by ID
   */
   app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), (req, res) => {

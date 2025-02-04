@@ -1,14 +1,15 @@
 import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import React, { useState } from "react"
-import { LuCalendarDays, LuEllipsis, LuInfo, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
+import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
+import { toast } from "react-hot-toast"
 
 import { selectTeam } from "../../slices/team"
 import canAccess from "../../config/canAccess"
 import { selectUser } from "../../slices/user"
 import connectionImages from "../../config/connectionImages"
-import { removeConnection, saveConnection, selectConnections } from "../../slices/connection"
+import { duplicateConnection, removeConnection, saveConnection, selectConnections } from "../../slices/connection"
 import { useTheme } from "../../modules/ThemeContext"
 import { selectProjects } from "../../slices/project"
 import { selectDatasets } from "../../slices/dataset"
@@ -20,6 +21,9 @@ function ConnectionList() {
   const [modifyingConnection, setModifyingConnection] = useState(false);
   const [deletingConnection, setDeletingConnection] = useState(false);
   const [deleteRelatedDatasets, setDeleteRelatedDatasets] = useState(false);
+  const [duplicateName, setDuplicateName] = useState("");
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
+  const [viewingDuplicateModal, setViewingDuplicateModal] = useState(null);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -92,14 +96,46 @@ function ConnectionList() {
     return datasets.filter((d) => d.DataRequests?.find((dr) => dr.connection_id === connectionId));
   };
 
+  const _onDuplicateConnection = (connection) => {
+    if (!duplicateName) {
+      toast.error("Please enter a name for the new connection");
+      return;
+    }
+
+    setDuplicateLoading(true);
+    dispatch(duplicateConnection({
+      team_id: team.id,
+      connection_id: connection.id,
+      name: duplicateName,
+    }))
+      .then((response) => {
+        if (response?.error) {
+          toast.error("Failed to duplicate connection");
+        }
+        else {
+          toast.success("Connection duplicated successfully");
+        }
+
+        setDuplicateLoading(false);
+        setViewingDuplicateModal(null);
+        setDuplicateName("");
+      })
+      .catch(() => {
+        setDuplicateLoading(false);
+        setViewingDuplicateModal(null);
+        setDuplicateName("");
+        toast.error("Failed to duplicate connection");
+      });
+  };
+
   return (
-    (<div className="flex flex-col">
+    <div className="flex flex-col">
       <div className={"flex flex-row items-center gap-4"}>
         {_canAccess("teamAdmin", team.TeamRoles) && (
           <Button
             color="primary"
             endContent={<LuPlus />}
-            onClick={() => navigate(`/${team.id}/connection/new`)}
+            onPress={() => navigate(`/${team.id}/connection/new`)}
             isDisabled={user.temporary}
           >
             Create connection
@@ -175,7 +211,7 @@ function ConnectionList() {
                     startContent={<LuPlus size={18} />}
                     size="sm"
                     className="opacity-0 hover:opacity-100"
-                    onClick={() => setConnectionToEdit(connection)}
+                    onPress={() => setConnectionToEdit(connection)}
                   >
                     Add tag
                   </Button>
@@ -199,20 +235,29 @@ function ConnectionList() {
                       </DropdownTrigger>
                       <DropdownMenu variant="flat">
                         <DropdownItem
-                          onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
+                          onPress={() => navigate(`/${team.id}/connection/${connection.id}`)}
                           startContent={<LuPencilLine />}
                         >
                           Edit connection
                         </DropdownItem>
                         <DropdownItem
-                          onClick={() => setConnectionToEdit(connection)}
+                          onPress={() => {
+                            setViewingDuplicateModal(connection);
+                            setDuplicateName(connection.name);
+                          }}
+                          startContent={<LuCopy />}
+                        >
+                          Duplicate connection
+                        </DropdownItem>
+                        <DropdownItem
+                          onPress={() => setConnectionToEdit(connection)}
                           startContent={<LuTags />}
                           showDivider
                         >
                           Edit tags
                         </DropdownItem>
                         <DropdownItem
-                          onClick={() => setConnectionToDelete(connection)}
+                          onPress={() => setConnectionToDelete(connection)}
                           startContent={<LuTrash />}
                           color="danger"
                         >
@@ -274,7 +319,7 @@ function ConnectionList() {
             <div className="flex flex-row items-center gap-1">
               <Button
                 variant="bordered"
-                onClick={() => setConnectionToDelete(null)}
+                onPress={() => setConnectionToDelete(null)}
                 size="sm"
               >
                 Cancel
@@ -283,7 +328,7 @@ function ConnectionList() {
                 size="sm"
                 color="danger"
                 endContent={<LuTrash />}
-                onClick={() => _onDeleteConnection()}
+                onPress={() => _onDeleteConnection()}
                 isLoading={deletingConnection}
               >
                 Delete
@@ -330,13 +375,13 @@ function ConnectionList() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setConnectionToEdit(null)}
+              onPress={() => setConnectionToEdit(null)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onEditConnectionTags()}
+              onPress={() => _onEditConnectionTags()}
               isLoading={modifyingConnection}
             >
               Save
@@ -344,7 +389,38 @@ function ConnectionList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>)
+
+      <Modal isOpen={!!viewingDuplicateModal} onClose={() => setViewingDuplicateModal(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Duplicate connection</div>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              placeholder="New connection name"
+              value={duplicateName}
+              onChange={(e) => setDuplicateName(e.target.value)}
+              variant="bordered"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onPress={() => setViewingDuplicateModal(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onPress={() => _onDuplicateConnection(viewingDuplicateModal)}
+              isLoading={duplicateLoading}
+            >
+              Duplicate
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </div>
   );
 }
 

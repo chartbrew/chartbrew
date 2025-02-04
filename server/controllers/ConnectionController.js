@@ -1088,6 +1088,21 @@ class ConnectionController {
         return err;
       });
   }
+
+  async duplicateConnection(connectionId, name) {
+    const connection = await db.Connection.findByPk(connectionId);
+    const connectionToSave = connection.toJSON();
+    delete connectionToSave.id;
+    delete connectionToSave.createdAt;
+    delete connectionToSave.updatedAt;
+
+    if (name) {
+      connectionToSave.name = name;
+    }
+
+    const newConnection = await db.Connection.create(connectionToSave);
+    return newConnection;
+  }
 }
 
 module.exports = ConnectionController;
