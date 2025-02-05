@@ -4,13 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Pagination,
   CircularProgress,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -33,6 +26,7 @@ import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
 import AiQuery from "../../Dataset/AiQuery";
+import QueryResultsTable from "./QueryResultsTable";
 
 /*
   The query builder for Mysql and Postgres
@@ -59,7 +53,7 @@ function SqlBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("sql");
   const [activeResultsTab, setActiveResultsTab] = useState("table");
-  const [resultsPage, setResultsPage] = useState(1);
+
   const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
@@ -200,49 +194,6 @@ function SqlBuilder(props) {
     }).catch(() => {
       setSaveLoading(false);
     });
-  };
-
-  const _getResultHeaderRows = () => {
-    if (!result) return ["Results"];
-
-    try {
-      const parsedResult = JSON.parse(result);
-      const headers = [];
-      parsedResult.forEach((o) => {
-        Object.keys(o).forEach((attr) => {
-          if (!headers.includes(attr)) {
-            headers.push(attr);
-          }
-        });
-      });
-
-      if (headers.length === 0) return ["Results"];
-
-      return headers;
-    } catch (e) {
-      return ["Results"];
-    }
-  };
-
-  const _getResultBodyRows = (page) => {
-    if (!result) return [];
-
-    const perPage = 10;
-
-    try {
-      const parsedResult = JSON.parse(result);
-      const allRows = page ? parsedResult.slice((page - 1) * perPage, page * perPage) : parsedResult;
-      const headers = _getResultHeaderRows();
-      return allRows.map((row) => {
-        const newRow = {};
-        headers.forEach((header) => {
-          newRow[header] = row[header] || "";
-        });
-        return newRow;
-      });
-    } catch (e) {
-      return [];
-    }
   };
 
   if (!connection) {
@@ -439,41 +390,8 @@ function SqlBuilder(props) {
           <Spacer y={2} />
 
           {activeResultsTab === "table" && (
-            <div>
-              <div className="w-full">
-                <Table
-                  isStriped
-                  className="sqlbuilder-result-tut"
-                  aria-label="Results table"
-                >
-                  {_getResultHeaderRows()?.length > 0 && (
-                    <TableHeader>
-                      {_getResultHeaderRows().map((h) => (
-                        <TableColumn key={h}>{h}</TableColumn>
-                      ))}
-                    </TableHeader>
-                  )}
-                  <TableBody emptyContent={"Run a query to see the results"}>
-                    {_getResultBodyRows(resultsPage).map((row, i) => (
-                      <TableRow key={i}>
-                        {Object.keys(row).map((key) => (
-                          <TableCell key={key}>{row[key]}</TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <Spacer y={2} />
-              <div>
-                <Pagination
-                  total={_getResultBodyRows().length > 0 ? Math.ceil(_getResultBodyRows().length / 10) : 1}
-                  onChange={(page) => setResultsPage(page)}
-                  page={resultsPage}
-                  size="sm"
-                  aria-label="Pagination"
-                />
-              </div>
+            <div className="w-full">
+              <QueryResultsTable result={result} />
             </div>
           )}
 
