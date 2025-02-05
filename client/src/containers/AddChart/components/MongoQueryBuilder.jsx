@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
-  Tooltip,
+  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent,
+  ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
+  Tab, Tabs, Tooltip,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -21,6 +22,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import QueryResultsTable from "./QueryResultsTable";
 
 /*
   MongoDB query builder
@@ -44,6 +46,7 @@ function MongoQueryBuilder(props) {
   });
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [activeResultsTab, setActiveResultsTab] = useState("table");
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -184,7 +187,7 @@ function MongoQueryBuilder(props) {
                   color="primary"
                   auto
                   size="sm"
-                  onClick={() => _onSavePressed()}
+                  onPress={() => _onSavePressed()}
                   isLoading={saveLoading || testingQuery}
                   variant="flat"
                 >
@@ -198,7 +201,7 @@ function MongoQueryBuilder(props) {
                     auto
                     size="sm"
                     variant="bordered"
-                    onClick={() => onDelete()}
+                    onPress={() => onDelete()}
                   >
                     <LuTrash />
                   </Button>
@@ -253,7 +256,7 @@ function MongoQueryBuilder(props) {
             <Button
               color={testSuccess ? "success" : testError ? "danger" : "primary"}
               endContent={<LuPlay />}
-              onClick={() => _onTest()}
+              onPress={() => _onTest()}
               isLoading={testingQuery}
             >
               {!testSuccess && !testError && "Run query"}
@@ -264,7 +267,7 @@ function MongoQueryBuilder(props) {
               variant="bordered"
               endContent={<LuPlus />}
               isLoading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
+              onPress={_onSaveQueryConfirmation}
             >
               {!savedQuery && "Save query"}
               {savedQuery && "Save as new"}
@@ -275,7 +278,7 @@ function MongoQueryBuilder(props) {
                 <Button
                   variant="bordered"
                   startContent={<LuPencilLine />}
-                  onClick={_onUpdateSavedQuery}
+                  onPress={_onUpdateSavedQuery}
                   isLoading={updatingSavedQuery}
                 >
                   {"Update the query"}
@@ -321,14 +324,13 @@ function MongoQueryBuilder(props) {
           <Spacer y={8} />
         </div>
         <div className="col-span-12 sm:col-span-6">
-          <Row>
-            <Text b>
-              {"Query result"}
-            </Text>
-          </Row>
-          <Spacer y={1} />
+          <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
+            <Tab title="Table" key="table" />
+            <Tab title="JSON" key="json" />
+          </Tabs>
+          <Spacer y={2} />
 
-          <Row>
+          {activeResultsTab === "json" && (
             <div className="w-full">
               <AceEditor
                 mode="json"
@@ -342,7 +344,14 @@ function MongoQueryBuilder(props) {
                 className="mongobuilder-result-tut rounded-md border-1 border-solid border-content3"
               />
             </div>
-          </Row>
+          )}
+
+          {activeResultsTab === "table" && (
+            <div className="w-full">
+              <QueryResultsTable result={result} />
+            </div>
+          )}
+
           <Spacer y={1} />
           {result && (
             <>
@@ -442,14 +451,14 @@ function MongoQueryBuilder(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setSaveQueryModal(false)}
+              onPress={() => setSaveQueryModal(false)}
             >
               Close
             </Button>
             <Button
               disabled={!savedQuerySummary}
               endContent={<LuCheck />}
-              onClick={_onSaveQuery}
+              onPress={_onSaveQuery}
               color="primary"
             >
               Save the query
