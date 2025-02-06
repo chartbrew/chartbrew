@@ -127,13 +127,18 @@ function ProjectDashboard(props) {
 
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
         event.preventDefault();
-        setEditingLayout((prev) => !prev);
+        setEditingLayout((prev) => {
+          if (prev) {
+            _onCancelChanges();
+          }
+
+          return !prev;
+        });
       }
     };
 
     document.addEventListener("keydown", handleKeyPress);
 
-    // Cleanup
     return () => {
       document.removeEventListener("keydown", handleKeyPress);
     };
@@ -544,7 +549,7 @@ function ProjectDashboard(props) {
     }));
   };
 
-  const _onChangeLayout = (layout, allLayouts) => {
+  const _onChangeLayout = (layout, allLayouts, toComplete = false) => {
     const updatedCharts = charts.map(chart => {
       const updatedLayout = {};
 
@@ -558,26 +563,50 @@ function ProjectDashboard(props) {
       return { ...chart, layout: updatedLayout };
     });
 
-    updatedCharts.forEach((chart, index) => {
-      // only allow chart updates if the layout has all the breakpoints
-      const chartBreakpoints = Object.keys(chart.layout);
-      const allBreakpoints = Object.keys(widthSize);
+    if (toComplete) {
+      updatedCharts.forEach((chart, index) => {
+        // only allow chart updates if the layout has all the breakpoints
+        const chartBreakpoints = Object.keys(chart.layout);
+        const allBreakpoints = Object.keys(widthSize);
 
-      if (chartBreakpoints.length === allBreakpoints.length) {
-        // only update the layout if it has changed
-        if (!isEqual(chart.layout, charts[index].layout)) {
-          dispatch(updateChart({
-            project_id: params.projectId,
-            chart_id: chart.id,
-            data: { layout: chart.layout },
-            justUpdates: true
-          }));
+        if (chartBreakpoints.length === allBreakpoints.length) {
+          // only update the layout if it has changed
+          if (!isEqual(chart.layout, charts[index].layout)) {
+            dispatch(updateChart({
+              project_id: params.projectId,
+              chart_id: chart.id,
+              data: { layout: chart.layout },
+              justUpdates: true
+            }));
+          }
         }
-      }
-    });
+      });
+    }
 
     setLayouts(allLayouts);    
   };
+
+  const _onCancelChanges = () => {
+    // should set the layouts to the original chart layouts
+    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    charts.forEach((chart) => {
+      if (chart.layout) {
+        Object.keys(chart.layout).forEach((key) => {
+          newLayouts[key].push({
+            i: chart.id.toString(),
+            x: chart.layout[key][0] || 0,
+            y: chart.layout[key][1] || 0,
+            w: chart.layout[key][2],
+            h: chart.layout[key][3],
+            minW: 2,
+          });
+        });
+      }
+    });
+
+    setLayouts(newLayouts);
+    setEditingLayout(false);
+  }
 
   const _onGetChartHeight = (chart) => {
     const currentBreakpoint = Object.keys(layouts).find(breakpoint => {
@@ -746,31 +775,29 @@ function ProjectDashboard(props) {
                   </div>
                 </Row>
                 <Row justify="flex-end" align="center">
-                  {!mobile && (
-                    <>
-                      <Spacer x={0.5} />
-                      <Tooltip
-                        placement="bottom-end"
-                        content={
-                          <div className="flex flex-row items-center gap-2">
-                            Edit dashboard layout
-                            <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
-                          </div>
-                        }
+                  <>
+                    <Spacer x={0.5} />
+                    <Tooltip
+                      placement="bottom-end"
+                      content={
+                        <div className="flex flex-row items-center gap-2">
+                          Edit dashboard layout
+                          <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
+                        </div>
+                      }
+                    >
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        onPress={() => setEditingLayout(!editingLayout)}
+                        color={editingLayout ? "primary" : "default"}
+                        size="sm"
+                        className="dashboard-layout-tutorial"
                       >
-                        <Button
-                          variant="light"
-                          isIconOnly
-                          onPress={() => setEditingLayout(!editingLayout)}
-                          color={editingLayout ? "primary" : "default"}
-                          size="sm"
-                          className="dashboard-layout-tutorial"
-                        >
-                          <LuLayoutDashboard size={22} />
-                        </Button>
-                      </Tooltip>
-                    </>
-                  )}
+                        <LuLayoutDashboard size={22} />
+                      </Button>
+                    </Tooltip>
+                  </>
                   {_canAccess("projectEditor") && (
                     <>
                       <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
@@ -984,6 +1011,32 @@ function ProjectDashboard(props) {
         // onTogglePassword={_onTogglePassword}
         // onSavePassword={_onSavePassword}
       />
+
+      {editingLayout && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-background p-2 rounded-lg flex flex-col items-center gap-4 border-2 border-divider animate-appearance-in">
+            <div className="flex gap-2">
+              <Button
+                variant="bordered" 
+                onPress={_onCancelChanges}
+                size="sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                color="primary"
+                onPress={() => {
+                  _onChangeLayout(null, layouts, true);
+                  setEditingLayout(false);
+                }}
+                size="sm"
+              >
+                Save changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
