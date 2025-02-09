@@ -31,6 +31,7 @@ export default {
   },
   darkMode: "class",
   plugins: [
+    require("@tailwindcss/typography"), // eslint-disable-line
     heroui({
       prefix: "nextui",
       addCommonColors: false,

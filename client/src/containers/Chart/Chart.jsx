@@ -166,7 +166,7 @@ function Chart(props) {
     }
 
     // if variables exist, run query again with variables
-    if (variables?.[params.projectId]) {
+    if (variables?.[params.projectId] && chart.ChartDatasetConfigs) {
       // check if any filters have the same variable name and run query with filters
       chart.ChartDatasetConfigs.forEach((cdc) => {
         if (Array.isArray(cdc.Dataset?.conditions)) {
@@ -372,6 +372,8 @@ function Chart(props) {
 
   const _checkIfFilters = () => {
     let filterCount = 0;
+    if (!chart.ChartDatasetConfigs) return false;
+
     chart.ChartDatasetConfigs.forEach((d) => {
       if (Array.isArray(d.Dataset?.conditions)) {
         filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;

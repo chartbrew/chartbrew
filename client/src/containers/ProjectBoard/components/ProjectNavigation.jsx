@@ -9,9 +9,8 @@ import {
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
-  LuPanelLeftOpen, LuCirclePlus, LuPresentation, LuPuzzle, LuSettings,
-  LuTvMinimal, LuUser, LuUsers,
-  LuVariable,
+  LuPanelLeftOpen, LuPresentation, LuPuzzle, LuSettings,
+  LuTvMinimal, LuUser, LuUsers, LuVariable,
 } from "react-icons/lu";
 
 import {
@@ -163,42 +162,6 @@ function ProjectNavigation(props) {
               </PopoverContent>
             </Popover>
           </Row>
-          <Spacer y={8} />
-          {canAccess("projectEditor")
-            && (
-              <Row justify="center" align="center">
-                {menuSize === "small" && (
-                  <Tooltip content="Create a new chart" placement="right">
-                    <div className="hover:saturate-200 transition-all">
-                      <Link to={`/${teamId}/${projectId}/chart`} className="m-0 p-0">
-                        <Button
-                          isIconOnly
-                          variant="flat"
-                          color="primary"
-                          className="pointer-events-none cursor-pointer create-chart-tutorial"
-                        >
-                          <LuCirclePlus size={28} />
-                        </Button>
-                      </Link>
-                    </div>
-                  </Tooltip>
-                )}
-                {menuSize === "large" && (
-                  <Link to={`/${teamId}/${projectId}/chart`} className={"w-full pl-4 pr-4"}>
-                    <Button
-                      endContent={<LuCirclePlus />}
-                      fullWidth
-                      color="primary"
-                      className="pointer-events-none cursor-pointer create-chart-tutorial"
-                      variant="flat"
-                      size="sm"
-                    >
-                      Create a chart
-                    </Button>
-                  </Link>
-                )}
-              </Row>
-            )}
           <Spacer y={6} />
           <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
             <Link to={`/${teamId}/${projectId}/dashboard`}>

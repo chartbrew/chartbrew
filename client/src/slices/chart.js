@@ -459,6 +459,26 @@ export const chartSlice = createSlice({
     setCharts: (state, action) => {
       state.data = action.payload;
     },
+    stageChart: (state, action) => {
+      state.data = [action.payload, ...state.data];
+    },
+    clearStagedCharts: (state) => {
+      state.data = state.data.filter((chart) => !chart.staged);
+    },
+    updateLocalChart: (state, action) => {
+      state.data = state.data.map((chart) => {
+        if (chart.id === action.payload.id) {
+          return {
+            ...chart,
+            ...action.payload.data,
+          };
+        }
+        return chart;
+      });
+    },
+    removeLocalChart: (state, action) => {
+      state.data = state.data.filter((chart) => chart.id !== action.payload.id);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -814,7 +834,13 @@ export const chartSlice = createSlice({
   },
 });
 
-export const { setCharts } = chartSlice.actions;
+export const {
+  setCharts,
+  stageChart,
+  clearStagedCharts,
+  updateLocalChart,
+  removeLocalChart,
+} = chartSlice.actions;
 export const selectCharts = (state) => state.chart.data;
 export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === id); 
 export const selectCdc = (state, chartId, cdcId) => {

@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Kbd,
+  ButtonGroup,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -22,16 +23,23 @@ import {
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
   LuEllipsisVertical,
   LuShare,
+  LuChartPie,
+  LuLetterText,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
 import Filters from "./components/Filters";
 import { operators } from "../../modules/filterOperations";
 import {
   getProjectCharts, runQueryWithFilters, runQuery, changeOrder, exportChart, updateChart, selectCharts,
+  clearStagedCharts,
+  createChart,
+  stageChart,
+  removeLocalChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
@@ -47,6 +55,7 @@ import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
+import TextWidget from "../Chart/TextWidget";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -103,6 +112,7 @@ function ProjectDashboard(props) {
   const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [stagedContent, setStagedContent] = useState({});
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -162,25 +172,35 @@ function ProjectDashboard(props) {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
       initLayoutRef.current = true;
       // set the grid layout
-      const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
-      charts.forEach((chart) => {
-        if (chart.layout) {
-          Object.keys(chart.layout).forEach((key) => {
-            newLayouts[key].push({
-              i: chart.id.toString(),
-              x: chart.layout[key][0] || 0,
-              y: chart.layout[key][1] || 0,
-              w: chart.layout[key][2],
-              h: chart.layout[key][3],
-              minW: 2,
-            });
-          });
-        }
-      });
-
-      setLayouts(newLayouts);
+      _prepareLayout();
     }
+
+    charts.forEach((chart) => {
+      if (chart.staged) {
+        setEditingLayout(true);
+      }
+    });
   }, [charts]);
+
+  const _prepareLayout = (chartsToProcess = charts) => {
+    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    chartsToProcess.forEach((chart) => {
+      if (chart?.layout) {
+        Object.keys(chart.layout).forEach((key) => {
+          newLayouts[key].push({
+            i: `${chart.id}`,
+            x: chart.layout[key][0] || 0,
+            y: chart.layout[key][1] || 0,
+            w: chart.layout[key][2],
+            h: chart.layout[key][3],
+            minW: 2,
+          });
+        });
+      }
+    });
+
+    setLayouts(newLayouts);
+  };
 
   const _onEditFilterGroup = (chartId, selectAll = false, deselectAll = false) => {
     const { projectId } = params;
@@ -420,7 +440,7 @@ function ProjectDashboard(props) {
 
     const queries = [];
     setRefreshLoading(true);
-    for (let i = 0; i < charts.length; i++) {
+    for (let i = 0; i < charts.filter(c => !c.staged || c.type === "text").length; i++) {
       const queryOpt = {
         projectId,
         chartId: charts[i].id,
@@ -554,7 +574,7 @@ function ProjectDashboard(props) {
       const updatedLayout = {};
 
       Object.keys(allLayouts).forEach(breakpoint => {
-        const layoutItem = allLayouts[breakpoint].find(item => item.i === chart.id.toString());
+        const layoutItem = allLayouts[breakpoint].find(item => item.i === `${chart.id}`);
         if (layoutItem || layoutItem === 0) {
           updatedLayout[breakpoint] = [layoutItem.x, layoutItem.y, layoutItem.w, layoutItem.h];
         }
@@ -586,14 +606,16 @@ function ProjectDashboard(props) {
     setLayouts(allLayouts);    
   };
 
-  const _onCancelChanges = () => {
+  const _onCancelChanges = async () => {
+    await dispatch(clearStagedCharts());
+
     // should set the layouts to the original chart layouts
     const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
     charts.forEach((chart) => {
       if (chart.layout) {
         Object.keys(chart.layout).forEach((key) => {
           newLayouts[key].push({
-            i: chart.id.toString(),
+            i: `${chart.id}`,
             x: chart.layout[key][0] || 0,
             y: chart.layout[key][1] || 0,
             w: chart.layout[key][2],
@@ -610,15 +632,75 @@ function ProjectDashboard(props) {
 
   const _onGetChartHeight = (chart) => {
     const currentBreakpoint = Object.keys(layouts).find(breakpoint => {
-      return layouts[breakpoint].find(item => item.i === chart.id.toString());
+      return layouts[breakpoint].find(item => item.i === `${chart.id}`);
     });
 
     if (currentBreakpoint) {
-      const layoutItem = layouts[currentBreakpoint].find(item => item.i === chart.id.toString());
+      const layoutItem = layouts[currentBreakpoint].find(item => item.i === `${chart.id}`);
       return layoutItem.h * 150;
     }
 
     return 150;
+  };
+
+  const _onSaveChanges = async () => {
+    // create all the staged charts
+    const createPromises = charts.map((chart) => {
+      if (chart.staged) {
+        const newChart = {
+          name: chart.name,
+          type: chart.type,
+          layout: chart.layout,
+          content: stagedContent?.[chart.id] || chart.content,
+          staged: false,
+          onReport: true,
+        };
+        
+        dispatch(removeLocalChart({ id: chart.id }));
+        return dispatch(createChart({
+          project_id: params.projectId,
+          data: newChart,
+        }));
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (createPromises.length > 0) {
+      const createdCharts = await Promise.all(createPromises);
+      const tempCharts = createdCharts.map((chart) => chart.payload);
+      _prepareLayout([...charts, ...tempCharts]);
+    } else {
+      _onChangeLayout(null, layouts, true);
+    }
+
+    setStagedContent({});
+    setEditingLayout(false);
+  };
+
+  const _onAddTextMedia = async () => {
+    const newChart = {
+      id: uuidv4(),
+      project_id: parseInt(params.projectId, 10),
+      type: "text",
+      name: "Text",
+      layout: {
+        xxs: [0, 0, 4, 2],
+        xs: [0, 0, 4, 2],
+        sm: [0, 0, 2, 2],
+        md: [0, 0, 3, 2],
+        lg: [0, 0, 3, 2],
+      },
+      staged: true,
+    };
+
+    await dispatch(stageChart(newChart));
+
+    setStagedContent({
+      ...stagedContent,
+      [newChart.id]: newChart.content,
+    });
+
+    _prepareLayout([...charts, newChart]);
   };
 
   return (
@@ -631,8 +713,8 @@ function ProjectDashboard(props) {
               size="xl"
               style={mobile ? styles.actionBarMobile : styles.actionBar}
             >
-              <Row justify="space-between" align="center" className={"w-full"}>
-                <Row justify="flex-start" align="center">
+              <div className="flex flex-row justify-between gap-1 w-full">
+                <div className="flex flex-row items-center gap-1">
                   {projectMembers?.length > 0 && (
                     <>
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
@@ -697,7 +779,7 @@ function ProjectDashboard(props) {
                     variant="ghost"
                     startContent={<LuListFilter />}
                     isLoading={filterLoading}
-                    onClick={_onShowFilters}
+                    onPress={_onShowFilters}
                     size="sm"
                     className="hidden sm:flex"
                   >
@@ -705,7 +787,7 @@ function ProjectDashboard(props) {
                   </Button>
                   <Button
                     isIconOnly
-                    onClick={_onShowFilters}
+                    onPress={_onShowFilters}
                     isLoading={filterLoading}
                     variant="ghost"
                     size="sm"
@@ -773,68 +855,66 @@ function ProjectDashboard(props) {
                         ))}
                     </>
                   </div>
-                </Row>
-                <Row justify="flex-end" align="center">
-                  <>
-                    <Spacer x={0.5} />
-                    <Tooltip
-                      placement="bottom-end"
-                      content={
-                        <div className="flex flex-row items-center gap-2">
-                          Edit dashboard layout
-                          <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
-                        </div>
-                      }
-                    >
-                      <Button
-                        variant="light"
-                        isIconOnly
-                        onPress={() => setEditingLayout(!editingLayout)}
-                        color={editingLayout ? "primary" : "default"}
-                        size="sm"
-                        className="dashboard-layout-tutorial"
-                      >
-                        <LuLayoutDashboard size={22} />
-                      </Button>
-                    </Tooltip>
-                  </>
-                  {_canAccess("projectEditor") && (
-                    <>
-                      <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
+                </div>
+                {!editingLayout && (
+                  <div className="flex flex-row items-center gap-1">
+                    <Dropdown aria-label="Add widget">
+                      <DropdownTrigger>
                         <Button
-                          variant="light"
-                          isIconOnly
-                          onPress={() => setScheduleVisible(true)}
+                          variant="ghost"
                           size="sm"
+                          onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
                         >
-                          <LuCalendarClock
-                            className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
-                            size={22}
-                          />
+                          {"Add widget"}
                         </Button>
-                      </Tooltip>
-                    </>
-                  )}
-
-                  <>
-                    <Spacer x={2} />
-                    <Tooltip content="Refresh data" placement="bottom-start">
+                      </DropdownTrigger>
+                      <DropdownMenu>
+                        <DropdownItem
+                          startContent={<LuChartPie />}
+                          onPress={() => {
+                            navigate(`/${params.teamId}/${params.projectId}/chart`);
+                          }}
+                        >
+                          Add a chart
+                        </DropdownItem>
+                        <DropdownItem
+                          startContent={<LuLetterText />}
+                          onPress={() => _onAddTextMedia()}
+                        >
+                          Add text & media
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                    <ButtonGroup className="hidden sm:flex">
                       <Button
                         variant="ghost"
                         onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
-                        endContent={<LuRefreshCw />}
-                        className="hidden sm:flex"
                       >
                         Refresh charts
                       </Button>
-                    </Tooltip>
+                      {_canAccess("projectEditor") && (
+                        <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
+                          <Button
+                            variant="ghost"
+                            isIconOnly
+                            onPress={() => setScheduleVisible(true)}
+                            size="sm"
+                          >
+                            <LuCalendarClock
+                              className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
+                              size={22}
+                            />
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </ButtonGroup>
                     <Tooltip content="Refresh all charts" placement="bottom-end">
                       <Button
                         variant="ghost"
                         isIconOnly
-                        onClick={() => _onRefreshData()}
+                        onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
                         className="flex sm:hidden"
@@ -842,10 +922,6 @@ function ProjectDashboard(props) {
                         <LuRefreshCw size={24} />
                       </Button>
                     </Tooltip>
-                  </>
-
-                  <>
-                    <Spacer x={2} />
                     <Dropdown aria-label="Dashboard actions">
                       <DropdownTrigger>
                         <Button
@@ -858,9 +934,15 @@ function ProjectDashboard(props) {
                       </DropdownTrigger>
                       <DropdownMenu>
                         <DropdownItem
+                          startContent={<LuLayoutDashboard />}
+                          onPress={() => setEditingLayout(!editingLayout)}
+                          endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
+                        >
+                          {"Edit layout"}
+                        </DropdownItem>
+                        <DropdownItem
                           startContent={<LuShare />}
                           onPress={() => setShowShare(true)}
-                          endContent={<Chip size="sm" color="secondary" variant="flat" radius="sm">{"New!"}</Chip>}
                         >
                           {"Share dashboard"}
                         </DropdownItem>
@@ -882,9 +964,28 @@ function ProjectDashboard(props) {
                         )}
                       </DropdownMenu>
                     </Dropdown>
-                  </>
-                </Row>
-              </Row>
+                  </div>
+                )}
+                
+                {editingLayout && (
+                  <div className="flex flex-row items-center gap-1">
+                    <Button
+                      color="primary"
+                      size="sm"
+                      onPress={() => _onSaveChanges()}
+                    >
+                      Save changes
+                    </Button>
+                    <Button
+                      variant="bordered"
+                      size="sm"
+                      onPress={_onCancelChanges}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -938,16 +1039,30 @@ function ProjectDashboard(props) {
           >
             {charts.map((chart, index) => (
               <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>
-                <Chart
-                  key={chart.id}
-                  chart={chart}
-                  charts={charts}
-                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                  height={() => _onGetChartHeight(chart)}
-                  editingLayout={editingLayout}
-                  onEditLayout={() => setEditingLayout(!editingLayout)}
-                  variables={variables}
-                />
+                {chart.type === "text" ? (
+                  <TextWidget
+                    chart={chart}
+                    onEditLayout={() => setEditingLayout(!editingLayout)}
+                    editingLayout={editingLayout}
+                    onCancelChanges={_onCancelChanges}
+                    onSaveChanges={() => _onSaveChanges()}
+                    onEditContent={(content) => setStagedContent({
+                      ...stagedContent,
+                      [chart.id]: content,
+                    })}
+                  />
+                ) : (
+                  <Chart
+                    key={chart.id}
+                    chart={chart}
+                    charts={charts}
+                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                    height={() => _onGetChartHeight(chart)}
+                    editingLayout={editingLayout}
+                    onEditLayout={() => setEditingLayout(!editingLayout)}
+                    variables={variables}
+                  />
+                )}
               </div>
             ))}
           </ResponsiveGridLayout>
@@ -1014,24 +1129,21 @@ function ProjectDashboard(props) {
 
       {editingLayout && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-background p-2 rounded-lg flex flex-col items-center gap-4 border-2 border-divider animate-appearance-in">
-            <div className="flex gap-2">
+          <div className="bg-background p-2 rounded-lg flex flex-col items-center gap-4 border-1 border-divider animate-appearance-in">
+            <div className="flex gap-1">
               <Button
-                variant="bordered" 
+                color="primary"
+                onPress={() => _onSaveChanges()}
+                size="sm"
+              >
+                Save changes
+              </Button>
+              <Button
+                variant="bordered"
                 onPress={_onCancelChanges}
                 size="sm"
               >
                 Cancel
-              </Button>
-              <Button
-                color="primary"
-                onPress={() => {
-                  _onChangeLayout(null, layouts, true);
-                  setEditingLayout(false);
-                }}
-                size="sm"
-              >
-                Save changes
               </Button>
             </div>
           </div>
