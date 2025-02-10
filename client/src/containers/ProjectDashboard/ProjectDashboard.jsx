@@ -16,13 +16,12 @@ import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
-  LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus,
+  LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
-import { LiaMarkdown } from "react-icons/lia";
 
 import Chart from "../Chart/Chart";
 import Filters from "./components/Filters";
@@ -870,14 +869,14 @@ function ProjectDashboard(props) {
                             navigate(`/${params.teamId}/${params.projectId}/chart`);
                           }}
                         >
-                          Add a chart
+                          Add chart
                         </DropdownItem>
                         <DropdownItem
-                          startContent={<LiaMarkdown />}
+                          startContent={<LuLetterText />}
                           onPress={() => _onAddMarkdown()}
                           endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                         >
-                          Add markdown
+                          Add text
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
