@@ -8,6 +8,7 @@ import {
   CardFooter,
   Tooltip,
   Spacer,
+  Link,
 } from "@heroui/react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -50,8 +51,8 @@ function TextWidget({
     setIsEditing(chart.staged)
   }, [chart])
 
-  // Prevent drag events from bubbling up to the grid layout
-  const handleMouseDown = (e) => {
+  // Add a new handler for interactive elements
+  const handleInteractiveMouseDown = (e) => {
     e.stopPropagation();
   };
 
@@ -91,7 +92,11 @@ function TextWidget({
     return canAccess(role, user.id, team.TeamRoles);
   }
 
-  const insertMarkdown = (type) => {
+  const insertMarkdown = (type, e) => {
+    // Stop event propagation to prevent drag-and-drop
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!textareaRef.current) return;
 
     const textarea = textareaRef.current;
@@ -275,54 +280,57 @@ function TextWidget({
               <CardBody>
                 {!isPreview && (
                   <>
-                    <div className="flex gap-1 flex-wrap">
+                    <div 
+                      className="flex gap-1 flex-wrap"
+                      onMouseDown={handleInteractiveMouseDown}
+                    >
                       <Tooltip content="Add heading">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("heading")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("heading", e)}>
                           <LuHeading size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add bold text">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("bold")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("bold", e)}>
                           <LuBold size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add italic text">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("italic")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("italic", e)}>
                           <LuItalic size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add quote">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("quote")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("quote", e)}>
                           <LuQuote size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add code">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("code")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("code", e)}>
                           <LuCode size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add image">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("image")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("image", e)}>
                           <LuImage size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add link">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("link")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("link", e)}>
                           <LuLink size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add numbered list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("numbered")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("numbered", e)}>
                           <LuListOrdered size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add bullet list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("unordered")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("unordered", e)}>
                           <LuList size={16} />
                         </div>
                       </Tooltip>
                       <Tooltip content="Add task list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={() => insertMarkdown("task")}>
+                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("task", e)}>
                           <LuSquareCheck size={16} />
                         </div>
                       </Tooltip>
@@ -335,7 +343,7 @@ function TextWidget({
                         placeholder="Enter markdown text here..."
                         className="!h-full font-mono"
                         variant="bordered"
-                        onMouseDown={handleMouseDown}
+                        onMouseDown={handleInteractiveMouseDown}
                         ref={textareaRef}
                         fullWidth
                         endContent={(
@@ -345,15 +353,16 @@ function TextWidget({
                             onPress={() => setIsPreview(true)}
                             isLoading={chartLoading}
                             isIconOnly
+                            onMouseDown={handleInteractiveMouseDown}
                           >
                             <LuEye />
                           </Button>
                         )}
                         description={
-                          <div className="flex flex-row gap-1 items-center">
+                          <Link className="flex flex-row gap-1 items-center" href="https://www.markdownguide.org/basic-syntax/" target="_blank">
                             <FaMarkdown size={18} />
                             <span className="text-xs text-gray-500">Markdown is supported</span>
-                          </div>
+                          </Link>
                         }
                       />
                     </div>

@@ -364,7 +364,7 @@ function Filters(props) {
                 </Button>
               </div>
               <div className={"flex flex-row flex-wrap gap-1"}>
-                {charts.map((chart) => (
+                {charts.filter(c => c.type !== "markdown").map((chart) => (
                   <Fragment key={chart.id}>
                     <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
                       <Chip

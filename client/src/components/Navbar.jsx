@@ -8,7 +8,7 @@ import {
   Chip,
 } from "@heroui/react";
 import {
-  LuBook, LuBookOpenText, LuChevronDown, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
+  LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
@@ -138,7 +138,7 @@ function NavbarContainer() {
   }
   return (
     <>
-      <Navbar isBordered maxWidth="full" height={"3rem"} style={{ zIndex: 999 }}>
+      <Navbar isBordered maxWidth="full" height={"3rem"} style={{ zIndex: 999 }} classNames={{ wrapper: "px-4" }}>
         <NavbarBrand>
           <Link to="/">
             <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
@@ -229,8 +229,8 @@ function NavbarContainer() {
                       size="sm"
                       isBordered
                       showFallback={<LuUser />}
+                      className="cursor-pointer"
                     />
-                    <LuChevronDown />
                   </Row>
                 </div>
               </DropdownTrigger>

@@ -4,13 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
-  PopoverContent, Listbox, ListboxItem, Divider,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Kbd,
-  ButtonGroup,
+  PopoverContent, Listbox, ListboxItem, Divider, Dropdown, DropdownTrigger,
+  DropdownMenu, DropdownItem, Kbd, ButtonGroup,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -21,15 +16,13 @@ import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
-  LuEllipsisVertical,
-  LuShare,
-  LuChartPie,
-  LuLetterText,
+  LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
+import { LiaMarkdown } from "react-icons/lia";
 
 import Chart from "../Chart/Chart";
 import Filters from "./components/Filters";
@@ -137,9 +130,10 @@ function ProjectDashboard(props) {
 
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
         event.preventDefault();
-        setEditingLayout((prev) => {
+        setEditingLayout(async (prev) => {
           if (prev) {
-            _onCancelChanges();
+            await _onCancelChanges();
+            _prepareLayout();
           }
 
           return !prev;
@@ -440,7 +434,7 @@ function ProjectDashboard(props) {
 
     const queries = [];
     setRefreshLoading(true);
-    for (let i = 0; i < charts.filter(c => !c.staged || c.type === "text").length; i++) {
+    for (let i = 0; i < charts.filter(c => !c.staged || c.type === "markdown").length; i++) {
       const queryOpt = {
         projectId,
         chartId: charts[i].id,
@@ -677,12 +671,12 @@ function ProjectDashboard(props) {
     setEditingLayout(false);
   };
 
-  const _onAddTextMedia = async () => {
+  const _onAddMarkdown = async () => {
     const newChart = {
       id: uuidv4(),
       project_id: parseInt(params.projectId, 10),
-      type: "text",
-      name: "Text",
+      type: "markdown",
+      name: "Markdown",
       layout: {
         xxs: [0, 0, 4, 2],
         xs: [0, 0, 4, 2],
@@ -770,9 +764,9 @@ function ProjectDashboard(props) {
                             </Listbox>
                           </PopoverContent>
                         </Popover>
-                        <Spacer x={2} />
+                        <Spacer x={3} />
                       </div>
-                      <Spacer x={2} />
+                      <Spacer x={1} />
                     </>
                   )}
                   <Button
@@ -795,8 +789,7 @@ function ProjectDashboard(props) {
                   >
                     <LuListFilter size={24} />
                   </Button>
-                  <Spacer x={1} />
-                  <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:flex-row sm:flex gap-1">
+                  <div style={mobile ? {} : { paddingLeft: 4 }} className="hidden sm:flex-row sm:flex gap-1">
                     <>
                       {filters
                         && filters[params.projectId]
@@ -805,10 +798,10 @@ function ProjectDashboard(props) {
                             {filter.type === "date" && (
                               <Chip
                                 color="primary"
-                                variant={"faded"}
+                                variant={"flat"}
                                 radius="sm"
                                 endContent={(
-                                  <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
+                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default-500">
                                     <LuCircleX />
                                   </LinkNext>
                                 )}
@@ -822,7 +815,7 @@ function ProjectDashboard(props) {
                                 variant={"flat"}
                                 radius="sm"
                                 endContent={(
-                                  <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
+                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default">
                                     <LuCircleX />
                                   </LinkNext>
                                 )}
@@ -840,10 +833,10 @@ function ProjectDashboard(props) {
                         && variables[params.projectId].map((variable) => (
                           <Chip
                             color="primary"
-                            variant={"faded"}
+                            variant={"flat"}
                             radius="sm"
                             endContent={(
-                              <LinkNext onClick={() => _onRemoveVariable(variable.variable)} className="text-default-500">
+                              <LinkNext onPress={() => _onRemoveVariable(variable.variable)} className="text-default-500">
                                 <LuCircleX />
                               </LinkNext>
                             )}
@@ -864,6 +857,7 @@ function ProjectDashboard(props) {
                           variant="ghost"
                           size="sm"
                           onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                          startContent={<LuGrid2X2Plus size={18} />}
                         >
                           {"Add widget"}
                         </Button>
@@ -878,10 +872,11 @@ function ProjectDashboard(props) {
                           Add a chart
                         </DropdownItem>
                         <DropdownItem
-                          startContent={<LuLetterText />}
-                          onPress={() => _onAddTextMedia()}
+                          startContent={<LiaMarkdown />}
+                          onPress={() => _onAddMarkdown()}
+                          endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                         >
-                          Add text & media
+                          Add markdown
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
@@ -1039,7 +1034,7 @@ function ProjectDashboard(props) {
           >
             {charts.map((chart, index) => (
               <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>
-                {chart.type === "text" ? (
+                {chart.type === "markdown" ? (
                   <TextWidget
                     chart={chart}
                     onEditLayout={() => setEditingLayout(!editingLayout)}
