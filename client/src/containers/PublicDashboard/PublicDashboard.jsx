@@ -42,6 +42,7 @@ import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import { useTheme } from "../../modules/ThemeContext";
+import TextWidget from "../Chart/TextWidget";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -749,14 +750,26 @@ function PublicDashboard(props) {
                 >
                   {charts.filter((c) => !c.draft && c.onReport).map((chart) => (
                     <div key={chart.id}>
-                      <Chart
-                        isPublic
-                        chart={chart}
-                        charts={charts}
-                        className="chart-card"
-                        showExport={project.Team?.allowReportExport}
-                        password={project.password || window.localStorage.getItem("reportPassword")}
-                      />
+                      {chart.type === "markdown" ? (
+                        <TextWidget
+                          isPublic
+                          chart={chart}
+                          onEditLayout={() => {}}
+                          editingLayout={false}
+                          onCancelChanges={() => {}}
+                          onSaveChanges={() => {}}
+                          onEditContent={() => {}}
+                        />
+                      ) : (
+                        <Chart
+                          isPublic
+                          chart={chart}
+                          charts={charts}
+                          className="chart-card"
+                          showExport={project.Team?.allowReportExport}
+                          password={project.password || window.localStorage.getItem("reportPassword")}
+                        />
+                      )}
                     </div>
                   ))}
                 </ResponsiveGridLayout>

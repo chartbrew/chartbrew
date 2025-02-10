@@ -648,6 +648,7 @@ function ProjectDashboard(props) {
           content: stagedContent?.[chart.id] || chart.content,
           staged: false,
           onReport: true,
+          draft: false,
         };
         
         dispatch(removeLocalChart({ id: chart.id }));

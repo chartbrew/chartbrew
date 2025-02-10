@@ -33,7 +33,8 @@ function TextWidget({
   editingLayout,
   onCancelChanges,
   onSaveChanges,
-  onEditContent
+  onEditContent,
+  isPublic = false,
 }) {
   const [content, setContent] = useState(chart.content || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -405,59 +406,61 @@ function TextWidget({
           )}
           {!isEditing && (
             <CardBody className="relative">
-              <div className={`absolute top-4 right-2 ${_canAccess("projectEditor") ? "" : "hidden"}`}>
-                <Dropdown aria-label="Select a widget option">
-                  <DropdownTrigger>
-                    <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
-                      <LuEllipsisVertical />
-                    </LinkNext>
-                  </DropdownTrigger>
-                  <DropdownMenu>
-                    {_canAccess("projectEditor") && (
-                      <DropdownItem
-                        startContent={<LuPencil />}
-                        onPress={() => setIsEditing(true)}
-                        textValue="Edit content"
-                      >
-                        Edit content
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectEditor") && (
-                      <DropdownItem
-                        startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
-                        onPress={onEditLayout}
-                        showDivider
-                        textValue={editingLayout ? "Complete layout" : "Edit layout"}
-                        endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
-                      >
-                        <span className={editingLayout ? "text-primary" : ""}>
-                          {editingLayout ? "Complete layout" : "Edit layout"}
-                        </span>
-                      </DropdownItem>
-                    )}
-                    {!chart.draft && _canAccess("projectEditor") && (
-                      <DropdownItem
-                        startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
-                        onPress={_onChangeReport}
-                        textValue={chart.onReport ? "Remove from report" : "Add to report"}
-                        showDivider
-                      >
-                        {chart.onReport ? "Remove from report" : "Add to report"}
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectEditor") && (
-                      <DropdownItem
-                        startContent={<LuTrash />}
-                        color="danger"
-                        onPress={_onDeleteChartConfirmation}
-                        textValue="Delete widget"
-                      >
-                        Delete widget
-                      </DropdownItem>
-                    )}
-                  </DropdownMenu>
-                </Dropdown>
-              </div>
+              {!isPublic && (
+                <div className={`absolute top-4 right-2 ${_canAccess("projectEditor") ? "" : "hidden"}`}>
+                  <Dropdown aria-label="Select a widget option">
+                    <DropdownTrigger>
+                      <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
+                        <LuEllipsisVertical />
+                      </LinkNext>
+                    </DropdownTrigger>
+                    <DropdownMenu>
+                      {_canAccess("projectEditor") && (
+                        <DropdownItem
+                          startContent={<LuPencil />}
+                          onPress={() => setIsEditing(true)}
+                          textValue="Edit content"
+                        >
+                          Edit content
+                        </DropdownItem>
+                      )}
+                      {_canAccess("projectEditor") && (
+                        <DropdownItem
+                          startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
+                          onPress={onEditLayout}
+                          showDivider
+                          textValue={editingLayout ? "Complete layout" : "Edit layout"}
+                          endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
+                        >
+                          <span className={editingLayout ? "text-primary" : ""}>
+                            {editingLayout ? "Complete layout" : "Edit layout"}
+                          </span>
+                        </DropdownItem>
+                      )}
+                      {!chart.draft && _canAccess("projectEditor") && (
+                        <DropdownItem
+                          startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
+                          onPress={_onChangeReport}
+                          textValue={chart.onReport ? "Remove from report" : "Add to report"}
+                          showDivider
+                        >
+                          {chart.onReport ? "Remove from report" : "Add to report"}
+                        </DropdownItem>
+                      )}
+                      {_canAccess("projectEditor") && (
+                        <DropdownItem
+                          startContent={<LuTrash />}
+                          color="danger"
+                          onPress={_onDeleteChartConfirmation}
+                          textValue="Delete widget"
+                        >
+                          Delete widget
+                        </DropdownItem>
+                      )}
+                    </DropdownMenu>
+                  </Dropdown>
+                </div>
+              )}
 
               <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary hover:prose-a:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content3 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded prose-img:rounded prose-img:mx-auto max-w-none p-1 leading-tight">
                 {MemoizedMarkdown}
@@ -508,6 +511,7 @@ TextWidget.propTypes = {
   onCancelChanges: PropTypes.func.isRequired,
   onSaveChanges: PropTypes.func.isRequired,
   onEditContent: PropTypes.func.isRequired,
+  isPublic: PropTypes.bool,
 };
 
 export default TextWidget
