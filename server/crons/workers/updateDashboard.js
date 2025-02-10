@@ -1,4 +1,6 @@
 const { DateTime } = require("luxon");
+const { Op } = require("sequelize");
+
 const ChartController = require("../../controllers/ChartController");
 const db = require("../../models/models");
 const { checkChartForAlerts } = require("../../modules/alerts/checkAlerts");
@@ -19,7 +21,7 @@ module.exports = async (job) => {
   try {
     const dashboard = job.data;
     const charts = await db.Chart.findAll({
-      where: { project_id: dashboard.id },
+      where: { project_id: dashboard.id, type: { [Op.not]: "markdown" } },
       attributes: ["id"],
     });
 

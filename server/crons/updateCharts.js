@@ -19,7 +19,8 @@ async function addChartsToQueue(charts, queue) {
 function updateCharts(queue) {
   const conditions = {
     where: {
-      autoUpdate: { [Op.gt]: 0 }
+      autoUpdate: { [Op.gt]: 0 },
+      type: { [Op.not]: "markdown" },
     },
     attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
     include: [{ model: db.ChartDatasetConfig }],
