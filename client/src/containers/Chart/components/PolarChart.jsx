@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { cloneDeep } from "lodash";
+import { tooltipPlugin } from "./ChartTooltip";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -62,11 +63,30 @@ function PolarChart(props) {
         newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
 
+      // Add tooltip configuration
+      newOptions.plugins = {
+        ...newOptions.plugins,
+        tooltip: {
+          ...tooltipPlugin,
+          isCategoryChart: true,
+        },
+      };
+
       return newOptions;
     }
 
     return chart.chartData?.options;
   };
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
 
   return (
     <div className="h-full">

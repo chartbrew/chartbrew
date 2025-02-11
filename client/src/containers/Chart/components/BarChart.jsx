@@ -13,6 +13,7 @@ import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
+import { tooltipPlugin } from "./ChartTooltip";
 
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, PointElement, BarElement, Title, Tooltip, Legend, Filler
@@ -34,6 +35,15 @@ function BarChart(props) {
       }, 1000);
     }
   }, [redraw]);
+
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
@@ -91,6 +101,22 @@ function BarChart(props) {
           newOptions.scales[realY].ticks.maxTicksLimit = 10;
         }
       }
+
+      // Add tooltip configuration
+      newOptions.plugins = {
+        ...newOptions.plugins,
+        tooltip: tooltipPlugin,
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
+      };
+
+      // Add hover configuration
+      newOptions.hover = {
+        mode: "index",
+        intersect: false,
+      };
 
       return newOptions;
     }

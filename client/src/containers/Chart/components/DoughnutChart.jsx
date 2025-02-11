@@ -18,6 +18,7 @@ import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
+import { tooltipPlugin } from "./ChartTooltip";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
@@ -98,11 +99,31 @@ function DoughnutChart(props) {
       if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
+
+      // Add tooltip configuration
+      newOptions.plugins = {
+        ...newOptions.plugins,
+        tooltip: {
+          ...tooltipPlugin,
+          isCategoryChart: true,
+        },
+      };
+
       return newOptions;
     }
 
     return chart.chartData?.options;
   };
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
 
   return (
     <div className="h-full">
