@@ -102,10 +102,18 @@ function BarChart(props) {
         }
       }
 
+      // Check if it's a category chart by looking if any dataset has multiple background colors
+      const isCategoryChart = chart.chartData?.data?.datasets?.some(ds => 
+        Array.isArray(ds?.backgroundColor) && ds.backgroundColor?.length > 1
+      );
+
       // Add tooltip configuration
       newOptions.plugins = {
         ...newOptions.plugins,
-        tooltip: tooltipPlugin,
+        tooltip: {
+          ...tooltipPlugin,
+          isCategoryChart,
+        },
         interaction: {
           mode: "index",
           intersect: false,

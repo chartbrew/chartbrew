@@ -191,22 +191,31 @@ function ChartDatasetConfig(props) {
   const _onChangeMultiFill = () => {
     if (!cdc.multiFill) {
       let newFillColor = cdc.fillColor;
-      if (!Array.isArray(newFillColor || !newFillColor.length)) {
+      if (!Array.isArray(newFillColor) || !newFillColor.length) {
         newFillColor = [newFillColor];
       } else {
         newFillColor = [...newFillColor];
       }
 
+      // Replace any null/undefined values with colors
+      newFillColor = newFillColor.map((color, i) => {
+        if (!color) {
+          return Object.values(chartColors)[i % Object.values(chartColors).length].hex;
+        }
+        return color;
+      });
+
+      // Add additional colors if needed
       if (newFillColor.length < dataItems.labels.length) {
-        // add colors sequentially, then restart from the beginning
         for (let i = newFillColor.length; i < dataItems.labels.length; i++) {
-          newFillColor.push(chartColors[i % chartColors.length]);
+          newFillColor.push(Object.values(chartColors)[i % Object.values(chartColors).length].hex);
         }
       }
 
       _onUpdateCdc({ multiFill: true, fillColor: newFillColor });
     } else {
-      _onUpdateCdc({ multiFill: false, fillColor: Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor });
+      const firstValidColor = cdc.fillColor.find(c => c) || Object.values(chartColors)[0].hex;
+      _onUpdateCdc({ multiFill: false, fillColor: firstValidColor });
     }
   };
 
