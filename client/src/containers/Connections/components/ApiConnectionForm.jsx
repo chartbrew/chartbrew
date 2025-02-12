@@ -3,12 +3,13 @@ import PropTypes from "prop-types";
 
 import {
   Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem,
+  Alert,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
 import { useParams } from "react-router";
-import { HiPlus, HiX } from "react-icons/hi";
 import { useDispatch } from "react-redux";
+import { LuEye, LuEyeOff, LuPlus, LuX } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -18,7 +19,6 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
-import { LuEye, LuEyeOff } from "react-icons/lu";
 
 
 const authTypes = [{
@@ -197,16 +197,16 @@ function ApiConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg pb-10">
       <div>
-        <Row align="center">
+        <div className="flex items-center">
           <p className="font-semibold">
             {!editConnection && "Add a new API host"}
             {editConnection && `Edit ${editConnection.name}`}
           </p>
-        </Row>
+        </div>
         <Spacer y={4} />
-        <Row className={"gap-4"}>
+        <div className="flex items-center">
           <Input
             label="Enter a name for your connection"
             placeholder="Enter a name you can recognize later"
@@ -218,8 +218,11 @@ function ApiConnectionForm(props) {
             fullWidth
             variant="bordered"
             description={errors.name}
+            className="max-w-md"
           />
-
+        </div>
+        <Spacer y={4} />
+        <div className="flex items-center">
           <Input
             label="The hostname of your API"
             placeholder="https://api.example.com"
@@ -230,9 +233,10 @@ function ApiConnectionForm(props) {
             fullWidth
             color={errors.host ? "danger" : "default"}
             variant="bordered"
-            description={errors.host}
+            description={errors.host || "This should be the base URL of your API. Datasets can be configured for each endpoint."}
+            className="max-w-md"
           />
-        </Row>
+        </div>
         <Spacer y={4} />
 
         <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
@@ -340,13 +344,15 @@ function ApiConnectionForm(props) {
         {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
           return (
             <Fragment key={option.id}>
-              <Row className={"gap-4"}>
+              <div className="flex items-center gap-2 sm:flex-wrap md:flex-nowrap">
                 <Input
                   placeholder="Header name"
                   labelPlacement="outside"
                   value={option.key}
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                   fullWidth
+                  variant="bordered"
+                  className="max-w-md"
                 />
                 <Input
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
@@ -354,16 +360,17 @@ function ApiConnectionForm(props) {
                   placeholder="Value"
                   labelPlacement="outside"
                   fullWidth
+                  variant="bordered"
+                  className="max-w-md"
                 />
                 <Button
                   isIconOnly
-                  onClick={() => _removeOption(option.id)}
-                  variant="faded"
-                  color="secondary"
+                  onPress={() => _removeOption(option.id)}
+                  variant="light"
                 >
-                  <HiX />
+                  <LuX />
                 </Button>
-              </Row>
+              </div>
               <Spacer y={2} />
             </Fragment>
           );
@@ -373,9 +380,10 @@ function ApiConnectionForm(props) {
           <>
             <Spacer y={2} />
             <Button
-              endContent={<HiPlus />}
-              onClick={_addOption}
+              endContent={<LuPlus size={16} />}
+              onPress={_addOption}
               variant="bordered"
+              size="sm"
             >
               Add a header
             </Button>
@@ -399,7 +407,7 @@ function ApiConnectionForm(props) {
         <Row align="center">
           <Button
             variant="ghost"
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isLoading={testLoading}
             auto
           >
@@ -409,7 +417,7 @@ function ApiConnectionForm(props) {
           {!editConnection && (
             <Button
               isLoading={loading}
-              onClick={() => _onCreateConnection()}
+              onPress={() => _onCreateConnection()}
               color="primary"
             >
               {"Save connection"}
@@ -418,7 +426,7 @@ function ApiConnectionForm(props) {
           {editConnection && (
             <Button
               isLoading={loading}
-              onClick={_onCreateConnection}
+              onPress={_onCreateConnection}
               color="primary"
             >
               {"Save changes"}
@@ -433,30 +441,42 @@ function ApiConnectionForm(props) {
           <Divider />
           <Spacer y={4} />
           <div>
-            <Row align="center">
-              <Text>
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
                 {"Test Result "}
-              </Text>
-              <Spacer x={1} />
-              <Chip
-                size="sm"
-                color={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
-            </Row>
+              </div>
+              <div>
+                <Chip
+                  size="sm"
+                  color={testResult.status < 400 ? "success" : "danger"}
+                  variant="flat"
+                >
+                  {`Status code: ${testResult.status}`}
+                </Chip>
+              </div>
+            </div>
+            {testResult.status >= 400 && (
+              <>
+                <Spacer y={2} />
+                <Alert
+                  variant="bordered"
+                  title="Connection info"
+                  description="Making API requests to base URLs can sometimes fail, but it's not always an issue. Lots of APIs fail to return data when the base URL is used directly. You can configure datasets to make requests to the correct endpoints after the connection is saved."
+                />
+              </>
+            )}
             <Spacer y={4} />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
               style={{ borderRadius: 10 }}
-              height="150px"
               width="none"
               value={testResult.body || "Hello"}
               readOnly
               name="queryEditor"
               editorProps={{ $blockScrolling: true }}
             />
+            <Spacer y={2} />
           </div>
         </>
       )}
