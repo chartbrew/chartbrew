@@ -120,9 +120,9 @@ function BarChart(props) {
 
       // Add hover configuration
       newOptions.hover = {
-        mode: chart.horizontal ? "x" : "nearest",
+        mode: "nearest",
         intersect: chart.horizontal ? false : true,
-        axis: chart.horizontal ? "x" : "y",
+        axis: "y"
       };
 
       return newOptions;
