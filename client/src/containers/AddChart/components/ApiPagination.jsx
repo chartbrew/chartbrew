@@ -181,7 +181,8 @@ function ApiPagination(props) {
       {template === "url" && (
         <>
           <div className="col-span-12">
-            <Text>{"Click here to select a field that contains the pagination URL"}</Text>
+            <div className="text-sm">{"Click here to select a field that contains the pagination URL"}</div>
+            <Spacer y={1} />
             <div style={styles.rowDisplay}>
               <Select
                 variant="bordered"
@@ -200,12 +201,13 @@ function ApiPagination(props) {
                 ))}
               </Select>
               {!result && (
-                <Text size="sm">{" You will have to run a request before you can use this feature"}</Text>
+                <div className="text-sm">{" You will have to run a request before you can use this feature"}</div>
               )}
             </div>
           </div>
           <div className="col-span-12">
-            <Text>Or enter the object path manually here</Text>
+            <div className="text-sm">Or enter the object path manually here</div>
+            <Spacer y={1} />
             <Input
               placeholder="pagination.next"
               labelPlacement="outside"
@@ -222,7 +224,7 @@ function ApiPagination(props) {
       {/* STRIPE */}
       {template === "stripe" && (
         <div className="col-span-12">
-          <Text>Your request will now be paginated automatically</Text>
+          <div className="text-sm">Your request will now be paginated automatically</div>
         </div>
       )}
 
@@ -234,7 +236,7 @@ function ApiPagination(props) {
             placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text>{"Cursor query parameter"}</Text>
+              <div className="text-sm">{"Cursor query parameter"}</div>
               <Spacer x={0.5} />
               <LuInfo />
             </div>
@@ -257,7 +259,7 @@ function ApiPagination(props) {
             placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text>{"Next cursor field name"}</Text>
+              <div className="text-sm">{"Next cursor field name"}</div>
               <Spacer x={0.5} />
               <LuInfo />
             </div>
@@ -280,7 +282,7 @@ function ApiPagination(props) {
           placement="top-start"
         >
           <div style={styles.rowDisplay}>
-            <Text>{"Maximum number of items (0 = unlimited)"}</Text>
+            <div className="text-sm">{"Maximum number of items (0 = unlimited)"}</div>
             <Spacer x={0.5} />
             <LuInfo />
           </div>
@@ -303,17 +305,17 @@ function ApiPagination(props) {
 
       {pagination && template === "custom" && (
         <div className="col-span-12">
-          <Text>{"You should include these query parameters: "}</Text>
+          <div className="text-sm">{"You should include these query parameters: "}</div>
           <Spacer y={1} />
           <div style={styles.rowDisplay}>
-            <Chip>
-              <Text>{`${items}=<xxx>&${offset}=<xxx> `}</Text>
+            <Chip size="sm" radius="sm" variant="flat">
+              {`${items}=<xxx>&${offset}=<xxx> `}
             </Chip>
             <Spacer x={1} />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
-                <Chip color="success">
-                  <Text>{`${items} was found`}</Text>
+                <Chip color="success" size="sm" radius="sm" variant="flat">
+                  {`${items} was found`}
                 </Chip>
                 <Spacer x={0.5} />
               </>
@@ -321,36 +323,36 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
                 <Spacer x={0.5} />
-                <Chip color="warning">
-                  <Text>{`${items} not found in route`}</Text>
+                <Chip color="warning" size="sm" radius="sm" variant="flat">
+                  {`${items} not found in route`}
                 </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
                 <Spacer x={0.5} />
-                <Chip color="success">
-                  <Text>{`${offset} was found`}</Text>
+                <Chip color="success" size="sm" radius="sm" variant="flat">
+                  {`${offset} was found`}
                 </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
                 <Spacer x={0.5} />
-                <Chip color="warning">
-                  <Text>{`${offset} not found in route`}</Text>
+                <Chip color="warning" size="sm" radius="sm" variant="flat">
+                  {`${offset} not found in route`}
                 </Chip>
               </>
             )}
           </div>
           <Spacer y={1} />
           <div style={styles.rowDisplay}>
-            <Text>
+            <div className="text-sm">
               {"The maximum amount of item that you're going to get is: "}
-            </Text>
-            <Spacer x={0.5} />
-            <Chip>
-              <Text>{itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}</Text>
+            </div>
+            <Spacer x={1} />
+            <Chip size="sm" radius="sm" variant="flat">
+              {itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}
             </Chip>
           </div>
         </div>

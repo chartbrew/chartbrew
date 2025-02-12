@@ -149,8 +149,8 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
       let parsedResponse;
       try {
         parsedResponse = JSON.parse(response.body);
-        paginationURL = _.get(parsedResponse, paginationField);
-        if (!paginationURL) return new Promise((resolve) => resolve(parsedResponse));
+        const formattedPaginationField = paginationField.replace("root.", "").replace("root[].", "");
+        paginationURL = _.get(parsedResponse, formattedPaginationField);
 
         Object.keys(parsedResponse).forEach((key) => {
           if (parsedResponse[key] instanceof Array) {
@@ -171,7 +171,12 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
 
       const tempResults = totalResults.concat(results);
 
-      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+      if (skipping
+          || !results
+          || results.length === 0
+          || (tempResults.length >= limit && limit !== 0)
+          || !paginationURL
+      ) {
         let finalResults = skipping ? results : tempResults;
 
         // check if it goes above the limit
