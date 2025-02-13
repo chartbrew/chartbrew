@@ -45,6 +45,7 @@ import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
 import isMac from "../../modules/isMac";
+import GaugeChart from "./components/GaugeChart";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -516,12 +517,12 @@ function Chart(props) {
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
-                    <Chip color="secondary" variant="flat" size="sm">Draft</Chip>
+                    <Chip color="secondary" variant="flat" size="sm" radius="sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
                       <Link to={`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`}>
-                        <Text b className={"text-default"}>{chart.name}</Text>
+                        <div className={"text-foreground font-bold text-sm"}>{chart.name}</div>
                       </Link>
                     )}
                     {(!_canAccess("projectEditor") || editingLayout) && (
@@ -832,6 +833,15 @@ function Chart(props) {
                 {(chart.type === "kpi" || chart.type === "avg")
                   && (
                     <KpiMode
+                      chart={chart}
+                      height={height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
+                    />
+                  )}
+                {chart.type === "gauge"
+                  && (
+                    <GaugeChart
                       chart={chart}
                       height={height}
                       redraw={redraw}
