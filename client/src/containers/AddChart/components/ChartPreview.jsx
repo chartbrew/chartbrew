@@ -156,11 +156,15 @@ function ChartPreview(props) {
   };
 
   const _onAddRange = () => {
-    const previousRange = ranges[ranges.length - 1];
-    setRanges([...ranges, { min: previousRange.max, max: previousRange.max + 20, label: `${previousRange.max}-${previousRange.max + 20}` }]);
+    const previousRange = ranges[ranges.length - 1] || { min: 0, max: 100, label: "Total" };
+    setRanges([
+      ...ranges || [],
+      { min: previousRange.max, max: previousRange.max + 20, label: `${previousRange.max}-${previousRange.max + 20}` },
+    ]);
   };
 
   const _onRemoveRange = (index) => {
+    if (ranges.length === 1) return;
     const newRanges = [...ranges];
     newRanges.splice(index, 1);
     setRanges(newRanges);
@@ -377,7 +381,7 @@ function ChartPreview(props) {
                     variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
                     color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
                     onPress={_toggleAccumulation}
-                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi"}
+                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                     isIconOnly
                   >
                     <FaChartLine size={20} />
@@ -580,14 +584,16 @@ function ChartPreview(props) {
                   size="sm"
                   className="max-w-[200px]"
                 />
-                <Button
-                  onPress={() => _onRemoveRange(index)}
-                  variant="light"
-                  size="sm"
-                  isIconOnly
+                {ranges.length > 1 && (
+                  <Button
+                    onPress={() => _onRemoveRange(index)}
+                    variant="light"
+                    size="sm"
+                    isIconOnly
                 >
-                  <LuX />
-                </Button>
+                    <LuX />
+                  </Button>
+                )}
               </div>
             ))}
             <Spacer y={1} />

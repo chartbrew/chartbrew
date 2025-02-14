@@ -51,8 +51,9 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
     if (!chart.chartData?.data?.datasets?.[0]?.data) return null;
 
     const value = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
-    const ranges = chart.ranges || [{ min: 0, max: 100 }];
+    const ranges = chart.ranges || [{ min: 0, max: 100, label: "Total" }];
     const maxValue = Math.max(...ranges.map(r => r.max));
+    const minValue = Math.min(...ranges.map(r => r.min));
     
     // Calculate the percentage for each range
     const rangeData = ranges.map(range => {
@@ -68,7 +69,8 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
     const defaultColors = Object.values(chartColors).map(c => c.hex);
 
     // Calculate rotation to point to current value
-    const valuePercentage = (value / maxValue) * 180; // 180 degrees total rotation
+    // Map value to degrees between -135 (start) and 135 (end) - total 270 degrees
+    const valuePercentage = ((value - minValue) / (maxValue - minValue)) * 270 - 135;
     
     return {
       datasets: [{
@@ -91,7 +93,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
         ],
         borderWidth: 0,
         circumference: 90,
-        rotation: -90 + valuePercentage,
+        rotation: valuePercentage,
       }],
       labels: ranges.map(range => range.label || `${range.min}-${range.max}`),
     };
@@ -144,8 +146,8 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
             family: "Inter",
           },
           formatter: (value, context) => {
-            if (context.datasetIndex === 0) {
-              const range = chart.ranges[context.dataIndex];
+            if (context.datasetIndex === 0 && chart.ranges) {
+              const range = chart.ranges?.[context.dataIndex];
               return `${range?.label || `${range?.min}-${range?.max}`}`;
             }
             return "";
