@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Doughnut } from "react-chartjs-2";
 import { semanticColors } from "@heroui/react";
@@ -8,18 +8,20 @@ import {
   Tooltip,
 } from "chart.js";
 import { cloneDeep } from "lodash";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { tooltipPlugin } from "./ChartTooltip";
 import { chartColors } from "../../../config/colors";
 
-ChartJS.register(ArcElement, Tooltip);
+ChartJS.register(ArcElement, Tooltip, ChartDataLabels);
 
 function GaugeChart({ chart, redraw, redrawComplete }) {
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
-
+  const containerRef = useRef(null);
+  const [isCompact, setIsCompact] = useState(false);
   useEffect(() => {
     if (redraw) {
       setTimeout(() => {
@@ -27,6 +29,23 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
       }, 1000);
     }
   }, [redraw]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        setIsCompact(containerRef.current.offsetHeight < 200);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const _prepareData = () => {
     if (!chart.chartData?.data?.datasets?.[0]?.data) return null;
@@ -61,8 +80,8 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
           defaultColors[index % defaultColors.length]
         ),
         borderWidth: 0,
-        circumference: 180,
-        rotation: -90,
+        circumference: 270,
+        rotation: -135,
       }, {
         // This dataset creates the pointer
         data: [6, 98], // Small segment for the pointer
@@ -83,6 +102,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
     return {
       ...baseOptions,
       responsive: true,
+      maintainAspectRatio: isCompact,
       plugins: {
         tooltip: {
           ...tooltipPlugin,
@@ -110,10 +130,48 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
           },
         },
         legend: {
-          display: !!chart.displayLegend,
-          position: "bottom",
+          display: isCompact ? false : !!chart.displayLegend,
+          position: "top",
+        },
+        datalabels: {
+          display: (context) => {
+            return chart.dataLabels && !isCompact && context.datasetIndex === 0;
+          },
+          color: "#fff",
+          font: {
+            weight: "bold",
+            size: 10,
+            family: "Inter",
+          },
+          formatter: (value, context) => {
+            if (context.datasetIndex === 0) {
+              const range = chart.ranges[context.dataIndex];
+              return `${range?.label || `${range?.min}-${range?.max}`}`;
+            }
+            return "";
+          },
+          anchor: "center",
+          align: "center",
+          offset: 0,
+          padding: 4,
+          backgroundColor: "rgba(0, 0, 0, 0.2)",
+          borderRadius: 4,
+          rotation: (context) => {
+            // Calculate angle based on the segment's midpoint
+            const chart = context.chart;
+            const meta = chart.getDatasetMeta(context.datasetIndex);
+            const arc = meta.data[context.dataIndex];
+            const startAngle = arc.startAngle + Math.PI / 2; // Add PI/2 to account for chart rotation
+            const endAngle = arc.endAngle + Math.PI / 2;
+            const angle = (startAngle + endAngle) / 2;
+            
+            // Convert radians to degrees and adjust to keep text readable
+            const degrees = (angle * 180) / Math.PI;
+            return degrees > 90 && degrees < 270 ? degrees - 180 : degrees;
+          }
         },
       },
+      scales: {}, // Add empty scales object to disable all axes
       layout: {
       },
       cutout: "55%",
@@ -137,15 +195,30 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
   const value = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
 
   return (
-    <div className="h-full w-full relative flex flex-col items-center justify-center">
-      <div className="w-full max-w-[600px] mx-auto">
-        <ChartErrorBoundary>
-          <Doughnut
-            data={gaugeData}
-            options={_getChartOptions()}
-            redraw={redraw}
-          />
-          <div className="absolute top-1/2 left-0 right-0 text-center">
+    <div ref={containerRef} className="h-full relative w-full flex flex-col items-center justify-center">
+      {!isCompact && (
+        <div className="w-full max-w-[600px] mx-auto h-full">
+          <ChartErrorBoundary>
+            <Doughnut
+              data={gaugeData}
+              options={_getChartOptions()}
+              redraw={redraw}
+            />
+            <div className="absolute top-1/2 left-0 right-0 text-center">
+              <div className="text-3xl font-bold text-default-800">
+                {value.toLocaleString()}
+              </div>
+              <div className="text-sm text-default-500">
+                {chart.chartData.data.datasets[0].label}
+              </div>
+            </div>
+          </ChartErrorBoundary>
+        </div>
+      )}
+
+      {isCompact && (
+        <div className="w-full h-full flex flex-row items-center justify-center mx-auto gap-4">
+          <div className="flex flex-col items-center justify-center">
             <div className="text-3xl font-bold text-default-800">
               {value.toLocaleString()}
             </div>
@@ -153,8 +226,14 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
               {chart.chartData.data.datasets[0].label}
             </div>
           </div>
-        </ChartErrorBoundary>
-      </div>
+
+          <div className="h-full max-w-[200px] justify-center items-center">
+            <ChartErrorBoundary>
+              <Doughnut data={gaugeData} options={_getChartOptions()} redraw={redraw} />
+            </ChartErrorBoundary>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
