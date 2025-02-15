@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, CircularProgress, Divider, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
+  Button, Checkbox, Chip, CircularProgress, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg,
@@ -10,8 +10,9 @@ import {
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
+import { LuGauge, LuX, LuPlus } from "react-icons/lu";
 import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX } from "react-icons/lu";
-import { findIndex } from "lodash";
+import { findIndex, isEqual } from "lodash";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -26,6 +27,7 @@ import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
+import GaugeChart from "../../Chart/components/GaugeChart";
 
 function ChartPreview(props) {
   const {
@@ -34,6 +36,8 @@ function ChartPreview(props) {
 
   const [redraw, setRedraw] = useState(false);
   const [conditions, setConditions] = useState([]);
+  const [ranges, setRanges] = useState([]);
+  const [rangeErrors, setRangeErrors] = useState(null);
 
   useEffect(() => {
     _onRefreshPreview();
@@ -42,6 +46,10 @@ function ChartPreview(props) {
   useEffect(() => {
     setRedraw(true);
   }, [chart.dataLabels]);
+
+  useEffect(() => {
+    setRanges(chart.ranges || [{ min: 0, max: 100 }]);
+  }, [chart.ranges]);
 
   const _checkIfFilters = () => {
     let filterCount = 0;
@@ -135,6 +143,63 @@ function ChartPreview(props) {
     onRefreshData(useCache);
   };
 
+  const _onChangeRange = (value, index, key) => {
+    const newRanges = ranges.map((range, i) => {
+      if (i === index) {
+        const newRange = { ...range };
+        newRange[key] = value;
+        return newRange;
+      }
+      return range;
+    });
+    setRanges(newRanges);
+  };
+
+  const _onAddRange = () => {
+    const previousRange = ranges[ranges.length - 1] || { min: 0, max: 100, label: "Total" };
+    setRanges([
+      ...ranges || [],
+      { min: previousRange.max, max: previousRange.max + 20, label: `${previousRange.max}-${previousRange.max + 20}` },
+    ]);
+  };
+
+  const _onRemoveRange = (index) => {
+    if (ranges.length === 1) return;
+    const newRanges = [...ranges];
+    newRanges.splice(index, 1);
+    setRanges(newRanges);
+  };
+
+  const _onSaveRanges = () => {
+    setRangeErrors(null);
+    // do a sanity check on the ranges
+    // ensure that min is always less than max
+    if (ranges.some((range) => range.min > range.max)) {
+      setRangeErrors("Min values must be less than max values");
+      return;
+    }
+
+    // ensure that the ranges are not overlapping
+    if (ranges.some((range, index) => ranges.some((r, i) => i !== index && range.min < r.max && range.max > r.min))) {
+      setRangeErrors("Ranges cannot overlap");
+      return;
+    }
+
+    // ensure that the ranges are not empty
+    if (ranges.some((range) => range.min === null || range.max === null)) {
+      setRangeErrors("Ranges cannot be empty");
+      return;
+    }
+
+    // ensure the labels are not empty
+    if (ranges.some((range) => range.label === null)) {
+      setRangeErrors("Labels cannot be empty");
+      return;
+    }
+
+    onChange({ ranges });
+  };
+
   return (
     <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
@@ -143,7 +208,7 @@ function ChartPreview(props) {
             <Row justify="flex-between" align="center">
               <div className="flex items-center gap-1">
                 <Button
-                  onClick={_onRefreshData}
+                  onPress={_onRefreshData}
                   isLoading={chartLoading}
                   size="sm"
                   endContent={<LuRefreshCw size={18} />}
@@ -196,7 +261,7 @@ function ChartPreview(props) {
                       key={c.id}
                       size="sm"
                       endContent={(
-                        <Link onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
+                        <Link onPress={() => _onClearFilter(c)} className="text-default-500 flex items-center">
                           <LuCircleX size={14} />
                         </Link>
                       )}
@@ -283,6 +348,14 @@ function ChartPreview(props) {
               {(chart.type === "kpi" || chart.type === "avg") && (
                 <KpiMode chart={chart} editMode />
               )}
+
+              {chart.type === "gauge" && (
+                <GaugeChart
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                />
+              )}
             </div>
           </div>
           <Spacer y={2} />
@@ -295,7 +368,7 @@ function ChartPreview(props) {
                   <Button
                     variant={chart.type !== "avg" ? "bordered" : "solid"}
                     color={chart.type === "avg" ? "secondary" : "default"}
-                    onClick={() => _onChangeChartType({ type: "avg" })}
+                    onPress={() => _onChangeChartType({ type: "avg" })}
                     isIconOnly
                   >
                     <TbMathAvg size={24} />
@@ -307,8 +380,8 @@ function ChartPreview(props) {
                   <Button
                     variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
                     color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
-                    onClick={_toggleAccumulation}
-                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi"}
+                    onPress={_toggleAccumulation}
+                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                     isIconOnly
                   >
                     <FaChartLine size={20} />
@@ -320,7 +393,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display data in a table view">
                   <Button
                     variant={chart.type !== "table" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "table" })}
+                    onPress={() => _onChangeChartType({ type: "table" })}
                     color={chart.type === "table" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -330,7 +403,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as line chart">
                   <Button
                     variant={chart.type !== "line" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "line" })}
+                    onPress={() => _onChangeChartType({ type: "line" })}
                     color={chart.type === "line" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -340,7 +413,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as bar chart">
                   <Button
                     variant={chart.type !== "bar" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "bar" })}
+                    onPress={() => _onChangeChartType({ type: "bar" })}
                     color={chart.type === "bar" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -350,11 +423,21 @@ function ChartPreview(props) {
                 <Tooltip content="Display as a single value (KPI)">
                   <Button
                     variant={chart.type !== "kpi" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "kpi" })}
+                    onPress={() => _onChangeChartType({ type: "kpi" })}
                     color={chart.type === "kpi" ? "primary" : "default"}
                     isIconOnly
                   >
                     <TbHash size={24} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Display as a gauge chart">
+                  <Button
+                    variant={chart.type !== "gauge" ? "bordered" : "solid"}
+                    onPress={() => _onChangeChartType({ type: "gauge" })}
+                    color={chart.type === "gauge" ? "primary" : "default"}
+                    isIconOnly
+                  >
+                    <LuGauge size={24} />
                   </Button>
                 </Tooltip>
               </Row>
@@ -363,7 +446,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as pie chart">
                   <Button
                     variant={chart.type !== "pie" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "pie" })}
+                    onPress={() => _onChangeChartType({ type: "pie" })}
                     color={chart.type === "pie" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -373,7 +456,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as doughnut chart">
                   <Button
                     variant={chart.type !== "doughnut" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "doughnut" })}
+                    onPress={() => _onChangeChartType({ type: "doughnut" })}
                     color={chart.type === "doughnut" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -383,7 +466,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as radar chart">
                   <Button
                     variant={chart.type !== "radar" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "radar" })}
+                    onPress={() => _onChangeChartType({ type: "radar" })}
                     color={chart.type === "radar" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -393,7 +476,7 @@ function ChartPreview(props) {
                 <Tooltip content="Display as polar chart">
                   <Button
                     variant={chart.type !== "polar" ? "bordered" : "solid"}
-                    onClick={() => _onChangeChartType({ type: "polar" })}
+                    onPress={() => _onChangeChartType({ type: "polar" })}
                     color={chart.type === "polar" ? "primary" : "default"}
                     isIconOnly
                   >
@@ -436,7 +519,8 @@ function ChartPreview(props) {
         )}
       </div>
 
-      {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0 && (
+      {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0
+        && chart.type !== "gauge" && (
         <div style={styles.topBuffer} className="chart-preview-growth">
           <Row align="center" className={"gap-4"}>
             <Checkbox
@@ -459,6 +543,86 @@ function ChartPreview(props) {
             </Checkbox>
           </Row>
           <Spacer y={2} />
+        </div>
+      )}
+
+      {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0
+        && chart.type === "gauge" && (
+        <div className="flex flex-col gap-1 mt-4">
+          <div className="text-sm font-bold">Define gauge ranges</div>
+          <div className="flex flex-col gap-1">
+            {ranges.map((range, index) => (
+              <div key={index} className={`flex flex-row ${index === 0 ? "items-end" : "items-center"} gap-2 w-full sm:flex-wrap md:flex-nowrap`}>
+                <Input
+                  label={index === 0 ? "Min" : ""}
+                  labelPlacement="outside"
+                  value={range.min}
+                  onChange={(e) => _onChangeRange(parseFloat(e.target.value), index, "min")}
+                  variant="bordered"
+                  size="sm"
+                  type="number"
+                  step="0.01"
+                  className="max-w-[150px]"
+                />
+                <Input
+                  label={index === 0 ? "Max" : ""}
+                  labelPlacement="outside"
+                  value={range.max}
+                  onChange={(e) => _onChangeRange(parseFloat(e.target.value), index, "max")}
+                  variant="bordered"
+                  size="sm"
+                  type="number"
+                  step="0.01"
+                  className="max-w-[150px]"
+                />
+                <Input
+                  label={index === 0 ? "Label" : ""}
+                  labelPlacement="outside"
+                  value={range.label}
+                  onChange={(e) => _onChangeRange(e.target.value, index, "label")}
+                  variant="bordered"
+                  size="sm"
+                  className="max-w-[200px]"
+                />
+                {ranges.length > 1 && (
+                  <Button
+                    onPress={() => _onRemoveRange(index)}
+                    variant="light"
+                    size="sm"
+                    isIconOnly
+                >
+                    <LuX />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Spacer y={1} />
+            <div className="flex flex-row gap-2 items-center">
+              <Button
+                onPress={_onAddRange}
+                variant="flat"
+                size="sm"
+                endContent={<LuPlus />}
+              >
+                Add range
+              </Button>
+              {!isEqual(ranges, chart.ranges) && (
+                <Button
+                  onPress={_onSaveRanges}
+                  variant="flat"
+                  size="sm"
+                  color="primary"
+                >
+                  Save ranges
+                </Button>
+              )}
+              {rangeErrors && (
+                <div className="text-red-500 text-xs">
+                  {rangeErrors}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -177,6 +177,29 @@ module.exports = (sequelize, DataTypes) => {
     content: {
       type: DataTypes.TEXT,
     },
+    /*
+    ** ranges example
+    {
+      "ranges": [
+        { "min": 0, "max": 50, "label": "Low" },
+        { "min": 50, "max": 100, "label": "Medium" },
+        { "min": 100, "max": 150, "label": "High" }
+      ]
+    }
+    */
+    ranges: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("ranges", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("ranges"));
+        } catch (e) {
+          return this.getDataValue("ranges");
+        }
+      },
+    },
   }, {
     freezeTableName: true,
   });
