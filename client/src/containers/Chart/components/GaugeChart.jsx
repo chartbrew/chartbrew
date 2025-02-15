@@ -133,7 +133,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
             label: (context) => {
               // Only show tooltip for the first dataset (the ranges)
               if (context.datasetIndex === 0) {
-                const range = chart.ranges[context.dataIndex];
+                const range = chart.ranges?.[context.dataIndex];
                 if (range) {
                   return `${range.label || ""}: ${range.min} - ${range.max}`;
                 }
@@ -173,14 +173,17 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
             // Calculate angle based on the segment's midpoint
             const chart = context.chart;
             const meta = chart.getDatasetMeta(context.datasetIndex);
-            const arc = meta.data[context.dataIndex];
-            const startAngle = arc.startAngle + Math.PI / 2; // Add PI/2 to account for chart rotation
-            const endAngle = arc.endAngle + Math.PI / 2;
-            const angle = (startAngle + endAngle) / 2;
-            
-            // Convert radians to degrees and adjust to keep text readable
-            const degrees = (angle * 180) / Math.PI;
-            return degrees > 90 && degrees < 270 ? degrees - 180 : degrees;
+            if (meta.data) {
+              const arc = meta.data?.[context.dataIndex];
+              const startAngle = arc.startAngle + Math.PI / 2; // Add PI/2 to account for chart rotation
+              const endAngle = arc.endAngle + Math.PI / 2;
+              const angle = (startAngle + endAngle) / 2;
+              
+              // Convert radians to degrees and adjust to keep text readable
+              const degrees = (angle * 180) / Math.PI;
+              return degrees > 90 && degrees < 270 ? degrees - 180 : degrees;
+            }
+            return 0;
           }
         },
       },
@@ -203,9 +206,9 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
   }, []);
 
   const gaugeData = _prepareData();
-  if (!gaugeData) return null;
 
-  const value = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
+  const value = chart?.chartData?.data?.datasets?.[0]?.data?.[chart?.chartData?.data?.datasets?.[0]?.data?.length - 1];
+  const label = chart?.chartData?.data?.datasets?.[0]?.label || "";
 
   return (
     <div ref={containerRef} className="h-full relative w-full flex flex-col items-center justify-center">
@@ -222,7 +225,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
                 {value.toLocaleString()}
               </div>
               <div className="text-sm text-default-500">
-                {chart.chartData.data.datasets[0].label}
+                {label}
               </div>
             </div>
           </ChartErrorBoundary>
@@ -236,7 +239,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
               {value.toLocaleString()}
             </div>
             <div className="text-sm text-default-500">
-              {chart.chartData.data.datasets[0].label}
+              {label}
             </div>
           </div>
 
