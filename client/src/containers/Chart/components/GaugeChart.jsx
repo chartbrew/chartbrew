@@ -107,6 +107,15 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
       ...baseOptions,
       responsive: true,
       maintainAspectRatio: isCompact,
+      animation: {
+        onComplete: function(animation) {
+          // Only run once by checking if animation is the first one
+          if (animation.initial) {
+            // Force a dataset update to recalculate label rotations
+            this.update();
+          }
+        }
+      },
       plugins: {
         tooltip: {
           ...tooltipPlugin,
