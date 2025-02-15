@@ -70,7 +70,9 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
 
     // Calculate rotation to point to current value
     // Map value to degrees between -135 (start) and 135 (end) - total 270 degrees
-    const valuePercentage = ((value - minValue) / (maxValue - minValue)) * 270 - 135;
+    // Clamp the value between min and max to ensure pointer doesn't go beyond the range
+    const clampedValue = Math.min(Math.max(value, minValue), maxValue);
+    const valuePercentage = ((clampedValue - minValue) / (maxValue - minValue)) * 270 - 135;
     
     return {
       datasets: [{
