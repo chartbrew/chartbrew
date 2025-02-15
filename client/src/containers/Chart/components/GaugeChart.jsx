@@ -61,16 +61,10 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
       return (rangeSize / maxValue) * 100;
     });
 
-    // Get colors from ChartDatasetConfig if available
-    const config = chart.ChartDatasetConfigs?.[0];
-    const useMultiFillColors = config?.multiFill && Array.isArray(config?.fillColor);
-
-    // Get default colors array
+    // Get default colors array for initial setup
     const defaultColors = Object.values(chartColors).map(c => c.hex);
 
     // Calculate rotation to point to current value
-    // Map value to degrees between -135 (start) and 135 (end) - total 270 degrees
-    // Clamp the value between min and max to ensure pointer doesn't go beyond the range
     const clampedValue = Math.min(Math.max(value, minValue), maxValue);
     const valuePercentage = ((clampedValue - minValue) / (maxValue - minValue)) * 270 - 135;
     
@@ -78,10 +72,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
       datasets: [{
         data: rangeData,
         backgroundColor: ranges.map((range, index) => 
-          range.color || 
-          (useMultiFillColors && config.fillColor[index]) ||
-          chart.ChartDatasetConfigs?.[index]?.datasetColor || 
-          defaultColors[index % defaultColors.length]
+          range.color || defaultColors[index % defaultColors.length]
         ),
         borderWidth: 0,
         circumference: 270,

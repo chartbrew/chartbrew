@@ -13,6 +13,8 @@ import { BsTable } from "react-icons/bs";
 import { LuGauge, LuX, LuPlus } from "react-icons/lu";
 import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX } from "react-icons/lu";
 import { findIndex, isEqual } from "lodash";
+import { TwitterPicker } from "react-color";
+import { chartColors } from "../../../config/colors";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -48,7 +50,12 @@ function ChartPreview(props) {
   }, [chart.dataLabels]);
 
   useEffect(() => {
-    setRanges(chart.ranges || [{ min: 0, max: 100 }]);
+    setRanges(chart.ranges || [{ 
+      min: 0, 
+      max: 100, 
+      label: "Total",
+      color: Object.values(chartColors)[0].hex,
+    }]);
   }, [chart.ranges]);
 
   const _checkIfFilters = () => {
@@ -156,10 +163,24 @@ function ChartPreview(props) {
   };
 
   const _onAddRange = () => {
-    const previousRange = ranges[ranges.length - 1] || { min: 0, max: 100, label: "Total" };
+    const previousRange = ranges[ranges.length - 1] || { 
+      min: 0, 
+      max: 100, 
+      label: "Total",
+      color: Object.values(chartColors)[0].hex,
+    };
+    
+    // Get next available color
+    const colorIndex = ranges.length % Object.values(chartColors).length;
+    
     setRanges([
       ...ranges || [],
-      { min: previousRange.max, max: previousRange.max + 20, label: `${previousRange.max}-${previousRange.max + 20}` },
+      { 
+        min: previousRange.max, 
+        max: previousRange.max + 20, 
+        label: `${previousRange.max}-${previousRange.max + 20}`,
+        color: Object.values(chartColors)[colorIndex].hex,
+      },
     ]);
   };
 
@@ -167,6 +188,16 @@ function ChartPreview(props) {
     if (ranges.length === 1) return;
     const newRanges = [...ranges];
     newRanges.splice(index, 1);
+    setRanges(newRanges);
+  };
+
+  const _onChangeColor = (color, index) => {
+    const newRanges = ranges.map((range, i) => {
+      if (i === index) {
+        return { ...range, color: color.hex };
+      }
+      return range;
+    });
     setRanges(newRanges);
   };
 
@@ -584,13 +615,30 @@ function ChartPreview(props) {
                   size="sm"
                   className="max-w-[200px]"
                 />
+                <Popover>
+                  <PopoverTrigger>
+                    <div
+                      style={{ backgroundColor: range.color }}
+                      className="min-w-[30px] h-[30px] rounded-lg cursor-pointer border-2 border-divider"
+                      aria-label="Select color"
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <TwitterPicker
+                      triangle={"hide"}
+                      color={range.color}
+                      onChange={(color) => _onChangeColor(color, index)}
+                      colors={Object.values(chartColors).map((c) => c.hex)}
+                    />
+                  </PopoverContent>
+                </Popover>
                 {ranges.length > 1 && (
                   <Button
                     onPress={() => _onRemoveRange(index)}
                     variant="light"
                     size="sm"
                     isIconOnly
-                >
+                  >
                     <LuX />
                   </Button>
                 )}
