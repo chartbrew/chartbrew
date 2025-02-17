@@ -255,10 +255,13 @@ function PublicDashboard(props) {
   };
 
   const _checkSearchParamsForFields = () => {
-    if (!searchParams || !searchParams.entries || searchParams.entries()?.length === 0) return;
+    if (!searchParams || !searchParams.entries) return;
+
+    const entries = Array.from(searchParams.entries());
+    if (entries.length === 0) return;
 
     const filters = [];
-    searchParams.entries().forEach((entry) => {
+    entries.forEach((entry) => {
       const [key, value] = entry;
       if (key.startsWith("fields[")) {
         let field = key.replace("fields[", "");
