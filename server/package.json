@@ -18,8 +18,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@bull-board/api": "^5.20.5",
-    "@bull-board/express": "^5.20.5",
+    "@bull-board/api": "^6.7.9",
+    "@bull-board/express": "^6.7.9",
     "@google-analytics/admin": "^7.2.0",
     "@google-analytics/data": "^4.4.0",
     "@playwright/test": "^1.48.2",
