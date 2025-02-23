@@ -52,7 +52,33 @@ async function updateDashboards(queue) {
         const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
         shouldUpdate = now > updateTime && now.diff(lastUpdated, "days").as("days") >= 1;
       } else if (frequency === "weekly") {
-        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: dayOfWeek });
+        const weekdays = {
+          1: 'monday',
+          2: 'tuesday',
+          3: 'wednesday',
+          4: 'thursday',
+          5: 'friday',
+          6: 'saturday',
+          7: 'sunday'
+        };
+
+        let luxonWeekday;
+
+        if (typeof dayOfWeek === 'string') {
+          const lowerDayOfWeek = dayOfWeek.toLowerCase();
+          luxonWeekday = Object.keys(weekdays).find(
+            key => weekdays[key] === lowerDayOfWeek
+          );
+        }
+
+        if (!luxonWeekday) {
+          luxonWeekday = Number(dayOfWeek);
+          if (isNaN(luxonWeekday) || luxonWeekday < 1 || luxonWeekday > 7) {
+            throw new Error("Invalid weekday. Must be a number (1-7) or a valid day name (e.g., 'monday').");
+          }
+        }
+
+        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: luxonWeekday });
         shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks").as("weeks") >= 1;
       } else if (frequency === "every_x_days") {
         shouldUpdate = now.diff(lastUpdated, "days").as("days") >= frequencyNumber;
