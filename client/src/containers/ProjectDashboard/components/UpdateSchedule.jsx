@@ -29,7 +29,7 @@ function UpdateSchedule({ isOpen, onClose }) {
     if (project?.updateSchedule && !initRef.current) {
       initRef.current = true;
       setSchedule({
-        timezone: project.timezone || getMachineTimezone(),
+        timezone: project.timezone || project?.updateSchedule?.timezone || getMachineTimezone(),
         frequency: project.updateSchedule?.frequency || undefined,
         dayOfWeek: project.updateSchedule?.dayOfWeek || undefined,
         frequencyNumber: project.updateSchedule?.frequencyNumber || undefined,
