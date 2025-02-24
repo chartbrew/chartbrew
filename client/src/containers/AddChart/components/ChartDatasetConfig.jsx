@@ -206,7 +206,7 @@ function ChartDatasetConfig(props) {
       });
 
       // Add additional colors if needed
-      if (newFillColor.length < dataItems.labels.length) {
+      if (dataItems?.labels && newFillColor.length < dataItems.labels.length) {
         for (let i = newFillColor.length; i < dataItems.labels.length; i++) {
           newFillColor.push(Object.values(chartColors)[i % Object.values(chartColors).length].hex);
         }
@@ -643,7 +643,7 @@ function ChartDatasetConfig(props) {
           <>
             <Spacer y={2} />
             <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
-              {dataItems.labels?.map((label, index) => (
+              {dataItems?.labels?.map((label, index) => (
                 <Row key={label} justify={"space-between"}>
                   <Text size="sm">{label}</Text>
 
