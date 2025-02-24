@@ -213,7 +213,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
             />
             <div className="absolute top-1/2 left-0 right-0 text-center">
               <div className="text-3xl font-bold text-default-800">
-                {value.toLocaleString()}
+                {value?.toLocaleString()}
               </div>
               <div className="text-sm text-default-500">
                 {label}
@@ -227,7 +227,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
         <div className="w-full h-full flex flex-row items-center justify-center mx-auto gap-4">
           <div className="flex flex-col items-center justify-center">
             <div className="text-3xl font-bold text-default-800">
-              {value.toLocaleString()}
+              {value?.toLocaleString()}
             </div>
             <div className="text-sm text-default-500">
               {label}

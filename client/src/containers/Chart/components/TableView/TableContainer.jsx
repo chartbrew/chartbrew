@@ -88,7 +88,7 @@ function TableContainer(props) {
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <Text>{`Total ${activeDataset.configuration.sum}:`}</Text>
             <Spacer x={0.6} />
-            <Text b>{totalValue.toLocaleString()}</Text>
+            <Text b>{totalValue?.toLocaleString()}</Text>
           </div>
         )}
       </Row>

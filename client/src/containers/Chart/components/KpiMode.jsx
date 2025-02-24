@@ -50,7 +50,7 @@ function KpiMode(props) {
     }
 
     if (`${parseFloat(finalData)}` === `${finalData}`) {
-      return parseFloat(finalData).toLocaleString();
+      return parseFloat(finalData)?.toLocaleString();
     }
 
     return `${finalData}`;
