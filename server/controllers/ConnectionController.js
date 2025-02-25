@@ -291,20 +291,23 @@ class ConnectionController {
   }
 
   testRequest(data, extras) {
-    let certificates;
+    const certificates = {};
     if (extras?.files?.length > 0) {
-      certificates = {};
       extras.files.forEach((file) => {
-        // Assuming the field names in the form match these keys
+        // Handle SSL certificates
         if (file.fieldname === "sslCa" || file.fieldname === "sslCert" || file.fieldname === "sslKey") {
           certificates[file.fieldname] = file.path; // Use the temporary file path for testing
+        }
+        // Handle SSH private key
+        if (file.fieldname === "sshPrivateKey") {
+          certificates.sshPrivateKey = file.path;
         }
       });
     }
 
     let connectionParams = { ...data };
 
-    if (certificates) {
+    if (Object.keys(certificates).length > 0) {
       connectionParams = { ...connectionParams, ...certificates };
     }
 
@@ -377,8 +380,9 @@ class ConnectionController {
   }
 
   async testMysql(data) {
+    let sqlDb;
     try {
-      const sqlDb = await externalDbConnection(data);
+      sqlDb = await externalDbConnection(data);
       const schema = await this.getSchema(sqlDb);
 
       return Promise.resolve({
@@ -387,6 +391,11 @@ class ConnectionController {
       });
     } catch (err) {
       return Promise.reject(err.message || err);
+    } finally {
+      // Close SSH tunnel if it exists
+      if (sqlDb && sqlDb.sshTunnel) {
+        sqlDb.sshTunnel.close();
+      }
     }
   }
 
@@ -654,34 +663,41 @@ class ConnectionController {
       if (drCache) return drCache;
     }
 
-    return this.findById(id)
-      .then(async (connection) => {
-        const dbConnection = await externalDbConnection(connection);
-        const schema = await this.getSchema(dbConnection);
-        db.Connection.update({ schema }, { where: { id } });
+    let dbConnection = null;
 
-        return dbConnection;
-      })
-      .then((dbConnection) => {
-        return dbConnection.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
-      })
-      .then(async (results) => {
-        // cache the data for later use
-        const dataToCache = {
-          dataRequest,
-          responseData: {
-            data: results,
-          },
-          connection_id: id,
-        };
+    try {
+      const connection = await this.findById(id);
+      dbConnection = await externalDbConnection(connection);
 
-        await drCacheController.create(dataRequest.id, dataToCache);
+      // Update schema in the background
+      this.getSchema(dbConnection)
+        .then((schema) => {
+          db.Connection.update({ schema }, { where: { id } });
+        });
 
-        return new Promise((resolve) => resolve(dataToCache));
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+      const results = await dbConnection
+        .query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
+
+      // cache the data for later use
+      const dataToCache = {
+        dataRequest,
+        responseData: {
+          data: results,
+        },
+        connection_id: id,
+      };
+
+      await drCacheController.create(dataRequest.id, dataToCache);
+
+      return dataToCache;
+    } catch (error) {
+      return Promise.reject(error);
+    } finally {
+      // Close SSH tunnel if it exists
+      if (dbConnection && dbConnection.sshTunnel) {
+        dbConnection.sshTunnel.close();
+      }
+    }
   }
 
   async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "") {

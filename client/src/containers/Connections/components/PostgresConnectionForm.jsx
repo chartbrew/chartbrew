@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
+  Alert,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDispatch } from "react-redux";
@@ -65,6 +66,12 @@ function PostgresConnectionForm(props) {
     sslCert: null,
     sslKey: null,
   });
+  const [sshFiles, setSshFiles] = useState({
+    sshPrivateKey: null,
+  });
+  const [sshFilesErrors, setSshFilesErrors] = useState({
+    sshPrivateKey: null,
+  });
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
@@ -96,11 +103,19 @@ function PostgresConnectionForm(props) {
     const newTestResult = {};
     let response;
     
-    if (data.ssl && sslCerts.sslCa) {
+    const files = {
+      ...sslCerts
+    };
+    
+    if (data.useSsh && sshFiles.sshPrivateKey) {
+      files.sshPrivateKey = sshFiles.sshPrivateKey;
+    }
+    
+    if ((data.ssl && sslCerts.sslCa) || (data.useSsh && sshFiles.sshPrivateKey)) {
       response = await dispatch(testRequestWithFiles({
         team_id: params.teamId,
         connection: data,
-        files: sslCerts
+        files
       }));
     } else {
       response = await dispatch(testRequest({ team_id: params.teamId, connection: data }));
@@ -141,6 +156,28 @@ function PostgresConnectionForm(props) {
       }, 100);
       return;
     }
+    
+    // Validate SSH tunnel settings if enabled
+    if (connection.useSsh) {
+      if (!connection.sshHost) {
+        setTimeout(() => {
+          setErrors({ ...errors, sshHost: "Please enter the SSH host" });
+        }, 100);
+        return;
+      }
+      if (!connection.sshUsername) {
+        setTimeout(() => {
+          setErrors({ ...errors, sshUsername: "Please enter the SSH username" });
+        }, 100);
+        return;
+      }
+      if (!connection.sshPassword && !sshFiles.sshPrivateKey) {
+        setTimeout(() => {
+          setErrors({ ...errors, sshPassword: "Please provide either a password or a private key" });
+        }, 100);
+        return;
+      }
+    }
 
     const newConnection = connection;
     // Clean the connection string if the form style is Form
@@ -159,7 +196,16 @@ function PostgresConnectionForm(props) {
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(newConnection, sslCerts)
+        
+        const files = {
+          ...sslCerts
+        };
+        
+        if (connection.useSsh && sshFiles.sshPrivateKey) {
+          files.sshPrivateKey = sshFiles.sshPrivateKey;
+        }
+        
+        onComplete(newConnection, files)
           .then(() => setLoading(false))
           .catch(() => setLoading(false));
       }
@@ -212,6 +258,22 @@ function PostgresConnectionForm(props) {
       return;
     }
     setSslCerts({ ...sslCerts, sslKey: file });
+  };
+  
+  const _selectSshPrivateKey = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Reset errors
+    setSshFilesErrors({ ...sshFilesErrors, sshPrivateKey: null });
+    
+    // Validate file size (32KB max for SSH keys)
+    if (file.size > 32768) {
+      setSshFilesErrors({ ...sshFilesErrors, sshPrivateKey: "File size is too large. Max size is 32KB" });
+      return;
+    }
+    
+    setSshFiles({ ...sshFiles, sshPrivateKey: file });
   };
 
   const _onChangeSSL = (checked) => {
@@ -505,6 +567,178 @@ function PostgresConnectionForm(props) {
                 {"Certificates are accepted in .crt, .pem, and .key formats"}
               </span>
             </Row>
+          </>
+        )}
+
+        <Spacer y={4} />
+        <Row align="center">
+          <Switch
+            label="SSH Tunnel"
+            isSelected={connection.useSsh || false}
+            checked={connection.useSsh || false}
+            onChange={(e) => setConnection({ ...connection, useSsh: e.target.checked })}
+            size="sm"
+          >
+            <div className="flex items-center gap-2">
+              {"Use SSH Tunnel"}
+              <Chip color="secondary" size="sm" radius="sm" variant="flat">{"New!"}</Chip>
+            </div>
+          </Switch>
+        </Row>
+        {connection.useSsh && (
+          <>
+            <Spacer y={2} />
+            <div className="grid grid-cols-12 gap-2">
+              <div className="sm:col-span-12 md:col-span-8">
+                <Input
+                  label="SSH Host"
+                  placeholder="ssh.example.com"
+                  value={connection.sshHost || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshHost: e.target.value });
+                  }}
+                  color={errors.sshHost ? "danger" : "default"}
+                  description={errors.sshHost}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+              <div className="sm:col-span-12 md:col-span-4">
+                <Input
+                  label="SSH Port"
+                  placeholder="22"
+                  value={connection.sshPort || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshPort: e.target.value });
+                  }}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+              <div className="sm:col-span-12 md:col-span-6">
+                <Input
+                  label="SSH Username"
+                  placeholder="username"
+                  value={connection.sshUsername || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshUsername: e.target.value });
+                  }}
+                  color={errors.sshUsername ? "danger" : "default"}
+                  description={errors.sshUsername}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+              <div className="sm:col-span-12 md:col-span-6">
+                <Input
+                  type="password"
+                  label="SSH Password"
+                  placeholder="Leave empty if using private key"
+                  value={connection.sshPassword || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshPassword: e.target.value });
+                  }}
+                  color={errors.sshPassword ? "danger" : "default"}
+                  description={errors.sshPassword}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+            </div>
+            <Spacer y={2} />
+            <Row align="center">
+              <input
+                type="file"
+                id="sshPrivateKeyInput"
+                style={{ display: "none" }}
+                onChange={_selectSshPrivateKey}
+              />
+              <Button
+                variant="ghost"
+                startContent={<LuUpload />}
+                onClick={() => document.getElementById("sshPrivateKeyInput").click()}
+              >
+                {"SSH Private Key"}
+              </Button>
+              <Spacer x={2} />
+              {sshFiles.sshPrivateKey && (
+                <span className="text-sm">{sshFiles.sshPrivateKey.name}</span>
+              )}
+              {sshFilesErrors.sshPrivateKey && (
+                <span className="text-sm text-danger">
+                  {sshFilesErrors.sshPrivateKey}
+                </span>
+              )}
+              {!sshFilesErrors.sshPrivateKey && connection.sshPrivateKey && (
+                <LuCircleCheck className="text-success" size={20} />
+              )}
+            </Row>
+            <Spacer y={2} />
+            <Row align="center">
+              <Input
+                type="password"
+                label="Private Key Passphrase"
+                placeholder="Leave empty if not needed"
+                value={connection.sshPassphrase || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, sshPassphrase: e.target.value });
+                }}
+                variant="bordered"
+                className="w-full md:w-1/2"
+              />
+            </Row>
+            <Spacer y={2} />
+            <div className="grid grid-cols-12 gap-2">
+              <div className="sm:col-span-12 md:col-span-8">
+                <Input
+                  label="Jump Host (Bastion Server)"
+                  placeholder="bastion.example.com (optional)"
+                  value={connection.sshJumpHost || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshJumpHost: e.target.value });
+                  }}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+              <div className="sm:col-span-12 md:col-span-4">
+                <Input
+                  label="Jump Host Port"
+                  placeholder="22"
+                  value={connection.sshJumpPort || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshJumpPort: e.target.value });
+                  }}
+                  variant="bordered"
+                  fullWidth
+                />
+              </div>
+            </div>
+            <Spacer y={2} />
+            <div>
+              <Alert
+                title="Something not working?"
+                color="default"
+                variant="flat"
+              >
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm">
+                    {"SSH tunneling is a new feature and some things might not work as expected. If you're having trouble, please contact support."}
+                  </span>
+                  <div>
+                    <Button
+                      variant="bordered"
+                      size="sm"
+                      as={"a"}
+                      href="mailto:support@chartbrew.com"
+                      target="_blank"
+                    >
+                      {"Contact support"}
+                    </Button>
+                  </div>
+                </div>
+              </Alert>
+            </div>
           </>
         )}
 
