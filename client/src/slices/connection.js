@@ -129,10 +129,21 @@ export const testRequestWithFiles = createAsyncThunk(
     const url = `${API_HOST}/team/${team_id}/connections/${connection.type}/test/files`;
     const formData = new FormData();
     formData.append("connection", JSON.stringify(connection));
-    if (files) {
+    
+    // Add SSL certificate files if they exist
+    if (files.sslCa) {
       formData.append("sslCa", files.sslCa);
+    }
+    if (files.sslCert) {
       formData.append("sslCert", files.sslCert);
+    }
+    if (files.sslKey) {
       formData.append("sslKey", files.sslKey);
+    }
+    
+    // Add SSH private key file if it exists
+    if (files.sshPrivateKey) {
+      formData.append("sshPrivateKey", files.sshPrivateKey);
     }
 
     const headers = new Headers({

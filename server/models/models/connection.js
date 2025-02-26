@@ -283,6 +283,34 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    useSsh: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    sshHost: {
+      type: DataTypes.STRING,
+    },
+    sshPort: {
+      type: DataTypes.INTEGER,
+    },
+    sshUsername: {
+      type: DataTypes.STRING,
+    },
+    sshPassword: {
+      type: DataTypes.STRING,
+    },
+    sshPrivateKey: {
+      type: DataTypes.STRING,
+    },
+    sshPassphrase: {
+      type: DataTypes.STRING,
+    },
+    sshJumpHost: {
+      type: DataTypes.STRING,
+    },
+    sshJumpPort: {
+      type: DataTypes.INTEGER,
+    },
   }, {
     freezeTableName: true,
   });

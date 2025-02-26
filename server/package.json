@@ -66,6 +66,8 @@
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "sequelize": "^6.3.5",
+    "ssh2": "^1.16.0",
+    "tunnel-ssh": "^5.2.0",
     "simplecrypt": "^0.1.0",
     "umzug": "^3.7.0",
     "uninstall": "*",
