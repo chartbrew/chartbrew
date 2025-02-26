@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 const fs = require("fs");
 const { createTunnel } = require("tunnel-ssh");
+const { decryptFileSync } = require("./fileEncryption");
 
 // Create SSH tunnel function
 const createSshTunnel = async (sshConfig, dbConfig) => {
@@ -22,9 +23,14 @@ const createSshTunnel = async (sshConfig, dbConfig) => {
   };
 
   if (sshConfig.privateKey) {
-    sshOptions.privateKey = fs.readFileSync(sshConfig.privateKey);
-    if (sshConfig.passphrase) {
-      sshOptions.passphrase = sshConfig.passphrase;
+    try {
+      sshOptions.privateKey = decryptFileSync(sshConfig.privateKey);
+      if (sshConfig.passphrase) {
+        sshOptions.passphrase = sshConfig.passphrase;
+      }
+    } catch (error) {
+      // If decryption fails, try reading the file directly (for backward compatibility)
+      sshOptions.privateKey = fs.readFileSync(sshConfig.privateKey);
     }
   } else if (sshConfig.password) {
     sshOptions.password = sshConfig.password;
@@ -101,7 +107,7 @@ module.exports = async (connection) => {
         sslOptions = {
           require: true,
           rejectUnauthorized: true,
-          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
+          ca: connection.sslCa ? decryptFileSync(connection.sslCa) : undefined,
         };
         break;
 
@@ -109,9 +115,9 @@ module.exports = async (connection) => {
         sslOptions = {
           require: true,
           rejectUnauthorized: true,
-          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
-          key: connection.sslKey ? fs.readFileSync(connection.sslKey) : undefined,
-          cert: connection.sslCert ? fs.readFileSync(connection.sslCert) : undefined,
+          ca: connection.sslCa ? decryptFileSync(connection.sslCa) : undefined,
+          key: connection.sslKey ? decryptFileSync(connection.sslKey) : undefined,
+          cert: connection.sslCert ? decryptFileSync(connection.sslCert) : undefined,
         };
         break;
       case "prefer":

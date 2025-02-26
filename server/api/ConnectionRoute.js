@@ -6,6 +6,7 @@ const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const { encryptFile } = require("../modules/fileEncryption");
 
 const upload = multer({
   dest: ".connectionFiles/",
@@ -281,11 +282,19 @@ module.exports = (app) => {
 
     // update the fields with the paths of the files
     const files = {};
+    const encryptionPromises = [];
+
     req.files.forEach((file) => {
       files[file.fieldname] = file.path;
+      // Encrypt the file
+      encryptionPromises.push(encryptFile(file.path));
     });
 
-    return connectionController.update(req.params.connection_id, files)
+    // Wait for all files to be encrypted before updating the connection
+    Promise.all(encryptionPromises)
+      .then(() => {
+        return connectionController.update(req.params.connection_id, files);
+      })
       .then((connection) => {
         return res.status(200).send(connection);
       })
@@ -380,7 +389,19 @@ module.exports = (app) => {
       return res.status(400).send("Invalid connection parameters");
     }
 
-    return connectionController.testRequest(connectionParams, { files: req.files })
+    const encryptionPromises = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        // Encrypt the file
+        encryptionPromises.push(encryptFile(file.path));
+      });
+    }
+
+    // Wait for all files to be encrypted before testing the connection
+    Promise.all(encryptionPromises)
+      .then(() => {
+        return connectionController.testRequest(connectionParams, { files: req.files });
+      })
       .then((response) => {
         // if done, remove the files
         try {

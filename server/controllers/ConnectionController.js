@@ -243,6 +243,9 @@ class ConnectionController {
       if (connection.sslKey) {
         fs.unlink(connection.sslKey, () => {});
       }
+      if (connection.sshPrivateKey) {
+        fs.unlink(connection.sshPrivateKey, () => {});
+      }
     } catch (e) {
       //
     }
@@ -293,16 +296,20 @@ class ConnectionController {
   testRequest(data, extras) {
     const certificates = {};
     if (extras?.files?.length > 0) {
-      extras.files.forEach((file) => {
-        // Handle SSL certificates
-        if (file.fieldname === "sslCa" || file.fieldname === "sslCert" || file.fieldname === "sslKey") {
-          certificates[file.fieldname] = file.path; // Use the temporary file path for testing
-        }
-        // Handle SSH private key
-        if (file.fieldname === "sshPrivateKey") {
-          certificates.sshPrivateKey = file.path;
-        }
-      });
+      try {
+        extras.files.forEach((file) => {
+          // Handle SSL certificates
+          if (file.fieldname === "sslCa" || file.fieldname === "sslCert" || file.fieldname === "sslKey") {
+            certificates[file.fieldname] = file.path; // Use the temporary file path for testing
+          }
+          // Handle SSH private key
+          if (file.fieldname === "sshPrivateKey") {
+            certificates.sshPrivateKey = file.path;
+          }
+        });
+      } catch (error) {
+        return Promise.reject(new Error(`Error processing certificate files: ${error.message}`));
+      }
     }
 
     let connectionParams = { ...data };
