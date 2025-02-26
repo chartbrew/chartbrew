@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
@@ -69,13 +69,17 @@ function PostgresConnectionForm(props) {
   const { isDark } = useTheme();
   const dispatch = useDispatch();
   const params = useParams();
+  const initRef = useRef(false);
 
   useEffect(() => {
-    _init();
-  }, []);
+    if (editConnection?.id && !initRef.current) {
+      initRef.current = true;
+      _init();
+    }
+  }, [editConnection]);
 
   useEffect(() => {
-    if (connection.subType !== subType) {
+    if (connection.subType !== subType && !editConnection) {
       setConnection({ ...connection, subType });
     }
   }, [subType]);
