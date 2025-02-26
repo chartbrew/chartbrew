@@ -291,7 +291,7 @@ module.exports = (app) => {
     });
 
     // Wait for all files to be encrypted before updating the connection
-    Promise.all(encryptionPromises)
+    return Promise.all(encryptionPromises)
       .then(() => {
         return connectionController.update(req.params.connection_id, files);
       })
@@ -398,7 +398,7 @@ module.exports = (app) => {
     }
 
     // Wait for all files to be encrypted before testing the connection
-    Promise.all(encryptionPromises)
+    return Promise.all(encryptionPromises)
       .then(() => {
         return connectionController.testRequest(connectionParams, { files: req.files });
       })
