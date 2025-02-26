@@ -1,12 +1,16 @@
-# Contributions guide to ChartBrew
+# Contributions guide to Chartbrew
 
-ChartBrew is currently maintained by:
+Chartbrew is currently maintained by:
 
 * [Razvan Ilin](https://github.com/razvanilin)
 
-Everybody is welcome to contribute to ChartBrew and the core team will review any open PRs before merging with the codebase. Please follow this guide to ensure that the process is as smooth as possible. Any active contributor can become part of the core maintenance team if they wish so.
+Everybody is welcome to contribute to Chartbrew and the core team will review any open PRs before merging with the codebase. Please follow this guide to ensure that the process is as smooth as possible. Any active contributor can become part of the core maintenance team if they wish so.
 
-ChartBrew is an open-source project under the MIT license. This is the official repository and it contains all the work done by contributors.
+Chartbrew is an open-source project under the MIT license. This is the official repository and it contains all the work done by contributors.
+
+## Contributor License Agreement
+
+Getting sued is not fun, so we ask everyone to sign a [Contributor License Agreement](https://github.com/chartbrew/chartbrew/blob/master/CLA.md) before we merge the pull request. We automated this process and when you create a new pull request, a bot will ask you to agree to the CLA in the comment section.
 
 ## Contribution preparation
 
