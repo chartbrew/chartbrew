@@ -1,7 +1,73 @@
 const Sequelize = require("sequelize");
 const fs = require("fs");
+const { createTunnel } = require("tunnel-ssh");
+const { decryptFileSync } = require("./fileEncryption");
 
-module.exports = (connection) => {
+// Create SSH tunnel function
+const createSshTunnel = async (sshConfig, dbConfig) => {
+  const tunnelOptions = {
+    autoClose: true,
+    keepAlive: true,
+    debug: true
+  };
+
+  const serverOptions = {
+    host: "127.0.0.1",
+    port: 0 // Let OS assign a local port dynamically
+  };
+
+  const sshOptions = {
+    host: sshConfig.host,
+    port: sshConfig.port || 22,
+    username: sshConfig.username
+  };
+
+  if (sshConfig.privateKey) {
+    try {
+      sshOptions.privateKey = decryptFileSync(sshConfig.privateKey);
+      if (sshConfig.passphrase) {
+        sshOptions.passphrase = sshConfig.passphrase;
+      }
+    } catch (error) {
+      // If decryption fails, try reading the file directly (for backward compatibility)
+      sshOptions.privateKey = fs.readFileSync(sshConfig.privateKey);
+    }
+  } else if (sshConfig.password) {
+    sshOptions.password = sshConfig.password;
+  }
+
+  const forwardOptions = {
+    dstAddr: dbConfig.host, // Remote DB host
+    dstPort: dbConfig.port, // Remote DB port (from user settings)
+    srcAddr: "127.0.0.1", // Local forwarded address
+    srcPort: 0 // OS will assign a free port dynamically
+  };
+
+  try {
+    const [server] = await createTunnel(
+      tunnelOptions,
+      serverOptions,
+      sshOptions,
+      forwardOptions
+    );
+
+    server.on("error", (err) => {
+      throw err;
+    });
+
+    const assignedPort = server.address().port;
+
+    return {
+      server,
+      port: assignedPort // The port we must use in Sequelize
+    };
+  } catch (error) {
+    console.error("SSH tunnel error:", error); // eslint-disable-line no-console
+    throw error;
+  }
+};
+
+module.exports = async (connection) => {
   const name = connection.dbName;
   const username = connection.username || "";
   const password = connection.password || "";
@@ -10,6 +76,7 @@ module.exports = (connection) => {
   const dialect = connection.type;
 
   let sequelize;
+  let sshTunnel = null;
 
   const connectionConfig = {
     host,
@@ -40,7 +107,7 @@ module.exports = (connection) => {
         sslOptions = {
           require: true,
           rejectUnauthorized: true,
-          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
+          ca: connection.sslCa ? decryptFileSync(connection.sslCa) : undefined,
         };
         break;
 
@@ -48,9 +115,9 @@ module.exports = (connection) => {
         sslOptions = {
           require: true,
           rejectUnauthorized: true,
-          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
-          key: connection.sslKey ? fs.readFileSync(connection.sslKey) : undefined,
-          cert: connection.sslCert ? fs.readFileSync(connection.sslCert) : undefined,
+          ca: connection.sslCa ? decryptFileSync(connection.sslCa) : undefined,
+          key: connection.sslKey ? decryptFileSync(connection.sslKey) : undefined,
+          cert: connection.sslCert ? decryptFileSync(connection.sslCert) : undefined,
         };
         break;
       case "prefer":
@@ -71,6 +138,33 @@ module.exports = (connection) => {
           rejectUnauthorized: false,
         };
         break;
+    }
+  }
+
+  // Setup SSH tunnel if enabled
+  if (connection.useSsh) {
+    try {
+      const sshConfig = {
+        host: connection.sshHost,
+        port: parseInt(connection.sshPort, 10) || 22,
+        username: connection.sshUsername,
+        password: connection.sshPassword,
+        privateKey: connection.sshPrivateKey,
+        passphrase: connection.sshPassphrase,
+        jumpHost: connection.sshJumpHost,
+        jumpPort: connection.sshJumpPort
+      };
+
+      const dbConfig = {
+        host,
+        port
+      };
+
+      // Create SSH tunnel
+      sshTunnel = await createSshTunnel(sshConfig, dbConfig);
+    } catch (error) {
+      console.error("Failed to establish SSH tunnel:", error); // eslint-disable-line no-console
+      throw new Error(`SSH tunnel error: ${error.message}`);
     }
   }
 
@@ -116,15 +210,24 @@ module.exports = (connection) => {
         ssl: sslOptions,
       };
     }
+
     sequelize = new Sequelize(name, username, password, connectionConfig);
   }
 
-  return sequelize
-    .authenticate()
-    .then(() => {
-      return new Promise((resolve) => resolve(sequelize));
-    })
-    .catch((err) => {
-      return new Promise((resolve, reject) => reject(err));
-    });
+  try {
+    await sequelize.authenticate();
+
+    // Add the SSH tunnel to the sequelize instance so we can close it later
+    if (sshTunnel) {
+      sequelize.sshTunnel = sshTunnel.server;
+    }
+
+    return sequelize;
+  } catch (err) {
+    // Close SSH tunnel if it exists
+    if (sshTunnel && sshTunnel.server) {
+      sshTunnel.server.close();
+    }
+    throw err;
+  }
 };
