@@ -1178,7 +1178,11 @@ class ConnectionController {
   }
 
   async updateMongoSchema(connectionId) {
-    await updateMongoSchema(connectionId);
+    await updateMongoSchema({
+      data: {
+        connection_id: connectionId,
+      },
+    });
 
     return this.findById(connectionId);
   }

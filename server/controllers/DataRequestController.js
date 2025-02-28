@@ -3,6 +3,7 @@ const drCacheController = require("./DataRequestCacheController");
 const db = require("../models/models");
 const { generateSqlQuery } = require("../modules/ai/generateSqlQuery");
 const { generateMongoQuery } = require("../modules/ai/generateMongoQuery");
+const externalDbConnection = require("../modules/externalDbConnection");
 
 class RequestController {
   constructor() {
@@ -208,24 +209,37 @@ class RequestController {
     return this.findById(id)
       .then(async (dataRequest) => {
         const connection = await db.Connection.findByPk(dataRequest.Connection.id);
-        if (!connection?.schema) {
+        let schema = connection?.schema;
+        if (!schema) {
+          if (connection.type === "mongodb") {
+            const updatedConnection = await this.connectionController
+              .updateMongoSchema(connection.id);
+            schema = updatedConnection?.schema;
+          } else if (connection.type === "postgres" || connection.type === "mysql") {
+            const dbConnection = await externalDbConnection(connection);
+            schema = await this.connectionController.getSchema(dbConnection);
+          }
+        }
+
+        if (!schema) {
           return Promise.reject(new Error("No schema found. Please test your connection first."));
         }
 
         let aiResponse;
         if (connection.type === "mongodb") {
           aiResponse = await generateMongoQuery(
-            connection.schema, question, conversationHistory, currentQuery
+            schema, question, conversationHistory, currentQuery
           );
         } else {
           aiResponse = await generateSqlQuery(
-            connection.schema, question, conversationHistory, currentQuery
+            schema, question, conversationHistory, currentQuery
           );
         }
 
         return aiResponse;
       })
       .catch((error) => {
+        console.log("error", error);
         return Promise.reject(error);
       });
   }
