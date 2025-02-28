@@ -4,6 +4,7 @@ export default [{
 }, {
   type: "mongodb",
   name: "MongoDB",
+  ai: true,
 }, {
   type: "postgres",
   name: "PostgreSQL",

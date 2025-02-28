@@ -551,6 +551,7 @@ function MongoConnectionForm(props) {
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
+                variant="flat"
               >
                 {`Status code: ${testResult.status}`}
               </Chip>
@@ -560,7 +561,6 @@ function MongoConnectionForm(props) {
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
               style={{ borderRadius: 10 }}
-              height="150px"
               width="none"
               value={testResult.body || "Hello"}
               readOnly

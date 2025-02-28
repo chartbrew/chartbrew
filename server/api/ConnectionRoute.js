@@ -273,6 +273,23 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
+  ** Route to trigger a MongoDB schema update for a connection
+  */
+  app.post("/team/:team_id/connections/:connection_id/update-schema", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return connectionController.updateMongoSchema(req.params.connection_id)
+      .then((result) => {
+        return res.status(200).send(result);
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // -----------------------------------------
+
+  /*
   ** Route to add files to a connection
   */
   app.post("/team/:team_id/connections/:connection_id/files", verifyToken, checkPermissions("updateOwn"), upload.any(), (req, res) => {

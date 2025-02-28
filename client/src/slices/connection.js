@@ -211,6 +211,25 @@ export const duplicateConnection = createAsyncThunk(
   }
 );
 
+export const updateMongoSchema = createAsyncThunk(
+  "connection/updateMongoSchema",
+  async ({ team_id, connection_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/connections/${connection_id}/update-schema`;
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+    const response = await fetch(url, { headers, method: "POST" });
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
 export const connectionSlice = createSlice({
   name: "dataset",
   initialState,
@@ -344,6 +363,24 @@ export const connectionSlice = createSlice({
       state.data = [action.payload, ...state.data];
     })
     builder.addCase(duplicateConnection.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    }); 
+
+    // updateMongoSchema
+    builder.addCase(updateMongoSchema.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(updateMongoSchema.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = state.data.map((connection) => {
+        if (connection.id === action.payload.id) {
+          return action.payload;
+        }
+        return connection;
+      });
+    })
+    builder.addCase(updateMongoSchema.rejected, (state) => {
       state.loading = false;
       state.error = true;
     });
