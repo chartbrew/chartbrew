@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import PropTypes from "prop-types";
 import { Spacer, Textarea, Button, Alert } from "@heroui/react";
 import toast from "react-hot-toast";
@@ -12,8 +12,29 @@ function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
   const [askAiLoading, setAskAiLoading] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [conversation, setConversation] = useState([]);
+  const [typedText, setTypedText] = useState("");
+  const responseText = "I tried to generate a query based on your question. If it's not what you want, you can ask for clarification or try a different question.";
 
   const params = useParams();
+
+  useEffect(() => {
+    if (!askAiLoading && conversation.length > 0) {
+      setTypedText("");
+      let i = 0;
+      const interval = setInterval(() => {
+        setTypedText((prev) => {
+          if (i >= responseText.length) {
+            clearInterval(interval);
+            return prev;
+          }
+          i++;
+          return responseText.slice(0, i);
+        });
+      }, 20);
+
+      return () => clearInterval(interval);
+    }
+  }, [askAiLoading, conversation]);
 
   const _onAskAi = () => {
     if (!aiQuestion) return;
@@ -86,14 +107,14 @@ function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
             icon={<LuBrainCircuit />}
             variant="flat"
             color="primary"
-              description="Hi! I can help you write SQL queries. Ask me a question about your data and I'll generate a query for you."
+            description="Hi! I can help you write SQL queries. Ask me a question about your data and I'll generate a query for you."
           />
         ) : (
           <Alert
             icon={<LuBrainCircuit />}
             color="primary"
             size="sm"
-            description="I tried to generate a query based on your question. If it's not what you want, you can ask for clarification or try a different question."
+            description={typedText}
           />
         )}
       </div>

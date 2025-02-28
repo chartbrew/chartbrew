@@ -27,7 +27,7 @@ const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
-const setUpQueues = require("./setUpQueues");
+const { setUpQueues } = require("./setUpQueues");
 
 // check if the encryption keys are valid 32-byte hex strings
 checkEncryptionKeys();

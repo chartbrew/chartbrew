@@ -5,6 +5,7 @@ const querystring = require("querystring");
 const moment = require("moment");
 const _ = require("lodash");
 const fs = require("fs");
+const { Queue } = require("bullmq");
 
 const { ObjectId } = mongoose.Types;
 
@@ -21,6 +22,8 @@ const determineType = require("../modules/determineType");
 const drCacheController = require("./DataRequestCacheController");
 const RealtimeDatabase = require("../connections/RealtimeDatabase");
 const CustomerioConnection = require("../connections/CustomerioConnection");
+const { getQueueOptions } = require("../redisConnection");
+const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -183,6 +186,11 @@ class ConnectionController {
 
     return db.Connection.create(dataToSave)
       .then((connection) => {
+        if (connection.type === "mongodb") {
+          // update the schema in the background
+          this.addMongoSchemaUpdateJob(connection.id);
+        }
+
         return connection;
       })
       .catch((error) => {
@@ -653,6 +661,13 @@ class ConnectionController {
 
         // close the mongodb connection
         mongoConnection.close();
+
+        // Trigger schema update in the background
+        try {
+          this.addMongoSchemaUpdateJob(id);
+        } catch (error) {
+          // do nothing
+        }
 
         return Promise.resolve(dataToCache);
       })
@@ -1125,6 +1140,47 @@ class ConnectionController {
 
     const newConnection = await db.Connection.create(connectionToSave);
     return newConnection;
+  }
+
+  async addMongoSchemaUpdateJob(connectionId) {
+    try {
+      const connection = await this.findById(connectionId);
+
+      if (!connection) {
+        return Promise.reject(new Error("Connection not found"));
+      }
+
+      if (connection.type !== "mongodb") {
+        return Promise.reject(new Error("Connection is not a MongoDB connection"));
+      }
+
+      // Get the queue from the global scope
+      const queue = new Queue("updateMongoDBSchemaQueue", getQueueOptions());
+
+      // Add a job to update the schema
+      const job = await queue.add(`update-mongo-schema-${connectionId}`, { connection_id: connectionId }, {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+        removeOnComplete: true,
+        removeOnFail: 100,
+      });
+
+      // Wait for job to complete
+      const result = await job.waitUntilFinished(queue);
+
+      return result;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  async updateMongoSchema(connectionId) {
+    await updateMongoSchema(connectionId);
+
+    return this.findById(connectionId);
   }
 }
 

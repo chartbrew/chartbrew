@@ -8,7 +8,7 @@ import {
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuCheck, LuChevronRight, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuCheck, LuChevronRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -23,6 +23,7 @@ import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import QueryResultsTable from "./QueryResultsTable";
+import AiQuery from "../../Dataset/AiQuery";
 
 /*
   MongoDB query builder
@@ -122,6 +123,8 @@ function MongoQueryBuilder(props) {
   };
 
   const _onChangeQuery = (value) => {
+    setTestSuccess(false);
+    setTestError(false);
     setMongoRequest({ ...mongoRequest, query: value });
   };
 
@@ -252,42 +255,19 @@ function MongoQueryBuilder(props) {
             </div>
           </Row>
           <Spacer y={2} />
-          <Row align="center" className="mongobuilder-buttons-tut">
+          <div className="mongobuilder-buttons-tut flex flex-row items-center">
             <Button
               color={testSuccess ? "success" : testError ? "danger" : "primary"}
               endContent={<LuPlay />}
               onPress={() => _onTest()}
               isLoading={testingQuery}
+              fullWidth
             >
-              {!testSuccess && !testError && "Run query"}
-              {(testSuccess || testError) && "Run again"}
+              Run query
             </Button>
-            <Spacer x={0.5} />
-            <Button
-              variant="bordered"
-              endContent={<LuPlus />}
-              isLoading={savingQuery}
-              onPress={_onSaveQueryConfirmation}
-            >
-              {!savedQuery && "Save query"}
-              {savedQuery && "Save as new"}
-            </Button>
-            {savedQuery && (
-              <>
-                <Spacer x={0.5} />
-                <Button
-                  variant="bordered"
-                  startContent={<LuPencilLine />}
-                  onPress={_onUpdateSavedQuery}
-                  isLoading={updatingSavedQuery}
-                >
-                  {"Update the query"}
-                </Button>
-              </>
-            )}
-          </Row>
+          </div>
           <Spacer y={2} />
-          <Row align="center">
+          <div className="flex flex-row items-center">
             <Checkbox
               isSelected={!invalidateCache}
               onChange={() => setInvalidateCache(!invalidateCache)}
@@ -302,14 +282,50 @@ function MongoQueryBuilder(props) {
             >
               <div><LuInfo /></div>
             </Tooltip>
-          </Row>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <AiQuery
+              query={mongoRequest.query}
+              dataRequest={dataRequest}
+              onChangeQuery={_onChangeQuery}
+            />
+          </div>
+
           <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
           <Row>
             <Text b>Saved queries</Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
+          <div className="flex flex-row gap-2">
+            <Button
+              endContent={<LuPlus />}
+              isLoading={savingQuery}
+              onPress={_onSaveQueryConfirmation}
+              variant="flat"
+              size="sm"
+            >
+              {!savedQuery && "Save this query"}
+              {savedQuery && "Save as new"}
+            </Button>
+
+            {savedQuery && (
+              <>
+                <Button
+                  variant="flat"
+                  endContent={<LuCheck />}
+                  onPress={_onUpdateSavedQuery}
+                  isLoading={updatingSavedQuery}
+                  size="sm"
+                >
+                  {"Update current query"}
+                </Button>
+              </>
+            )}
+          </div>
+          <Spacer y={2} />
           <Row className="mongobuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
@@ -365,11 +381,10 @@ function MongoQueryBuilder(props) {
           <Row>
             <Popover>
               <PopoverTrigger>
-                <Link className="text-secondary flex items-center">
-                  <div className="flex flex-row items-center">
-                    <LuInfo />
-                    <Spacer x={0.5} />
-                    <Text>Are your queries slow? Read here</Text>
+                <Link className="text-secondary flex items-center cursor-pointer">
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="text-sm text-default-500">Are your queries slow? Read here</div>
+                    <LuInfo className="text-default-500" />
                   </div>
                 </Link>
               </PopoverTrigger>
@@ -384,7 +399,7 @@ function MongoQueryBuilder(props) {
                       href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center"
+                      className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
                       <Spacer x={0.5} />
@@ -400,7 +415,7 @@ function MongoQueryBuilder(props) {
                       href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center"
+                      className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
                       <Spacer x={0.2} />
@@ -416,7 +431,7 @@ function MongoQueryBuilder(props) {
                       href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center"
+                      className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
                       <Spacer x={1} />

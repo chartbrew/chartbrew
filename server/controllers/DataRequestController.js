@@ -2,6 +2,7 @@ const ConnectionController = require("./ConnectionController");
 const drCacheController = require("./DataRequestCacheController");
 const db = require("../models/models");
 const { generateSqlQuery } = require("../modules/ai/generateSqlQuery");
+const { generateMongoQuery } = require("../modules/ai/generateMongoQuery");
 
 class RequestController {
   constructor() {
@@ -211,9 +212,17 @@ class RequestController {
           return Promise.reject(new Error("No schema found. Please test your connection first."));
         }
 
-        const aiResponse = await generateSqlQuery(
-          connection.schema, question, conversationHistory, currentQuery
-        );
+        let aiResponse;
+        if (connection.type === "mongodb") {
+          aiResponse = await generateMongoQuery(
+            connection.schema, question, conversationHistory, currentQuery
+          );
+        } else {
+          aiResponse = await generateSqlQuery(
+            connection.schema, question, conversationHistory, currentQuery
+          );
+        }
+
         return aiResponse;
       })
       .catch((error) => {
