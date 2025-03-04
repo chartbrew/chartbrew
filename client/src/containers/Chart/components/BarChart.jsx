@@ -113,16 +113,7 @@ function BarChart(props) {
         tooltip: {
           ...tooltipPlugin,
           isCategoryChart,
-          mode: chart.horizontal ? "nearest" : "index",
-          intersect: chart.horizontal ? false : true,
         },
-      };
-
-      // Add hover configuration
-      newOptions.hover = {
-        mode: "nearest",
-        intersect: chart.horizontal ? false : true,
-        axis: "y"
       };
 
       return newOptions;

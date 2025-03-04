@@ -239,7 +239,6 @@ class RequestController {
         return aiResponse;
       })
       .catch((error) => {
-        console.log("error", error);
         return Promise.reject(error);
       });
   }
