@@ -200,6 +200,10 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    dashedLastPoint: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     freezeTableName: true,
   });

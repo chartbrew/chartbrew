@@ -444,6 +444,17 @@ function ChartSettings({ chart, onChange, onComplete }) {
             </Checkbox>
           </div>
         )}
+        {chart.type === "line" && (
+          <div>
+            <Checkbox
+              isSelected={chart.dashedLastPoint}
+              onValueChange={(selected) => onChange({ dashedLastPoint: selected })}
+              size="sm"
+            >
+              Dashed last point
+            </Checkbox>
+          </div>
+        )}
       </div>
 
       <Spacer y={4} />
