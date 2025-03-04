@@ -141,6 +141,25 @@ function LineChart(props) {
     };
   }, []);
 
+  const getChartData = () => {
+    if (!chart.chartData?.data) return null;
+
+    const newData = cloneDeep(chart.chartData.data);
+    if (chart.dashedLastPoint) {
+      newData.datasets = newData.datasets.map(dataset => ({
+        ...dataset,
+        segment: {
+          borderDash: (ctx) => {
+            const dataLength = dataset.data?.length || 0;
+            if (dataLength === 0) return [];
+            return ctx.p1DataIndex === dataLength - 1 ? [5, 5] : [];
+          }
+        }
+      }));
+    }
+    return newData;
+  };
+
   return (
     <>
       {chart.chartData && chart.chartData.data && (
@@ -152,7 +171,7 @@ function LineChart(props) {
             <div className={chart.mode !== "kpichart" ? "h-full" : "h-full pb-[50px]"}>
               <ChartErrorBoundary>
                 <Line
-                  data={chart.chartData.data}
+                  data={getChartData()}
                   options={{
                     ..._getChartOptions(),
                     plugins: {
