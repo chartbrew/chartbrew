@@ -4,6 +4,7 @@ const db = require("../models/models");
 const { generateSqlQuery } = require("../modules/ai/generateSqlQuery");
 const { generateMongoQuery } = require("../modules/ai/generateMongoQuery");
 const externalDbConnection = require("../modules/externalDbConnection");
+const { generateClickhouseQuery } = require("../modules/ai/generateClickhouseQuery");
 
 class RequestController {
   constructor() {
@@ -140,6 +141,8 @@ class RequestController {
           return this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache);
         } else if (connection.type === "customerio") {
           return this.connectionController.runCustomerio(connection, dataRequest, getCache);
+        } else if (connection.type === "clickhouse") {
+          return this.connectionController.runClickhouse(connection.id, dataRequest, getCache);
         } else {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
@@ -218,6 +221,8 @@ class RequestController {
           } else if (connection.type === "postgres" || connection.type === "mysql") {
             const dbConnection = await externalDbConnection(connection);
             schema = await this.connectionController.getSchema(dbConnection);
+          } else if (connection.type === "clickhouse") {
+            schema = await this.connectionController.getClickhouseSchema(connection.id);
           }
         }
 
@@ -228,6 +233,10 @@ class RequestController {
         let aiResponse;
         if (connection.type === "mongodb") {
           aiResponse = await generateMongoQuery(
+            schema, question, conversationHistory, currentQuery
+          );
+        } else if (connection.type === "clickhouse") {
+          aiResponse = await generateClickhouseQuery(
             schema, question, conversationHistory, currentQuery
           );
         } else {

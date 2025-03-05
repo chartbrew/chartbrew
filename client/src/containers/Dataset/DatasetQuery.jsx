@@ -25,6 +25,7 @@ import RealtimeDbBuilder from "../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../Connections/Customerio/CustomerioBuilder";
+import ClickHouseBuilder from "../Connections/ClickHouse/ClickHouseBuilder";
 import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
@@ -381,6 +382,15 @@ function DatasetQuery(props) {
                 )}
                 {selectedRequest.Connection?.type === "customerio" && selectedRequest.id === dr.id && (
                   <CustomerioBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
+                {selectedRequest.Connection?.type === "clickhouse" && selectedRequest.id === dr.id && (
+                  <ClickHouseBuilder
                     dataRequest={dr}
                     connection={dr.Connection}
                     onChangeRequest={_updateDataRequest}

@@ -44,5 +44,9 @@ export default [{
   type: "rdsMysql",
   name: "RDS MySQL",
   ai: true,
+}, {
+  type: "clickhouse",
+  name: "ClickHouse",
+  ai: true,
 }];
 

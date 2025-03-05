@@ -32,6 +32,8 @@ import supabaseLogo from "../assets/supabase-connection.webp";
 import supabaseDarkLogo from "../assets/Supabase-dark.png";
 import rdsLogo from "../assets/rds.png";
 import rdsDarkLogo from "../assets/rds-dark.png";
+import clickhouseLogo from "../assets/clickhouse-light.svg";
+import clickhouseDarkLogo from "../assets/clickhouse-dark.svg";
 
 export default (isDark) => ({
   mongodb: isDark ? mongoDarkLogo : mongoLogo,
@@ -54,4 +56,5 @@ export default (isDark) => ({
   supabaseapi: isDark ? supabaseDarkLogo : supabaseLogo,
   rdsPostgres: isDark ? rdsDarkLogo : rdsLogo,
   rdsMysql: isDark ? rdsDarkLogo : rdsLogo,
+  clickhouse: isDark ? clickhouseDarkLogo : clickhouseLogo,
 });

@@ -24,6 +24,7 @@ const RealtimeDatabase = require("../connections/RealtimeDatabase");
 const CustomerioConnection = require("../connections/CustomerioConnection");
 const { getQueueOptions } = require("../redisConnection");
 const updateMongoSchema = require("../crons/workers/updateMongoSchema");
+const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -340,6 +341,8 @@ class ConnectionController {
       return this.testGoogleAnalytics(connectionParams);
     } else if (data.type === "customerio") {
       return this.testCustomerio(connectionParams);
+    } else if (data.type === "clickhouse") {
+      return this.testClickhouse(connectionParams);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -412,6 +415,17 @@ class ConnectionController {
         sqlDb.sshTunnel.close();
       }
     }
+  }
+
+  async testClickhouse(data) {
+    const clickhouse = new ClickhouseConnector(data);
+    return clickhouse.getDatabaseSchema();
+  }
+
+  async getClickhouseSchema(connectionId) {
+    const connection = await db.Connection.findByPk(connectionId);
+    const clickhouse = new ClickhouseConnector(connection);
+    return clickhouse.getDatabaseSchema();
   }
 
   testFirebase(data) {
@@ -719,6 +733,33 @@ class ConnectionController {
       if (dbConnection && dbConnection.sshTunnel) {
         dbConnection.sshTunnel.close();
       }
+    }
+  }
+
+  async runClickhouse(id, dataRequest, getCache) {
+    if (getCache) {
+      const drCache = await checkAndGetCache(id, dataRequest);
+      if (drCache) return drCache;
+    }
+
+    try {
+      const connection = await this.findById(id);
+      const clickhouse = new ClickhouseConnector(connection);
+      const result = await clickhouse.query(dataRequest.query);
+
+      // cache the data for later use
+      const dataToCache = {
+        dataRequest,
+        responseData: {
+          data: result,
+        },
+        connection_id: id,
+      };
+
+      await drCacheController.create(dataRequest.id, dataToCache);
+      return dataToCache;
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 

@@ -273,6 +273,10 @@ class DatasetController {
             drPromises.push(
               this.connectionController.runMysqlOrPostgres(connection.id, dataRequest, getCache)
             );
+          } else if (connection.type === "clickhouse") {
+            drPromises.push(
+              this.connectionController.runClickhouse(connection.id, dataRequest, getCache)
+            );
           } else if (connection.type === "firestore") {
             drPromises.push(
               this.connectionController.runFirestore(connection.id, dataRequest, getCache)
