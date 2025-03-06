@@ -58,7 +58,7 @@ function ClickHouseBuilder(props) {
 
   useEffect(() => {
     if (dataRequest) {
-      setSqlRequest({ ...sqlRequest, ...dataRequest });
+      setSqlRequest({ ...sqlRequest, ...dataRequest, query: dataRequest.query || sqlRequest.query });
     }
   }, []);
 

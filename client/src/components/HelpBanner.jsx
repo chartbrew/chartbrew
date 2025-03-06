@@ -6,7 +6,6 @@ import {
 import { LuGraduationCap } from "react-icons/lu";
 
 import Row from "./Row";
-import Text from "./Text";
 
 const bannerData = {
   api: {
@@ -87,6 +86,12 @@ const bannerData = {
     url: "https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/",
     info: "5 min read",
   },
+  clickhouse: {
+    title: "Visualizing ClickHouse Data with Chartbrew",
+    description: "Chartbrew can connect to your ClickHouse database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/visualizing-clickhouse-data-with-chartbrew-a-step-by-step-guide/",
+    info: "5 min read",
+  },
 }
 
 function HelpBanner(props) {
@@ -115,7 +120,7 @@ function HelpBanner(props) {
             src={imageUrl}
             width={100}
             height={80}
-            radius="sm"
+            className="rounded-lg"
           />
         </div>
         <div>
@@ -131,10 +136,8 @@ function HelpBanner(props) {
       </CardHeader>
       <Divider />
       <CardBody>
-        <div>
-          <Text>
-            {bannerData[type].description}
-          </Text>
+        <div className="text-sm">
+          {bannerData[type].description}
         </div>
       </CardBody>
       <Divider />
@@ -142,13 +145,9 @@ function HelpBanner(props) {
         <Row align="center">
           <LuGraduationCap size={24} />
           <Spacer x={1} />
-          <Text
-            css={{ py: 5 }}
-            color="default"
-            target="_blank"
-          >
+          <div className="text-sm text-gray-500">
             {bannerData[type].info}
-          </Text>
+          </div>
         </Row>
       </CardFooter>
     </Card>

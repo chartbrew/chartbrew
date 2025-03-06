@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Divider, Switch, Select, SelectItem,
+  Button, Input, Spacer, Chip, Divider, Switch, Select, SelectItem,
   CircularProgress,
 } from "@heroui/react";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
-import { LuCircleCheck, LuUpload } from "react-icons/lu";
+import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -280,7 +279,7 @@ function ClickHouseConnectionForm(props) {
           />
         </div>
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <div className="flex items-center gap-2">
           <Switch
             label="SSL"
@@ -442,7 +441,7 @@ function ClickHouseConnectionForm(props) {
           <Spacer x={1} />
           <Button
             isLoading={loading}
-            onClick={_onCreateConnection}
+            onPress={_onCreateConnection}
             color="primary"
           >
             {"Save connection"}
@@ -457,13 +456,15 @@ function ClickHouseConnectionForm(props) {
           <Spacer y={4} />
           <div>
             <Row align="center">
-              <Text>
+              <div className="font-bold text-sm">
                 {"Test Result "}
-              </Text>
+              </div>
               <Spacer x={2} />
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
+                variant="flat"
+                radius="sm"
               >
                 {`Status code: ${testResult.status}`}
               </Chip>
@@ -473,7 +474,6 @@ function ClickHouseConnectionForm(props) {
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
               style={{ borderRadius: 10 }}
-              height="150px"
               width="none"
               value={testResult.body || "Hello"}
               readOnly
@@ -488,33 +488,33 @@ function ClickHouseConnectionForm(props) {
 }
 
 function FormGuides() {
+  const [copiedIP, setCopiedIP] = useState(false);
+
   return (
     <>
       <Row align="center">
         <RiArrowRightSLine />
         <Spacer x={1} />
-        <Link
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://clickhouse.com/docs/en/guides/security/access-control"
+        <div>
+          {"You can add our IP address to the allow list to allow remote connections: "}
+          <span className="font-bold">{"89.39.106.86"}</span>
+        </div>
+        <Spacer x={1} />
+        <Button
+          variant="light"
+          size="sm"
+          isIconOnly
+          color={copiedIP ? "success" : "default"}
+          onPress={() => {
+            navigator.clipboard.writeText("89.39.106.86");
+            setCopiedIP(true);
+            setTimeout(() => {
+              setCopiedIP(false);
+            }, 2000);
+          }}
         >
-          <Text>{"For security reasons, connect to your ClickHouse database with read-only credentials"}</Text>
-        </Link>
-        <Spacer x={1} />
-        <FaExternalLinkSquareAlt size={12} />
-      </Row>
-      <Row align="center">
-        <RiArrowRightSLine />
-        <Spacer x={1} />
-        <Link
-          href="https://clickhouse.com/docs/en/guides/security/network-security"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Text>{"Find out how to allow remote connections to your ClickHouse database"}</Text>
-        </Link>
-        <Spacer x={1} />
-        <FaExternalLinkSquareAlt size={12} />
+          {copiedIP ? <LuCopyCheck /> : <LuCopy />}
+        </Button>
       </Row>
     </>
   );

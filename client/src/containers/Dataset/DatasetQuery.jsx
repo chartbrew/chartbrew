@@ -466,7 +466,7 @@ function DatasetQuery(props) {
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-col gap-1">
                             <Text size="h4">{c.name}</Text>
-                            {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb") && (
+                            {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb" || c.type === "clickhouse") && (
                               <Chip color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
                                 {"AI-powered"}
                               </Chip>
