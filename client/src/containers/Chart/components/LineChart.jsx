@@ -152,7 +152,7 @@ function LineChart(props) {
           borderDash: (ctx) => {
             const dataLength = dataset.data?.length || 0;
             if (dataLength === 0) return [];
-            return ctx.p1DataIndex === dataLength - 1 ? [5, 5] : [];
+            return ctx.p1DataIndex === dataLength - 1 ? [5, 10] : [];
           }
         }
       }));

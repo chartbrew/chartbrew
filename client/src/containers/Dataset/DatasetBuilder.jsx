@@ -300,7 +300,7 @@ function DatasetBuilder(props) {
   const _onChangeGlobalSettings = ({
     pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
     fixedStartDate, maxValue, minValue, xLabelTicks, stacked, horizontal, dataLabels,
-    dateVarsFormat, isLogarithmic,
+    dateVarsFormat, isLogarithmic, dashedLastPoint,
   }) => {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : chart.pointRadius,
@@ -321,6 +321,7 @@ function DatasetBuilder(props) {
       dataLabels: typeof dataLabels !== "undefined" ? dataLabels : chart.dataLabels,
       dateVarsFormat: dateVarsFormat !== "undefined" ? dateVarsFormat : chart.dateVarsFormat,
       isLogarithmic: typeof isLogarithmic !== "undefined" ? isLogarithmic : chart.isLogarithmic,
+      dashedLastPoint: typeof dashedLastPoint !== "undefined" ? dashedLastPoint : chart.dashedLastPoint,
     };
 
     let skipParsing = false;
@@ -331,6 +332,7 @@ function DatasetBuilder(props) {
       || xLabelTicks
       || stacked
       || horizontal
+      || dashedLastPoint
     ) {
       skipParsing = true;
     }
