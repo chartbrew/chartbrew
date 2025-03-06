@@ -8,7 +8,7 @@ import { LuBrainCircuit, LuSend } from "react-icons/lu";
 import { API_HOST } from "../../config/settings";
 import { getAuthToken } from "../../modules/auth";
 
-function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
+function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }) {
   const [askAiLoading, setAskAiLoading] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [conversation, setConversation] = useState([]);
@@ -107,7 +107,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "" }) {
             icon={<LuBrainCircuit />}
             variant="flat"
             color="primary"
-            description="Hi! I can help you write SQL queries. Ask me a question about your data and I'll generate a query for you."
+            description={`Hi! I can help you write ${connectionType === "mongodb" ? "MongoDB" : "SQL"} queries. Ask me a question about your data and I'll generate a query for you.`}
           />
         ) : (
           <Alert
@@ -156,6 +156,7 @@ AiQuery.propTypes = {
   onChangeQuery: PropTypes.func.isRequired,
   dataRequest: PropTypes.object.isRequired,
   query: PropTypes.string.isRequired,
+  connectionType: PropTypes.string,
 };
 
 export default AiQuery

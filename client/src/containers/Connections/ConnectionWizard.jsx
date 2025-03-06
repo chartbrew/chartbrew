@@ -20,6 +20,7 @@ import RealtimeDbConnectionForm from "./RealtimeDb/RealtimeDbConnectionForm";
 import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
+import ClickHouseConnectionForm from "./ClickHouse/ClickHouseConnectionForm";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection, selectConnections } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { generateInviteUrl } from "../../slices/team";
@@ -326,6 +327,12 @@ function ConnectionWizard() {
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
               subType="rdsMysql"
+            />
+          )}
+          {selectedType === "clickhouse" && (
+            <ClickHouseConnectionForm
+              onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
 

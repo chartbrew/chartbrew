@@ -25,6 +25,7 @@ import RealtimeDbBuilder from "../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../Connections/Customerio/CustomerioBuilder";
+import ClickHouseBuilder from "../Connections/ClickHouse/ClickHouseBuilder";
 import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
@@ -388,6 +389,15 @@ function DatasetQuery(props) {
                     onDelete={() => _onDeleteRequest(dr.id)}
                   />
                 )}
+                {selectedRequest.Connection?.type === "clickhouse" && selectedRequest.id === dr.id && (
+                  <ClickHouseBuilder
+                    dataRequest={dr}
+                    connection={dr.Connection}
+                    onChangeRequest={_updateDataRequest}
+                    onSave={_onSaveRequest}
+                    onDelete={() => _onDeleteRequest(dr.id)}
+                  />
+                )}
 
                 {!selectedRequest.Connection && selectedRequest.id === dr.id && (
                   <div className="p-4">
@@ -456,7 +466,7 @@ function DatasetQuery(props) {
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-col gap-1">
                             <Text size="h4">{c.name}</Text>
-                            {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb") && (
+                            {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb" || c.type === "clickhouse") && (
                               <Chip color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
                                 {"AI-powered"}
                               </Chip>
