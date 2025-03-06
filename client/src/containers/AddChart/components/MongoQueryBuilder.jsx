@@ -289,6 +289,7 @@ function MongoQueryBuilder(props) {
               query={mongoRequest.query}
               dataRequest={dataRequest}
               onChangeQuery={_onChangeQuery}
+              connectionType="mongodb"
             />
           </div>
 

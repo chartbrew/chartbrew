@@ -26,6 +26,11 @@ import { getConnection } from "../../../slices/connection";
 import AiQuery from "../../Dataset/AiQuery";
 import QueryResultsTable from "../../AddChart/components/QueryResultsTable";
 
+const initialQuery =
+`-- Write your ClickHouse query here
+-- Or ask the AI assistant below to generate one for you
+`;
+
 function ClickHouseBuilder(props) {
   const {
     dataRequest, onChangeRequest, onSave,
@@ -33,7 +38,7 @@ function ClickHouseBuilder(props) {
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
-    query: "SELECT * FROM table LIMIT 10;",
+    query: initialQuery,
   });
   const [savedQuery, setSavedQuery] = useState(null);
   const [savedQuerySummary, setSavedQuerySummary] = useState("");
@@ -82,11 +87,16 @@ function ClickHouseBuilder(props) {
   }, [requestError]);
 
   useEffect(() => {
-    if (connection?.id && !connection.schema && !schemaInitRef.current) {
+    if (connection?.id
+      && !connection.schema
+      && !schemaInitRef.current
+      && dataRequest?.query
+      && dataRequest?.query !== initialQuery
+    ) {
       schemaInitRef.current = true;
       _onTest(dataRequest, true);
     }
-  }, [connection]);
+  }, [connection, dataRequest]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -157,13 +167,19 @@ function ClickHouseBuilder(props) {
       }))
         .then(async (data) => {
           const result = data.payload;
+
           if (!noError && result?.status?.statusCode >= 400) {
             setRequestError(result.response);
+            setResult(JSON.stringify(result.response, null, 2));
+            setActiveResultsTab("json");
+            toast.error("The request failed. Please check your query 🔎");
+            return;
           }
+
           if (result?.response?.dataRequest?.responseData?.data) {
             setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
             setRequestSuccess(true);
-          }
+          }          
 
           await dispatch(getConnection({
             team_id: params.teamId,
