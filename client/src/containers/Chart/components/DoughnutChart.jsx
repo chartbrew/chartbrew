@@ -109,6 +109,9 @@ function DoughnutChart(props) {
         },
       };
 
+      // Add datalabels plugin
+      newOptions.plugins.datalabels = chart?.dataLabels ? dataLabelsPlugin : { formatter: () => "" };
+
       return newOptions;
     }
 
@@ -131,13 +134,7 @@ function DoughnutChart(props) {
         <ChartErrorBoundary>
           <Doughnut
             data={chart.chartData.data}
-            options={{
-              ..._getChartOptions(),
-              plugins: {
-                ..._getChartOptions().plugins,
-                datalabels: dataLabelsPlugin,
-              },
-            }}
+            options={_getChartOptions()}
             redraw={redraw}
             plugins={[ChartDataLabels]}
           />

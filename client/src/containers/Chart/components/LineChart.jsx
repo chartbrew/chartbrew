@@ -59,6 +59,9 @@ function LineChart(props) {
   const _getChartOptions = () => {
     if (chart.chartData?.options) {
       const newOptions = cloneDeep(chart.chartData.options);
+
+      newOptions.plugins = newOptions.plugins || {}; // Ensure plugins object exists
+
       if (newOptions.scales?.y?.grid) {
         newOptions.scales.y.grid.color = semanticColors[theme].content3.DEFAULT;
       }
@@ -120,6 +123,8 @@ function LineChart(props) {
         },
       };
 
+      newOptions.plugins.datalabels = chart?.dataLabels ? dataLabelsPlugin : { formatter: () => "" };
+
       // Add hover configuration
       newOptions.hover = {
         mode: "index",
@@ -142,7 +147,7 @@ function LineChart(props) {
   }, []);
 
   const getChartData = () => {
-    if (!chart.chartData?.data) return null;
+    if (!chart.chartData?.data || !chart.chartData.data.datasets) return null;
 
     const newData = cloneDeep(chart.chartData.data);
     if (chart.dashedLastPoint) {
@@ -172,13 +177,7 @@ function LineChart(props) {
               <ChartErrorBoundary>
                 <Line
                   data={getChartData()}
-                  options={{
-                    ..._getChartOptions(),
-                    plugins: {
-                      ..._getChartOptions().plugins,
-                      datalabels: chart.dataLabels && dataLabelsPlugin,
-                    },
-                  }}
+                  options={_getChartOptions()}
                   redraw={redraw}
                   plugins={chart.dataLabels ? [ChartDataLabels] : []}
                 />

@@ -16,7 +16,7 @@ import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layout
 import { tooltipPlugin } from "./ChartTooltip";
 
 ChartJS.register(
-  CategoryScale, LinearScale, LogarithmicScale, PointElement, BarElement, Title, Tooltip, Legend, Filler
+  CategoryScale, LinearScale, LogarithmicScale, PointElement, BarElement, Title, Tooltip, Legend, Filler,
 );
 
 function BarChart(props) {
@@ -49,6 +49,9 @@ function BarChart(props) {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
       const newOptions = cloneDeep(chart.chartData.options);
+
+      newOptions.plugins = newOptions.plugins || {}; // Ensure plugins object exists
+
       if (newOptions.scales?.y?.grid) {
         newOptions.scales.y.grid.color = semanticColors[theme].content3.DEFAULT
       }
@@ -116,6 +119,8 @@ function BarChart(props) {
         },
       };
 
+      newOptions.plugins.datalabels = chart?.dataLabels ? _getDatalabelsOptions() : { formatter: () => "" };
+
       return newOptions;
     }
 
@@ -137,6 +142,7 @@ function BarChart(props) {
   };
 
   const _getChartData = () => {
+    if (!chart?.chartData?.data) return null;
     if (!chart?.chartData?.data?.datasets) return chart.chartData.data;
 
     const newChartData = cloneDeep(chart.chartData.data);
@@ -162,13 +168,7 @@ function BarChart(props) {
               <ChartErrorBoundary>
                 <Bar
                   data={_getChartData()}
-                  options={{
-                    ..._getChartOptions(),
-                    plugins: {
-                      ..._getChartOptions().plugins,
-                      datalabels: chart.dataLabels && _getDatalabelsOptions(),
-                    },
-                  }}
+                  options={_getChartOptions()}
                   redraw={redraw}
                   plugins={chart.dataLabels ? [ChartDataLabels] : []}
                 />
