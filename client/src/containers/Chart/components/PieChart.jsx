@@ -19,6 +19,7 @@ import { cloneDeep } from "lodash";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { tooltipPlugin } from "./ChartTooltip";
+import { chartColors } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler
@@ -84,6 +85,16 @@ function PieChart(props) {
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
 
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (redraw) {
       setTimeout(() => {
@@ -117,22 +128,44 @@ function PieChart(props) {
     return chart.chartData?.options;
   };
 
-  // Add cleanup effect
-  useEffect(() => {
-    return () => {
-      const tooltipEl = document.getElementById("chartjs-tooltip");
-      if (tooltipEl) {
-        tooltipEl.remove();
+  const _getChartData = () => {
+    const data = cloneDeep(chart.chartData.data);
+    if (!data) return null;
+
+    // Get number of segments
+    const numSegments = data.labels?.length || 0;
+    if (numSegments === 0) return data;
+
+    // Ensure backgroundColor array exists and has enough colors
+    data.datasets = data.datasets.map(dataset => {
+      // If dataset already has backgroundColor array, use it
+      if (dataset.backgroundColor && Array.isArray(dataset.backgroundColor)) {
+        return dataset;
       }
-    };
-  }, []);
+
+      const colors = Object.values(chartColors).map(c => c.hex);
+      dataset.backgroundColor = Array(numSegments).fill().map((_, i) => {
+        // If fillColor exists and is not transparent/null for this index, use it
+        const existingColor = dataset.fillColor?.[i];
+        if (existingColor && existingColor !== "transparent" && existingColor !== null) {
+          return existingColor;
+        }
+        // Otherwise use chartColors in order
+        return colors[i % colors.length];
+      });
+
+      return dataset;
+    });
+
+    return data;
+  };
 
   return (
     <div className="h-full">
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <Pie
-            data={chart.chartData.data}
+            data={_getChartData()}
             options={_getChartOptions()}
             redraw={redraw}
             plugins={[ChartDataLabels]}

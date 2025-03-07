@@ -14,14 +14,68 @@ import {
   Filler,
 } from "chart.js";
 import { cloneDeep } from "lodash";
-import { tooltipPlugin } from "./ChartTooltip";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
+import { tooltipPlugin } from "./ChartTooltip";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
+import { chartColors } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
 );
+
+const dataLabelsPlugin = {
+  font: {
+    weight: "bold",
+    size: 10,
+    family: "Inter",
+  },
+  padding: 2,
+  formatter: (value, context) => {
+    let formattedValue = value;
+    try {
+      formattedValue = parseFloat(value);
+    } catch (e) {
+      // do nothing
+    }
+
+    const hiddens = context.chart._hiddenIndices;
+    let total = 0;
+    const datapoints = context.dataset.data;
+    datapoints.forEach((val, i) => {
+      let formattedVal = val;
+      try {
+        formattedVal = parseFloat(val);
+      } catch (e) {
+        // do nothing
+      }
+      if (hiddens[i] !== undefined) {
+        if (!hiddens[i]) {
+          total += formattedVal;
+        }
+      } else {
+        total += formattedVal;
+      }
+    });
+
+    const percentage = `${((formattedValue / total) * 100).toFixed(2)}%`;
+    const out = percentage;
+    return out;
+  },
+  display(context) {
+    const { dataset } = context;
+    const count = dataset.data.length;
+    const value = dataset.data[context.dataIndex];
+    return value > count * 1.5;
+  },
+  backgroundColor(context) {
+    return context.dataset.backgroundColor;
+  },
+  borderColor: "white",
+  borderRadius: 4,
+  borderWidth: 1,
+};
 
 function PolarChart(props) {
   const {
@@ -30,6 +84,16 @@ function PolarChart(props) {
 
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (redraw) {
@@ -72,30 +136,56 @@ function PolarChart(props) {
         },
       };
 
+      // Add datalabels plugin
+      newOptions.plugins.datalabels = chart?.dataLabels ? dataLabelsPlugin : { formatter: () => "" };
+
       return newOptions;
     }
 
     return chart.chartData?.options;
   };
 
-  // Add cleanup effect
-  useEffect(() => {
-    return () => {
-      const tooltipEl = document.getElementById("chartjs-tooltip");
-      if (tooltipEl) {
-        tooltipEl.remove();
+  const _getChartData = () => {
+    const data = cloneDeep(chart.chartData.data);
+    if (!data) return null;
+
+    // Get number of segments
+    const numSegments = data.labels?.length || 0;
+    if (numSegments === 0) return data;
+
+    // Ensure backgroundColor array exists and has enough colors
+    data.datasets = data.datasets.map(dataset => {
+      // If dataset already has backgroundColor array, use it
+      if (dataset.backgroundColor && Array.isArray(dataset.backgroundColor)) {
+        return dataset;
       }
-    };
-  }, []);
+
+      const colors = Object.values(chartColors).map(c => c.hex);
+      dataset.backgroundColor = Array(numSegments).fill().map((_, i) => {
+        // If fillColor exists and is not transparent/null for this index, use it
+        const existingColor = dataset.fillColor?.[i];
+        if (existingColor && existingColor !== "transparent" && existingColor !== null) {
+          return existingColor;
+        }
+        // Otherwise use chartColors in order
+        return colors[i % colors.length];
+      });
+
+      return dataset;
+    });
+
+    return data;
+  };
 
   return (
     <div className="h-full">
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <PolarArea
-            data={chart.chartData.data}
+            data={_getChartData()}
             options={_getChartOptions()}
             redraw={redraw}
+            plugins={[ChartDataLabels]}
           />
         </ChartErrorBoundary>
       )}

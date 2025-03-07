@@ -332,13 +332,11 @@ function ChartPreview(props) {
                 )}
               {chart.type === "pie"
                 && (
-                  <div>
-                    <PieChart
-                      chart={chart}
-                      height={300}
-                      editMode
-                    />
-                  </div>
+                  <PieChart
+                    chart={chart}
+                    height={300}
+                    editMode
+                  />
                 )}
               {chart.type === "doughnut"
                 && (
