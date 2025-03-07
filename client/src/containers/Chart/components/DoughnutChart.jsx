@@ -26,9 +26,10 @@ ChartJS.register(
 );
 
 const dataLabelsPlugin = {
+  color: "#fff",
   font: {
     weight: "bold",
-    size: 12,
+    size: 10,
     family: "Inter",
   },
   padding: 4,
@@ -69,12 +70,8 @@ const dataLabelsPlugin = {
     const value = dataset.data[context.dataIndex];
     return value > count * 1.5;
   },
-  backgroundColor(context) {
-    return context.dataset.backgroundColor;
-  },
-  borderColor: "white",
-  borderRadius: 6,
-  borderWidth: 2,
+  backgroundColor: "rgba(0, 0, 0, 0.2)",
+  borderRadius: 4,
 };
 
 function DoughnutChart(props) {

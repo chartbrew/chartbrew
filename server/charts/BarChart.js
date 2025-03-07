@@ -38,7 +38,12 @@ class NewBarChart {
         && datasetConfig.fillColor instanceof Array
       ) {
         formattedDataset.datalabels = {
-          color: datasetConfig.fillColor.map((color) => getContrastYIQ(color)),
+          color: datasetConfig.fillColor.map((color) => {
+            if (this.chart.type === "bar" || this.chart.type === "radar") {
+              return getContrastYIQ(color);
+            }
+            return "#fff";
+          }),
           display: "auto",
         };
         if (this.chart.type === "bar") {
@@ -54,7 +59,7 @@ class NewBarChart {
         }
       } else {
         formattedDataset.datalabels = {
-          color: getContrastYIQ(datasetConfig.fillColor),
+          color: this.chart.type === "bar" || this.chart.type === "radar" ? getContrastYIQ(datasetConfig.fillColor) : "#fff",
           display: "auto",
         };
 

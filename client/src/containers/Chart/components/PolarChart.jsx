@@ -26,6 +26,7 @@ ChartJS.register(
 );
 
 const dataLabelsPlugin = {
+  color: "#fff",
   font: {
     weight: "bold",
     size: 10,
@@ -69,12 +70,8 @@ const dataLabelsPlugin = {
     const value = dataset.data[context.dataIndex];
     return value > count * 1.5;
   },
-  backgroundColor(context) {
-    return context.dataset.backgroundColor;
-  },
-  borderColor: "white",
+  backgroundColor: "rgba(0, 0, 0, 0.2)",
   borderRadius: 4,
-  borderWidth: 1,
 };
 
 function PolarChart(props) {
