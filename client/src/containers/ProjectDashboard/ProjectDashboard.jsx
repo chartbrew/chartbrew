@@ -6,6 +6,8 @@ import {
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
+  Tabs,
+  Tab,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -17,6 +19,7 @@ import {
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
   LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
+  LuMonitorSmartphone,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -105,6 +108,7 @@ function ProjectDashboard(props) {
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [stagedContent, setStagedContent] = useState({});
+  const [previewSize, setPreviewSize] = useState({});
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -121,6 +125,8 @@ function ProjectDashboard(props) {
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
   const hasRunVariableFiltering = useRef(null);
+  const dashboardRef = useRef(null);
+  const dashboardParentRef = useRef(null);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -129,14 +135,11 @@ function ProjectDashboard(props) {
 
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
         event.preventDefault();
-        setEditingLayout(async (prev) => {
-          if (prev) {
-            await _onCancelChanges();
-            _prepareLayout();
-          }
-
-          return !prev;
-        });
+        if (editingLayout) {
+          _onCancelChanges();
+        } else {
+          _onEditLayout();
+        }
       }
     };
 
@@ -145,7 +148,7 @@ function ProjectDashboard(props) {
     return () => {
       document.removeEventListener("keydown", handleKeyPress);
     };
-  }, []);
+  }, [editingLayout]);
 
   useEffect(() => {
     if (!filterLoading && filters && charts.length > 0 && !hasRunInitialFiltering.current) {
@@ -170,10 +173,87 @@ function ProjectDashboard(props) {
 
     charts.forEach((chart) => {
       if (chart.staged) {
-        setEditingLayout(true);
+        _onEditLayout();
       }
     });
   }, [charts]);
+
+  const _onEditLayout = async () => {
+    if (editingLayout) {
+      return;
+    }
+
+    setEditingLayout(true);
+
+    const dashboardWidth = dashboardRef.current?.offsetWidth;
+
+    let newPreviewSize = {
+      size: dashboardWidth,
+      breakpoint: "auto",
+    };
+
+    // Determine initial breakpoint based on dashboard width
+    if (dashboardWidth > widthSize.lg) {
+      newPreviewSize = {
+        size: dashboardWidth,
+        breakpoint: "xl",
+      };
+    } else if (dashboardWidth > widthSize.md && dashboardWidth <= widthSize.lg) {
+      newPreviewSize = {
+        size: dashboardWidth,
+        breakpoint: "lg",
+      };
+    } else if (dashboardWidth > widthSize.sm && dashboardWidth <= widthSize.md) {
+      newPreviewSize = {
+        size: dashboardWidth,
+        breakpoint: "md",
+      };
+    } else if (dashboardWidth > widthSize.xs && dashboardWidth <= widthSize.sm) {
+      newPreviewSize = {
+        size: dashboardWidth,
+        breakpoint: "sm",
+      };
+    } else if (dashboardWidth <= widthSize.xs) {
+      newPreviewSize = {
+        size: dashboardWidth,
+        breakpoint: "xs",
+      };
+    }
+
+    setPreviewSize(newPreviewSize);
+  };
+
+  const _getUserBreakpoint = () => {
+    const dashboardWidth = dashboardParentRef.current?.offsetWidth;
+    if (dashboardWidth > widthSize.lg) return "xl";
+    if (dashboardWidth > widthSize.md) return "lg";
+    if (dashboardWidth > widthSize.sm) return "md";
+    return "xs";
+  };
+
+  const _onChangePreviewSize = (key) => {
+    const dashboardWidth = dashboardParentRef.current?.offsetWidth;
+    const breakpointWidth = key === "xl" ? 1440 : gridBreakpoints[key];
+    let newSize;
+
+    // Case 1: Switching to a smaller breakpoint - use breakpoint width
+    if (breakpointWidth < dashboardWidth) {
+      newSize = breakpointWidth;
+    }
+    // Case 2: Switching to current screen's breakpoint - use Math.min
+    else if (_getUserBreakpoint() === key) {
+      newSize = Math.min(dashboardWidth, breakpointWidth);
+    }
+    // Case 3: Switching to a larger breakpoint - use breakpoint width (will enable scroll)
+    else {
+      newSize = breakpointWidth;
+    }
+
+    setPreviewSize({
+      size: newSize,
+      breakpoint: key,
+    });
+  };
 
   const _prepareLayout = (chartsToProcess = charts) => {
     const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
@@ -698,10 +778,10 @@ function ProjectDashboard(props) {
   };
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${editingLayout && "bg-background dark:bg-content3 overflow-x-auto"}`}>
       {charts && charts.length > 0
         && (
-          <div>
+          <div ref={dashboardParentRef}>
             <div
               className={"bg-content1 w-full border-b-1 border-solid border-content3"}
               size="xl"
@@ -930,7 +1010,7 @@ function ProjectDashboard(props) {
                       <DropdownMenu>
                         <DropdownItem
                           startContent={<LuLayoutDashboard />}
-                          onPress={() => setEditingLayout(!editingLayout)}
+                          onPress={() => _onEditLayout()}
                           endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
                         >
                           {"Edit layout"}
@@ -984,7 +1064,23 @@ function ProjectDashboard(props) {
             </div>
           </div>
         )}
-      <div className="bg-content2 w-full" style={styles.container(width < breakpoints.tablet)}>
+      <div
+        className={`bg-content2 w-full relative ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
+        style={{
+          ...styles.container(width < breakpoints.tablet),
+          ...(editingLayout && previewSize?.breakpoint && {
+            width: previewSize.size,
+            margin: "0 auto",
+            boxSizing: "border-box",
+            marginTop: 5,
+            overflowX: previewSize.size > dashboardRef.current?.offsetWidth ? "auto" : "hidden",
+          }),
+          ...(editingLayout && {
+            paddingBottom: 100,
+          }),
+        }}
+        ref={dashboardRef}
+      >
         {charts.length === 0 && !chartsLoading && (
           <div className="flex flex-col justify-center pt-10">
             <Row justify="center" align="center">
@@ -1005,7 +1101,7 @@ function ProjectDashboard(props) {
                     endContent={<LuCirclePlus size={24} />}
                     size="lg"
                     color="primary"
-                    onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                    onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
                   >
                     Create a chart
                   </Button>
@@ -1037,7 +1133,7 @@ function ProjectDashboard(props) {
                 {chart.type === "markdown" ? (
                   <TextWidget
                     chart={chart}
-                    onEditLayout={() => setEditingLayout(!editingLayout)}
+                    onEditLayout={() => _onEditLayout()}
                     editingLayout={editingLayout}
                     onCancelChanges={_onCancelChanges}
                     onSaveChanges={() => _onSaveChanges()}
@@ -1054,7 +1150,7 @@ function ProjectDashboard(props) {
                     onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
                     height={() => _onGetChartHeight(chart)}
                     editingLayout={editingLayout}
-                    onEditLayout={() => setEditingLayout(!editingLayout)}
+                    onEditLayout={() => _onEditLayout()}
                     variables={variables}
                   />
                 )}
@@ -1123,23 +1219,47 @@ function ProjectDashboard(props) {
       />
 
       {editingLayout && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-background p-2 rounded-lg flex flex-col items-center gap-4 border-1 border-divider animate-appearance-in">
-            <div className="flex gap-1">
-              <Button
-                color="primary"
-                onPress={() => _onSaveChanges()}
-                size="sm"
-              >
-                Save changes
-              </Button>
-              <Button
-                variant="bordered"
-                onPress={_onCancelChanges}
-                size="sm"
-              >
-                Cancel
-              </Button>
+        <div className="dark fixed bottom-0 left-0 right-0 z-50 border-t-1 border-solid border-content3">
+          <div className="bg-background p-4 flex justify-center items-center animate-appearance-in">
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="flex gap-2 items-center">
+                <Tooltip content="See how this dashboard looks on different devices. You can edit the layout on each device from here." size="sm" className="max-w-xs">
+                  <span className="text-foreground">
+                    <LuMonitorSmartphone />
+                  </span>
+                </Tooltip>
+                <Tabs
+                  size="sm"
+                  variant="bordered"
+                  selectedKey={previewSize?.breakpoint}
+                  onSelectionChange={(key) => _onChangePreviewSize(key)}
+                >
+                  <Tab key="xl" title="Large screen" />
+                  <Tab key="lg" title="Desktop" />
+                  <Tab key="md" title="Laptop" />
+                  <Tab key="sm" title="Tablet" />
+                  <Tab key="xs" title="Mobile" />
+                </Tabs>
+              </div>
+
+              <Divider orientation="vertical" className="h-8" />
+
+              <div className="flex gap-2">
+                <Button
+                  color="primary"
+                  onPress={() => _onSaveChanges()}
+                  size="sm"
+                >
+                  Save changes
+                </Button>
+                <Button
+                  variant="bordered"
+                  onPress={_onCancelChanges}
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </div>
