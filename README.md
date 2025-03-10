@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://chartbrew.com/logo_primary.svg" alt="ChartBrew logo" width="300"/>
+    <img src="https://chartbrew-static.b-cdn.net/banners/banner_dark_mode.svg" alt="ChartBrew logo" />
   </a>
 </a>
 
@@ -17,7 +17,7 @@
   </strong>
 </p>
 
-<p align="center">
+<p align="center" style="text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #000; text-decoration-thickness: 2px;">
   <strong><a href="https://chartbrew.com">Chartbrew as a service is available here</a></strong>
 </p>
 
