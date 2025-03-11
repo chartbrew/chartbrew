@@ -1,13 +1,12 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Spacer,
+  Spacer, Tab, Tabs,
 } from "@heroui/react";
 
 import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
-import { getWidthBreakpoint } from "../../../../modules/layoutBreakpoints";
 
 function TableContainer(props) {
   const {
@@ -16,9 +15,6 @@ function TableContainer(props) {
 
   const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
   const [totalValue, setTotalValue] = useState(0);
-  const [chartSize, setChartSize] = useState(2);
-
-  const containerRef = React.useRef(null);
 
   useEffect(() => {
     if (datasets && datasets.length > 0) {
@@ -47,45 +43,23 @@ function TableContainer(props) {
     }
   }, [activeDatasetIndex, tabularData]);
 
-  useEffect(() => {
-    switch (getWidthBreakpoint(containerRef)) {
-      case "xxs":
-      case "xs":
-        setChartSize(1);
-        break;
-      case "sm":
-        setChartSize(2);
-        break;
-      case "md":
-        setChartSize(3);
-        break;
-      case "lg":
-        setChartSize(4);
-        break;
-    }
-  }, [containerRef.current]);
-
   const activeDataset = datasets[activeDatasetIndex];
   const dataKey = Object.keys(tabularData)[activeDatasetIndex];
 
   return (
     <div className="h-full overflow-y-auto">
       <Row align="center" wrap="wrap" className={"gap-1"}>
-        {datasets.map((dataset, index) => {
-          return (
-            <Fragment key={dataset.id}>
-              <Button
-                onPress={() => setActiveDatasetIndex(index)}
-                color="primary"
-                variant={activeDatasetIndex !== index ? "light" : "bordered"}
-                auto
-                size={chartSize === 1 ? "xs" : "sm"}
-              >
-                {dataset.legend}
-              </Button>
-            </Fragment>
-          );
-        })}
+        {datasets.length > 1 && (
+          <Tabs
+            selectedKey={`${activeDatasetIndex}`}
+            onSelectionChange={(key) => setActiveDatasetIndex(parseInt(key))}
+            size="sm"
+        >
+          {datasets.map((dataset, index) => (
+              <Tab key={index} title={dataset.legend} />
+            ))}
+          </Tabs>
+        )}
 
         {activeDataset?.configuration?.sum && (
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -95,7 +69,6 @@ function TableContainer(props) {
           </div>
         )}
       </Row>
-      <Spacer y={1} />
       {dataKey && tabularData[dataKey] && tabularData[dataKey].columns && (
         <TableComponent
           columns={tabularData[dataKey].columns}
