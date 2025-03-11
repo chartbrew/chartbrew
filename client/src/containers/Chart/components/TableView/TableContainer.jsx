@@ -11,30 +11,31 @@ import { getWidthBreakpoint } from "../../../../modules/layoutBreakpoints";
 
 function TableContainer(props) {
   const {
-    tabularData, embedded, datasets,
+    tabularData, embedded = false, datasets,
   } = props;
 
-  const [activeDataset, setActiveDataset] = useState(null);
+  const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
   const [totalValue, setTotalValue] = useState(0);
   const [chartSize, setChartSize] = useState(2);
 
   const containerRef = React.useRef(null);
 
   useEffect(() => {
-    if (datasets && datasets[0] && !activeDataset) {
-      setActiveDataset(datasets[0]);
-    } else if (activeDataset) {
-      setActiveDataset(datasets.find((d) => d.id === activeDataset.id));
+    if (datasets && datasets.length > 0) {
+      setActiveDatasetIndex(0);
     }
   }, [datasets]);
 
   useEffect(() => {
+    const activeDataset = datasets[activeDatasetIndex];
+    const dataKey = Object.keys(tabularData)[activeDatasetIndex];
+
     if (activeDataset
-      && tabularData[activeDataset.legend]?.data
+      && tabularData[dataKey]?.data
       && activeDataset?.configuration?.sum
     ) {
       setTotalValue(0);
-      tabularData[activeDataset.legend].data.forEach((d) => {
+      tabularData[dataKey].data.forEach((d) => {
         if (d[activeDataset.configuration.sum]) {
           try {
             setTotalValue((prev) => prev + parseFloat(d[activeDataset.configuration.sum]));
@@ -44,7 +45,7 @@ function TableContainer(props) {
         }
       });
     }
-  }, [activeDataset]);
+  }, [activeDatasetIndex, tabularData]);
 
   useEffect(() => {
     switch (getWidthBreakpoint(containerRef)) {
@@ -64,17 +65,19 @@ function TableContainer(props) {
     }
   }, [containerRef.current]);
 
+  const activeDataset = datasets[activeDatasetIndex];
+  const dataKey = Object.keys(tabularData)[activeDatasetIndex];
 
   return (
     <div className="h-full overflow-y-auto">
       <Row align="center" wrap="wrap" className={"gap-1"}>
-        {activeDataset && datasets.map((dataset) => {
+        {datasets.map((dataset, index) => {
           return (
             <Fragment key={dataset.id}>
               <Button
-                onClick={() => setActiveDataset(dataset)}
+                onPress={() => setActiveDatasetIndex(index)}
                 color="primary"
-                variant={activeDataset.id !== dataset.id ? "light" : "bordered"}
+                variant={activeDatasetIndex !== index ? "light" : "bordered"}
                 auto
                 size={chartSize === 1 ? "xs" : "sm"}
               >
@@ -93,17 +96,14 @@ function TableContainer(props) {
         )}
       </Row>
       <Spacer y={1} />
-      {activeDataset?.legend
-        && tabularData[activeDataset.legend]
-        && tabularData[activeDataset.legend].columns
-        && (
-          <TableComponent
-            columns={tabularData[activeDataset.legend].columns}
-            data={tabularData[activeDataset.legend].data}
-            embedded={embedded}
-            dataset={activeDataset}
-          />
-        )}
+      {dataKey && tabularData[dataKey] && tabularData[dataKey].columns && (
+        <TableComponent
+          columns={tabularData[dataKey].columns}
+          data={tabularData[dataKey].data}
+          embedded={embedded}
+          dataset={activeDataset}
+        />
+      )}
     </div>
   );
 }
