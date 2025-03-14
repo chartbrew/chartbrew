@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import PropTypes from "prop-types";
-import { connect, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Spacer,
 } from "@heroui/react";
@@ -8,22 +7,24 @@ import {
 
 import WebhookIntegrations from "./components/WebhookIntegrations";
 import {
-  getTeamIntegrations as getTeamIntegrationsAction,
-} from "../../actions/integration";
+  getTeamIntegrations,
+  selectIntegrations,
+} from "../../slices/integration";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Segment from "../../components/Segment";
 import { selectTeam } from "../../slices/team";
 
-function Integrations(props) {
-  const { integrations, getTeamIntegrations } = props;
+function Integrations() {
+  const integrations = useSelector(selectIntegrations);
+  const dispatch = useDispatch();
 
   const team = useSelector(selectTeam);
   const initRef = useRef(false);
 
   useEffect(() => {
     if (team?.id && !initRef.current) {
-      getTeamIntegrations(team?.id);
+      dispatch(getTeamIntegrations({ team_id: team?.id }));
       initRef.current = true;
     }
   }, [team]);
@@ -54,18 +55,4 @@ function Integrations(props) {
   );
 }
 
-Integrations.propTypes = {
-  integrations: PropTypes.arrayOf(PropTypes.object).isRequired,
-  getTeamIntegrations: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
-};
-
-const mapStateToProps = (state) => ({
-  integrations: state.integration.data,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  getTeamIntegrations: (teamId) => dispatch(getTeamIntegrationsAction(teamId)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Integrations);
+export default Integrations;

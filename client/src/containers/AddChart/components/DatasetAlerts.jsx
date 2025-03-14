@@ -4,7 +4,7 @@ import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
   Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
 } from "@heroui/react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   LuBellOff, LuBellPlus, LuBellRing, LuMail, LuPlus, LuRefreshCw, LuSlack, LuTrash, LuWebhook
 } from "react-icons/lu";
@@ -14,8 +14,9 @@ import {
   getChartAlerts, createAlert, updateAlert, deleteAlert, selectAlerts,
 } from "../../../slices/alert";
 import {
-  getTeamIntegrations as getTeamIntegrationsAction,
-} from "../../../actions/integration";
+  getTeamIntegrations,
+  selectIntegrations,
+} from "../../../slices/integration";
 import autoUpdatePicture from "../../../assets/chartbrew-auto-update.webp";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
@@ -56,13 +57,14 @@ const timePeriods = [{
 
 function DatasetAlerts(props) {
   const {
-    chartId, cdcId, projectId, getTeamIntegrations, integrations, onChanged = () => {},
+    chartId, cdcId, projectId, onChanged = () => {},
   } = props;
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const teamMembers = useSelector(selectTeamMembers);
   const charts = useSelector(selectCharts);
+  const integrations = useSelector(selectIntegrations);
 
   const initAlert = {
     rules: {},
@@ -96,7 +98,7 @@ function DatasetAlerts(props) {
 
   useEffect(() => {
     dispatch(getTeamMembers({ team_id: team.id }));
-    getTeamIntegrations(team.id);
+    dispatch(getTeamIntegrations({ team_id: team.id }));
 
     if (!initRef.current && alerts?.length === 0) {
       dispatch(getChartAlerts({
@@ -129,7 +131,7 @@ function DatasetAlerts(props) {
   };
 
   const _onRefreshIntegrationList = () => {
-    getTeamIntegrations(team.id);
+    dispatch(getTeamIntegrations({ team_id: team.id }));
   };
 
   const _onCreateNewIntegration = () => {
@@ -656,17 +658,7 @@ DatasetAlerts.propTypes = {
   chartId: PropTypes.string.isRequired,
   cdcId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
-  getTeamIntegrations: PropTypes.func.isRequired,
-  integrations: PropTypes.array.isRequired,
   onChanged: PropTypes.func,
 };
 
-const mapStateToProps = (state) => ({
-  integrations: state.integration.data,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  getTeamIntegrations: (teamId) => dispatch(getTeamIntegrationsAction(teamId)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(DatasetAlerts);
+export default DatasetAlerts;
