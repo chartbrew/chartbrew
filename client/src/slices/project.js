@@ -124,6 +124,30 @@ export const updateProjectLogo = createAsyncThunk(
   }
 );
 
+export const takeSnapshot = createAsyncThunk(
+  "project/takeSnapshot",
+  async ({ project_id, options }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/snapshot`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    
+    const body = JSON.stringify(options);
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const project = await response.json();
+    return project;
+  }
+);
+
 export const removeProject = createAsyncThunk(
   "project/removeProject",
   async ({ project_id }) => {

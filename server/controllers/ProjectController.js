@@ -4,6 +4,7 @@ const { nanoid } = require("nanoid");
 const db = require("../models/models");
 const TeamController = require("./TeamController");
 const templateModels = require("../templates");
+const { snapDashboard } = require("../modules/snapshots");
 
 class ProjectController {
   constructor() {
@@ -272,6 +273,11 @@ class ProjectController {
       .catch((error) => {
         return Promise.reject(error);
       });
+  }
+
+  async takeSnapshot(projectId, options) {
+    const project = await this.findById(projectId);
+    return snapDashboard(project, true, options);
   }
 }
 

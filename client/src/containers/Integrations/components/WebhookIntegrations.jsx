@@ -360,8 +360,7 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={() => setIntegrationToDelete(false)}
-              color="warning"
-              variant="flat"
+              variant="bordered"
             >
               Close
             </Button>

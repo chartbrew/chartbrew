@@ -82,7 +82,23 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    snapshotSchedule: {
+      type: DataTypes.TEXT,
+      set(value) {
+        this.setDataValue("snapshotSchedule", JSON.stringify(value));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("snapshotSchedule"));
+        } catch (error) {
+          return {};
+        }
+      },
+    },
     lastUpdatedAt: {
+      type: DataTypes.DATE,
+    },
+    lastSnapshotSentAt: {
       type: DataTypes.DATE,
     },
   }, {

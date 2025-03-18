@@ -495,7 +495,7 @@ function PublicDashboard(props) {
   }
 
   return (
-    <div>
+    <div className="dashboard-container">
       <Helmet>
         {(newChanges?.headerCode || project?.headerCode) && (
           <style type="text/css">{newChanges.headerCode || project.headerCode}</style>

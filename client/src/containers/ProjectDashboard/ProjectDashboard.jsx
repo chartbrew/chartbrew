@@ -20,6 +20,7 @@ import {
   LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
   LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
   LuMonitorSmartphone,
+  LuMonitorUp,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -51,6 +52,7 @@ import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
 import TextWidget from "../Chart/TextWidget";
+import SnapshotSchedule from "./components/SnapshotSchedule";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -109,6 +111,7 @@ function ProjectDashboard(props) {
   const [showShare, setShowShare] = useState(false);
   const [stagedContent, setStagedContent] = useState({});
   const [previewSize, setPreviewSize] = useState({});
+  const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -1021,6 +1024,14 @@ function ProjectDashboard(props) {
                         >
                           {"Share dashboard"}
                         </DropdownItem>
+                        {_canAccess("projectEditor") && (
+                          <DropdownItem
+                            startContent={<LuMonitorUp />}
+                            onPress={() => setSnapshotScheduleVisible(true)}
+                          >
+                            {"Schedule deliveries"}
+                          </DropdownItem>
+                        )}
                         {_canAccess("teamAdmin") && (
                           <DropdownItem
                             startContent={<LuCopyPlus />} 
@@ -1192,6 +1203,13 @@ function ProjectDashboard(props) {
       <UpdateSchedule
         isOpen={scheduleVisible}
         onClose={() => setScheduleVisible(false)}
+        timezone={project.timezone}
+        openSnapshotSchedule={() => setSnapshotScheduleVisible(true)}
+      />
+
+      <SnapshotSchedule
+        isOpen={snapshotScheduleVisible}
+        onClose={() => setSnapshotScheduleVisible(false)}
         timezone={project.timezone}
       />
 

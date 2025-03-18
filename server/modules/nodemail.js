@@ -118,3 +118,24 @@ module.exports.emailUpdate = (data) => {
     return nodemail.sendMail(message);
   });
 };
+
+module.exports.sendDashboardSnapshot = (data) => {
+  const message = {
+    from: settings.adminMail,
+    to: data.recipients,
+    subject: `Chartbrew - ${data.projectName} snapshot`,
+  };
+
+  ejs.renderFile(`${__dirname}/emailTemplates/snapshot.ejs`, {
+    projectName: data.projectName,
+    dashboardUrl: data.dashboardUrl,
+    snapshotUrl: data.snapshotUrl,
+  }, (err, str) => {
+    if (err) {
+      console.log(err); // eslint-disable-line no-console
+    }
+    message.html = str;
+
+    return nodemail.sendMail(message);
+  });
+};
