@@ -1,5 +1,6 @@
 const { chromium } = require("playwright");
 const path = require("path");
+const jwt = require("jsonwebtoken");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -30,10 +31,17 @@ module.exports.snapChart = async (shareString) => {
   }
 };
 
-module.exports.snapDashboard = async (dashboard, report = false, options = {}) => {
+module.exports.snapDashboard = async (userId, dashboard, report = false, options = {}) => {
   if (!dashboard) {
     throw new Error("Dashboard not found");
   }
+
+  // create a temporary accessToken
+  const accessToken = jwt.sign(
+    { project_id: dashboard.id, id: userId },
+    settings.encryptionKey,
+    { expiresIn: 300 },
+  );
 
   const { viewport, theme } = options;
 
@@ -50,9 +58,9 @@ module.exports.snapDashboard = async (dashboard, report = false, options = {}) =
         height,
       });
 
-      await page.goto(`${settings.client}/b/${dashboard.brewName}?theme=${theme}`);
+      await page.goto(`${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`);
       await page.waitForSelector("div.dashboard-container");
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(2000);
 
       const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${dashboard.id}.png`);
       await page.screenshot({ path: snapshotPath, fullPage: true, omitBackground: true });

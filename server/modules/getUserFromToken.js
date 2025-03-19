@@ -17,9 +17,25 @@ module.exports = async (req, res, next) => {
     //
   }
 
+  // also check for ?accessToken=
+  if (!decoded && req.query.accessToken) {
+    try {
+      decoded = await jwt.verify(req.query.accessToken, settings.encryptionKey);
+    } catch (err) {
+      //
+    }
+  }
+
   if (!decoded) {
     try {
       decoded = await jwt.verify(token, settings.secret);
+
+      if (decoded?.project_id) {
+        const project = await db.Project.findByPk(decoded.project_id);
+        if (project && project.brewName !== req.params.brewName) {
+          return res.status(401).send("Not authorized");
+        }
+      }
     } catch (err) {
       //
     }

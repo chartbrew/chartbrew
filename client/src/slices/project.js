@@ -171,7 +171,7 @@ export const removeProject = createAsyncThunk(
 
 export const getPublicDashboard = createAsyncThunk(
   "project/getPublicDashboard",
-  async ({ brewName, password }, thunkAPI) => {
+  async ({ brewName, password, accessToken }, thunkAPI) => {
     let token;
     try {
       token = getAuthToken();
@@ -187,6 +187,10 @@ export const getPublicDashboard = createAsyncThunk(
 
     if (password) {
       url += `?pass=${password}`;
+    }
+
+    if (accessToken) {
+      url += `${url.includes("?") ? "&" : "?"}accessToken=${accessToken}`;
     }
 
     const response = await fetch(url, { headers });

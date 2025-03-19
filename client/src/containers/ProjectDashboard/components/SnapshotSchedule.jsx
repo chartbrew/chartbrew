@@ -477,16 +477,32 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 <div className="flex flex-row items-center gap-2">
                   <Tooltip content="Viewport width">
                     <ButtonGroup variant="light" size="sm">
-                      <Button onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })} isIconOnly>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
+                        isIconOnly
+                        color={schedule.viewport.width === 375 ? "primary" : "default"}
+                      >
                         <LuSmartphone />
                       </Button>
-                      <Button onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })} isIconOnly>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
+                        isIconOnly
+                        color={schedule.viewport.width === 768 ? "primary" : "default"}
+                      >
                         <LuTablet />
                       </Button>
-                      <Button onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })} isIconOnly>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
+                        isIconOnly
+                        color={schedule.viewport.width === 1440 ? "primary" : "default"}
+                      >
                         <LuLaptop />
                       </Button>
-                      <Button onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })} isIconOnly>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
+                        isIconOnly
+                        color={schedule.viewport.width === 1920 ? "primary" : "default"}
+                      >
                         <LuMonitor />
                       </Button>
                     </ButtonGroup>

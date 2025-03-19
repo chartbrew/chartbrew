@@ -175,7 +175,7 @@ function PublicDashboard(props) {
     if (password) window.localStorage.setItem("reportPassword", password);
 
     setLoading(true);
-    dispatch(getPublicDashboard({ brewName: params.brewName, password }))
+    dispatch(getPublicDashboard({ brewName: params.brewName, password, accessToken: searchParams.get("accessToken") }))
       .then((data) => {
         if (data.error) {
           if (data.error.message === "403") {

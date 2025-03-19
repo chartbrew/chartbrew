@@ -334,7 +334,7 @@ module.exports = (app) => {
   ** Route to take a snapshot of a project
   */
   app.post("/project/:id/snapshot", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return projectController.takeSnapshot(req.params.id, req.body)
+    return projectController.takeSnapshot(req.user.id, req.params.id, req.body)
       .then((snapshot) => {
         return res.status(200).send({ snapshot_path: snapshot });
       })
