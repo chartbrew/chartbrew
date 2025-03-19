@@ -1,12 +1,35 @@
+const { Op } = require("sequelize");
+const request = require("request-promise");
 const { DateTime } = require("luxon");
-const mail = require("../../modules/mail");
-const webhookAlerts = require("../../modules/alerts/webhookAlerts");
-const { snapDashboard } = require("../../modules/snapshots");
 
+const mail = require("../../modules/mail");
+const { snapDashboard } = require("../../modules/snapshots");
 const db = require("../../models/models");
+
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
 const fullApiUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_API_HOST : process.env.VITE_APP_API_HOST_DEV;
+
+async function sendToWebhook({
+  project, snapshotUrl, blocks, integration
+}) {
+  const options = {
+    url: integration.config.url,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      project: project.name,
+      snapshotUrl,
+      blocks,
+    }),
+  };
+
+  const response = await request(options);
+
+  return response;
+}
 
 async function sendSnapshotToEmail(project, snapshotPath, customEmails) {
   if (!project.snapshotSchedule?.mediums?.email?.enabled) {
@@ -42,18 +65,12 @@ async function sendSnapshotToIntegrations(project, snapshotPath, integrations) {
           text: `:camera: New dashboard snapshot for *${project.name}*`,
         },
       }, {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "A new snapshot of your dashboard has been generated.",
-        },
-      }, {
         type: "divider",
       }, {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": `<${dashboardUrl}|*View your dashboard*>`,
+          "text": `<${dashboardUrl}|*View live dashboard*>`,
         }
       }];
 
@@ -66,7 +83,7 @@ async function sendSnapshotToIntegrations(project, snapshotPath, integrations) {
         });
       }
 
-      return webhookAlerts.send({
+      return sendToWebhook({
         integration,
         project,
         snapshotUrl,
@@ -97,9 +114,23 @@ module.exports = async (job) => {
       throw new Error("Failed to take snapshot");
     }
 
+    let integrations = [];
+    if (project.snapshotSchedule?.integrations) {
+      integrations = await db.Integration.findAll({
+        where: {
+          id: {
+            [Op.in]: project.snapshotSchedule?.integrations?.map((i) => i.integration_id),
+          },
+        },
+      });
+    }
+
     // Send to configured channels
     await sendSnapshotToEmail(project, snapshotPath, project.snapshotSchedule?.customEmails);
-    await sendSnapshotToIntegrations(project, snapshotPath, project.snapshotSchedule?.integrations);
+
+    if (integrations.length > 0) {
+      await sendSnapshotToIntegrations(project, snapshotPath, integrations);
+    }
 
     // Update last snapshot sent time
     await db.Project.update(
