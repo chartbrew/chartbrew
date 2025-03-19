@@ -43,7 +43,9 @@ module.exports.snapDashboard = async (userId, dashboard, report = false, options
     { expiresIn: 300 },
   );
 
-  const { viewport, theme } = options;
+  const {
+    viewport, theme, removeStyling, removeHeader
+  } = options;
 
   const width = (viewport?.width && parseInt(viewport.width, 10)) || 1440;
   const height = (viewport?.height && parseInt(viewport.height, 10)) || 900;
@@ -58,7 +60,18 @@ module.exports.snapDashboard = async (userId, dashboard, report = false, options
         height,
       });
 
-      await page.goto(`${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`);
+      let url = `${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`;
+
+      // apply options
+      if (removeStyling) {
+        url += "&removeStyling=true";
+      }
+
+      if (removeHeader) {
+        url += "&removeHeader=true";
+      }
+
+      await page.goto(url);
       await page.waitForSelector("div.dashboard-container");
       await page.waitForTimeout(2000);
 

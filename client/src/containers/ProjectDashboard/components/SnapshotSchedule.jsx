@@ -4,6 +4,7 @@ import {
   Autocomplete, AutocompleteItem, Button, Input, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Select, SelectItem, TimeInput, Spacer, Image, Textarea, ButtonGroup, Tooltip,
   Tabs, Tab,
+  Checkbox,
 } from "@heroui/react";
 import {
   LuCamera, LuLaptop, LuMail, LuMailPlus, LuMapPin, LuMonitor, LuPlus, LuRefreshCw, LuSettings,
@@ -480,28 +481,28 @@ function SnapshotSchedule({ isOpen, onClose }) {
                       <Button
                         onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
                         isIconOnly
-                        color={schedule.viewport.width === 375 ? "primary" : "default"}
+                        color={schedule?.viewport?.width === 375 ? "primary" : "default"}
                       >
                         <LuSmartphone />
                       </Button>
                       <Button
                         onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
                         isIconOnly
-                        color={schedule.viewport.width === 768 ? "primary" : "default"}
+                        color={schedule?.viewport?.width === 768 ? "primary" : "default"}
                       >
                         <LuTablet />
                       </Button>
                       <Button
                         onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
                         isIconOnly
-                        color={schedule.viewport.width === 1440 ? "primary" : "default"}
+                        color={schedule?.viewport?.width === 1440 ? "primary" : "default"}
                       >
                         <LuLaptop />
                       </Button>
                       <Button
                         onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
                         isIconOnly
-                        color={schedule.viewport.width === 1920 ? "primary" : "default"}
+                        color={schedule?.viewport?.width === 1920 ? "primary" : "default"}
                       >
                         <LuMonitor />
                       </Button>
@@ -518,6 +519,22 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     max={7680}
                   />
                 </div>
+              </div>
+              <div className="flex flex-row items-center gap-4">
+                <Checkbox
+                  isSelected={schedule.removeStyling}
+                  onValueChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
+                  size="sm"
+                >
+                  Remove styling
+                </Checkbox>
+                <Checkbox
+                  isSelected={schedule.removeHeader}
+                  onValueChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
+                  size="sm"
+                >
+                  Remove header
+                </Checkbox>
               </div>
             </div>
           </ModalBody>

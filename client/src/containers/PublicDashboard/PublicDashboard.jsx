@@ -84,6 +84,9 @@ function PublicDashboard(props) {
   const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
 
+  const removeStyling = searchParams.get("removeStyling") === "true";
+  const removeHeader = searchParams.get("removeHeader") === "true";
+
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
     setIsSaved(false);
@@ -392,7 +395,7 @@ function PublicDashboard(props) {
     return (
       <div>
         <Helmet>
-          {(newChanges?.headerCode || project?.headerCode) && (
+          {(newChanges?.headerCode || project?.headerCode) && !removeStyling && (
             <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
           )}
           <style type="text/css">
@@ -497,13 +500,13 @@ function PublicDashboard(props) {
   return (
     <div className="dashboard-container">
       <Helmet>
-        {(newChanges?.headerCode || project?.headerCode) && (
+        {(newChanges?.headerCode || project?.headerCode) && !removeStyling && (
           <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
         )}
         <style type="text/css">
           {`
             html, body {
-              background-color: ${newChanges.backgroundColor} !important;
+              background-color: ${removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor)} !important;
             }
           `}
         </style>
@@ -619,73 +622,75 @@ function PublicDashboard(props) {
       )}
 
       <div className={editorVisible && !preview ? "ml-16" : ""}>
-        <Navbar
-          isBordered
-          maxWidth={"full"}
-          isBlurred={false}
-          className={"header flex-grow-0 justify-between"}
-          style={{ backgroundColor: newChanges.backgroundColor || project.backgroundColor || "#FFFFFF" }}
-        >
-          <NavbarBrand>
-            <div className="flex items-center gap-4">
-              {editorVisible && !preview && (
-                <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
-                  <img
-                    onLoad={_onLoadLogo}
-                    className="dashboard-logo"
-                    src={logoPreview || newChanges.logo || logo}
-                    alt={`${project.name} Logo`}
-                    height={45}
-                    width={45 * logoAspectRatio}
-                  />
-                </div>
-              )}
-
-              {(!editorVisible || preview) && (
-                <div className="dashboard-logo-container">
-                  <a
-                    href={newChanges.logoLink || project.logoLink || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+        {!removeHeader && (
+          <Navbar
+            isBordered
+            maxWidth={"full"}
+            isBlurred={false}
+            className={"header flex-grow-0 justify-between"}
+            style={{ backgroundColor: removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor || project.backgroundColor || "#FFFFFF") }}
+          >
+            <NavbarBrand>
+              <div className="flex items-center gap-4">
+                {editorVisible && !preview && (
+                  <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <img
+                      onLoad={_onLoadLogo}
                       className="dashboard-logo"
-                      src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                      src={logoPreview || newChanges.logo || logo}
+                      alt={`${project.name} Logo`}
                       height={45}
                       width={45 * logoAspectRatio}
-                      alt={`${project.name} Logo`}
                     />
-                  </a>
-                </div>
-              )}
+                  </div>
+                )}
 
-              <div className="flex flex-col">
-                <span
-                  className="text-lg font-bold"
-                  style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
-                >
-                  {newChanges.dashboardTitle || project.dashboardTitle || project.name}
-                </span>
-                {!editorVisible && project.description && (
-                  <span
-                    className="dashboard-sub-title"
-                    style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
-                  >
-                    {project.description}
-                  </span>
+                {(!editorVisible || preview) && (
+                  <div className="dashboard-logo-container">
+                    <a
+                      href={newChanges.logoLink || project.logoLink || "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <img
+                        className="dashboard-logo"
+                        src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                        height={45}
+                        width={45 * logoAspectRatio}
+                        alt={`${project.name} Logo`}
+                      />
+                    </a>
+                  </div>
                 )}
-                {editorVisible && newChanges.description && (
+
+                <div className="flex flex-col">
                   <span
-                    className="dashboard-sub-title"
-                    style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
+                    className="text-lg font-bold"
+                    style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
                   >
-                    {newChanges.description}
+                    {newChanges.dashboardTitle || project.dashboardTitle || project.name}
                   </span>
-                )}
+                  {!editorVisible && project.description && (
+                    <span
+                      className="dashboard-sub-title"
+                      style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
+                    >
+                      {project.description}
+                    </span>
+                  )}
+                  {editorVisible && newChanges.description && (
+                    <span
+                      className="dashboard-sub-title"
+                      style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
+                    >
+                      {newChanges.description}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </NavbarBrand>
-        </Navbar>
+            </NavbarBrand>
+          </Navbar>
+        )}
 
         <div className="absolute top-4 right-4 z-50">
           {!isSaved && !preview && (
@@ -782,19 +787,19 @@ function PublicDashboard(props) {
             {project.Team && project.Team.showBranding && (
               <div className="footer-content mt-4 pr-4 flex justify-end">
                 <Link
-                  className={`flex items-start !text-[${newChanges.titleColor || "black"}]`}
+                  className={`flex items-start !text-[${removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000")}]`}
                   href={"https://chartbrew.com?ref=chartbrew_report"}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                  <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     {"Powered by "}
                   </span> 
                   <Spacer x={1} />
-                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                  <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     <strong>{"Chart"}</strong>
                   </span>
-                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                  <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     {"brew"}
                   </span>
                 </Link>
