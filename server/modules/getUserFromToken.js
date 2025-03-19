@@ -17,15 +17,6 @@ module.exports = async (req, res, next) => {
     //
   }
 
-  // also check for ?accessToken=
-  if (!decoded && req.query.accessToken) {
-    try {
-      decoded = await jwt.verify(req.query.accessToken, settings.encryptionKey);
-    } catch (err) {
-      //
-    }
-  }
-
   if (!decoded) {
     try {
       decoded = await jwt.verify(token, settings.secret);

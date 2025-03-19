@@ -31,14 +31,14 @@ module.exports.snapChart = async (shareString) => {
   }
 };
 
-module.exports.snapDashboard = async (userId, dashboard, report = false, options = {}) => {
+module.exports.snapDashboard = async (dashboard, options = {}) => {
   if (!dashboard) {
     throw new Error("Dashboard not found");
   }
 
   // create a temporary accessToken
   const accessToken = jwt.sign(
-    { project_id: dashboard.id, id: userId },
+    { project_id: dashboard.id },
     settings.encryptionKey,
     { expiresIn: 300 },
   );
@@ -50,46 +50,42 @@ module.exports.snapDashboard = async (userId, dashboard, report = false, options
   const width = (viewport?.width && parseInt(viewport.width, 10)) || 1440;
   const height = (viewport?.height && parseInt(viewport.height, 10)) || 900;
 
-  if (report) {
-    let browser = null;
-    try {
-      browser = await chromium.launch();
-      const page = await browser.newPage();
-      await page.setViewportSize({
-        width,
-        height,
-      });
+  let browser = null;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    await page.setViewportSize({
+      width,
+      height,
+    });
 
-      let url = `${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`;
+    let url = `${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`;
 
-      // apply options
-      if (removeStyling) {
-        url += "&removeStyling=true";
-      }
+    // apply options
+    if (removeStyling) {
+      url += "&removeStyling=true";
+    }
 
-      if (removeHeader) {
-        url += "&removeHeader=true";
-      }
+    if (removeHeader) {
+      url += "&removeHeader=true";
+    }
 
-      await page.goto(url);
-      await page.waitForSelector("div.dashboard-container");
-      await page.waitForTimeout(2000);
+    await page.goto(url);
+    await page.waitForSelector("div.dashboard-container");
+    await page.waitForTimeout(2000);
 
-      const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${dashboard.id}.png`);
-      await page.screenshot({ path: snapshotPath, fullPage: true, omitBackground: true });
+    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${dashboard.id}.png`);
+    await page.screenshot({ path: snapshotPath, fullPage: true, omitBackground: true });
 
+    await browser.close();
+
+    return `uploads/snapshots/snap-${dashboard.id}.png`;
+  } catch (err) {
+    console.log("Could not take dashboard snapshot", err); // eslint-disable-line no-console
+    return null;
+  } finally {
+    if (browser) {
       await browser.close();
-
-      return `uploads/snapshots/snap-${dashboard.id}.png`;
-    } catch (err) {
-      console.log("Could not take dashboard snapshot", err); // eslint-disable-line no-console
-      return null;
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
     }
   }
-
-  return null;
 };

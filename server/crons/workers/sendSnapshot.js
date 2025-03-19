@@ -105,10 +105,7 @@ module.exports = async (job) => {
     }
 
     // Take the snapshot
-    const snapshotPath = await snapDashboard(project, true, {
-      viewport: project.snapshotSchedule?.viewport,
-      theme: project.snapshotSchedule?.theme,
-    });
+    const snapshotPath = await snapDashboard(project, project.snapshotSchedule);
 
     if (!snapshotPath) {
       throw new Error("Failed to take snapshot");

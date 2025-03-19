@@ -275,9 +275,9 @@ class ProjectController {
       });
   }
 
-  async takeSnapshot(userId, projectId, options) {
+  async takeSnapshot(projectId, options) {
     const project = await this.findById(projectId);
-    return snapDashboard(userId, project, true, options);
+    return snapDashboard(project, options);
   }
 }
 

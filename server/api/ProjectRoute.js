@@ -2,6 +2,9 @@ const path = require("path");
 const fs = require("fs");
 const { nanoid } = require("nanoid");
 const _ = require("lodash");
+const jwt = require("jsonwebtoken");
+
+const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
@@ -224,6 +227,14 @@ module.exports = (app) => {
           }
         }
 
+        // check if accessToken is present and valid
+        if (req.query.accessToken) {
+          const decodedToken = await jwt.verify(req.query.accessToken, settings.encryptionKey);
+          if (decodedToken.project_id === project.id) {
+            return res.status(200).send(processedProject);
+          }
+        }
+
         if (project.public && !project.passwordProtected) {
           return res.status(200).send(processedProject);
         }
@@ -334,7 +345,7 @@ module.exports = (app) => {
   ** Route to take a snapshot of a project
   */
   app.post("/project/:id/snapshot", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return projectController.takeSnapshot(req.user.id, req.params.id, req.body)
+    return projectController.takeSnapshot(req.params.id, req.body)
       .then((snapshot) => {
         return res.status(200).send({ snapshot_path: snapshot });
       })
