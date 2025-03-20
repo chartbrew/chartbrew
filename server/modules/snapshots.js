@@ -72,12 +72,6 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
     }
 
     await page.goto(url);
-    // Wait for navigation to complete and check for 404
-    const response = await page.waitForResponse((response) => response.url() === url);
-    if (response.status() === 404) {
-      throw new Error("Dashboard page not found (404)");
-    }
-
     await page.waitForSelector("div.dashboard-container");
     await page.waitForTimeout(2000);
 
