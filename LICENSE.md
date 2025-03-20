@@ -31,6 +31,19 @@ To obtain a commercial license, contact **Chartbrew** (Depomo Ltd) at:
 
 The terms for commercial use can be found at [`chartbrew.com/legal/commercial-license`](https://chartbrew.com/legal/commercial-license).
 
+> **Note:** If you are using Chartbrew internally and want to keep your modifications private, you may qualify for a **free commercial license**.  
+> Reach out to **support@chartbrew.com** to discuss your use case.  
+> **AGPL-3.0 is mainly in place to prevent Chartbrew from being resold without fair compensation, not to restrict internal usage.**
+
+## **3. Branding & Trademark Restrictions**
+- The Chartbrew name, logo (coffee cup design), and branding elements are trademarks of Depomo Ltd.
+- Self-hosted users are allowed to use Chartbrew with its original branding.
+- If you modify Chartbrew’s branding, you must completely rebrand it—you may not:
+  - Use a coffee cup or similar imagery in logos to imply association with Chartbrew.
+  - Use the name “Chartbrew” or similar-sounding names in your branding.
+  - Use phrases such as “brewing charts,” “brewing insights,” or similar language in a way that mimics Chartbrew’s identity.
+- Customer testimonials from Chartbrew.com or its affiliates that refer to Chartbrew or its services may not be modified or repurposed under any circumstances. These were provided by customers exclusively for Chartbrew and are not covered under open-source licensing.
+- Any violation of these terms will result in license termination and potential legal action.
 
 ## **Frequently Asked Questions**
 
