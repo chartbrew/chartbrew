@@ -559,7 +559,7 @@ function Chart(props) {
                       </Tooltip>
                     )}
                     {(chart.onReport && !isPublic && !print && !chart.draft) && (
-                      <Tooltip content="This chart is visible on your report">
+                      <Tooltip content="Visible on your report and snapshots">
                         <div>
                           <LuMonitor size={12} />
                         </div>
@@ -567,7 +567,7 @@ function Chart(props) {
                     )}
                     {(!chart.onReport || chart.draft) && (
                       <Tooltip
-                        content={chart.draft ? "Draft charts are not visible on your report" : "This chart is not visible on your report"}
+                        content={chart.draft ? "Drafts are not visible on report and snapshots" : "Hidden on reports and snapshots"}
                       >
                         <div>
                           <LuMonitorX size={12} />
