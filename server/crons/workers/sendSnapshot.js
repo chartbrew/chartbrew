@@ -131,7 +131,7 @@ module.exports = async (job) => {
 
     // Update last snapshot sent time
     await db.Project.update(
-      { lastSnapshotSentAt: DateTime.now().toJSDate() },
+      { lastSnapshotSentAt: DateTime.now().toJSDate(), currentSnapshot: snapshotPath },
       { where: { id: project.id } }
     );
 

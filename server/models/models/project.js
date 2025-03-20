@@ -101,6 +101,9 @@ module.exports = (sequelize, DataTypes) => {
     lastSnapshotSentAt: {
       type: DataTypes.DATE,
     },
+    currentSnapshot: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

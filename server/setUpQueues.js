@@ -7,6 +7,7 @@ const { getQueueOptions } = require("./redisConnection");
 const updateCharts = require("./crons/updateCharts");
 const updateDashboards = require("./crons/updateDashboards");
 const sendSnapshots = require("./crons/sendSnapshots");
+// const updateSnapshots = require("./crons/updateSnapshots");
 
 async function cleanActiveJobs(queue) {
   try {
@@ -73,7 +74,7 @@ const setUpQueues = (app) => {
   /*
   ** Dashboard Snapshot Queue
   */
-  const dashboardSnapshotQueue = new Queue("dashboardSnapshotQueue", getQueueOptions());
+  const dashboardSnapshotQueue = new Queue("sendSnapshotsQueue", getQueueOptions());
   dashboardSnapshotQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the dashboard snapshot queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -86,6 +87,22 @@ const setUpQueues = (app) => {
     await sendSnapshot(job);
   }, { connection: dashboardSnapshotQueue.opts.connection, concurrency: 1 });
 
+  /*
+  ** Update Snapshots Queue
+  */
+  const updateSnapshotsQueue = new Queue("updateSnapshotsQueue", getQueueOptions());
+  updateSnapshotsQueue.on("error", (error) => {
+    if (error.code === "ECONNREFUSED") {
+      console.error("Failed to set up the update snapshots queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      process.exit(1);
+    }
+  });
+  // create a worker for the updateSnapshotsQueue
+  const takeSnapshotWorker = new Worker(updateSnapshotsQueue.name, async (job) => { // eslint-disable-line
+    const takeSnapshot = require("./crons/workers/takeSnapshot"); // eslint-disable-line
+    await takeSnapshot(job);
+  }, { connection: updateSnapshotsQueue.opts.connection, concurrency: 10 });
+
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/apps/queues");
 
@@ -95,6 +112,7 @@ const setUpQueues = (app) => {
       new BullMQAdapter(updateDashboardsQueue),
       new BullMQAdapter(updateMongoDBSchemaQueue),
       new BullMQAdapter(dashboardSnapshotQueue),
+      new BullMQAdapter(updateSnapshotsQueue),
     ],
     serverAdapter,
     options: {
@@ -113,6 +131,9 @@ const setUpQueues = (app) => {
   updateCharts(updateChartsQueue);
   updateDashboards(updateDashboardsQueue);
   sendSnapshots(dashboardSnapshotQueue);
+
+  // Uncomment this to enable regular snapshot updates
+  // updateSnapshots(updateSnapshotsQueue, takeSnapshotWorker);
 
   // Handle PM2 shutdown/reload
   process.on("SIGINT", async () => {
