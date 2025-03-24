@@ -151,9 +151,7 @@ function UserDashboard(props) {
   return (
     <div className="dashboard bg-content2 flex flex-col min-h-screen h-full">
       <Navbar hideTeam transparent />
-      <div className="container mx-auto px-4">
-        <Spacer y={4} />
-
+      <div className="max-w-screen-2xl mx-auto px-4">
         {team?.id && (
           <div className="grid grid-cols-12 gap-4 mt-4">
             <div className="col-span-12 sm:col-span-5 md:col-span-4 lg:col-span-3">
@@ -165,9 +163,9 @@ function UserDashboard(props) {
                   <Dropdown aria-label="Select a team option">
                     <DropdownTrigger>
                       <Button
-                        startContent={<LuUsers size={28} />}
+                        startContent={<LuUsers size={20} />}
                         variant="bordered"
-                        className="bg-background"
+                        className="bg-background justify-between"
                         endContent={<LuChevronDown />}
                         fullWidth
                       >
@@ -263,6 +261,7 @@ function UserDashboard(props) {
                   )}
                 </Listbox>
               </Segment>
+
 
               <NoticeBoard />
             </div>

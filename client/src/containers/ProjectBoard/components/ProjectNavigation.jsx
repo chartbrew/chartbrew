@@ -127,19 +127,13 @@ function ProjectNavigation(props) {
     <div>
       <div className={"bg-content1 flex flex-col justify-between"} style={styles.mainSideMenu(height)}>
         <div className="p-2">
-          <Row justify="center" align="center" className={"pt-4"}>
+          <div className="flex justify-center items-center">
             <Popover>
               <PopoverTrigger>
-                <div>
-                  {menuSize === "small" && (
-                    <div>
-                      <Text className={"text-default-800"}><LuMenu size={28} /></Text>
-                    </div>
-                  )}
-                  {menuSize === "large" && (
-                    <Text b className={"text-sm text-blue-600"}>{_formatProjectName(project.name)}</Text>
-                  )}
-                </div>
+                <Button variant="bordered" isIconOnly={menuSize === "small"} isLoading={!project.name} fullWidth>
+                  {menuSize === "small" && <LuMenu size={24} />}
+                  {menuSize === "large" && _formatProjectName(project.name)}
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="max-w-[200px] max-h-[400px] px-2 py-4">
                 <div className="flex flex-col gap-2 overflow-y-auto">
@@ -150,6 +144,7 @@ function ProjectNavigation(props) {
                     variant="bordered"
                     endContent={<HiSearch />}
                     onChange={(e) => setProjectSearch(e.target.value)}
+                    className="px-2"
                   />
                   <Listbox aria-label="Dashboard switch list">
                     {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1 && !p.ghost).map((p) => (
@@ -161,8 +156,8 @@ function ProjectNavigation(props) {
                 </div>
               </PopoverContent>
             </Popover>
-          </Row>
-          <Spacer y={6} />
+          </div>
+          <Spacer y={4} />
           <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
             <Link to={`/${teamId}/${projectId}/dashboard`}>
               {menuSize === "small" && (
@@ -191,7 +186,6 @@ function ProjectNavigation(props) {
             </Link>
           </Row>
 
-          <Spacer y={1} />
           <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
             <Link to={`/b/${project.brewName}`}>
               <LinkNext className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
@@ -225,7 +219,6 @@ function ProjectNavigation(props) {
 
           {canAccess("projectEditor") && (
             <>
-              <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
                 <Link to={`/${teamId}/${projectId}/settings`}>
                   {menuSize === "small" && (
@@ -258,7 +251,6 @@ function ProjectNavigation(props) {
           )}
           {canAccess("projectEditor") && (
             <>
-              <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
                 <Link to={`/${teamId}/${projectId}/members`}>
                   {menuSize === "small" && (
@@ -286,7 +278,6 @@ function ProjectNavigation(props) {
                   )}
                 </Link>
               </Row>
-              <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
                 <Link to={`/${teamId}/${projectId}/integrations`}>
                   {menuSize === "small" && (
@@ -315,7 +306,6 @@ function ProjectNavigation(props) {
                 </Link>
               </Row>
 
-              <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
                 <Link to={`/${teamId}/${projectId}/variables`}>
                   {menuSize === "small" && (
