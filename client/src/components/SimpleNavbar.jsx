@@ -5,8 +5,9 @@ import {
 
 import Text from "./Text";
 import { useTheme } from "../modules/ThemeContext";
-import cbLogoDark from "../assets/logo_full_dark.png";
-import cbLogoLight from "../assets/logo_full_light.png";
+import cbLogoDark from "../assets/cb_logo_dark.svg";
+import cbLogoLight from "../assets/cb_logo_light.svg";
+import { SITE_HOST } from "../config/settings";
 
 function SimpleNavbar() {
   const { isDark } = useTheme();
@@ -14,7 +15,7 @@ function SimpleNavbar() {
   return (
     <Navbar maxWidth={"full"} className="z-50">
       <NavbarBrand>
-        <a href="https://chartbrew.com">
+        <a href={`${SITE_HOST}`}>
           <Image src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={150} radius="sm" />
         </a>
       </NavbarBrand>
