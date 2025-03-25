@@ -22,8 +22,8 @@ import Row from "./Row";
 import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
 import { useTheme } from "../modules/ThemeContext";
-import cbFullLogoLight from "../assets/logo_light_mode_black.svg";
-import cbFullLogoDark from "../assets/logo_dark_mode.svg";
+import cbFullLogoLight from "../assets/cb_logo_light.svg";
+import cbFullLogoDark from "../assets/cb_logo_dark.svg";
 
 /*
   The navbar component used throughout the app
