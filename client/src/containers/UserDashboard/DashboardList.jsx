@@ -5,13 +5,13 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
 } from "@heroui/react";
 import React, { useEffect, useState } from "react";
-import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
+import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPin, LuPinOff, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
 import { getTeams, saveActiveTeam, selectTeam, selectTeamMembers } from "../../slices/team";
 import canAccess from "../../config/canAccess";
-import { selectUser } from "../../slices/user";
+import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
 import { getTemplates } from "../../slices/template";
 import { removeProject, selectProjects, updateProject } from "../../slices/project";
 import ProjectForm from "../../components/ProjectForm";
@@ -28,6 +28,7 @@ function DashboardList() {
   const user = useSelector(selectUser);
   const projects = useSelector(selectProjects);
   const teamMembers = useSelector(selectTeamMembers);
+  const pinnedDashboards = user?.PinnedDashboards || [];
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -53,10 +54,14 @@ function DashboardList() {
   };
 
   const _getFilteredProjects = () => {
-    if (!search[team.id]) return projects.filter((p) => !p.ghost && p.team_id === team.id);
-    const filteredProjects = projects.filter((p) => {
-      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1 && !p.ghost && p.team_id === team.id;
-    });
+    let filteredProjects = [];
+    if (!search[team.id]) {
+      filteredProjects = projects.filter((p) => !p.ghost && p.team_id === team.id);
+    } else {
+      filteredProjects = projects.filter((p) => {
+        return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1 && !p.ghost && p.team_id === team.id;
+      });
+    }
 
     // now add the team members to each project
     const formattedProjects = filteredProjects.map((p) => {
@@ -67,7 +72,16 @@ function DashboardList() {
       };
     });
 
-    return formattedProjects;
+    // Sort pinned dashboards to the top
+    const sortedProjects = formattedProjects.sort((a, b) => {
+      const aPinned = pinnedDashboards.find((p) => p.project_id === a.id);
+      const bPinned = pinnedDashboards.find((p) => p.project_id === b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+
+    return sortedProjects;
   };
 
   const _getProjectMembers = (project) => {
@@ -136,6 +150,14 @@ function DashboardList() {
     window.location.href = url;
   };
 
+  const _onPinDashboard = (projectId) => {
+    if (pinnedDashboards.find((p) => p.project_id === projectId)) {
+      dispatch(unpinDashboard({ pin_id: pinnedDashboards.find((p) => p.project_id === projectId).id }));
+    } else {
+      dispatch(pinDashboard({ project_id: projectId, user_id: user.id }));
+    }
+  };
+
   return (
     <div className="flex flex-col">
       <ProjectForm
@@ -149,7 +171,7 @@ function DashboardList() {
             <div>
               <Button
                 color="primary"
-                onClick={() => _onNewProject(team)}
+                onPress={() => _onNewProject(team)}
                 endContent={<LuPlus />}
                 className="create-dashboard-tutorial"
               >
@@ -173,7 +195,7 @@ function DashboardList() {
             variant="light"
             isIconOnly
             color={viewMode === "grid" ? "primary" : "default"}
-            onClick={() => _changeViewMode("grid")}
+            onPress={() => _changeViewMode("grid")}
           >
             <LuLayoutGrid />
           </Button>
@@ -181,7 +203,7 @@ function DashboardList() {
             variant="light"
             isIconOnly
             color={viewMode === "table" ? "primary" : "default"}
-            onClick={() => _changeViewMode("table")}
+            onPress={() => _changeViewMode("table")}
           >
             <LuTable />
           </Button>
@@ -197,28 +219,40 @@ function DashboardList() {
               shadow="none"
               className="border-1 border-solid border-content3"
               radius="sm"
-              onClick={() => directToProject(project.id)}
+              onPress={() => directToProject(project.id)}
             >
               <CardHeader className="flex flex-row justify-between items-center">
-                <span className="text-sm font-medium">{project.name}</span>
+                <div className="flex flex-row items-center gap-2">
+                  {pinnedDashboards.find((p) => p.project_id === project.id) && (
+                    <LuPin className="text-foreground-500" size={18} />
+                  )}
+                  <span className="text-sm font-medium">{project.name}</span>
+                </div>
                 {_canAccess("teamAdmin", team.TeamRoles) && (
                   <Dropdown size="sm">
                     <DropdownTrigger>
-                      <LinkNext className="text-foreground-400">
-                        <LuEllipsis />
-                      </LinkNext>
+                      <Button isIconOnly variant="light" size="sm">
+                        <LuEllipsis className="text-foreground-400" />
+                      </Button>
                     </DropdownTrigger>
                     <DropdownMenu>
                       <DropdownItem
-                        onClick={() => _onEditProject(project)}
+                        onPress={() => _onEditProject(project)}
                         startContent={<LuPencilLine />}
-                        showDivider
                         textValue="Rename"
                       >
                         Rename
                       </DropdownItem>
                       <DropdownItem
-                        onClick={() => _onDeleteProject(project)}
+                        onPress={() => _onPinDashboard(project?.id)}
+                        startContent={pinnedDashboards.find((p) => p.project_id === project.id) ? <LuPinOff /> : <LuPin />}
+                        textValue={pinnedDashboards.find((p) => p.project_id === project.id) ? "Unpin" : "Pin"}
+                        showDivider
+                      >
+                        {pinnedDashboards.find((p) => p.project_id === project.id) ? "Unpin" : "Pin"}
+                      </DropdownItem>
+                      <DropdownItem
+                        onPress={() => _onDeleteProject(project)}
                         startContent={<LuTrash />}
                         color="danger"
                         textValue="Delete"
@@ -291,11 +325,26 @@ function DashboardList() {
           </TableHeader>
           <TableBody>
             {_getFilteredProjects().map((project) => (
-              <TableRow key={project.id}>
+              <TableRow key={project.id} className="group">
                 <TableCell key="name">
-                  <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
-                    <span className={"text-foreground font-medium"}>{project.name}</span>
-                  </LinkNext>
+                  <div className="flex flex-row items-center gap-2">
+                    {pinnedDashboards.find((p) => p.project_id === project.id) ? (
+                      <Tooltip content="Unpin dashboard" placement="left-start">
+                        <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
+                          <LuPin className="text-gray-500" size={18} />
+                        </Button>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip content="Pin dashboard" placement="left-start">
+                        <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <LuPin className="text-gray-500" size={18} />
+                        </Button>
+                      </Tooltip>
+                    )}
+                    <LinkNext onPress={() => directToProject(project.id)} className="cursor-pointer flex flex-row items-center">
+                      <span className={"text-foreground font-medium"}>{project.name}</span>
+                    </LinkNext>
+                  </div>
                 </TableCell>
                 <TableCell key="members">
                   <div className="flex flex-row items-center justify-center">
@@ -332,7 +381,7 @@ function DashboardList() {
                           variant="light"
                           size="sm"
                           className={"min-w-fit"}
-                          onClick={() => _onEditProject(project)}
+                          onPress={() => _onEditProject(project)}
                         >
                           <LuPencilLine />
                         </Button>
@@ -344,7 +393,7 @@ function DashboardList() {
                           variant="light"
                           size="sm"
                           className={"min-w-fit"}
-                          onClick={() => _onDeleteProject(project)}
+                          onPress={() => _onDeleteProject(project)}
                         >
                           <LuTrash />
                         </Button>
@@ -395,13 +444,13 @@ function DashboardList() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setProjectToEdit(null)}
+              onPress={() => setProjectToEdit(null)}
             >
               Cancel
             </Button>
             <Button
               color="primary"
-              onClick={() => _onEditProjectSubmit()}
+              onPress={() => _onEditProjectSubmit()}
               disabled={!projectToEdit?.name || modifyingProject}
               isLoading={modifyingProject}
             >
@@ -424,7 +473,7 @@ function DashboardList() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setProjectToDelete(null)}
+              onPress={() => setProjectToDelete(null)}
             >
               Cancel
             </Button>
@@ -432,7 +481,7 @@ function DashboardList() {
               auto
               color="danger"
               endContent={<LuTrash />}
-              onClick={() => _onDeleteProjectSubmit()}
+              onPress={() => _onDeleteProjectSubmit()}
               isLoading={modifyingProject}
             >
               Delete

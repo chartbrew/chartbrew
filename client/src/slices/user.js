@@ -423,6 +423,49 @@ export const validate2faLogin = createAsyncThunk(
   }
 )
 
+export const pinDashboard = createAsyncThunk(
+  "user/pinDashboard",
+  async ({ user_id, project_id }) => {
+    const url = `${API_HOST}/user/${user_id}/pin`;
+    const body = JSON.stringify({ project_id });
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getAuthToken()}`,
+    });
+    const method = "POST";
+
+    const response = await fetch(url, { body, headers, method });
+    if (!response.ok) {
+      throw new Error("Error pinning dashboard");
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
+export const unpinDashboard = createAsyncThunk(
+  "user/unpinDashboard",
+  async ({ user_id, pin_id }) => {
+    const url = `${API_HOST}/user/${user_id}/pin/${pin_id}`;
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getAuthToken()}`,
+    });
+    const method = "DELETE";
+
+    const response = await fetch(url, { headers, method });
+    if (!response.ok) {
+      throw new Error("Error unpinning dashboard");
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
 const initialState = {
   loading: false,
   error: false,
@@ -573,6 +616,35 @@ export const userSlice = createSlice({
       state.data = action.payload;
     });
     builder.addCase(validate2faLogin.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
+
+    // pinDashboard
+    builder.addCase(pinDashboard.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(pinDashboard.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data.PinnedDashboards = [
+        ...state.data.PinnedDashboards,
+        action.payload,
+      ];
+    });
+    builder.addCase(pinDashboard.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
+
+    // unpinDashboard
+    builder.addCase(unpinDashboard.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(unpinDashboard.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data.PinnedDashboards = state.data.PinnedDashboards.filter((p) => p.id !== action.meta.arg.pin_id);
+    });
+    builder.addCase(unpinDashboard.rejected, (state) => {
       state.loading = false;
       state.error = true;
     })

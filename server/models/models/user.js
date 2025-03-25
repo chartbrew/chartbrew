@@ -93,6 +93,7 @@ module.exports = (sequelize, DataTypes) => {
     models.User.hasMany(models.TeamInvitation, { foreignKey: "user_id" });
     models.User.hasMany(models.ChartCache, { foreignKey: "user_id" });
     models.User.hasMany(models.User2fa, { foreignKey: "user_id" });
+    models.User.hasMany(models.PinnedDashboard, { foreignKey: "user_id" });
   };
 
   User.beforeValidate((user) => {

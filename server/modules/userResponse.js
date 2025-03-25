@@ -8,5 +8,6 @@ module.exports = (user) => {
     tutorials: user.tutorials,
     createdAt: user.createdAt,
     User2fas: user.User2fas,
+    PinnedDashboards: user.PinnedDashboards,
   };
 };

@@ -238,7 +238,7 @@ class UserController {
   findById(id) {
     return db.User.findOne({
       where: { "id": id },
-      include: [{ model: db.TeamRole }],
+      include: [{ model: db.TeamRole }, { model: db.PinnedDashboard, required: false }],
     }).then((user) => {
       if (!user) return new Promise((resolve, reject) => reject(new Error(404)));
       return user;
@@ -308,6 +308,9 @@ class UserController {
         where: {
           team_id: teamId
         }
+      }, {
+        model: db.PinnedDashboard,
+        required: false,
       }],
       attributes: { exclude: ["password", "passwordResetToken"] },
     }).then((users) => {
@@ -581,6 +584,29 @@ class UserController {
     } else {
       return new Promise((resolve, reject) => reject(new Error(401)));
     }
+  }
+
+  async pinDashboard(projectId, userId) {
+    const project = await db.Project.findByPk(projectId);
+    return db.PinnedDashboard.create({
+      project_id: projectId,
+      user_id: userId,
+      team_id: project.team_id,
+    });
+  }
+
+  async unpinDashboard(pinId) {
+    return db.PinnedDashboard.destroy({
+      where: {
+        id: pinId,
+      },
+    });
+  }
+
+  async getPinnedDashboards(userId) {
+    return db.PinnedDashboard.findAll({
+      where: { user_id: userId },
+    });
   }
 }
 
