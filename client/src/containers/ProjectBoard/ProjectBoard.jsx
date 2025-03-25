@@ -11,7 +11,7 @@ import {
 
 import "allotment/dist/style.css";
 
-import { getProject, changeActiveProject, selectProjects, selectProject, getProjects } from "../../slices/project";
+import { getProject, changeActiveProject, selectProject, getProjects } from "../../slices/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
   getTeam, getTeamMembers, selectTeam,
@@ -38,12 +38,10 @@ function ProjectBoard(props) {
 
   const [loading, setLoading] = useState(true);
   const [menuSize, setMenuSize] = useState("small");
-  const [showDrafts, setShowDrafts] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [update, setUpdate] = useState({});
 
   const team = useSelector(selectTeam);
-  const projects = useSelector(selectProjects);
   const project = useSelector(selectProject) || {};
 
   const { height } = useWindowSize();
@@ -59,9 +57,6 @@ function ProjectBoard(props) {
       _init();
       if (window.localStorage.getItem("_cb_menu_size")) {
         _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
-      }
-      if (window.localStorage.getItem("_cb_drafts")) {
-        _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
       }
 
       checkForUpdates()
@@ -114,11 +109,6 @@ function ProjectBoard(props) {
     }
     setMenuSize(newMenuSize);
     window.localStorage.setItem("_cb_menu_size", newMenuSize);
-  };
-
-  const _setDraftsVisible = (isShowing) => {
-    setShowDrafts(isShowing);
-    window.localStorage.setItem("_cb_drafts", isShowing);
   };
 
   const _getDefaultMenuSize = () => {
@@ -186,15 +176,9 @@ function ProjectBoard(props) {
               >
                 <div>
                   <ProjectNavigation
-                    project={project}
-                    projects={projects}
-                    projectId={params.projectId}
-                    teamId={params.teamId}
-                    onChangeDrafts={_setDraftsVisible}
                     onSetMenuSize={(mSize) => _setMenuSize(mSize)}
                     canAccess={_canAccess}
                     menuSize={menuSize}
-                    showDrafts={showDrafts}
                     onChangeProject={_onChangeProject}
                     update={update}
                   />
@@ -206,7 +190,6 @@ function ProjectBoard(props) {
                 >
                   <div className="pl-0">
                     <MainContent
-                      showDrafts={showDrafts}
                       onPrint={_onPrint}
                       _canAccess={_canAccess}
                     />
@@ -220,7 +203,6 @@ function ProjectBoard(props) {
             <div className="grid grid-cols-12">
               <div className="col-span-12">
                 <MainContent
-                  showDrafts={showDrafts}
                   onPrint={_onPrint}
                   _canAccess={_canAccess}
                   mobile
@@ -232,15 +214,9 @@ function ProjectBoard(props) {
             <Spacer y={8} />
 
             <ProjectNavigation
-              project={project}
-              projects={projects}
-              projectId={params.projectId}
-              teamId={params.teamId}
-              onChangeDrafts={_setDraftsVisible}
               onSetMenuSize={(mSize) => _setMenuSize(mSize)}
               canAccess={_canAccess}
               menuSize={menuSize}
-              showDrafts={showDrafts}
               onChangeProject={_onChangeProject}
               mobile
             />
@@ -253,21 +229,19 @@ function ProjectBoard(props) {
 
 function MainContent() {
   return (
-    <div style={{ width: "100%" }}>
+    <div className="w-full">
       <Outlet />
     </div>
   );
 }
 
 MainContent.propTypes = {
-  showDrafts: PropTypes.bool,
   onPrint: PropTypes.func.isRequired,
   _canAccess: PropTypes.func.isRequired,
   mobile: PropTypes.bool,
 };
 
 MainContent.defaultProps = {
-  showDrafts: true,
   mobile: false,
 };
 
