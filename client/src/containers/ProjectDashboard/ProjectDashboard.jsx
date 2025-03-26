@@ -44,9 +44,8 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { TbChevronDownRight } from "react-icons/tb";
-import { widthSize } from "../../modules/layoutBreakpoints";
+import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
-import gridBreakpoints from "../../config/gridBreakpoints";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
@@ -228,15 +227,18 @@ function ProjectDashboard(props) {
 
   const _getUserBreakpoint = () => {
     const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    if (dashboardWidth > widthSize.lg) return "xl";
-    if (dashboardWidth > widthSize.md) return "lg";
-    if (dashboardWidth > widthSize.sm) return "md";
+    if (dashboardWidth > widthSize.xxxl) return "xxxl";
+    if (dashboardWidth > widthSize.xxl) return "xxl";
+    if (dashboardWidth > widthSize.xl) return "xl";
+    if (dashboardWidth > widthSize.lg) return "lg";
+    if (dashboardWidth > widthSize.md) return "md";
+    if (dashboardWidth > widthSize.sm) return "sm";
     return "xs";
   };
 
   const _onChangePreviewSize = (key) => {
     const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    const breakpointWidth = key === "xl" ? 1440 : gridBreakpoints[key];
+    const breakpointWidth = key === "xxxl" ? 3840 : key === "xxl" ? 2560 : key === "xl" ? 1600 : widthSize[key];
     let newSize;
 
     // Case 1: Switching to a smaller breakpoint - use breakpoint width
@@ -259,18 +261,25 @@ function ProjectDashboard(props) {
   };
 
   const _prepareLayout = (chartsToProcess = charts) => {
-    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
+      acc[key] = [];
+      return acc;
+    }, {});
+
     chartsToProcess.forEach((chart) => {
       if (chart?.layout) {
+        // First, process all existing breakpoints
         Object.keys(chart.layout).forEach((key) => {
-          newLayouts[key].push({
-            i: `${chart.id}`,
-            x: chart.layout[key][0] || 0,
-            y: chart.layout[key][1] || 0,
-            w: chart.layout[key][2],
-            h: chart.layout[key][3],
-            minW: 2,
-          });
+          if (newLayouts[key]) {
+            newLayouts[key].push({
+              i: `${chart.id}`,
+              x: chart.layout[key][0] || 0,
+              y: chart.layout[key][1] || 0,
+              w: chart.layout[key][2],
+              h: chart.layout[key][3],
+              minW: 2,
+            });
+          }
         });
       }
     });
@@ -686,7 +695,11 @@ function ProjectDashboard(props) {
     await dispatch(clearStagedCharts());
 
     // should set the layouts to the original chart layouts
-    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
+      acc[key] = [];
+      return acc;
+    }, {});
+
     charts.forEach((chart) => {
       if (chart.layout) {
         Object.keys(chart.layout).forEach((key) => {
@@ -766,6 +779,8 @@ function ProjectDashboard(props) {
         sm: [0, 0, 2, 2],
         md: [0, 0, 3, 2],
         lg: [0, 0, 3, 2],
+        xl: [0, 0, 3, 2],
+        xxl: [0, 0, 3, 2],
       },
       staged: true,
     };
@@ -1126,9 +1141,9 @@ function ProjectDashboard(props) {
           <ResponsiveGridLayout
             className="layout dashboard-tutorial"
             layouts={layouts}
-            margin={{ lg: [12, 12], md: [12, 12], sm: [12, 12], xs: [12, 12], xxs: [12, 12] }}
-            breakpoints={gridBreakpoints}
-            cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+            margin={margin}
+            breakpoints={widthSize}
+            cols={cols}
             rowHeight={150}
             onLayoutChange={_onChangeLayout}
             resizeHandle={(
@@ -1252,6 +1267,8 @@ function ProjectDashboard(props) {
                   selectedKey={previewSize?.breakpoint}
                   onSelectionChange={(key) => _onChangePreviewSize(key)}
                 >
+                  <Tab key="xxxl" title="4K" />
+                  <Tab key="xxl" title="2K" />
                   <Tab key="xl" title="Large screen" />
                   <Tab key="lg" title="Desktop" />
                   <Tab key="md" title="Laptop" />

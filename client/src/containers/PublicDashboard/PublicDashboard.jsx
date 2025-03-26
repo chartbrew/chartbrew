@@ -43,6 +43,7 @@ import Row from "../../components/Row";
 import Container from "../../components/Container";
 import { useTheme } from "../../modules/ThemeContext";
 import TextWidget from "../Chart/TextWidget";
+import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -147,7 +148,11 @@ function PublicDashboard(props) {
     if (charts && charts.length > 0 && !initLayoutRef.current) {
       initLayoutRef.current = true;
       // set the grid layout
-      const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+      const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
+        acc[key] = [];
+        return acc;
+      }, {});
+
       charts.forEach((chart) => {
         if (chart.layout) {
           Object.keys(chart.layout).forEach((key) => {
@@ -749,8 +754,9 @@ function PublicDashboard(props) {
                 <ResponsiveGridLayout
                   className="layout"
                   layouts={layouts}
-                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                  cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+                  breakpoints={widthSize}
+                  cols={cols}
+                  margin={margin}
                   onLayoutChange={() => {}}
                   rowHeight={150}
                   isDraggable={false}

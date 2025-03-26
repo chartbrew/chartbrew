@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import gridBreakpoints from "../config/gridBreakpoints";
+import { widthSize } from "./layoutBreakpoints";
 
 const useChartSize = (layouts) => {
   const [currentLayout, setCurrentLayout] = useState(null);
@@ -8,12 +8,12 @@ const useChartSize = (layouts) => {
     const screenWidth = window.innerWidth;
     let selectedKey = "xxs"; // Default to the smallest size
 
-    const orderedBreakpoints = Object.keys(gridBreakpoints).sort(
-      (a, b) => gridBreakpoints[a] - gridBreakpoints[b]
+    const orderedBreakpoints = Object.keys(widthSize).sort(
+      (a, b) => widthSize[a] - widthSize[b]
     );
 
     orderedBreakpoints.forEach((key) => {
-      if (screenWidth >= gridBreakpoints[key]) {
+      if (screenWidth >= widthSize[key]) {
         selectedKey = key;
       }
     });
