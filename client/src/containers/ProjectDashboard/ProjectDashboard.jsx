@@ -1,8 +1,8 @@
-import React, { useState, useEffect, Fragment, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
+  Button, Spacer, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
@@ -13,14 +13,14 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
-import moment from "moment";
 import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
+  LuCirclePlus, LuRefreshCw, LuUser, LuUsers,
   LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
   LuMonitorSmartphone,
   LuMonitorUp,
+  LuArrowDownRight,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -28,8 +28,7 @@ import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
-import Filters from "./components/Filters";
-import { operators } from "../../modules/filterOperations";
+import AddFilters from "./components/AddFilters";
 import {
   getProjectCharts, runQueryWithFilters, runQuery, changeOrder, exportChart, updateChart, selectCharts,
   clearStagedCharts,
@@ -43,7 +42,6 @@ import CreateTemplateForm from "../../components/CreateTemplateForm";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
-import { TbChevronDownRight } from "react-icons/tb";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
@@ -52,6 +50,7 @@ import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
 import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
+import DashboardFilters from "./components/DashboardFilters";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -65,15 +64,6 @@ const getFiltersFromStorage = () => {
   try {
     const filters = JSON.parse(window.localStorage.getItem("_cb_filters"));
     return filters || null;
-  } catch (e) {
-    return null;
-  }
-};
-
-const getVariablesFromStorage = () => {
-  try {
-    const variables = JSON.parse(window.localStorage.getItem("_cb_variables"));
-    return variables || null;
   } catch (e) {
     return null;
   }
@@ -105,7 +95,6 @@ function ProjectDashboard(props) {
   const [templateVisible, setTemplateVisible] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
-  const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [stagedContent, setStagedContent] = useState({});
@@ -126,7 +115,6 @@ function ProjectDashboard(props) {
   const { width } = useWindowSize();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
-  const hasRunVariableFiltering = useRef(null);
   const dashboardRef = useRef(null);
   const dashboardParentRef = useRef(null);
 
@@ -158,13 +146,6 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [filters, charts]);
-
-  useEffect(() => {
-    if (variables?.[params.projectId] && initLayoutRef.current && !hasRunVariableFiltering.current) {
-      hasRunVariableFiltering.current = true;
-      _checkVariablesForFilters(variables[params.projectId]);
-    }
-  }, [variables, initLayoutRef.current]);
 
   useEffect(() => {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
@@ -328,51 +309,24 @@ function ProjectDashboard(props) {
   const _onAddVariableFilter = (variableFilter) => {
     const { projectId } = params;
 
-    const newVariables = _.clone(variables) || {};
-    if (!newVariables[projectId]) newVariables[projectId] = [];
+    const newFilters = _.clone(filters) || {};
+    if (!newFilters[projectId]) newFilters[projectId] = [];
 
-    newVariables[projectId].push(variableFilter);
-    setVariables(newVariables);
+    // Convert variable filter to unified filter format
+    const filter = {
+      id: uuidv4(),
+      type: "variable",
+      variable: variableFilter.variable,
+      value: variableFilter.value
+    };
 
-    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
+    newFilters[projectId].push(filter);
+    setFilters(newFilters);
 
-    _checkVariablesForFilters(newVariables[projectId]);
+    window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
+
+    _onFilterCharts(newFilters);
     setShowFilters(false);
-  };
-
-  const _checkVariablesForFilters = (variables) => {
-    if (!variables || variables.length === 0) return;
-
-    charts.forEach((chart) => {
-      // check if there are any filters in the search params
-      // if so, add them to the conditions
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
-      });
-
-      // now check if any filters have the same variable name
-      let newConditions = [];
-      variables.forEach((variable) => {
-        const found = identifiedConditions.find((c) => c.variable === variable.variable);
-        if (found) {
-          newConditions.push({
-            ...found,
-            value: variable.value,
-          });
-        }
-      });
-
-      if (newConditions.length > 0) {
-        dispatch(runQueryWithFilters({
-          project_id: chart.project_id,
-          chart_id: chart.id,
-          filters: newConditions,
-        }));
-      }
-    });
   };
 
   const _onRemoveFilter = (filterId) => {
@@ -382,7 +336,7 @@ function ProjectDashboard(props) {
       delete newFilters[projectId];
       setFilters(newFilters);
       window.localStorage.removeItem("_cb_filters");
-      _runFiltering({});
+      _onFilterCharts({});
       return;
     }
 
@@ -394,35 +348,19 @@ function ProjectDashboard(props) {
 
     setFilters(newFilters);
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
-  };
-
-  const _onRemoveVariable = (variable) => {
-    const { projectId } = params;
-    const index = _.findIndex(variables[projectId], { variable });
-    if (!index && index !== 0) return;
-
-    const newVariables = _.cloneDeep(variables);
-    newVariables[projectId].splice(index, 1);
-
-    setVariables(newVariables);
-    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
-
-    _checkVariablesForFilters([{
-      variable: variable,
-      remove: true,
-    }]);
+    _onFilterCharts(newFilters);
   };
 
   const _runFiltering = (currentFilters = filters, chartIds = null) => {
-    if ((!variables?.[params.projectId] && !currentFilters?.[params.projectId]) || charts.length === 0) return;
+    if (!currentFilters?.[params.projectId] || charts.length === 0) return;
 
     setFilterLoading(true);
     _onFilterCharts(currentFilters, chartIds)
       .then(() => {
-        // Only check variables if we have them and they've changed
-        if (variables?.[params.projectId]) {
-          _checkVariablesForFilters(variables[params.projectId]);
-        }
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
       });
   };
 
@@ -476,25 +414,52 @@ function ProjectDashboard(props) {
     chartsToProcess.forEach((chart) => {
       if (currentFilters && currentFilters[projectId]) {
         setFilterLoading(true);
-        // first, discard the charts on which the filters don't apply
-        if (_chartHasFilter(chart, currentFilters)) {
+        
+        // Get all conditions from the chart's datasets
+        let identifiedConditions = [];
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (Array.isArray(cdc.Dataset?.conditions)) {
+            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+          }
+        });
+
+        // Separate filters by type
+        const variableFilters = currentFilters[projectId].filter(f => f.type === "variable");
+        const dateFilters = currentFilters[projectId].filter(f => f.type === "date");
+        const otherFilters = currentFilters[projectId].filter(f => f.type !== "variable" && f.type !== "date");
+
+        // Handle variable filters by matching against chart conditions
+        let newConditions = [];
+        variableFilters.forEach((variableFilter) => {
+          const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
+          if (found) {
+            newConditions.push({
+              ...found,
+              value: variableFilter.value,
+            });
+          }
+        });
+
+        // Combine non-date filters into a single array
+        const allFilters = [...newConditions, ...otherFilters];
+
+        // Only make an API call if there are non-date filters to apply
+        if (allFilters.length > 0) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: projectId,
               chart_id: chart.id,
-              filters: currentFilters[projectId]
+              filters: allFilters,
             }))
           );
         }
 
-        if (currentFilters?.[projectId]?.length > 0
-          && currentFilters?.[projectId]?.find((o) => o.type === "date")
-          && filterGroups?.[projectId]?.find((c) => c === chart.id)
-        ) {
+        // Handle date filters for selected charts
+        if (dateFilters.length > 0 && filterGroups?.[projectId]?.find((c) => c === chart.id)) {
           queries.push({
             projectId,
             chartId: chart.id,
-            dateFilter: currentFilters?.[projectId]?.find((o) => o.type === "date"),
+            dateFilter: dateFilters[0], // We only use the first date filter since we only allow one
           });
         }
       }
@@ -517,7 +482,7 @@ function ProjectDashboard(props) {
   };
 
   const _checkIfAnyKindOfFiltersAreAvailable = () => {
-    return filters?.[params.projectId]?.length > 0 || variables?.[params.projectId]?.length > 0;
+    return filters?.[params.projectId]?.length > 0;
   };
 
   const _onRefreshData = () => {
@@ -548,28 +513,6 @@ function ProjectDashboard(props) {
       .catch(() => {
         setRefreshLoading(false);
       });
-  };
-
-  const _chartHasFilter = (chart, currentFilters = filters) => {
-    let found = false;
-    if (chart.ChartDatasetConfigs) {
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (cdc.Dataset?.fieldsSchema) {
-          Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
-            if (_.find(currentFilters[params.projectId], (o) => o.field === key)) {
-              found = true;
-            }
-          });
-        }
-      });
-    }
-
-    return found;
-  };
-
-  const _getOperator = (operator) => {
-    const found = _.find(operators, (o) => o.value === operator);
-    return (found && found.key) || "";
   };
 
   const _onShowFilters = () => {
@@ -812,15 +755,17 @@ function ProjectDashboard(props) {
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
                         <Popover>
                           <PopoverTrigger>
-                            <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer">
-                              {projectMembers.map((member) => (
-                                <Avatar
-                                  key={member.id}
-                                  name={member.name}
-                                  showFallback={<LuUser />}
-                                />
-                              ))}
-                            </AvatarGroup>
+                            <div className="cursor-pointer">
+                              <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer pointer-events-none">
+                                {projectMembers.map((member) => (
+                                  <Avatar
+                                    key={member.id}
+                                    name={member.name}
+                                    showFallback={<LuUser />}
+                                  />
+                                ))}
+                              </AvatarGroup>
+                            </div>
                           </PopoverTrigger>
                           <PopoverContent className="pt-4">
                             {_canAccess("teamAdmin") && (
@@ -851,7 +796,7 @@ function ProjectDashboard(props) {
                                   textValue={member.name}
                                   description={member.email}
                                   endContent={(
-                                    <Chip size="sm">
+                                    <Chip size="sm" variant="flat">
                                       {member.TeamRoles?.find((r) => r.team_id === parseInt(params.teamId, 10))?.role}
                                     </Chip>
                                   )}
@@ -867,84 +812,23 @@ function ProjectDashboard(props) {
                       <Spacer x={1} />
                     </>
                   )}
-                  <Button
-                    variant="ghost"
-                    startContent={<LuListFilter />}
-                    isLoading={filterLoading}
-                    onPress={_onShowFilters}
-                    size="sm"
-                    className="hidden sm:flex"
-                  >
-                    {"Add filter"}
-                  </Button>
-                  <Button
-                    isIconOnly
-                    onPress={_onShowFilters}
-                    isLoading={filterLoading}
-                    variant="ghost"
-                    size="sm"
-                    className="flex sm:hidden"
-                  >
-                    <LuListFilter size={24} />
-                  </Button>
-                  <div style={mobile ? {} : { paddingLeft: 4 }} className="hidden sm:flex-row sm:flex gap-1">
-                    <>
-                      {filters
-                        && filters[params.projectId]
-                        && filters[params.projectId].map((filter) => (
-                          <Fragment key={filter.id}>
-                            {filter.type === "date" && (
-                              <Chip
-                                color="primary"
-                                variant={"flat"}
-                                radius="sm"
-                                endContent={(
-                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                    <LuCircleX />
-                                  </LinkNext>
-                                )}
-                              >
-                                {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                              </Chip>
-                            )}
-                            {filter.type !== "date" && filter.field && (
-                              <Chip
-                                color="primary"
-                                variant={"flat"}
-                                radius="sm"
-                                endContent={(
-                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default">
-                                    <LuCircleX />
-                                  </LinkNext>
-                                )}
-                              >
-                                <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                                <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                                <span>{`${filter.value}`}</span>
-                              </Chip>
-                            )}
-                          </Fragment>
-                        ))}
-
-                      {variables
-                        && variables[params.projectId]
-                        && variables[params.projectId].map((variable) => (
-                          <Chip
-                            color="primary"
-                            variant={"flat"}
-                            radius="sm"
-                            endContent={(
-                              <LinkNext onPress={() => _onRemoveVariable(variable.variable)} className="text-default-500">
-                                <LuCircleX />
-                              </LinkNext>
-                            )}
-                            key={variable.variable}
-                            startContent={<LuVariable />}
-                          >
-                            {`${variable.variable} - ${variable.value}`}
-                          </Chip>
-                        ))}
-                    </>
+                  <Tooltip content="Add dashboard filters" placement="bottom">
+                    <Button
+                      variant="ghost"
+                      isIconOnly
+                      isLoading={filterLoading}
+                      onPress={_onShowFilters}
+                      size="sm"
+                    >
+                      <LuListFilter size={18} />
+                    </Button>
+                  </Tooltip>
+                  <div style={mobile ? {} : { paddingLeft: 4 }}>
+                    <DashboardFilters
+                      filters={filters}
+                      projectId={params.projectId}
+                      onRemoveFilter={_onRemoveFilter}
+                    />
                   </div>
                 </div>
                 {!editingLayout && (
@@ -1148,7 +1032,7 @@ function ProjectDashboard(props) {
             onLayoutChange={_onChangeLayout}
             resizeHandle={(
               <div className="react-resizable-handle react-resizable-handle-se">
-                <TbChevronDownRight className="text-primary" size={20} />
+                <LuArrowDownRight className="text-primary" size={20} />
               </div>
             )}
             isDraggable={editingLayout}
@@ -1177,7 +1061,6 @@ function ProjectDashboard(props) {
                     height={() => _onGetChartHeight(chart)}
                     editingLayout={editingLayout}
                     onEditLayout={() => _onEditLayout()}
-                    variables={variables}
                   />
                 )}
               </div>
@@ -1186,7 +1069,7 @@ function ProjectDashboard(props) {
         )}
       </div>
       
-      <Filters
+      <AddFilters
         charts={charts}
         projectId={params.projectId}
         onAddFilter={_onAddFilter}
@@ -1195,6 +1078,7 @@ function ProjectDashboard(props) {
         filterGroups={filterGroups?.[params?.projectId] || []}
         onEditFilterGroup={_onEditFilterGroup}
         onAddVariableFilter={_onAddVariableFilter}
+        filters={filters}
       />
 
       <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl" scrollBehavior="outside">

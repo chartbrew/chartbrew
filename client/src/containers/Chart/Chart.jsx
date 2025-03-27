@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
@@ -46,6 +46,8 @@ import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
 import isMac from "../../modules/isMac";
 import GaugeChart from "./components/GaugeChart";
+import { selectTeam } from "../../slices/team";
+import { selectUser } from "../../slices/user";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -61,10 +63,19 @@ const getFiltersFromStorage = (projectId) => {
 */
 function Chart(props) {
   const {
-    team, user, chart, isPublic, print, height,
-    showExport, password, editingLayout, onEditLayout,
-    variables,
+    chart,
+    isPublic = false,
+    print = "",
+    height = 300,
+    showExport = false,
+    password = "",
+    editingLayout = false,
+    onEditLayout = () => {},
+    variables = {},
   } = props;
+
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -1299,17 +1310,6 @@ const styles = {
   }),
 };
 
-Chart.defaultProps = {
-  isPublic: false,
-  onChangeOrder: () => {},
-  print: "",
-  height: 300,
-  showExport: false,
-  password: "",
-  editingLayout: false,
-  onEditLayout: () => {},
-};
-
 Chart.propTypes = {
   chart: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
@@ -1323,19 +1323,7 @@ Chart.propTypes = {
   editingLayout: PropTypes.bool,
   onEditLayout: PropTypes.func,
   variables: PropTypes.object,
+  onDashboard: PropTypes.bool,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    connections: state.connection.data,
-    team: state.team.active,
-    user: state.user.data,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Chart);
+export default Chart;

@@ -12,6 +12,7 @@ import {
   AutocompleteItem,
 } from "@heroui/react";
 import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { toast } from "react-hot-toast";
 
 import { operators } from "../../../modules/filterOperations";
 import Text from "../../../components/Text";
@@ -21,9 +22,9 @@ import { useSelector } from "react-redux";
 import { selectProject } from "../../../slices/project";
 import { Link } from "react-router-dom";
 
-function Filters(props) {
+function AddFilters(props) {
   const {
-    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup, onAddVariableFilter,
+    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup, onAddVariableFilter, filters,
   } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -49,6 +50,7 @@ function Filters(props) {
   const [variableCondition, setVariableCondition] = useState({
     variable: "", value: ""
   });
+  const [rangeActive, setRangeActive] = useState(false);
 
   const project = useSelector(selectProject);
 
@@ -143,6 +145,11 @@ function Filters(props) {
   };
 
   const _onSelectRange = (type) => {
+    setRangeActive(type);
+    setTimeout(() => {
+      setRangeActive(false);
+    }, 1000);
+
     if (type === "this_month") {
       setDateRange({
         startDate: moment().startOf("month").startOf("day").toISOString(),
@@ -239,7 +246,18 @@ function Filters(props) {
   };
 
   const _onAddVariableFilter = () => {
+    // Check if a filter for this variable already exists
+    const existingVariableFilter = filters?.[projectId]?.find(
+      f => f.type === "variable" && f.variable === variableCondition.variable
+    );
+
+    if (existingVariableFilter) {
+      toast.error("A filter for this variable already exists");
+      return;
+    }
+
     onAddVariableFilter(variableCondition);
+    setVariableCondition({ variable: "", value: "" });
   };
 
   return (
@@ -254,6 +272,7 @@ function Filters(props) {
               selectedKey={filterType}
               onSelectionChange={(selection) => setFilterType(selection)}
               disableAnimation
+              variant="underlined"
             >
               <Tab key="date" title="Date" />
               <Tab key="variables" title="Variables" />
@@ -266,65 +285,110 @@ function Filters(props) {
           {filterType === "date" && (
             <>
               <Row>
-                <span>
+                <span className="text-sm">
                   {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-                  <Code size="sm">{"{{start_date}}"}</Code>
+                  <Code size="sm" className="text-sm">{"{{start_date}}"}</Code>
                   {" and "}
-                  <Code size="sm">{"{{end_date}}"}</Code>
+                  <Code size="sm" className="text-sm">{"{{end_date}}"}</Code>
                   {" variables in the queries."}
                 </span>
               </Row>
               <Row wrap="wrap" className={"gap-1"}>
                 <LinkNext onPress={() => _onSelectRange("this_month")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "this_month" ? "primary" : "default"}
+                  >
                     This month
                   </Chip>
                 </LinkNext>
 
                 <LinkNext onPress={() => _onSelectRange("last_month")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_month" ? "primary" : "default"}
+                  >
                     Last month
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_7_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_7_days" ? "primary" : "default"}
+                  >
                     Last 7 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_30_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_30_days" ? "primary" : "default"}
+                  >
                     Last 30 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_90_days")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_90_days" ? "primary" : "default"}
+                  >
                     Last 90 days
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_year")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_year" ? "primary" : "default"}
+                  >
                     Last year
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("quarter_to_date")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "quarter_to_date" ? "primary" : "default"}
+                  >
                     Quarter to date
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("last_quarter")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer"
+                    color={rangeActive === "last_quarter" ? "primary" : "default"}
+                  >
                     Last quarter
                   </Chip>
                 </LinkNext>
                 
                 <LinkNext onPress={() => _onSelectRange("year_to_date")}>
-                  <Chip color="primary" size="sm" variant={"bordered"} className="cursor-pointer">
+                  <Chip
+                    size="sm"
+                    variant={"flat"}
+                    className="cursor-pointer transition-colors duration-500"
+                    color={rangeActive === "year_to_date" ? "primary" : "default"}
+                  >
                     Year to date
                   </Chip>
                 </LinkNext>
@@ -340,14 +404,15 @@ function Filters(props) {
                   color="primary"
                 />
               </div>
-              <Row>
-                <Text>
-                  Select the charts that will be affected by the date filter
-                </Text>
-              </Row>
+
+              <Spacer y={1} />
+
+              <div className="text-sm">
+                Select the charts that will be affected by the date filter
+              </div>
               <div className={"flex flex-row flex-wrap gap-1"}>
                 <Button
-                  variant="light"
+                  variant="flat"
                   startContent={<LuSquareCheck />}
                   size="sm"
                   onPress={() => onEditFilterGroup(null, true)}
@@ -355,7 +420,7 @@ function Filters(props) {
                   Select all
                 </Button>
                 <Button
-                  variant="light"
+                  variant="flat"
                   startContent={<LuX />}
                   size="sm"
                   onPress={() => onEditFilterGroup(null, false, true)}
@@ -552,7 +617,7 @@ function Filters(props) {
   );
 }
 
-Filters.propTypes = {
+AddFilters.propTypes = {
   charts: PropTypes.array.isRequired,
   projectId: PropTypes.number.isRequired,
   onAddFilter: PropTypes.func.isRequired,
@@ -561,6 +626,7 @@ Filters.propTypes = {
   filterGroups: PropTypes.array.isRequired,
   onEditFilterGroup: PropTypes.func.isRequired,
   onAddVariableFilter: PropTypes.func.isRequired,
+  filters: PropTypes.object,
 };
 
-export default Filters;
+export default AddFilters;
