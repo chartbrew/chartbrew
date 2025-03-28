@@ -4,14 +4,24 @@ import moment from "moment";
 import _ from "lodash";
 import { v4 as uuid } from "uuid";
 import {
-  Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Modal, Chip,
-  Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, DropdownTrigger,
-  DropdownMenu, DropdownItem, ModalContent, DateRangePicker,
+  Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Chip,
+  Divider, DateRangePicker,
   Code, DatePicker,
   Autocomplete,
   AutocompleteItem,
+  Drawer,
+  DrawerFooter,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  Select,
+  SelectItem,
+  Checkbox,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@heroui/react";
-import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { LuSquareCheck, LuInfo, LuPlus, LuX, LuCheck } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 
 import { operators } from "../../../modules/filterOperations";
@@ -48,7 +58,11 @@ function AddFilters(props) {
   const [dateRange, setDateRange] = useState(initSelectionRange);
   const [newDateRange, setNewDateRange] = useState(initNewSelectionRange);
   const [variableCondition, setVariableCondition] = useState({
-    variable: "", value: ""
+    variable: "", 
+    value: "",
+    dataType: "text",
+    label: "",
+    allowValueChange: false,
   });
   const [rangeActive, setRangeActive] = useState(false);
 
@@ -257,28 +271,40 @@ function AddFilters(props) {
     }
 
     onAddVariableFilter(variableCondition);
-    setVariableCondition({ variable: "", value: "" });
+    setVariableCondition({
+      variable: "",
+      value: "",
+      dataType: "text",
+      label: "",
+      allowValueChange: false,
+    });
   };
 
+  if (!open) return null;
+
   return (
-    <Modal isOpen={open} onClose={onClose} closeButton size="3xl" className="dashboard-filters-modal">
-      <ModalContent>
-        <ModalHeader>
-          <Text size="h3">Dashboard filters</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Row>
-            <Tabs
-              selectedKey={filterType}
-              onSelectionChange={(selection) => setFilterType(selection)}
-              disableAnimation
-              variant="underlined"
-            >
-              <Tab key="date" title="Date" />
-              <Tab key="variables" title="Variables" />
-              <Tab key="field" title="Matching field" />
-            </Tabs>
-          </Row>
+    <Drawer isOpen={open} onClose={onClose} closeButton size="2xl" placement="left" className="dashboard-filters-modal">
+      <DrawerContent className="pt-[3rem]">
+        <DrawerHeader>
+          <span className="font-bold text-lg">Add dashboard filter</span>
+        </DrawerHeader>
+        <DrawerBody>
+          <Select
+            label="Select a filter type"
+            variant="bordered"
+            selectedKeys={[filterType]}
+            onSelectionChange={(keys) => setFilterType(keys.currentKey)}
+          >
+            <SelectItem key="date" textValue="Date">
+              Date
+            </SelectItem>
+            <SelectItem key="variables" textValue="Variables">
+              Variables
+            </SelectItem>
+            <SelectItem key="field" textValue="Matching field">
+              Matching field
+            </SelectItem>
+          </Select>
 
           <Divider />
 
@@ -449,33 +475,186 @@ function AddFilters(props) {
 
           {filterType === "variables" && (
             <>
-              <div className="flex flex-row gap-2 items-center">
-                <Autocomplete
-                  label="Select a variable"
-                  variant="bordered"
-                  selectedKey={variableCondition.variable}
-                  onSelectionChange={(key) => setVariableCondition({ ...variableCondition, variable: key })}
-                  aria-label="Select a variable"
-                >
-                  {project?.Variables?.map((variable) => (
-                    <AutocompleteItem key={variable.name} textValue={variable.name}>
-                      {variable.name}
-                    </AutocompleteItem>
-                  ))}
-                </Autocomplete>
-                
-                <Input
-                  label="Enter a value"
-                  variant="bordered"
-                  value={variableCondition.value}
-                  onChange={(e) => setVariableCondition({ ...variableCondition, value: e.target.value })}
-                />
-              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-row gap-2 items-center">
+                    <Input
+                      label="Filter label"
+                      variant="bordered"
+                      value={variableCondition.label}
+                      onChange={(e) => setVariableCondition({ ...variableCondition, label: e.target.value })}
+                      size="sm"
+                    />
 
-              <div>
-                <Link to="../variables" className="text-primary-400">
-                  Missing a variable? Click here to create new variables for this project.
-                </Link>
+                    <Autocomplete
+                      label="Select a variable"
+                      variant="bordered"
+                      selectedKey={variableCondition.variable}
+                      onSelectionChange={(key) => setVariableCondition({ ...variableCondition, variable: key, label: variableCondition.label || key })}
+                      aria-label="Select a variable"
+                      size="sm"
+                    >
+                      {project?.Variables?.map((variable) => (
+                        <AutocompleteItem key={variable.name} textValue={variable.name}>
+                          {variable.name}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                  </div>
+
+                  <div className="flex flex-row gap-2 items-center">
+                    <Select
+                      label="Data type"
+                      variant="bordered"
+                      selectedKeys={[variableCondition.dataType]}
+                      onSelectionChange={(keys) => {
+                        if (keys.currentKey === "date") {
+                          setVariableCondition({ ...variableCondition, value: today(), dataType: keys.currentKey });
+                        } else {
+                          setVariableCondition({ ...variableCondition, dataType: keys.currentKey });
+                        }
+                      }}
+                      size="sm"
+                    >
+                      <SelectItem key="text" textValue="Text">
+                        Text
+                      </SelectItem>
+                      <SelectItem key="number" textValue="Number">
+                        Number
+                      </SelectItem>
+                      <SelectItem key="date" textValue="Date">
+                        Date
+                      </SelectItem>
+                      <SelectItem key="binary" textValue="Binary">
+                        Binary
+                      </SelectItem>
+                    </Select>
+
+                    {variableCondition.dataType === "date" ? (
+                      <DatePicker
+                        label="Select a date"
+                        value={variableCondition.value ? parseDate(moment(variableCondition.value).format("YYYY-MM-DD")) : today()}
+                        onChange={(date) => setVariableCondition({ ...variableCondition, value: date.toString() })}
+                        variant="bordered"
+                        showMonthAndYearPickers
+                        calendarProps={{ color: "primary" }}
+                        size="sm"
+                      />
+                    ) : variableCondition.dataType === "number" ? (
+                      <Input
+                        label="Enter a number"
+                        variant="bordered"
+                        type="number"
+                        value={variableCondition.value}
+                        onChange={(e) => setVariableCondition({ ...variableCondition, value: e.target.value })}
+                        size="sm"
+                      />
+                    ) : variableCondition.dataType === "binary" ? (
+                      <Select
+                        label="Select value"
+                        variant="bordered"
+                        selectedKeys={[variableCondition.value]}
+                        onSelectionChange={(keys) => setVariableCondition({ ...variableCondition, value: keys.currentKey })}
+                        size="sm"
+                      >
+                        <SelectItem key="true" textValue="True">
+                          True
+                        </SelectItem>
+                        <SelectItem key="false" textValue="False">
+                          False
+                        </SelectItem>
+                      </Select>
+                    ) : (
+                      <Input
+                        label="Enter a value"
+                        variant="bordered"
+                        value={variableCondition.value}
+                        onChange={(e) => setVariableCondition({ ...variableCondition, value: e.target.value })}
+                        size="sm"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex flex-row gap-2 items-center">
+                    <Checkbox
+                      isSelected={variableCondition.allowValueChange}
+                      onValueChange={(isSelected) => setVariableCondition({ ...variableCondition, allowValueChange: isSelected })}
+                      size="sm"
+                    >
+                      Allow value change
+                    </Checkbox>
+                  </div>
+                </div>
+
+                <div>
+                  <Link to="../variables" className="text-primary-400 text-sm">
+                    Missing a variable? Click here to create new variables for this project.
+                  </Link>
+                </div>
+
+                <Divider />
+
+                <div>
+                  <Text b>Preview filter</Text>
+                  <div className="mt-2">
+                    {variableCondition.dataType === "text" && (
+                      <Input
+                        label={variableCondition.label}
+                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
+                        value={variableCondition.value}
+                        size="sm"
+                        className="max-w-xs"
+                        endContent={variableCondition.allowValueChange
+                          ? (<Button variant="light" isIconOnly size="sm">
+                              <LuCheck />
+                            </Button>)
+                          : null
+                        }
+                      />
+                    )}
+                    {variableCondition.dataType === "number" && (
+                      <Input
+                        label={variableCondition.label}
+                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
+                        value={variableCondition.value}
+                        endContent={variableCondition.allowValueChange
+                          ? (<Button variant="light" isIconOnly size="sm">
+                              <LuCheck />
+                            </Button>)
+                          : null
+                        }
+                        size="sm"
+                        className="max-w-xs"
+                      />
+                    )}
+                    {variableCondition.dataType === "date" && (
+                      <DatePicker
+                        label={variableCondition.label}
+                        value={variableCondition.value ? parseDate(moment(variableCondition.value).format("YYYY-MM-DD")) : today()}
+                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
+                        size="sm"
+                        className="max-w-xs"
+                        isDisabled={!variableCondition.allowValueChange}
+                      />
+                    )}
+                    {variableCondition.dataType === "binary" && (
+                      <Select
+                        label={variableCondition.label}
+                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
+                        selectedKeys={[variableCondition.value]}
+                        size="sm"
+                        className="max-w-xs"
+                      >
+                        <SelectItem key="true" textValue="True">
+                          True
+                        </SelectItem>
+                        <SelectItem key="false" textValue="False">
+                          False
+                        </SelectItem>
+                      </Select>
+                    )}
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -581,14 +760,14 @@ function AddFilters(props) {
               )}
             </>
           )}
-        </ModalBody>
-        <ModalFooter>
+        </DrawerBody>
+        <DrawerFooter>
           <Button auto onPress={onClose} variant="bordered">
             Close
           </Button>
           {filterType === "date" && (
             <Button color="primary" onPress={_onApplyFilter}>
-              Apply filter
+              Add filter
             </Button>
           )}
           {filterType === "field" && (
@@ -598,7 +777,7 @@ function AddFilters(props) {
               onPress={_onAddFilter}
               color="primary"
             >
-              Apply filter
+              Add filter
             </Button>
           )}
           {filterType === "variables" && (
@@ -608,12 +787,12 @@ function AddFilters(props) {
               onPress={_onAddVariableFilter}
               color="primary"
             >
-              Add variable filter
+              Add filter
             </Button>
           )}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
