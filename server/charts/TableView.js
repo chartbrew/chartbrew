@@ -1,39 +1,31 @@
-const _ = require("lodash");
 const moment = require("moment-timezone");
-
 const determineType = require("../modules/determineType");
+
+// Cache regex pattern
+const checkNumbersOnly = /^\d+$/;
 
 function formatValue(value, config, timezone) {
   if (!config || !config.type || !value) return value;
 
-  const checkNumbersOnly = /^\d+$/;
-
-  if (config.type === "date" && determineType(value) === "date") {
-    if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
-      return timezone ? moment.utc(value, "X").tz(timezone).format(config.format || "")
-        : moment.utc(value, "X").format(config.format);
-    } else {
-      return timezone ? moment.utc(value).tz(timezone).format(config.format || "")
-        : moment.utc(value).format(config.format);
-    }
+  if (config.type === "date" && determineType(value) === "date" && config.format) {
+    const isTimestamp = value.toString().length === 10 && `${value}`.match(checkNumbersOnly);
+    const momentObj = isTimestamp ? moment.utc(value, "X") : moment.utc(value);
+    return timezone
+      ? momentObj.tz(timezone).format(config.format)
+      : momentObj.format(config.format);
   } else if ((config.type === "number" || config.type === "currency")
     && (determineType(value) === "number" || `${value}`.match(checkNumbersOnly))
   ) {
     let finalNumber = value;
-    // check if decimals are needed
     if (config.decimals > -1) {
       finalNumber = Number(value).toFixed(config.decimals);
     }
-
-    // add thousands separator
     if (config.thousandsSeparator) {
       finalNumber = finalNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
-
     if (config.type === "currency" && config.symbol) {
       finalNumber = `${config.symbol}${finalNumber}`;
     }
-
     return finalNumber;
   }
 
@@ -49,100 +41,99 @@ class TableView {
     Object.keys(rawData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
       const dataset = rawData[key];
-      let excludedFields = chartData.datasets[datasetIndex].options.excludedFields || [];
 
-      if (datasetConfigs[datasetIndex]?.excludedFields?.length > 0) {
-        excludedFields = excludedFields.concat(
-          datasetConfigs[datasetIndex].excludedFields,
-        );
-      }
+      // Pre-compute dataset config and excluded fields
+      const datasetConfig = datasetConfigs?.[datasetIndex];
+      const baseExcludedFields = chartData.datasets[datasetIndex].options.excludedFields || [];
+      const excludedFields = datasetConfig?.excludedFields?.length > 0
+        ? [...baseExcludedFields, ...datasetConfig.excludedFields]
+        : baseExcludedFields;
 
-      dataset.forEach((item) => {
-        Object.keys(item).forEach((k) => {
-          if (_.indexOf(excludedFields, k) !== -1) return;
-          if (determineType(item[k]) === "object") {
-            // handle nested objects (only one level)
-            const nested = item[k];
-            Object.keys(nested).forEach((n) => {
-              const headerIndex = _.findIndex(tab.columns, { Header: k });
-              const headerKey = `${k}?${n}`;
+      const excludedSet = new Set(excludedFields);
+      const columnMap = new Map(); // Header -> index
+      const nestedColumnMap = new Set(); // `${k}?${n}`
+      const columnsFormatting = datasetConfig?.Dataset?.configuration?.columnsFormatting;
 
-              if (_.indexOf(excludedFields, headerKey) !== -1) return;
+      // Process items in chunks to avoid blocking the event loop
+      const chunkSize = 1000;
+      for (let i = 0; i < dataset.length; i += chunkSize) {
+        const chunk = dataset.slice(i, i + chunkSize);
 
-              if (headerIndex === -1) {
-                tab.columns.push({
-                  Header: k, accessor: k, columns: [{ Header: n, accessor: headerKey }]
-                });
-              } else if (_.findIndex(tab.columns[headerIndex].columns, { Header: n }) === -1) {
-                if (!tab.columns[headerIndex].columns) {
-                  tab.columns[headerIndex].columns = [];
+        chunk.forEach((item) => {
+          const dataItem = {};
+
+          Object.entries(item).forEach(([k, val]) => {
+            if (excludedSet.has(k)) return;
+
+            const type = determineType(val);
+
+            if (type === "object" && val && !Array.isArray(val)) {
+              Object.entries(val).forEach(([n, nestedVal]) => {
+                const headerKey = `${k}?${n}`;
+                if (excludedSet.has(headerKey)) return;
+
+                const nestedType = determineType(nestedVal);
+
+                if (!columnMap.has(k)) {
+                  columnMap.set(k, tab.columns.length);
+                  tab.columns.push({ Header: k, accessor: k, columns: [] });
                 }
-                tab.columns[headerIndex].columns.push({ Header: n, accessor: headerKey });
+
+                const colIndex = columnMap.get(k);
+                if (!nestedColumnMap.has(headerKey)) {
+                  nestedColumnMap.add(headerKey);
+                  if (!tab.columns[colIndex].columns) tab.columns[colIndex].columns = [];
+                  tab.columns[colIndex].columns.push({ Header: n, accessor: headerKey });
+                }
+
+                const columnConfig = columnsFormatting?.[headerKey];
+                if (nestedType === "object") {
+                  dataItem[headerKey] = `__cb_object${JSON.stringify(nestedVal)}`;
+                } else if (nestedType === "array") {
+                  dataItem[headerKey] = `__cb_array${JSON.stringify(nestedVal)}`;
+                } else {
+                  dataItem[headerKey] = formatValue(nestedVal, columnConfig, timezone);
+                }
+              });
+            } else if (type === "array") {
+              dataItem[k] = `__cb_array${JSON.stringify(val)}`;
+
+              if (!columnMap.has(k)) {
+                columnMap.set(k, tab.columns.length);
+                tab.columns.push({ Header: k, accessor: k });
               }
-            });
-          } else if (_.findIndex(tab.columns, { Header: k }) === -1) {
-            tab.columns.push({ Header: k, accessor: k });
-          }
-        });
+            } else {
+              const columnConfig = columnsFormatting?.[k];
+              dataItem[k] = formatValue(val, columnConfig, timezone);
 
-        const dataItem = {};
-        Object.keys(item).forEach((k) => {
-          let columnConfig = datasetConfigs[datasetIndex]?.Dataset
-            ?.configuration?.columnsFormatting?.[k];
-
-          if (_.indexOf(excludedFields, k) !== -1) return;
-
-          if (determineType(item[k]) === "object") {
-            Object.keys(item[k]).forEach((n) => {
-              columnConfig = datasetConfigs[datasetIndex]?.Dataset
-                ?.configuration?.columnsFormatting?.[`${k}?${n}`];
-
-              const nestedType = determineType(item[k][n]);
-              const headerKey = `${k}?${n}`;
-
-              if (_.indexOf(excludedFields, headerKey) !== -1) return;
-
-              if (nestedType === "object") {
-                dataItem[`${k}?${n}`] = `__cb_object${JSON.stringify(item[k][n])}`;
-              } else if (nestedType === "array") {
-                dataItem[`${k}?${n}`] = `__cb_array${JSON.stringify(item[k][n])}`;
-              } else {
-                dataItem[`${k}?${n}`] = formatValue(item[k][n], columnConfig, timezone);
+              if (!columnMap.has(k)) {
+                columnMap.set(k, tab.columns.length);
+                tab.columns.push({ Header: k, accessor: k });
               }
-            });
-          } else if (determineType(item[k]) === "array") {
-            dataItem[k] = `__cb_array${JSON.stringify(item[k])}`;
-          } else {
-            dataItem[k] = formatValue(item[k], columnConfig, timezone);
-          }
+            }
+          });
+
+          tab.data.push(dataItem);
         });
-        tab.data.push(dataItem);
-      });
-
-      let { columnsOrder } = chartData.datasets[datasetIndex].options;
-
-      if (datasetConfigs[datasetIndex]?.columnsOrder?.length > 0) {
-        columnsOrder = datasetConfigs[datasetIndex].columnsOrder;
       }
 
-      if (columnsOrder && columnsOrder.length > 0) {
+      // Column order sorting
+      const columnsOrder = datasetConfig?.columnsOrder?.length > 0
+        ? datasetConfig.columnsOrder
+        : chartData.datasets[datasetIndex].options.columnsOrder;
+
+      if (columnsOrder?.length > 0) {
+        const columnMapByHeader = new Map(tab.columns.map((col) => [col.Header, col]));
         const orderedColumns = [];
-        const notFoundColumns = [];
+
         columnsOrder.forEach((column) => {
-          const columnIndex = _.findIndex(tab.columns, { Header: column });
-          if (columnIndex !== -1) {
-            orderedColumns.push(tab.columns[columnIndex]);
+          if (columnMapByHeader.has(column)) {
+            orderedColumns.push(columnMapByHeader.get(column));
+            columnMapByHeader.delete(column);
           }
         });
 
-        // now check if which columns from tab.columns are not in columnsOrder
-        tab.columns.forEach((column) => {
-          if (_.indexOf(columnsOrder, column.Header) === -1) {
-            notFoundColumns.push(column);
-          }
-        });
-
-        tab.columns = orderedColumns.concat(notFoundColumns);
+        tab.columns = orderedColumns.concat(Array.from(columnMapByHeader.values()));
       }
 
       tabularData[key] = tab;
