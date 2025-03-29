@@ -52,7 +52,7 @@ class TableView {
       const excludedSet = new Set(excludedFields);
       const columnMap = new Map(); // Header -> index
       const nestedColumnMap = new Set(); // `${k}?${n}`
-      const columnsFormatting = datasetConfig?.Dataset?.configuration?.columnsFormatting;
+      const columnsFormatting = datasetConfig?.configuration?.columnsFormatting;
 
       // Process items in chunks to avoid blocking the event loop
       const chunkSize = 1000;
