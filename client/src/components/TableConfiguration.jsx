@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Accordion, AccordionItem, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Spacer } from "@heroui/react";
-import { LuCircleChevronDown, LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX } from "react-icons/lu";
+import { LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX, LuEllipsisVertical } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
@@ -151,31 +151,31 @@ function TableConfiguration(props) {
                       startContent={(
                         <Link
                           className="flex items-center text-content3"
-                          onClick={() => _onExcludeField(field.accessor)}
+                          onPress={() => _onExcludeField(field.accessor)}
                           title="Hide field"
                         >
                           <LuEye />
                         </Link>
                       )}
-                      endContent={dataset?.configuration ? (
-                        <Dropdown aria-label="Select a data formatting option">
+                      endContent={
+                        <Dropdown aria-label="Select a data formatting option" size="sm">
                           <DropdownTrigger>
                             <Link
-                              className="flex items-center"
-                              title="Sum values on this field"
+                              className="flex items-center text-background cursor-pointer"
+                              title="Field options"
                             >
-                              <LuCircleChevronDown />
+                              <LuEllipsisVertical size={16} />
                             </Link>
                           </DropdownTrigger>
-                          <DropdownMenu variant="bordered">
+                          <DropdownMenu variant="flat">
                             <DropdownItem startContent={<LuSettings />} textValue="Data formatting">
-                              <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
+                              <Link className="w-full" onPress={() => _onSelectFieldForFormatting(field.accessor)}>
                                 <Text>Data formatting</Text>
                               </Link>
                             </DropdownItem>
                           </DropdownMenu>
                         </Dropdown>
-                      ) : null}
+                      }
                     >
                       {`${field.accessor.replace("?", ".")}`}
                     </Chip>
@@ -256,7 +256,7 @@ function TableConfiguration(props) {
                     isIconOnly
                     variant="light"
                     color={"danger"}
-                    onClick={_onCancelColumnOrder}
+                    onPress={_onCancelColumnOrder}
                     title="Cancel ordering"
                     size="sm"
                   >
