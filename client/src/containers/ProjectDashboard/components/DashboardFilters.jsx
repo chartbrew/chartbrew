@@ -1,10 +1,10 @@
 import React from "react"
 import PropTypes from "prop-types"
-import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react"
+import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Spacer } from "@heroui/react"
 import { LuCircleX, LuEllipsisVertical, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
-import moment from "moment"
 import { operators } from "../../../modules/filterOperations"
 import VariableFilter from "./VariableFilter"
+import DateRangeFilter from "./DateRangeFilter"
 
 function DashboardFilters({ 
   filters, 
@@ -36,21 +36,35 @@ function DashboardFilters({
     onApplyFilterValue(storedFilters);
   }
 
+  const _handleDateRangeChange = (filter, { startDate, endDate }) => {
+    const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
+    const projectFilters = storedFilters[projectId] || [];
+    
+    const updatedFilters = projectFilters.map((f) => {
+      if (f.id === filter.id) {
+        return { ...f, startDate, endDate };
+      }
+      return f;
+    });
+
+    storedFilters[projectId] = updatedFilters;
+    window.localStorage.setItem("_cb_filters", JSON.stringify(storedFilters));
+
+    onApplyFilterValue(storedFilters);
+  }
+
   return (
     <div className="hidden sm:flex sm:flex-row sm:gap-1">
       <div className="flex flex-row gap-1 min-w-min">
         {projectFilters.map((filter) => (
-          <div className="flex flex-row gap-1 items-center" key={filter.id}>
+          <div className="flex flex-row items-center" key={filter.id}>
             <div className="cursor-pointer flex flex-row gap-1 items-center">
               {filter.type === "date" && (
-                <Chip
-                  color="primary"
-                  variant={"flat"}
-                  radius="sm"
-                  size="sm"
-                >
-                  {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                </Chip>
+                <DateRangeFilter
+                  startDate={filter.startDate}
+                  endDate={filter.endDate}
+                  onChange={(dates) => _handleDateRangeChange(filter, dates)}
+                />
               )}
               {filter.type === "field" && filter.field && (
                 <Chip
@@ -90,6 +104,7 @@ function DashboardFilters({
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
+            <Spacer x={1} />
           </div>
         ))}
       </div>

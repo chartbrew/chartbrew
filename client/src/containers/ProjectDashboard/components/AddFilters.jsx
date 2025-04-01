@@ -5,8 +5,8 @@ import _ from "lodash";
 import { v4 as uuid } from "uuid";
 import {
   Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Chip,
-  Divider, DateRangePicker,
-  Code, DatePicker,
+  Divider,
+  Code,
   Autocomplete,
   AutocompleteItem,
   Drawer,
@@ -20,18 +20,20 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  DatePicker,
 } from "@heroui/react";
 import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { toast } from "react-hot-toast";
+import { parseDate, today } from "@internationalized/date";
 
 import { operators } from "../../../modules/filterOperations";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { parseDate, parseDateTime, today } from "@internationalized/date";
 import { useSelector } from "react-redux";
 import { selectProject } from "../../../slices/project";
 import { Link } from "react-router-dom";
 import VariableFilter from "./VariableFilter";
+import DateRangeFilter from "./DateRangeFilter";
 
 function AddFilters(props) {
   const {
@@ -52,12 +54,7 @@ function AddFilters(props) {
     endDate: moment().endOf("month").toISOString(),
     key: "selection",
   });
-  const [initNewSelectionRange] = useState({
-    start: parseDate(moment().startOf("month").format("YYYY-MM-DD")),
-    end: parseDate(moment().endOf("month").format("YYYY-MM-DD")),
-  });
   const [dateRange, setDateRange] = useState(initSelectionRange);
-  const [newDateRange, setNewDateRange] = useState(initNewSelectionRange);
   const [variableCondition, setVariableCondition] = useState({
     variable: "", 
     value: "",
@@ -68,15 +65,6 @@ function AddFilters(props) {
   const [rangeActive, setRangeActive] = useState(false);
 
   const project = useSelector(selectProject);
-
-  useEffect(() => {
-    if (dateRange.startDate && dateRange.endDate) {
-      setNewDateRange({
-        start: parseDateTime(moment(dateRange.startDate).format("YYYY-MM-DDTHH:mm:ss")),
-        end: parseDateTime(moment(dateRange.endDate).format("YYYY-MM-DDTHH:mm:ss")),
-      });
-    }
-  }, [dateRange]);
 
   useEffect(() => {
     if (charts) {
@@ -165,94 +153,63 @@ function AddFilters(props) {
       setRangeActive(false);
     }, 1000);
 
+    let startDate;
+    let endDate;
+
     if (type === "this_month") {
-      setDateRange({
-        startDate: moment().startOf("month").startOf("day").toISOString(),
-        endDate: moment().endOf("month").endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().startOf("month").startOf("day").toISOString();
+      endDate = moment().endOf("month").endOf("day").toISOString();
     }
 
     if (type === "last_month") {
-      setDateRange({
-        startDate: moment().subtract(1, "month").startOf("month").startOf("day")
-          .toISOString(),
-        endDate: moment().subtract(1, "month").endOf("month").endOf("day")
-          .toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(1, "month").startOf("month").startOf("day").toISOString();
+      endDate = moment().subtract(1, "month").endOf("month").endOf("day").toISOString();
     }
 
     if (type === "last_7_days") {
-      setDateRange({
-        startDate: moment().subtract(7, "days").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(7, "days").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
 
     if (type === "last_30_days") {
-      setDateRange({
-        startDate: moment().subtract(30, "days").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(30, "days").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
 
     if (type === "last_90_days") {
-      setDateRange({
-        startDate: moment().subtract(90, "days").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(90, "days").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
 
     if (type === "last_year") {
-      setDateRange({
-        startDate: moment().subtract(1, "year").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(1, "year").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
 
     if (type === "quarter_to_date") {
-      setDateRange({
-        startDate: moment().startOf("quarter").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().startOf("quarter").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
 
     if (type === "last_quarter") {
-      setDateRange({
-        startDate: moment().subtract(1, "quarter").startOf("quarter").startOf("day")
-          .toISOString(),
-        endDate: moment().subtract(1, "quarter").endOf("quarter").endOf("day")
-          .toISOString(),
-        key: "selection",
-      });
+      startDate = moment().subtract(1, "quarter").startOf("quarter").startOf("day").toISOString();
+      endDate = moment().subtract(1, "quarter").endOf("quarter").endOf("day").toISOString();
     }
 
     if (type === "year_to_date") {
-      setDateRange({
-        startDate: moment().startOf("year").startOf("day").toISOString(),
-        endDate: moment().endOf("day").toISOString(),
-        key: "selection",
-      });
+      startDate = moment().startOf("year").startOf("day").toISOString();
+      endDate = moment().endOf("day").toISOString();
     }
+
+    setDateRange({ startDate, endDate });
   };
 
   const _onApplyFilter = () => {
     if (filterType === "date") {
-      const startDate = moment([newDateRange.start.year, newDateRange.start.month - 1, newDateRange.start.day])
-        .utcOffset(0, true).format();
-      const endDate = moment([newDateRange.end.year, newDateRange.end.month - 1, newDateRange.end.day, 23, 59, 59])
-        .utcOffset(0, true).format();
-
       onAddFilter({
         id: uuid(),
-        startDate,
-        endDate,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
         type: "date",
       });
     } else {
@@ -311,15 +268,48 @@ function AddFilters(props) {
 
           {filterType === "date" && (
             <>
-              <Row>
-                <span className="text-sm">
-                  {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-                  <Code size="sm" className="text-sm">{"{{start_date}}"}</Code>
-                  {" and "}
-                  <Code size="sm" className="text-sm">{"{{end_date}}"}</Code>
-                  {" variables in the queries."}
-                </span>
-              </Row>
+              <div className="font-bold">
+                Configure the date filter
+              </div>
+
+              <div className="text-sm">
+                Select the charts that will be affected by the date filter
+              </div>
+              <div className={"flex flex-row flex-wrap gap-1"}>
+                <Button
+                  variant="flat"
+                  startContent={<LuSquareCheck />}
+                  size="sm"
+                  onPress={() => onEditFilterGroup(null, true)}
+                >
+                  Select all
+                </Button>
+                <Button
+                  variant="flat"
+                  startContent={<LuX />}
+                  size="sm"
+                  onPress={() => onEditFilterGroup(null, false, true)}
+                >
+                  Deselect all
+                </Button>
+              </div>
+              <div className={"flex flex-row flex-wrap gap-1"}>
+                {charts.filter(c => c.type !== "markdown").map((chart) => (
+                  <Fragment key={chart.id}>
+                    <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
+                      <Chip
+                        className="cursor-pointer"
+                        color={filterGroups.find(c => c === chart.id) ? "primary" : "default"}
+                        radius="sm"
+                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "flat"}
+                      >
+                        {chart.name}
+                      </Chip>
+                    </LinkNext>
+                  </Fragment>
+                ))}
+              </div>
+              <Spacer y={1} />
               <Row wrap="wrap" className={"gap-1"}>
                 <LinkNext onPress={() => _onSelectRange("this_month")}>
                   <Chip
@@ -421,55 +411,22 @@ function AddFilters(props) {
                 </LinkNext>
               </Row>
               <div>
-                <DateRangePicker
-                  variant="bordered"
-                  label="Select a date range"
-                  labelPlacement="inside"
-                  visibleMonths={2}
-                  value={newDateRange}
-                  onChange={(value) => setNewDateRange(value)}
-                  color="primary"
+                <DateRangeFilter
+                  startDate={dateRange.startDate}
+                  endDate={dateRange.endDate}
+                  onChange={({ startDate, endDate }) => setDateRange({ startDate, endDate })}
+                  showLabel
+                  size="lg"
                 />
               </div>
-
-              <Spacer y={1} />
-
-              <div className="text-sm">
-                Select the charts that will be affected by the date filter
-              </div>
-              <div className={"flex flex-row flex-wrap gap-1"}>
-                <Button
-                  variant="flat"
-                  startContent={<LuSquareCheck />}
-                  size="sm"
-                  onPress={() => onEditFilterGroup(null, true)}
-                >
-                  Select all
-                </Button>
-                <Button
-                  variant="flat"
-                  startContent={<LuX />}
-                  size="sm"
-                  onPress={() => onEditFilterGroup(null, false, true)}
-                >
-                  Deselect all
-                </Button>
-              </div>
-              <div className={"flex flex-row flex-wrap gap-1"}>
-                {charts.filter(c => c.type !== "markdown").map((chart) => (
-                  <Fragment key={chart.id}>
-                    <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
-                      <Chip
-                        className="cursor-pointer"
-                        color={filterGroups.find(c => c === chart.id) ? "primary" : "default"}
-                        radius="sm"
-                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "flat"}
-                      >
-                        {chart.name}
-                      </Chip>
-                    </LinkNext>
-                  </Fragment>
-                ))}
+              <div className="flex flex-row">
+                <span className="text-sm">
+                  {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
+                  <Code size="sm" className="text-sm">{"{{start_date}}"}</Code>
+                  {" and "}
+                  <Code size="sm" className="text-sm">{"{{end_date}}"}</Code>
+                  {" variables in the queries."}
+                </span>
               </div>
             </>
           )}
@@ -477,6 +434,9 @@ function AddFilters(props) {
           {filterType === "variables" && (
             <>
               <div className="flex flex-col gap-4">
+                <div className="font-bold">
+                  Configure the variable filter
+                </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-row gap-2 items-center">
                     <Input
@@ -609,7 +569,10 @@ function AddFilters(props) {
 
           {filterType === "field" && (
             <>
-              <Row align="center" className={"gap-2"}>
+              <div className="font-bold">
+                Configure the field filter
+              </div>
+              <div className="flex flex-row gap-2 items-center">
                 <Autocomplete
                   label="Select a field"
                   value={() => (
@@ -689,7 +652,7 @@ function AddFilters(props) {
                     <LuInfo />
                   </LinkNext>
                 </Tooltip>
-              </Row>
+              </div>
               {filter.field && (
                 <>
                   <Row align="center">
