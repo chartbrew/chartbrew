@@ -21,7 +21,7 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@heroui/react";
-import { LuSquareCheck, LuInfo, LuPlus, LuX, LuCheck } from "react-icons/lu";
+import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 
 import { operators } from "../../../modules/filterOperations";
@@ -31,6 +31,7 @@ import { parseDate, parseDateTime, today } from "@internationalized/date";
 import { useSelector } from "react-redux";
 import { selectProject } from "../../../slices/project";
 import { Link } from "react-router-dom";
+import VariableFilter from "./VariableFilter";
 
 function AddFilters(props) {
   const {
@@ -595,65 +596,12 @@ function AddFilters(props) {
                 <Divider />
 
                 <div>
-                  <Text b>Preview filter</Text>
-                  <div className="mt-2">
-                    {variableCondition.dataType === "text" && (
-                      <Input
-                        label={variableCondition.label}
-                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
-                        value={variableCondition.value}
-                        size="sm"
-                        className="max-w-xs"
-                        endContent={variableCondition.allowValueChange
-                          ? (<Button variant="light" isIconOnly size="sm">
-                              <LuCheck />
-                            </Button>)
-                          : null
-                        }
-                      />
-                    )}
-                    {variableCondition.dataType === "number" && (
-                      <Input
-                        label={variableCondition.label}
-                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
-                        value={variableCondition.value}
-                        endContent={variableCondition.allowValueChange
-                          ? (<Button variant="light" isIconOnly size="sm">
-                              <LuCheck />
-                            </Button>)
-                          : null
-                        }
-                        size="sm"
-                        className="max-w-xs"
-                      />
-                    )}
-                    {variableCondition.dataType === "date" && (
-                      <DatePicker
-                        label={variableCondition.label}
-                        value={variableCondition.value ? parseDate(moment(variableCondition.value).format("YYYY-MM-DD")) : today()}
-                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
-                        size="sm"
-                        className="max-w-xs"
-                        isDisabled={!variableCondition.allowValueChange}
-                      />
-                    )}
-                    {variableCondition.dataType === "binary" && (
-                      <Select
-                        label={variableCondition.label}
-                        variant={variableCondition.allowValueChange ? "bordered" : "flat"}
-                        selectedKeys={[variableCondition.value]}
-                        size="sm"
-                        className="max-w-xs"
-                      >
-                        <SelectItem key="true" textValue="True">
-                          True
-                        </SelectItem>
-                        <SelectItem key="false" textValue="False">
-                          False
-                        </SelectItem>
-                      </Select>
-                    )}
-                  </div>
+                  <div className="mb-2 font-bold">Preview filter</div>
+                  <VariableFilter
+                    filter={variableCondition}
+                    onValueChange={(value) => setVariableCondition({ ...variableCondition, value })}
+                    onApply={() => {}}
+                  />
                 </div>
               </div>
             </>
@@ -773,7 +721,6 @@ function AddFilters(props) {
           {filterType === "field" && (
             <Button
               endContent={<LuPlus />}
-              isDisabled={!filter.value}
               onPress={_onAddFilter}
               color="primary"
             >
@@ -783,7 +730,7 @@ function AddFilters(props) {
           {filterType === "variables" && (
             <Button
               endContent={<LuPlus />}
-              isDisabled={!variableCondition.variable || !variableCondition.value}
+              isDisabled={!variableCondition.variable}
               onPress={_onAddVariableFilter}
               color="primary"
             >

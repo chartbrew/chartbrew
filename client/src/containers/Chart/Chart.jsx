@@ -169,39 +169,44 @@ function Chart(props) {
   };
 
   const _runFiltering = async (filters) => {
+    if (!chart.ChartDatasetConfigs) return;
+
+    // Get all conditions from the chart's datasets
+    let identifiedConditions = [];
+    chart.ChartDatasetConfigs.forEach((cdc) => {
+      if (Array.isArray(cdc.Dataset?.conditions)) {
+        identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+      }
+    });
+
+    // Combine regular filters and variable filters into a single array
+    const allFilters = [];
+
+    // Add regular filters if they exist
     if (filters) {
+      allFilters.push(...filters);
+    }
+
+    // Add variable filters if they exist and match chart conditions
+    if (variables?.[params.projectId]) {
+      variables[params.projectId].forEach((variable) => {
+        const found = identifiedConditions.find((c) => c.variable === variable.variable && variable.value);
+        if (found) {
+          allFilters.push({
+            ...found,
+            value: variable.value,
+          });
+        }
+      });
+    }
+
+    // Only make an API call if there are filters to apply
+    if (allFilters.length > 0) {
       await dispatch(runQueryWithFilters({
         project_id: chart.project_id,
         chart_id: chart.id,
-        filters,
+        filters: allFilters,
       }));
-    }
-
-    // if variables exist, run query again with variables
-    if (variables?.[params.projectId] && chart.ChartDatasetConfigs) {
-      // check if any filters have the same variable name and run query with filters
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          const newConditions = [];
-          variables[params.projectId].forEach((variable) => {
-            const found = cdc.Dataset.conditions.find((c) => c.variable === variable.variable);
-            if (found) {
-              newConditions.push({
-                ...found,
-                value: variable.value,
-              });
-            }
-          });
-
-          if (newConditions.length > 0) {
-            dispatch(runQueryWithFilters({
-              project_id: chart.project_id,
-              chart_id: chart.id,
-              filters: newConditions,
-            }));
-          }
-        }
-      });
     }
   };
 

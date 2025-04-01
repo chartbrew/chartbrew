@@ -316,8 +316,7 @@ function ProjectDashboard(props) {
     const filter = {
       id: uuidv4(),
       type: "variable",
-      variable: variableFilter.variable,
-      value: variableFilter.value
+      ...variableFilter,
     };
 
     newFilters[projectId].push(filter);
@@ -357,6 +356,7 @@ function ProjectDashboard(props) {
     setFilterLoading(true);
     _onFilterCharts(currentFilters, chartIds)
       .then(() => {
+        setFilters(currentFilters);
         setFilterLoading(false);
       })
       .catch(() => {
@@ -424,7 +424,7 @@ function ProjectDashboard(props) {
         });
 
         // Separate filters by type
-        const variableFilters = currentFilters[projectId].filter(f => f.type === "variable");
+        const variableFilters = currentFilters[projectId].filter(f => f.type === "variable" && f.value);
         const dateFilters = currentFilters[projectId].filter(f => f.type === "date");
         const otherFilters = currentFilters[projectId].filter(f => f.type !== "variable" && f.type !== "date");
 
@@ -828,6 +828,7 @@ function ProjectDashboard(props) {
                       filters={filters}
                       projectId={params.projectId}
                       onRemoveFilter={_onRemoveFilter}
+                      onApplyFilterValue={_runFiltering}
                     />
                   </div>
                 </div>
