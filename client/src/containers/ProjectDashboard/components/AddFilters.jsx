@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import _ from "lodash";
@@ -6,7 +6,6 @@ import { v4 as uuid } from "uuid";
 import {
   Dropdown, Spacer, Link as LinkNext, Input, Tooltip, Button, Chip,
   Divider,
-  Code,
   Autocomplete,
   AutocompleteItem,
   Drawer,
@@ -22,7 +21,7 @@ import {
   DropdownItem,
   DatePicker,
 } from "@heroui/react";
-import { LuSquareCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { LuInfo, LuPlus } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 import { parseDate, today } from "@internationalized/date";
 
@@ -33,11 +32,11 @@ import { useSelector } from "react-redux";
 import { selectProject } from "../../../slices/project";
 import { Link } from "react-router-dom";
 import VariableFilter from "./VariableFilter";
-import DateRangeFilter from "./DateRangeFilter";
+import EditDateRangeFilter from "./EditDateRangeFilter";
 
 function AddFilters(props) {
   const {
-    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup, onAddVariableFilter, filters,
+    charts, projectId, onAddFilter, open, onClose, onAddVariableFilter, filters,
   } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -62,7 +61,6 @@ function AddFilters(props) {
     label: "",
     allowValueChange: false,
   });
-  const [rangeActive, setRangeActive] = useState(false);
 
   const project = useSelector(selectProject);
 
@@ -147,63 +145,6 @@ function AddFilters(props) {
     });
   };
 
-  const _onSelectRange = (type) => {
-    setRangeActive(type);
-    setTimeout(() => {
-      setRangeActive(false);
-    }, 1000);
-
-    let startDate;
-    let endDate;
-
-    if (type === "this_month") {
-      startDate = moment().startOf("month").startOf("day").toISOString();
-      endDate = moment().endOf("month").endOf("day").toISOString();
-    }
-
-    if (type === "last_month") {
-      startDate = moment().subtract(1, "month").startOf("month").startOf("day").toISOString();
-      endDate = moment().subtract(1, "month").endOf("month").endOf("day").toISOString();
-    }
-
-    if (type === "last_7_days") {
-      startDate = moment().subtract(7, "days").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    if (type === "last_30_days") {
-      startDate = moment().subtract(30, "days").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    if (type === "last_90_days") {
-      startDate = moment().subtract(90, "days").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    if (type === "last_year") {
-      startDate = moment().subtract(1, "year").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    if (type === "quarter_to_date") {
-      startDate = moment().startOf("quarter").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    if (type === "last_quarter") {
-      startDate = moment().subtract(1, "quarter").startOf("quarter").startOf("day").toISOString();
-      endDate = moment().subtract(1, "quarter").endOf("quarter").endOf("day").toISOString();
-    }
-
-    if (type === "year_to_date") {
-      startDate = moment().startOf("year").startOf("day").toISOString();
-      endDate = moment().endOf("day").toISOString();
-    }
-
-    setDateRange({ startDate, endDate });
-  };
-
   const _onApplyFilter = () => {
     if (filterType === "date") {
       onAddFilter({
@@ -211,10 +152,19 @@ function AddFilters(props) {
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
         type: "date",
+        charts: filter.charts || [],
       });
     } else {
       _onAddFilter();
     }
+  };
+
+  const _handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    setDateRange({
+      startDate: newFilter.startDate,
+      endDate: newFilter.endDate,
+    });
   };
 
   const _onAddVariableFilter = () => {
@@ -267,168 +217,11 @@ function AddFilters(props) {
           <Divider />
 
           {filterType === "date" && (
-            <>
-              <div className="font-bold">
-                Configure the date filter
-              </div>
-
-              <div className="text-sm">
-                Select the charts that will be affected by the date filter
-              </div>
-              <div className={"flex flex-row flex-wrap gap-1"}>
-                <Button
-                  variant="flat"
-                  startContent={<LuSquareCheck />}
-                  size="sm"
-                  onPress={() => onEditFilterGroup(null, true)}
-                >
-                  Select all
-                </Button>
-                <Button
-                  variant="flat"
-                  startContent={<LuX />}
-                  size="sm"
-                  onPress={() => onEditFilterGroup(null, false, true)}
-                >
-                  Deselect all
-                </Button>
-              </div>
-              <div className={"flex flex-row flex-wrap gap-1"}>
-                {charts.filter(c => c.type !== "markdown").map((chart) => (
-                  <Fragment key={chart.id}>
-                    <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
-                      <Chip
-                        className="cursor-pointer"
-                        color={filterGroups.find(c => c === chart.id) ? "primary" : "default"}
-                        radius="sm"
-                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "flat"}
-                      >
-                        {chart.name}
-                      </Chip>
-                    </LinkNext>
-                  </Fragment>
-                ))}
-              </div>
-              <Spacer y={1} />
-              <Row wrap="wrap" className={"gap-1"}>
-                <LinkNext onPress={() => _onSelectRange("this_month")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "this_month" ? "primary" : "default"}
-                  >
-                    This month
-                  </Chip>
-                </LinkNext>
-
-                <LinkNext onPress={() => _onSelectRange("last_month")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_month" ? "primary" : "default"}
-                  >
-                    Last month
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("last_7_days")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_7_days" ? "primary" : "default"}
-                  >
-                    Last 7 days
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("last_30_days")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_30_days" ? "primary" : "default"}
-                  >
-                    Last 30 days
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("last_90_days")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_90_days" ? "primary" : "default"}
-                  >
-                    Last 90 days
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("last_year")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_year" ? "primary" : "default"}
-                  >
-                    Last year
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("quarter_to_date")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "quarter_to_date" ? "primary" : "default"}
-                  >
-                    Quarter to date
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("last_quarter")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer"
-                    color={rangeActive === "last_quarter" ? "primary" : "default"}
-                  >
-                    Last quarter
-                  </Chip>
-                </LinkNext>
-                
-                <LinkNext onPress={() => _onSelectRange("year_to_date")}>
-                  <Chip
-                    size="sm"
-                    variant={"flat"}
-                    className="cursor-pointer transition-colors duration-500"
-                    color={rangeActive === "year_to_date" ? "primary" : "default"}
-                  >
-                    Year to date
-                  </Chip>
-                </LinkNext>
-              </Row>
-              <div>
-                <DateRangeFilter
-                  startDate={dateRange.startDate}
-                  endDate={dateRange.endDate}
-                  onChange={({ startDate, endDate }) => setDateRange({ startDate, endDate })}
-                  showLabel
-                  size="lg"
-                />
-              </div>
-              <div className="flex flex-row">
-                <span className="text-sm">
-                  {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-                  <Code size="sm" className="text-sm">{"{{start_date}}"}</Code>
-                  {" and "}
-                  <Code size="sm" className="text-sm">{"{{end_date}}"}</Code>
-                  {" variables in the queries."}
-                </span>
-              </div>
-            </>
+            <EditDateRangeFilter
+              charts={charts}
+              filter={filter}
+              onChange={_handleFilterChange}
+            />
           )}
 
           {filterType === "variables" && (
@@ -712,8 +505,6 @@ AddFilters.propTypes = {
   onAddFilter: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  filterGroups: PropTypes.array.isRequired,
-  onEditFilterGroup: PropTypes.func.isRequired,
   onAddVariableFilter: PropTypes.func.isRequired,
   filters: PropTypes.object,
 };

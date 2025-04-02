@@ -69,15 +69,6 @@ const getFiltersFromStorage = () => {
   }
 };
 
-const getFilterGroupsFromStorage = () => {
-  try {
-    const filterGroups = JSON.parse(window.localStorage.getItem("_cb_filter_groups"));
-    return filterGroups || null;
-  } catch (e) {
-    return null;
-  }
-};
-
 /*
   Dashboard container (for the charts)
 */
@@ -85,7 +76,6 @@ function ProjectDashboard(props) {
   const { mobile } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
-  const [filterGroups, setFilterGroups] = useState(getFilterGroupsFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
@@ -268,34 +258,11 @@ function ProjectDashboard(props) {
     setLayouts(newLayouts);
   };
 
-  const _onEditFilterGroup = (chartId, selectAll = false, deselectAll = false) => {
-    const { projectId } = params;
-    const newFilterGroups = _.clone(filterGroups) || {};
-    if (!newFilterGroups[projectId]) newFilterGroups[projectId] = [];
-
-    if (selectAll) {
-      newFilterGroups[projectId] = charts.filter((c) => c.project_id === parseInt(projectId, 10)).map((c) => c.id);
-    } else if (deselectAll) {
-      newFilterGroups[projectId] = [];
-    } else if (newFilterGroups[projectId].find((c) => c === chartId)) {
-      newFilterGroups[projectId] = newFilterGroups[projectId].filter((c) => c !== chartId);
-    } else {
-      newFilterGroups[projectId].push(chartId);
-    }
-
-    setFilterGroups(newFilterGroups);
-    window.localStorage.setItem("_cb_filter_groups", JSON.stringify(newFilterGroups));
-  };
-
   const _onAddFilter = (filter) => {
     const { projectId } = params;
 
     const newFilters = _.clone(filters) || {};
     if (!newFilters[projectId]) newFilters[projectId] = [];
-
-    if (filter.type === "date") {
-      newFilters[projectId] = newFilters[projectId].filter((f) => f.type !== "date");
-    }
 
     newFilters[projectId].push(filter);
     setFilters(newFilters);
@@ -455,7 +422,7 @@ function ProjectDashboard(props) {
         }
 
         // Handle date filters for selected charts
-        if (dateFilters.length > 0 && filterGroups?.[projectId]?.find((c) => c === chart.id)) {
+        if (dateFilters.length > 0 && dateFilters[0].charts?.includes(chart.id)) {
           queries.push({
             projectId,
             chartId: chart.id,
@@ -495,8 +462,8 @@ function ProjectDashboard(props) {
         projectId,
         chartId: charts[i].id,
       };
-      if (filterGroups?.[projectId]?.find((c) => c === charts[i].id)) {
-        queryOpt.dateFilter = filters?.[projectId]?.find((o) => o.type === "date");
+      if (filters?.[projectId]?.find((o) => o.type === "date")) {
+        queryOpt.dateFilter = filters[projectId].find((o) => o.type === "date");
       }
 
       queries.push(queryOpt);
@@ -1076,8 +1043,6 @@ function ProjectDashboard(props) {
         onAddFilter={_onAddFilter}
         open={showFilters}
         onClose={() => setShowFilters(false)}
-        filterGroups={filterGroups?.[params?.projectId] || []}
-        onEditFilterGroup={_onEditFilterGroup}
         onAddVariableFilter={_onAddVariableFilter}
         filters={filters}
       />

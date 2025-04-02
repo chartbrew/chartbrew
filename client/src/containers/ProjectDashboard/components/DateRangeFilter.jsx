@@ -132,7 +132,7 @@ function DateRangeFilter({
       )}
       CalendarBottomContent={
         <div className="flex flex-col gap-1 pb-4">
-          <div className="flex flex-row gap-1 px-2 py-1 overflow-x-auto">
+          <div className="flex flex-row flex-wrap gap-1 px-2 py-1">
             <Link onPress={() => _onSelectRange("this_month")} className="whitespace-nowrap">
               <Chip size="sm" variant="flat" className="cursor-pointer">
                 This month
