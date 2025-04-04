@@ -15,21 +15,21 @@ function DateRangeFilter({
 }) {
   // This is the actual value that is displayed to the user
   const [currentValue, setCurrentValue] = useState({
-    start: parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")),
-    end: parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")),
+    start: startDate ? parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
+    end: endDate ? parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
   })
 
   // This is the committed value that we compare against to show the save button
   const [committedValue, setCommittedValue] = useState({
-    start: parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")),
-    end: parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")),
+    start: startDate ? parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
+    end: endDate ? parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
   })
 
   // Update the values when props change
   useEffect(() => {
     const newValue = {
-      start: parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")),
-      end: parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")),
+      start: startDate ? parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
+      end: endDate ? parseDateTime(moment.utc(endDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
     };
     setCurrentValue(newValue);
     setCommittedValue(newValue);
@@ -104,8 +104,8 @@ function DateRangeFilter({
 
   const _hasChanges = () => {
     return (
-      currentValue.start.toString() !== committedValue.start.toString() ||
-      currentValue.end.toString() !== committedValue.end.toString()
+      currentValue.start?.toString() !== committedValue.start?.toString() ||
+      currentValue.end?.toString() !== committedValue.end?.toString()
     );
   }
 

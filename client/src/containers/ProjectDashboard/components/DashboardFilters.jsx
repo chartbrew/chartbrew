@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
-import { LuCircleX, LuEllipsisVertical, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
+import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import { operators } from "../../../modules/filterOperations"
 import VariableFilter from "./VariableFilter"
 import DateRangeFilter from "./DateRangeFilter"
@@ -83,6 +83,21 @@ function DashboardFilters({
     setEditingFilter(newFilter);
   };
 
+  const _onClearFilterValue = (filter) => {
+    const updatedFilters = {
+      ...filters,
+      [projectId]: filters[projectId].map(f => {
+        if (f.type === "date") {
+          return { ...f, startDate: "", endDate: "" };
+        }
+        return f.id === filter.id ? { ...f, value: "" } : f;
+      }),
+    };
+    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+
+    onApplyFilterValue(updatedFilters);
+  }
+
   return (
     <>
       <div className="hidden sm:flex sm:flex-row sm:gap-1">
@@ -127,8 +142,11 @@ function DashboardFilters({
                   <DropdownItem onPress={() => { }} startContent={<LuUsers />}>
                     Save for everyone
                   </DropdownItem>
-                  <DropdownItem onPress={() => { }} startContent={<LuTvMinimal />} showDivider>
+                  <DropdownItem onPress={() => { }} startContent={<LuTvMinimal />}>
                     Show on report
+                  </DropdownItem>
+                  <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
+                    Clear filter value
                   </DropdownItem>
                   <DropdownItem onPress={() => onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
                     Remove filter

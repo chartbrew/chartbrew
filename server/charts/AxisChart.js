@@ -138,7 +138,7 @@ class AxisChart {
 
         let filteredData = filterData.data;
 
-        const dateDashboardFilter = filters && filters?.find((f) => f.type === "date");
+        const dateDashboardFilter = filters && filters?.find((f) => f.type === "date" && f.startDate && f.endDate);
         if (dateField
           && ((this.chart.startDate && this.chart.endDate) || dateDashboardFilter)
           && canDateFilter

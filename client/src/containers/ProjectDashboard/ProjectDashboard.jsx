@@ -372,6 +372,7 @@ function ProjectDashboard(props) {
 
     const refreshPromises = [];
     const queries = [];
+    const previousFilters = _.cloneDeep(filters);
 
     // Filter charts based on chartIds if provided
     const chartsToProcess = chartIds 
@@ -392,8 +393,30 @@ function ProjectDashboard(props) {
 
         // Separate filters by type
         const variableFilters = currentFilters[projectId].filter(f => f.type === "variable" && f.value);
-        const dateFilters = currentFilters[projectId].filter(f => f.type === "date");
+        const dateFilters = currentFilters[projectId].filter(f => f.type === "date" && f.startDate && f.endDate);
         const otherFilters = currentFilters[projectId].filter(f => f.type !== "variable" && f.type !== "date");
+
+        // Check for date filters that were just cleared (have null values)
+        const clearedDateFilters = currentFilters[projectId].filter(f => 
+          f.type === "date" && 
+          !f.startDate && 
+          !f.endDate &&
+          previousFilters?.[projectId]?.find(pf => 
+            pf.id === f.id && 
+            pf.startDate && 
+            pf.endDate
+          )
+        );
+
+        // check for variable filters that were just cleared (have empty values)
+        const clearedVariableFilters = currentFilters[projectId].filter(f => 
+          f.type === "variable" && 
+          !f.value && 
+          previousFilters?.[projectId]?.find(pf => 
+            pf.id === f.id &&
+            pf.value
+          )
+        );
 
         // Handle variable filters by matching against chart conditions
         let newConditions = [];
@@ -408,7 +431,7 @@ function ProjectDashboard(props) {
         });
 
         // Combine non-date filters into a single array
-        const allFilters = [...newConditions, ...otherFilters];
+        const allFilters = [...newConditions, ...otherFilters, ...clearedVariableFilters];
 
         // Only make an API call if there are non-date filters to apply
         if (allFilters.length > 0) {
@@ -422,11 +445,12 @@ function ProjectDashboard(props) {
         }
 
         // Handle date filters for selected charts
-        if (dateFilters.length > 0 && dateFilters[0].charts?.includes(chart.id)) {
+        const activeDateFilters = [...dateFilters, ...clearedDateFilters];
+        if (activeDateFilters.length > 0 && activeDateFilters[0].charts?.includes(chart.id)) {
           queries.push({
             projectId,
             chartId: chart.id,
-            dateFilter: dateFilters[0], // We only use the first date filter since we only allow one
+            dateFilter: activeDateFilters[0], // We only use the first date filter since we only allow one
           });
         }
       }

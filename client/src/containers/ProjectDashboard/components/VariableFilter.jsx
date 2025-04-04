@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import {
@@ -22,6 +22,11 @@ function VariableFilter({
   const [textValue, setTextValue] = useState(value);
   const [dateValue, setDateValue] = useState(value);
 
+  useEffect(() => {
+    setTextValue(value);
+    setDateValue(value);
+  }, [value]);
+
   const renderInput = () => {
     switch (dataType) {
       case "text":
@@ -36,7 +41,7 @@ function VariableFilter({
               inputWrapper: "pl-1"
             }}
             variant={allowValueChange ? "bordered" : "flat"}
-            value={textValue}
+            value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             size="sm"
             className={className}
@@ -60,7 +65,7 @@ function VariableFilter({
               inputWrapper: "pl-1"
             }}
             variant={allowValueChange ? "bordered" : "flat"}
-            value={textValue}
+            value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             type="number"
             size="sm"
@@ -103,7 +108,7 @@ function VariableFilter({
         return (
           <Select
             variant={allowValueChange ? "bordered" : "flat"}
-            selectedKeys={[value]}
+            selectedKeys={[value || ""]}
             onSelectionChange={(keys) => onApply?.(keys.currentKey)}
             size="sm"
             isDisabled={!allowValueChange}
