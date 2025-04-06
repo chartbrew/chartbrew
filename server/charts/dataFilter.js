@@ -121,10 +121,30 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
       });
       break;
     case "isNotNull":
-      newData = _.filter(newData, (o) => getValue(o) !== null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" and boolean values for isNotNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val !== null;
+          if (condition.value.toLowerCase() === "false") return val === null;
+        } else if (typeof condition.value === "boolean") {
+          return condition.value ? val !== null : val === null;
+        }
+        return val !== null;
+      });
       break;
     case "isNull":
-      newData = _.filter(newData, (o) => getValue(o) === null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" and boolean values for isNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val === null;
+          if (condition.value.toLowerCase() === "false") return val !== null;
+        } else if (typeof condition.value === "boolean") {
+          return condition.value ? val === null : val !== null;
+        }
+        return val === null;
+      });
       break;
     default:
       break;

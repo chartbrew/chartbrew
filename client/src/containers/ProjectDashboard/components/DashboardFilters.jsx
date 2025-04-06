@@ -1,12 +1,15 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
-import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
+import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
 import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
-import { operators } from "../../../modules/filterOperations"
 import VariableFilter from "./VariableFilter"
 import DateRangeFilter from "./DateRangeFilter"
 import EditDateRangeFilter from "./EditDateRangeFilter"
+import EditVariableFilter from "./EditVariableFilter"
+import EditFieldFilter from "./EditFieldFilter"
+import FieldFilter from "./FieldFilter"
 import { selectCharts } from "../../../slices/chart"
+import { selectProject } from "../../../slices/project"
 import { useSelector } from "react-redux"
 
 function DashboardFilters({ 
@@ -18,11 +21,7 @@ function DashboardFilters({
   const [editingFilter, setEditingFilter] = useState(null);
 
   const charts = useSelector(selectCharts);
-
-  const _getOperator = (operator) => {
-    const found = operators.find((o) => o.value === operator)
-    return (found && found.key) || "";
-  }
+  const project = useSelector(selectProject);
 
   const projectFilters = filters?.[projectId] || []
 
@@ -59,6 +58,18 @@ function DashboardFilters({
     window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
     onApplyFilterValue(updatedFilters);
   }
+
+  const _handleFieldFilterChange = (newFilter) => {
+    const updatedFilters = {
+      ...filters,
+      [projectId]: filters[projectId].map(f => 
+        f.id === newFilter.id ? newFilter : f
+      ),
+    };
+
+    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    onApplyFilterValue(updatedFilters);
+  };
 
   const _handleEditFilter = (filter) => {
     setEditingFilter(filter);
@@ -98,6 +109,40 @@ function DashboardFilters({
     onApplyFilterValue(updatedFilters);
   }
 
+  const _getFieldOptions = () => {
+    const tempFieldOptions = [];
+    charts.map((chart) => {
+      if (chart.ChartDatasetConfigs) {
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (cdc.Dataset?.fieldsSchema) {
+            Object.keys(cdc.Dataset?.fieldsSchema).forEach((key) => {
+              const type = cdc.Dataset?.fieldsSchema[key];
+              if (tempFieldOptions.findIndex(f => f.key === key) !== -1) return;
+              tempFieldOptions.push({
+                key,
+                text: key && key.replace("root[].", "").replace("root.", ""),
+                value: key,
+                type,
+                chart_id: chart.id,
+                label: {
+                  content: type || "unknown",
+                  color: type === "date" ? "warning"
+                    : type === "number" ? "success"
+                      : type === "string" ? "primary"
+                        : type === "boolean" ? "warning"
+                          : "neutral"
+                },
+              });
+            });
+          }
+        });
+      }
+      return chart;
+    });
+
+    return tempFieldOptions;
+  };
+
   return (
     <>
       <div className="hidden sm:flex sm:flex-row sm:gap-1">
@@ -113,16 +158,7 @@ function DashboardFilters({
                   />
                 )}
                 {filter.type === "field" && filter.field && (
-                  <Chip
-                    color="primary"
-                    variant={"flat"}
-                    radius="sm"
-                    size="sm"
-                  >
-                    <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                    <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                    <span>{`${filter.value}`}</span>
-                  </Chip>
+                  <FieldFilter filter={filter} onApply={(newFilter) => _handleFieldFilterChange(newFilter)} />
                 )}
                 {filter.type === "variable" && (
                   <VariableFilter
@@ -165,11 +201,25 @@ function DashboardFilters({
             <span className="font-bold text-lg">Edit filter</span>
           </ModalHeader>
           <ModalBody>
-            {editingFilter && (
+            {editingFilter && editingFilter.type === "date" && (
               <EditDateRangeFilter
                 charts={charts.filter(c => c.type !== "markdown")}
                 filter={editingFilter}
                 onChange={_handleFilterChange}
+              />
+            )}
+            {editingFilter && editingFilter.type === "variable" && (
+              <EditVariableFilter
+                filter={editingFilter}
+                onChange={_handleFilterChange}
+                project={project}
+              />
+            )}
+            {editingFilter && editingFilter.type === "field" && (
+              <EditFieldFilter
+                filter={editingFilter}
+                onChange={_handleFilterChange}
+                fieldOptions={_getFieldOptions()}
               />
             )}
           </ModalBody>

@@ -800,7 +800,7 @@ function ProjectDashboard(props) {
                         </Popover>
                         <Spacer x={3} />
                       </div>
-                      <Spacer x={1} />
+                      <Spacer x={0.5} />
                     </>
                   )}
                   <Tooltip content="Add dashboard filters" placement="bottom">
