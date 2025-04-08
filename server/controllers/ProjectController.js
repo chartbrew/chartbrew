@@ -169,6 +169,13 @@ class ProjectController {
         {
           model: db.Team,
           attributes: ["showBranding", "allowReportRefresh", "allowReportExport"],
+        },
+        {
+          model: db.DashboardFilter,
+          where: {
+            onReport: true,
+          },
+          required: false,
         }
       ],
       order: [[db.Chart, "dashboardOrder", "ASC"]],

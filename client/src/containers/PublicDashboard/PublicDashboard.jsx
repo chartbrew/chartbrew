@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import PropTypes from "prop-types";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router-dom";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
   Link, Image, CircularProgress, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarBrand,
+  Spinner,
 } from "@heroui/react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
@@ -16,6 +16,7 @@ import {
   LuCircleCheck, LuChevronLeft, LuEye, LuImagePlus, LuPalette,
   LuRefreshCw, LuShare, LuCircleX,
   LuClipboardPen,
+  LuListFilter,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -30,7 +31,7 @@ import {
   getPublicDashboard, getProject, updateProject, updateProjectLogo,
 } from "../../slices/project";
 import { selectTeams } from "../../slices/team";
-import { runQueryOnPublic, runQueryWithFilters, selectCharts } from "../../slices/chart";
+import { getProjectCharts, runQueryOnPublic, runQueryWithFilters, selectCharts } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -44,6 +45,8 @@ import Container from "../../components/Container";
 import { useTheme } from "../../modules/ThemeContext";
 import TextWidget from "../Chart/TextWidget";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
+import { selectUser } from "../../slices/user";
+import DashboardFilters from "../ProjectDashboard/components/DashboardFilters";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -52,9 +55,7 @@ const defaultColors = [
   "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
 ];
 
-function PublicDashboard(props) {
-  const { user } = props;
-
+function PublicDashboard() {
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -75,9 +76,12 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
+  const [dashboardFilters, setDashboardFilters] = useState([]);
+  const [filterLoading, setFilterLoading] = useState(false);
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
+  const user = useSelector(selectUser);
 
   const [searchParams] = useSearchParams();
   const { setTheme, isDark } = useTheme();
@@ -127,6 +131,23 @@ function PublicDashboard(props) {
         headerCode: project.headerCode || "",
         logoLink: project.logoLink,
       });
+
+      _checkSearchParamsForFilters();
+      _checkSearchParamsForFields();
+
+      // get and format the dashboard filters
+      if (project.DashboardFilters) {
+        const formattedFilters = project.DashboardFilters.map((f) => ({
+          ...f?.configuration,
+          id: f.id,
+          onReport: f.onReport,
+        }));
+
+        setDashboardFilters({ [project.id]: formattedFilters });
+        
+        // Run initial filtering with the dashboard filters
+        _runFiltering({ [project.id]: formattedFilters });
+      }
     }
   }, [project]);
 
@@ -172,13 +193,6 @@ function PublicDashboard(props) {
     }
   }, [charts]);
 
-  useEffect(() => {
-    if (project?.id) {
-      _checkSearchParamsForFilters();
-      _checkSearchParamsForFields();
-    }
-  }, [project]);
-
   const _fetchProject = (password) => {
     if (password) window.localStorage.setItem("reportPassword", password);
 
@@ -219,47 +233,38 @@ function PublicDashboard(props) {
   };
 
   const _checkSearchParamsForFilters = () => {
-    charts.forEach((chart) => {
-      // check if there are any filters in the search params
-      // if so, add them to the conditions
-      const params = [];
-      if (searchParams?.entries) {
-        // Convert searchParams to array and filter out empty entries
-        const searchParamsArray = Array.from(searchParams.entries());
-        if (searchParamsArray.length > 0) {
-          searchParamsArray.forEach(([key, value]) => {
-            params.push({ variable: key, value });
-          });
-        }
+    if (!searchParams || !searchParams.entries) return;
+
+    const entries = Array.from(searchParams.entries());
+    if (entries.length === 0) return;
+
+    const filters = [];
+    entries.forEach((entry) => {
+      const [key, value] = entry;
+      if (!key.startsWith("fields[") && !key.startsWith("theme")) {
+        filters.push({ variable: key, value, type: "variable" });
       }
-
-      if (params.length === 0) return;
-
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
-      });
-
-      // now check if any filters have the same variable name
-      let newConditions = [];
-      newConditions = identifiedConditions.map((c) => {
-        const newCondition = { ...c };
-        const param = params.find((p) => p.variable === c.variable);
-        if (param) {
-          newCondition.value = param.value;
-        }
-        return newCondition;
-      });
-
-      // remove conditions that don't have a value
-      newConditions = newConditions.filter((c) => c.value);
-
-      if (newConditions.length === 0) return;
-
-      dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
     });
+
+    if (filters.length > 0) {
+      const currentFilters = { ...dashboardFilters };
+      if (!currentFilters[project.id]) {
+        currentFilters[project.id] = [];
+      }
+      
+      // Add search param filters to the dashboard filters
+      currentFilters[project.id] = [
+        ...currentFilters[project.id],
+        ...filters.map(f => ({
+          ...f,
+          id: `search-${f.variable}`,
+          onReport: true
+        }))
+      ];
+
+      setDashboardFilters(currentFilters);
+      _runFiltering(currentFilters);
+    }
   };
 
   const _checkSearchParamsForFields = () => {
@@ -278,41 +283,29 @@ function PublicDashboard(props) {
           field = `root[].${field}`;
         }
 
-        filters.push({ field, value, operator: "is", project_id: project.id });
+        filters.push({ field, value, operator: "is", type: "field", project_id: project.id });
       }
     });
 
-    const refreshPromises = [];
-    charts.forEach((chart) => {
-      if (_chartHasFilter(chart, filters)) {
-        refreshPromises.push(
-          dispatch(runQueryWithFilters({
-            project_id: project.id,
-            chart_id: chart.id,
-            filters
-          }))
-        );
+    if (filters.length > 0) {
+      const currentFilters = { ...dashboardFilters };
+      if (!currentFilters[project.id]) {
+        currentFilters[project.id] = [];
       }
-    });
+      
+      // Add field filters to the dashboard filters
+      currentFilters[project.id] = [
+        ...currentFilters[project.id],
+        ...filters.map(f => ({
+          ...f,
+          id: `field-${f.field}`,
+          onReport: true
+        }))
+      ];
 
-    return Promise.all(refreshPromises);
-  };
-
-  const _chartHasFilter = (chart, filters) => {
-    let found = false;
-    if (chart.ChartDatasetConfigs) {
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (cdc.Dataset?.fieldsSchema) {
-          Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
-            if (filters && filters.some(o => o.field === key || `root[].${o.field}` === key || `root.${o.field}` === key)) {
-              found = true;
-            }
-          });
-        }
-      });
+      setDashboardFilters(currentFilters);
+      _runFiltering(currentFilters);
     }
-
-    return found;
   };
 
   const _isOnReport = () => {
@@ -368,6 +361,135 @@ function PublicDashboard(props) {
   const _onLoadLogo = ({ target: img }) => {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     setLogoAspectRatio(aspectRatio);
+  };
+
+  const _runFiltering = (currentFilters = dashboardFilters, chartIds = null) => {
+    if (!currentFilters?.[project.id] || charts.length === 0) return;
+
+    setFilterLoading(true);
+    _onFilterCharts(currentFilters, chartIds)
+      .then(() => {
+        setDashboardFilters(currentFilters);
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
+      });
+  };
+
+  const _onFilterCharts = (currentFilters = dashboardFilters, chartIds = null) => {
+    if (!currentFilters || !currentFilters[project.id]) {
+      dispatch(getProjectCharts({ project_id: project.id }));
+      setFilterLoading(false);
+      return Promise.resolve("done");
+    }
+
+    const refreshPromises = [];
+    const queries = [];
+
+    // Filter charts based on chartIds if provided
+    const chartsToProcess = chartIds 
+      ? charts.filter(chart => chartIds.includes(chart.id))
+      : charts;
+    
+    chartsToProcess.forEach((chart) => {
+      if (currentFilters && currentFilters[project.id]) {
+        setFilterLoading(true);
+        
+        // Get all conditions from the chart's datasets
+        let identifiedConditions = [];
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (Array.isArray(cdc.Dataset?.conditions)) {
+            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+          }
+        });
+
+        // Separate filters by type
+        const variableFilters = currentFilters[project.id].filter(f => f.type === "variable" && f.value);
+        const dateFilters = currentFilters[project.id].filter(f => f.type === "date" && f.startDate && f.endDate);
+        const otherFilters = currentFilters[project.id].filter(f => f.type !== "variable" && f.type !== "date");
+
+        // Handle variable filters by matching against chart conditions
+        let newConditions = [];
+        variableFilters.forEach((variableFilter) => {
+          const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
+          if (found) {
+            newConditions.push({
+              ...found,
+              value: variableFilter.value,
+            });
+          }
+        });
+
+        // Combine non-date filters into a single array
+        const allFilters = [...newConditions, ...otherFilters];
+
+        // Only make an API call if there are non-date filters to apply
+        if (allFilters.length > 0) {
+          refreshPromises.push(
+            dispatch(runQueryWithFilters({
+              project_id: project.id,
+              chart_id: chart.id,
+              filters: allFilters,
+            }))
+          );
+        }
+
+        // Handle date filters for selected charts
+        if (dateFilters.length > 0 && dateFilters[0].charts?.includes(chart.id)) {
+          queries.push({
+            projectId: project.id,
+            chartId: chart.id,
+            dateFilter: dateFilters[0], // We only use the first date filter since we only allow one
+          });
+        }
+      }
+    });
+
+    return Promise.all(refreshPromises)
+      .then(() => {
+        if (queries.length > 0) {
+          return _throttleRefreshes(queries, 0);
+        }
+        return "done";
+      })
+      .then(() => {
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
+      });
+  };
+
+  const _throttleRefreshes = (refreshes, index, batchSize = 5) => {
+    if (index >= refreshes.length) return Promise.resolve("done");
+
+    // Get the next batch of refreshes to process
+    const batch = refreshes.slice(index, index + batchSize);
+    const batchPromises = batch.map((refresh) => {
+      return dispatch(runQueryWithFilters({
+        project_id: refresh.projectId,
+        chart_id: refresh.chartId,
+        filters: refresh.dateFilter,
+      }))
+      .catch(() => {
+        // Continue even if one request fails
+        return null;
+      });
+    });
+
+    return Promise.all(batchPromises)
+      .then(() => {
+        return _throttleRefreshes(refreshes, index + batchSize, batchSize);
+      });
+  };
+
+  const _onApplyFilterValue = (filters) => {
+    _runFiltering(filters);
+  };
+
+  const _onRemoveFilter = () => {
+    // No need to do anything here since we don't store filters in localStorage
   };
 
   if (loading && !project?.id && !noCharts) {
@@ -749,6 +871,22 @@ function PublicDashboard(props) {
               </Container>
             )}
 
+            <div className="flex flex-row gap-2 items-center">
+              {!filterLoading && (
+                <LuListFilter size={22} />
+              )}
+              {filterLoading && (
+                <Spinner variant="simple" size="sm" aria-label="Loading" />
+              )}
+              <DashboardFilters
+                filters={dashboardFilters}
+                projectId={project.id}
+                onRemoveFilter={_onRemoveFilter}
+                onApplyFilterValue={_onApplyFilterValue}
+                onReport
+              />
+            </div>
+
             {layouts && charts?.length > 0 && (
               <div className="w-full">
                 <ResponsiveGridLayout
@@ -961,14 +1099,4 @@ const styles = {
   })
 };
 
-PublicDashboard.propTypes = {
-  user: PropTypes.object.isRequired,
-};
-
-const mapStateToProps = (state) => ({
-  user: state.user.data,
-});
-
-const mapDispatchToProps = () => ({});
-
-export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);
+export default PublicDashboard;

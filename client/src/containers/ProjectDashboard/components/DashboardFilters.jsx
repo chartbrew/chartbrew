@@ -2,6 +2,9 @@ import React, { useState } from "react"
 import PropTypes from "prop-types"
 import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
 import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
+import { useDispatch, useSelector } from "react-redux"
+import toast from "react-hot-toast"
+
 import VariableFilter from "./VariableFilter"
 import DateRangeFilter from "./DateRangeFilter"
 import EditDateRangeFilter from "./EditDateRangeFilter"
@@ -10,8 +13,6 @@ import EditFieldFilter from "./EditFieldFilter"
 import FieldFilter from "./FieldFilter"
 import { selectCharts } from "../../../slices/chart"
 import { createDashboardFilter, deleteDashboardFilter, selectProject, updateDashboardFilter } from "../../../slices/project"
-import { useDispatch, useSelector } from "react-redux"
-import toast from "react-hot-toast"
 import canAccess from "../../../config/canAccess"
 import { selectUser } from "../../../slices/user"
 import { selectTeam } from "../../../slices/team"
@@ -21,6 +22,7 @@ function DashboardFilters({
   projectId, 
   onRemoveFilter,
   onApplyFilterValue,
+  onReport = false,
 }) {
   const [editingFilter, setEditingFilter] = useState(null);
 
@@ -34,6 +36,11 @@ function DashboardFilters({
   const dispatch = useDispatch();
 
   const _onApplyFilterValue = (filter, value) => {
+    if (onReport) {
+      onApplyFilterValue({ [projectId]: [{ ...filter, value }] });
+      return;
+    }
+
     const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
     const projectFilters = storedFilters[projectId] || [];
     
@@ -63,7 +70,9 @@ function DashboardFilters({
       ),
     };
 
-    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    if (!onReport) {
+      window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    }
     onApplyFilterValue(updatedFilters);
   }
 
@@ -75,7 +84,9 @@ function DashboardFilters({
       ),
     };
 
-    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    if (!onReport) {
+      window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    }
     onApplyFilterValue(updatedFilters);
   };
 
@@ -93,7 +104,9 @@ function DashboardFilters({
       ),
     };
 
-    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    if (!onReport) {
+      window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    }
     onApplyFilterValue(updatedFilters);
     setEditingFilter(null);
   }
@@ -112,8 +125,10 @@ function DashboardFilters({
         return f.id === filter.id ? { ...f, value: "" } : f;
       }),
     };
-    window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
 
+    if (!onReport) {
+      window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
+    }
     onApplyFilterValue(updatedFilters);
   }
 
@@ -204,6 +219,12 @@ function DashboardFilters({
 
   const _onRevertToServerDefault = (filter) => {
     const stateFilter = _getStateFilter(filter.id);
+    
+    if (onReport) {
+      onApplyFilterValue({ [projectId]: [{ ...stateFilter.configuration, id: filter.id, onReport: stateFilter.onReport }] });
+      return;
+    }
+
     const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
 
     if (storedFilters[project.id]) {
@@ -248,47 +269,49 @@ function DashboardFilters({
                   />
                 )}
               </div>
-              <Dropdown size="sm">
-                <DropdownTrigger>
-                  <div className="cursor-pointer"><LuEllipsisVertical /></div>
-                </DropdownTrigger>
-                <DropdownMenu variant="flat">
-                  <DropdownItem onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />}>
-                    Edit filter
-                  </DropdownItem>
-                  {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
-                    <DropdownItem onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />}>
-                      Save for everyone
+              {!onReport && (
+                <Dropdown size="sm">
+                  <DropdownTrigger>
+                    <div className="cursor-pointer"><LuEllipsisVertical /></div>
+                  </DropdownTrigger>
+                  <DropdownMenu variant="flat">
+                    <DropdownItem onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />}>
+                      Edit filter
                     </DropdownItem>
-                  )}
-                  {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
-                    <DropdownItem startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)}>
-                      Remove from everyone
+                    {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
+                      <DropdownItem onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />}>
+                        Save for everyone
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
+                      <DropdownItem startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)}>
+                        Remove from everyone
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
+                      <DropdownItem onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />}>
+                        Hide from report
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
+                      <DropdownItem onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />}>
+                        Show on report
+                      </DropdownItem>
+                    )}
+                    {_getStateFilter(filter.id) && (
+                      <DropdownItem onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />}>
+                        Revert to server default
+                      </DropdownItem>
+                    )}
+                    <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
+                      Clear filter value
                     </DropdownItem>
-                  )}
-                  {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
-                    <DropdownItem onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />}>
-                      Hide from report
+                    <DropdownItem onPress={() => onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
+                      Remove filter
                     </DropdownItem>
-                  )}
-                  {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
-                    <DropdownItem onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />}>
-                      Show on report
-                    </DropdownItem>
-                  )}
-                  {_getStateFilter(filter.id) && (
-                    <DropdownItem onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />}>
-                      Revert to server default
-                    </DropdownItem>
-                  )}
-                  <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
-                    Clear filter value
-                  </DropdownItem>
-                  <DropdownItem onPress={() => onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
-                    Remove filter
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+                  </DropdownMenu>
+                </Dropdown>
+              )}
               <Spacer x={1} />
             </div>
           ))}
@@ -342,6 +365,7 @@ DashboardFilters.propTypes = {
   projectId: PropTypes.number.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onApplyFilterValue: PropTypes.func.isRequired,
+  onReport: PropTypes.bool,
 }
 
 export default DashboardFilters
