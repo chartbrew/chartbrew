@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
 import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
-import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
+import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import VariableFilter from "./VariableFilter"
 import DateRangeFilter from "./DateRangeFilter"
 import EditDateRangeFilter from "./EditDateRangeFilter"
@@ -9,11 +9,15 @@ import EditVariableFilter from "./EditVariableFilter"
 import EditFieldFilter from "./EditFieldFilter"
 import FieldFilter from "./FieldFilter"
 import { selectCharts } from "../../../slices/chart"
-import { selectProject } from "../../../slices/project"
-import { useSelector } from "react-redux"
+import { createDashboardFilter, deleteDashboardFilter, selectProject, updateDashboardFilter } from "../../../slices/project"
+import { useDispatch, useSelector } from "react-redux"
+import toast from "react-hot-toast"
+import canAccess from "../../../config/canAccess"
+import { selectUser } from "../../../slices/user"
+import { selectTeam } from "../../../slices/team"
 
 function DashboardFilters({ 
-  filters, 
+  filters,
   projectId, 
   onRemoveFilter,
   onApplyFilterValue,
@@ -21,9 +25,13 @@ function DashboardFilters({
   const [editingFilter, setEditingFilter] = useState(null);
 
   const charts = useSelector(selectCharts);
+  const user = useSelector(selectUser);
+  const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
-
+  const dashboardFilters = project?.DashboardFilters || [];
   const projectFilters = filters?.[projectId] || []
+
+  const dispatch = useDispatch();
 
   const _onApplyFilterValue = (filter, value) => {
     const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
@@ -109,6 +117,53 @@ function DashboardFilters({
     onApplyFilterValue(updatedFilters);
   }
 
+  const _saveForEveryone = async (filter, onReport = false) => {
+    const response = await dispatch(createDashboardFilter({
+      project_id: projectId,
+      configuration: filter,
+      onReport,
+      dashboard_filter_id: filter.id,
+    }));
+
+    if (response.error) {
+      toast.error("Failed to save the filter for everyone. Please try again.");
+    } else {
+      toast.success("Filter saved for everyone successfully.");
+    }
+  };
+
+  const _updateReportVisibility = async (filter, onReport) => {
+    let response;
+    if (dashboardFilters.findIndex(f => f.id === filter.id) === -1) {
+      response = await _saveForEveryone(filter, onReport);
+    } else {
+      response = await dispatch(updateDashboardFilter({
+        project_id: projectId,
+        dashboard_filter_id: filter.id,
+        data: { onReport },
+      }));
+    }
+
+    if (response.error) {
+      toast.error("Failed to update the filter. Please try again.");
+    } else {
+      toast.success("Filter updated successfully.");
+    }
+  };
+
+  const _removeFromEveryone = async (filter) => {
+    const response = await dispatch(deleteDashboardFilter({
+      project_id: projectId,
+      dashboard_filter_id: filter.id,
+    }));
+
+    if (response.error) {
+      toast.error("Failed to remove the filter from everyone. Please try again.");
+    } else {
+      toast.success("Filter removed from everyone successfully.");
+    }
+  };
+
   const _getFieldOptions = () => {
     const tempFieldOptions = [];
     charts.map((chart) => {
@@ -143,6 +198,32 @@ function DashboardFilters({
     return tempFieldOptions;
   };
 
+  const _getStateFilter = (filterId) => {
+    return dashboardFilters.find(f => f.id === filterId);
+  };
+
+  const _onRevertToServerDefault = (filter) => {
+    const stateFilter = _getStateFilter(filter.id);
+    const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
+
+    if (storedFilters[project.id]) {
+      const filterIndex = storedFilters[project.id].findIndex(f => f.id === filter.id);
+      if (filterIndex !== -1) {
+        storedFilters[project.id][filterIndex] = {
+          ...stateFilter.configuration,
+          id: filter.id,
+          onReport: stateFilter.onReport
+        };
+        window.localStorage.setItem("_cb_filters", JSON.stringify(storedFilters));
+        onApplyFilterValue(storedFilters);
+      }
+    }
+  }
+
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
+
   return (
     <>
       <div className="hidden sm:flex sm:flex-row sm:gap-1">
@@ -175,12 +256,31 @@ function DashboardFilters({
                   <DropdownItem onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />}>
                     Edit filter
                   </DropdownItem>
-                  <DropdownItem onPress={() => { }} startContent={<LuUsers />}>
-                    Save for everyone
-                  </DropdownItem>
-                  <DropdownItem onPress={() => { }} startContent={<LuTvMinimal />}>
-                    Show on report
-                  </DropdownItem>
+                  {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
+                    <DropdownItem onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />}>
+                      Save for everyone
+                    </DropdownItem>
+                  )}
+                  {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
+                    <DropdownItem startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)}>
+                      Remove from everyone
+                    </DropdownItem>
+                  )}
+                  {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
+                    <DropdownItem onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />}>
+                      Hide from report
+                    </DropdownItem>
+                  )}
+                  {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
+                    <DropdownItem onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />}>
+                      Show on report
+                    </DropdownItem>
+                  )}
+                  {_getStateFilter(filter.id) && (
+                    <DropdownItem onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />}>
+                      Revert to server default
+                    </DropdownItem>
+                  )}
                   <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
                     Clear filter value
                   </DropdownItem>

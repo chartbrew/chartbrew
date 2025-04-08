@@ -112,6 +112,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Project.hasMany(models.ProjectRole, { foreignKey: "project_id" });
     models.Project.hasMany(models.Chart, { foreignKey: "project_id" });
     models.Project.hasMany(models.Variable, { foreignKey: "project_id" });
+    models.Project.hasMany(models.DashboardFilter, { foreignKey: "project_id" });
     models.Project.belongsTo(models.Team, { foreignKey: "team_id" });
   };
 

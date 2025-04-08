@@ -355,6 +355,73 @@ module.exports = (app) => {
   });
   // -------------------------------------------
 
+  /*
+  ** Route to create a dashboard filter
+  */
+  app.post("/project/:id/dashboard-filter", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    return projectController.createDashboardFilter(req.params.id, req.body)
+      .then((dashboardFilter) => {
+        return res.status(200).send(dashboardFilter);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to get a dashboard filter
+  */
+  app.get("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return projectController.getDashboardFilter(req.params.dashboardFilterId)
+      .then((dashboardFilter) => {
+        return res.status(200).send(dashboardFilter);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to get all dashboard filters
+  */
+  app.get("/project/:id/dashboard-filters", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return projectController.getDashboardFilters(req.params.id)
+      .then((dashboardFilters) => {
+        return res.status(200).send(dashboardFilters);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to update a dashboard filter
+  */
+  app.put("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.updateDashboardFilter(req.params.dashboardFilterId, req.body)
+      .then((dashboardFilter) => {
+        return res.status(200).send(dashboardFilter);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to delete a dashboard filter
+  */
+  app.delete("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.deleteDashboardFilter(req.params.dashboardFilterId)
+      .then(() => {
+        return res.status(200).send({ removed: true });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
   return (req, res, next) => {
     next();
   };

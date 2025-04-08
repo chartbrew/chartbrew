@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Outlet, Route, Routes, useParams } from "react-router";
 import { Allotment } from "allotment";
 import { useWindowSize } from "react-use";
@@ -12,7 +12,6 @@ import {
 import "allotment/dist/style.css";
 
 import { getProject, changeActiveProject, selectProject, getProjects } from "../../slices/project";
-import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
@@ -25,17 +24,14 @@ import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import { selectUser } from "../../slices/user";
 
 const sideMaxSize = 220;
 const sideMinSize = 70;
 /*
   The project screen where the dashboard, builder, etc. are
 */
-function ProjectBoard(props) {
-  const {
-    cleanErrors, user,
-  } = props;
-
+function ProjectBoard() {
   const [loading, setLoading] = useState(true);
   const [menuSize, setMenuSize] = useState("small");
   const [isPrinting, setIsPrinting] = useState(false);
@@ -43,6 +39,7 @@ function ProjectBoard(props) {
 
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject) || {};
+  const user = useSelector(selectUser);
 
   const { height } = useWindowSize();
   const params = useParams();
@@ -53,7 +50,6 @@ function ProjectBoard(props) {
     if (params.projectId && !initRef.current) {
       initRef.current = true;
 
-      cleanErrors();
       _init();
       if (window.localStorage.getItem("_cb_menu_size")) {
         _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
@@ -281,21 +277,4 @@ const styles = {
   }
 };
 
-ProjectBoard.propTypes = {
-  user: PropTypes.object.isRequired,
-  cleanErrors: PropTypes.func.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    cleanErrors: () => dispatch(cleanErrorsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectBoard);
+export default ProjectBoard;

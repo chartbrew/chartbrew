@@ -111,7 +111,7 @@ function EditFieldFilter({
         Configure the field filter
       </div>
 
-      <div className="flex flex-col gap-4 mt-4">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-row gap-2 items-center">
           <Autocomplete
             label="Select a field"

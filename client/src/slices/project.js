@@ -275,6 +275,76 @@ export const deleteVariable = createAsyncThunk(
   }
 );
 
+export const createDashboardFilter = createAsyncThunk(
+  "project/createDashboardFilter",
+  async ({ project_id, configuration, onReport, dashboard_filter_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/dashboard-filter`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const data = { configuration, onReport };
+    if (dashboard_filter_id) {
+      data.id = dashboard_filter_id;
+    }
+    const body = JSON.stringify(data);
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const dashboardFilter = await response.json();
+    return dashboardFilter;
+  }
+);
+
+export const updateDashboardFilter = createAsyncThunk(
+  "project/updateDashboardFilter",
+  async ({ project_id, dashboard_filter_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/dashboard-filter/${dashboard_filter_id}`;
+    const method = "PUT";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const body = JSON.stringify(data);
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const dashboardFilter = await response.json();
+    return dashboardFilter;
+  }
+);
+
+export const deleteDashboardFilter = createAsyncThunk(
+  "project/deleteDashboardFilter",
+  async ({ project_id, dashboard_filter_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/dashboard-filter/${dashboard_filter_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
 export const projectSlice = createSlice({
   name: "project",
   initialState,
@@ -441,11 +511,87 @@ export const projectSlice = createSlice({
       state.loading = false;
       state.error = true;
     });
+
+    // createDashboardFilter
+    builder.addCase(createDashboardFilter.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(createDashboardFilter.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.active?.DashboardFilters) {
+        state.active.DashboardFilters.push(action.payload);
+      } else {
+        state.active.DashboardFilters = [action.payload];
+      }
+
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          if (project.DashboardFilters) {
+            project.DashboardFilters.push(action.payload);
+          } else {
+            project.DashboardFilters = [action.payload];
+          }
+        }
+        return project;
+      });
+    })
+    builder.addCase(createDashboardFilter.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // updateDashboardFilter
+    builder.addCase(updateDashboardFilter.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(updateDashboardFilter.fulfilled, (state, action) => {
+      state.loading = false;
+      state.active.DashboardFilters = state.active.DashboardFilters?.map((dashboardFilter) => {
+        if (dashboardFilter.id === action.payload.id) {
+          return action.payload;
+        }
+        return dashboardFilter;
+      });
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.DashboardFilters = project.DashboardFilters?.map((dashboardFilter) => {
+            return dashboardFilter.id === action.payload.id ? action.payload : dashboardFilter;
+          });
+        }
+        return project;
+      });
+    })
+    builder.addCase(updateDashboardFilter.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // deleteDashboardFilter
+    builder.addCase(deleteDashboardFilter.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(deleteDashboardFilter.fulfilled, (state, action) => {
+      state.loading = false;
+      state.active.DashboardFilters = state.active.DashboardFilters?.filter((dashboardFilter) => {
+        return dashboardFilter.id !== action.meta.arg.dashboard_filter_id;
+      });
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.DashboardFilters = project.DashboardFilters?.filter((dashboardFilter) => {
+            return dashboardFilter.id !== action.meta.arg.dashboard_filter_id;
+          });
+        }
+        return project;
+      });
+    });
+    builder.addCase(deleteDashboardFilter.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
   },
 });
 
 export const { changeActiveProject } = projectSlice.actions;
-
 export const selectProjects = (state) => state.project.data;
 export const selectProject = (state) => state.project.active || {};
 

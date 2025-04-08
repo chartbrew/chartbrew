@@ -151,6 +151,48 @@ function ProjectDashboard(props) {
     });
   }, [charts]);
 
+  useEffect(() => {
+    if (project?.DashboardFilters) {
+      const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
+      const projectId = project.id;
+
+      // Get existing filters for this project
+      const existingFilters = storedFilters[projectId] || [];
+
+      // Update existing filters with new configuration values if they exist
+      const updatedFilters = existingFilters.map(existingFilter => {
+        const matchingFilter = project.DashboardFilters.find(newFilter => newFilter.id === existingFilter.id);
+        if (matchingFilter) {
+          return {
+            ...matchingFilter.configuration,
+            ...existingFilter,
+            onReport: matchingFilter.onReport,
+          };
+        }
+        return existingFilter;
+      });
+
+      // Add any new filters that don't exist yet
+      const newFilters = project.DashboardFilters.filter(newFilter =>
+        !existingFilters.some(existingFilter => existingFilter.id === newFilter.id)
+      ).map(filter => ({
+        id: filter.id,
+        onReport: filter.onReport,
+        ...filter.configuration
+      }));
+
+      if (newFilters.length > 0 || JSON.stringify(updatedFilters) !== JSON.stringify(existingFilters)) {
+        const finalFilters = {
+          ...storedFilters,
+          [projectId]: [...updatedFilters, ...newFilters]
+        };
+
+        window.localStorage.setItem("_cb_filters", JSON.stringify(finalFilters));
+        setFilters(finalFilters);
+      }
+    }
+  }, [project?.DashboardFilters]);
+
   const _onEditLayout = async () => {
     if (editingLayout) {
       return;
