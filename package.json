@@ -26,8 +26,5 @@
   "homepage": "https://github.com/chartbrew/chartbrew",
   "devDependencies": {
     "vuepress": "^1.9.7"
-  },
-  "dependencies": {
-    "@heroui/react": "^2.7.5"
   }
 }
