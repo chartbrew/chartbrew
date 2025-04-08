@@ -25,6 +25,7 @@ function DashboardFilters({
   onReport = false,
 }) {
   const [editingFilter, setEditingFilter] = useState(null);
+  const [filterToRemove, setFilterToRemove] = useState(null);
 
   const charts = useSelector(selectCharts);
   const user = useSelector(selectUser);
@@ -241,14 +242,25 @@ function DashboardFilters({
     }
   }
 
+  const _onRemoveFilter = (filterId, confirmed = false) => {
+    if (_getStateFilter(filterId) && !confirmed) {
+      setFilterToRemove(filterId);
+      return;
+    } else if (_getStateFilter(filterId) && confirmed) {
+      _removeFromEveryone(filterId);
+    }
+
+    onRemoveFilter(filterId);
+  }
+
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
   return (
     <>
-      <div className="hidden sm:flex sm:flex-row sm:gap-1">
-        <div className="flex flex-row gap-1 min-w-min">
+      <div>
+        <div className="flex flex-row flex-wrap gap-1 min-w-min">
           {projectFilters.map((filter) => (
             <div className="flex flex-row items-center" key={filter.id}>
               <div className="cursor-pointer flex flex-row gap-1 items-center">
@@ -306,7 +318,7 @@ function DashboardFilters({
                     <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
                       Clear filter value
                     </DropdownItem>
-                    <DropdownItem onPress={() => onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
+                    <DropdownItem onPress={() => _onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
                       Remove filter
                     </DropdownItem>
                   </DropdownMenu>
@@ -353,6 +365,22 @@ function DashboardFilters({
             <Button color="primary" onPress={_handleSaveFilter}>
               Save changes
             </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={!!filterToRemove} onClose={() => setFilterToRemove(null)} size="2xl">
+        <ModalContent>
+          <ModalHeader>
+            <span className="font-bold">Remove filter</span>
+          </ModalHeader>
+          <ModalBody>
+            <p>{"Removing this filter will remove it from everyone's dashboard."}</p>
+            <p>{"If you want to remove it from your dashboard only, you can clear the filter value instead."}</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="bordered" onPress={() => setFilterToRemove(null)}>Cancel</Button>
+            <Button color="danger" onPress={() => _onRemoveFilter(filterToRemove, true)}>Remove from everyone</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -137,7 +137,7 @@ function PublicDashboard() {
 
       // get and format the dashboard filters
       if (project.DashboardFilters) {
-        const formattedFilters = project.DashboardFilters.map((f) => ({
+        const formattedFilters = project.DashboardFilters.filter(f => f.onReport).map((f) => ({
           ...f?.configuration,
           id: f.id,
           onReport: f.onReport,
@@ -559,7 +559,7 @@ function PublicDashboard() {
               <Button
                 color="primary"
                 loading={loading}
-                onClick={() => _fetchProject(reportPassword)}
+                onPress={() => _fetchProject(reportPassword)}
                 size="lg"
               >
                 Access report
@@ -589,7 +589,7 @@ function PublicDashboard() {
           <Spacer y={4} />
           <Row justify="center">
             <Button
-              onClick={() => window.history.back()}
+              onPress={() => window.history.back()}
               color="primary"
               size="lg"
               startContent={<LuChevronLeft />}
@@ -657,7 +657,7 @@ function PublicDashboard() {
 
               <div>
                 <Tooltip content="Preview dashboard" placement="right-end">
-                  <Link className="text-foreground cursor-pointer" onClick={() => setPreview(true)}>
+                  <Link className="text-foreground cursor-pointer" onPress={() => setPreview(true)}>
                     <LuEye size={26} />
                   </Link>
                 </Tooltip>
@@ -728,7 +728,7 @@ function PublicDashboard() {
 
                   <div>
                     <Tooltip content="Report settings" placement="right-end">
-                      <Link className="text-foreground cursor-pointer" onClick={() => setEditingTitle(true)}>
+                      <Link className="text-foreground cursor-pointer" onPress={() => setEditingTitle(true)}>
                         <LuClipboardPen size={26} />
                       </Link>
                     </Tooltip>
@@ -736,7 +736,7 @@ function PublicDashboard() {
 
                   <div>
                     <Tooltip content="Sharing settings" placement="right-end">
-                      <Link className="text-foreground cursor-pointer" onClick={() => setShowSettings(true)}>
+                      <Link className="text-foreground cursor-pointer" onPress={() => setShowSettings(true)}>
                         <LuShare size={26} />
                       </Link>
                     </Tooltip>
@@ -758,7 +758,7 @@ function PublicDashboard() {
             style={{ backgroundColor: removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor || project.backgroundColor || "#FFFFFF") }}
           >
             <NavbarBrand>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-row items-center gap-4">
                 {editorVisible && !preview && (
                   <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <img
@@ -773,7 +773,7 @@ function PublicDashboard() {
                 )}
 
                 {(!editorVisible || preview) && (
-                  <div className="dashboard-logo-container">
+                  <div className="dashboard-logo-container min-w-[45px]">
                     <a
                       href={newChanges.logoLink || project.logoLink || "#"}
                       target="_blank"
@@ -790,16 +790,16 @@ function PublicDashboard() {
                   </div>
                 )}
 
-                <div className="flex flex-col">
+                <div className="flex flex-col max-w-[calc(100vw-100px)]">
                   <span
-                    className="text-lg font-bold"
+                    className="text-lg font-bold truncate"
                     style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
                   >
                     {newChanges.dashboardTitle || project.dashboardTitle || project.name}
                   </span>
                   {!editorVisible && project.description && (
                     <span
-                      className="dashboard-sub-title"
+                      className="dashboard-sub-title truncate"
                       style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
                     >
                       {project.description}
@@ -807,7 +807,7 @@ function PublicDashboard() {
                   )}
                   {editorVisible && newChanges.description && (
                     <span
-                      className="dashboard-sub-title"
+                      className="dashboard-sub-title truncate"
                       style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
                     >
                       {newChanges.description}
@@ -826,7 +826,7 @@ function PublicDashboard() {
                 color="success"
                 endContent={<LuCircleCheck />}
                 isLoading={saveLoading}
-                onClick={_onSaveChanges}
+                onPress={_onSaveChanges}
               >
                 Save changes
               </Button>
@@ -835,7 +835,7 @@ function PublicDashboard() {
           {preview && (
             <div>
               <Button
-                onClick={() => setPreview(false)}
+                onPress={() => setPreview(false)}
                 endContent={<LuCircleX />}
                 color="primary"
                 variant="faded"
@@ -848,7 +848,7 @@ function PublicDashboard() {
           {project?.Team?.allowReportRefresh && (
             <div className="hidden sm:block">
               <Button
-                onClick={() => _onRefreshCharts()}
+                onPress={() => _onRefreshCharts()}
                 endContent={<LuRefreshCw />}
                 isLoading={refreshLoading}
                 size="sm"
@@ -871,21 +871,26 @@ function PublicDashboard() {
               </Container>
             )}
 
-            <div className="flex flex-row gap-2 items-center">
-              {!filterLoading && (
-                <LuListFilter size={22} />
-              )}
-              {filterLoading && (
-                <Spinner variant="simple" size="sm" aria-label="Loading" />
-              )}
-              <DashboardFilters
-                filters={dashboardFilters}
-                projectId={project.id}
-                onRemoveFilter={_onRemoveFilter}
-                onApplyFilterValue={_onApplyFilterValue}
-                onReport
-              />
-            </div>
+            {dashboardFilters?.[project.id]?.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-background p-2 mx-2 rounded-lg border-1 border-divider">
+                {!filterLoading && (
+                  <div className="flex flex-row items-center gap-2">
+                    <LuListFilter size={22} />
+                    <div className="block sm:hidden text-sm">Filters</div>
+                  </div>
+                )}
+                {filterLoading && (
+                  <Spinner size="sm" aria-label="Loading" />
+                )}
+                <DashboardFilters
+                  filters={dashboardFilters}
+                  projectId={project.id}
+                  onRemoveFilter={_onRemoveFilter}
+                  onApplyFilterValue={_onApplyFilterValue}
+                  onReport
+                />
+              </div>
+            )}
 
             {layouts && charts?.length > 0 && (
               <div className="w-full">
@@ -1035,7 +1040,7 @@ function PublicDashboard() {
           <ModalFooter>
             <Button
               color="primary"
-              onClick={() => setEditingTitle(false)}
+              onPress={() => setEditingTitle(false)}
             >
               Preview changes
             </Button>
