@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Select, SelectItem, Input, DatePicker, Checkbox, Divider,
+  Select, SelectItem, Input, DatePicker, Divider,
 } from "@heroui/react";
 import { Link } from "react-router-dom";
 import { parseDate, today } from "@internationalized/date";
@@ -18,7 +18,7 @@ function EditVariableFilter({
     value: filter?.value || "",
     dataType: filter?.dataType || "text",
     label: filter?.label || "",
-    allowValueChange: filter?.allowValueChange || false,
+    allowValueChange: filter?.allowValueChange || true,
   });
 
   useEffect(() => {
@@ -27,7 +27,7 @@ function EditVariableFilter({
       value: filter?.value || "",
       dataType: filter?.dataType || "text",
       label: filter?.label || "",
-      allowValueChange: filter?.allowValueChange || false,
+      allowValueChange: filter?.allowValueChange || true,
     });
   }, [filter]);
 
@@ -142,16 +142,6 @@ function EditVariableFilter({
               size="sm"
             />
           )}
-        </div>
-
-        <div className="flex flex-row gap-2 items-center">
-          <Checkbox
-            isSelected={variableCondition.allowValueChange}
-            onValueChange={(isSelected) => _handleVariableChange("allowValueChange", isSelected)}
-            size="sm"
-          >
-            Allow value change
-          </Checkbox>
         </div>
 
         <div>

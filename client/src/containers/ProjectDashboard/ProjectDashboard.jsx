@@ -181,14 +181,24 @@ function ProjectDashboard(props) {
         ...filter.configuration
       }));
 
-      if (newFilters.length > 0 || JSON.stringify(updatedFilters) !== JSON.stringify(existingFilters)) {
+      // Only update if there are actual changes
+      const hasNewFilters = newFilters.length > 0;
+      const hasUpdatedFilters = JSON.stringify(updatedFilters) !== JSON.stringify(existingFilters);
+      
+      if (hasNewFilters || hasUpdatedFilters) {
         const finalFilters = {
           ...storedFilters,
           [projectId]: [...updatedFilters, ...newFilters]
         };
 
-        window.localStorage.setItem("_cb_filters", JSON.stringify(finalFilters));
-        setFilters(finalFilters);
+        // Only update localStorage if the filters have actually changed
+        const currentFiltersStr = window.localStorage.getItem("_cb_filters");
+        const newFiltersStr = JSON.stringify(finalFilters);
+        
+        if (currentFiltersStr !== newFiltersStr) {
+          window.localStorage.setItem("_cb_filters", newFiltersStr);
+          setFilters(finalFilters);
+        }
       }
     }
   }, [project?.DashboardFilters]);

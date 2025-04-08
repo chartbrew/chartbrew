@@ -6,7 +6,7 @@ import {
   Button, Divider, Drawer, DrawerFooter,
   DrawerContent, DrawerHeader, DrawerBody, Select, SelectItem,
 } from "@heroui/react";
-import { LuCalendar, LuListTree, LuPlus, LuVariable } from "react-icons/lu";
+import { LuCalendarDays, LuListTree, LuPlus, LuVariable } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 
 import { useSelector } from "react-redux";
@@ -110,13 +110,28 @@ function AddFilters(props) {
             selectedKeys={[filterType]}
             onSelectionChange={(keys) => setFilterType(keys.currentKey)}
           >
-            <SelectItem key="date" textValue="Date" startContent={<LuCalendar />}>
-              Date
+            <SelectItem
+              key="date"
+              textValue="Date"
+              startContent={<LuCalendarDays />}
+              description="A filter that targets dataset date fields and {{start_date}} and {{end_date}} variables"
+            >
+              Date range
             </SelectItem>
-            <SelectItem key="variables" textValue="Variables" startContent={<LuVariable />}>
+            <SelectItem
+              key="variables"
+              textValue="Variables"
+              startContent={<LuVariable />}
+              description="A filter that targets dataset variables"
+            >
               Variables
             </SelectItem>
-            <SelectItem key="field" textValue="Matching field" startContent={<LuListTree />}>
+            <SelectItem
+              key="field"
+              textValue="Matching field"
+              startContent={<LuListTree />}
+              description="A filter that applies to all datasets that contain a specific field"
+            >
               Matching field
             </SelectItem>
           </Select>
