@@ -1,65 +1,87 @@
 # **Chartbrew Licensing**
 
-Chartbrew is licensed under a **dual-license model**:  
-1. **GNU Affero General Public License v3.0 (AGPL-3.0)**  
-2. **Commercial License for Resellers & SaaS Providers**  
+Chartbrew is licensed under the **Functional Source License v1.1 (MIT Future License)** with a dual-purpose structure:
 
-## **1. Open-Source License (AGPL-3.0)**  
-You are free to:
-
-- **Modify, self-host, and use Chartbrew** for personal or internal use.
-- **Use Chartbrew within your company** as long as you follow AGPL-3.0 terms.
-- **Offer a hosted version** only if you **open-source all modifications** and comply with AGPL-3.0.
-
-> **If you modify and host Chartbrew, or redistribute it in any form for commercial purposes, you must publicly release your modifications under the AGPL-3.0 license.**
-
-The full AGPL-3.0 license can be found in [`LICENSE-AGPL.md`](./LICENSE-AGPL.md).
-
-## **2. Commercial License for Resale & SaaS Use**  
-If you want to **resell, distribute, or offer Chartbrew as a service** without open-sourcing your modifications, you must obtain a **commercial license**.
-
-This applies if you:
-
-- **Modify and sell Chartbrew as a product (self-hosted or SaaS).**  
-- **Use Chartbrew as the backend for a proprietary service.**  
-- **Distribute a modified version of Chartbrew for a fee or bundled with another product.**  
-
-> **If you intend to use Chartbrew in any commercial product or service without complying with AGPL, you must obtain a commercial license.**
-
-To obtain a commercial license, contact **Chartbrew** (Depomo Ltd) at:  
-📧 **support@chartbrew.com**  
-
-The terms for commercial use can be found at [`chartbrew.com/legal/commercial-license`](https://chartbrew.com/legal/commercial-license).
-
-> **Note:** If you are using Chartbrew internally and want to keep your modifications private, you may qualify for a **free commercial license**.  
-> Reach out to **support@chartbrew.com** to discuss your use case.  
-> **AGPL-3.0 is mainly in place to prevent Chartbrew from being resold without fair compensation, not to restrict internal usage.**
-
-## **3. Branding & Trademark Restrictions**
-- The Chartbrew name, logo (coffee cup design), and branding elements are trademarks of Depomo Ltd.
-- Self-hosted users are allowed to use Chartbrew with its original branding.
-- If you modify Chartbrew’s branding, you must completely rebrand it—you may not:
-  - Use a coffee cup or similar imagery in logos to imply association with Chartbrew.
-  - Use the name “Chartbrew” or similar-sounding names in your branding.
-  - Use phrases such as “brewing charts,” “brewing insights,” or similar language in a way that mimics Chartbrew’s identity.
-- Customer testimonials from Chartbrew.com or its affiliates that refer to Chartbrew or its services may not be modified or repurposed under any circumstances. These were provided by customers exclusively for Chartbrew and are not covered under open-source licensing.
-- Any violation of these terms will result in license termination and potential legal action.
-
-## **Frequently Asked Questions**
-
-### ❓ Can I use Chartbrew for free?
-Yes! You can **self-host, modify, and use Chartbrew** for personal or internal company use as long as you follow AGPL-3.0.
-
-### ❓ Can I resell Chartbrew or offer it as part of my product?
-Only if you:  
-- **Open-source your modifications (AGPL-3.0).**  
-- OR **purchase a commercial license** to keep your changes private.
-
-### ❓ What if I only use Chartbrew internally?
-No problem! If you’re **self-hosting for personal or internal company use**, you do **not** need a commercial license.
+1. **Functional Source License v1.1 (FSL-1.1-MIT)**
+2. **Commercial License for Resellers & SaaS Providers**
 
 ---
 
-This **dual-license model ensures Chartbrew remains open-source** while protecting it from unauthorized resale or closed-source SaaS usage.
+## **1. Open License: FSL-1.1-MIT**
 
-For any questions, reach out at **support@chartbrew.com**.
+You are free to:
+
+- **Self-host, modify, and use Chartbrew** for personal or internal company use.
+- **Embed dashboards** into your own websites, portals, or SaaS products, even if those are commercial.
+- **Study, improve, and contribute** to the source code.
+
+You may **not**:
+
+- Offer Chartbrew (modified or not) as a **hosted product or service** to customers (e.g. “Chartbrew-as-a-Service”).
+- Bundle, sell, or rebrand Chartbrew as part of a client-facing reporting platform without a commercial license.
+
+> **Embedding dashboards is permitted** as long as Chartbrew is **not the primary paid product** being offered. For resale, deeper integration, or closed-source usage beyond the scope of FSL, a commercial license is required.
+
+The full legal terms of this license are available in [`LICENSE-FSL.md`](./LICENSE-FSL.md).
+
+### 🕒 MIT Transition
+
+Each version of Chartbrew becomes available under the **MIT License** exactly **two years after its release date**. At that point, that specific version’s code becomes fully open-source under MIT.
+
+---
+
+## **2. Commercial License**
+
+You **must purchase a commercial license** if you:
+
+- Modify and sell Chartbrew as a standalone or integrated product.
+- Offer hosted access to Chartbrew or a derivative version.
+- Use Chartbrew as part of a paid SaaS reporting or dashboard product.
+- Do not wish to comply with the FSL requirements.
+
+To purchase a license, contact **Chartbrew (Depomo Ltd)**:  
+📧 **support@chartbrew.com**  
+🔗 [`chartbrew.com/legal/commercial-license`](https://chartbrew.com/legal/commercial-license)
+
+> Internal use is generally free. If you're unsure, reach out—we offer **free commercial licenses** for certain internal use cases.
+
+---
+
+## **3. Branding & Trademark Restrictions**
+
+- The **Chartbrew** name, logo (coffee cup design), and branding elements are trademarks of **Depomo Ltd**.
+- Self-hosted users may use Chartbrew with its **original, unmodified branding**.
+- You **may not**:
+  - Use the Chartbrew logo or brand elements alongside a **different company or product name**.
+  - Retain Chartbrew’s logo while replacing the name (e.g. rebranding it as your own).
+  - Modify or remix the logo or name to create a **similar-looking or sounding brand**.
+  - Use coffee-themed branding that could cause confusion with Chartbrew (e.g. mugs, brewing metaphors, or puns).
+  - Attribute Chartbrew’s UI, branding, or components to a different company or suggest a partnership or endorsement.
+
+> If you change the name or branding of Chartbrew, you must **fully rebrand** it to avoid confusion. Any branding reuse must be clearly and accurately attributed to **Chartbrew by Depomo Ltd**, with no misleading associations.
+
+- Customer testimonials from chartbrew.com or affiliated sources may **not be used, modified, or repurposed** under any license.
+
+Violation of these terms may result in **license termination** and legal action.
+
+---
+
+## **FAQs**
+
+### ❓ Can I use Chartbrew for free?
+Yes, as long as you follow the FSL-1.1 terms. Embedding dashboards is allowed. Selling Chartbrew as a product is not.
+
+### ❓ Can I resell Chartbrew or offer hosted access?
+Only if:
+- You open-source your modifications under the same license, **or**
+- You wait 2 years for the MIT release, **or**
+- You purchase a commercial license.
+
+### ❓ What if I use it only for internal dashboards?
+No problem. Internal and personal use is fully permitted under the open license.
+
+---
+
+This model keeps Chartbrew open and sustainable, while protecting against unfair commercial exploitation.
+
+For any questions, contact: **support@chartbrew.com**
