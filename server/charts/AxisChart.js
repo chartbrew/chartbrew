@@ -553,7 +553,7 @@ class AxisChart {
             const newVal = parser.parse(expression);
 
             let finalVal = `${before}${newVal.result?.toLocaleString() || 0}${after}`;
-            if (this.chart.type !== "kpi") {
+            if (this.chart.type !== "kpi" && this.chart.type !== "avg" && this.chart.type !== "gauge") {
               finalVal = +(newVal.result?.toFixed(2) || 0).toLocaleString();
             }
 

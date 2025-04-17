@@ -50,7 +50,12 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
   const _prepareData = () => {
     if (!chart.chartData?.data?.datasets?.[0]?.data) return null;
 
-    const value = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
+    const rawValue = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
+    // Extract numeric value from string if needed
+    const value = typeof rawValue === "string" 
+      ? parseFloat(rawValue.replace(/[^0-9.-]/g, "")) 
+      : rawValue;
+    
     const ranges = chart.ranges || [{ min: 0, max: 100, label: "Total" }];
     const maxValue = Math.max(...ranges.map(r => r.max));
     const minValue = Math.min(...ranges.map(r => r.min));
