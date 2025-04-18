@@ -36,9 +36,9 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <Row align="center">
-                <Text b className="text-xl text-default-800">
+                <div className="text-xl text-default-800 font-bold font-tw">
                   {`${c.value?.toLocaleString()}`}
-                </Text>
+                </div>
                 <Spacer x={1} />
                 {chart.showGrowth && (
                   <Tooltip content={`compared to last ${chart.timeInterval}`}>

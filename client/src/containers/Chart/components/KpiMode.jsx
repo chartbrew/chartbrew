@@ -153,13 +153,12 @@ function KpiMode(props) {
             )}
 
             <Row justify="center" align="center">
-              <Text
-                b
-                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
+              <div
+                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tw`}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}
-              </Text>
+              </div>
             </Row>
 
             {chart.showGrowth && chart.chartData.growth && (
