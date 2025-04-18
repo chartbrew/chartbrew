@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -106,6 +106,8 @@ function Chart(props) {
   const [alertsModal, setAlertsModal] = useState(false);
   const [alertsDatasetId, setAlertsDatasetId] = useState(null);
   const chartSize = useChartSize(chart.layout);
+  const [isCompact, setIsCompact] = useState(false);
+  const containerRef = useRef(null);
 
   useInterval(() => {
     dispatch(getChart({
@@ -140,6 +142,30 @@ function Chart(props) {
       }
     }
   }, [customUpdateFreq, updateFreqType]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        setIsCompact(containerRef.current.offsetHeight < 200);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  const _shouldCompact = () => {
+    if (isCompact && (chart.type === "kpi" || chart.type === "gauge" || chart.type === "bar")) {
+      return true;
+    }
+    return false;
+  }
 
   const _onGetChartData = () => {
     const { projectId } = params;
@@ -517,6 +543,7 @@ function Chart(props) {
       animate={{ opacity: [0, 1] }}
       transition={{ duration: 0.7 }}
       style={styles.container}
+      ref={containerRef}
     >
       {error && (
         <Text color="danger" onClick={() => setError(false)}>
@@ -528,8 +555,8 @@ function Chart(props) {
           shadow="none"
           className={`h-full bg-content1 border-solid border-1 border-divider ${print && "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
-          <CardHeader className="pb-0 grid grid-cols-12 items-start">
-            <div className="col-span-6 sm:col-span-8 flex items-start justify-start">
+          <CardHeader className={`pb-0 grid grid-cols-12 items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
+            <div className={`col-span-6 sm:col-span-8 flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
@@ -601,7 +628,7 @@ function Chart(props) {
                 )}
               </div>
             </div>
-            <div className="col-span-6 sm:col-span-4 flex items-start justify-end">
+            <div className={`col-span-6 sm:col-span-4 flex items-start justify-end ${isCompact ? "absolute right-2 top-2" : ""}`}>
               {_checkIfFilters() && (
                 <div className="flex items-start gap-1">
                   {chartSize?.[2] > 3 && (
@@ -646,7 +673,7 @@ function Chart(props) {
                       <LuEllipsisVertical />
                     </LinkNext>
                   </DropdownTrigger>
-                  <DropdownMenu>
+                  <DropdownMenu disabledKeys={["status"]}>
                     <DropdownItem
                       startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       onPress={_onGetChartData}
@@ -754,10 +781,46 @@ function Chart(props) {
                         color="danger"
                         onPress={_onDeleteChartConfirmation}
                         textValue="Delete chart"
+                        showDivider
                       >
                         Delete chart
                       </DropdownItem>
                     )}
+                    <DropdownItem key="status" isReadOnly className="opacity-100">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {chart.autoUpdate > 0 && (
+                            <div className="flex items-center gap-1">
+                              <LuCalendarClock size={12} />
+                              <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {chart.public && !isPublic && !print && (
+                            <div className="flex items-center gap-1">
+                              <LuLockOpen size={12} />
+                              <span className="text-[10px] text-default-500">Public chart</span>
+                            </div>
+                          )}
+                          {(!chart.onReport || chart.draft) && (
+                            <div className="flex items-center gap-1">
+                              <LuMonitorX size={12} />
+                              <span className="text-[10px] text-default-500">{chart.draft ? "Draft" : "Hidden on report"}</span>
+                            </div>
+                          )}
+                          {chart?.Alerts?.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <LuBell size={12} />
+                              <span className="text-[10px] text-default-500">Has alerts</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
               )}
@@ -782,7 +845,9 @@ function Chart(props) {
               )}
             </div>
           </CardHeader>
-          <CardBody className="pt-2 pb-4 overflow-y-hidden">
+          <CardBody
+            className={`${_shouldCompact() ? "pt-0 pb-0" : "pt-2 pb-4"} overflow-y-hidden`}
+          >
             {chart.chartData && (
               <div className="h-full">
                 {chart.type === "line"

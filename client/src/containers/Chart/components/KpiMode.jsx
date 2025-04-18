@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Progress, Tooltip,
@@ -12,7 +12,25 @@ import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 function KpiMode(props) {
   const { chart } = props;
   const [chartSize, setChartSize] = useState(2);
-  const containerRef = React.useRef(null);
+  const [isCompact, setIsCompact] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        setIsCompact(containerRef.current.offsetWidth < 300);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     switch (getWidthBreakpoint(containerRef)) {
@@ -108,7 +126,7 @@ function KpiMode(props) {
   return (
     <div ref={containerRef} className={"flex h-full w-full gap-2 items-center justify-center align-middle flex-wrap"}>
       {!chart?.chartData?.data?.datasets && (
-        <div className="p-3">
+        <div className={`${isCompact ? "p-0" : "p-3"}`}>
           <Row justify="center" align="center">
             <Text
               b
@@ -119,41 +137,45 @@ function KpiMode(props) {
           </Row>
         </div>
       )}
-      {chart?.chartData?.data?.datasets.map((dataset, index) => (
-        <div key={dataset.label} className="p-2">
-          {chart.ChartDatasetConfigs[index] && (
+      {chart?.chartData?.data?.datasets.map((dataset, index) => {
+        if (isCompact && index > 0) return null;
+
+        return (
+          <div key={dataset.label} className="p-2">
+            {chart.ChartDatasetConfigs[index] && (
+              <Row justify="center" align="center">
+                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
+                  <span>
+                    {dataset.label}
+                  </span>
+                </Text>
+              </Row>
+            )}
+
             <Row justify="center" align="center">
-              <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
-                <span>
-                  {dataset.label}
-                </span>
+              <Text
+                b
+                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
+                key={dataset.label}
+              >
+                {dataset.data && _getKpi(dataset.data)}
               </Text>
             </Row>
-          )}
 
-          <Row justify="center" align="center">
-            <Text
-              b
-              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
-              key={dataset.label}
-            >
-              {dataset.data && _getKpi(dataset.data)}
-            </Text>
-          </Row>
+            {chart.showGrowth && chart.chartData.growth && (
+              <Row justify="center" align="center">
+                {_renderGrowth(chart.chartData.growth[index])}
+              </Row>
+            )}
 
-          {chart.showGrowth && chart.chartData.growth && (
-            <Row justify="center" align="center">
-              {_renderGrowth(chart.chartData.growth[index])}
-            </Row>
-          )}
-
-          {chart.chartData.goals && (
-            <Row justify="center" align="center">
-              {_renderGoal(chart.chartData.goals, index)}
-            </Row>
-          )}
-        </div>
-      ))}
+            {chart.chartData.goals && (
+              <Row justify="center" align="center">
+                {_renderGoal(chart.chartData.goals, index)}
+              </Row>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
