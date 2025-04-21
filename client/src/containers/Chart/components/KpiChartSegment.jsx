@@ -8,6 +8,7 @@ import {
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
+import { LuArrowDownRight, LuArrowUpRight } from "react-icons/lu";
 
 function KpiChartSegment(props) {
   const { chart, editMode } = props;
@@ -26,6 +27,8 @@ function KpiChartSegment(props) {
           else if (getWidthBreakpoint(containerRef) === "sm" && index > 5) return (<span key={c.label} />);
           else if (index > 7) return (<span key={c.label} />);
 
+          const formattedComparison = Math.abs(c.comparison % 1 === 0 ? Math.round(c.comparison).toFixed(0) : c.comparison.toFixed(2));
+
           return (
             <div
               style={{
@@ -35,31 +38,28 @@ function KpiChartSegment(props) {
               }}
               key={c.label}
             >
-              <Row align="center">
+              <div className="flex flex-row items-center">
                 <div className="text-xl text-default-800 font-bold font-tw">
                   {`${c.value?.toLocaleString()}`}
                 </div>
-                <Spacer x={1} />
+                <Spacer x={2} />
                 {chart.showGrowth && (
                   <Tooltip content={`compared to last ${chart.timeInterval}`}>
                     <div>
                       <Chip
                         size="sm"
                         variant="flat"
+                        radius="sm"
                         color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                        startContent={c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : ""}
                       >
-                        <Text
-                          className={`${c.status === "neutral" ? "text-gray-500" : c.status === "positive" ? "text-success" : "text-danger"} text-[12px]`}
-                        >
-                          {c.status === "positive" ? "+" : ""}
-                          {`${c.comparison}%`}
-                        </Text>
+                        {`${formattedComparison}%`}
                       </Chip>
                     </div>
                   </Tooltip>
                 )}
-              </Row>
-              <Row>
+              </div>
+              <div>
                 <Text size="sm" className={"text-default-600"}>
                   <span
                     style={
@@ -71,7 +71,7 @@ function KpiChartSegment(props) {
                     {c.label}
                   </span>
                 </Text>
-              </Row>
+              </div>
             </div>
           );
         })}
