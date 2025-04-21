@@ -136,6 +136,12 @@ function ChartPreview(props) {
     return onChange({ showGrowth: !chart.showGrowth });
   };
 
+  const _onChangeInvertGrowth = () => {
+    setRedraw(true);
+
+    return onChange({ invertGrowth: !chart.invertGrowth });
+  };
+
   const _redrawComplete = () => {
     setRedraw(false);
   };
@@ -551,13 +557,12 @@ function ChartPreview(props) {
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0
         && chart.type !== "gauge" && (
         <div style={styles.topBuffer} className="chart-preview-growth">
-          <Row align="center" className={"gap-4"}>
+          <div className="flex flex-row items-center gap-4">
             <Checkbox
               isSelected={chart.mode === "kpichart"}
               onChange={_onChangeMode}
               isDisabled={chart.type === "kpi" || chart.type === "avg"}
               size="sm"
-              className="min-w-[150px]"
             >
               Show KPI on chart
             </Checkbox>
@@ -566,11 +571,17 @@ function ChartPreview(props) {
               onChange={_onChangeGrowth}
               isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
               size="sm"
-              className="min-w-[150px]"
             >
               Show growth
             </Checkbox>
-          </Row>
+            <Checkbox
+              isSelected={chart.invertGrowth}
+              onChange={_onChangeInvertGrowth}
+              size="sm"
+            >
+              Invert growth
+            </Checkbox>
+          </div>
           <Spacer y={2} />
         </div>
       )}

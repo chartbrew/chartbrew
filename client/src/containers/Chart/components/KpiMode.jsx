@@ -79,7 +79,7 @@ function KpiMode(props) {
   const _renderGrowth = (c) => {
     if (!c) return (<span />);
     const { status, comparison } = c;
-    const formattedComparison = comparison % 1 === 0 ? Math.round(comparison).toFixed(0) : comparison.toFixed(2);
+    const formattedComparison = Math.abs(comparison % 1 === 0 ? Math.round(comparison).toFixed(0) : comparison.toFixed(2));
     return (
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`} placement="bottom">
