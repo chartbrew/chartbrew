@@ -900,7 +900,6 @@ function ProjectDashboard(props) {
                         <DropdownItem
                           startContent={<LuLetterText />}
                           onPress={() => _onAddMarkdown()}
-                          endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                         >
                           Add text
                         </DropdownItem>
@@ -971,6 +970,7 @@ function ProjectDashboard(props) {
                           <DropdownItem
                             startContent={<LuMonitorUp />}
                             onPress={() => setSnapshotScheduleVisible(true)}
+                            endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                           >
                             {"Schedule deliveries"}
                           </DropdownItem>
