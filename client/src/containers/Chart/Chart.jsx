@@ -726,6 +726,12 @@ function Chart(props) {
                         startContent={<LuBell />}
                         onPress={_openAlertsModal}
                         textValue="Alerts"
+                        endContent={
+                          chart?.Alerts?.length > 0 && (
+                          <Chip color="default" size="sm" variant="flat">
+                            {chart?.Alerts?.length}
+                          </Chip>
+                        )}
                       >
                         Alerts
                       </DropdownItem>
@@ -786,7 +792,7 @@ function Chart(props) {
                         Delete chart
                       </DropdownItem>
                     )}
-                    <DropdownItem key="status" isReadOnly className="opacity-100">
+                    <DropdownItem key="status" isReadOnly className="opacity-100" textValue="Chart details">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
