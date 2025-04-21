@@ -115,7 +115,8 @@ function DateRangeFilter({
       visibleMonths={2}
       value={currentValue}
       calendarProps={{
-        focusedValue: currentValue?.start,
+        // focusedValue: currentValue?.start,
+        autoFocus: true,
       }}
       onChange={_handleDateRangeChange}
       color="primary"
