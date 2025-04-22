@@ -790,8 +790,25 @@ class ConnectionController {
           // first, check for the keys to avoid making an unnecessary query to the DB
           const keysFound = {};
           Object.keys(queryParams).forEach((q) => {
-            if (queryParams[q] === "{{start_date}}") keysFound[q] = "startDate";
-            if (queryParams[q] === "{{end_date}}") keysFound[q] = "endDate";
+            const paramValue = queryParams[q];
+            // Check for exact matches
+            if (paramValue === "{{start_date}}") {
+              keysFound[q] = { type: "startDate", format: "single" };
+            } else if (paramValue === "{{end_date}}") {
+              keysFound[q] = { type: "endDate", format: "single" };
+            } else if (typeof paramValue === "string") {
+              // Check for combined variables using regex
+              const startDateMatch = paramValue.match(/{{start_date}}/);
+              const endDateMatch = paramValue.match(/{{end_date}}/);
+              if (startDateMatch || endDateMatch) {
+                keysFound[q] = {
+                  type: "combined",
+                  hasStartDate: !!startDateMatch,
+                  hasEndDate: !!endDateMatch,
+                  originalValue: paramValue
+                };
+              }
+            }
           });
 
           // something was found, go through all and replace the variables
@@ -803,7 +820,7 @@ class ConnectionController {
                 let startDate = getMomentObj(timezone)(chart.startDate);
                 let endDate = getMomentObj(timezone)(chart.endDate);
 
-                if (value === "startDate" && chart.currentEndDate) {
+                if (value.type === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, chart.timeInterval);
                   endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
@@ -811,7 +828,7 @@ class ConnectionController {
                       .subtract(timeDiff, chart.timeInterval)
                       .startOf(chart.timeInterval);
                   }
-                } else if (value === "endDate" && chart.currentEndDate) {
+                } else if (value.type === "endDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, chart.timeInterval);
                   endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
@@ -819,8 +836,6 @@ class ConnectionController {
                       .subtract(timeDiff, chart.timeInterval)
                       .startOf(chart.timeInterval);
                   }
-                } else {
-                  queryParams[q] = chart[value];
                 }
 
                 if (filters && filters.length > 0) {
@@ -831,12 +846,21 @@ class ConnectionController {
                   }
                 }
 
-                if (value === "startDate" && startDate) {
-                  queryParams[q] = startDate.format(chart.dateVarsFormat || "");
-                }
-
-                if (value === "endDate" && endDate) {
-                  queryParams[q] = endDate.format(chart.dateVarsFormat || "");
+                if (value.format === "single") {
+                  if (value.type === "startDate" && startDate) {
+                    queryParams[q] = startDate.format(chart.dateVarsFormat || "");
+                  } else if (value.type === "endDate" && endDate) {
+                    queryParams[q] = endDate.format(chart.dateVarsFormat || "");
+                  }
+                } else if (value.type === "combined") {
+                  let formattedValue = value.originalValue;
+                  if (value.hasStartDate && startDate) {
+                    formattedValue = formattedValue.replace(/{{start_date}}/g, startDate.format(chart.dateVarsFormat || ""));
+                  }
+                  if (value.hasEndDate && endDate) {
+                    formattedValue = formattedValue.replace(/{{end_date}}/g, endDate.format(chart.dateVarsFormat || ""));
+                  }
+                  queryParams[q] = formattedValue;
                 }
               });
             } else if (variables?.startDate?.value && variables?.endDate?.value) {
@@ -845,12 +869,21 @@ class ConnectionController {
                 const startDate = getMomentObj(timezone)(variables.startDate.value);
                 const endDate = getMomentObj(timezone)(variables.endDate.value);
 
-                if (value === "startDate" && startDate) {
-                  queryParams[q] = startDate.format(variables.dateFormat?.value || "");
-                }
-
-                if (value === "endDate" && endDate) {
-                  queryParams[q] = endDate.format(variables.dateFormat?.value || "");
+                if (value.format === "single") {
+                  if (value.type === "startDate" && startDate) {
+                    queryParams[q] = startDate.format(variables.dateFormat?.value || "");
+                  } else if (value.type === "endDate" && endDate) {
+                    queryParams[q] = endDate.format(variables.dateFormat?.value || "");
+                  }
+                } else if (value.type === "combined") {
+                  let formattedValue = value.originalValue;
+                  if (value.hasStartDate && startDate) {
+                    formattedValue = formattedValue.replace(/{{start_date}}/g, startDate.format(variables.dateFormat?.value || ""));
+                  }
+                  if (value.hasEndDate && endDate) {
+                    formattedValue = formattedValue.replace(/{{end_date}}/g, endDate.format(variables.dateFormat?.value || ""));
+                  }
+                  queryParams[q] = formattedValue;
                 }
               });
             }
