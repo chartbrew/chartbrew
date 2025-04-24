@@ -21,6 +21,44 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   text: `Show ${pageSize}`,
 }));
 
+// Add URL detection function
+const isUrl = (str) => {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Add text rendering rules
+const renderCellContent = (value) => {
+  // Handle boolean values
+  if (value === true || value === false) {
+    return `${value}`;
+  }
+
+  // Handle string values with special cases
+  if (typeof value === "string") {
+    // URL case
+    if (isUrl(value)) {
+      return (
+        <LinkNext
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          {value}
+        </LinkNext>
+      );
+    }
+  }
+
+  // Default case - return the value as is
+  return value;
+};
+
 function TableComponent(props) {
   const {
     columns, data, embedded,
@@ -178,8 +216,7 @@ function TableComponent(props) {
                                 onMouseDown={(e) => e.stopPropagation()}
                                 role="presentation"
                               >
-                                {cellObj.props.value === true || cellObj.props.value === false
-                                  ? `${cellObj.props.value}` : cellObj}
+                                {renderCellContent(cellObj.props.value)}
                               </span>
                             </Text>
                           )}
