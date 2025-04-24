@@ -185,7 +185,7 @@ function DatasetList() {
         </TableHeader>
         <TableBody
           emptyContent={
-            connections.length === 0 ? (
+            connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
               <div className="flex flex-col items-center gap-1">
                 <LuDatabase />
                 <span>No datasets found</span>
