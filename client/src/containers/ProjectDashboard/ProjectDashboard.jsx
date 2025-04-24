@@ -21,6 +21,7 @@ import {
   LuMonitorSmartphone,
   LuMonitorUp,
   LuArrowDownRight,
+  LuPlug,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -51,6 +52,7 @@ import isMac from "../../modules/isMac";
 import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
+import { selectConnections } from "../../slices/connection";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -101,6 +103,7 @@ function ProjectDashboard(props) {
   const project = useSelector(selectProject);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
+  const connections = useSelector(selectConnections);
 
   const { width } = useWindowSize();
   const initLayoutRef = useRef(null);
@@ -1038,7 +1041,7 @@ function ProjectDashboard(props) {
         {charts.length === 0 && !chartsLoading && (
           <div className="flex flex-col justify-center pt-10">
             <Row justify="center" align="center">
-              <span className="text-xl font-bold">
+              <span className="text-4xl font-bold font-tw">
                 Welcome to your dashboard
               </span>
             </Row>
@@ -1047,19 +1050,33 @@ function ProjectDashboard(props) {
               <>
                 <Row justify="center" align="center">
                   <span>
-                    {"It looks empty over here. Let's create a chart to get started."}
+                    {"It looks empty over here. Let's get you started!"}
                   </span>
                 </Row>
-                <Spacer y={4} /><Row justify="center" align="center">
-                  <Button
-                    endContent={<LuCirclePlus size={24} />}
-                    size="lg"
-                    color="primary"
-                    onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
-                  >
-                    Create a chart
-                  </Button>
-                </Row>
+                <Spacer y={4} />
+                <div className="flex flex-row justify-center gap-2">
+                  {connections.length > 0 && (
+                    <Button
+                      endContent={<LuCirclePlus size={24} />}
+                      size="lg"
+                      color="primary"
+                      onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                    >
+                      Create a chart
+                    </Button>
+                  )}
+
+                  {connections.length === 0 && (
+                    <Button
+                      endContent={<LuPlug size={24} />}
+                      size="lg"
+                      color="primary"
+                      onPress={() => navigate(`/${params.teamId}/connection/new`)}
+                    >
+                      Create your first connection
+                    </Button>
+                  )}
+                </div>
               </>
             )}
           </div>
