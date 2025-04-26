@@ -307,8 +307,8 @@ export const completeTutorial = createAsyncThunk(
       throw new Error("Error completing tutorial");
     }
 
-    const data = await response.json();
-    return data;
+    await response.json();
+    return newTutorials;
   }
 );
 
@@ -573,7 +573,7 @@ export const userSlice = createSlice({
     });
     builder.addCase(completeTutorial.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.data.tutorials = action.payload;
     });
     builder.addCase(completeTutorial.rejected, (state) => {
       state.loading = false;
