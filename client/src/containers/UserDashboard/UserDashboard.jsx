@@ -151,7 +151,7 @@ function UserDashboard(props) {
   return (
     <div className="dashboard bg-content2 flex flex-col min-h-screen h-full">
       <Navbar hideTeam transparent />
-      <div className="max-w-screen-2xl mx-auto px-4">
+      <div className="w-full max-w-screen-2xl mx-auto px-4">
         {team?.id && (
           <div className="grid grid-cols-12 gap-4 mt-4">
             <div className="col-span-12 sm:col-span-5 md:col-span-4 lg:col-span-3">
