@@ -4,7 +4,7 @@ import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
   CardFooter, Spinner, Input, Divider, Chip,
 } from "@heroui/react";
-import { LuBrainCircuit, LuGitMerge, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
+import { LuBrainCircuit, LuGitMerge, LuMonitorX, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -422,7 +422,7 @@ function DatasetQuery(props) {
             <Spacer y={1} />
             <Text size="h2">Select a connection</Text>
             <Spacer y={2} />
-            {_filteredConnections().length > 0 && (
+            {connections.length > 0 && (
               <div>
                 <Input
                   startContent={<LuSearch />}
@@ -431,21 +431,41 @@ function DatasetQuery(props) {
                   className="max-w-[300px]"
                   labelPlacement="outside"
                   variant="bordered"
+                  isClearable
+                  value={connectionSearch}
+                  onClear={() => setConnectionSearch("")}
                 />
               </div>
             )}
             <Spacer y={4} />
             <div className="grid grid-cols-12 gap-4">
-              {_filteredConnections().length === 0 && (
+              {_filteredConnections().length === 0 && connections.length === 0 && (
                 <div className="col-span-12 flex flex-col">
                   <p className="text-default-500">{"No connections found. Please create a connection first."}</p>
                   <Spacer y={2} />
                   <div>
                     <Button
-                      onClick={() => navigate(`/${team.id}/connection/new`)}
+                      onPress={() => navigate(`/${team.id}/connection/new`)}
                       color="primary"
                     >
                       Create a connection
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {_filteredConnections().length === 0 && connections.length > 0 && (
+                <div className="col-span-12 flex flex-col">
+                  <p className="text-default-500">{"No connections found with this search query. Please try again."}</p>
+                  <Spacer y={2} />
+                  <div>
+                    <Button
+                      onPress={() => setConnectionSearch("")}
+                      color="default"
+                      variant="flat"
+                      endContent={<LuX />}
+                    >
+                      Clear search
                     </Button>
                   </div>
                 </div>
