@@ -10,7 +10,7 @@ import {
   Button,
   DropdownItem,
 } from "@heroui/react";
-import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp } from "react-icons/lu";
+import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
 
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
@@ -46,6 +46,12 @@ const isUrl = (str) => {
   return false;
 };
 
+// Add long text detection function
+const isLongText = (str) => {
+  if (typeof str !== "string") return false;
+  return str.length > 50; // Consider text longer than 50 characters as "long" for text-sm in 300px width
+};
+
 // Add text rendering rules
 const renderCellContent = (value) => {
   // Handle boolean values
@@ -66,6 +72,37 @@ const renderCellContent = (value) => {
         >
           {value}
         </LinkNext>
+      );
+    }
+
+    // Long text case
+    if (isLongText(value)) {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          <Popover>
+            <PopoverTrigger>
+              <Button isIconOnly variant="flat" size="sm">
+                <LuExpand size={16} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <div className="p-4 max-w-[500px] max-h-[300px] overflow-auto">
+                <div className="flex justify-between items-center mb-2">
+                  <Text className="text-sm font-medium">Full Text</Text>
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => navigator.clipboard.writeText(value)}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <pre className="text-sm whitespace-pre-wrap">{value}</pre>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <span>{value}</span>
+        </div>
       );
     }
   }
@@ -131,7 +168,7 @@ function TableComponent(props) {
                   <Spacer x={0.5} />
                   <Dropdown aria-label="Select a page size">
                     <DropdownTrigger>
-                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={18} />}>
+                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
                         {paginationOptions.find((option) => option.value === pageSize).text}
                       </Button>
                     </DropdownTrigger>
@@ -165,14 +202,14 @@ function TableComponent(props) {
                     <Row align="center">
                       {column.isSorted
                         ? column.isSortedDesc
-                          ? (<LuCircleChevronDown />)
-                          : (<LuCircleChevronUp />)
+                          ? (<LuCircleChevronDown size={16} />)
+                          : (<LuCircleChevronUp size={16} />)
                         : ""}
 
                       {(column.isSorted || column.isSortedDesc) && <Spacer x={1} />}
                       <LinkNext
                         className="text-sm cursor-pointer hover:text-secondary"
-                        onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
+                        onPress={column.getHeaderProps(column.getSortByToggleProps()).onClick}
                       >
                         <Text className={"text-foreground-500"}>
                           {typeof column.render("Header") === "object"
@@ -220,10 +257,9 @@ function TableComponent(props) {
                           title={cellObj.props.value}
                         >
                           {(!isObject && !isArray) && (
-                            <Text
-                              size={"sm"}
+                            <div
                               title={cellObj.props.value}
-                              className="whitespace-nowrap overflow-ellipsis overflow-hidden"
+                              className="text-sm truncate"
                             >
                               <span
                                 style={{ cursor: "text", WebkitUserSelect: "text", whiteSpace: "nowrap" }}
@@ -233,7 +269,7 @@ function TableComponent(props) {
                               >
                                 {renderCellContent(cellObj.props.value)}
                               </span>
-                            </Text>
+                            </div>
                           )}
                           {(isObject || isArray) && (
                             <Popover>
