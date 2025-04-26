@@ -23,12 +23,27 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
 
 // Add URL detection function
 const isUrl = (str) => {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
+  if (typeof str !== "string") return false;
+  
+  // Check for common URL patterns
+  const urlPatterns = [
+    /^https?:\/\//i,  // http:// or https://
+    /^www\./i,        // www.
+    /^ftp:\/\//i,     // ftp://
+    /^mailto:/i,      // mailto:
+  ];
+
+  // Check if string matches any URL pattern
+  if (urlPatterns.some(pattern => pattern.test(str))) {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
   }
+  
+  return false;
 };
 
 // Add text rendering rules
