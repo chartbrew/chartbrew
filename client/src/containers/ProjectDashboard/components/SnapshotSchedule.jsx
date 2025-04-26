@@ -243,7 +243,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
             <div className="flex flex-col gap-2 w-full pb-6">
               <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
                 <Select
-                  placeholder="Select update frequency"
+                  placeholder="Select snapshot frequency"
                   aria-label="Update frequency"
                   variant="bordered"
                   selectedKeys={[schedule.frequency]}
