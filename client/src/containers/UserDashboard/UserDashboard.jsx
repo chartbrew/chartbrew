@@ -6,6 +6,7 @@ import { useWindowSize } from "react-use";
 import {
   Button, Spacer, Chip, CircularProgress,
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
+  Spinner,
 } from "@heroui/react";
 import {
   LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers,
@@ -280,13 +281,13 @@ function UserDashboard(props) {
 
         {(teams && teams.length === 0) && (
           <>
-            <Row align="center" justify="center">
-              <CircularProgress aria-label="Loading" size="xl" />
-            </Row>
+            <div className="flex justify-center items-center">
+              <Spinner variant="simple" aria-label="Loading" />
+            </div>
             <Spacer y={1} />
-            <Row align="center" justify="center">
-              <Text size="lg" className={"text-gray-400"}>Loading your space</Text>
-            </Row>
+            <div className="flex justify-center items-center">
+              <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
+            </div>
           </>
         )}
       </div>
