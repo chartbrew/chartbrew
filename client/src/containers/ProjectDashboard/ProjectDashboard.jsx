@@ -1,8 +1,8 @@
-import React, { useState, useEffect, Fragment, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
+  Button, Spacer, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
@@ -13,13 +13,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
-import moment from "moment";
 import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuCirclePlus, LuRefreshCw, LuUser, LuUsers, LuVariable, LuCircleX,
+  LuCirclePlus, LuRefreshCw, LuUser, LuUsers,
   LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
   LuMonitorSmartphone,
+  LuMonitorUp,
+  LuArrowDownRight,
+  LuPlug,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -27,8 +29,7 @@ import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
-import Filters from "./components/Filters";
-import { operators } from "../../modules/filterOperations";
+import AddFilters from "./components/AddFilters";
 import {
   getProjectCharts, runQueryWithFilters, runQuery, changeOrder, exportChart, updateChart, selectCharts,
   clearStagedCharts,
@@ -42,15 +43,16 @@ import CreateTemplateForm from "../../components/CreateTemplateForm";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
-import { TbChevronDownRight } from "react-icons/tb";
-import { widthSize } from "../../modules/layoutBreakpoints";
+import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
-import gridBreakpoints from "../../config/gridBreakpoints";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
 import TextWidget from "../Chart/TextWidget";
+import SnapshotSchedule from "./components/SnapshotSchedule";
+import DashboardFilters from "./components/DashboardFilters";
+import { selectConnections } from "../../slices/connection";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -69,24 +71,6 @@ const getFiltersFromStorage = () => {
   }
 };
 
-const getVariablesFromStorage = () => {
-  try {
-    const variables = JSON.parse(window.localStorage.getItem("_cb_variables"));
-    return variables || null;
-  } catch (e) {
-    return null;
-  }
-};
-
-const getFilterGroupsFromStorage = () => {
-  try {
-    const filterGroups = JSON.parse(window.localStorage.getItem("_cb_filter_groups"));
-    return filterGroups || null;
-  } catch (e) {
-    return null;
-  }
-};
-
 /*
   Dashboard container (for the charts)
 */
@@ -94,7 +78,6 @@ function ProjectDashboard(props) {
   const { mobile } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
-  const [filterGroups, setFilterGroups] = useState(getFilterGroupsFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
@@ -104,11 +87,11 @@ function ProjectDashboard(props) {
   const [templateVisible, setTemplateVisible] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
-  const [variables, setVariables] = useState(getVariablesFromStorage());
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [stagedContent, setStagedContent] = useState({});
   const [previewSize, setPreviewSize] = useState({});
+  const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -120,11 +103,11 @@ function ProjectDashboard(props) {
   const project = useSelector(selectProject);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
+  const connections = useSelector(selectConnections);
 
   const { width } = useWindowSize();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
-  const hasRunVariableFiltering = useRef(null);
   const dashboardRef = useRef(null);
   const dashboardParentRef = useRef(null);
 
@@ -158,13 +141,6 @@ function ProjectDashboard(props) {
   }, [filters, charts]);
 
   useEffect(() => {
-    if (variables?.[params.projectId] && initLayoutRef.current && !hasRunVariableFiltering.current) {
-      hasRunVariableFiltering.current = true;
-      _checkVariablesForFilters(variables[params.projectId]);
-    }
-  }, [variables, initLayoutRef.current]);
-
-  useEffect(() => {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
       initLayoutRef.current = true;
       // set the grid layout
@@ -177,6 +153,58 @@ function ProjectDashboard(props) {
       }
     });
   }, [charts]);
+
+  useEffect(() => {
+    if (project?.DashboardFilters) {
+      const storedFilters = JSON.parse(window.localStorage.getItem("_cb_filters") || "{}");
+      const projectId = project.id;
+
+      // Get existing filters for this project
+      const existingFilters = storedFilters[projectId] || [];
+
+      // Update existing filters with new configuration values if they exist
+      const updatedFilters = existingFilters.map(existingFilter => {
+        const matchingFilter = project.DashboardFilters.find(newFilter => newFilter.id === existingFilter.id);
+        if (matchingFilter) {
+          return {
+            ...matchingFilter.configuration,
+            ...existingFilter,
+            onReport: matchingFilter.onReport,
+          };
+        }
+        return existingFilter;
+      });
+
+      // Add any new filters that don't exist yet
+      const newFilters = project.DashboardFilters.filter(newFilter =>
+        !existingFilters.some(existingFilter => existingFilter.id === newFilter.id)
+      ).map(filter => ({
+        id: filter.id,
+        onReport: filter.onReport,
+        ...filter.configuration
+      }));
+
+      // Only update if there are actual changes
+      const hasNewFilters = newFilters.length > 0;
+      const hasUpdatedFilters = JSON.stringify(updatedFilters) !== JSON.stringify(existingFilters);
+      
+      if (hasNewFilters || hasUpdatedFilters) {
+        const finalFilters = {
+          ...storedFilters,
+          [projectId]: [...updatedFilters, ...newFilters]
+        };
+
+        // Only update localStorage if the filters have actually changed
+        const currentFiltersStr = window.localStorage.getItem("_cb_filters");
+        const newFiltersStr = JSON.stringify(finalFilters);
+        
+        if (currentFiltersStr !== newFiltersStr) {
+          window.localStorage.setItem("_cb_filters", newFiltersStr);
+          setFilters(finalFilters);
+        }
+      }
+    }
+  }, [project?.DashboardFilters]);
 
   const _onEditLayout = async () => {
     if (editingLayout) {
@@ -225,15 +253,18 @@ function ProjectDashboard(props) {
 
   const _getUserBreakpoint = () => {
     const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    if (dashboardWidth > widthSize.lg) return "xl";
-    if (dashboardWidth > widthSize.md) return "lg";
-    if (dashboardWidth > widthSize.sm) return "md";
+    if (dashboardWidth > widthSize.xxxl) return "xxxl";
+    if (dashboardWidth > widthSize.xxl) return "xxl";
+    if (dashboardWidth > widthSize.xl) return "xl";
+    if (dashboardWidth > widthSize.lg) return "lg";
+    if (dashboardWidth > widthSize.md) return "md";
+    if (dashboardWidth > widthSize.sm) return "sm";
     return "xs";
   };
 
   const _onChangePreviewSize = (key) => {
     const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    const breakpointWidth = key === "xl" ? 1440 : gridBreakpoints[key];
+    const breakpointWidth = key === "xxxl" ? 3840 : key === "xxl" ? 2560 : key === "xl" ? 1600 : widthSize[key];
     let newSize;
 
     // Case 1: Switching to a smaller breakpoint - use breakpoint width
@@ -256,18 +287,25 @@ function ProjectDashboard(props) {
   };
 
   const _prepareLayout = (chartsToProcess = charts) => {
-    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
+      acc[key] = [];
+      return acc;
+    }, {});
+
     chartsToProcess.forEach((chart) => {
       if (chart?.layout) {
+        // First, process all existing breakpoints
         Object.keys(chart.layout).forEach((key) => {
-          newLayouts[key].push({
-            i: `${chart.id}`,
-            x: chart.layout[key][0] || 0,
-            y: chart.layout[key][1] || 0,
-            w: chart.layout[key][2],
-            h: chart.layout[key][3],
-            minW: 2,
-          });
+          if (newLayouts[key]) {
+            newLayouts[key].push({
+              i: `${chart.id}`,
+              x: chart.layout[key][0] || 0,
+              y: chart.layout[key][1] || 0,
+              w: chart.layout[key][2],
+              h: chart.layout[key][3],
+              minW: 2,
+            });
+          }
         });
       }
     });
@@ -275,34 +313,11 @@ function ProjectDashboard(props) {
     setLayouts(newLayouts);
   };
 
-  const _onEditFilterGroup = (chartId, selectAll = false, deselectAll = false) => {
-    const { projectId } = params;
-    const newFilterGroups = _.clone(filterGroups) || {};
-    if (!newFilterGroups[projectId]) newFilterGroups[projectId] = [];
-
-    if (selectAll) {
-      newFilterGroups[projectId] = charts.filter((c) => c.project_id === parseInt(projectId, 10)).map((c) => c.id);
-    } else if (deselectAll) {
-      newFilterGroups[projectId] = [];
-    } else if (newFilterGroups[projectId].find((c) => c === chartId)) {
-      newFilterGroups[projectId] = newFilterGroups[projectId].filter((c) => c !== chartId);
-    } else {
-      newFilterGroups[projectId].push(chartId);
-    }
-
-    setFilterGroups(newFilterGroups);
-    window.localStorage.setItem("_cb_filter_groups", JSON.stringify(newFilterGroups));
-  };
-
   const _onAddFilter = (filter) => {
     const { projectId } = params;
 
     const newFilters = _.clone(filters) || {};
     if (!newFilters[projectId]) newFilters[projectId] = [];
-
-    if (filter.type === "date") {
-      newFilters[projectId] = newFilters[projectId].filter((f) => f.type !== "date");
-    }
 
     newFilters[projectId].push(filter);
     setFilters(newFilters);
@@ -316,51 +331,23 @@ function ProjectDashboard(props) {
   const _onAddVariableFilter = (variableFilter) => {
     const { projectId } = params;
 
-    const newVariables = _.clone(variables) || {};
-    if (!newVariables[projectId]) newVariables[projectId] = [];
+    const newFilters = _.clone(filters) || {};
+    if (!newFilters[projectId]) newFilters[projectId] = [];
 
-    newVariables[projectId].push(variableFilter);
-    setVariables(newVariables);
+    // Convert variable filter to unified filter format
+    const filter = {
+      id: uuidv4(),
+      type: "variable",
+      ...variableFilter,
+    };
 
-    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
+    newFilters[projectId].push(filter);
+    setFilters(newFilters);
 
-    _checkVariablesForFilters(newVariables[projectId]);
+    window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
+
+    _onFilterCharts(newFilters);
     setShowFilters(false);
-  };
-
-  const _checkVariablesForFilters = (variables) => {
-    if (!variables || variables.length === 0) return;
-
-    charts.forEach((chart) => {
-      // check if there are any filters in the search params
-      // if so, add them to the conditions
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
-      });
-
-      // now check if any filters have the same variable name
-      let newConditions = [];
-      variables.forEach((variable) => {
-        const found = identifiedConditions.find((c) => c.variable === variable.variable);
-        if (found) {
-          newConditions.push({
-            ...found,
-            value: variable.value,
-          });
-        }
-      });
-
-      if (newConditions.length > 0) {
-        dispatch(runQueryWithFilters({
-          project_id: chart.project_id,
-          chart_id: chart.id,
-          filters: newConditions,
-        }));
-      }
-    });
   };
 
   const _onRemoveFilter = (filterId) => {
@@ -370,7 +357,7 @@ function ProjectDashboard(props) {
       delete newFilters[projectId];
       setFilters(newFilters);
       window.localStorage.removeItem("_cb_filters");
-      _runFiltering({});
+      _onFilterCharts({});
       return;
     }
 
@@ -382,35 +369,20 @@ function ProjectDashboard(props) {
 
     setFilters(newFilters);
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
-  };
-
-  const _onRemoveVariable = (variable) => {
-    const { projectId } = params;
-    const index = _.findIndex(variables[projectId], { variable });
-    if (!index && index !== 0) return;
-
-    const newVariables = _.cloneDeep(variables);
-    newVariables[projectId].splice(index, 1);
-
-    setVariables(newVariables);
-    window.localStorage.setItem("_cb_variables", JSON.stringify(newVariables));
-
-    _checkVariablesForFilters([{
-      variable: variable,
-      remove: true,
-    }]);
+    _onFilterCharts(newFilters);
   };
 
   const _runFiltering = (currentFilters = filters, chartIds = null) => {
-    if ((!variables?.[params.projectId] && !currentFilters?.[params.projectId]) || charts.length === 0) return;
+    if (!currentFilters?.[params.projectId] || charts.length === 0) return;
 
     setFilterLoading(true);
     _onFilterCharts(currentFilters, chartIds)
       .then(() => {
-        // Only check variables if we have them and they've changed
-        if (variables?.[params.projectId]) {
-          _checkVariablesForFilters(variables[params.projectId]);
-        }
+        setFilters(currentFilters);
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
       });
   };
 
@@ -455,6 +427,7 @@ function ProjectDashboard(props) {
 
     const refreshPromises = [];
     const queries = [];
+    const previousFilters = _.cloneDeep(filters);
 
     // Filter charts based on chartIds if provided
     const chartsToProcess = chartIds 
@@ -464,25 +437,75 @@ function ProjectDashboard(props) {
     chartsToProcess.forEach((chart) => {
       if (currentFilters && currentFilters[projectId]) {
         setFilterLoading(true);
-        // first, discard the charts on which the filters don't apply
-        if (_chartHasFilter(chart, currentFilters)) {
+        
+        // Get all conditions from the chart's datasets
+        let identifiedConditions = [];
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (Array.isArray(cdc.Dataset?.conditions)) {
+            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+          }
+        });
+
+        // Separate filters by type
+        const variableFilters = currentFilters[projectId].filter(f => f.type === "variable" && f.value);
+        const dateFilters = currentFilters[projectId].filter(f => f.type === "date" && f.startDate && f.endDate);
+        const otherFilters = currentFilters[projectId].filter(f => f.type !== "variable" && f.type !== "date");
+
+        // Check for date filters that were just cleared (have null values)
+        const clearedDateFilters = currentFilters[projectId].filter(f => 
+          f.type === "date" && 
+          !f.startDate && 
+          !f.endDate &&
+          previousFilters?.[projectId]?.find(pf => 
+            pf.id === f.id && 
+            pf.startDate && 
+            pf.endDate
+          )
+        );
+
+        // check for variable filters that were just cleared (have empty values)
+        const clearedVariableFilters = currentFilters[projectId].filter(f => 
+          f.type === "variable" && 
+          !f.value && 
+          previousFilters?.[projectId]?.find(pf => 
+            pf.id === f.id &&
+            pf.value
+          )
+        );
+
+        // Handle variable filters by matching against chart conditions
+        let newConditions = [];
+        variableFilters.forEach((variableFilter) => {
+          const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
+          if (found) {
+            newConditions.push({
+              ...found,
+              value: variableFilter.value,
+            });
+          }
+        });
+
+        // Combine non-date filters into a single array
+        const allFilters = [...newConditions, ...otherFilters, ...clearedVariableFilters];
+
+        // Only make an API call if there are non-date filters to apply
+        if (allFilters.length > 0) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: projectId,
               chart_id: chart.id,
-              filters: currentFilters[projectId]
+              filters: allFilters,
             }))
           );
         }
 
-        if (currentFilters?.[projectId]?.length > 0
-          && currentFilters?.[projectId]?.find((o) => o.type === "date")
-          && filterGroups?.[projectId]?.find((c) => c === chart.id)
-        ) {
+        // Handle date filters for selected charts
+        const activeDateFilters = [...dateFilters, ...clearedDateFilters];
+        if (activeDateFilters.length > 0 && activeDateFilters[0].charts?.includes(chart.id)) {
           queries.push({
             projectId,
             chartId: chart.id,
-            dateFilter: currentFilters?.[projectId]?.find((o) => o.type === "date"),
+            dateFilter: activeDateFilters[0], // We only use the first date filter since we only allow one
           });
         }
       }
@@ -505,7 +528,7 @@ function ProjectDashboard(props) {
   };
 
   const _checkIfAnyKindOfFiltersAreAvailable = () => {
-    return filters?.[params.projectId]?.length > 0 || variables?.[params.projectId]?.length > 0;
+    return filters?.[params.projectId]?.length > 0;
   };
 
   const _onRefreshData = () => {
@@ -518,8 +541,8 @@ function ProjectDashboard(props) {
         projectId,
         chartId: charts[i].id,
       };
-      if (filterGroups?.[projectId]?.find((c) => c === charts[i].id)) {
-        queryOpt.dateFilter = filters?.[projectId]?.find((o) => o.type === "date");
+      if (filters?.[projectId]?.find((o) => o.type === "date")) {
+        queryOpt.dateFilter = filters[projectId].find((o) => o.type === "date");
       }
 
       queries.push(queryOpt);
@@ -536,28 +559,6 @@ function ProjectDashboard(props) {
       .catch(() => {
         setRefreshLoading(false);
       });
-  };
-
-  const _chartHasFilter = (chart, currentFilters = filters) => {
-    let found = false;
-    if (chart.ChartDatasetConfigs) {
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (cdc.Dataset?.fieldsSchema) {
-          Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
-            if (_.find(currentFilters[params.projectId], (o) => o.field === key)) {
-              found = true;
-            }
-          });
-        }
-      });
-    }
-
-    return found;
-  };
-
-  const _getOperator = (operator) => {
-    const found = _.find(operators, (o) => o.value === operator);
-    return (found && found.key) || "";
   };
 
   const _onShowFilters = () => {
@@ -683,7 +684,11 @@ function ProjectDashboard(props) {
     await dispatch(clearStagedCharts());
 
     // should set the layouts to the original chart layouts
-    const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
+      acc[key] = [];
+      return acc;
+    }, {});
+
     charts.forEach((chart) => {
       if (chart.layout) {
         Object.keys(chart.layout).forEach((key) => {
@@ -763,6 +768,8 @@ function ProjectDashboard(props) {
         sm: [0, 0, 2, 2],
         md: [0, 0, 3, 2],
         lg: [0, 0, 3, 2],
+        xl: [0, 0, 3, 2],
+        xxl: [0, 0, 3, 2],
       },
       staged: true,
     };
@@ -794,15 +801,17 @@ function ProjectDashboard(props) {
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
                         <Popover>
                           <PopoverTrigger>
-                            <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer">
-                              {projectMembers.map((member) => (
-                                <Avatar
-                                  key={member.id}
-                                  name={member.name}
-                                  showFallback={<LuUser />}
-                                />
-                              ))}
-                            </AvatarGroup>
+                            <div className="cursor-pointer">
+                              <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer pointer-events-none">
+                                {projectMembers.map((member) => (
+                                  <Avatar
+                                    key={member.id}
+                                    name={member.name}
+                                    showFallback={<LuUser />}
+                                  />
+                                ))}
+                              </AvatarGroup>
+                            </div>
                           </PopoverTrigger>
                           <PopoverContent className="pt-4">
                             {_canAccess("teamAdmin") && (
@@ -833,7 +842,7 @@ function ProjectDashboard(props) {
                                   textValue={member.name}
                                   description={member.email}
                                   endContent={(
-                                    <Chip size="sm">
+                                    <Chip size="sm" variant="flat">
                                       {member.TeamRoles?.find((r) => r.team_id === parseInt(params.teamId, 10))?.role}
                                     </Chip>
                                   )}
@@ -846,87 +855,27 @@ function ProjectDashboard(props) {
                         </Popover>
                         <Spacer x={3} />
                       </div>
-                      <Spacer x={1} />
+                      <Spacer x={0.5} />
                     </>
                   )}
-                  <Button
-                    variant="ghost"
-                    startContent={<LuListFilter />}
-                    isLoading={filterLoading}
-                    onPress={_onShowFilters}
-                    size="sm"
-                    className="hidden sm:flex"
-                  >
-                    {"Add filter"}
-                  </Button>
-                  <Button
-                    isIconOnly
-                    onPress={_onShowFilters}
-                    isLoading={filterLoading}
-                    variant="ghost"
-                    size="sm"
-                    className="flex sm:hidden"
-                  >
-                    <LuListFilter size={24} />
-                  </Button>
-                  <div style={mobile ? {} : { paddingLeft: 4 }} className="hidden sm:flex-row sm:flex gap-1">
-                    <>
-                      {filters
-                        && filters[params.projectId]
-                        && filters[params.projectId].map((filter) => (
-                          <Fragment key={filter.id}>
-                            {filter.type === "date" && (
-                              <Chip
-                                color="primary"
-                                variant={"flat"}
-                                radius="sm"
-                                endContent={(
-                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                    <LuCircleX />
-                                  </LinkNext>
-                                )}
-                              >
-                                {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                              </Chip>
-                            )}
-                            {filter.type !== "date" && filter.field && (
-                              <Chip
-                                color="primary"
-                                variant={"flat"}
-                                radius="sm"
-                                endContent={(
-                                  <LinkNext onPress={() => _onRemoveFilter(filter.id)} className="text-default">
-                                    <LuCircleX />
-                                  </LinkNext>
-                                )}
-                              >
-                                <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                                <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                                <span>{`${filter.value}`}</span>
-                              </Chip>
-                            )}
-                          </Fragment>
-                        ))}
-
-                      {variables
-                        && variables[params.projectId]
-                        && variables[params.projectId].map((variable) => (
-                          <Chip
-                            color="primary"
-                            variant={"flat"}
-                            radius="sm"
-                            endContent={(
-                              <LinkNext onPress={() => _onRemoveVariable(variable.variable)} className="text-default-500">
-                                <LuCircleX />
-                              </LinkNext>
-                            )}
-                            key={variable.variable}
-                            startContent={<LuVariable />}
-                          >
-                            {`${variable.variable} - ${variable.value}`}
-                          </Chip>
-                        ))}
-                    </>
+                  <Tooltip content="Add dashboard filters" placement="bottom">
+                    <Button
+                      variant="ghost"
+                      isIconOnly
+                      isLoading={filterLoading}
+                      onPress={_onShowFilters}
+                      size="sm"
+                    >
+                      <LuListFilter size={18} />
+                    </Button>
+                  </Tooltip>
+                  <div style={mobile ? {} : { paddingLeft: 4 }}>
+                    <DashboardFilters
+                      filters={filters}
+                      projectId={params.projectId}
+                      onRemoveFilter={_onRemoveFilter}
+                      onApplyFilterValue={_runFiltering}
+                    />
                   </div>
                 </div>
                 {!editingLayout && (
@@ -954,7 +903,6 @@ function ProjectDashboard(props) {
                         <DropdownItem
                           startContent={<LuLetterText />}
                           onPress={() => _onAddMarkdown()}
-                          endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                         >
                           Add text
                         </DropdownItem>
@@ -1021,6 +969,15 @@ function ProjectDashboard(props) {
                         >
                           {"Share dashboard"}
                         </DropdownItem>
+                        {_canAccess("projectEditor") && (
+                          <DropdownItem
+                            startContent={<LuMonitorUp />}
+                            onPress={() => setSnapshotScheduleVisible(true)}
+                            endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
+                          >
+                            {"Schedule deliveries"}
+                          </DropdownItem>
+                        )}
                         {_canAccess("teamAdmin") && (
                           <DropdownItem
                             startContent={<LuCopyPlus />} 
@@ -1084,7 +1041,7 @@ function ProjectDashboard(props) {
         {charts.length === 0 && !chartsLoading && (
           <div className="flex flex-col justify-center pt-10">
             <Row justify="center" align="center">
-              <span className="text-xl font-bold">
+              <span className="text-4xl font-bold font-tw">
                 Welcome to your dashboard
               </span>
             </Row>
@@ -1093,19 +1050,33 @@ function ProjectDashboard(props) {
               <>
                 <Row justify="center" align="center">
                   <span>
-                    {"It looks empty over here. Let's create a chart to get started."}
+                    {"It looks empty over here. Let's get you started!"}
                   </span>
                 </Row>
-                <Spacer y={4} /><Row justify="center" align="center">
-                  <Button
-                    endContent={<LuCirclePlus size={24} />}
-                    size="lg"
-                    color="primary"
-                    onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
-                  >
-                    Create a chart
-                  </Button>
-                </Row>
+                <Spacer y={4} />
+                <div className="flex flex-row justify-center gap-2">
+                  {connections.length > 0 && (
+                    <Button
+                      endContent={<LuCirclePlus size={24} />}
+                      size="lg"
+                      color="primary"
+                      onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                    >
+                      Create a chart
+                    </Button>
+                  )}
+
+                  {connections.length === 0 && (
+                    <Button
+                      endContent={<LuPlug size={24} />}
+                      size="lg"
+                      color="primary"
+                      onPress={() => navigate(`/${params.teamId}/connection/new`)}
+                    >
+                      Create your first connection
+                    </Button>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -1115,14 +1086,14 @@ function ProjectDashboard(props) {
           <ResponsiveGridLayout
             className="layout dashboard-tutorial"
             layouts={layouts}
-            margin={{ lg: [12, 12], md: [12, 12], sm: [12, 12], xs: [12, 12], xxs: [12, 12] }}
-            breakpoints={gridBreakpoints}
-            cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+            margin={margin}
+            breakpoints={widthSize}
+            cols={cols}
             rowHeight={150}
             onLayoutChange={_onChangeLayout}
             resizeHandle={(
               <div className="react-resizable-handle react-resizable-handle-se">
-                <TbChevronDownRight className="text-primary" size={20} />
+                <LuArrowDownRight className="text-primary" size={20} />
               </div>
             )}
             isDraggable={editingLayout}
@@ -1151,7 +1122,6 @@ function ProjectDashboard(props) {
                     height={() => _onGetChartHeight(chart)}
                     editingLayout={editingLayout}
                     onEditLayout={() => _onEditLayout()}
-                    variables={variables}
                   />
                 )}
               </div>
@@ -1160,15 +1130,14 @@ function ProjectDashboard(props) {
         )}
       </div>
       
-      <Filters
+      <AddFilters
         charts={charts}
         projectId={params.projectId}
         onAddFilter={_onAddFilter}
         open={showFilters}
         onClose={() => setShowFilters(false)}
-        filterGroups={filterGroups?.[params?.projectId] || []}
-        onEditFilterGroup={_onEditFilterGroup}
         onAddVariableFilter={_onAddVariableFilter}
+        filters={filters}
       />
 
       <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl" scrollBehavior="outside">
@@ -1192,6 +1161,13 @@ function ProjectDashboard(props) {
       <UpdateSchedule
         isOpen={scheduleVisible}
         onClose={() => setScheduleVisible(false)}
+        timezone={project.timezone}
+        openSnapshotSchedule={() => setSnapshotScheduleVisible(true)}
+      />
+
+      <SnapshotSchedule
+        isOpen={snapshotScheduleVisible}
+        onClose={() => setSnapshotScheduleVisible(false)}
         timezone={project.timezone}
       />
 
@@ -1234,6 +1210,8 @@ function ProjectDashboard(props) {
                   selectedKey={previewSize?.breakpoint}
                   onSelectionChange={(key) => _onChangePreviewSize(key)}
                 >
+                  <Tab key="xxxl" title="4K" />
+                  <Tab key="xxl" title="2K" />
                   <Tab key="xl" title="Large screen" />
                   <Tab key="lg" title="Desktop" />
                   <Tab key="md" title="Laptop" />

@@ -22,6 +22,8 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
   const theme = isDark ? "dark" : "light";
   const containerRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
+  const resizeTimeout = useRef(null);
+
   useEffect(() => {
     if (redraw) {
       setTimeout(() => {
@@ -32,9 +34,15 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
 
   useEffect(() => {
     const handleResize = () => {
-      if (containerRef.current) {
-        setIsCompact(containerRef.current.offsetHeight < 200);
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
       }
+
+      resizeTimeout.current = setTimeout(() => {
+        if (containerRef.current) {
+          setIsCompact(containerRef.current.offsetHeight < 200);
+        }
+      }, 100); // 100ms debounce
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
@@ -44,13 +52,21 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
 
     return () => {
       resizeObserver.disconnect();
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
     };
   }, []);
 
   const _prepareData = () => {
     if (!chart.chartData?.data?.datasets?.[0]?.data) return null;
 
-    const value = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
+    const rawValue = chart.chartData.data.datasets[0].data[chart.chartData.data.datasets[0].data.length - 1];
+    // Extract numeric value from string if needed
+    const value = typeof rawValue === "string" 
+      ? parseFloat(rawValue.replace(/[^0-9.-]/g, "")) 
+      : rawValue;
+    
     const ranges = chart.ranges || [{ min: 0, max: 100, label: "Total" }];
     const maxValue = Math.max(...ranges.map(r => r.max));
     const minValue = Math.min(...ranges.map(r => r.min));
@@ -212,7 +228,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
               redraw={redraw}
             />
             <div className="absolute top-1/2 left-0 right-0 text-center">
-              <div className="text-3xl font-bold text-default-800">
+              <div className="text-3xl font-bold text-default-800 font-tw">
                 {value?.toLocaleString()}
               </div>
               <div className="text-sm text-default-500">
@@ -225,8 +241,8 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
 
       {isCompact && (
         <div className="w-full h-full flex flex-row items-center justify-center mx-auto gap-4">
-          <div className="flex flex-col items-center justify-center">
-            <div className="text-3xl font-bold text-default-800">
+          <div className="flex flex-col items-start justify-center">
+            <div className="text-3xl font-bold text-default-800 font-tw">
               {value?.toLocaleString()}
             </div>
             <div className="text-sm text-default-500">
@@ -234,7 +250,7 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
             </div>
           </div>
 
-          <div className="h-full max-w-[200px] justify-center items-center">
+          <div className="h-full max-w-[100px] flex items-center justify-center">
             <ChartErrorBoundary>
               <Doughnut data={gaugeData} options={_getChartOptions()} redraw={redraw} />
             </ChartErrorBoundary>

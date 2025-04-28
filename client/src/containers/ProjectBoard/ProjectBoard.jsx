@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Outlet, Route, Routes, useParams } from "react-router";
 import { Allotment } from "allotment";
 import { useWindowSize } from "react-use";
@@ -11,8 +11,7 @@ import {
 
 import "allotment/dist/style.css";
 
-import { getProject, changeActiveProject, selectProjects, selectProject, getProjects } from "../../slices/project";
-import { cleanErrors as cleanErrorsAction } from "../../actions/error";
+import { getProject, changeActiveProject, selectProject, getProjects } from "../../slices/project";
 import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
@@ -25,26 +24,22 @@ import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import { selectUser } from "../../slices/user";
 
 const sideMaxSize = 220;
 const sideMinSize = 70;
 /*
   The project screen where the dashboard, builder, etc. are
 */
-function ProjectBoard(props) {
-  const {
-    cleanErrors, user,
-  } = props;
-
+function ProjectBoard() {
   const [loading, setLoading] = useState(true);
   const [menuSize, setMenuSize] = useState("small");
-  const [showDrafts, setShowDrafts] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [update, setUpdate] = useState({});
 
   const team = useSelector(selectTeam);
-  const projects = useSelector(selectProjects);
   const project = useSelector(selectProject) || {};
+  const user = useSelector(selectUser);
 
   const { height } = useWindowSize();
   const params = useParams();
@@ -55,13 +50,9 @@ function ProjectBoard(props) {
     if (params.projectId && !initRef.current) {
       initRef.current = true;
 
-      cleanErrors();
       _init();
       if (window.localStorage.getItem("_cb_menu_size")) {
         _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
-      }
-      if (window.localStorage.getItem("_cb_drafts")) {
-        _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
       }
 
       checkForUpdates()
@@ -114,11 +105,6 @@ function ProjectBoard(props) {
     }
     setMenuSize(newMenuSize);
     window.localStorage.setItem("_cb_menu_size", newMenuSize);
-  };
-
-  const _setDraftsVisible = (isShowing) => {
-    setShowDrafts(isShowing);
-    window.localStorage.setItem("_cb_drafts", isShowing);
   };
 
   const _getDefaultMenuSize = () => {
@@ -186,15 +172,9 @@ function ProjectBoard(props) {
               >
                 <div>
                   <ProjectNavigation
-                    project={project}
-                    projects={projects}
-                    projectId={params.projectId}
-                    teamId={params.teamId}
-                    onChangeDrafts={_setDraftsVisible}
                     onSetMenuSize={(mSize) => _setMenuSize(mSize)}
                     canAccess={_canAccess}
                     menuSize={menuSize}
-                    showDrafts={showDrafts}
                     onChangeProject={_onChangeProject}
                     update={update}
                   />
@@ -206,7 +186,6 @@ function ProjectBoard(props) {
                 >
                   <div className="pl-0">
                     <MainContent
-                      showDrafts={showDrafts}
                       onPrint={_onPrint}
                       _canAccess={_canAccess}
                     />
@@ -220,7 +199,6 @@ function ProjectBoard(props) {
             <div className="grid grid-cols-12">
               <div className="col-span-12">
                 <MainContent
-                  showDrafts={showDrafts}
                   onPrint={_onPrint}
                   _canAccess={_canAccess}
                   mobile
@@ -232,15 +210,9 @@ function ProjectBoard(props) {
             <Spacer y={8} />
 
             <ProjectNavigation
-              project={project}
-              projects={projects}
-              projectId={params.projectId}
-              teamId={params.teamId}
-              onChangeDrafts={_setDraftsVisible}
               onSetMenuSize={(mSize) => _setMenuSize(mSize)}
               canAccess={_canAccess}
               menuSize={menuSize}
-              showDrafts={showDrafts}
               onChangeProject={_onChangeProject}
               mobile
             />
@@ -253,21 +225,19 @@ function ProjectBoard(props) {
 
 function MainContent() {
   return (
-    <div style={{ width: "100%" }}>
+    <div className="w-full">
       <Outlet />
     </div>
   );
 }
 
 MainContent.propTypes = {
-  showDrafts: PropTypes.bool,
   onPrint: PropTypes.func.isRequired,
   _canAccess: PropTypes.func.isRequired,
   mobile: PropTypes.bool,
 };
 
 MainContent.defaultProps = {
-  showDrafts: true,
   mobile: false,
 };
 
@@ -307,21 +277,4 @@ const styles = {
   }
 };
 
-ProjectBoard.propTypes = {
-  user: PropTypes.object.isRequired,
-  cleanErrors: PropTypes.func.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    cleanErrors: () => dispatch(cleanErrorsAction()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectBoard);
+export default ProjectBoard;

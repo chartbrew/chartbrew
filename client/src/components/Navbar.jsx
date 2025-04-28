@@ -5,7 +5,6 @@ import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar, Breadcrumbs, BreadcrumbItem,
-  Chip,
 } from "@heroui/react";
 import {
   LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
@@ -23,6 +22,8 @@ import Row from "./Row";
 import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
 import { useTheme } from "../modules/ThemeContext";
+import cbFullLogoLight from "../assets/cb_logo_light.svg";
+import cbFullLogoDark from "../assets/cb_logo_dark.svg";
 
 /*
   The navbar component used throughout the app
@@ -140,32 +141,36 @@ function NavbarContainer() {
     <>
       <Navbar isBordered maxWidth="full" height={"3rem"} style={{ zIndex: 999 }} classNames={{ wrapper: "px-4" }}>
         <NavbarBrand>
-          <Link to="/">
-            <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
-          </Link>
+          {params.teamId && (
+            <Link to="/">
+              <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
+            </Link>
+          )}
+          {!params.teamId && (
+            <Link to="/">
+              <img src={isDark ? cbFullLogoDark : cbFullLogoLight} alt="Chartbrew Logo" width={120}  />
+            </Link>
+          )}
           <Spacer x={4} />
           <Row align="center" className={"gap-1 hidden sm:flex"}>
-            <Breadcrumbs variant="solid">
-              {!params.teamId && (
-                <BreadcrumbItem key="home" onClick={() => navigate("/")}>
-                  <Text>{"Home"}</Text>
-                </BreadcrumbItem>
-              )}
-              {params.teamId && (
-                <BreadcrumbItem key="team" onClick={() => navigate("/")} isCurrent={!params.projectId}>
-                  {team.name}
-                </BreadcrumbItem>
-              )}
-              {params.projectId && (
-                <BreadcrumbItem
-                  key="project"
-                  isCurrent={!!params.projectId}
-                  onClick={() => navigate(`/${params.teamId}/${params.projectId}/dashboard`)}
-                >
-                  {project.name}
-                </BreadcrumbItem>
-              )}
-            </Breadcrumbs>
+            {params.teamId && (
+              <Breadcrumbs variant="solid">
+                {params.teamId && (
+                  <BreadcrumbItem key="team" onClick={() => navigate("/")} isCurrent={!params.projectId}>
+                    {team.name}
+                  </BreadcrumbItem>
+                )}
+                {params.projectId && (
+                  <BreadcrumbItem
+                    key="project"
+                    isCurrent={!!params.projectId}
+                    onClick={() => navigate(`/${params.teamId}/${params.projectId}/dashboard`)}
+                  >
+                    {project.name}
+                  </BreadcrumbItem>
+                )}
+              </Breadcrumbs>
+            )}
           </Row>
         </NavbarBrand>
         <NavbarContent justify="end">
@@ -198,7 +203,7 @@ function NavbarContainer() {
               <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuSquareKanban />} key="roadmap" textValue="Roadmap" endContent={<Chip variant="flat" color="secondary" size="sm" radius="sm">New</Chip>}>
+              <DropdownItem startContent={<LuSquareKanban />} key="roadmap" textValue="Roadmap">
                 <Text>{"Roadmap"}</Text>
               </DropdownItem>
               <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">

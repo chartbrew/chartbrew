@@ -12,7 +12,7 @@ const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
-const { snapChart } = require("../modules/chartSnapshot");
+const { snapChart } = require("../modules/snapshots");
 
 // charts
 const AxisChart = require("../charts/AxisChart");

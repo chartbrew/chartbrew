@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v3.13.0",
+  "version": "v4.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "accesscontrol": "^2.2.1",
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
-    "body-parser": "^1.19.0",
+    "body-parser": "^2.2.0",
     "bullmq": "^5.8.5",
     "compare-versions": "^6.1.0",
     "connect-busboy": "^1.0.0",
@@ -37,7 +37,7 @@
     "date-fns": "^3.3.1",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
-    "express": "^4.17.1",
+    "express": "^5.1.0",
     "express-rate-limit": "^7.2.0",
     "firebase-admin": "^12.0.0",
     "googleapis": "^134.0.0",

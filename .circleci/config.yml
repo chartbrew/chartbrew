@@ -2,7 +2,7 @@ version: 5
 jobs:
   setup:
     docker:
-      - image: cimg/node:20.11.1
+      - image: cimg/node:22.15.0
       - image: circleci/php:7.1-apache-node-browsers # The primary container where steps are run
       - image: circleci/mysql:5.7.27
         environment:
@@ -34,7 +34,7 @@ jobs:
   # lint the server project
   lint_server:
     docker:
-      - image: cimg/node:20.11.1
+      - image: cimg/node:22.15.0
     working_directory: ~/chartbrew
     steps:
       - checkout
@@ -52,7 +52,7 @@ jobs:
   # lint the client project
   lint_client:
     docker:
-      - image: cimg/node:20.11.1
+      - image: cimg/node:22.15.0
     working_directory: ~/chartbrew
     steps:
       - checkout
@@ -70,7 +70,7 @@ jobs:
 
   build_client:
     docker:
-      - image: cimg/node:20.11.1
+      - image: cimg/node:22.15.0
     working_directory: ~/chartbrew
     # Build the client
     steps:

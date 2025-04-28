@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
-import { Autocomplete, AutocompleteItem, Button, Chip, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@heroui/react";
+import { Autocomplete, AutocompleteItem, Button, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@heroui/react";
 import timezones from "../../../modules/timezones";
-import { LuMapPin } from "react-icons/lu";
+import { LuMapPin, LuSend } from "react-icons/lu";
 import { getProject, selectProject, updateProject } from "../../../slices/project";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -13,7 +13,7 @@ const getMachineTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-function UpdateSchedule({ isOpen, onClose }) {
+function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
   const project = useSelector(selectProject);
   const charts = useSelector(selectCharts)?.filter((chart) => chart.project_id === project.id);
 
@@ -144,12 +144,7 @@ function UpdateSchedule({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
       <ModalContent>
         <ModalHeader className="flex flex-col">
-          <div className="flex flex-row gap-2 items-center">
-            <div className="text-lg font-bold">Schedule dashboard updates</div>
-            <Chip color="secondary" radius="sm" size="sm" variant="flat">
-              New!
-            </Chip>
-          </div>
+          <div className="text-lg font-bold">Schedule dashboard updates</div>
           <div className="text-sm text-gray-500">
             {"All the charts in this dashboard will be updated at the appointed time"}
           </div>
@@ -239,12 +234,18 @@ function UpdateSchedule({ isOpen, onClose }) {
                 color="primary"
                 variant="light"
                 size="sm"
-                onClick={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
+                onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
               >
                 <LuMapPin />
               </Button>
             </div>
           )}
+
+          <Divider />
+          <Link onPress={openSnapshotSchedule} className="flex flex-row items-center gap-2 cursor-pointer text-sm">
+            <LuSend />
+            <span>Get your reports delivered to your inbox, slack, and more.</span>
+          </Link>
         </ModalBody>
         <ModalFooter>
           {_areChartsUpdating() && (
@@ -252,18 +253,18 @@ function UpdateSchedule({ isOpen, onClose }) {
               variant="light"
               color="primary"
               isLoading={removingUpdates}
-              onClick={_disableIndividualChartUpdates}
+              onPress={_disableIndividualChartUpdates}
             >
               Disable individual chart updates
             </Button>
           )}
           {project.updateSchedule?.frequency && (
-            <Button variant="flat" onClick={_disableAutomaticUpdates}>
+            <Button variant="flat" onPress={_disableAutomaticUpdates}>
               {"Disable the schedule"}
             </Button>
           )}
           <Button
-            onClick={_onSave}
+            onPress={_onSave}
             color="primary"
             isLoading={isLoading}
             isDisabled={!_canSave()}
@@ -280,6 +281,7 @@ UpdateSchedule.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   timezone: PropTypes.string.isRequired,
+  openSnapshotSchedule: PropTypes.func.isRequired,
 };
 
 export default UpdateSchedule

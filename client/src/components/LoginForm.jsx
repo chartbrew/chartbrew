@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { connect, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
 } from "@heroui/react";
@@ -53,7 +53,7 @@ function LoginForm() {
       });
   };
 
-  const loginUser = (e) => {
+  const loginUser = async (e) => {
     e.preventDefault();
 
     const params = new URLSearchParams(document.location.search);
@@ -69,44 +69,38 @@ function LoginForm() {
     }
 
     setLoading(true);
-    dispatch(login({ email, password }))
-      .then((data) => {
-        if (data.error) {
-          throw new Error(data.error?.message || "Wrong email or password");
-        }
+    try {
+      const data = await dispatch(login({ email, password }));
+      
+      if (data.error) {
+        throw new Error(data.error?.message || "Wrong email or password");
+      }
 
-        const userData = data.payload;
-        if (userData?.method_id) {
-          setView2FaApp(true);
-          setTwoFaData(userData);
-          return "2fa"
-        }
+      const userData = data.payload;
+      if (userData?.method_id) {
+        setView2FaApp(true);
+        setTwoFaData(userData);
+        setLoading(false);
+        return;
+      }
 
-        if (params.has("inviteToken")) {
-          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
-        }
-        setLoading(false);
-        return "done";
-      })
-      .then((result) => {
-        if (result === "done" || result === "2fa") {
-          return result;
-        }
+      let result = "done";
+      if (params.has("inviteToken")) {
+        await dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
+        result = await dispatch(login({ email, password }));
+      }
 
-        return dispatch(login({ email, password }));
-      })
-      .then((result) => {
-        if (result === "2fa") {
-          setLoading(false);
-          return;
-        }
+      if (result === "2fa") {
         setLoading(false);
-        navigate("/");
-      })
-      .catch((err) => {
-        setErrors({ ...errors, login: err.message });
-        setLoading(false);
-      });
+        return;
+      }
+
+      setLoading(false);
+      navigate("/");
+    } catch (err) {
+      setErrors({ ...errors, login: err.message });
+      setLoading(false);
+    }
   };
 
   const _onValidateToken = (e) => {
@@ -198,7 +192,7 @@ function LoginForm() {
             <Spacer y={4} />
             <Row justify="center" align="center">
               <Button
-                onClick={loginUser}
+                onPress={loginUser}
                 endContent={<LuChevronRight />}
                 size="lg"
                 color="primary"
@@ -215,7 +209,7 @@ function LoginForm() {
             <Row justify="center" align="center">
               <Link
                 style={{ paddingTop: 10 }}
-                onClick={() => setForgotModal(true)}
+                onPress={() => setForgotModal(true)}
                 className="cursor-pointer"
               >
                 Forgot password?
@@ -246,7 +240,7 @@ function LoginForm() {
           <Spacer />
           <div>
             <Button
-              onClick={_onValidateToken}
+              onPress={_onValidateToken}
               endContent={<LuChevronRight />}
               size="lg"
               color="primary"
@@ -286,12 +280,12 @@ function LoginForm() {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button onClick={() => setForgotModal(false)} variant="bordered">
+            <Button onPress={() => setForgotModal(false)} variant="bordered">
               Close
             </Button>
             <Button
               isDisabled={resetDone}
-              onClick={_onSendResetRequest}
+              onPress={_onSendResetRequest}
               isLoading={resetLoading}
               color="primary"
               variant={resetDone ? "flat" : "solid"}
@@ -305,15 +299,4 @@ function LoginForm() {
   );
 }
 
-const mapStateToProps = (state) => {
-  return {
-    form: state.forms,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
+export default LoginForm;

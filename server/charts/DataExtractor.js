@@ -73,7 +73,7 @@ module.exports = (data, filters, timezone) => {
       // check if any date filters should be applied
       // these filters come from the dashboard filters and override the global date filter
       if (filters && filters.length > 0) {
-        const dateRangeFilter = filters.find((o) => o.type === "date");
+        const dateRangeFilter = filters.find((o) => o.type === "date" && o.startDate && o.endDate);
         if (dateRangeFilter) {
           dateConditions[0] = {
             field: dateField,

@@ -121,10 +121,30 @@ function compareDates(data, field, condition, timezone = "", timeInterval = "day
       });
       break;
     case "isNotNull":
-      newData = _.filter(newData, (o) => getValue(o) !== null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" and boolean values for isNotNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val !== null;
+          if (condition.value.toLowerCase() === "false") return val === null;
+        } else if (typeof condition.value === "boolean") {
+          return condition.value ? val !== null : val === null;
+        }
+        return val !== null;
+      });
       break;
     case "isNull":
-      newData = _.filter(newData, (o) => getValue(o) === null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" and boolean values for isNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val === null;
+          if (condition.value.toLowerCase() === "false") return val !== null;
+        } else if (typeof condition.value === "boolean") {
+          return condition.value ? val === null : val !== null;
+        }
+        return val === null;
+      });
       break;
     default:
       break;
@@ -286,10 +306,26 @@ function compareStrings(data, field, condition) {
       newData = _.filter(newData, (o) => getValue(o) <= condition.value);
       break;
     case "isNotNull":
-      newData = _.filter(newData, (o) => getValue(o) !== null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" values for isNotNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val !== null;
+          if (condition.value.toLowerCase() === "false") return val === null;
+        }
+        return val !== null;
+      });
       break;
     case "isNull":
-      newData = _.filter(newData, (o) => getValue(o) === null);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        // Handle string "true"/"false" values for isNull
+        if (typeof condition.value === "string") {
+          if (condition.value.toLowerCase() === "true") return val === null;
+          if (condition.value.toLowerCase() === "false") return val !== null;
+        }
+        return val === null;
+      });
       break;
     default:
       break;
@@ -318,27 +354,61 @@ function compareBooleans(data, field, condition) {
       return null;
     }
 
+    // Convert string "true"/"false" to actual boolean
+    if (typeof value === "string") {
+      if (value.toLowerCase() === "true") return true;
+      if (value.toLowerCase() === "false") return false;
+    }
+
     return value;
   };
 
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        const conditionVal = typeof condition.value === "string"
+          ? condition.value.toLowerCase() === "true"
+          : condition.value;
+        return val === conditionVal;
+      });
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        const conditionVal = typeof condition.value === "string"
+          ? condition.value.toLowerCase() === "true"
+          : condition.value;
+        return val !== conditionVal;
+      });
       break;
     case "contains":
-      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o)?.indexOf(condition.value) > -1;
+        return getValue(o) === parseFloat(condition.value);
+      });
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o)?.indexOf(condition.value) === -1;
+        return getValue(o) !== parseFloat(condition.value);
+      });
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) >= condition.value;
+        return getValue(o) >= parseFloat(condition.value);
+      });
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) <= condition.value;
+        return getValue(o) <= parseFloat(condition.value);
+      });
       break;
     case "isNotNull":
       newData = _.filter(newData, (o) => getValue(o) !== null);

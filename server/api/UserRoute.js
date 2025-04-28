@@ -439,6 +439,30 @@ module.exports = (app) => {
   });
   // -------------------------------------
 
+  /*
+  ** Route to pin a dashboard
+  */
+  app.post("/user/:id/pin", verifyToken, (req, res) => {
+    if (!req.body.project_id) return res.status(400).send("Missing fields");
+
+    return userController.pinDashboard(req.body.project_id, req.user.id)
+      .then((pinnedDashboard) => {
+        return res.status(200).send(pinnedDashboard);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to unpin a dashboard
+  */
+  app.delete("/user/:id/pin/:pin_id", verifyToken, (req, res) => {
+    return userController.unpinDashboard(req.params.pin_id)
+      .then(() => {
+        return res.status(200).send({ removed: true });
+      });
+  });
+  // -------------------------------------------
+
   return (req, res, next) => {
     next();
   };

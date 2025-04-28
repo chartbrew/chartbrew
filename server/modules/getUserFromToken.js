@@ -20,6 +20,13 @@ module.exports = async (req, res, next) => {
   if (!decoded) {
     try {
       decoded = await jwt.verify(token, settings.secret);
+
+      if (decoded?.project_id) {
+        const project = await db.Project.findByPk(decoded.project_id);
+        if (project && project.brewName !== req.params.brewName) {
+          return res.status(401).send("Not authorized");
+        }
+      }
     } catch (err) {
       //
     }

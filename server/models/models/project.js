@@ -82,8 +82,27 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    snapshotSchedule: {
+      type: DataTypes.TEXT,
+      set(value) {
+        this.setDataValue("snapshotSchedule", JSON.stringify(value));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("snapshotSchedule"));
+        } catch (error) {
+          return {};
+        }
+      },
+    },
     lastUpdatedAt: {
       type: DataTypes.DATE,
+    },
+    lastSnapshotSentAt: {
+      type: DataTypes.DATE,
+    },
+    currentSnapshot: {
+      type: DataTypes.STRING,
     },
   }, {
     freezeTableName: true,
@@ -93,6 +112,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Project.hasMany(models.ProjectRole, { foreignKey: "project_id" });
     models.Project.hasMany(models.Chart, { foreignKey: "project_id" });
     models.Project.hasMany(models.Variable, { foreignKey: "project_id" });
+    models.Project.hasMany(models.DashboardFilter, { foreignKey: "project_id" });
     models.Project.belongsTo(models.Team, { foreignKey: "team_id" });
   };
 

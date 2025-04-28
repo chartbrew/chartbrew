@@ -1,9 +1,9 @@
-const { Op } = require("sequelize");
 const { nanoid } = require("nanoid");
 
 const db = require("../models/models");
 const TeamController = require("./TeamController");
 const templateModels = require("../templates");
+const { snapDashboard } = require("../modules/snapshots");
 
 class ProjectController {
   constructor() {
@@ -41,49 +41,11 @@ class ProjectController {
         {
           model: db.Team,
           attributes: ["showBranding"],
+        }, {
+          model: db.DashboardFilter,
         }
       ],
     })
-      .then((project) => {
-        // if (!project) {
-        //   throw new Error(404);
-        // }
-        return project;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  findByUserId(userId) {
-    return db.ProjectRole.findAll({
-      where: {
-        user_id: userId
-      },
-      include: [{ model: db.Variable }],
-    })
-      .then((roles) => {
-        const idArray = [];
-
-        roles.forEach((role) => {
-          idArray.push(role.project_id);
-        });
-
-        if (idArray.length < 1) {
-          return new Promise((resolve) => resolve([]));
-        }
-
-        return db.Project.findAll({
-          where: {
-            id: { [Op.in]: idArray },
-          },
-          include: [{ model: db.ProjectRole }, { model: db.Chart, attributes: ["id", "layout"] }],
-        });
-      })
-      .then((projects) => {
-        if (projects.length === 1) return new Promise((resolve) => resolve(projects));
-        return new Promise((resolve) => resolve(projects));
-      })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
@@ -207,6 +169,13 @@ class ProjectController {
         {
           model: db.Team,
           attributes: ["showBranding", "allowReportRefresh", "allowReportExport"],
+        },
+        {
+          model: db.DashboardFilter,
+          where: {
+            onReport: true,
+          },
+          required: false,
         }
       ],
       order: [[db.Chart, "dashboardOrder", "ASC"]],
@@ -266,6 +235,67 @@ class ProjectController {
 
   deleteVariable(variableId) {
     return db.Variable.destroy({ where: { id: variableId } })
+      .then(() => {
+        return { removed: true };
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
+  async takeSnapshot(projectId, options) {
+    const project = await this.findById(projectId);
+    return snapDashboard(project, options);
+  }
+
+  createDashboardFilter(projectId, data) {
+    return db.DashboardFilter.create({
+      ...data,
+      project_id: projectId,
+    })
+      .then((dashboardFilter) => {
+        return dashboardFilter;
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
+  getDashboardFilter(dashboardFilterId) {
+    return db.DashboardFilter.findByPk(dashboardFilterId)
+      .then((dashboardFilter) => {
+        return dashboardFilter;
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
+  getDashboardFilters(projectId) {
+    return db.DashboardFilter.findAll({
+      where: { project_id: projectId },
+      order: [["createdAt", "DESC"]],
+    })
+      .then((dashboardFilters) => {
+        return dashboardFilters;
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
+  updateDashboardFilter(dashboardFilterId, data) {
+    return db.DashboardFilter.update(data, { where: { id: dashboardFilterId } })
+      .then(() => {
+        return this.getDashboardFilter(dashboardFilterId);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
+  deleteDashboardFilter(dashboardFilterId) {
+    return db.DashboardFilter.destroy({ where: { id: dashboardFilterId } })
       .then(() => {
         return { removed: true };
       })

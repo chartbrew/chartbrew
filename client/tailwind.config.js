@@ -10,6 +10,7 @@ export default {
   theme: {
     fontFamily: {
       sans: ["Inter", "-apple-system", "system-ui", "sans-serif"],
+      tw: ["Titillium Web", "-apple-system", "system-ui", "sans-serif"],
     },
     screens: {
       "sm": "640px",

@@ -113,7 +113,7 @@ const template = (website, apiKey) => ({
     timeInterval: "day",
     type: "kpi",
     layout: {
-      "xxs": [0, 0, 4, 2], "xs": [0, 0, 6, 2], "sm": [0, 0, 3, 2], "md": [0, 0, 4, 2], "lg": [0, 0, 3, 2]
+      "xxs": [0, 0, 2, 2], "xs": [0, 0, 6, 2], "sm": [0, 0, 3, 2], "md": [0, 0, 4, 2], "lg": [0, 0, 3, 2], "xl": [0, 0, 4, 2], "xxl": [0, 0, 4, 2], "xxxl": [0, 0, 4, 2]
     },
     ChartDatasetConfigs: [{
       td_id: 1,
@@ -154,7 +154,7 @@ const template = (website, apiKey) => ({
     type: "line",
     showGrowth: true,
     layout: {
-      "xxs": [0, 2, 4, 2], "xs": [0, 2, 6, 2], "sm": [3, 0, 5, 2], "md": [4, 0, 6, 2], "lg": [3, 0, 6, 2]
+      "xxs": [0, 2, 2, 2], "xs": [0, 2, 6, 2], "sm": [3, 0, 5, 2], "md": [4, 0, 6, 2], "lg": [3, 0, 6, 2], "xl": [4, 0, 7, 2], "xxl": [4, 0, 8, 2], "xxxl": [4, 0, 8, 2]
     },
     ChartDatasetConfigs: [{
       td_id: 1,
@@ -190,7 +190,7 @@ const template = (website, apiKey) => ({
     type: "doughnut",
     displayLegend: true,
     layout: {
-      "xxs": [0, 4, 4, 2], "xs": [0, 4, 6, 2], "sm": [0, 2, 2, 2], "md": [0, 2, 4, 2], "lg": [9, 0, 3, 2]
+      "xxs": [0, 4, 2, 2], "xs": [0, 4, 6, 2], "sm": [0, 2, 2, 2], "md": [0, 2, 4, 2], "lg": [9, 0, 3, 2], "xl": [11, 0, 3, 2], "xxl": [12, 0, 4, 2], "xxxl": [12, 0, 4, 2]
     },
     ChartDatasetConfigs: [{
       td_id: 3,
@@ -214,7 +214,7 @@ const template = (website, apiKey) => ({
     type: "table",
     timeInterval: "day",
     layout: {
-      "xxs": [0, 6, 4, 3], "xs": [0, 6, 6, 3], "sm": [2, 2, 6, 2], "md": [4, 2, 6, 2], "lg": [0, 2, 6, 3]
+      "xxs": [0, 6, 2, 3], "xs": [0, 6, 6, 3], "sm": [2, 2, 6, 2], "md": [4, 2, 6, 2], "lg": [0, 2, 6, 3], "xl": [0, 2, 7, 3], "xxl": [0, 2, 8, 3], "xxxl": [0, 2, 8, 3]
     },
     ChartDatasetConfigs: [{
       td_id: 4,
@@ -247,7 +247,7 @@ const template = (website, apiKey) => ({
     type: "table",
     timeInterval: "day",
     layout: {
-      "xxs": [0, 9, 4, 3], "xs": [0, 9, 6, 3], "sm": [0, 4, 6, 3], "md": [0, 4, 6, 3], "lg": [6, 2, 6, 3]
+      "xxs": [0, 9, 2, 3], "xs": [0, 9, 6, 3], "sm": [0, 4, 6, 3], "md": [0, 4, 6, 3], "lg": [6, 2, 6, 3], "xl": [7, 2, 7, 3], "xxl": [8, 2, 8, 3], "xxxl": [8, 2, 8, 3]
     },
     ChartDatasetConfigs: [{
       td_id: 6,

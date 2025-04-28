@@ -3,6 +3,7 @@ import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Button, Card, Spacer, Input, Link as LinkNext, Avatar, CardHeader, CardBody, Divider,
+  Alert,
 } from "@heroui/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
@@ -12,9 +13,6 @@ import {
   email as emailValidation,
   password as passwordValidation
 } from "../config/validations";
-import {
-  negative, positive, secondary,
-} from "../config/colors";
 import signupBackground from "../assets/dashboards_background.webp";
 import Row from "../components/Row";
 import Text from "../components/Text";
@@ -132,7 +130,7 @@ function Signup() {
               </Row>
               {errors.name && (
                 <Row>
-                  <Text color={negative}>
+                  <Text color="danger">
                     {"Please enter your name"}
                   </Text>
                 </Row>
@@ -179,37 +177,37 @@ function Signup() {
                 />
               </Row>
               {errors.password && (
-              <Row>
-                <Text color={negative}>
+                <div className="text-danger">
                   {errors.password}
-                </Text>
-              </Row>
+                </div>
               )}
               <Spacer y={4} />
               <Row>
                 <Button
-                  onClick={submitUser}
+                  onPress={submitUser}
                   isLoading={loading}
                   type="submit"
                   size="lg"
                   endContent={<LuArrowRight />}
-                  auto
                   color="primary"
+                  isDisabled={addedToTeam}
                 >
                   Continue
                 </Button>
               </Row>
               {signupError && (
-              <Row>
-                <Text b color={negative}>{signupError.message || signupError}</Text>
-              </Row>
+                <div className="text-danger">
+                  {signupError.message || signupError}
+                </div>
               )}
               {addedToTeam && (
-              <Row>
-                <Text color={positive}>
-                  {"You created a new account and were added to the team. We will redirect you to your dashboard now..."}
-                </Text>
-              </Row>
+                <Alert
+                  className="mt-4"
+                  color="success"
+                  variant="flat"
+                  title="You have been added to the team"
+                  description="We will redirect you to your dashboard now..."
+                />
               )}
             </form>
 
@@ -228,7 +226,7 @@ function Signup() {
                 {" "}
                 Already have an account?
                 {" "}
-                <Link to={"/login"} style={styles.loginLink}>Login here</Link>
+                <Link to={"/login"} className="text-primary">Login here</Link>
                 {" "}
               </Text>
             </div>
@@ -280,7 +278,7 @@ function Signup() {
                   </div>
                   <div className="col-span-12">
                     <span className="text-gray-500 text-sm flex flex-row">
-                      {"Co-founder, "}
+                      <div>{"Co-founder, "}</div>
                       <Spacer x={1} />
                       <LinkNext className="text-sm" href="https://www.circularcity.asia/?ref=chartbrew" rel="noopener noreferrer" target="_blank" color="secondary">
                         {"Circular City"}
@@ -328,9 +326,6 @@ function Signup() {
 }
 
 const styles = {
-  loginLink: {
-    color: secondary,
-  },
   sideBackground: {
     backgroundImage: `url(${signupBackground})`,
     backgroundSize: "cover",

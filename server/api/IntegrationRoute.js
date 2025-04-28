@@ -123,7 +123,7 @@ module.exports = (app) => {
         return integrationController.remove(req.params.id);
       })
       .then(() => {
-        return res.status(200).send("Integration deleted");
+        return res.status(200).send({ deleted: true });
       })
       .catch((err) => {
         if (err.message === "401") {

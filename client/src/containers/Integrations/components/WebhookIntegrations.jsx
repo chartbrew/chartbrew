@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
@@ -9,11 +9,9 @@ import { TbWebhook } from "react-icons/tb";
 import { formatRelative } from "date-fns";
 
 import {
-  createIntegration as createIntegrationAction,
-  deleteIntegration as deleteIntegrationAction,
-  updateIntegration as updateIntegrationAction,
-  getTeamIntegrations as getTeamIntegrationsAction,
-} from "../../../actions/integration";
+  createIntegration, deleteIntegration, updateIntegration, getTeamIntegrations,
+  selectIntegrations,
+} from "../../../slices/integration";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
@@ -21,12 +19,7 @@ import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash } from "react-icons/lu";
 
 const urlRegex = /^https?:\/\/.+/;
 
-function WebhookIntegrations(props) {
-  const {
-    integrations, teamId, createIntegration, deleteIntegration, updateIntegration,
-    getTeamIntegrations,
-  } = props;
-
+function WebhookIntegrations({ teamId }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [newIntegration, setNewIntegration] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
@@ -36,6 +29,9 @@ function WebhookIntegrations(props) {
   const [deleteError, setDeleteError] = useState(false);
   const [slackModalOpen, setSlackModalOpen] = useState(false);
   const [urlError, setUrlError] = useState(false);
+
+  const integrations = useSelector(selectIntegrations);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (newIntegration.url?.indexOf("https://hooks.slack.com") > -1) {
@@ -60,19 +56,25 @@ function WebhookIntegrations(props) {
     }
 
     setCreateLoading(true);
-    createIntegration(teamId, {
-      name: newIntegration.name,
-      team_id: teamId,
-      type: "webhook",
-      config: {
-        url: newIntegration.url,
-        slackMode: newIntegration.slackMode,
+    dispatch(createIntegration({
+      data: {
+        team_id: teamId,
+        name: newIntegration.name,
+        type: "webhook",
+        config: {
+          url: newIntegration.url,
+          slackMode: newIntegration.slackMode,
+        },
       },
-    })
-      .then(() => {
+    }))
+      .then((data) => {
         setCreateLoading(false);
-        setCreateOpen(false);
-        setNewIntegration({});
+        if (data?.error) {
+          setError(true);
+        } else {
+          setCreateOpen(false);
+          setNewIntegration({});
+        }
       })
       .catch(() => {
         setCreateLoading(false);
@@ -82,11 +84,18 @@ function WebhookIntegrations(props) {
 
   const _onDelete = () => {
     setDeleteLoading(true);
-    deleteIntegration(teamId, integrationToDelete)
-      .then(() => {
+    dispatch(deleteIntegration({
+      team_id: teamId,
+      integration_id: integrationToDelete,
+    }))
+      .then((data) => {
         setDeleteLoading(false);
-        setIntegrationToDelete(false);
-        getTeamIntegrations(teamId);
+        if (data?.error) {
+          setDeleteError(true);
+        } else {
+          setIntegrationToDelete(false);
+          dispatch(getTeamIntegrations({ team_id: teamId }));
+        }
       })
       .catch(() => {
         setDeleteLoading(false);
@@ -118,19 +127,26 @@ function WebhookIntegrations(props) {
     }
 
     setCreateLoading(true);
-    updateIntegration(teamId, {
-      id: newIntegration.id,
-      name: newIntegration.name,
-      config: {
+    dispatch(updateIntegration({
+      team_id: teamId,
+      integration_id: newIntegration.id,
+      data: {
+        name: newIntegration.name,
+        config: {
         url: newIntegration.url,
         slackMode: newIntegration.slackMode,
+        },
       },
-    })
-      .then(() => {
+    }))
+      .then((data) => {
         setCreateLoading(false);
-        setCreateOpen(false);
-        setNewIntegration({});
-        getTeamIntegrations(teamId);
+        if (data?.error) {
+          setError(true);
+        } else {
+          setCreateOpen(false);
+          setNewIntegration({});
+          getTeamIntegrations(teamId);
+        }
       })
       .catch(() => {
         setCreateLoading(false);
@@ -150,7 +166,7 @@ function WebhookIntegrations(props) {
           <Spacer x={2} />
           <Button
             auto
-            onClick={() => {
+            onPress={() => {
               setCreateOpen(true);
             }}
             startContent={<LuPlus />}
@@ -178,7 +194,7 @@ function WebhookIntegrations(props) {
         <Spacer y={1} />
         <Row>
           <div className="text-sm">
-            <Link onClick={() => setSlackModalOpen(true)} className="text-sm">
+            <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
               <LuSlack size={16} />
               <Spacer x={1} />
               {"Want to send events to Slack? Check out how to do it here"}
@@ -215,7 +231,7 @@ function WebhookIntegrations(props) {
                         <Button
                           isIconOnly
                           variant="light"
-                          onClick={() => _onEditOpen(i)}
+                          onPress={() => _onEditOpen(i)}
                           size="sm"
                         >
                           <LuPencilLine size={18} />
@@ -224,7 +240,7 @@ function WebhookIntegrations(props) {
                           isIconOnly
                           variant="light"
                           color="danger"
-                          onClick={() => setIntegrationToDelete(i.id)}
+                          onPress={() => setIntegrationToDelete(i.id)}
                           size="sm"
                         >
                           <LuTrash size={18} />
@@ -285,7 +301,7 @@ function WebhookIntegrations(props) {
                 {"This is a Slack webhook"}
               </Checkbox>
               <Spacer x={3} />
-              <Link onClick={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
+              <Link onPress={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
                 <LuInfo size={16} />
                 <Spacer x={1} />
                 {"What is this?"}
@@ -300,14 +316,14 @@ function WebhookIntegrations(props) {
           <ModalFooter>
             <Button
               auto
-              onClick={() => setCreateOpen(false)}
+              onPress={() => setCreateOpen(false)}
               variant="bordered"
             >
               Close
             </Button>
             <Button
               auto
-              onClick={!newIntegration.id ? _onCreate : _onEdit}
+              onPress={!newIntegration.id ? _onCreate : _onEdit}
               color="primary"
               isLoading={createLoading}
             >
@@ -343,15 +359,14 @@ function WebhookIntegrations(props) {
           <ModalFooter>
             <Button
               auto
-              onClick={() => setIntegrationToDelete(false)}
-              color="warning"
-              variant="flat"
+              onPress={() => setIntegrationToDelete(false)}
+              variant="bordered"
             >
               Close
             </Button>
             <Button
               auto
-              onClick={_onDelete}
+              onPress={_onDelete}
               color="danger"
               isLoading={deleteLoading}
             >
@@ -386,7 +401,7 @@ function WebhookIntegrations(props) {
           <ModalFooter>
             <Button
               auto
-              onClick={() => setSlackModalOpen(false)}
+              onPress={() => setSlackModalOpen(false)}
               variant="bordered"
             >
               Close
@@ -399,30 +414,7 @@ function WebhookIntegrations(props) {
 }
 
 WebhookIntegrations.propTypes = {
-  integrations: PropTypes.arrayOf(PropTypes.object).isRequired,
   teamId: PropTypes.string.isRequired,
-  createIntegration: PropTypes.func.isRequired,
-  deleteIntegration: PropTypes.func.isRequired,
-  updateIntegration: PropTypes.func.isRequired,
-  getTeamIntegrations: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => ({
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  createIntegration: (teamId, integration) => (
-    dispatch(createIntegrationAction(teamId, integration))
-  ),
-  deleteIntegration: (teamId, integrationId) => (
-    dispatch(deleteIntegrationAction(teamId, integrationId))
-  ),
-  updateIntegration: (teamId, data) => (
-    dispatch(updateIntegrationAction(teamId, data))
-  ),
-  getTeamIntegrations: (teamId) => (
-    dispatch(getTeamIntegrationsAction(teamId))
-  ),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(WebhookIntegrations);
+export default WebhookIntegrations;

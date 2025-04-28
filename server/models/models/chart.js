@@ -146,6 +146,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    invertGrowth: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     layout: {
       type: DataTypes.TEXT,
       defaultValue: JSON.stringify({

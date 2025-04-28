@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   Link as LinkNext, Tooltip, Spacer, Button, Modal, ModalHeader, ModalBody,ModalFooter,
@@ -9,9 +9,10 @@ import {
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
-  LuPanelLeftOpen, LuPresentation, LuPuzzle, LuSettings,
-  LuTvMinimal, LuUser, LuUsers, LuVariable,
+  LuPanelLeftOpen, LuPin, LuPresentation, LuPuzzle, LuSettings,
+  LuTvMinimal, LuUser, LuVariable, LuSearch,
 } from "react-icons/lu";
+import { useSelector } from "react-redux";
 
 import {
   dark, lightGray, primary, secondary
@@ -20,7 +21,8 @@ import { APP_VERSION } from "../../../config/settings";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import { HiSearch } from "react-icons/hi";
+import { selectProject, selectProjects } from "../../../slices/project";
+import { selectTeam } from "../../../slices/team";
 
 const sideMaxSize = 220;
 
@@ -50,6 +52,9 @@ const _checkIfActive = (path) => {
     case "integrations":
       if (window.location.pathname.indexOf("integrations") > -1) return true;
       break;
+    case "variables":
+      if (window.location.pathname.indexOf("variables") > -1) return true;
+      break;
     default:
       return false;
   }
@@ -59,14 +64,20 @@ const _checkIfActive = (path) => {
 
 function ProjectNavigation(props) {
   const {
-    menuSize, teamId, projectId, project, onSetMenuSize,
-    canAccess, projects, onChangeProject, mobile, update,
+    menuSize = "large", mobile = false, update = {},
+    onSetMenuSize, canAccess, onChangeProject,
   } = props;
 
   const [showUpdate, setShowUpdate] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
 
+  const projects = useSelector(selectProjects);
+  const project = useSelector(selectProject) || {};
+  const team = useSelector(selectTeam);
+  const pinnedDashboards = useSelector((state) => state.user?.data?.PinnedDashboards);
+
   const { height } = useWindowSize();
+  const navigate = useNavigate();
 
   const _onVersionClicked = () => {
     if (update && update.tag_name) {
@@ -82,6 +93,23 @@ function ProjectNavigation(props) {
     return projectName;
   };
 
+  const _getFilteredProjects = () => {
+    if (!projects) return [];
+
+    const filteredProjects = projects.filter((p) => {
+      return p.name.toLowerCase().includes(projectSearch.toLowerCase());
+    });
+
+    // Sort pinned projects to the top
+    return filteredProjects.sort((a, b) => {
+      const aPinned = pinnedDashboards.find((p) => p.project_id === a.id);
+      const bPinned = pinnedDashboards.find((p) => p.project_id === b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+  };
+
   if (mobile) {
     return (
       <nav
@@ -90,7 +118,7 @@ function ProjectNavigation(props) {
         <div className="flex items-center justify-center shadow-md bg-content3-foreground w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
           <Container className="flex flex-nowrap justify-between w-full p-2">
             <Row justify="space-around" align="center">
-              <Link to={`/${teamId}/${projectId}/dashboard`}>
+              <Link to={`/${team.id}/${project.id}/dashboard`}>
                 <LinkNext className="pointer-events-none">
                   <LuMenu color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
@@ -102,7 +130,7 @@ function ProjectNavigation(props) {
               </Link>
               {canAccess("projectEditor")
                 && (
-                  <Link to={`/${teamId}/${projectId}/members`}>
+                  <Link to={`/${team.id}/${project.id}/members`}>
                     <LinkNext className="pointer-events-none">
                       <LuUser color={_checkIfActive("members") ? secondary : "white"} size={24} />
                     </LinkNext>
@@ -110,7 +138,7 @@ function ProjectNavigation(props) {
                 )}
               {canAccess("projectEditor")
                 && (
-                  <Link to={`/${teamId}/${projectId}/settings`}>
+                  <Link to={`/${team.id}/${project.id}/settings`}>
                     <LinkNext className="pointer-events-none">
                       <LuSettings color={_checkIfActive("settings") ? secondary : "white"} size={24} />
                     </LinkNext>
@@ -127,19 +155,13 @@ function ProjectNavigation(props) {
     <div>
       <div className={"bg-content1 flex flex-col justify-between"} style={styles.mainSideMenu(height)}>
         <div className="p-2">
-          <Row justify="center" align="center" className={"pt-4"}>
+          <div className="flex justify-center items-center">
             <Popover>
               <PopoverTrigger>
-                <div>
-                  {menuSize === "small" && (
-                    <div>
-                      <Text className={"text-default-800"}><LuMenu size={28} /></Text>
-                    </div>
-                  )}
-                  {menuSize === "large" && (
-                    <Text b className={"text-sm text-blue-600"}>{_formatProjectName(project.name)}</Text>
-                  )}
-                </div>
+                <Button variant="bordered" isIconOnly={menuSize === "small"} isLoading={!project.name} fullWidth>
+                  {menuSize === "small" && <LuMenu size={24} />}
+                  {menuSize === "large" && _formatProjectName(project.name)}
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="max-w-[200px] max-h-[400px] px-2 py-4">
                 <div className="flex flex-col gap-2 overflow-y-auto">
@@ -148,12 +170,17 @@ function ProjectNavigation(props) {
                     fullWidth
                     size="small"
                     variant="bordered"
-                    endContent={<HiSearch />}
+                    endContent={<LuSearch />}
                     onChange={(e) => setProjectSearch(e.target.value)}
+                    className="px-2"
                   />
                   <Listbox aria-label="Dashboard switch list">
-                    {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1 && !p.ghost).map((p) => (
-                      <ListboxItem key={p.id} onClick={() => onChangeProject(p.id)}>
+                    {_getFilteredProjects().map((p) => (
+                      <ListboxItem
+                        key={p.id}
+                        onPress={() => onChangeProject(p.id)}
+                        startContent={pinnedDashboards.find((pd) => pd.project_id === p.id) && <LuPin className="text-gray-500" size={18} />}
+                      >
                         {p.name}
                       </ListboxItem>
                     ))}
@@ -161,190 +188,118 @@ function ProjectNavigation(props) {
                 </div>
               </PopoverContent>
             </Popover>
-          </Row>
-          <Spacer y={6} />
-          <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
-            <Link to={`/${teamId}/${projectId}/dashboard`}>
-              {menuSize === "small" && (
+          </div>
+
+          <Spacer y={4} />
+
+          <Listbox
+            aria-label="Project navigation"
+            variant="flat"
+            color="default"
+            className="p-0"
+          >
+            <ListboxItem
+              key="dashboard"
+              startContent={menuSize === "large" ? <LuLayoutGrid size={24} /> : null}
+              onPress={() => navigate(`/${team.id}/${project.id}/dashboard`)}
+              className={`${_checkIfActive("dashboard") ? "text-primary" : "text-foreground"}`}
+              classNames={{
+                title: menuSize === "small" ? "flex flex-row justify-center" : "",
+              }}
+            >
+              {menuSize === "large" ? "Dashboard" : (
                 <Tooltip content="Dashboard" placement="right">
-                  <div className="pointer-events-none">
-                    <Button
-                      isIconOnly
-                      variant="light"
-                      color={_checkIfActive("dashboard") ? "primary" : "default"}
-                    >
-                      <LuLayoutGrid size={28} />
-                    </Button>
-                  </div>
+                  <div className=""><LuLayoutGrid size={24} /></div>
                 </Tooltip>
               )}
-              {menuSize === "large" && (
-                <Button
-                  variant="light"
-                  color={_checkIfActive("dashboard") ? "primary" : "default"}
-                  startContent={<LuLayoutGrid size={24} />}
-                  className="pointer-events-none"
-                >
-                  Dashboard
-                </Button>
-              )}
-            </Link>
-          </Row>
+            </ListboxItem>
 
-          <Spacer y={1} />
-          <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
-            <Link to={`/b/${project.brewName}`}>
-              <LinkNext className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
-                {menuSize === "small" && (
-                  <Tooltip content="Dashboard report" placement="right">
-                    <div className="pointer-events-none">
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color={_checkIfActive("public") ? "primary" : "default"}
-                        className="dashboard-report-tutorial"
-                      >
-                        <LuTvMinimal size={28} />
-                      </Button>
-                    </div>
+            <ListboxItem
+              key="public"
+              startContent={menuSize === "large" ? <LuTvMinimal size={24} /> : null}
+              onPress={() => navigate(`/b/${project.brewName}`)}
+              className={_checkIfActive("public") ? "text-primary" : "text-foreground"}
+              classNames={{
+                title: menuSize === "small" ? "flex flex-row justify-center" : "",
+              }}
+            >
+              {menuSize === "large" ? "Dashboard report" : (
+                <Tooltip content="Dashboard report" placement="right">
+                  <div className=""><LuTvMinimal size={24} /></div>
+                </Tooltip>
+              )}
+            </ListboxItem>
+
+            {canAccess("projectEditor") && (
+              <ListboxItem
+                key="members"
+                startContent={menuSize === "large" ? <LuUser size={24} /> : null}
+                onPress={() => navigate(`/${team.id}/${project.id}/members`)}
+                className={_checkIfActive("members") ? "text-primary" : "text-foreground"}
+                classNames={{
+                  title: menuSize === "small" ? "flex flex-row justify-center" : "",
+                }}
+              >
+                {menuSize === "large" ? "Members" : (
+                  <Tooltip content="Members" placement="right">
+                    <div className=""><LuUser size={24} /></div>
                   </Tooltip>
                 )}
-                {menuSize === "large" && (
-                  <Button
-                    variant="light"
-                    color={_checkIfActive("public") ? "primary" : "default"}
-                    startContent={<LuTvMinimal size={24} />}
-                    className="pointer-events-none dashboard-report-tutorial"
-                  >
-                    Dashboard report
-                  </Button>
-                )}
-              </LinkNext>
-            </Link>
-          </Row>
+              </ListboxItem>
+            )}
 
-          {canAccess("projectEditor") && (
-            <>
-              <Spacer y={1} />
-              <Row justify={menuSize === "large" ? "flex-start" : "center"}>
-                <Link to={`/${teamId}/${projectId}/settings`}>
-                  {menuSize === "small" && (
+            {canAccess("projectAdmin", project.TeamRoles) && (
+              <>
+                <ListboxItem
+                  key="settings"
+                  startContent={menuSize === "large" ? <LuSettings size={24} /> : null}
+                  onPress={() => navigate(`/${team.id}/${project.id}/settings`)}
+                  className={_checkIfActive("settings") ? "text-primary" : "text-foreground"}
+                  classNames={{
+                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
+                  }}
+                >
+                  {menuSize === "large" ? "Settings" : (
                     <Tooltip content="Dashboard settings" placement="right">
-                      <div className="pointer-events-none">
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color={_checkIfActive("settings") ? "primary" : "default"}
-                          className="dashboard-settings-tutorial"
-                        >
-                          <LuSettings size={28} />
-                        </Button>
-                      </div>
+                      <div className=""><LuSettings size={24} /></div>
                     </Tooltip>
                   )}
-                  {menuSize === "large" && (
-                    <Button
-                      variant="light"
-                      color={_checkIfActive("settings") ? "primary" : "default"}
-                      startContent={<LuSettings size={24} />}
-                      className="pointer-events-none dashboard-settings-tutorial"
-                    >
-                      Dashboard settings
-                    </Button>
-                  )}
-                </Link>
-              </Row>
-            </>
-          )}
-          {canAccess("projectEditor") && (
-            <>
-              <Spacer y={1} />
-              <Row justify={menuSize === "large" ? "flex-start" : "center"}>
-                <Link to={`/${teamId}/${projectId}/members`}>
-                  {menuSize === "small" && (
-                    <Tooltip content="Team members" placement="right">
-                      <div className="pointer-events-none">
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color={_checkIfActive("members") ? "primary" : "default"}
-                        >
-                          <LuUsers size={28} />
-                        </Button>
-                      </div>
-                    </Tooltip>
-                  )}
-                  {menuSize === "large" && (
-                    <Button
-                      variant="light"
-                      color={_checkIfActive("members") ? "primary" : "default"}
-                      startContent={<LuUsers size={24} />}
-                      className="pointer-events-none"
-                    >
-                      Team members
-                    </Button>
-                  )}
-                </Link>
-              </Row>
-              <Spacer y={1} />
-              <Row justify={menuSize === "large" ? "flex-start" : "center"}>
-                <Link to={`/${teamId}/${projectId}/integrations`}>
-                  {menuSize === "small" && (
-                    <Tooltip content="Integrations" placement="right">
-                      <div className="pointer-events-none">
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color={_checkIfActive("integrations") ? "primary" : "default"}
-                        >
-                          <LuPuzzle size={28} />
-                        </Button>
-                      </div>
-                    </Tooltip>
-                  )}
-                  {menuSize === "large" && (
-                    <Button
-                      variant="light"
-                      color={_checkIfActive("integrations") ? "primary" : "default"}
-                      startContent={<LuPuzzle size={24} />}
-                      className="pointer-events-none"
-                    >
-                      Integrations
-                    </Button>
-                  )}
-                </Link>
-              </Row>
+                </ListboxItem>
 
-              <Spacer y={1} />
-              <Row justify={menuSize === "large" ? "flex-start" : "center"}>
-                <Link to={`/${teamId}/${projectId}/variables`}>
-                  {menuSize === "small" && (
-                    <Tooltip content="Variables" placement="right">
-                      <div className="pointer-events-none">
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color={_checkIfActive("variables") ? "primary" : "default"}
-                        >
-                          <LuVariable size={28} />
-                        </Button>
-                      </div>
+                <ListboxItem
+                  key="integrations"
+                  startContent={menuSize === "large" ? <LuPuzzle size={24} /> : null}
+                  onPress={() => navigate(`/${team.id}/${project.id}/integrations`)}
+                  className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
+                  classNames={{
+                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
+                  }}
+                >
+                  {menuSize === "large" ? "Integrations" : (
+                    <Tooltip content="Integrations" placement="right">
+                      <div className=""><LuPuzzle size={24} /></div>
                     </Tooltip>
                   )}
-                  {menuSize === "large" && (
-                    <Button
-                      variant="light"
-                      color={_checkIfActive("variables") ? "primary" : "default"}
-                      startContent={<LuVariable size={24} />}
-                      className="pointer-events-none"
-                    >
-                      Variables
-                    </Button>
+                </ListboxItem>
+
+                <ListboxItem
+                  key="variables"
+                  startContent={menuSize === "large" ? <LuVariable size={24} /> : null}
+                  onPress={() => navigate(`/${team.id}/${project.id}/variables`)}
+                  className={_checkIfActive("variables") ? "text-primary" : "text-foreground"}
+                  classNames={{
+                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
+                  }}
+                >
+                  {menuSize === "large" ? "Variables" : (
+                    <Tooltip content="Variables" placement="right">
+                      <div className=""><LuVariable size={24} /></div>
+                    </Tooltip>
                   )}
-                </Link>
-              </Row>
-            </>
-          )}
+                </ListboxItem>
+              </>
+            )}
+          </Listbox>
         </div>
         <div className="translate-y-[-50px]">
           {menuSize === "large" && (
@@ -354,9 +309,9 @@ function ProjectNavigation(props) {
                   isIconOnly
                   variant="light"
                   color="default"
-                  onClick={() => onSetMenuSize(70)}
+                  onPress={() => onSetMenuSize(70)}
                 >
-                  <LuPanelLeftClose size={28} />
+                  <LuPanelLeftClose size={24} />
                 </Button>
               </Tooltip>
             </Row>
@@ -368,9 +323,9 @@ function ProjectNavigation(props) {
                   isIconOnly
                   variant="light"
                   color="default"
-                  onClick={() => onSetMenuSize(sideMaxSize)}
+                  onPress={() => onSetMenuSize(sideMaxSize)}
                 >
-                  <LuPanelLeftOpen size={28} />
+                  <LuPanelLeftOpen size={24} />
                 </Button>
               </Tooltip>
             </Row>
@@ -382,7 +337,7 @@ function ProjectNavigation(props) {
                 href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
                 target={(!update || !update.tag_name) && "_blank"}
                 rel="noopener noreferrer"
-                onClick={_onVersionClicked}
+                onPress={_onVersionClicked}
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
@@ -400,7 +355,7 @@ function ProjectNavigation(props) {
                 href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
                 target={(!update || !update.tag_name) && "_blank"}
                 rel="noopener noreferrer"
-                onClick={_onVersionClicked}
+                onPress={_onVersionClicked}
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
@@ -429,7 +384,7 @@ function ProjectNavigation(props) {
               variant="flat"
               color="warning"
               auto
-              onClick={() => setShowUpdate(false)}
+              onPress={() => setShowUpdate(false)}
             >
               Close
             </Button>
@@ -452,25 +407,12 @@ function ProjectNavigation(props) {
 }
 
 ProjectNavigation.propTypes = {
-  teamId: PropTypes.string.isRequired,
-  projectId: PropTypes.string.isRequired,
-  project: PropTypes.object.isRequired,
-  projects: PropTypes.array.isRequired,
   onSetMenuSize: PropTypes.func.isRequired,
   canAccess: PropTypes.func.isRequired,
-  onChangeDrafts: PropTypes.func.isRequired,
   onChangeProject: PropTypes.func.isRequired,
   menuSize: PropTypes.string,
-  showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
   update: PropTypes.object,
-};
-
-ProjectNavigation.defaultProps = {
-  menuSize: "large",
-  showDrafts: true,
-  mobile: false,
-  update: {},
 };
 
 const styles = {

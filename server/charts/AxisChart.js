@@ -138,7 +138,7 @@ class AxisChart {
 
         let filteredData = filterData.data;
 
-        const dateDashboardFilter = filters && filters?.find((f) => f.type === "date");
+        const dateDashboardFilter = filters && filters?.find((f) => f.type === "date" && f.startDate && f.endDate);
         if (dateField
           && ((this.chart.startDate && this.chart.endDate) || dateDashboardFilter)
           && canDateFilter
@@ -553,7 +553,7 @@ class AxisChart {
             const newVal = parser.parse(expression);
 
             let finalVal = `${before}${newVal.result?.toLocaleString() || 0}${after}`;
-            if (this.chart.type !== "kpi") {
+            if (this.chart.type !== "kpi" && this.chart.type !== "avg" && this.chart.type !== "gauge") {
               finalVal = +(newVal.result?.toFixed(2) || 0).toLocaleString();
             }
 
@@ -684,6 +684,11 @@ class AxisChart {
             / previousValue;
           result *= 100;
 
+          // Invert the growth if invertGrowth is true
+          if (this.chart.invertGrowth) {
+            result = -result;
+          }
+
           configuration.growth.push({
             value: `${before}${currentValue.toLocaleString()}${after}`,
             comparison: (result === 0 && 0) || +(result.toFixed(2)).toLocaleString(),
@@ -707,8 +712,8 @@ class AxisChart {
       } else if (d.data && d.data.length === 1) {
         configuration.growth.push({
           value: `${before}${d.data[0]}${after}`,
-          comparison: 100,
-          status: "positive",
+          comparison: this.chart.invertGrowth ? -100 : 100,
+          status: this.chart.invertGrowth ? "negative" : "positive",
           label: d.label,
         });
 
@@ -733,8 +738,10 @@ class AxisChart {
 
         configuration.growth.push({
           value: `${before}${currentValue.toLocaleString()}${after}`,
-          comparison: currentValue * 100,
-          status: (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
+          comparison: this.chart.invertGrowth ? -currentValue * 100 : currentValue * 100,
+          status: this.chart.invertGrowth
+            ? (currentValue > 0 && "negative") || (currentValue < 0 && "positive") || "neutral"
+            : (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
           label: d.label,
         });
 

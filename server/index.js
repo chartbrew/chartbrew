@@ -48,6 +48,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
+app.set("query parser", "simple");
 app.use(json());
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet({

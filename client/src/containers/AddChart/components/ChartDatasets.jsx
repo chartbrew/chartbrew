@@ -58,6 +58,12 @@ function ChartDatasets(props) {
     }
   }, [datasets]);
 
+  useEffect(() => {
+    if (chart?.ChartDatasetConfigs?.length > 0 && !activeCdc) {
+      setActiveCdc(chart?.ChartDatasetConfigs[0]?.id);
+    }
+  }, [chart]);
+
   const _filteredDatasets = () => {
     if (tag === "project") {
       return datasets.filter((d) => (

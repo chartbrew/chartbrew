@@ -11,7 +11,7 @@ import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
 import template from "../slices/template";
 import alert from "../slices/alert";
-import integration from "./integration";
+import integration from "../slices/integration";
 
 const AppReducer = {
   user,

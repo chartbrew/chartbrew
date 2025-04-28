@@ -1,6 +1,6 @@
 import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
-import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuCopy, LuDatabase, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -183,7 +183,25 @@ function DatasetList() {
           </TableColumn>
           <TableColumn key="actions" align="center" hideHeader />
         </TableHeader>
-        <TableBody>
+        <TableBody
+          emptyContent={
+            connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
+              <div className="flex flex-col items-center gap-1">
+                <LuDatabase />
+                <span>No datasets found</span>
+                <Spacer y={1} />
+                <Button
+                  onPress={() => navigate(`/${team.id}/connection/new`)}
+                  color="primary"
+                >
+                  Create your first connection
+                </Button>
+              </div>
+            ) : (
+              "No datasets found"
+            )
+          }
+        >
           {_getFilteredDatasets().map((dataset) => (
             <TableRow key={dataset.id}>
               <TableCell key="name">

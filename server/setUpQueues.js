@@ -6,6 +6,8 @@ const { ExpressAdapter } = require("@bull-board/express");
 const { getQueueOptions } = require("./redisConnection");
 const updateCharts = require("./crons/updateCharts");
 const updateDashboards = require("./crons/updateDashboards");
+const sendSnapshots = require("./crons/sendSnapshots");
+// const updateSnapshots = require("./crons/updateSnapshots");
 
 async function cleanActiveJobs(queue) {
   try {
@@ -69,6 +71,38 @@ const setUpQueues = (app) => {
     await updateMongoDBSchema(job);
   }, { connection: updateMongoDBSchemaQueue.opts.connection, concurrency: 1 });
 
+  /*
+  ** Dashboard Snapshot Queue
+  */
+  const dashboardSnapshotQueue = new Queue("sendSnapshotsQueue", getQueueOptions());
+  dashboardSnapshotQueue.on("error", (error) => {
+    if (error.code === "ECONNREFUSED") {
+      console.error("Failed to set up the dashboard snapshot queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      process.exit(1);
+    }
+  });
+  // create a worker for the dashboardSnapshotQueue
+  const sendSnapshotWorker = new Worker(dashboardSnapshotQueue.name, async (job) => { // eslint-disable-line
+    const sendSnapshot = require("./crons/workers/sendSnapshot"); // eslint-disable-line
+    await sendSnapshot(job);
+  }, { connection: dashboardSnapshotQueue.opts.connection, concurrency: 1 });
+
+  /*
+  ** Update Snapshots Queue
+  */
+  const updateSnapshotsQueue = new Queue("updateSnapshotsQueue", getQueueOptions());
+  updateSnapshotsQueue.on("error", (error) => {
+    if (error.code === "ECONNREFUSED") {
+      console.error("Failed to set up the update snapshots queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      process.exit(1);
+    }
+  });
+  // create a worker for the updateSnapshotsQueue
+  const takeSnapshotWorker = new Worker(updateSnapshotsQueue.name, async (job) => { // eslint-disable-line
+    const takeSnapshot = require("./crons/workers/takeSnapshot"); // eslint-disable-line
+    await takeSnapshot(job);
+  }, { connection: updateSnapshotsQueue.opts.connection, concurrency: 10 });
+
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/apps/queues");
 
@@ -77,6 +111,8 @@ const setUpQueues = (app) => {
       new BullMQAdapter(updateChartsQueue),
       new BullMQAdapter(updateDashboardsQueue),
       new BullMQAdapter(updateMongoDBSchemaQueue),
+      new BullMQAdapter(dashboardSnapshotQueue),
+      new BullMQAdapter(updateSnapshotsQueue),
     ],
     serverAdapter,
     options: {
@@ -94,6 +130,10 @@ const setUpQueues = (app) => {
   // set up cron jobs
   updateCharts(updateChartsQueue);
   updateDashboards(updateDashboardsQueue);
+  sendSnapshots(dashboardSnapshotQueue);
+
+  // Uncomment this to enable regular snapshot updates
+  // updateSnapshots(updateSnapshotsQueue, takeSnapshotWorker);
 
   // Handle PM2 shutdown/reload
   process.on("SIGINT", async () => {

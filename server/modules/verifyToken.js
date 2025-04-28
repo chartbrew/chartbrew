@@ -38,6 +38,9 @@ module.exports = async (req, res, next) => {
         attributes: ["id", "method"],
         where: { isEnabled: true },
         required: false
+      }, {
+        model: db.PinnedDashboard,
+        required: false,
       }]
     })
       .then((user) => {

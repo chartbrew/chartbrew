@@ -23,7 +23,9 @@ import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import ClickHouseConnectionForm from "./ClickHouse/ClickHouseConnectionForm";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection, selectConnections } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
-import { generateInviteUrl } from "../../slices/team";
+import { generateInviteUrl, selectTeam } from "../../slices/team";
+import canAccess from "../../config/canAccess";
+import { selectUser } from "../../slices/user";
 
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
@@ -44,7 +46,9 @@ function ConnectionWizard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const connections = useSelector(selectConnections)
+  const connections = useSelector(selectConnections);
+  const user = useSelector(selectUser);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     dispatch(getTeamConnections({ team_id: params.teamId }));
@@ -160,6 +164,28 @@ function ConnectionWizard() {
       setInviteCopied(false);
     }, 2000);
   };
+
+  const _canAccess = (role, teamRoles) => {
+    return canAccess(role, user.id, teamRoles);
+  };
+
+  if (!_canAccess("teamAdmin", team.TeamRoles)) {
+    return (
+      <div>
+        <Navbar hideTeam transparent />
+        <div className="flex flex-col items-center justify-center h-screen">
+          <span className="text-xl text-secondary font-semibold">{"You don't have access to this page"}</span>
+          <Spacer y={2} />
+          <Button
+            color="primary"
+            onPress={() => navigate("/")}
+          >
+            Return to dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -6,6 +6,7 @@ import { useWindowSize } from "react-use";
 import {
   Button, Spacer, Chip, CircularProgress,
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
+  Spinner,
 } from "@heroui/react";
 import {
   LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers,
@@ -151,9 +152,7 @@ function UserDashboard(props) {
   return (
     <div className="dashboard bg-content2 flex flex-col min-h-screen h-full">
       <Navbar hideTeam transparent />
-      <div className="container mx-auto px-4">
-        <Spacer y={4} />
-
+      <div className="w-full max-w-screen-2xl mx-auto px-4">
         {team?.id && (
           <div className="grid grid-cols-12 gap-4 mt-4">
             <div className="col-span-12 sm:col-span-5 md:col-span-4 lg:col-span-3">
@@ -165,9 +164,9 @@ function UserDashboard(props) {
                   <Dropdown aria-label="Select a team option">
                     <DropdownTrigger>
                       <Button
-                        startContent={<LuUsers size={28} />}
+                        startContent={<LuUsers size={20} />}
                         variant="bordered"
-                        className="bg-background"
+                        className="bg-background justify-between"
                         endContent={<LuChevronDown />}
                         fullWidth
                       >
@@ -264,6 +263,7 @@ function UserDashboard(props) {
                 </Listbox>
               </Segment>
 
+
               <NoticeBoard />
             </div>
 
@@ -281,13 +281,13 @@ function UserDashboard(props) {
 
         {(teams && teams.length === 0) && (
           <>
-            <Row align="center" justify="center">
-              <CircularProgress aria-label="Loading" size="xl" />
-            </Row>
+            <div className="flex justify-center items-center">
+              <Spinner variant="simple" aria-label="Loading" />
+            </div>
             <Spacer y={1} />
-            <Row align="center" justify="center">
-              <Text size="lg" className={"text-gray-400"}>Loading your space</Text>
-            </Row>
+            <div className="flex justify-center items-center">
+              <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
+            </div>
           </>
         )}
       </div>

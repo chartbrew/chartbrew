@@ -1,6 +1,6 @@
 import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import React, { useState } from "react"
-import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
+import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
@@ -169,7 +169,25 @@ function ConnectionList() {
           </TableColumn>
           <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          emptyContent={
+            connections.length === 0 ? (
+              <div className="flex flex-col items-center gap-1">
+                <LuPlug />
+                <span>No connections found</span>
+                <Spacer y={1} />
+                <Button
+                  onPress={() => navigate(`/${team.id}/connection/new`)}
+                  color="primary"
+                >
+                  Create your first connection
+                </Button>
+              </div>
+            ) : (
+              "No connections found"
+            )
+          }
+        >
           {_getFilteredConnections()?.map((connection) => (
             <TableRow key={connection.id}>
               <TableCell key="name">

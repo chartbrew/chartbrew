@@ -1,5 +1,11 @@
+import { widthSize } from "./layoutBreakpoints";
+
 export default function getDashboardLayout(charts) {
-  const layouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+  const layouts = Object.keys(widthSize).reduce((acc, key) => {
+    acc[key] = [];
+    return acc;
+  }, {});
+
   charts.forEach((chart) => {
     if (chart.layout) {
       Object.keys(chart.layout).forEach((key) => {
