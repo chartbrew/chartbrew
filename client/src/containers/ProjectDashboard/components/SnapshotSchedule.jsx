@@ -61,23 +61,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
   useEffect(() => {
     if (project?.snapshotSchedule && !initRef.current) {
       initRef.current = true;
-      setSchedule({
-        timezone: project.timezone || project?.snapshotSchedule?.timezone || getMachineTimezone(),
-        frequency: project.snapshotSchedule?.frequency || undefined,
-        dayOfWeek: project.snapshotSchedule?.dayOfWeek || undefined,
-        frequencyNumber: project.snapshotSchedule?.frequencyNumber || undefined,
-        time: project.snapshotSchedule?.time ? new Time(project.snapshotSchedule.time?.hour, project.snapshotSchedule.time?.minute) : undefined,
-        mediums: project.snapshotSchedule?.mediums || {
-          email: {
-            enabled: true,
-          }
-        },
-        viewport: project.snapshotSchedule?.viewport || {
-          width: 1920,
-          height: 1080,
-        },
-        theme: project.snapshotSchedule?.theme || "light",
-      });
+      _resetSchedule();
       if (project.snapshotSchedule?.integrations) {
         setSelectedIntegrations(project.snapshotSchedule.integrations);
       }
@@ -92,6 +76,26 @@ function SnapshotSchedule({ isOpen, onClose }) {
       dispatch(getTeamIntegrations({ team_id: team.id }));
     }
   }, [team?.id]);
+
+  const _resetSchedule = () => {
+    setSchedule({
+      timezone: project.timezone || project?.snapshotSchedule?.timezone || getMachineTimezone(),
+      frequency: project.snapshotSchedule?.frequency || undefined,
+      dayOfWeek: project.snapshotSchedule?.dayOfWeek || undefined,
+      frequencyNumber: project.snapshotSchedule?.frequencyNumber || undefined,
+      time: project.snapshotSchedule?.time ? new Time(project.snapshotSchedule.time?.hour, project.snapshotSchedule.time?.minute) : undefined,
+      mediums: project.snapshotSchedule?.mediums || {
+        email: {
+          enabled: true,
+        }
+      },
+      viewport: project.snapshotSchedule?.viewport || {
+        width: 1920,
+        height: 1080,
+      },
+      theme: project.snapshotSchedule?.theme || "light",
+    });
+  };
 
   const frequencies = [
     { label: "Daily", value: "daily" },
@@ -168,6 +172,24 @@ function SnapshotSchedule({ isOpen, onClose }) {
       toast.error(response.error.message, { autoClose: 2000 });
     } else {
       toast.success("Schedule updated", { autoClose: 2000 });
+    }
+
+    setIsLoading(false);
+  };
+
+  const _onRemoveSchedule = async () => {
+    setIsLoading(true);
+    const response = await dispatch(updateProject({
+      project_id: project.id,
+      data: { snapshotSchedule: null }
+    }));
+
+    if (response?.error?.message) {
+      toast.error(response.error.message, { autoClose: 2000 });
+    } else {
+      toast.success("Schedule removed", { autoClose: 2000 });
+      await dispatch(getProject({ project_id: project.id, active: true }));
+      onClose();
     }
 
     setIsLoading(false);
@@ -538,12 +560,22 @@ function SnapshotSchedule({ isOpen, onClose }) {
               </div>
             </div>
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter className="items-center">
+            {!project?.snapshotSchedule?.frequency && (
+              <div className="text-sm text-gray-500">
+                {"Schedule is not set yet"}
+              </div>
+            )}
             <Button variant="bordered" onPress={onClose}>
               Close
             </Button>
+            {project?.snapshotSchedule?.frequency && (
+              <Button variant="flat" onPress={_onRemoveSchedule} color="danger">
+                Remove schedule
+              </Button>
+            )}
             <Button onPress={_onSave} color="primary" isLoading={isLoading} isDisabled={!_canSave()}>
-              {"Save"}
+              {project?.snapshotSchedule?.frequency ? "Update" : "Set schedule"}
             </Button>
           </ModalFooter>
         </ModalContent>
