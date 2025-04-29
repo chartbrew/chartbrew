@@ -12,7 +12,9 @@ function throttlePromises(promises, chunkSize, index) {
 
 module.exports = {
   async up() {
-    const chartDatasetConfigs = await db.ChartDatasetConfig.findAll();
+    const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
+      attributes: ["id", "excludedFields", "fillColor", "columnsOrder"],
+    });
 
     const updates = [];
     chartDatasetConfigs.forEach((chartDatasetConfig) => {
