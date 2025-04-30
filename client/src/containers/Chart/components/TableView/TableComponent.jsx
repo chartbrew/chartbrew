@@ -209,7 +209,10 @@ function TableComponent(props) {
                       {(column.isSorted || column.isSortedDesc) && <Spacer x={1} />}
                       <LinkNext
                         className="text-sm cursor-pointer hover:text-secondary"
-                        onPress={column.getHeaderProps(column.getSortByToggleProps()).onClick}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          column.getSortByToggleProps().onClick(e);
+                        }}
                       >
                         <Text className={"text-foreground-500"}>
                           {typeof column.render("Header") === "object"
