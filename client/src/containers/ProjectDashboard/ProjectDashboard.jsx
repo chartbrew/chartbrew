@@ -8,6 +8,7 @@ import {
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
   Tabs,
   Tab,
+  Badge,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -44,7 +45,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
-import { selectUser } from "../../slices/user";
+import { completeTutorial, selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
@@ -946,15 +947,47 @@ function ProjectDashboard(props) {
                       </Button>
                     </Tooltip>
                     <Dropdown aria-label="Dashboard actions">
-                      <DropdownTrigger>
-                        <Button
-                          variant="ghost"
-                          isIconOnly
-                          size="sm"
+                      {!user?.tutorials?.projectSettings && (
+                        <Badge
+                          color="secondary"
+                          shape="circle"
+                          content=""
+                          className="absolute top-[-4px] right-[-4px]"
+                          classNames={{
+                            badge: "animate-pulse",
+                          }}
                         >
-                          <LuEllipsisVertical size={20} />
-                        </Button>
-                      </DropdownTrigger>
+                          <DropdownTrigger
+                            onClick={() => dispatch(completeTutorial({
+                              user_id: user.id,
+                              tutorial: { projectSettings: true },
+                            }))}
+                          >
+                            <Button
+                              variant="ghost"
+                              isIconOnly
+                              size="sm"
+                              onPress={() => dispatch(completeTutorial({
+                                user_id: user.id,
+                                tutorial: { projectSettings: true },
+                              }))}
+                            >
+                              <LuEllipsisVertical size={20} />
+                            </Button>
+                          </DropdownTrigger>
+                        </Badge>
+                      )}
+                      {user?.tutorials?.projectSettings && (
+                        <DropdownTrigger>
+                          <Button
+                            variant="ghost"
+                            isIconOnly
+                            size="sm"
+                          >
+                            <LuEllipsisVertical size={20} />
+                          </Button>
+                        </DropdownTrigger>
+                      )}
                       <DropdownMenu>
                         <DropdownItem
                           startContent={<LuLayoutDashboard />}
