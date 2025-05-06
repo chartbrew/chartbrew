@@ -119,8 +119,12 @@ function TableConfiguration(props) {
   };
 
   const _onUpdateFieldFormatting = async (config) => {
-    const newConfiguration = JSON.parse(JSON.stringify(dataset.configuration));
-    if (!newConfiguration.columnsFormatting) {
+    let newConfiguration = JSON.parse(JSON.stringify(dataset.configuration));
+    if (!newConfiguration) {
+      newConfiguration = {};
+    }
+
+    if (!newConfiguration?.columnsFormatting) {
       newConfiguration.columnsFormatting = {};
     }
 
