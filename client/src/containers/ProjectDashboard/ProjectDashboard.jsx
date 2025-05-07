@@ -1008,7 +1008,7 @@ function ProjectDashboard(props) {
                             onPress={() => setSnapshotScheduleVisible(true)}
                             endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
                           >
-                            {"Schedule deliveries"}
+                            {"Dashboard snapshots"}
                           </DropdownItem>
                         )}
                         {_canAccess("teamAdmin") && (

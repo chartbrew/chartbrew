@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import { Autocomplete, AutocompleteItem, Button, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@heroui/react";
 import timezones from "../../../modules/timezones";
-import { LuMapPin, LuSend } from "react-icons/lu";
+import { LuMapPin, LuMonitorUp } from "react-icons/lu";
 import { getProject, selectProject, updateProject } from "../../../slices/project";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -243,7 +243,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
 
           <Divider />
           <Link onPress={openSnapshotSchedule} className="flex flex-row items-center gap-2 cursor-pointer text-sm">
-            <LuSend />
+            <LuMonitorUp />
             <span>Get your reports delivered to your inbox, slack, and more.</span>
           </Link>
         </ModalBody>
