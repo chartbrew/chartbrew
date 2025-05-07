@@ -32,11 +32,6 @@ async function checkSnapshots(queue) {
         frequencyNumber,
       } = project.snapshotSchedule || {};
 
-      let formattedTime;
-      if (time?.hour !== undefined && time?.minute !== undefined) {
-        formattedTime = `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}`;
-      }
-
       const now = DateTime.now().setZone(timezone);
       const lastSnapshot = project.lastSnapshotSentAt
         ? DateTime.fromJSDate(project.lastSnapshotSentAt, { zone: timezone })
@@ -47,7 +42,11 @@ async function checkSnapshots(queue) {
       if (!lastSnapshot) {
         shouldSend = true;
       } else if (frequency === "daily") {
-        const sendTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
+        const sendTime = DateTime.now()
+          .setZone(timezone)
+          .set({
+            hour: time.hour, minute: time.minute, second: 0, millisecond: 0
+          });
         shouldSend = now > sendTime && now.diff(lastSnapshot, "days").as("days") >= 1;
       } else if (frequency === "weekly" && dayOfWeek) {
         let weekdayNumber;
@@ -66,7 +65,15 @@ async function checkSnapshots(queue) {
         }
 
         if (weekdayNumber) {
-          const sendTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: weekdayNumber });
+          const sendTime = DateTime.now()
+            .setZone(timezone)
+            .set({
+              hour: time.hour,
+              minute: time.minute,
+              second: 0,
+              millisecond: 0,
+              weekday: weekdayNumber
+            });
           shouldSend = now > sendTime && now.diff(lastSnapshot, "weeks").as("weeks") >= 1;
         }
       } else if (frequency === "every_x_days") {

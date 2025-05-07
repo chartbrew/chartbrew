@@ -34,11 +34,6 @@ async function updateDashboards(queue) {
         frequencyNumber,
       } = dashboard.updateSchedule || {};
 
-      let formattedTime;
-      if (time?.hour !== undefined && time?.minute !== undefined) {
-        formattedTime = `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}`;
-      }
-
       const now = DateTime.now().setZone(timezone);
       const lastUpdated = dashboard.lastUpdatedAt
         ? DateTime.fromJSDate(dashboard.lastUpdatedAt, { zone: timezone })
@@ -49,7 +44,14 @@ async function updateDashboards(queue) {
       if (!lastUpdated) {
         shouldUpdate = true;
       } else if (frequency === "daily") {
-        const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone });
+        const updateTime = DateTime.now()
+          .setZone(timezone)
+          .set({
+            hour: time.hour,
+            minute: time.minute,
+            second: 0,
+            millisecond: 0
+          });
         shouldUpdate = now > updateTime && now.diff(lastUpdated, "days").as("days") >= 1;
       } else if (frequency === "weekly" && dayOfWeek) {
         let weekdayNumber;
@@ -68,7 +70,15 @@ async function updateDashboards(queue) {
         }
 
         if (weekdayNumber) {
-          const updateTime = DateTime.fromFormat(formattedTime, "HH:mm", { zone: timezone }).set({ weekday: weekdayNumber });
+          const updateTime = DateTime.now()
+            .setZone(timezone)
+            .set({
+              hour: time.hour,
+              minute: time.minute,
+              second: 0,
+              millisecond: 0,
+              weekday: weekdayNumber
+            });
           shouldUpdate = now > updateTime && now.diff(lastUpdated, "weeks").as("weeks") >= 1;
         }
       } else if (frequency === "every_x_days") {
