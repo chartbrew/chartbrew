@@ -9,6 +9,7 @@ import {
 import {
   LuCamera, LuLaptop, LuMail, LuMailPlus, LuMapPin, LuMonitor, LuPlus, LuRefreshCw, LuSettings,
   LuSlack, LuSmartphone, LuTablet, LuWebhook, LuSun, LuMoon,
+  LuCopy,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -251,6 +252,21 @@ function SnapshotSchedule({ isOpen, onClose }) {
     setCustomEmails(uniqueEmails);
   };
 
+  const _onCopyToClipboard = async () => {
+    try {
+      const response = await fetch(snapshotPath);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob
+        })
+      ]);
+      toast.success("Copied to clipboard", { autoClose: 2000 });
+    } catch (error) {
+      toast.error("Failed to copy image", { autoClose: 2000 });
+    }
+  }
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
@@ -450,14 +466,24 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 <div className="font-medium">
                   {"Preview"}
                 </div>
-                <Button
-                  variant="flat"
-                  size="sm"
-                  onPress={() => navigate(`/b/${project.brewName}`)}
-                  startContent={<LuSettings size={18} />}
-                >
-                  Edit visuals
-                </Button>
+                <div className="flex flex-row items-center gap-2">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    onPress={_onCopyToClipboard}
+                    startContent={<LuCopy size={18} />}
+                  >
+                    Copy image
+                  </Button>
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    onPress={() => navigate(`/b/${project.brewName}`)}
+                    startContent={<LuSettings size={18} />}
+                  >
+                    Edit visuals
+                  </Button>
+                </div>
               </div>
 
               {snapshotPath && (
