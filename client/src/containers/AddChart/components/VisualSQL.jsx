@@ -817,7 +817,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           isIconOnly
           size="sm"
           variant="light"
-          onClick={() => setViewFilter(true)}
+          onPress={() => setViewFilter(true)}
         >
           <LuPlus />
         </Button>
@@ -834,7 +834,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             color="primary"
             variant="flat"
           >
-            {condition.left?.column}
+            {typeof condition.left?.column === "object" ? condition.left.column?.expr?.value : condition.left?.column}
           </Button>
           <Button
             size="sm"
@@ -854,7 +854,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => _onRemoveFilter(condition)}
+            onPress={() => _onRemoveFilter(condition)}
           >
             <LuX />
           </Button>
@@ -875,7 +875,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => _onRemoveGroup(group)}
+            onPress={() => _onRemoveGroup(group)}
           >
             <LuX />
           </Button>
@@ -896,7 +896,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => _onRemoveOrder(order)}
+            onPress={() => _onRemoveOrder(order)}
           >
             <LuX />
           </Button>
@@ -917,7 +917,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => _onRemoveLimit()}
+            onPress={() => _onRemoveLimit()}
           >
             <LuX />
           </Button>
@@ -935,7 +935,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         <Button
           variant="flat"
           size="sm"
-          onClick={() => _onAddJoin()}
+          onPress={() => _onAddJoin()}
         >
           join
         </Button>
@@ -1021,13 +1021,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewJoin(false)}
+              onPress={() => setViewJoin(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onChangeJoin(viewJoin)}
+              onPress={() => _onChangeJoin(viewJoin)}
             >
               Save
             </Button>
@@ -1063,14 +1063,14 @@ function VisualSQL({ schema, query, updateQuery, type }) {
               <Button
                 variant="flat"
                 size="sm"
-                onClick={() => setSelectedColumns(_getAvailableColumns())}
+                onPress={() => setSelectedColumns(_getAvailableColumns())}
               >
                 Select all
               </Button>
               <Button
                 variant="flat"
                 size="sm"
-                onClick={() => setSelectedColumns([])}
+                onPress={() => setSelectedColumns([])}
               >
                 Select none
               </Button>
@@ -1079,13 +1079,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewAddColumn(false)}
+              onPress={() => setViewAddColumn(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onAddColumn()}
+              onPress={() => _onAddColumn()}
             >
               Add
             </Button>
@@ -1147,13 +1147,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewFilter(false)}
+              onPress={() => setViewFilter(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onAddFilter(newFilter)}
+              onPress={() => _onAddFilter(newFilter)}
               isDisabled={!newFilter.column || !newFilter.operator || !newFilter.value}
             >
               Add
@@ -1189,13 +1189,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewGroupBy(false)}
+              onPress={() => setViewGroupBy(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onAddGroupBy()}
+              onPress={() => _onAddGroupBy()}
             >
               Add
             </Button>
@@ -1238,13 +1238,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewOrderBy(false)}
+              onPress={() => setViewOrderBy(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onAddOrderBy()}
+              onPress={() => _onAddOrderBy()}
             >
               Add
             </Button>
@@ -1270,13 +1270,13 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setViewLimit(false)}
+              onPress={() => setViewLimit(false)}
             >
               Close
             </Button>
             <Button
               color="primary"
-              onClick={() => _onAddLimit()}
+              onPress={() => _onAddLimit()}
             >
               Save limit
             </Button>
