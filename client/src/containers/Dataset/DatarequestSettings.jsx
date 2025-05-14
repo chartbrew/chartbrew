@@ -41,6 +41,7 @@ function DatarequestSettings(props) {
   const dispatch = useDispatch();
   const initRef = useRef(null);
   const responseInitRef = useRef(null);
+  const joinInitRef = useRef(null);
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
@@ -76,7 +77,30 @@ function DatarequestSettings(props) {
         .catch(() => {});
     }
   }, [dataset?.main_dr_id, dataRequests]);
-  
+
+  useEffect(() => {
+    if (dataset?.joinSettings?.joins && !joinInitRef.current) {
+      joinInitRef.current = true;
+      dataset.joinSettings.joins.forEach(join => {
+        if (join.dr_id) {
+          dispatch(runDataRequest({
+            team_id: params.teamId,
+            dataset_id: dataset.id,
+            dataRequest_id: join.dr_id,
+            getCache: true
+          })).catch(() => {});
+        }
+        if (join.join_id) {
+          dispatch(runDataRequest({
+            team_id: params.teamId,
+            dataset_id: dataset.id,
+            dataRequest_id: join.join_id,
+            getCache: true
+          })).catch(() => {});
+        }
+      });
+    }
+  }, [dataset?.joinSettings?.joins]);
 
   useEffect(() => {
     if (_.isEqual(dataset?.joinSettings?.joins, joins)) {
@@ -131,7 +155,7 @@ function DatarequestSettings(props) {
   const _onAddJoin = () => {
     const newJoinSettings = {
       key: nanoid(6),
-      dr_id: joins.length === 0 ? dataset.main_dr_id : null,
+      dr_id: joins.length === 0 ? dataset.main_dr_id : joins[joins.length - 1].dr_id,
       join_id: null,
       dr_field: "",
       join_field: "",
@@ -317,8 +341,8 @@ function DatarequestSettings(props) {
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { dr_id: parseInt(keys.currentKey, 10) })}
                     selectionMode="single"
                     color="primary"
-                    isDisabled
                     aria-label="Select a source"
+                    isDisabled={index === 0}
                   >
                     {_getAllowedDataRequests(index).map((request) => (
                       <SelectItem
