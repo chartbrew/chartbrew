@@ -406,7 +406,14 @@ export const datasetSlice = createSlice({
         state.loading = false;
         if (state.data.find((dataset) => dataset.id === action.payload.id)) {
           state.data = state.data.map((dataset) =>
-            dataset.id === action.payload.id ? action.payload : dataset
+            dataset.id === action.payload.id ? {
+              ...dataset,
+              ...action.payload,
+              DataRequests: dataset.DataRequests?.map((dr) => ({
+                ...dr,
+                response: dr.response
+              }))
+            } : dataset
           );
         }
         else {
@@ -443,6 +450,7 @@ export const datasetSlice = createSlice({
 
         if (indexReq > -1) {
           state.responses[indexReq] = {
+            ...state.responses[indexReq],
             data: action.payload.data,
             dataset_id: datasetId,
           };

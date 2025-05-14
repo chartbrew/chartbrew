@@ -40,6 +40,7 @@ function DatarequestSettings(props) {
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(null);
+  const responseInitRef = useRef(null);
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
@@ -48,9 +49,34 @@ function DatarequestSettings(props) {
   useEffect(() => {
     if (dataset?.joinSettings?.joins && !initRef.current) {
       initRef.current = true;
-      setJoins([...dataset.joinSettings.joins]);
+      const newJoins = dataset.joinSettings.joins.map(join => ({...join}));
+      setJoins(newJoins);
+
+      // also change the first item of joins
+      if (!newJoins?.[0]?.dr_id) {
+        newJoins[0] = {
+          ...newJoins[0],
+          dr_id: parseInt(dataset.main_dr_id, 10)
+        };
+        setJoins(newJoins);
+      }
     }
   }, [dataset]);
+
+  useEffect(() => {
+    const dr = dataRequests.find((o) => o.id === dataset.main_dr_id);
+    if (dr && !responseInitRef.current) {
+      responseInitRef.current = true;
+      dispatch(runDataRequest({
+        team_id: params.teamId,
+        dataset_id: dataset.id,
+        dataRequest_id: dataset.main_dr_id,
+        getCache: true
+      }))
+        .catch(() => {});
+    }
+  }, [dataset?.main_dr_id, dataRequests]);
+  
 
   useEffect(() => {
     if (_.isEqual(dataset?.joinSettings?.joins, joins)) {
@@ -61,37 +87,6 @@ function DatarequestSettings(props) {
       setIsSaved(false);
     }
   }, [dataset, joins]);
-
-  useEffect(() => {
-    if (joins && joins.length > 0) {
-      joins.forEach((data) => {
-        if (data.dr_id || data.join_id) {
-          // check to see if there is a response for the data request
-          const dr = dataRequests.find((o) => o?.id === data.dr_id);
-          if (!dr?.response || !dr.response?.data) {
-            dispatch(runDataRequest({
-              team_id: params.teamId,
-              dataset_id: dataset.id,
-              dataRequest_id: data.dr_id,
-              getCache: true
-            }))
-              .catch(() => {});
-          }
-
-          const drJoin = dataRequests.find((o) => o?.id === data.join_id);
-          if (!drJoin?.response || !drJoin.response?.data) {
-            dispatch(runDataRequest({
-              team_id: params.teamId,
-              dataset_id: dataset.id,
-              dataRequest_id: data.join_id,
-              getCache: true,
-            }))
-              .catch(() => {});
-          }
-        }
-      });
-    }
-  }, [joins]);
 
   useEffect(() => {
     if (responses && responses.length > 0 && dataset && dataset.id) {
@@ -154,6 +149,33 @@ function DatarequestSettings(props) {
       newJoins[index] = { ...newJoins[index], ...data };
     } else {
       newJoins.push({ ...data, key });
+    }
+
+    // check if 
+    if (data?.dr_id) {
+      const dr = dataRequests.find((o) => o?.id === data.dr_id);
+      if (!dr?.response || !dr.response?.data) {
+        dispatch(runDataRequest({
+          team_id: params.teamId,
+          dataset_id: dataset.id,
+          dataRequest_id: data.dr_id,
+          getCache: true
+        }))
+          .catch(() => { });
+      }
+    }
+
+    if (data?.join_id) {
+      const drJoin = dataRequests.find((o) => o?.id === data.join_id);
+      if (!drJoin?.response || !drJoin.response?.data) {
+        dispatch(runDataRequest({
+          team_id: params.teamId,
+          dataset_id: dataset.id,
+          dataRequest_id: data.join_id,
+          getCache: true,
+        }))
+          .catch(() => { });
+      }
     }
 
     setJoins(newJoins);
@@ -248,6 +270,7 @@ function DatarequestSettings(props) {
               onSelectionChange={(keys) => _onChangeMainSource(keys.currentKey)}
               selectionMode="single"
               aria-label="Select a main source"
+              disallowEmptySelection
             >
               {dataRequests.map((request) => (
                 <SelectItem
@@ -281,20 +304,15 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5">
                   <Select
-                    size="sm"
                     variant="bordered"
                     placeholder="Select source"
-                    renderValue={() => (
-                      <div className="flex items-center gap-2">
-                        {_renderIcon(join.dr_id, "sm")}
-                        {dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
-                        {join.dr_id && (
-                          <Chip variant={"faded"} size="sm" color="primary">
-                            {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
-                          </Chip>
-                        )}
-                      </div>
-                    )}
+                    value={dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
+                    startContent={_renderIcon(join.dr_id, "sm")}
+                    endContent={
+                      <Chip variant={"flat"} size="sm" color="primary">
+                        {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
+                      </Chip>
+                    }
                     selectedKeys={[`${join.dr_id}`]}
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { dr_id: parseInt(keys.currentKey, 10) })}
                     selectionMode="single"
@@ -326,25 +344,21 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5">
                   <Select
-                    size="sm"
                     variant="bordered"
                     placeholder="Select source"
-                    renderValue={() => (
-                      <div className="flex items-center gap-2">
-                        { _renderIcon(join.join_id, "sm")}
-                        {dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
-                        {join.join_id && (
-                          <Chip variant={"faded"} size="sm" color="secondary">
-                            {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
-                          </Chip>
-                        )}
-                      </div>
-                    )}
+                    value={dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
+                    startContent={_renderIcon(join.join_id, "sm")}
+                    endContent={
+                      <Chip variant={"flat"} size="sm" color="secondary">
+                        {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
+                      </Chip>
+                    }
                     selectedKeys={[`${join.join_id}`]}
                     onSelectionChange={(keys) => _onChangeJoin(join.key, { join_id: parseInt(keys.currentKey, 10) })}
                     selectionMode="single"
                     color="secondary"
                     aria-label="Select a source"
+                    disallowEmptySelection
                   >
                     {dataRequests.map((request) => (
                       <SelectItem
@@ -446,7 +460,7 @@ function DatarequestSettings(props) {
               variant="light"
               color="primary"
               startContent={<LuPlus />}
-              onClick={() => _onAddJoin()}
+              onPress={() => _onAddJoin()}
             >
               Join with another source
             </Button>
@@ -457,7 +471,7 @@ function DatarequestSettings(props) {
                 variant="light"
                 color="danger"
                 startContent={<LuX />}
-                onClick={() => _onRemoveLastJoin()}
+                onPress={() => _onRemoveLastJoin()}
               >
                 Remove last join
               </Button>
@@ -471,7 +485,7 @@ function DatarequestSettings(props) {
           <Row>
             <Button
               auto
-              onClick={() => _onSaveJoins()}
+              onPress={() => _onSaveJoins()}
               size="sm"
               disabled={isSaved}
               isLoading={saveLoading}
@@ -486,7 +500,7 @@ function DatarequestSettings(props) {
               <Button
                 auto
                 color="warning"
-                onClick={() => _onRevertChanges()}
+                onPress={() => _onRevertChanges()}
                 size="sm"
                 variant="flat"
               >
@@ -501,7 +515,7 @@ function DatarequestSettings(props) {
               <Button
                 fullWidth
                 color="secondary"
-                onClick={() => _onRunDataset()}
+                onPress={() => _onRunDataset()}
                 endContent={<LuPlay />}
                 isLoading={isCompiling}
               >
