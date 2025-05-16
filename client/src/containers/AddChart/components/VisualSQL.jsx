@@ -364,7 +364,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         expr: {
           column,
           type: "column_ref",
-          table: { value: table, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
+          table: { value: table, type: type === "mysql" ? "backticks_quote_string" : "double_quote_string" }
         },
         as: null
       };
@@ -420,18 +420,18 @@ function VisualSQL({ schema, query, updateQuery, type }) {
   const _determineValueTypeFromSchema = (column) => {
     const columnType = schema[column]?.type;
     if (!columnType) {
-      return "double_quote_string";
+      return type === "mysql" ? "double_quote_string" : "single_quote_string";
     }
 
     if (columnType.includes("CHAR") || columnType.includes("VARCHAR") || columnType.includes("TEXT") || columnType.includes("LONGTEXT")) {
-      return "double_quote_string";
+      return type === "mysql" ? "double_quote_string" : "single_quote_string";
     } else if (columnType.includes("INT") || columnType.includes("TINYINT")) {
       return "number";
     } else if (columnType.includes("DATETIME") || columnType.includes("DATE") || columnType.includes("TIMESTAMP")) {
       return "date";
     }
 
-    return "double_quote_string";
+    return type === "mysql" ? "double_quote_string" : "single_quote_string";
   };
 
   const _getColumnsForFilter = () => {
@@ -444,7 +444,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           .map((column) => ({
             name: `${fromItem.as || fromItem.table}.${column}`,
             type: schema?.description[fromItem.table][column].type,
-            table: { value: fromItem.as || fromItem.table, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
+            table: { value: fromItem.as || fromItem.table, type: type === "mysql" ? "backticks_quote_string" : "double_quote_string" }
           }));
         allColumns = allColumns.concat(tableColumns);
       }
@@ -453,7 +453,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
           .map((column) => ({
             name: `${fromItem.joinTableAs || fromItem.joinTable}.${column}`,
             type: schema?.description[fromItem.joinTable][column].type,
-            table: { value: fromItem.joinTableAs || fromItem.joinTable, type: type === "mysql" ? "backticks_quote_string" : "single_quote_string" }
+            table: { value: fromItem.joinTableAs || fromItem.joinTable, type: type === "mysql" ? "backticks_quote_string" : "double_quote_string" }
           }));
         allColumns = allColumns.concat(joinTableColumns);
       }
@@ -462,6 +462,11 @@ function VisualSQL({ schema, query, updateQuery, type }) {
   };
 
   const _onAddFilter = () => {
+    let conditionValue = newFilter.value;
+    if (newFilter.operator === "LIKE" || newFilter.operator === "NOT LIKE") {
+      conditionValue = `%${conditionValue}%`;
+    }
+
     const newFilterCondition = {
       type: "binary_expr",
       operator: newFilter.operator,
@@ -472,7 +477,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
       },
       right: {
         type: _determineValueTypeFromSchema(newFilter.column.name),
-        value: newFilter.value
+        value: conditionValue
       }
     };
 
@@ -757,7 +762,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
               size="sm"
               color="primary"
               variant="flat"
-              onClick={() => setViewJoin({ ...fromItem, index })}
+              onPress={() => setViewJoin({ ...fromItem, index })}
             >
               {`${fromItem.joinTable} on ${fromItem.on.left} ${fromItem.on.operator} ${fromItem.on.right}`}
             </Button>
@@ -767,7 +772,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
               isIconOnly
               size="sm"
               variant="light"
-              onClick={() => _onRemoveJoin(index)}
+              onPress={() => _onRemoveJoin(index)}
             >
               <LuX />
             </Button>
@@ -778,14 +783,17 @@ function VisualSQL({ schema, query, updateQuery, type }) {
         <div className="flex flex-wrap gap-1 items-center">
           <Code variant="flat">Select columns</Code>
           {ast.columns.map((col) => (
-            <Popover key={col.expr.column}>
+            <Popover key={typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column}>
               <PopoverTrigger>
                 <Button
                   size="sm"
                   color="primary"
                   variant="flat"
                 >
-                  {col.expr.column === "*" ? "All" : col.expr.column}
+                  {typeof col.expr.column === "object" 
+                    ? (col.expr.column.expr.value === "*" ? "All" : col.expr.column.expr.value)
+                    : (col.expr.column === "*" ? "All" : col.expr.column)
+                  }
                 </Button>
               </PopoverTrigger>
               <PopoverContent>
@@ -794,7 +802,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
                   color="danger"
                   variant="light"
                   endContent={<LuX />}
-                  onClick={() => _onRemoveColumn(col.expr.column)}
+                  onPress={() => _onRemoveColumn(typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column)}
                 >
                   Remove
                 </Button>
@@ -805,7 +813,7 @@ function VisualSQL({ schema, query, updateQuery, type }) {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => setViewAddColumn(true)}
+            onPress={() => setViewAddColumn(true)}
           >
             <LuPlus />
           </Button>
@@ -825,7 +833,14 @@ function VisualSQL({ schema, query, updateQuery, type }) {
       {ast?.where && flattenConditions(ast.where).map((condition, index) => (
         <div key={index} className="flex gap-1 items-center ml-4">
           {index > 0 && ast?.where?.operator && (
-            <Chip size="sm" variant="faded" color="primary" radius="sm" className="cursor-pointer" onClick={() => _onChangeOperator(ast?.where?.operator)}>
+            <Chip
+              size="sm"
+              variant="faded"
+              color="primary"
+              radius="sm"
+              className="cursor-pointer"
+              onPress={() => _onChangeOperator(ast?.where?.operator)}
+            >
               {ast?.where?.operator}
             </Chip>
           )}
@@ -929,9 +944,9 @@ function VisualSQL({ schema, query, updateQuery, type }) {
       </div>
 
       <div className="flex gap-1 items-center">
-        <Button variant="flat" size="sm" onClick={() => setViewGroupBy(true)}>group</Button>
-        <Button variant="flat" size="sm" onClick={() => setViewOrderBy(true)}>order</Button>
-        <Button variant="flat" size="sm" onClick={() => setViewLimit(true)}>limit</Button>
+        <Button variant="flat" size="sm" onPress={() => setViewGroupBy(true)}>group</Button>
+        <Button variant="flat" size="sm" onPress={() => setViewOrderBy(true)}>order</Button>
+        <Button variant="flat" size="sm" onPress={() => setViewLimit(true)}>limit</Button>
         <Button
           variant="flat"
           size="sm"
