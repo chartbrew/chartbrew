@@ -409,10 +409,13 @@ export const datasetSlice = createSlice({
             dataset.id === action.payload.id ? {
               ...dataset,
               ...action.payload,
-              DataRequests: dataset.DataRequests?.map((dr) => ({
-                ...dr,
-                response: dr.response
-              }))
+              DataRequests: action.payload.DataRequests?.map((newDr) => {
+                const existingDr = dataset.DataRequests?.find(dr => dr.id === newDr.id);
+                return {
+                  ...newDr,
+                  response: existingDr?.response || newDr.response
+                };
+              })
             } : dataset
           );
         }
@@ -499,7 +502,7 @@ export const datasetSlice = createSlice({
           if (dataset.id === action.meta.arg.dataset_id) {
             return {
               ...dataset,
-              dataRequests: [
+              DataRequests: [
                 ...dataset.DataRequests,
                 action.payload,
               ],
