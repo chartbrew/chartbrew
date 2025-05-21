@@ -21,7 +21,7 @@ jobs:
           git config --global user.name "Chartbrew Mirror Bot"
           git config --global user.email "mirror@chartbrew.com"
 
-          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/chartbrew/chartbrew.git
+          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/razvanilin/chartbrew-mirror.git
 
           # Push all local branches
           for branch in $(git branch -r | grep -v '\->' | grep 'origin/' | sed 's/origin\///'); do
