@@ -11,12 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout full repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important: get all branches and tags
 
       - name: Push to GitLab
         run: |
           git config --global user.name "Chartbrew Mirror Bot"
-          git config --global user.email "support@chartbrew.com"
+          git config --global user.email "mirror@chartbrew.com"
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/razvanilin/chartbrew.git
-          git push --mirror gitlab
+
+          # Push all branches
+          for branch in $(git for-each-ref --format='%(refname:strip=3)' refs/heads/); do
+            git push gitlab "refs/heads/$branch:refs/heads/$branch"
+          done
+
+          # Push all tags
+          git push --tags gitlab
