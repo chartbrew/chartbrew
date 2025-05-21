@@ -11,22 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout full repo
+      - name: Full Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Needed to get all history
+          fetch-depth: 0  # Get full history and all branches
 
-      - name: Push to GitLab
+      - name: Setup & Push to GitLab
         run: |
           git config --global user.name "Chartbrew Mirror Bot"
           git config --global user.email "mirror@chartbrew.com"
 
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/razvanilin/chartbrew-mirror.git
 
-          # Push all local branches
-          for branch in $(git branch -r | grep -v '\->' | grep 'origin/' | sed 's/origin\///'); do
-            git push gitlab "refs/heads/$branch:refs/heads/$branch"
+          # Fetch all branches
+          git fetch origin
+
+          # Create local tracking branches for each remote branch
+          for branch in $(git branch -r | grep origin/ | grep -v 'HEAD' | sed 's|origin/||'); do
+            git checkout -B "$branch" "origin/$branch"
+            git push gitlab "$branch"
           done
 
-          # Push tags
-          git push --tags gitlab
+          # Push all tags
+          git push gitlab --tags
