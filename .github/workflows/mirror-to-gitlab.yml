@@ -1,0 +1,36 @@
+name: Mirror to GitLab
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Full Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Get full history and all branches
+
+      - name: Setup & Push to GitLab
+        run: |
+          git config --global user.name "Chartbrew Mirror Bot"
+          git config --global user.email "mirror@chartbrew.com"
+
+          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/razvanilin/chartbrew-mirror.git
+
+          # Fetch all branches
+          git fetch origin
+
+          # Create local tracking branches for each remote branch
+          for branch in $(git branch -r | grep origin/ | grep -v 'HEAD' | sed 's|origin/||'); do
+            git checkout -B "$branch" "origin/$branch"
+            git push gitlab "$branch"
+          done
+
+          # Push all tags
+          git push gitlab --tags
