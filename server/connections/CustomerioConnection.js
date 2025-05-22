@@ -355,6 +355,66 @@ function getCampaignMetrics(connection, dr) {
     });
 }
 
+async function getActivities(connection, dr) {
+  const options = getConnectionOpt(connection, dr);
+
+  // Add query parameters based on configuration
+  options.qs = {
+    limit: dr.configuration.limit || 100,
+  };
+
+  if (dr.configuration.activityType) {
+    options.qs.type = dr.configuration.activityType;
+  }
+
+  if (dr.configuration.eventName) {
+    options.qs.name = dr.configuration.eventName;
+  }
+
+  if (dr.configuration.deleted) {
+    options.qs.deleted = dr.configuration.deleted;
+  }
+
+  if (dr.configuration.customerId) {
+    options.qs.customer_id = dr.configuration.customerId;
+    if (dr.configuration.idType) {
+      options.qs.id_type = dr.configuration.idType;
+    }
+  }
+
+  const result = await paginateRequests("cursor", {
+    options,
+    limit: dr.itemsLimit,
+    items: "next",
+    offset: "start"
+  });
+
+  return {
+    activities: result.activities || [],
+    activity_count: result.activities ? result.activities.length : 0,
+  };
+}
+
+function getAllObjectTypes(connection) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: "object_types",
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData?.types) return parsedData.types;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Object types not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
 module.exports = {
   getConnectionOpt,
   getCustomers,
@@ -363,4 +423,6 @@ module.exports = {
   getCampaignMetrics,
   getCampaignLinks,
   getCampaignActions,
+  getActivities,
+  getAllObjectTypes,
 };

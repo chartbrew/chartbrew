@@ -1131,6 +1131,8 @@ class ConnectionController {
     let cioRoute = "customers";
     if (dataRequest?.route?.indexOf("campaigns") === 0) {
       cioRoute = "campaigns";
+    } else if (dataRequest?.route?.indexOf("activities") === 0) {
+      cioRoute = "activities";
     }
 
     if (cioRoute === "customers") {
@@ -1154,6 +1156,25 @@ class ConnectionController {
         });
     } else if (cioRoute === "campaigns") {
       return CustomerioConnection.getCampaignMetrics(connection, dataRequest)
+        .then(async (responseData) => {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData: {
+              data: responseData,
+            },
+            connection_id: connection.id,
+          };
+
+          await drCacheController.create(dataRequest.id, dataToCache);
+
+          return dataToCache;
+        })
+        .catch((err) => {
+          return new Promise((resolve, reject) => reject(err));
+        });
+    } else if (cioRoute === "activities") {
+      return CustomerioConnection.getActivities(connection, dataRequest)
         .then(async (responseData) => {
           // cache the data for later use
           const dataToCache = {

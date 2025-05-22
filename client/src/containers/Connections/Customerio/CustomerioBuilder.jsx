@@ -5,7 +5,7 @@ import {
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers } from "react-icons/lu";
+import { LuActivity, LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -20,6 +20,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import ActivitiesQuery from "./ActivitiesQuery";
 
 /*
   The Customer.io data request builder
@@ -107,6 +108,11 @@ function CustomerioBuilder(props) {
     setCioRequest({ ...cioRequest, method: "GET", route: "campaigns" });
   };
 
+  const _onSelectActivities = () => {
+    setEntity("activities");
+    setCioRequest({ ...cioRequest, method: "GET", route: "activities" });
+  };
+
   const _onUpdateCustomerConditions = (conditions) => {
     setConditions(conditions);
     setCioRequest({
@@ -114,6 +120,21 @@ function CustomerioBuilder(props) {
       configuration: {
         ...cioRequest.configuration,
         cioFilters: conditions
+      },
+    });
+  };
+
+  const _onUpdateActivitiesConfig = (data) => {
+    setCioRequest({
+      ...cioRequest,
+      configuration: {
+        ...cioRequest.configuration,
+        activityType: data.activityType,
+        eventName: data.eventName,
+        deleted: data.deleted,
+        customerId: data.customerId,
+        idType: data.idType,
+        limit: data.limit,
       },
     });
   };
@@ -237,6 +258,8 @@ function CustomerioBuilder(props) {
                     _onSelectCustomers();
                   } else if (key === "campaigns") {
                     _onSelectCampaigns();
+                  } else if (key === "activities") {
+                    _onSelectActivities();
                   }
                 }}
               >
@@ -257,12 +280,23 @@ function CustomerioBuilder(props) {
                       <span>Campaigns</span>
                     </div>
                   )}
-                /> 
+                />
+                <Tab
+                  key="activities"
+                  title={(
+                    <div className="flex items-center space-x-2">
+                      <LuActivity />
+                      <span>Activities</span>
+                    </div>
+                  )}
+                />
               </Tabs>
             </Row>
 
             {!entity && (
-              <Row><Text className={"italic"}>Select which type of data you want to get started with</Text></Row>
+              <div className="flex mt-4">
+                <Text className={"italic"}>Select which type of data you want to get started with</Text>
+              </div>
             )}
             <Spacer y={2} />
 
@@ -296,6 +330,16 @@ function CustomerioBuilder(props) {
                   connectionId={connection.id}
                   onUpdate={_onUpdateCampaignConfig}
                   request={cioRequest}
+                />
+              </Row>
+            )}
+
+            {entity === "activities" && (
+              <Row>
+                <ActivitiesQuery
+                  onUpdate={_onUpdateActivitiesConfig}
+                  request={cioRequest}
+                  connectionId={connection.id}
                 />
               </Row>
             )}
