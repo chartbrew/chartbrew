@@ -660,9 +660,10 @@ function GaBuilder(props) {
             <Button
               endContent={<LuPlay />}
               isLoading={requestLoading}
-              onClick={() => _onTest()}
+              onPress={() => _onTest()}
               className="w-full"
               color="primary"
+              variant="ghost"
             >
               Get analytics data
             </Button>

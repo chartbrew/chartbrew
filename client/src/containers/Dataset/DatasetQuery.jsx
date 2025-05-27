@@ -240,8 +240,8 @@ function DatasetQuery(props) {
 
   return (
     <>
-      <aside className="fixed top-50 left-0 z-40 w-16 h-screen">
-        <div className="h-full items-center py-2 overflow-y-auto flex flex-col gap-2">
+      <aside className="fixed top-32 left-0 z-40 w-20 h-screen">
+        <div className="h-full py-2 overflow-y-auto flex flex-col gap-2 items-center">
           {selectedRequest && (
             <>
               <Row>
@@ -307,9 +307,8 @@ function DatasetQuery(props) {
           </Row>
         </div>
       </aside>
-      <div className="grid grid-cols-12 ml-16">
+      <div className="grid grid-cols-12 ml-20">
         <div className="col-span-12">
-          <Divider />
           <Spacer y={4} />
         </div>
         {!createMode && selectedRequest?.isSettings && (
@@ -418,7 +417,7 @@ function DatasetQuery(props) {
           </div>
         )}
         {createMode && (
-          <div className="col-span-12 md:col-span-12 container mx-auto px-4">
+          <div className="col-span-12 md:col-span-12 max-w-screen-2xl mx-auto px-4">
             <Spacer y={1} />
             <Text size="h2">Select a connection</Text>
             <Spacer y={2} />

@@ -776,6 +776,8 @@ function FirestoreBuilder(props) {
               )}
             </div>
           )}
+
+          <Spacer y={20} />
         </div>
         <div className={"col-span-12 md:col-span-5"}>
           <Container>
@@ -783,9 +785,10 @@ function FirestoreBuilder(props) {
               <Button
                 endContent={<LuPlay />}
                 isLoading={requestLoading}
-                onClick={() => _onTest()}
+                onPress={() => _onTest()}
                 className={"w-full"}
                 color="primary"
+                variant="ghost"
               >
                 Get Firestore data
               </Button>

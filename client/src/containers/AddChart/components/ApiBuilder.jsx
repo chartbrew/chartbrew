@@ -315,7 +315,7 @@ function ApiBuilder(props) {
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="px-4 max-w-screen-2xl mx-auto">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row justify="space-between" align="center">
@@ -659,6 +659,7 @@ function ApiBuilder(props) {
               selectionMode="single"
               labelPlacement="ouside"
               aria-label="Select a method"
+              size="sm"
             >
               {methods.map((method) => (
                 <SelectItem key={method.value} textValue={method.text}>
@@ -667,11 +668,13 @@ function ApiBuilder(props) {
               ))}
             </Select>
             <Button
-              endContent={<LuPlay />}
+              endContent={<LuPlay size={16} />}
               isLoading={requestLoading}
-              onClick={() => _onTest()}
+              onPress={() => _onTest()}
               fullWidth
               color="primary"
+              size="sm"
+              variant="ghost"
             >
               {"Send the request"}
             </Button>

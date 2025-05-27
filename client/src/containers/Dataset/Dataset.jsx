@@ -2,22 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Button, Link, Spacer, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
+  Button, Link, Spacer, Input, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
+  Breadcrumbs, BreadcrumbItem,
 } from "@heroui/react";
 import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import Row from "../../components/Row";
-import Text from "../../components/Text";
-import {
-  createCdc,
-  createChart,
-  runQuery,
-} from "../../slices/chart";
-
-import {
-  getDataset, runRequest, saveNewDataset, updateDataset,
-} from "../../slices/dataset";
+import { createCdc, createChart, runQuery } from "../../slices/chart";
+import { getDataset, runRequest, saveNewDataset, updateDataset } from "../../slices/dataset";
 import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
@@ -345,13 +337,13 @@ function Dataset() {
   return (
     <div>
       <Navbar hideTeam transparent />
-      <div className="p-2 md:pl-8 md:pr-8">
-        <Row justify={"space-between"} align={"center"}>
+      <div>
+        <div className="flex flex-row justify-between items-center p-2 md:pl-8 md:pr-8 bg-content2 border-b border-divider">
           <div className="flex flex-row gap-2 items-center">
             {!editLegend && (
               <>
-                <Text size="h4">{dataset?.legend}</Text>
-                <Link onClick={() => setEditLegend(true)}>
+                <Link onClick={() => setEditLegend(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
+                  <div className="text-lg font-tw font-bold text-foreground">{dataset?.legend}</div>
                   <LuPencil />
                 </Link>
               </>
@@ -362,7 +354,7 @@ function Dataset() {
                 <Input
                   value={legend}
                   onChange={(e) => setLegend(e.target.value)}
-                  placeholder="How is this dataset called?"
+                  placeholder="Dataset name"
                   variant="bordered"
                   labelPlacement="outside"
                 />
@@ -374,7 +366,6 @@ function Dataset() {
                     _onUpdateDataset({ legend });
                     setEditLegend(false);
                   }}
-                  disabled={legend === dataset?.legend}
                   size="sm"
                 >
                   <LuCheck />
@@ -384,47 +375,39 @@ function Dataset() {
           </div>
 
           <div>
-            <Tabs
-              aria-label="Pages"
-              color="primary"
-              variant="bordered"
+            <Breadcrumbs
+              aria-label="Dataset steps"
+              onAction={(key) => setDatasetMenu(key)}
               size="lg"
-              selectedKey={datasetMenu}
-              onSelectionChange={(key) => setDatasetMenu(key)}
             >
               {canAccess("projectAdmin", user.id, team.TeamRoles) && (
-                <Tab
+                <BreadcrumbItem
                   key="query"
-                  title={(
-                    <div className="flex items-center gap-2">
-                      <LuDatabase size={24} />
-                      <span>Query</span>
-                    </div>
-                  )}
-                  textValue="Query"
-                />
+                  startContent={<LuDatabase size={18} />}
+                  isCurrent={datasetMenu === "query"}
+                >
+                  Query
+                </BreadcrumbItem>
               )}
               {canAccess("projectEditor", user.id, team.TeamRoles) && (
-                <Tab
+                <BreadcrumbItem
                   key="configure"
-                  title={(
-                    <div className="flex items-center gap-2">
-                      <LuChartArea size={24} />
-                      <span>Configure</span>
-                    </div>
-                  )}
-                  textValue="Configure"
+                  startContent={<LuChartArea size={18} />}
+                  isCurrent={datasetMenu === "configure"}
                   isDisabled={dataset?.DataRequests.length === 0}
-                />
+                >
+                  Configure
+                </BreadcrumbItem>
               )}
-            </Tabs>
+            </Breadcrumbs>
           </div>
 
           <div className="flex flex-row">
             {datasetMenu === "query" && (
               <Button
                 color="primary"
-                onClick={() => setDatasetMenu("configure")}
+                // size="sm"
+                onPress={() => setDatasetMenu("configure")}
                 endContent={<LuArrowRight />}
                 isDisabled={dataset?.DataRequests.length === 0}
               >
@@ -434,7 +417,7 @@ function Dataset() {
             {datasetMenu === "configure" && (
               <Button
                 color="primary"
-                onClick={() => _onSaveDataset()}
+                onPress={() => _onSaveDataset()}
                 endContent={<LuCheck />}
                 isDisabled={dataset?.DataRequests.length === 0}
               >
@@ -443,9 +426,7 @@ function Dataset() {
               </Button>
             )}
           </div>
-        </Row>
-
-        <Spacer y={4} />
+        </div>
 
         {datasetMenu === "query" && (
           <DatasetQuery onUpdateDataset={_onUpdateDataset} />
@@ -513,14 +494,14 @@ function Dataset() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setCompleteModal(false)}
+              onPress={() => setCompleteModal(false)}
             >
               Close
             </Button>
             {fromChart !== "create" && (
               <Button
                 color="primary"
-                onClick={_onCompleteDataset}
+                onPress={_onCompleteDataset}
                 isLoading={completeDatasetLoading}
               >
                 {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
@@ -529,7 +510,7 @@ function Dataset() {
             {fromChart === "create" && (
               <Button
                 color="primary"
-                onClick={_onCompleteDataset}
+                onPress={_onCompleteDataset}
                 isLoading={completeDatasetLoading}
               >
                 Save & return to chart

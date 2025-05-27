@@ -448,8 +448,9 @@ function RealtimeDbBuilder(props) {
               color="primary"
               endContent={<LuPlay />}
               isLoading={requestLoading}
-              onClick={() => _onTest()}
+              onPress={() => _onTest()}
               fullWidth
+              variant="ghost"
             >
               Make the request
             </Button>
