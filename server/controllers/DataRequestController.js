@@ -5,6 +5,7 @@ const { generateSqlQuery } = require("../modules/ai/generateSqlQuery");
 const { generateMongoQuery } = require("../modules/ai/generateMongoQuery");
 const externalDbConnection = require("../modules/externalDbConnection");
 const { generateClickhouseQuery } = require("../modules/ai/generateClickhouseQuery");
+const { applyTransformation } = require("../modules/dataTransformations");
 
 class RequestController {
   constructor() {
@@ -183,7 +184,16 @@ class RequestController {
               // do nothing
             }
           }
-          // console.log("newConfiguration", newConfiguration);
+        }
+
+        // Apply transformation if enabled
+        if (processedRequest.dataRequest.transform
+          && processedRequest.dataRequest.transform.enabled
+        ) {
+          processedRequest.responseData.data = applyTransformation(
+            processedRequest?.responseData?.data,
+            processedRequest.dataRequest.transform
+          );
         }
 
         return Promise.resolve({

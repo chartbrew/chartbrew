@@ -30,6 +30,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
+import DataTransform from "../../Dataset/DataTransform";
 
 const methods = [{
   key: 1,
@@ -75,6 +76,7 @@ function ApiBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [showTransform, setShowTransform] = useState(false);
   const [variables, setVariables] = useState({
     startDate: {
       value: startOfDay(sub(new Date(), { months: 1 })),
@@ -99,7 +101,7 @@ function ApiBuilder(props) {
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   const {
-    dataRequest, onChangeRequest, connection, onSave, chart, onDelete,
+    dataRequest, onChangeRequest, connection, onSave, onDelete,
   } = props;
 
   // on init effect
@@ -314,36 +316,49 @@ function ApiBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...apiRequest, transform: transformConfig };
+    setApiRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   return (
     <div className="px-4 max-w-screen-2xl mx-auto">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
-            <Row>
+            <div className="flex flex-row items-center gap-2">
               <Button
                 color="primary"
-                auto
                 size="sm"
-                onClick={() => _onSavePressed()}
+                onPress={() => _onSavePressed()}
                 isLoading={saveLoading || requestLoading}
               >
                 {"Save"}
               </Button>
-              <Spacer x={1} />
+              <Tooltip content="Apply transformations to the data" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="primary"
+                  variant="flat"
+                  size="sm"
+                  onPress={() => setShowTransform(true)}
+                >
+                  Transform
+                </Button>
+              </Tooltip>
               <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                 <Button
                   color="danger"
                   isIconOnly
-                  auto
                   size="sm"
-                  variant="bordered"
-                  onClick={() => onDelete()}
+                  variant="flat"
+                  onPress={() => onDelete()}
                 >
                   <LuTrash />
                 </Button>
               </Tooltip>
-            </Row>
+            </div>
           </Row>
           <Spacer y={2} />
           <Row>
@@ -376,14 +391,14 @@ function ApiBuilder(props) {
             <Text size="sm">{"Available variables: "}</Text>
             <Spacer x={1} />
             <Tooltip
-              content={chart.startDate || "You can set this value later in the chart date settings"}
+              content={"You can set this value later in the chart date settings"}
             >
               <Link>
                 <Chip
                   color="primary"
                   variant="faded"
                   endContent={(
-                    <a onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
+                    <a onClick={() => _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
                       <LuCirclePlus />
                     </a>
                   )}
@@ -394,14 +409,14 @@ function ApiBuilder(props) {
             </Tooltip>
             <Spacer x={0.5} />
             <Tooltip
-              content={chart.endDate || "You can set this value later in the chart date settings"}
+              content={"You can set this value later in the chart date settings"}
             >
-              <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
+              <Link onClick={() => _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
                 <Chip
                   color="primary"
                   variant="faded"
                   endContent={(
-                    <a onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
+                    <a onClick={() => _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
                       <LuCirclePlus />
                     </a>
                   )}
@@ -492,7 +507,7 @@ function ApiBuilder(props) {
                     color={isEqual(variables, apiRequest.variables) ? "success" : "primary"}
                     variant={isEqual(variables, apiRequest.variables) ? "flat" : "solid"}
                     size="sm"
-                    onClick={() => _onSaveVariables()}
+                    onPress={() => _onSaveVariables()}
                   >
                     {isEqual(variables, apiRequest.variables) ? "Saved" : "Save"}
                   </Button>
@@ -590,7 +605,7 @@ function ApiBuilder(props) {
                         <Spacer x={1} />
                         <Button
                           isIconOnly
-                          onClick={() => _removeHeader(header.id)}
+                          onPress={() => _removeHeader(header.id)}
                           color="danger"
                           variant="light"
                         >
@@ -607,7 +622,7 @@ function ApiBuilder(props) {
               <Button
                 endContent={<LuPlus />}
                 size="sm"
-                onClick={_addHeader}
+                onPress={_addHeader}
                 variant="bordered"
               >
                 Add header
@@ -650,7 +665,7 @@ function ApiBuilder(props) {
           )}
         </div>
         <div className="col-span-12 md:col-span-5">
-          <Row align={"center"} className="gap-4 apibuilder-type-tut">
+          <div className="flex flex-row items-center gap-2 apibuilder-type-tut">
             <Select
               variant="bordered"
               disableAnimation
@@ -678,7 +693,7 @@ function ApiBuilder(props) {
             >
               {"Send the request"}
             </Button>
-          </Row>
+          </div>
           <Spacer y={2} />
           <div className="flex flex-row justify-between items-center">
             <div className="flex flex-row gap-2 items-center">
@@ -744,13 +759,18 @@ function ApiBuilder(props) {
           </Row>
         </div>
       </div>
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={apiRequest.transform}
+      />
     </div>
   );
 }
 
 ApiBuilder.defaultProps = {
   dataRequest: null,
-  chart: {},
 };
 
 ApiBuilder.propTypes = {
@@ -759,8 +779,8 @@ ApiBuilder.propTypes = {
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
-  chart: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
+  onTransform: PropTypes.func.isRequired,
 };
 
 export default ApiBuilder;

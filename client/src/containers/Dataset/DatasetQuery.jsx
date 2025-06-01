@@ -34,7 +34,6 @@ import Text from "../../components/Text";
 import { selectProjects } from "../../slices/project";
 import { selectTeam } from "../../slices/team";
 
-
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
 
@@ -330,7 +329,6 @@ function DatasetQuery(props) {
                     connection={dr.Connection}
                     onChangeRequest={_updateDataRequest}
                     onSave={_onSaveRequest}
-                    // chart={chart}
                     onDelete={() => _onDeleteRequest(dr.id)}
                   />
                 )}

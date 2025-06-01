@@ -151,6 +151,19 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    transform: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("transform", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("transform"));
+        } catch (e) {
+          return this.getDataValue("transform");
+        }
+      }
+    }
   }, {
     freezeTableName: true,
   });

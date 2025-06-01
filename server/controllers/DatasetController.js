@@ -3,6 +3,7 @@ const _ = require("lodash");
 const db = require("../models/models");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
+const { applyTransformation } = require("../modules/dataTransformations");
 
 function joinData(joins, index, requests, data) {
   const dr = requests.find((r) => r?.dataRequest?.id === joins[index].dr_id);
@@ -319,6 +320,11 @@ class DatasetController {
               data = joinData(joins, index, filteredRequests, data);
             });
           }
+        }
+
+        // Apply transformation if enabled
+        if (mainDr.transform && mainDr.transform.enabled) {
+          data = applyTransformation(data, mainDr.transform);
         }
 
         return Promise.resolve({
