@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  Badge,
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent,
   ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
   Tab, Tabs, Tooltip,
@@ -24,6 +25,7 @@ import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import QueryResultsTable from "./QueryResultsTable";
 import AiQuery from "../../Dataset/AiQuery";
+import DataTransform from "../../Dataset/DataTransform";
 
 /*
   MongoDB query builder
@@ -48,6 +50,7 @@ function MongoQueryBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeResultsTab, setActiveResultsTab] = useState("table");
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -178,38 +181,50 @@ function MongoQueryBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...mongoRequest, transform: transformConfig };
+    setMongoRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 sm:col-span-6">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
-            <div>
-              <Row>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                color="primary"
+                auto
+                size="sm"
+                onPress={() => _onSavePressed()}
+                isLoading={saveLoading || testingQuery}
+              >
+                {"Save"}
+              </Button>
+              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!mongoRequest.transform?.enabled}>
                 <Button
                   color="primary"
+                  variant="flat"
+                  size="sm"
+                  onPress={() => setShowTransform(true)}
+                >
+                  Transform
+                </Button>
+              </Badge>
+              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="danger"
+                  isIconOnly
                   auto
                   size="sm"
-                  onPress={() => _onSavePressed()}
-                  isLoading={saveLoading || testingQuery}
-                  variant="flat"
+                  variant="bordered"
+                  onPress={() => onDelete()}
                 >
-                  {"Save"}
+                  <LuTrash />
                 </Button>
-                <Spacer x={1} />
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    auto
-                    size="sm"
-                    variant="bordered"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip>
-              </Row>
+              </Tooltip>
             </div>
           </Row>
           <Spacer y={2} />
@@ -482,6 +497,13 @@ function MongoQueryBuilder(props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={mongoRequest.transform}
+      />
     </div>
   );
 }

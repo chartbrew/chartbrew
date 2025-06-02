@@ -4,6 +4,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
   Select, SelectItem, PopoverTrigger, PopoverContent, Code, Autocomplete, AutocompleteItem,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -27,6 +28,7 @@ import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
+import DataTransform from "../../Dataset/DataTransform";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -62,6 +64,7 @@ function GaBuilder(props) {
   const [fullConnection, setFullConnection] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const initRef = React.useRef(null);
@@ -384,6 +387,12 @@ function GaBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...gaRequest, transform: transformConfig };
+    setGaRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   return (
     <div style={styles.container}>
       <div className="grid grid-cols-12 gap-4 pl-1 pr-1 md:pl-4 md:pr-4">
@@ -391,30 +400,36 @@ function GaBuilder(props) {
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12 flex justify-between">
               <Text b size={"lg"}>{connection.name}</Text>
-              <div>
-                <Row>
+              <div className="flex flex-row items-center gap-2">
+                <Button
+                  color="primary"
+                  size="sm"
+                  onPress={() => _onSavePressed()}
+                  isLoading={saveLoading || requestLoading}
+                >
+                  {"Save"}
+                </Button>
+                <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!gaRequest.transform?.enabled}>
                   <Button
                     color="primary"
-                    size="sm"
-                    onClick={() => _onSavePressed()}
-                    isLoading={saveLoading || requestLoading}
                     variant="flat"
+                    size="sm"
+                    onPress={() => setShowTransform(true)}
                   >
-                    {"Save"}
+                    Transform
                   </Button>
-                  <Spacer x={1} />
-                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                    <Button
-                      color="danger"
-                      isIconOnly
-                      size="sm"
-                      variant="bordered"
-                      onClick={() => onDelete()}
-                    >
-                      <LuTrash />
-                    </Button>
-                  </Tooltip>
-                </Row>
+                </Badge>
+                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    size="sm"
+                    variant="bordered"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
             <div className="col-span-12">
@@ -655,6 +670,7 @@ function GaBuilder(props) {
             )}
           </div>
         </div>
+
         <div className="col-span-12 sm:col-span-5">
           <Row className="gabuilder-request-tut">
             <Button
@@ -711,6 +727,13 @@ function GaBuilder(props) {
           </Row>
         </div>
       </div>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={gaRequest.transform}
+      />
     </div>
   );
 }

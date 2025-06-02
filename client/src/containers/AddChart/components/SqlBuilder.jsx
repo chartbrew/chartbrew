@@ -5,6 +5,7 @@ import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
   CircularProgress,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -27,6 +28,7 @@ import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
 import AiQuery from "../../Dataset/AiQuery";
 import QueryResultsTable from "./QueryResultsTable";
+import DataTransform from "../../Dataset/DataTransform";
 
 /*
   The query builder for Mysql and Postgres
@@ -53,6 +55,7 @@ function SqlBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("sql");
   const [activeResultsTab, setActiveResultsTab] = useState("table");
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -196,6 +199,12 @@ function SqlBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...sqlRequest, transform: transformConfig };
+    setSqlRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   if (!connection) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -210,32 +219,38 @@ function SqlBuilder(props) {
         <div className="col-span-12 sm:col-span-6 md:col-span-5">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
-            <div>
-              <Row>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                color="primary"
+                auto
+                size="sm"
+                onPress={() => _onSavePressed()}
+                isLoading={saveLoading || requestLoading}
+              >
+                {"Save"}
+              </Button>
+              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!sqlRequest.transform?.enabled}>
                 <Button
                   color="primary"
+                  variant="flat"
+                  size="sm"
+                  onPress={() => setShowTransform(true)}
+                >
+                  Transform
+                </Button>
+              </Badge>
+              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="danger"
+                  isIconOnly
                   auto
                   size="sm"
-                  onPress={() => _onSavePressed()}
-                  isLoading={saveLoading || requestLoading}
                   variant="flat"
+                  onPress={() => onDelete()}
                 >
-                  {"Save"}
+                  <LuTrash />
                 </Button>
-                <Spacer x={1} />
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    auto
-                    size="sm"
-                    variant="flat"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip>
-              </Row>
+              </Tooltip>
             </div>
           </Row>
           <Spacer y={2} />
@@ -456,6 +471,13 @@ function SqlBuilder(props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={sqlRequest.transform}
+      />
     </div>
   );
 }

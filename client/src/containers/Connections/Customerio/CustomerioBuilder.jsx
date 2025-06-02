@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Spacer, Checkbox, Tooltip, Divider, Tabs, Tab,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -21,6 +22,7 @@ import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import ActivitiesQuery from "./ActivitiesQuery";
+import DataTransform from "../../Dataset/DataTransform";
 
 /*
   The Customer.io data request builder
@@ -37,6 +39,7 @@ function CustomerioBuilder(props) {
   const [conditions, setConditions] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -210,6 +213,12 @@ function CustomerioBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...cioRequest, transform: transformConfig };
+    setCioRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
@@ -217,32 +226,38 @@ function CustomerioBuilder(props) {
           <Container>
             <Row justify="space-between" align="center">
               <Text b size={"lg"}>{connection.name}</Text>
-              <div>
-                <Row>
+              <div className="flex flex-row items-center gap-2">
+                <Button
+                  color="primary"
+                  auto
+                  size="sm"
+                  onPress={() => _onSavePressed()}
+                  isLoading={saveLoading || requestLoading}
+                >
+                  {"Save"}
+                </Button>
+                <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!cioRequest.transform?.enabled}>
                   <Button
                     color="primary"
+                    variant="flat"
+                    size="sm"
+                    onPress={() => setShowTransform(true)}
+                  >
+                    Transform
+                  </Button>
+                </Badge>
+                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                  <Button
+                    color="danger"
+                    isIconOnly
                     auto
                     size="sm"
-                    onClick={() => _onSavePressed()}
-                    isLoading={saveLoading || requestLoading}
-                    variant="flat"
+                    variant="bordered"
+                    onPress={() => onDelete()}
                   >
-                    {"Save"}
+                    <LuTrash />
                   </Button>
-                  <Spacer x={1} />
-                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                    <Button
-                      color="danger"
-                      isIconOnly
-                      auto
-                      size="sm"
-                      variant="bordered"
-                      onClick={() => onDelete()}
-                    >
-                      <LuTrash />
-                    </Button>
-                  </Tooltip>
-                </Row>
+                </Tooltip>
               </div>
             </Row>
             <Spacer y={2} />
@@ -405,6 +420,13 @@ function CustomerioBuilder(props) {
           </Container>
         </div>
       </div>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={cioRequest.transform}
+      />
     </div>
   );
 }

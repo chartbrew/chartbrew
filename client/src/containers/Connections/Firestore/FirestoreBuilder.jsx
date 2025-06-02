@@ -4,6 +4,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Select, SelectItem, PopoverTrigger, PopoverContent,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -33,6 +34,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import DataTransform from "../../Dataset/DataTransform";
 
 export const operators = [{
   key: "=",
@@ -111,6 +113,7 @@ function FirestoreBuilder(props) {
   const [orderBy, setOrderBy] = useState("");
   const [orderByDirection, setOrderByDirection] = useState("desc");
   const [requestError, setRequestError] = useState("");
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -184,6 +187,12 @@ function FirestoreBuilder(props) {
       }
     }
   }, [stateDrs, firestoreRequest]);
+
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...firestoreRequest, transform: transformConfig };
+    setFirestoreRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
 
   const _initializeConditions = (dr = dataRequest) => {
     if (dr && dr.conditions) {
@@ -502,32 +511,38 @@ function FirestoreBuilder(props) {
         <div className={"col-span-12 md:col-span-7 mb-4"}>
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
-            <div>
-              <Row>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                color="primary"
+                auto
+                size="sm"
+                onPress={() => _onSavePressed()}
+                isLoading={saveLoading || requestLoading}
+              >
+                {"Save"}
+              </Button>
+              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!firestoreRequest.transform?.enabled}>
                 <Button
                   color="primary"
+                  variant="flat"
+                  size="sm"
+                  onPress={() => setShowTransform(true)}
+                >
+                  Transform
+                </Button>
+              </Badge>
+              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="danger"
+                  isIconOnly
                   auto
                   size="sm"
-                  onClick={() => _onSavePressed()}
-                  isLoading={saveLoading || requestLoading}
-                  variant="flat"
+                  variant="bordered"
+                  onPress={() => onDelete()}
                 >
-                  {"Save"}
+                  <LuTrash />
                 </Button>
-                <Spacer x={1} />
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    auto
-                    size="sm"
-                    variant="bordered"
-                    onClick={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip>
-              </Row>
+              </Tooltip>
             </div>
           </Row>
           <Spacer y={2} />
@@ -830,6 +845,13 @@ function FirestoreBuilder(props) {
           </Container>
         </div>
       </div>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={firestoreRequest.transform}
+      />
     </div>
   );
 }

@@ -32,7 +32,7 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
       setEditorValue(JSON.stringify(initialTransform, null, 2));
     } else {
       const defaultConfig = {
-        enabled: true,
+        enabled: false,
         type: "flattenNested",
         config: {
           baseArrayPath: "",

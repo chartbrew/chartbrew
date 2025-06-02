@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -18,6 +19,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import DataTransform from "../../Dataset/DataTransform";
 
 /*
   The API Data Request builder
@@ -35,6 +37,7 @@ function RealtimeDbBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [showTransform, setShowTransform] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -162,36 +165,48 @@ function RealtimeDbBuilder(props) {
     });
   };
 
+  const _onTransformSave = (transformConfig) => {
+    const updatedRequest = { ...firebaseRequest, transform: transformConfig };
+    setFirebaseRequest(updatedRequest);
+    onSave(updatedRequest);
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 sm:col-span-7">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
-            <div>
-              <Row>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                color="primary"
+                size="sm"
+                onPress={() => _onSavePressed()}
+                isLoading={saveLoading || requestLoading}
+              >
+                {"Save"}
+              </Button>
+              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!firebaseRequest.transform?.enabled}>
                 <Button
                   color="primary"
-                  size="sm"
-                  onClick={() => _onSavePressed()}
-                  isLoading={saveLoading || requestLoading}
                   variant="flat"
+                  size="sm"
+                  onPress={() => setShowTransform(true)}
                 >
-                  {"Save"}
+                  Transform
                 </Button>
-                <Spacer x={1} />
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    size="sm"
-                    variant="bordered"
-                    onClick={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip>
-              </Row>
+              </Badge>
+              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="danger"
+                  isIconOnly
+                  size="sm"
+                  variant="bordered"
+                  onPress={() => onDelete()}
+                >
+                  <LuTrash />
+                </Button>
+              </Tooltip>
             </div>
           </Row>
           <Spacer y={2} />
@@ -498,6 +513,13 @@ function RealtimeDbBuilder(props) {
           </Row>
         </div>
       </div>
+
+      <DataTransform
+        isOpen={showTransform}
+        onClose={() => setShowTransform(false)}
+        onSave={_onTransformSave}
+        initialTransform={firebaseRequest.transform}
+      />
     </div>
   );
 }
