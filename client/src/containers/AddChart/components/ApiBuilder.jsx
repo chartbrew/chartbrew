@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem, PopoverTrigger, Popover, PopoverContent,
+  Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
@@ -338,14 +339,22 @@ function ApiBuilder(props) {
                 {"Save"}
               </Button>
               <Tooltip content="Apply transformations to the data" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                  onPress={() => setShowTransform(true)}
+                <Badge
+                  color="success"
+                  content=""
+                  placement="top-right"
+                  shape="circle"
+                  isInvisible={!apiRequest.transform?.enabled}
                 >
-                  Transform
-                </Button>
+                  <Button
+                    color="primary"
+                    variant="flat"
+                    size="sm"
+                    onPress={() => setShowTransform(true)}
+                  >
+                    Transform
+                  </Button>
+                </Badge>
               </Tooltip>
               <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                 <Button
@@ -717,7 +726,12 @@ function ApiBuilder(props) {
               </Tooltip>
             </div>
 
-            <div>
+            <div className="flex flex-row gap-2 items-center">
+              {apiRequest.transform?.enabled && (
+                <Chip color="primary" size="sm" variant="flat">
+                  {"Transformed"}
+                </Chip>
+              )}
               {requestSuccess && (
                 <>
                   <Chip color="success" size="sm" variant="flat">

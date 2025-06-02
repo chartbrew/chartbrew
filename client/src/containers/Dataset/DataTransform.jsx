@@ -9,6 +9,9 @@ import {
   Button,
   Select,
   SelectItem,
+  Switch,
+  Accordion,
+  AccordionItem,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useTheme } from "../../modules/ThemeContext";
@@ -57,7 +60,7 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
           <div className="text-lg">Transform data</div>
@@ -94,7 +97,7 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
           </Select>
 
           {transformConfig.type && (
-            <div className="w-full mt-4">
+            <div className="w-full">
               <AceEditor
                 mode="json"
                 theme={isDark ? "one_dark" : "tomorrow"}
@@ -107,6 +110,100 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
                 editorProps={{ $blockScrolling: true }}
                 className="rounded-md border-1 border-solid border-content3"
               />
+            </div>
+          )}
+
+          <Switch
+            title="Enable transformation"
+            isSelected={transformConfig.enabled}
+            onValueChange={(value) => {
+              setTransformConfig({ ...transformConfig, enabled: value });
+              setEditorValue(JSON.stringify({ ...transformConfig, enabled: value }, null, 2));
+            }}
+            size="sm"
+          >
+            Enable transformation
+          </Switch>
+
+          {transformConfig.type === "flattenNested" && (
+            <div>
+              <Accordion variant="bordered">
+                <AccordionItem
+                  key="flatten-nested-help"
+                  aria-label="How to use Flatten Nested Array"
+                  title="How to use Flatten Nested Array"
+                  subtitle="Learn how to configure the flatten nested array transformation"
+                  variant="bordered"
+                  classNames={{
+                    title: "text-sm",
+                    subtitle: "text-xs",
+                  }}
+                >
+                  <div className="px-2 pb-2">
+                    <p className="mb-4 text-sm">
+                      The Flatten Nested Array transformation helps you combine data from two related arrays into a single, flat structure. This is useful when you have data like a list of orders, where each order contains a list of items.
+                    </p>
+
+                    <h4 className="font-semibold mb-2 text-sm">Configuration Fields:</h4>
+                    <ul className="list-disc pl-6 space-y-2 text-sm">
+                      <li>
+                        <span className="font-medium">baseArrayPath:</span> The path to your main array (e.g., &quot;orders&quot;)
+                      </li>
+                      <li>
+                        <span className="font-medium">nestedArrayPath:</span> The path to the nested array within each main item (e.g., &quot;items&quot;)
+                      </li>
+                      <li>
+                        <span className="font-medium">outputFields:</span> Define how to combine the fields from both arrays
+                      </li>
+                    </ul>
+
+                    <h4 className="font-semibold mt-4 mb-2 text-sm">Example:</h4>
+                    <p className="mb-2 text-sm">If your data looks like this:</p>
+                    <pre className="bg-default-100 p-3 rounded-md text-xs mb-4">
+                      {`{
+  "orders": [
+    {
+      "id": "123",
+      "customer": "John",
+      "items": [
+        { "product": "Apple", "price": 1.99 },
+        { "product": "Banana", "price": 0.99 }
+      ]
+    }
+  ]
+}`}
+                    </pre>
+                    <p className="mb-2 text-sm">You would configure it like this:</p>
+                    <pre className="bg-default-100 p-3 rounded-md text-xs">
+                      {`{
+  "enabled": true,
+  "type": "flattenNested",
+  "config": {
+    "baseArrayPath": "orders",
+    "nestedArrayPath": "items",
+    "outputFields": {
+      "orderId": {
+        "from": "base",
+        "path": "id"
+      },
+      "product": {
+        "from": "nested",
+        "path": "product"
+      },
+      "price": {
+        "from": "nested",
+        "path": "price"
+      }
+    }
+  }
+}`}
+                    </pre>
+                    <p className="mt-4 text-sm">
+                      This will create a flat list where each item combines the order details with its product details. The &quot;from&quot; field specifies whether to get the value from the base array (&quot;base&quot;) or the nested array (&quot;nested&quot;), and &quot;path&quot; specifies the exact location of the field in the data structure.
+                    </p>
+                  </div>
+                </AccordionItem>
+              </Accordion>
             </div>
           )}
         </ModalBody>
@@ -123,7 +220,7 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
               try {
                 // Validate JSON before saving
                 const finalConfig = JSON.parse(editorValue);
-                onSave(finalConfig);
+                onSave({ ...finalConfig, enabled: transformConfig.enabled });
                 onClose();
               } catch (e) {
                 // If JSON is invalid, don't save
