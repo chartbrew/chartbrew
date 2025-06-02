@@ -145,7 +145,7 @@ function ActivitiesQuery({
       setDeleted(request.configuration.deleted || false);
       setCustomerId(request.configuration.customerId || "");
       setIdType(request.configuration.idType || "id");
-      setLimit(request.configuration.limit || 100);
+      setLimit(request.configuration.limit ?? 100);
     }
   }, [request]);
 
