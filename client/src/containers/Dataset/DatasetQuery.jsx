@@ -415,7 +415,7 @@ function DatasetQuery(props) {
           </div>
         )}
         {createMode && (
-          <div className="col-span-12 md:col-span-12 max-w-screen-2xl mx-auto px-4">
+          <div className="col-span-12 md:col-span-12 w-full max-w-screen-2xl mx-auto px-4 pb-20">
             <Spacer y={1} />
             <Text size="h2">Select a connection</Text>
             <Spacer y={2} />
