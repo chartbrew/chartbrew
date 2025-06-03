@@ -334,6 +334,29 @@ export const duplicateDataset = createAsyncThunk(
   }
 );
 
+export const deleteDrafts = createAsyncThunk(
+
+  "dataset/deleteDrafts",
+  async ({ team_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/drafts`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+    
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error("Failed to delete drafts");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const datasetSlice = createSlice({
   name: "dataset",
   initialState,

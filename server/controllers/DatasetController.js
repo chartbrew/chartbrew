@@ -410,6 +410,16 @@ class DatasetController {
 
     return this.findById(newDataset.id);
   }
+
+  async removeDrafts(teamId) {
+    return db.Dataset.destroy({ where: { team_id: teamId, draft: true } })
+      .then(() => {
+        return true;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
 }
 
 module.exports = DatasetController;

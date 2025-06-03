@@ -1,6 +1,6 @@
-import { Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import { Avatar, AvatarGroup, Button, Checkbox, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
-import { LuCopy, LuDatabase, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import connectionImages from "../../config/connectionImages";
 import { selectTeam } from "../../slices/team";
 import { selectConnections } from "../../slices/connection";
-import { deleteDataset, duplicateDataset, getRelatedCharts, selectDatasets, updateDataset } from "../../slices/dataset";
+import { deleteDataset, deleteDrafts, duplicateDataset, getDatasets, getRelatedCharts, selectDatasets, updateDataset } from "../../slices/dataset";
 import { useTheme } from "../../modules/ThemeContext";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
@@ -26,6 +26,10 @@ function DatasetList() {
   const [datasetToDuplicate, setDatasetToDuplicate] = useState(null);
   const [duplicateDatasetName, setDuplicateDatasetName] = useState("");
   const [duplicateDatasetLoading, setDuplicateDatasetLoading] = useState(false);
+  const [selectedDatasets, setSelectedDatasets] = useState([]);
+  const [showDeleteAllDrafts, setShowDeleteAllDrafts] = useState(false);
+  const [deletingDatasets, setDeletingDatasets] = useState(false);
+  const [showDeleteDatasets, setShowDeleteDatasets] = useState(false);
 
   const team = useSelector(selectTeam);
   const connections = useSelector(selectConnections);
@@ -136,37 +140,126 @@ function DatasetList() {
       });
   };
 
+  const _onDeleteDrafts = async() => {
+    setDeletingDatasets(true);
+    const response = await dispatch(deleteDrafts({ team_id: team.id }))
+
+    if (response?.error) {
+      toast.error("Failed to delete drafts");
+    }
+    else {
+      toast.success("Draft datasets deleted successfully");
+      await dispatch(getDatasets({ team_id: team.id }));
+      setShowDeleteAllDrafts(false);
+    }
+
+    setDeletingDatasets(false);
+  };
+
+  const _onDeleteDatasets = async() => {
+    setDeletingDatasets(true);
+    let errorsDetected = false;
+    const deletionPromises = [];
+    selectedDatasets.forEach(async (datasetId) => {
+      deletionPromises.push(dispatch(deleteDataset({ team_id: team.id, dataset_id: datasetId })));
+    });
+
+    const deletionResults = await Promise.all(deletionPromises);
+    deletionResults.forEach((result) => {
+      if (result?.error) {
+        errorsDetected = true;
+      }
+    });
+
+    if (errorsDetected) {
+      toast.error("Failed to delete some of the datasets");
+    }
+    else {
+      toast.success("Datasets deleted successfully");
+      await dispatch(getDatasets({ team_id: team.id }));
+      setSelectedDatasets([]);
+      setShowDeleteDatasets(false);
+    }
+
+    setDeletingDatasets(false);
+  };
+
   return (
     <div className="flex flex-col">
-      <div className="flex flex-row items-center gap-4">
-        {connections.length > 0 && (
-          <Button
-            color="primary"
-            endContent={<LuPlus />}
-            onPress={() => _onCreateDataset()}
+      <div className="flex flex-row items-center justify-between flex-wrap gap-2">
+        <div className="flex flex-row items-center gap-2 flex-wrap md:flex-nowrap">
+          {connections.length > 0 && (
+            <div>
+              <Button
+                color="primary"
+                endContent={<LuPlus />}
+                onPress={() => _onCreateDataset()}
+              >
+                Create dataset
+              </Button>
+            </div>
+          )}
+          <Input
+            type="text"
+            placeholder="Search datasets"
+            variant="bordered"
+            endContent={<LuSearch />}
+            className="max-w-[300px]"
+            labelPlacement="outside"
+            onChange={(e) => setDatasetSearch(e.target.value)}
+          />
+          {selectedDatasets.length > 0 && (
+            <div>
+              <Button
+                variant="flat"
+                size="sm"
+                onPress={() => setShowDeleteDatasets(true)}
+                color="danger"
+                startContent={<LuTrash size={16} />}
+              >
+                Delete selected
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-row items-center gap-2 flex-wrap md:flex-nowrap">
+          {showDatasetDrafts && (
+            <Button
+              variant="flat"
+              size="sm"
+              onPress={() => {
+                setShowDeleteAllDrafts(true);
+              }}
+              color="secondary"
+            >
+              Delete all drafts
+            </Button>
+          )}
+          <Checkbox
+            isSelected={showDatasetDrafts}
+            onChange={() => setShowDatasetDrafts(!showDatasetDrafts)}
+            size="sm"
           >
-            Create dataset
-          </Button>
-        )}
-        <Input
-          type="text"
-          placeholder="Search datasets"
-          variant="bordered"
-          endContent={<LuSearch />}
-          className="max-w-[300px]"
-          labelPlacement="outside"
-          onChange={(e) => setDatasetSearch(e.target.value)}
-        />
-        <Switch
-          isSelected={showDatasetDrafts}
-          onChange={() => setShowDatasetDrafts(!showDatasetDrafts)}
-          size="sm"
-        >
-          <span className="text-sm">Show drafts</span>
-        </Switch>
+            <span className="text-xs">Show drafts</span>
+          </Checkbox>
+        </div>
       </div>
       <Spacer y={4} />
-      <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl" aria-label="Dataset list">
+      <Table
+        shadow="none"
+        isStriped
+        className="border-1 border-solid border-content3 rounded-xl max-h-[calc(100vh-150px)]"
+        aria-label="Dataset list"
+        selectionMode="multiple"
+        onSelectionChange={(keys) => {
+          if (keys === "all") {
+            setSelectedDatasets(datasets.map((d) => d.id));
+          } else {
+            setSelectedDatasets(Array.from(keys));
+          }
+        }}
+        onRowAction={() => {}}
+      >
         <TableHeader>
           <TableColumn key="name">Dataset name</TableColumn>
           <TableColumn key="connections" textValue="Connections" align="center" justify="center">
@@ -179,6 +272,12 @@ function DatasetList() {
             <div className="flex flex-row items-center gap-1">
               <LuTags />
               <span>Tags</span>
+            </div>
+          </TableColumn>
+          <TableColumn key="createdAt" textValue="Created at" align="center" justify="center">
+            <div className="flex flex-row items-center justify-center gap-1">
+              <LuCalendarDays />
+              <span>Created</span>
             </div>
           </TableColumn>
           <TableColumn key="actions" align="center" hideHeader />
@@ -271,6 +370,9 @@ function DatasetList() {
                     Add tag
                   </Button>
                 )}
+              </TableCell>
+              <TableCell key="createdAt">
+                  <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
               </TableCell>
               <TableCell key="actions">
                 <div className="flex flex-row items-center justify-end">
@@ -473,6 +575,68 @@ function DatasetList() {
               color="primary"
             >
               Duplicate
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={showDeleteAllDrafts} onClose={() => setShowDeleteAllDrafts(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Delete draft datasets</div>
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              {"Are you sure you want to delete draft datasets?"}
+            </div>
+            <div>
+              {"This action cannot be undone."}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onPress={() => setShowDeleteAllDrafts(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              onPress={() => _onDeleteDrafts()}
+              isLoading={deletingDatasets}
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={showDeleteDatasets} onClose={() => setShowDeleteDatasets(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <div className="font-bold">Delete selected datasets</div>
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              {"Are you sure you want to delete selected datasets?"}
+            </div>
+            <div>
+              {"If the datasets are used in any charts, they will stop working."}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onPress={() => setShowDeleteDatasets(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              onPress={() => _onDeleteDatasets()}
+              isLoading={deletingDatasets}
+            >
+              Delete selected
             </Button>
           </ModalFooter>
         </ModalContent>

@@ -171,6 +171,20 @@ module.exports = (app) => {
   // ----------------------------------------------------
 
   /*
+  ** Route to delete all draft datasets
+  */
+  app.delete(`${root}/drafts`, verifyToken, checkPermissions("deleteAny"), (req, res) => {
+    return datasetController.removeDrafts(req.params.team_id)
+      .then((result) => {
+        return res.status(200).send(result);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
+
+  /*
   ** Route to delete a dataset
   */
   app.delete(`${root}/:dataset_id`, verifyToken, checkPermissions("deleteAny"), (req, res) => {
