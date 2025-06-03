@@ -997,7 +997,8 @@ class AxisChart {
           // get the objects in the nested array
           if (op !== "count" && yType === "number") {
             nestedData.forEach((current) => {
-              nestedResult += _.get(current, nestedArray[1].slice(1)) || 0;
+              const value = _.get(current, nestedArray[1].slice(1));
+              nestedResult += value ? Number(value) : 0;
             });
           }
         });
@@ -1026,19 +1027,29 @@ class AxisChart {
       } else {
         finalItem = finalItem[yData[key].length - 1];
         if (op === "sum" && yType === "number") {
-          finalItem = _.reduce(yData[key], (sum, n) => sum + (n instanceof Object ? 0 : n), 0);
+          finalItem = _.reduce(yData[key], (sum, n) => {
+            const value = n instanceof Object ? 0 : Number(n);
+            return sum + (Number.isNaN(value) ? 0 : value);
+          }, 0);
         }
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
             totalNumberOfItems += yData[key].length;
           } else {
-            finalItem = _.reduce(yData[key], (avg, n) => avg + (n instanceof Object ? 0 : n));
+            finalItem = _.reduce(yData[key], (avg, n) => {
+              const value = n instanceof Object ? 0 : Number(n);
+              return avg + (Number.isNaN(value) ? 0 : value);
+            }, 0);
             finalItem /= yData[key].length;
             finalItem = parseFloat(finalItem.toFixed(2));
           }
         }
-        if (op === "min") finalItem = _.min(yData[key]);
-        if (op === "max") finalItem = _.max(yData[key]);
+        if (op === "min") {
+          finalItem = _.min(yData[key].map((n) => Number(n)));
+        }
+        if (op === "max") {
+          finalItem = _.max(yData[key].map((n) => Number(n)));
+        }
       }
 
       finalData[key] = finalItem;
