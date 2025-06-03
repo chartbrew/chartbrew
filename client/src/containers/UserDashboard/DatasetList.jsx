@@ -1,6 +1,6 @@
 import { Avatar, AvatarGroup, Button, Checkbox, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
-import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -320,11 +320,12 @@ function DatasetList() {
                   <AvatarGroup max={3} isBordered size="sm">
                     {dataset?.DataRequests?.map((dr) => (
                       <Avatar
-                        src={connectionImages(isDark)[dr?.Connection?.subType]}
+                        src={dr.Connection ? connectionImages(isDark)[dr?.Connection?.subType] : null}
                         showFallback={<LuPlug />}
                         size="sm"
                         isBordered
                         key={dr.id}
+                        icon={!dr.Connection ? <LuMonitorX /> : null}
                       />
                     ))}
                   </AvatarGroup>
