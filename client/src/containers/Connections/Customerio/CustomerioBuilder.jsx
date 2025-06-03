@@ -75,6 +75,8 @@ function CustomerioBuilder(props) {
           setEntity("customers");
         } else if (dataRequest.route.indexOf("campaigns/") > -1) {
           setEntity("campaigns");
+        } else if (dataRequest.route.indexOf("activities") > -1) {
+          setEntity("activities");
         }
       }
 
