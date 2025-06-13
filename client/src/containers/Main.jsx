@@ -32,6 +32,8 @@ import { Toaster } from "react-hot-toast";
 import ConnectionList from "./UserDashboard/ConnectionList";
 import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
+import { getDatasets } from "../slices/dataset";
+import { getTeamConnections } from "../slices/connection";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -133,8 +135,11 @@ function Main(props) {
         if (storageTeam) selectedTeam = storageTeam;
       }
 
-      if (!selectedTeam) return;
-      dispatch(saveActiveTeam(selectedTeam));
+      if (selectedTeam) {
+        dispatch(saveActiveTeam(selectedTeam));
+        dispatch(getTeamConnections({ team_id: selectedTeam.id }));
+        dispatch(getDatasets({ team_id: selectedTeam.id }));
+      }
     }
   }, [teams]);
 

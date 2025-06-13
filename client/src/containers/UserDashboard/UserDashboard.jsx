@@ -82,15 +82,16 @@ function UserDashboard(props) {
         if (storageTeam) selectedTeam = storageTeam;
       }
       
-      if (!selectedTeam) return;
-      dispatch(saveActiveTeam(selectedTeam));
-      dispatch(getTeamMembers({ team_id: selectedTeam.id }));
-      dispatch(getDatasets({ team_id: selectedTeam.id }));
+      if (selectedTeam) {
+        dispatch(saveActiveTeam(selectedTeam));
+        dispatch(getTeamMembers({ team_id: selectedTeam.id }));
+        dispatch(getDatasets({ team_id: selectedTeam.id }));
 
-      const welcome = new URLSearchParams(window.location.search).get("welcome");
-      if (welcome) {
-        navigate(`/${selectedTeam?.id}/connection/new`);
-      }
+        const welcome = new URLSearchParams(window.location.search).get("welcome");
+        if (welcome) {
+          navigate(`/${selectedTeam?.id}/connection/new`);
+        }
+      }        
     }
   }, [teams]);
 
