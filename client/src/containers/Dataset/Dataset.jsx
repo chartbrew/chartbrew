@@ -99,18 +99,22 @@ function Dataset() {
         },
       }))
         .then((newDataset) => {
-          let newPathname = `/${params.teamId}/dataset/${newDataset.payload.id}${search}`;
-          navigate(newPathname);
-          dispatch(getDataset({
-            team_id: params.teamId,
-            dataset_id: newDataset.payload.id,
-          }));
+          if (newDataset?.error) {
+            toast.error("Could not create dataset. Please try again.");
+          } else {
+            let newPathname = `/${params.teamId}/dataset/${newDataset.payload?.id}${search}`;
+            navigate(newPathname);
+            dispatch(getDataset({
+              team_id: params.teamId,
+              dataset_id: newDataset.payload?.id,
+            }));
+          }
         });
     }
   }, [params]);
 
   useEffect(() => {
-    if (ghostProject?.id && !chart && dataset && !chartInitRef.current) {
+    if (ghostProject?.id && !chart && dataset?.id && !chartInitRef.current) {
       chartInitRef.current = true;
       dispatch(createChart({
         project_id: ghostProject.id,

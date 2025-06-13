@@ -65,16 +65,18 @@ function DatarequestSettings(props) {
   }, [dataset]);
 
   useEffect(() => {
-    const dr = dataRequests.find((o) => o.id === dataset.main_dr_id);
-    if (dr && !responseInitRef.current) {
-      responseInitRef.current = true;
-      dispatch(runDataRequest({
-        team_id: params.teamId,
-        dataset_id: dataset.id,
-        dataRequest_id: dataset.main_dr_id,
-        getCache: true
-      }))
-        .catch(() => {});
+    if (dataset?.main_dr_id) {
+      const dr = dataRequests.find((o) => o.id === dataset.main_dr_id);
+      if (dr && !responseInitRef.current) {
+        responseInitRef.current = true;
+        dispatch(runDataRequest({
+          team_id: params.teamId,
+          dataset_id: dataset.id,
+          dataRequest_id: dataset.main_dr_id,
+          getCache: true
+        }))
+          .catch(() => {});
+      }
     }
   }, [dataset?.main_dr_id, dataRequests]);
 

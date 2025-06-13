@@ -34,10 +34,10 @@ function DatasetBuilder(props) {
   const initRef = useRef(null);
   
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
-  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset.id)?.data);
+  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset?.id)?.data);
 
   useEffect(() => {
-    if (dataset.formula) {
+    if (dataset?.formula) {
       setFormula(dataset.formula);
     }
   }, [dataset]);
@@ -59,7 +59,7 @@ function DatasetBuilder(props) {
   }, [chart, dataset, datasetResponse]);
 
   useEffect(() => {
-    if (datasetResponse) {
+    if (datasetResponse && dataset) {
       let tempFieldOptions = [];
       const tempObjectOptions = [];
       const fieldsSchema = {};
@@ -358,6 +358,14 @@ function DatasetBuilder(props) {
         return Promise.reject(e);
       });
   };
+
+  if (!dataset) return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="text-lg text-gray-500 py-4">
+        Dataset not found. Please refresh the page.
+      </div>
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4">

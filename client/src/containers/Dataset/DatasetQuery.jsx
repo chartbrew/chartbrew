@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from "react"
+import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
@@ -47,6 +47,7 @@ function DatasetQuery(props) {
   const dispatch = useDispatch();
   const params = useParams();
   const navigate = useNavigate();
+  const initRef = useRef(null);
 
   const stateDataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
   const connections = useSelector(selectConnections);
@@ -55,42 +56,46 @@ function DatasetQuery(props) {
   const team = useSelector(selectTeam);
 
   useEffect(() => {
-    dispatch(getDataRequestsByDataset({
-      team_id: params.teamId,
-      dataset_id: params.datasetId,
-    }))
-      .then((drs) => {
-        if (drs.payload?.length > 1) {
-          setDataRequests(drs.payload);
-          setSelectedRequest({ isSettings: true });
-        } else if (drs.payload?.length === 1) {
-          setDataRequests(drs.payload);
-          setSelectedRequest(drs.payload[0]);
-          setCreateMode(false);
-        }
+    if (dataset?.id && !initRef.current) {
+      initRef.current = true;
 
-        if (drs.payload?.[0] > 0 && !dataset.main_dr_id) {
-          dispatch(updateDataset({
-            team_id: params.teamId,
-            dataset_id: dataset.id,
-            data: { main_dr_id: drs.payload[0].id },
-          }));
-        }
+      dispatch(getDataRequestsByDataset({
+        team_id: params.teamId,
+        dataset_id: params.datasetId,
+      }))
+        .then((drs) => {
+          if (drs.payload?.length > 1) {
+            setDataRequests(drs.payload);
+            setSelectedRequest({ isSettings: true });
+          } else if (drs.payload?.length === 1) {
+            setDataRequests(drs.payload);
+            setSelectedRequest(drs.payload[0]);
+            setCreateMode(false);
+          }
 
-        if (!drs.payload?.[0]) {
-          setCreateMode(true);
-        }
-      })
-      .catch((err) => {
-        if (err && err.message === "404") {
-          setCreateMode(true);
-          return true;
-        }
+          if (drs.payload?.[0] > 0 && !dataset.main_dr_id) {
+            dispatch(updateDataset({
+              team_id: params.teamId,
+              dataset_id: dataset.id,
+              data: { main_dr_id: drs.payload[0].id },
+            }));
+          }
 
-        toast.error("Could not load data requests. Please try again or get in touch with us.");
-        return err;
-      });
-  }, []);
+          if (!drs.payload?.[0]) {
+            setCreateMode(true);
+          }
+        })
+        .catch((err) => {
+          if (err && err.message === "404") {
+            setCreateMode(true);
+            return true;
+          }
+
+          toast.error("Could not load data requests. Please try again or get in touch with us.");
+          return err;
+        });
+    }
+  }, [dataset]);
 
   useEffect(() => {
     if (stateDataRequests.length > 0) {
