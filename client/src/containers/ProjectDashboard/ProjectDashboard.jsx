@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuCirclePlus, LuRefreshCw, LuUser, LuUsers,
+  LuRefreshCw, LuUser, LuUsers,
   LuEllipsisVertical, LuShare, LuChartPie, LuGrid2X2Plus, LuLetterText,
   LuMonitorSmartphone,
   LuMonitorUp,
@@ -1088,25 +1088,23 @@ function ProjectDashboard(props) {
                 </Row>
                 <Spacer y={4} />
                 <div className="flex flex-row justify-center gap-2">
+                  <Button
+                    endContent={<LuPlug size={22} />}
+                    size="lg"
+                    color="primary"
+                    variant={connections.length > 0 ? "flat" : "solid"}
+                    onPress={() => navigate(`/${params.teamId}/connection/new`)}
+                  >
+                    Create a connection
+                  </Button>
                   {connections.length > 0 && (
                     <Button
-                      endContent={<LuCirclePlus size={24} />}
+                      endContent={<LuChartPie size={22} />}
                       size="lg"
                       color="primary"
                       onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
                     >
                       Create a chart
-                    </Button>
-                  )}
-
-                  {connections.length === 0 && (
-                    <Button
-                      endContent={<LuPlug size={24} />}
-                      size="lg"
-                      color="primary"
-                      onPress={() => navigate(`/${params.teamId}/connection/new`)}
-                    >
-                      Create your first connection
                     </Button>
                   )}
                 </div>
