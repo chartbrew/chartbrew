@@ -25,7 +25,7 @@ class RequestController {
   findById(id) {
     return db.DataRequest.findOne({
       where: { id },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }],
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }],
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -41,7 +41,7 @@ class RequestController {
   findByChart(chartId) {
     return db.DataRequest.findOne({
       where: { chart_id: chartId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -57,7 +57,7 @@ class RequestController {
   findByDataset(datasetId) {
     return db.DataRequest.findAll({
       where: { dataset_id: datasetId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequests) => {
         if (!dataRequests || dataRequests.length === 0) {

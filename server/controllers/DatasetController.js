@@ -97,7 +97,7 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { team_id: teamId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
       ],
       order: [["createdAt", "DESC"]],
     })
@@ -113,7 +113,7 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
       ],
     })
       .then((dataset) => {
@@ -131,7 +131,7 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { chart_id: chartId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
       ],
       order: [["order", "ASC"]],
     })
@@ -200,7 +200,7 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }] },
       ],
     })
       .then((dataset) => {
