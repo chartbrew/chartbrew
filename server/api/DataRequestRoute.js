@@ -199,6 +199,35 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to create a new variable binding
+  */
+  app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.createVariableBinding(
+      req.params.id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to update a variable binding
+  */
+  app.put(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.updateVariableBinding(
+      req.params.id,
+      req.params.variable_id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

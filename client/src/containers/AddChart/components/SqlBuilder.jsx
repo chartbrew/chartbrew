@@ -4,25 +4,25 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
-  CircularProgress,
-  Badge,
+  CircularProgress, Badge, Drawer, DrawerHeader, DrawerBody,
+  Select, SelectItem, DrawerFooter, DrawerContent, Code, Switch,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuCheck, LuChevronsRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/mode-pgsql";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
+import SqlAceEditor from "../../../components/SqlAceEditor";
 
 import VisualSQL from "./VisualSQL";
 import { getConnection } from "../../../slices/connection";
@@ -40,7 +40,7 @@ function SqlBuilder(props) {
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
-    query: "SELECT * FROM users;",
+    query: "SELECT * FROM users WHERE created_at > {{start_date}} AND status = {{user_status}};",
   });
   const [savedQuery, setSavedQuery] = useState(null);
   const [savedQuerySummary, setSavedQuerySummary] = useState("");
@@ -56,6 +56,8 @@ function SqlBuilder(props) {
   const [activeTab, setActiveTab] = useState("sql");
   const [activeResultsTab, setActiveResultsTab] = useState("table");
   const [showTransform, setShowTransform] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -205,6 +207,61 @@ function SqlBuilder(props) {
     onSave(updatedRequest);
   };
 
+  const _onVariableClick = (variable) => {
+    let selectedVariable = sqlRequest.VariableBindings.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    if (variableSettings.id) {
+      await dispatch(updateVariableBinding({
+        team_id: params.teamId,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+        variable_id: variableSettings.id,
+        data: variableSettings,
+      }));
+
+      setSqlRequest({
+        ...sqlRequest,
+        VariableBindings: sqlRequest.VariableBindings.map((v) => {
+          if (v.id === variableSettings.id) {
+            return variableSettings;
+          }
+          return v;
+        }),
+      });
+    } else {
+      await dispatch(createVariableBinding({
+        team_id: params.teamId,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+        data: variableSettings,
+      }));
+
+      setSqlRequest({
+        ...sqlRequest,
+        VariableBindings: [
+          ...sqlRequest.VariableBindings,
+          variableSettings,
+        ],
+      });
+    }
+
+    setVariableLoading(false);
+    setVariableSettings(null);
+    toast.success("Variable saved successfully");
+  };
+
   if (!connection) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -290,22 +347,19 @@ function SqlBuilder(props) {
             {activeTab === "sql" && (
               <div>
                 <Row>
-                  <div className="w-full">
-                    <AceEditor
-                      mode="pgsql"
-                      theme={isDark ? "one_dark" : "tomorrow"}
-                      style={{ borderRadius: 10 }}
-                      height="300px"
-                      width="none"
-                      value={sqlRequest.query || ""}
-                      onChange={(value) => {
-                        _onChangeQuery(value);
-                      }}
-                      name="queryEditor"
-                      editorProps={{ $blockScrolling: true }}
-                      className="sqlbuilder-query-tut rounded-md border-1 border-solid border-content3"
-                    />
-                  </div>
+                  <SqlAceEditor
+                    mode="pgsql"
+                    theme={isDark ? "one_dark" : "tomorrow"}
+                    height="300px"
+                    width="none"
+                    value={sqlRequest.query || ""}
+                    onChange={(value) => {
+                      _onChangeQuery(value);
+                    }}
+                    onVariableClick={_onVariableClick}
+                    name="queryEditor"
+                    className="sqlbuilder-query-tut"
+                  />
                 </Row>
               </div>
             )}
@@ -478,6 +532,102 @@ function SqlBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={sqlRequest.transform}
       />
+    
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -261,6 +261,26 @@ class RequestController {
         return Promise.reject(error);
       });
   }
+
+  createVariableBinding(id, data) {
+    const newVar = {
+      ...data,
+      entity_type: "DataRequest",
+      entity_id: `${id}`,
+    };
+
+    return db.VariableBinding.create(newVar)
+      .then(() => {
+        return this.findById(id);
+      });
+  }
+
+  updateVariableBinding(id, variable_id, data) {
+    return db.VariableBinding.update(data, { where: { id: variable_id } })
+      .then(() => {
+        return this.findById(id);
+      });
+  }
 }
 
 module.exports = RequestController;
