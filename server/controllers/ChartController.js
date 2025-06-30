@@ -288,7 +288,7 @@ class ChartController {
   }
 
   updateChartData(id, user, {
-    noSource, skipParsing, filters, isExport, getCache,
+    noSource, skipParsing, filters, isExport, getCache, variables,
   }) {
     let gChart;
     let gCache;
@@ -322,13 +322,25 @@ class ChartController {
         gChart.ChartDatasetConfigs.forEach((cdc) => {
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
-              this.datasetController.runRequest(cdc.Dataset.id, gChart.id, true, getCache)
+              this.datasetController.runRequest({
+                dataset_id: cdc.Dataset.id,
+                chart_id: gChart.id,
+                noSource: true,
+                getCache,
+                variables,
+              })
             );
           } else {
             requestPromises.push(
-              this.datasetController.runRequest(
-                cdc.Dataset.id, gChart.id, false, getCache, filters, project.timezone
-              )
+              this.datasetController.runRequest({
+                dataset_id: cdc.Dataset.id,
+                chart_id: gChart.id,
+                noSource: false,
+                getCache,
+                filters,
+                timezone: project.timezone,
+                variables,
+              })
             );
           }
         });

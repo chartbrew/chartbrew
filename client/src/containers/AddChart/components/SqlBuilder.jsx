@@ -599,6 +599,7 @@ function SqlBuilder(props) {
                 variant="bordered"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
               />
             </div>
             <Spacer y={1} />

@@ -199,12 +199,57 @@ module.exports = (app) => {
   // ----------------------------------------------------
 
   /*
-  ** Route to run the request attached to the dataset
+  ** [DEPRECATED] Route to run the request attached to the dataset
   */
   app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
     return datasetController.runRequest(
       req.params.dataset_id, req.params.chart_id, req.query.noSource, req.query.getCache
     )
+      .then((dataset) => {
+        const newDataset = dataset;
+        if (newDataset?.data) {
+          const { data } = newDataset;
+          if (typeof data === "object" && data instanceof Array) {
+            newDataset.data = data.slice(0, 20);
+          } else if (typeof data === "object") {
+            const resultsKey = [];
+            Object.keys(data).forEach((key) => {
+              if (data[key] instanceof Array) {
+                resultsKey.push(key);
+              }
+            });
+
+            if (resultsKey.length > 0) {
+              resultsKey.forEach((resultKey) => {
+                const slicedArray = data[resultKey].slice(0, 20);
+                newDataset.data[resultKey] = slicedArray;
+              });
+            }
+          }
+        }
+
+        return res.status(200).send(newDataset);
+      })
+      .catch((err) => {
+        if (err && err.message === "404") {
+          return res.status(404).send((err && err.message) || err);
+        }
+        return res.status(400).send((err && err.message) || err);
+      });
+  });
+  // ----------------------------------------------------
+
+  /*
+  ** [NEW] Route to run the request attached to the dataset
+  */
+  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
+    return datasetController.runRequest({
+      dataset_id: req.body.dataset_id,
+      chart_id: req.body.chart_id,
+      noSource: req.body.noSource,
+      getCache: req.body.getCache,
+      variables: req.body.variables,
+    })
       .then((dataset) => {
         const newDataset = dataset;
         if (newDataset?.data) {

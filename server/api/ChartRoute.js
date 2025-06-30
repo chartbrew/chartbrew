@@ -255,6 +255,7 @@ module.exports = (app) => {
       req.user,
       req.query.no_source,
       req.query.skip_parsing,
+      req.body.variables,
     )
       .then((chart) => {
         return res.status(200).send(chart);
@@ -284,6 +285,7 @@ module.exports = (app) => {
         skipParsing: req.query.skip_parsing === "true",
         getCache: req.query.getCache,
         filters: req.body.filters,
+        variables: req.body.variables,
       },
     )
       .then((chart) => {
@@ -327,6 +329,7 @@ module.exports = (app) => {
         skipParsing,
         filters: req.body.filters,
         getCache,
+        variables: req.body.variables,
       },
     )
       .then(async (chart) => {
@@ -467,6 +470,7 @@ module.exports = (app) => {
             noSource: req.query.no_source === "true",
             skipParsing: req.query.skip_parsing === "true",
             getCache: req.query.getCache,
+            variables: req.body.variables,
           },
         );
       })

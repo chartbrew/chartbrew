@@ -693,7 +693,7 @@ class ConnectionController {
       });
   }
 
-  async runMysqlOrPostgres(id, dataRequest, getCache) {
+  async runMysqlOrPostgres(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -711,10 +711,12 @@ class ConnectionController {
           db.Connection.update({ schema }, { where: { id } });
         });
 
+      // Use the processed query if provided, otherwise use the original query
+      const queryToExecute = queryOverride || dataRequest.query;
       const results = await dbConnection
-        .query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
+        .query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
 
-      // cache the data for later use
+      // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
       const dataToCache = {
         dataRequest,
         responseData: {
@@ -736,7 +738,7 @@ class ConnectionController {
     }
   }
 
-  async runClickhouse(id, dataRequest, getCache) {
+  async runClickhouse(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -745,9 +747,12 @@ class ConnectionController {
     try {
       const connection = await this.findById(id);
       const clickhouse = new ClickhouseConnector(connection);
-      const result = await clickhouse.query(dataRequest.query);
 
-      // cache the data for later use
+      // Use the processed query if provided, otherwise use the original query
+      const queryToExecute = queryOverride || dataRequest.query;
+      const result = await clickhouse.query(queryToExecute);
+
+      // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
       const dataToCache = {
         dataRequest,
         responseData: {

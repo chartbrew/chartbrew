@@ -129,15 +129,16 @@ export const runRequest = createAsyncThunk(
   async ({ team_id, dataset_id, getCache }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/request`;
-    const method = "GET";
+    const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
+      "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     });
-
-    if (getCache) {
-      url += "?getCache=true";
-    }
+    
+    const body = {
+      getCache,
+    };
 
     let status = {
       statusCode: 500,
@@ -146,7 +147,7 @@ export const runRequest = createAsyncThunk(
 
     let data;
     try {
-      const response = await fetch(url, { method, headers });
+      const response = await fetch(url, { method, headers, body: JSON.stringify(body) });
       status = {
         statusCode: response.status,
         statusText: response.statusText,
@@ -259,7 +260,6 @@ export const runDataRequest = createAsyncThunk(
     const body = {};
     if (getCache) {
       body.getCache = getCache;
-      url += "?getCache=true";
     }
 
     let status = {
