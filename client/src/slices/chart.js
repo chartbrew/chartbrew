@@ -184,7 +184,7 @@ export const runQuery = createAsyncThunk(
 
 export const runQueryWithFilters = createAsyncThunk(
   "chart/runQueryWithFilters",
-  async ({ project_id, chart_id, filters }) => {
+  async ({ project_id, chart_id, filters, variables }) => {
     const token = getAuthToken();
     const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
     const method = "POST";
@@ -193,7 +193,7 @@ export const runQueryWithFilters = createAsyncThunk(
       "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({ filters });
+    const body = JSON.stringify({ filters, variables });
 
     const response = await fetch(url, { method, headers, body });
     const responseJson = await response.json();

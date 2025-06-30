@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
+  Spinner,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet";
@@ -41,6 +42,7 @@ function EmbeddedChart() {
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
   const [isSnapshot, setIsSnapshot] = useState(false);
+  const [showChart, setShowChart] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -51,14 +53,38 @@ function EmbeddedChart() {
   
   useInterval(() => {
     setDataLoading(true);
-    dispatch(getEmbeddedChart({ embed_id: params.chartId }))
-      .then((chart) => {
-        setChart(chart.payload);
-        setDataLoading(false);
-      })
-      .catch(() => {
-        setDataLoading(false);
-      });
+    
+    // Extract variables from URL parameters
+    const variables = _extractVariablesFromSearchParams();
+    
+    // If variables exist, use runQueryWithFilters to maintain variable state
+    if (Object.keys(variables).length > 0 && chart?.id) {
+      dispatch(runQueryWithFilters({ 
+        project_id: chart.project_id, 
+        chart_id: chart.id, 
+        filters: conditions, // existing filters
+        variables // maintain the URL variables
+      }))
+        .then((data) => {
+          if (data.payload) {
+            setChart(data.payload);
+          }
+          setDataLoading(false);
+        })
+        .catch(() => {
+          setDataLoading(false);
+        });
+    } else {
+      // No variables, use the original approach
+      dispatch(getEmbeddedChart({ embed_id: params.chartId }))
+        .then((chart) => {
+          setChart(chart.payload);
+          setDataLoading(false);
+        })
+        .catch(() => {
+          setDataLoading(false);
+        });
+    }
   }, chart?.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
   useEffect(() => {
@@ -103,56 +129,50 @@ function EmbeddedChart() {
     }
   }, [chart]);
 
-  const _checkSearchParamsForFilters = () => {
-    // check if there are any filters in the search params
-    // if so, add them to the conditions
-    const params = [];
-
+  // Helper function to extract variables from URL search parameters
+  const _extractVariablesFromSearchParams = () => {
+    const variables = {};
     if (searchParams?.entries) {
-      // Convert searchParams to array and filter out empty entries
       const searchParamsArray = Array.from(searchParams.entries());
-      if (searchParamsArray.length > 0) {
-        searchParamsArray.forEach(([key, value]) => {
-          params.push({ variable: key, value });
-        });
-      }
+      searchParamsArray.forEach(([key, value]) => {
+        // Skip special parameters like theme, isSnapshot, etc.
+        if (key !== "theme" && key !== "isSnapshot") {
+          variables[key] = value;
+        }
+      });
+    }
+    return variables;
+  };
+
+  const _checkSearchParamsForFilters = () => {
+    // Extract variables from URL search parameters
+    // These variables will be sent to the API and substituted in SQL queries using {{variable_name}} syntax
+    const variables = _extractVariablesFromSearchParams();
+
+    // If no variables found, return early
+    if (Object.keys(variables).length === 0) {
+      setShowChart(true);
+      return;
     }
 
-    if (params.length === 0) return;
-
-    let identifiedConditions = [];
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-      }
-    });
-
-    // now check if any filters have the same variable name
-    let newConditions = [];
-    newConditions = identifiedConditions.map((c) => {
-      const newCondition = c;
-      const param = params.find((p) => p.variable === c.variable);
-      if (param) {
-        newCondition.value = param.value;
-      }
-      return newCondition;
-    });
-
-    // remove conditions that don't have a value
-    newConditions = newConditions.filter((c) => c.value);
-
-    if (newConditions.length === 0) return;
-
-    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+    // Call the API with variables
+    setDataLoading(true);
+    dispatch(runQueryWithFilters({ 
+      project_id: chart.project_id, 
+      chart_id: chart.id, 
+      filters: [], // Keep empty filters for now
+      variables 
+    }))
       .then((data) => {
         if (data.payload) {
           setChart(data.payload);
         }
-
         setDataLoading(false);
+        setShowChart(true);
       })
       .catch(() => {
         setDataLoading(false);
+        setShowChart(true);
       });
   };
 
@@ -178,8 +198,16 @@ function EmbeddedChart() {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
+    // Extract variables from URL search params
+    const variables = _extractVariablesFromSearchParams();
+
     setDataLoading(true);
-    await dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+    await dispatch(runQueryWithFilters({ 
+      project_id: chart.project_id, 
+      chart_id: chart.id, 
+      filters: newConditions,
+      variables
+    }))
       .then((data) => {
         if (data.payload) {
           setChart(data.payload);
@@ -204,8 +232,17 @@ function EmbeddedChart() {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
+
+    // Extract variables from URL search params
+    const variables = _extractVariablesFromSearchParams();
+
     setDataLoading(true);
-    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
+    dispatch(runQueryWithFilters({ 
+      project_id: chart.project_id, 
+      chart_id: chart.id, 
+      filters: newConditions,
+      variables
+    }))
       .then((data) => {
         if (data.payload) {
           setChart(data.payload);
@@ -225,7 +262,7 @@ function EmbeddedChart() {
     return filterCount > 0;
   };
 
-  if (loading || !chart) {
+  if (loading || !chart || !showChart) {
     return (
       <>
         <Helmet>
@@ -243,7 +280,7 @@ function EmbeddedChart() {
         </Helmet>
         <div className="container mx-auto pt-10">
           <Row justify="center" align="center">
-            <CircularProgress color="default" aria-label="Loading chart" />
+            <Spinner variant="simple" aria-label="Loading chart" />
           </Row>
         </div>
       </>
