@@ -31,7 +31,7 @@ import {
   getPublicDashboard, getProject, updateProject, updateProjectLogo,
 } from "../../slices/project";
 import { selectTeams } from "../../slices/team";
-import { getProjectCharts, runQueryOnPublic, runQueryWithFilters, selectCharts } from "../../slices/chart";
+import { getProjectCharts, runQueryOnPublic, runQueryWithFilters, selectCharts, shouldSkipFiltering } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -232,16 +232,35 @@ function PublicDashboard() {
       });
   };
 
+  // Helper function to extract variables from URL search parameters
+  const _extractVariablesFromSearchParams = () => {
+    const variables = {};
+    if (searchParams?.entries) {
+      const searchParamsArray = Array.from(searchParams.entries());
+      searchParamsArray.forEach(([key, value]) => {
+        // Skip special parameters like theme, fields, etc.
+        if (key !== "theme" && !key.startsWith("fields[") && key !== "removeStyling" && key !== "removeHeader" && key !== "accessToken") {
+          variables[key] = value;
+        }
+      });
+    }
+    return variables;
+  };
+
   const _checkSearchParamsForFilters = () => {
     if (!searchParams || !searchParams.entries) return;
 
     const entries = Array.from(searchParams.entries());
     if (entries.length === 0) return;
 
+    // Extract variables for the new variable system
+    const variables = _extractVariablesFromSearchParams();
+    
+    // Legacy filters (kept for backward compatibility)
     const filters = [];
     entries.forEach((entry) => {
       const [key, value] = entry;
-      if (!key.startsWith("fields[") && !key.startsWith("theme")) {
+      if (!key.startsWith("fields[") && !key.startsWith("theme") && key !== "removeStyling" && key !== "removeHeader" && key !== "accessToken") {
         filters.push({ variable: key, value, type: "variable" });
       }
     });
@@ -263,7 +282,13 @@ function PublicDashboard() {
       ];
 
       setDashboardFilters(currentFilters);
-      _runFiltering(currentFilters);
+    }
+
+    // If variables exist, run filtering with variables
+    if (Object.keys(variables).length > 0) {
+      _runFilteringWithVariables(variables);
+    } else if (filters.length > 0) {
+      _runFiltering({ ...dashboardFilters, [project.id]: [...(dashboardFilters[project.id] || []), ...filters.map(f => ({ ...f, id: `search-${f.variable}`, onReport: true }))] });
     }
   };
 
@@ -363,11 +388,40 @@ function PublicDashboard() {
     setLogoAspectRatio(aspectRatio);
   };
 
+  const _runFilteringWithVariables = (variables) => {
+    if (!variables || Object.keys(variables).length === 0 || charts.length === 0) return;
+
+    setFilterLoading(true);
+    const refreshPromises = [];
+
+    charts.forEach((chart) => {
+      refreshPromises.push(
+        dispatch(runQueryWithFilters({
+          project_id: project.id,
+          chart_id: chart.id,
+          filters: [], // No regular filters when using variables
+          variables // Pass variables directly
+        }))
+      );
+    });
+
+    Promise.all(refreshPromises)
+      .then(() => {
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
+      });
+  };
+
   const _runFiltering = (currentFilters = dashboardFilters, chartIds = null) => {
     if (!currentFilters?.[project.id] || charts.length === 0) return;
 
+    // Extract variables from URL to maintain them during filtering
+    const variables = _extractVariablesFromSearchParams();
+
     setFilterLoading(true);
-    _onFilterCharts(currentFilters, chartIds)
+    _onFilterCharts(currentFilters, chartIds, variables)
       .then(() => {
         setDashboardFilters(currentFilters);
         setFilterLoading(false);
@@ -377,7 +431,7 @@ function PublicDashboard() {
       });
   };
 
-  const _onFilterCharts = (currentFilters = dashboardFilters, chartIds = null) => {
+  const _onFilterCharts = (currentFilters = dashboardFilters, chartIds = null, variables = null) => {
     if (!currentFilters || !currentFilters[project.id]) {
       dispatch(getProjectCharts({ project_id: project.id }));
       setFilterLoading(false);
@@ -387,12 +441,29 @@ function PublicDashboard() {
     const refreshPromises = [];
     const queries = [];
 
+    // Extract variables from URL if not provided
+    const urlVariables = variables || _extractVariablesFromSearchParams();
+
+    // Prepare filter arrays for optimization check
+    const currentFilterArray = currentFilters[project.id] || [];
+
     // Filter charts based on chartIds if provided
     const chartsToProcess = chartIds 
       ? charts.filter(chart => chartIds.includes(chart.id))
       : charts;
+
+    // Only process charts that actually need filtering
+    const chartsNeedingFiltering = chartsToProcess.filter(chart => 
+      !shouldSkipFiltering(chart, currentFilterArray, urlVariables)
+    );
+
+    if (chartsNeedingFiltering.length === 0) {
+      // All charts already have the correct filter state, no API calls needed
+      setFilterLoading(false);
+      return Promise.resolve("done");
+    }
     
-    chartsToProcess.forEach((chart) => {
+    chartsNeedingFiltering.forEach((chart) => {
       if (currentFilters && currentFilters[project.id]) {
         setFilterLoading(true);
         
@@ -409,7 +480,7 @@ function PublicDashboard() {
         const dateFilters = currentFilters[project.id].filter(f => f.type === "date" && f.startDate && f.endDate);
         const otherFilters = currentFilters[project.id].filter(f => f.type !== "variable" && f.type !== "date");
 
-        // Handle variable filters by matching against chart conditions
+        // Handle variable filters by matching against chart conditions (legacy behavior)
         let newConditions = [];
         variableFilters.forEach((variableFilter) => {
           const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
@@ -421,16 +492,34 @@ function PublicDashboard() {
           }
         });
 
+        // Also check URL variables against chart conditions (preserve legacy behavior)
+        if (urlVariables && Object.keys(urlVariables).length > 0) {
+          Object.keys(urlVariables).forEach((variableName) => {
+            const found = identifiedConditions.find((c) => c.variable === variableName);
+            if (found) {
+              // Only add if not already added by dashboard filters
+              const alreadyAdded = newConditions.find((nc) => nc.variable === variableName);
+              if (!alreadyAdded) {
+                newConditions.push({
+                  ...found,
+                  value: urlVariables[variableName],
+                });
+              }
+            }
+          });
+        }
+
         // Combine non-date filters into a single array
         const allFilters = [...newConditions, ...otherFilters];
 
-        // Only make an API call if there are non-date filters to apply
-        if (allFilters.length > 0) {
+        // Only make an API call if there are non-date filters to apply or variables exist
+        if (allFilters.length > 0 || (urlVariables && Object.keys(urlVariables).length > 0)) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: project.id,
               chart_id: chart.id,
               filters: allFilters,
+              variables: urlVariables, // Include variables in the request
             }))
           );
         }
@@ -441,6 +530,7 @@ function PublicDashboard() {
             projectId: project.id,
             chartId: chart.id,
             dateFilter: dateFilters[0], // We only use the first date filter since we only allow one
+            variables: urlVariables, // Include variables for date filters too
           });
         }
       }
@@ -471,6 +561,7 @@ function PublicDashboard() {
         project_id: refresh.projectId,
         chart_id: refresh.chartId,
         filters: refresh.dateFilter,
+        variables: refresh.variables, // Include variables
       }))
       .catch(() => {
         // Continue even if one request fails
@@ -485,7 +576,16 @@ function PublicDashboard() {
   };
 
   const _onApplyFilterValue = (filters) => {
-    _runFiltering(filters);
+    // Extract variables from URL to maintain them when applying dashboard filters
+    const variables = _extractVariablesFromSearchParams();
+    
+    if (Object.keys(variables).length > 0) {
+      // If variables exist, use the enhanced filter function that handles both filters and variables
+      _onFilterCharts(filters, null, variables);
+    } else {
+      // If no variables, use the regular filtering
+      _runFiltering(filters);
+    }
   };
 
   const _onRemoveFilter = () => {

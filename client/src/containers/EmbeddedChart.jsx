@@ -59,10 +59,37 @@ function EmbeddedChart() {
     
     // If variables exist, use runQueryWithFilters to maintain variable state
     if (Object.keys(variables).length > 0 && chart?.id) {
+      // Add URL variables as filters if they match chart conditions (preserve legacy behavior)
+      let enhancedConditions = [...conditions];
+      if (chart?.ChartDatasetConfigs) {
+        // Get all conditions from the chart's datasets
+        let identifiedConditions = [];
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (Array.isArray(cdc.Dataset?.conditions)) {
+            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+          }
+        });
+
+        // Check URL variables against chart conditions
+        Object.keys(variables).forEach((variableName) => {
+          const found = identifiedConditions.find((c) => c.variable === variableName);
+          if (found) {
+            // Only add if not already in conditions
+            const alreadyInConditions = enhancedConditions.find((nc) => nc.variable === variableName);
+            if (!alreadyInConditions) {
+              enhancedConditions.push({
+                ...found,
+                value: variables[variableName],
+              });
+            }
+          }
+        });
+      }
+
       dispatch(runQueryWithFilters({ 
         project_id: chart.project_id, 
         chart_id: chart.id, 
-        filters: conditions, // existing filters
+        filters: enhancedConditions, // existing filters + variables as filters
         variables // maintain the URL variables
       }))
         .then((data) => {
@@ -155,13 +182,36 @@ function EmbeddedChart() {
       return;
     }
 
-    // Call the API with variables
+    // Check if any URL variables match chart conditions (preserve legacy behavior)
+    let conditionsFromVariables = [];
+    if (chart?.ChartDatasetConfigs) {
+      // Get all conditions from the chart's datasets
+      let identifiedConditions = [];
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+        }
+      });
+
+      // Check URL variables against chart conditions
+      Object.keys(variables).forEach((variableName) => {
+        const found = identifiedConditions.find((c) => c.variable === variableName);
+        if (found) {
+          conditionsFromVariables.push({
+            ...found,
+            value: variables[variableName],
+          });
+        }
+      });
+    }
+
+    // Call the API with both variables and filters (if any conditions were matched)
     setDataLoading(true);
     dispatch(runQueryWithFilters({ 
       project_id: chart.project_id, 
       chart_id: chart.id, 
-      filters: [], // Keep empty filters for now
-      variables 
+      filters: conditionsFromVariables, // Apply variables as filters if they match conditions
+      variables // Also pass variables directly for the new system
     }))
       .then((data) => {
         if (data.payload) {
@@ -201,11 +251,38 @@ function EmbeddedChart() {
     // Extract variables from URL search params
     const variables = _extractVariablesFromSearchParams();
 
+    // Add URL variables as filters if they match chart conditions (preserve legacy behavior)
+    const enhancedConditions = [...newConditions];
+    if (variables && Object.keys(variables).length > 0 && chart?.ChartDatasetConfigs) {
+      // Get all conditions from the chart's datasets
+      let identifiedConditions = [];
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+        }
+      });
+
+      // Check URL variables against chart conditions
+      Object.keys(variables).forEach((variableName) => {
+        const found = identifiedConditions.find((c) => c.variable === variableName);
+        if (found) {
+          // Only add if not already in conditions
+          const alreadyInConditions = enhancedConditions.find((nc) => nc.variable === variableName);
+          if (!alreadyInConditions) {
+            enhancedConditions.push({
+              ...found,
+              value: variables[variableName],
+            });
+          }
+        }
+      });
+    }
+
     setDataLoading(true);
     await dispatch(runQueryWithFilters({ 
       project_id: chart.project_id, 
       chart_id: chart.id, 
-      filters: newConditions,
+      filters: enhancedConditions,
       variables
     }))
       .then((data) => {
@@ -236,11 +313,38 @@ function EmbeddedChart() {
     // Extract variables from URL search params
     const variables = _extractVariablesFromSearchParams();
 
+    // Add URL variables as filters if they match chart conditions (preserve legacy behavior)
+    const enhancedConditions = [...newConditions];
+    if (variables && Object.keys(variables).length > 0 && chart?.ChartDatasetConfigs) {
+      // Get all conditions from the chart's datasets
+      let identifiedConditions = [];
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (Array.isArray(cdc.Dataset?.conditions)) {
+          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
+        }
+      });
+
+      // Check URL variables against chart conditions
+      Object.keys(variables).forEach((variableName) => {
+        const found = identifiedConditions.find((c) => c.variable === variableName);
+        if (found) {
+          // Only add if not already in conditions
+          const alreadyInConditions = enhancedConditions.find((nc) => nc.variable === variableName);
+          if (!alreadyInConditions) {
+            enhancedConditions.push({
+              ...found,
+              value: variables[variableName],
+            });
+          }
+        }
+      });
+    }
+
     setDataLoading(true);
     dispatch(runQueryWithFilters({ 
       project_id: chart.project_id, 
       chart_id: chart.id, 
-      filters: newConditions,
+      filters: enhancedConditions,
       variables
     }))
       .then((data) => {

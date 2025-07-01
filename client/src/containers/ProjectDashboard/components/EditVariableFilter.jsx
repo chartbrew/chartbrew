@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Select, SelectItem, Input, DatePicker, Divider,
 } from "@heroui/react";
-import { Link } from "react-router-dom";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
 import VariableFilter from "./VariableFilter";
@@ -11,7 +10,6 @@ import VariableFilter from "./VariableFilter";
 function EditVariableFilter({
   filter,
   onChange,
-  project,
 }) {
   const [variableCondition, setVariableCondition] = useState({
     variable: filter?.variable || "",
@@ -53,21 +51,13 @@ function EditVariableFilter({
             size="sm"
           />
 
-          <Select
-            label="Select a variable"
+          <Input
+            label="Variable name (no brackets)"
             variant="bordered"
-            selectedKeys={[variableCondition.variable]}
-            onSelectionChange={(keys) => _handleVariableChange("variable", keys.currentKey)}
-            aria-label="Select a variable"
+            value={variableCondition.variable}
+            onChange={(e) => _handleVariableChange("variable", e.target.value)}
             size="sm"
-            selectionMode="single"
-          >
-            {project?.Variables?.map((variable) => (
-              <SelectItem key={variable.name} textValue={variable.name}>
-                {variable.name}
-              </SelectItem>
-            ))}
-          </Select>
+          />
         </div>
 
         <div className="flex flex-row gap-2 items-center">
@@ -142,12 +132,6 @@ function EditVariableFilter({
               size="sm"
             />
           )}
-        </div>
-
-        <div>
-          <Link to="../variables" className="text-primary-400 text-sm">
-            Missing a variable? Click here to create new variables for this project.
-          </Link>
         </div>
 
         <Divider />
