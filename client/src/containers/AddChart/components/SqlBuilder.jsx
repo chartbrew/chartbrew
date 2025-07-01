@@ -241,11 +241,12 @@ function SqlBuilder(props) {
         }));
       }
 
-      // Use the updated dataRequest from the API response
+      // Use the updated dataRequest from the API response, but preserve the current query
       if (response.payload) {
         setSqlRequest({
           ...sqlRequest,
           ...response.payload,
+          query: sqlRequest.query, // Preserve the current query being edited
         });
       }
 

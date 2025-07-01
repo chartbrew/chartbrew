@@ -225,11 +225,12 @@ function MongoQueryBuilder(props) {
         }));
       }
 
-      // Use the updated dataRequest from the API response
+      // Use the updated dataRequest from the API response, but preserve the current query
       if (response.payload) {
         setMongoRequest({
           ...mongoRequest,
           ...response.payload,
+          query: mongoRequest.query, // Preserve the current query being edited
         });
       }
 
