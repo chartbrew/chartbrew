@@ -31,6 +31,11 @@ async function generateClickhouseQuery(schema, question, conversationHistory = [
         Example: SELECT * FROM movies LIMIT 10;
 
         Try to format the query in a way that is easy to read and understand.
+
+        If the user asks for a query with variables, you should use the variables in the query.
+        Example: SELECT * FROM movies WHERE status = {{status}} LIMIT 10;
+
+        Don't add variables if not specified by the user.
       `,
       },
       ...conversationHistory,

@@ -624,14 +624,16 @@ class ConnectionController {
       });
   }
 
-  async runMongo(id, dataRequest, getCache) {
+  async runMongo(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
     let mongoConnection;
-    let formattedQuery = dataRequest.query;
+
+    // Use the processed query if provided, otherwise use the original query
+    let formattedQuery = queryOverride || dataRequest.query;
 
     // formatting required since introducing the multiple mongo connection support
     if (formattedQuery.indexOf("connection.") === 0) {
@@ -662,7 +664,7 @@ class ConnectionController {
         if (formattedQuery.indexOf("count(") > -1) {
           finalData = { count: data };
         }
-        // cache the data for later use
+        // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
           responseData: {

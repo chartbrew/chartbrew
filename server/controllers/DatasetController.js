@@ -272,7 +272,12 @@ class DatasetController {
 
           if (connection.type === "mongodb") {
             drPromises.push(
-              this.connectionController.runMongo(connection.id, originalDataRequest, getCache)
+              this.connectionController.runMongo(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                processedQuery
+              )
             );
           } else if (connection.type === "api") {
             drPromises.push(

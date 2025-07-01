@@ -222,44 +222,40 @@ function SqlBuilder(props) {
 
   const _onVariableSave = async () => {
     setVariableLoading(true);
-    if (variableSettings.id) {
-      await dispatch(updateVariableBinding({
-        team_id: params.teamId,
-        dataset_id: dataRequest.dataset_id,
-        dataRequest_id: dataRequest.id,
-        variable_id: variableSettings.id,
-        data: variableSettings,
-      }));
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          data: variableSettings,
+        }));
+      }
 
-      setSqlRequest({
-        ...sqlRequest,
-        VariableBindings: sqlRequest.VariableBindings.map((v) => {
-          if (v.id === variableSettings.id) {
-            return variableSettings;
-          }
-          return v;
-        }),
-      });
-    } else {
-      await dispatch(createVariableBinding({
-        team_id: params.teamId,
-        dataset_id: dataRequest.dataset_id,
-        dataRequest_id: dataRequest.id,
-        data: variableSettings,
-      }));
+      // Use the updated dataRequest from the API response
+      if (response.payload) {
+        setSqlRequest({
+          ...sqlRequest,
+          ...response.payload,
+        });
+      }
 
-      setSqlRequest({
-        ...sqlRequest,
-        VariableBindings: [
-          ...sqlRequest.VariableBindings,
-          variableSettings,
-        ],
-      });
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
     }
-
-    setVariableLoading(false);
-    setVariableSettings(null);
-    toast.success("Variable saved successfully");
   };
 
   if (!connection) {

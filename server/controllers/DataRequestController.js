@@ -134,7 +134,12 @@ class RequestController {
         }
 
         if (connection.type === "mongodb") {
-          return this.connectionController.runMongo(connection.id, originalDataRequest, getCache);
+          return this.connectionController.runMongo(
+            connection.id,
+            originalDataRequest,
+            getCache,
+            processedQuery
+          );
         } else if (connection.type === "api") {
           return this.connectionController.runApiRequest(
             connection.id, chartId, originalDataRequest, getCache,
