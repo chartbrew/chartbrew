@@ -98,7 +98,8 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { team_id: teamId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
       order: [["createdAt", "DESC"]],
     })
@@ -114,7 +115,8 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
     })
       .then((dataset) => {
@@ -132,7 +134,8 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { chart_id: chartId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }, { model: db.VariableBinding }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
       order: [["order", "ASC"]],
     })
@@ -203,7 +206,14 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id: dataset_id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }] },
+        {
+          model: db.DataRequest,
+          include: [
+            { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
+            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+          ]
+        },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
     })
       .then((dataset) => {
@@ -448,6 +458,16 @@ class DatasetController {
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  async createVariableBinding(id, data) {
+    await db.VariableBinding.create({ ...data, entity_id: id, entity_type: "Dataset" });
+    return this.findById(id);
+  }
+
+  async updateVariableBinding(id, variable_id, data) {
+    await db.VariableBinding.update(data, { where: { id: variable_id, entity_id: id, entity_type: "Dataset" } });
+    return this.findById(id);
   }
 }
 

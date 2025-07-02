@@ -315,6 +315,9 @@ function SqlAceEditor({
         className={`rounded-md border-1 border-solid border-content3 ${className}`}
         {...otherProps}
       />
+      <div className="text-sm mt-2 text-gray-500">
+        {"You can use variables like {{variable_name}} as values"}
+      </div>
     </div>
   );
 }

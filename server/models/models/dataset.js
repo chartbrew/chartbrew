@@ -277,6 +277,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Dataset.hasMany(models.DataRequest, { foreignKey: "dataset_id" });
     models.Dataset.hasMany(models.ChartDatasetConfig, { foreignKey: "dataset_id" });
     models.Dataset.hasOne(models.DataRequest, { foreignKey: "id", as: "mainSource" });
+    models.Dataset.hasMany(models.VariableBinding, { foreignKey: "entity_id", constraints: false, scope: { entity_type: "Dataset" } });
   };
 
   return Dataset;

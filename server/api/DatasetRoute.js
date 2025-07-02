@@ -244,7 +244,7 @@ module.exports = (app) => {
   */
   app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
     return datasetController.runRequest({
-      dataset_id: req.body.dataset_id,
+      dataset_id: req.params.dataset_id,
       chart_id: req.body.chart_id,
       noSource: req.body.noSource,
       getCache: req.body.getCache,
@@ -297,6 +297,35 @@ module.exports = (app) => {
       });
   });
   // ----------------------------------------------------
+
+  /*
+** Route to create a new variable binding
+*/
+  app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions("updateAny"), (req, res) => {
+    return datasetController.createVariableBinding(
+      req.params.id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to update a variable binding
+  */
+  app.put(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions("updateAny"), (req, res) => {
+    return datasetController.updateVariableBinding(
+      req.params.id,
+      req.params.variable_id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
+      });
+  });
+  // -------------------------------------------------
 
   return (req, res, next) => {
     next();
