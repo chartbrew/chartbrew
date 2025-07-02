@@ -335,6 +335,7 @@ function SqlBuilder(props) {
                   schema={connection.schema}
                   updateQuery={(query) => _onChangeQuery(query, true)}
                   type={connection.type}
+                  onVariableClick={_onVariableClick}
                 />
                 <Spacer y={4} />
                 <Divider />
