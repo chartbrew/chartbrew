@@ -48,7 +48,7 @@ class AxisChart {
     }
   }
 
-  plot(skipDataProcessing, filters) {
+  plot(skipDataProcessing, filters, variables) {
     // skip the data processing if not required (this algorithm is CPU-intensive)
     const conditionsOptions = [];
     let gXType;
@@ -67,6 +67,7 @@ class AxisChart {
         if (!dataset.options || !dataset.options.dateField) {
           canDateFilter = false;
         }
+
         return dataset;
       });
 
@@ -118,10 +119,22 @@ class AxisChart {
         let yAxisData = [];
         let alreadyDateFiltered = false;
 
-        const filterData = dataFilter(
-          dataset.data, xAxis, dataset.options.conditions, this.timezone, this.chart.timeInterval
-        );
-        if (filterData.conditionsOptions) {
+        let filterData = { data: dataset.data };
+
+        if (dataset?.options?.conditions) {
+          // Filter out conditions that contain mustache notation ({{variable}})
+          // - save them for variable processing
+          const nonVariableConditions = dataset.options.conditions.filter((condition) => !condition.value || !condition.value.toString().includes("{{")
+          );
+
+          if (nonVariableConditions.length > 0) {
+            filterData = dataFilter(
+              dataset.data, xAxis, nonVariableConditions, this.timezone, this.chart.timeInterval
+            );
+          }
+        }
+
+        if (filterData?.conditionsOptions) {
           conditionsOptions.push({
             dataset_id: dataset.options.id,
             conditions: filterData.conditionsOptions,
@@ -183,6 +196,82 @@ class AxisChart {
                 return filter;
               });
             }
+          }
+        }
+
+        // Apply variable filtering if variables are provided
+        if (variables
+          && Object.keys(variables).length > 0
+          && dataset.options && dataset.options.conditions
+        ) {
+          const variableConditions = [];
+
+          // Process conditions that contain mustache notation {{variable}}
+          dataset.options.conditions.forEach((condition) => {
+            if (condition.value && condition.value.toString().includes("{{")) {
+              // Extract variable name from mustache notation
+              const mustacheMatch = condition.value.toString().match(/\{\{(\w+)\}\}/);
+              if (mustacheMatch) {
+                const variableName = mustacheMatch[1];
+
+                // Check if we have a value for this variable
+                if (Object.prototype.hasOwnProperty.call(variables, variableName)
+                    && variables[variableName] !== null
+                    && variables[variableName] !== undefined
+                    && variables[variableName] !== "") {
+                  // Create a condition with the actual variable value
+                  variableConditions.push({
+                    field: condition.field,
+                    value: variables[variableName],
+                    operator: condition.operator || "is"
+                  });
+                }
+              }
+            }
+          });
+
+          // Also check for VariableBindings-based conditions (existing logic)
+          if (dataset.options.VariableBindings) {
+            dataset.options.VariableBindings.forEach((binding) => {
+              if (Object.prototype.hasOwnProperty.call(variables, binding.name)
+                  && variables[binding.name] !== null
+                  && variables[binding.name] !== undefined
+                  && variables[binding.name] !== "") {
+                // Find conditions that reference this variable binding
+                dataset.options.conditions.forEach((condition) => {
+                  if (condition.field) {
+                    // Check if the condition field references this variable name
+                    const fieldReferencesVariable = condition.field.includes(binding.name)
+                      || condition.field === binding.name
+                      || condition.variableName === binding.name;
+
+                    if (fieldReferencesVariable && (!condition.value || !condition.value.toString().includes("{{"))) {
+                      // Create a condition with the variable value
+                      // skip if it has mustache notation, handled above
+                      variableConditions.push({
+                        field: condition.field,
+                        value: variables[binding.name],
+                        operator: condition.operator || "is"
+                      });
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          // Apply variable conditions if any were found
+          if (variableConditions.length > 0) {
+            // Apply each condition individually
+            variableConditions.forEach((condition) => {
+              filteredData = dataFilter(
+                filteredData,
+                condition.field,
+                [condition],
+                this.timezone,
+                this.chart.timeInterval
+              ).data;
+            });
           }
         }
 

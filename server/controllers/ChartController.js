@@ -389,7 +389,11 @@ class ChartController {
         }
 
         const axisChart = new AxisChart(chartData, project?.timezone);
-        return axisChart.plot(reallySkipParsing, filters, isExport);
+        if (gChart.id === 3904) {
+          // console.log("chartData", chartData);
+        }
+
+        return axisChart.plot(reallySkipParsing, filters, variables);
       })
       .then(async (chartData) => {
         gChartData = chartData;
