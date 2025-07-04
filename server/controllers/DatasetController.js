@@ -98,7 +98,13 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { team_id: teamId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        {
+          model: db.DataRequest,
+          include: [
+            { model: db.Connection, attributes: ["id", "name", "type", "subType"] },
+            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+          ],
+        },
         { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
       order: [["createdAt", "DESC"]],

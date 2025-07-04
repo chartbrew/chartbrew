@@ -312,8 +312,8 @@ function DatasetAlerts(props) {
           {alerts.length === 0 && (
             <Link onClick={_onOpen} className="flex items-center cursor-pointer">
               <LuBellPlus size={24} />
-              <Spacer x={0.5} />
-              <Text>Set up alerts</Text>
+              <Spacer x={1} />
+              <div className="text-sm text-foreground">Set up alerts</div>
             </Link>
           )}
           {alerts.length > 0 && alerts.map((alert) => (

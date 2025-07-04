@@ -17,6 +17,7 @@ import {
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
   LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck,
+  LuVariable,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -550,6 +551,18 @@ function Chart(props) {
     }
   };
 
+  const _onGetVariables = () => {
+    const cdcs = chart.ChartDatasetConfigs;
+    const variables = [];
+    cdcs.forEach((cdc) => {
+      if (cdc?.configuration?.variables) {
+        variables.push(...cdc.configuration.variables);
+      }
+    });
+
+    return variables;
+  };
+
   const { projectId } = params;
 
   return (
@@ -635,6 +648,13 @@ function Chart(props) {
                       <Tooltip content="This chart has alerts">
                         <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
                           <LuBell size={12} />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {_onGetVariables()?.length > 0 && (
+                      <Tooltip content="This chart has variables">
+                        <div>
+                          <LuVariable size={12} />
                         </div>
                       </Tooltip>
                     )}

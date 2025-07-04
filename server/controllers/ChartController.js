@@ -318,6 +318,25 @@ class ChartController {
           gCache = cache;
         }
 
+        // Merge CDC configuration variables with the provided variables
+        // Existing variables take precedence over CDC configuration values
+        const mergedVariables = { ...variables };
+
+        if (gChart.ChartDatasetConfigs && gChart.ChartDatasetConfigs.length > 0) {
+          gChart.ChartDatasetConfigs.forEach((cdc) => {
+            if (cdc.configuration && cdc.configuration.variables) {
+              cdc.configuration.variables.forEach((configVar) => {
+                // Only use CDC value if no value already exists in variables
+                if (mergedVariables[configVar.name] === undefined
+                    || mergedVariables[configVar.name] === null
+                    || mergedVariables[configVar.name] === "") {
+                  mergedVariables[configVar.name] = configVar.value;
+                }
+              });
+            }
+          });
+        }
+
         const requestPromises = [];
         gChart.ChartDatasetConfigs.forEach((cdc) => {
           if (noSource && gCache && gCache.data) {
@@ -327,7 +346,7 @@ class ChartController {
                 chart_id: gChart.id,
                 noSource: true,
                 getCache,
-                variables,
+                variables: mergedVariables,
               })
             );
           } else {
@@ -339,7 +358,7 @@ class ChartController {
                 getCache,
                 filters,
                 timezone: project.timezone,
-                variables,
+                variables: mergedVariables,
               })
             );
           }
@@ -389,9 +408,6 @@ class ChartController {
         }
 
         const axisChart = new AxisChart(chartData, project?.timezone);
-        if (gChart.id === 3904) {
-          // console.log("chartData", chartData);
-        }
 
         return axisChart.plot(reallySkipParsing, filters, variables);
       })

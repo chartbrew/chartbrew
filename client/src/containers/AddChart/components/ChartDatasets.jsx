@@ -294,7 +294,7 @@ function ChartDatasets(props) {
               <Tab title={`${cdc.legend}`} key={cdc.id}>
                 <ChartDatasetConfig
                   chartId={chartId}
-                  datasetId={cdc.id}
+                  cdcId={cdc.id}
                   dataRequests={datasets.find((d) => d.id === cdc.dataset_id)?.DataRequests}
                 />
               </Tab>
