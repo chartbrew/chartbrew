@@ -25,6 +25,7 @@ const CustomerioConnection = require("../connections/CustomerioConnection");
 const { getQueueOptions } = require("../redisConnection");
 const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
+const { applyApiVariables } = require("../modules/applyVariables");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -770,7 +771,7 @@ class ConnectionController {
     }
   }
 
-  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "") {
+  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "", runtimeVariables = {}) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -782,8 +783,23 @@ class ConnectionController {
 
     return this.findById(id)
       .then(async (connection) => {
+        // Apply variable substitution for API requests
+        let processedRoute = dataRequest.route || "";
+        let processedHeaders = dataRequest.headers || {};
+        let processedBody = dataRequest.body || "";
+
+        try {
+          const result = applyApiVariables(dataRequest, runtimeVariables);
+          processedRoute = result.processedRoute || processedRoute;
+          processedHeaders = result.processedHeaders || processedHeaders;
+          processedBody = result.processedBody || processedBody;
+        } catch (error) {
+          // If there's an error in variable processing, return it
+          return Promise.reject(error);
+        }
+
         let tempUrl = connection.getApiUrl(connection);
-        let route = dataRequest.route || "";
+        let route = processedRoute;
         if (route && (route[0] !== "/" && route[0] !== "?")) {
           route = `/${route}`;
         }
@@ -928,15 +944,15 @@ class ConnectionController {
             headers = Object.assign(opt, headers);
           }
 
-          if (dataRequest.headers) {
-            headers = Object.assign(dataRequest.headers, headers);
+          if (processedHeaders) {
+            headers = Object.assign(processedHeaders, headers);
           }
         }
 
         options.headers = headers;
 
-        if (dataRequest.body && dataRequest.method !== "GET") {
-          options.body = dataRequest.body;
+        if (processedBody && dataRequest.method !== "GET") {
+          options.body = processedBody;
           options.headers["Content-Type"] = "application/json";
         }
 

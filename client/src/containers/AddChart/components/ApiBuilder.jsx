@@ -2,15 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
+  Button, Checkbox, Divider, Input, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem, PopoverTrigger, Popover, PopoverContent,
-  Badge,
+  Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
+  Code, Switch,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuCirclePlus, LuTrash, LuCircleX } from "react-icons/lu";
+import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuTrash, LuCircleX, LuChevronsRight, LuVariable } from "react-icons/lu";
 import { endOfDay, startOfDay, sub } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -23,7 +24,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
 import {
   getConnection,
 } from "../../../slices/connection";
@@ -78,6 +79,8 @@ function ApiBuilder(props) {
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
   const [showTransform, setShowTransform] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
   const [variables, setVariables] = useState({
     startDate: {
       value: startOfDay(sub(new Date(), { months: 1 })),
@@ -323,6 +326,133 @@ function ApiBuilder(props) {
     onSave(updatedRequest);
   };
 
+  const _onVariableClick = (variable) => {
+    let selectedVariable = apiRequest.VariableBindings?.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          data: variableSettings,
+        }));
+      }
+
+      // Use the updated dataRequest from the API response, but preserve the current configuration
+      if (response.payload) {
+        setApiRequest({
+          ...apiRequest,
+          ...response.payload,
+          route: apiRequest.route, // Preserve the current route being edited
+          headers: apiRequest.headers,
+          body: apiRequest.body,
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
+
+  // Helper function to detect if a string contains variables
+  const _hasVariables = (value) => {
+    if (!value || typeof value !== "string") return false;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    return variableRegex.test(value);
+  };
+
+  // Helper function to get the first variable from a string
+  const _getFirstVariable = (value) => {
+    if (!value || typeof value !== "string") return null;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const match = variableRegex.exec(value);
+    if (match) {
+      return {
+        variable: match[1].trim(),
+        placeholder: match[0]
+      };
+    }
+    return null;
+  };
+
+  // Helper function to detect and render variables in input value (for URL only)
+  const _renderUrlVariables = (value, onVariableClick, size = "md") => {
+    if (!value) return null;
+    
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = variableRegex.exec(value)) !== null) {
+      // Add text before the variable
+      if (match.index > lastIndex) {
+        parts.push(value.substring(lastIndex, match.index));
+      }
+      
+      // Add the variable as a clickable chip
+      parts.push({
+        type: "variable",
+        variable: match[1].trim(),
+        placeholder: match[0],
+        index: match.index
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < value.length) {
+      parts.push(value.substring(lastIndex));
+    }
+    
+    return parts.map((part, index) => {
+      if (typeof part === "string") {
+        return <span key={index}>{part}</span>;
+      } else if (part.type === "variable") {
+        return (
+          <Chip
+            key={index}
+            color="primary"
+            variant="flat"
+            size="sm"
+            className={`cursor-pointer mx-1 ${size === "sm" ? "text-xs" : ""}`}
+            onClick={() => onVariableClick(part)}
+          >
+            {part.placeholder}
+          </Chip>
+        );
+      }
+      return null;
+    });
+  };
+
   return (
     <div className="px-4 max-w-screen-2xl mx-auto">
       <div className="grid grid-cols-12 gap-4">
@@ -395,46 +525,22 @@ function ApiBuilder(props) {
               }}
             />
           </Row>
+          {apiRequest.route && _hasVariables(apiRequest.route) && (
+            <div className="mt-2 bg-content2 rounded-lg p-2">
+              <div className="text-sm font-bold">URL Preview:</div>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-default-600">
+                  {fullConnection.host}
+                  {_renderUrlVariables(apiRequest.route, _onVariableClick, "sm")}
+                </span>
+              </div>
+            </div>
+          )}
           <Spacer y={2} />
-          <Row align="center">
-            <Text size="sm">{"Available variables: "}</Text>
-            <Spacer x={1} />
-            <Tooltip
-              content={"You can set this value later in the chart date settings"}
-            >
-              <Link>
-                <Chip
-                  color="primary"
-                  variant="faded"
-                  endContent={(
-                    <a onClick={() => _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
-                      <LuCirclePlus />
-                    </a>
-                  )}
-                >
-                  {"{{start_date}}"}
-                </Chip>
-              </Link>
-            </Tooltip>
-            <Spacer x={0.5} />
-            <Tooltip
-              content={"You can set this value later in the chart date settings"}
-            >
-              <Link onClick={() => _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
-                <Chip
-                  color="primary"
-                  variant="faded"
-                  endContent={(
-                    <a onClick={() => _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
-                      <LuCirclePlus />
-                    </a>
-                  )}
-                >
-                  {"{{end_date}}"}
-                </Chip>
-              </Link>
-            </Tooltip>
-          </Row>
+          <div className="text-sm italic text-default-500 flex items-center gap-1">
+            <div><LuVariable /></div>
+            {"You can add {{variable_name}} in URL, headers, or body. Click on variables to configure them."}
+          </div>
           <Spacer y={4} />
           {apiRequest?.route && (apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
             <>
@@ -600,6 +706,19 @@ function ApiBuilder(props) {
                             _onChangeHeader(header.id, e.target.value);
                           }}
                           variant="bordered"
+                          endContent={_hasVariables(header.key) && (
+                            <Tooltip content="Configure variable in header name">
+                              <Button
+                                isIconOnly
+                                onPress={() => _onVariableClick(_getFirstVariable(header.key))}
+                                color="primary"
+                                variant="light"
+                                size="sm"
+                              >
+                                <LuVariable />
+                              </Button>
+                            </Tooltip>
+                          )}
                         />
                         <Spacer x={1} />
                         <Input
@@ -610,6 +729,19 @@ function ApiBuilder(props) {
                             _onChangeHeaderValue(header.id, e.target.value);
                           }}
                           variant="bordered"
+                          endContent={_hasVariables(header.value) && (
+                            <Tooltip content="Configure variable in header value">
+                              <Button
+                                isIconOnly
+                                onPress={() => _onVariableClick(_getFirstVariable(header.value))}
+                                color="primary"
+                                variant="light"
+                                size="sm"
+                              >
+                                <LuVariable />
+                              </Button>
+                            </Tooltip>
+                          )}
                         />
                         <Spacer x={1} />
                         <Button
@@ -639,23 +771,41 @@ function ApiBuilder(props) {
             </div>
           )}
           {activeMenu === "body" && (
-            <Row>
-              <div className="w-full h-full">
-                <AceEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  width="none"
-                  value={apiRequest.body || ""}
-                  onChange={(value) => {
-                    _onChangeBody(value);
-                  }}
-                  name="queryEditor"
-                  editorProps={{ $blockScrolling: true }}
-                  className="rounded-md border-1 border-solid border-content3"
-                />
-              </div>
-            </Row>
+            <>
+              <Row>
+                <div className="w-full h-full">
+                  <AceEditor
+                    mode="json"
+                    theme={isDark ? "one_dark" : "tomorrow"}
+                    style={{ borderRadius: 10 }}
+                    width="none"
+                    value={apiRequest.body || ""}
+                    onChange={(value) => {
+                      _onChangeBody(value);
+                    }}
+                    name="queryEditor"
+                    editorProps={{ $blockScrolling: true }}
+                    className="rounded-md border-1 border-solid border-content3"
+                  />
+                </div>
+              </Row>
+              {_hasVariables(apiRequest.body) && (
+                <Row className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <Text size="sm" color="default">Variables detected in body:</Text>
+                    <Button
+                      size="sm"
+                      color="primary"
+                      variant="flat"
+                      startContent={<LuVariable />}
+                      onPress={() => _onVariableClick(_getFirstVariable(apiRequest.body))}
+                    >
+                      Configure Variables
+                    </Button>
+                  </div>
+                </Row>
+              )}
+            </>
           )}
           {activeMenu === "pagination" && (
             <Row className={"pt-4"}>
@@ -764,13 +914,10 @@ function ApiBuilder(props) {
             </div>
           </Row>
           <Spacer y={2} />
-          <Row align="center">
-            <LuInfo />
-            <Spacer x={1} />
-            <Text size="sm">
-              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-            </Text>
-          </Row>
+          <div className="flex items-center gap-1 text-sm text-default-500">
+            <div><LuInfo /></div>
+            {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+          </div>
         </div>
       </div>
       <DataTransform
@@ -779,6 +926,103 @@ function ApiBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={apiRequest.transform}
       />
+
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
