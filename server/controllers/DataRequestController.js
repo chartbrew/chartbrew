@@ -153,6 +153,7 @@ class RequestController {
             connection.id,
             originalDataRequest,
             getCache,
+            variables,
           );
         } else if (connection.type === "googleAnalytics") {
           return this.connectionController.runGoogleAnalytics(

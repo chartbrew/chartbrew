@@ -321,7 +321,12 @@ class DatasetController {
             );
           } else if (connection.type === "firestore") {
             drPromises.push(
-              this.connectionController.runFirestore(connection.id, originalDataRequest, getCache)
+              this.connectionController.runFirestore(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                variables,
+              )
             );
           } else if (connection.type === "googleAnalytics") {
             drPromises.push(

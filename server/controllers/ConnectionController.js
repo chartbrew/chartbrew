@@ -25,7 +25,7 @@ const CustomerioConnection = require("../connections/CustomerioConnection");
 const { getQueueOptions } = require("../redisConnection");
 const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
-const { applyApiVariables } = require("../modules/applyVariables");
+const { applyApiVariables, applyVariables } = require("../modules/applyVariables");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -1031,7 +1031,7 @@ class ConnectionController {
       });
   }
 
-  async runFirestore(id, dataRequest, getCache) {
+  async runFirestore(id, dataRequest, getCache, runtimeVariables = {}) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -1041,10 +1041,27 @@ class ConnectionController {
       .then((connection) => {
         const firestoreConnection = new FirestoreConnection(connection);
 
-        return firestoreConnection.get(dataRequest);
+        // Apply variable substitution using the centralized function
+        let processedDataRequest = dataRequest;
+        if (dataRequest.VariableBindings && dataRequest.VariableBindings.length > 0) {
+          try {
+            // Add connection info to dataRequest for applyVariables to work
+            const dataRequestWithConnection = {
+              ...JSON.parse(JSON.stringify(dataRequest)),
+              Connection: connection,
+            };
+            const result = applyVariables(dataRequestWithConnection, runtimeVariables);
+            processedDataRequest = result.processedDataRequest;
+          } catch (error) {
+            // If there's an error in variable processing, return it
+            return Promise.reject(error);
+          }
+        }
+
+        return firestoreConnection.get(processedDataRequest);
       })
       .then(async (responseData) => {
-        // cache the data for later use
+        // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
           responseData,
