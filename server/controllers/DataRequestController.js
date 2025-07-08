@@ -161,7 +161,7 @@ class RequestController {
           );
         } else if (connection.type === "realtimedb") {
           return this.connectionController.runRealtimeDb(
-            connection.id, originalDataRequest, getCache,
+            connection.id, originalDataRequest, getCache, variables,
           );
         } else if (connection.type === "customerio") {
           return this.connectionController.runCustomerio(

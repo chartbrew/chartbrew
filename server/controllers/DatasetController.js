@@ -338,7 +338,12 @@ class DatasetController {
             );
           } else if (connection.type === "realtimedb") {
             drPromises.push(
-              this.connectionController.runRealtimeDb(connection.id, originalDataRequest, getCache)
+              this.connectionController.runRealtimeDb(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                variables,
+              )
             );
           } else if (connection.type === "customerio") {
             drPromises.push(

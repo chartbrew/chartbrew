@@ -535,6 +535,124 @@ const applyFirestoreVariables = (dataRequest, variables = {}) => {
   };
 };
 
+const applyRealtimeDbVariables = (dataRequest, variables = {}) => {
+  // Don't modify the original dataRequest at all
+  const originalDataRequest = dataRequest;
+
+  // If there's no variable bindings, return original unchanged
+  if (!originalDataRequest.VariableBindings
+    || originalDataRequest.VariableBindings.length === 0
+  ) {
+    return {
+      dataRequest: originalDataRequest,
+      processedDataRequest: originalDataRequest
+    };
+  }
+
+  // Convert Sequelize model to plain object if needed
+  let plainDataRequest = originalDataRequest;
+  if (originalDataRequest.dataValues) {
+    // It's a Sequelize model instance, convert to plain object
+    plainDataRequest = originalDataRequest.toJSON
+      ? originalDataRequest.toJSON() : originalDataRequest.dataValues;
+    // Preserve the VariableBindings and Connection from the original request
+    plainDataRequest.VariableBindings = originalDataRequest.VariableBindings;
+    plainDataRequest.Connection = originalDataRequest.Connection;
+  }
+
+  // Helper function to process variables in a string
+  const processVariablesInString = (str) => {
+    if (!str || typeof str !== "string") return str;
+
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    let match;
+    let processedStr = str;
+
+    // Extract all variables from the string
+    // eslint-disable-next-line no-cond-assign
+    while ((match = variableRegex.exec(str)) !== null) {
+      const variableName = match[1].trim();
+      const binding = originalDataRequest.VariableBindings
+        .find((vb) => vb.name === variableName);
+
+      // Check for runtime variable value first
+      const runtimeValue = variables[variableName];
+      const hasRuntimeValue = runtimeValue !== null && runtimeValue !== undefined && runtimeValue !== "";
+
+      // Check for default value
+      const hasDefaultValue = binding?.default_value !== null
+        && binding?.default_value !== undefined
+        && binding?.default_value !== "";
+
+      let replacementValue;
+      if (hasRuntimeValue) {
+        // Priority 1: Use runtime value
+        replacementValue = runtimeValue;
+
+        // Handle different data types based on binding type
+        if (binding?.type) {
+          switch (binding.type) {
+            case "number":
+              replacementValue = Number.isNaN(Number(runtimeValue))
+                ? 0 : Number(runtimeValue);
+              break;
+            case "boolean":
+              replacementValue = (runtimeValue === "true" || runtimeValue === true);
+              break;
+            case "date":
+              replacementValue = String(runtimeValue);
+              break;
+            default:
+              replacementValue = String(runtimeValue);
+          }
+        } else {
+          replacementValue = String(runtimeValue);
+        }
+      } else if (hasDefaultValue && binding) {
+        // Priority 2: Use default value
+        replacementValue = binding.default_value;
+
+        switch (binding.type) {
+          case "number":
+            replacementValue = Number.isNaN(Number(binding.default_value))
+              ? 0 : Number(binding.default_value);
+            break;
+          case "boolean":
+            replacementValue = binding.default_value === "true" || binding.default_value === true;
+            break;
+          case "date":
+            replacementValue = String(binding.default_value);
+            break;
+          default:
+            replacementValue = String(binding.default_value);
+        }
+      } else {
+        // Priority 3: No runtime value and no default value
+        if (binding?.required) {
+          // Required variable without value - throw error
+          throw new Error(`Required variable '${variableName}' has no value provided and no default value`);
+        }
+
+        // Not required and no value - remove the placeholder
+        replacementValue = "";
+      }
+
+      processedStr = processedStr.replace(match[0], replacementValue);
+    }
+
+    return processedStr;
+  };
+
+  // Process variables in the route field
+  const processedDataRequest = { ...plainDataRequest };
+  processedDataRequest.route = processVariablesInString(plainDataRequest.route);
+
+  return {
+    dataRequest: originalDataRequest, // Original unchanged
+    processedDataRequest // DataRequest with variables resolved
+  };
+};
+
 const applyVariables = (dataRequest, variables = {}) => {
   // Check the connection type instead of dataset type
   const connectionType = dataRequest.Connection?.type;
@@ -549,6 +667,8 @@ const applyVariables = (dataRequest, variables = {}) => {
       return applyApiVariables(dataRequest, variables);
     case "firestore":
       return applyFirestoreVariables(dataRequest, variables);
+    case "realtimedb":
+      return applyRealtimeDbVariables(dataRequest, variables);
     default:
       return {
         dataRequest,
@@ -563,4 +683,5 @@ module.exports = {
   applyMongoVariables,
   applyApiVariables,
   applyFirestoreVariables,
+  applyRealtimeDbVariables,
 };
