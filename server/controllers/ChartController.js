@@ -288,7 +288,7 @@ class ChartController {
   }
 
   updateChartData(id, user, {
-    noSource, skipParsing, filters, isExport, getCache,
+    noSource, skipParsing, filters, isExport, getCache, variables,
   }) {
     let gChart;
     let gCache;
@@ -318,17 +318,48 @@ class ChartController {
           gCache = cache;
         }
 
+        // Merge CDC configuration variables with the provided variables
+        // Existing variables take precedence over CDC configuration values
+        const mergedVariables = { ...variables };
+
+        if (gChart.ChartDatasetConfigs && gChart.ChartDatasetConfigs.length > 0) {
+          gChart.ChartDatasetConfigs.forEach((cdc) => {
+            if (cdc.configuration && cdc.configuration.variables) {
+              cdc.configuration.variables.forEach((configVar) => {
+                // Only use CDC value if no value already exists in variables
+                if (mergedVariables[configVar.name] === undefined
+                    || mergedVariables[configVar.name] === null
+                    || mergedVariables[configVar.name] === "") {
+                  mergedVariables[configVar.name] = configVar.value;
+                }
+              });
+            }
+          });
+        }
+
         const requestPromises = [];
         gChart.ChartDatasetConfigs.forEach((cdc) => {
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
-              this.datasetController.runRequest(cdc.Dataset.id, gChart.id, true, getCache)
+              this.datasetController.runRequest({
+                dataset_id: cdc.Dataset.id,
+                chart_id: gChart.id,
+                noSource: true,
+                getCache,
+                variables: mergedVariables,
+              })
             );
           } else {
             requestPromises.push(
-              this.datasetController.runRequest(
-                cdc.Dataset.id, gChart.id, false, getCache, filters, project.timezone
-              )
+              this.datasetController.runRequest({
+                dataset_id: cdc.Dataset.id,
+                chart_id: gChart.id,
+                noSource: false,
+                getCache,
+                filters,
+                timezone: project.timezone,
+                variables: mergedVariables,
+              })
             );
           }
         });
@@ -377,7 +408,8 @@ class ChartController {
         }
 
         const axisChart = new AxisChart(chartData, project?.timezone);
-        return axisChart.plot(reallySkipParsing, filters, isExport);
+
+        return axisChart.plot(reallySkipParsing, filters, variables);
       })
       .then(async (chartData) => {
         gChartData = chartData;

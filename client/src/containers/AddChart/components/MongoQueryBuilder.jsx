@@ -5,11 +5,12 @@ import {
   Badge,
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent,
   ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
-  Tab, Tabs, Tooltip,
+  Tab, Tabs, Tooltip, Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
+  DrawerContent, Code, Switch, Select, SelectItem,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuCheck, LuChevronRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuCheck, LuChevronRight, LuInfo, LuPlay, LuPlus, LuTrash, LuChevronsRight } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -17,18 +18,19 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
+import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import QueryResultsTable from "./QueryResultsTable";
 import AiQuery from "../../Dataset/AiQuery";
 import DataTransform from "../../Dataset/DataTransform";
+import SqlAceEditor from "../../../components/SqlAceEditor";
 
 /*
-  MongoDB query builder
+  MongoDB query builder with variable support
 */
 function MongoQueryBuilder(props) {
   const {
@@ -45,12 +47,14 @@ function MongoQueryBuilder(props) {
   const [testingQuery, setTestingQuery] = useState(false);
   const [result, setResult] = useState("");
   const [mongoRequest, setMongoRequest] = useState({
-    query: "collection('your_collection').find().limit(100)",
+    query: "collection('your_collection').find({status: {{status}}}).limit(100)",
   });
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeResultsTab, setActiveResultsTab] = useState("table");
   const [showTransform, setShowTransform] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -187,6 +191,58 @@ function MongoQueryBuilder(props) {
     onSave(updatedRequest);
   };
 
+  const _onVariableClick = (variable) => {
+    let selectedVariable = mongoRequest.VariableBindings?.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          data: variableSettings,
+        }));
+      }
+
+      // Use the updated dataRequest from the API response, but preserve the current query
+      if (response.payload) {
+        setMongoRequest({
+          ...mongoRequest,
+          ...response.payload,
+          query: mongoRequest.query, // Preserve the current query being edited
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
@@ -244,6 +300,9 @@ function MongoQueryBuilder(props) {
                     {"In order to select a collection you always have to start with "}
                   </Text>
                   <pre>{"collection('collection_name')"}</pre>
+                  <Text size="sm">
+                    {"You can use variables like {{variable_name}} in your queries"}
+                  </Text>
                 </>
               )}
               placement="bottom"
@@ -253,21 +312,19 @@ function MongoQueryBuilder(props) {
           </Row>
           <Spacer y={1} />
           <Row>
-            <div className="w-full">
-              <AceEditor
-                mode="javascript"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                height="200px"
-                width="none"
-                value={mongoRequest.query || ""}
-                onChange={(value) => {
-                  _onChangeQuery(value);
-                }}
-                name="queryEditor"
-                editorProps={{ $blockScrolling: true }}
-                className="mongobuilder-query-tut rounded-md border-1 border-solid border-content3"
-              />
-            </div>
+            <SqlAceEditor
+              mode="javascript"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              height="300px"
+              width="none"
+              value={mongoRequest.query || ""}
+              onChange={(value) => {
+                _onChangeQuery(value);
+              }}
+              onVariableClick={_onVariableClick}
+              name="queryEditor"
+              className="mongobuilder-query-tut"
+            />
           </Row>
           <Spacer y={2} />
           <div className="mongobuilder-buttons-tut flex flex-row items-center">
@@ -504,6 +561,103 @@ function MongoQueryBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={mongoRequest.transform}
       />
+
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

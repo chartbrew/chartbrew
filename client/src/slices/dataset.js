@@ -129,15 +129,16 @@ export const runRequest = createAsyncThunk(
   async ({ team_id, dataset_id, getCache }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/request`;
-    const method = "GET";
+    const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
+      "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     });
-
-    if (getCache) {
-      url += "?getCache=true";
-    }
+    
+    const body = {
+      getCache,
+    };
 
     let status = {
       statusCode: 500,
@@ -146,7 +147,7 @@ export const runRequest = createAsyncThunk(
 
     let data;
     try {
-      const response = await fetch(url, { method, headers });
+      const response = await fetch(url, { method, headers, body: JSON.stringify(body) });
       status = {
         statusCode: response.status,
         statusText: response.statusText,
@@ -259,7 +260,6 @@ export const runDataRequest = createAsyncThunk(
     const body = {};
     if (getCache) {
       body.getCache = getCache;
-      url += "?getCache=true";
     }
 
     let status = {
@@ -353,6 +353,104 @@ export const deleteDrafts = createAsyncThunk(
 
     const responseJson = await response.json();
 
+    return responseJson;
+  }
+);
+
+export const createDatasetVariableBinding = createAsyncThunk(
+  "dataset/createDatasetVariableBinding",
+  async ({ team_id, dataset_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/variableBindings`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error("Failed to create variable binding");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const updateDatasetVariableBinding = createAsyncThunk(
+  "dataset/updateDatasetVariableBinding",
+  async ({ team_id, dataset_id, variable_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/variableBindings/${variable_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error("Failed to update variable binding");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const createVariableBinding = createAsyncThunk(
+  "dataset/createVariableBinding",
+  async ({ team_id, dataset_id, dataRequest_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}/variableBindings`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error("Failed to create variable binding");
+    }
+
+    const responseJson = await response.json();
+
+    // returns the new dataRequest object with the new variable bindings
+    return responseJson;
+  }
+);
+  
+export const updateVariableBinding = createAsyncThunk(
+  "dataset/updateVariableBinding",
+  async ({ team_id, dataset_id, dataRequest_id, variable_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}/variableBindings/${variable_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error("Failed to update variable binding");
+    }
+
+    const responseJson = await response.json();
+
+    // returns the new dataRequest object with the new variable bindings
     return responseJson;
   }
 );
@@ -682,8 +780,107 @@ export const datasetSlice = createSlice({
       .addCase(duplicateDataset.rejected, (state) => {
         state.loading = false;
         state.error = true;
+      })
+
+      // createDatasetVariableBinding
+      .addCase(createDatasetVariableBinding.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createDatasetVariableBinding.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              VariableBindings: [...dataset.VariableBindings, action.payload],
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(createDatasetVariableBinding.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // updateDatasetVariableBinding
+      .addCase(updateDatasetVariableBinding.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateDatasetVariableBinding.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              VariableBindings: dataset.VariableBindings.map((variableBinding) => {
+                if (variableBinding.id === action.meta.arg.variable_id) {
+                  return action.payload;
+                }
+                return variableBinding;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(updateDatasetVariableBinding.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // createVariableBinding
+      .addCase(createVariableBinding.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createVariableBinding.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return action.payload;
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(createVariableBinding.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // updateVariableBinding
+      .addCase(updateVariableBinding.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateVariableBinding.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return action.payload;
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(updateVariableBinding.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
       });
-  },
+  }
 });
 
 export const { clearDatasets } = datasetSlice.actions;

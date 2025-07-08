@@ -142,9 +142,14 @@ module.exports = (app) => {
   ** Route to run a request
   */
   app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, res) => {
-    return dataRequestController.runRequest(
-      req.params.id, req.params.chart_id, req.body.noSource, req.body.getCache, req.body.filters,
-    )
+    return dataRequestController.runRequest({
+      id: req.params.id,
+      chart_id: req.params.chart_id,
+      noSource: req.body.noSource,
+      getCache: req.body.getCache,
+      filters: req.body.filters,
+      variables: req.body.variables,
+    })
       .then((dataRequest) => {
         const newDataRequest = dataRequest;
         // reduce the size of the returned data. No point in showing thousands of objects
@@ -195,6 +200,35 @@ module.exports = (app) => {
       })
       .catch((error) => {
         return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to create a new variable binding
+  */
+  app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.createVariableBinding(
+      req.params.id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to update a variable binding
+  */
+  app.put(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.updateVariableBinding(
+      req.params.id,
+      req.params.variable_id,
+      req.body,
+    )
+      .then((variableBinding) => {
+        return res.status(200).send(variableBinding);
       });
   });
   // -------------------------------------------------

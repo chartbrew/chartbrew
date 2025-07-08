@@ -27,7 +27,9 @@ function KpiChartSegment(props) {
           else if (getWidthBreakpoint(containerRef) === "sm" && index > 5) return (<span key={c.label} />);
           else if (index > 7) return (<span key={c.label} />);
 
-          const formattedComparison = Math.abs(c.comparison % 1 === 0 ? Math.round(c.comparison).toFixed(0) : c.comparison.toFixed(2));
+          const formattedComparison = c?.comparison && typeof c.comparison === "number" 
+            ? Math.abs(c.comparison % 1 === 0 ? Math.round(c.comparison).toFixed(0) : c.comparison.toFixed(2))
+            : "0";
 
           return (
             <div

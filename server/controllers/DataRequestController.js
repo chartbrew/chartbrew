@@ -6,6 +6,7 @@ const { generateMongoQuery } = require("../modules/ai/generateMongoQuery");
 const externalDbConnection = require("../modules/externalDbConnection");
 const { generateClickhouseQuery } = require("../modules/ai/generateClickhouseQuery");
 const { applyTransformation } = require("../modules/dataTransformations");
+const { applyVariables } = require("../modules/applyVariables");
 
 class RequestController {
   constructor() {
@@ -25,7 +26,7 @@ class RequestController {
   findById(id) {
     return db.DataRequest.findOne({
       where: { id },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }],
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }],
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -41,7 +42,7 @@ class RequestController {
   findByChart(chartId) {
     return db.DataRequest.findOne({
       where: { chart_id: chartId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -57,7 +58,7 @@ class RequestController {
   findByDataset(datasetId) {
     return db.DataRequest.findAll({
       where: { dataset_id: datasetId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequests) => {
         if (!dataRequests || dataRequests.length === 0) {
@@ -100,7 +101,9 @@ class RequestController {
       });
   }
 
-  runRequest(id, chartId, noSource, getCache) {
+  runRequest({
+    id, chartId, noSource, getCache, variables = {},
+  }) {
     let gDataset;
     let dataRequest;
     return this.findById(id)
@@ -110,11 +113,15 @@ class RequestController {
       })
       .then((dataset) => {
         gDataset = dataset;
+        const {
+          dataRequest: originalDataRequest,
+          processedQuery,
+        } = applyVariables(dataRequest, variables);
 
         // go through all data requests
-        const connection = dataRequest.Connection;
+        const connection = originalDataRequest.Connection;
 
-        if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
+        if (!originalDataRequest || (originalDataRequest && originalDataRequest.length === 0)) {
           return new Promise((resolve, reject) => reject(new Error("404")));
         }
 
@@ -127,23 +134,43 @@ class RequestController {
         }
 
         if (connection.type === "mongodb") {
-          return this.connectionController.runMongo(connection.id, dataRequest, getCache);
+          return this.connectionController.runMongo(
+            connection.id,
+            originalDataRequest,
+            getCache,
+            processedQuery
+          );
         } else if (connection.type === "api") {
           return this.connectionController.runApiRequest(
-            connection.id, chartId, dataRequest, getCache,
+            connection.id, chartId, originalDataRequest, getCache,
           );
         } else if (connection.type === "postgres" || connection.type === "mysql") {
-          return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
+          return this.connectionController.runMysqlOrPostgres(
+            connection.id, originalDataRequest, getCache, processedQuery,
+          );
         } else if (connection.type === "firestore") {
-          return this.connectionController.runFirestore(connection.id, dataRequest, getCache);
+          return this.connectionController.runFirestore(
+            connection.id,
+            originalDataRequest,
+            getCache,
+            variables,
+          );
         } else if (connection.type === "googleAnalytics") {
-          return this.connectionController.runGoogleAnalytics(connection, dataRequest);
+          return this.connectionController.runGoogleAnalytics(
+            connection, originalDataRequest,
+          );
         } else if (connection.type === "realtimedb") {
-          return this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache);
+          return this.connectionController.runRealtimeDb(
+            connection.id, originalDataRequest, getCache, variables,
+          );
         } else if (connection.type === "customerio") {
-          return this.connectionController.runCustomerio(connection, dataRequest, getCache);
+          return this.connectionController.runCustomerio(
+            connection, originalDataRequest, getCache,
+          );
         } else if (connection.type === "clickhouse") {
-          return this.connectionController.runClickhouse(connection.id, dataRequest, getCache);
+          return this.connectionController.runClickhouse(
+            connection.id, originalDataRequest, getCache, processedQuery,
+          );
         } else {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
@@ -175,10 +202,10 @@ class RequestController {
             );
 
             try {
-              const drCache = await drCacheController.findLast(dataRequest.id);
+              const drCache = await drCacheController.findLast(response.dataRequest.id);
               if (drCache?.responseData?.configuration) {
                 drCache.responseData.configuration = newConfiguration;
-                drCacheController.update(drCache, dataRequest.id);
+                drCacheController.update(drCache, response.dataRequest.id);
               }
             } catch (e) {
               // do nothing
@@ -259,6 +286,26 @@ class RequestController {
       })
       .catch((error) => {
         return Promise.reject(error);
+      });
+  }
+
+  createVariableBinding(id, data) {
+    const newVar = {
+      ...data,
+      entity_type: "DataRequest",
+      entity_id: `${id}`,
+    };
+
+    return db.VariableBinding.create(newVar)
+      .then(() => {
+        return this.findById(id);
+      });
+  }
+
+  updateVariableBinding(id, variable_id, data) {
+    return db.VariableBinding.update(data, { where: { id: variable_id } })
+      .then(() => {
+        return this.findById(id);
       });
   }
 }

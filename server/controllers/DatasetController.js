@@ -4,6 +4,7 @@ const db = require("../models/models");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const { applyTransformation } = require("../modules/dataTransformations");
+const { applyVariables } = require("../modules/applyVariables");
 
 function joinData(joins, index, requests, data) {
   const dr = requests.find((r) => r?.dataRequest?.id === joins[index].dr_id);
@@ -97,7 +98,14 @@ class DatasetController {
     return db.Dataset.findAll({
       where: { team_id: teamId },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        {
+          model: db.DataRequest,
+          include: [
+            { model: db.Connection, attributes: ["id", "name", "type", "subType"] },
+            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+          ],
+        },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
       order: [["createdAt", "DESC"]],
     })
@@ -114,6 +122,7 @@ class DatasetController {
       where: { id },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
     })
       .then((dataset) => {
@@ -132,6 +141,7 @@ class DatasetController {
       where: { chart_id: chartId },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
       order: [["order", "ASC"]],
     })
@@ -194,13 +204,22 @@ class DatasetController {
       });
   }
 
-  runRequest(id, chartId, noSource, getCache, filters, timezone) {
+  runRequest({
+    dataset_id, chart_id, noSource, getCache, filters, timezone, variables = {},
+  }) {
     let gDataset;
     let mainDr;
     return db.Dataset.findOne({
-      where: { id },
+      where: { id: dataset_id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }] },
+        {
+          model: db.DataRequest,
+          include: [
+            { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
+            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+          ]
+        },
+        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
       ],
     })
       .then((dataset) => {
@@ -242,9 +261,16 @@ class DatasetController {
 
         // go through all data requests
         dataRequests.forEach((dataRequest) => {
-          const connection = dataRequest.Connection;
+          // Apply variables before processing the request
+          const {
+            dataRequest: originalDataRequest,
+            processedQuery,
+          } = applyVariables(dataRequest, variables);
+          const connection = originalDataRequest.Connection;
 
-          if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
+          if (!originalDataRequest
+            || (originalDataRequest && originalDataRequest.length === 0)
+          ) {
             drPromises.push(
               new Promise((resolve, reject) => reject(new Error("404")))
             );
@@ -262,37 +288,66 @@ class DatasetController {
 
           if (connection.type === "mongodb") {
             drPromises.push(
-              this.connectionController.runMongo(connection.id, dataRequest, getCache)
+              this.connectionController.runMongo(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                processedQuery
+              )
             );
           } else if (connection.type === "api") {
             drPromises.push(
               this.connectionController.runApiRequest(
-                connection.id, chartId, dataRequest, getCache, filters, timezone,
+                connection.id, chart_id, originalDataRequest, getCache, filters, timezone,
               )
             );
           } else if (connection.type === "postgres" || connection.type === "mysql") {
             drPromises.push(
-              this.connectionController.runMysqlOrPostgres(connection.id, dataRequest, getCache)
+              this.connectionController.runMysqlOrPostgres(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                processedQuery,
+              )
             );
           } else if (connection.type === "clickhouse") {
             drPromises.push(
-              this.connectionController.runClickhouse(connection.id, dataRequest, getCache)
+              this.connectionController.runClickhouse(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                processedQuery,
+              )
             );
           } else if (connection.type === "firestore") {
             drPromises.push(
-              this.connectionController.runFirestore(connection.id, dataRequest, getCache)
+              this.connectionController.runFirestore(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                variables,
+              )
             );
           } else if (connection.type === "googleAnalytics") {
             drPromises.push(
-              this.connectionController.runGoogleAnalytics(connection, dataRequest, getCache)
+              this.connectionController.runGoogleAnalytics(
+                connection,
+                originalDataRequest,
+                getCache,
+              )
             );
           } else if (connection.type === "realtimedb") {
             drPromises.push(
-              this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache)
+              this.connectionController.runRealtimeDb(
+                connection.id,
+                originalDataRequest,
+                getCache,
+                variables,
+              )
             );
           } else if (connection.type === "customerio") {
             drPromises.push(
-              this.connectionController.runCustomerio(connection, dataRequest, getCache)
+              this.connectionController.runCustomerio(connection, originalDataRequest, getCache)
             );
           } else {
             drPromises.push(
@@ -419,6 +474,16 @@ class DatasetController {
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  async createVariableBinding(id, data) {
+    await db.VariableBinding.create({ ...data, entity_id: id, entity_type: "Dataset" });
+    return this.findById(id);
+  }
+
+  async updateVariableBinding(id, variable_id, data) {
+    await db.VariableBinding.update(data, { where: { id: variable_id, entity_id: id, entity_type: "Dataset" } });
+    return this.findById(id);
   }
 }
 

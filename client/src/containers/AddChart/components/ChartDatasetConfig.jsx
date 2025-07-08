@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -16,6 +16,7 @@ import {
   LuPlug,
   LuSettings,
   LuWandSparkles, LuCircleX,
+  LuVariable,
 } from "react-icons/lu";
 
 import Text from "../../../components/Text";
@@ -33,7 +34,7 @@ import connectionImages from "../../../config/connectionImages";
 import { useTheme } from "../../../modules/ThemeContext";
 
 function ChartDatasetConfig(props) {
-  const { chartId, datasetId, dataRequests } = props;
+  const { chartId, cdcId, dataRequests } = props;
 
   const [legend, setLegend] = useState("");
   const [formula, setFormula] = useState("");
@@ -42,8 +43,12 @@ function ChartDatasetConfig(props) {
   const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
   const [editConfirmation, setEditConfirmation] = useState(false);
+  const [variables, setVariables] = useState([]);
+  const [variableValues, setVariableValues] = useState({});
 
-  const cdc = useSelector((state) => selectCdc(state, chartId, datasetId));
+  const cdc = useSelector((state) => selectCdc(state, chartId, cdcId));
+  const drs = useSelector((state) => state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))?.DataRequests);
+
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -52,6 +57,7 @@ function ChartDatasetConfig(props) {
   const params = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const initVars = useRef(false);
 
   useEffect(() => {
     if (cdc.formula) {
@@ -67,6 +73,33 @@ function ChartDatasetConfig(props) {
       setGoal(cdc.goal);
     }
   }, [cdc]);
+
+  useEffect(() => {
+    if (drs && !initVars.current) {
+      initVars.current = true;
+      let tempVariables = [];
+      drs?.forEach((dr) => {
+        tempVariables = [...tempVariables, ...dr.VariableBindings];
+      });
+      setVariables(tempVariables);
+
+      // Load existing variable values from CDC configuration
+      const existingValues = {};
+      if (cdc.configuration?.variables) {
+        cdc.configuration.variables.forEach((configVar) => {
+          existingValues[configVar.name] = configVar.value;
+        });
+      }
+      
+      // Initialize variable values with existing overrides or default values
+      const initialValues = {};
+      tempVariables.forEach((variable) => {
+        initialValues[variable.name] = existingValues[variable.name] || variable.default_value || "";
+      });
+      
+      setVariableValues(initialValues);
+    }
+  }, [drs, cdc.configuration]);
 
   useEffect(() => {
     let tempDataItems;
@@ -148,7 +181,7 @@ function ChartDatasetConfig(props) {
     let skipParsing = true;
 
     Object.keys(data).forEach((key) => {
-      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal") {
+      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal" || key === "configuration") {
         skipParsing = false;
       }
     });
@@ -240,6 +273,78 @@ function ChartDatasetConfig(props) {
     _onUpdateCdc(data);
   };
 
+  const _onSaveVariableValue = (variableName, value) => {
+    // Get current configuration or initialize empty object
+    const currentConfig = cdc.configuration || {};
+    const currentVariables = currentConfig.variables || [];
+    
+    // Update or add the variable value
+    const updatedVariables = [...currentVariables];
+    const existingIndex = updatedVariables.findIndex(v => v.name === variableName);
+    
+    if (existingIndex >= 0) {
+      updatedVariables[existingIndex] = { name: variableName, value };
+    } else {
+      updatedVariables.push({ name: variableName, value });
+    }
+    
+    // Update the configuration
+    const updatedConfig = {
+      ...currentConfig,
+      variables: updatedVariables
+    };
+    
+    // Save to CDC
+    _onUpdateCdc({ configuration: updatedConfig });
+    
+    // Update local state
+    setVariableValues(prev => ({
+      ...prev,
+      [variableName]: value
+    }));
+  };
+
+  const _getVariableCurrentValue = (variable) => {
+    return variableValues[variable.name] || variable.default_value || "";
+  };
+
+  const _getVariableOriginalValue = (variable) => {
+    // Check if there's an override in CDC configuration
+    const overrideValue = cdc.configuration?.variables?.find(v => v.name === variable.name)?.value;
+    return overrideValue !== undefined ? overrideValue : (variable.default_value || "");
+  };
+
+  const _hasVariableChanged = (variable) => {
+    const currentValue = variableValues[variable.name] || "";
+    const originalValue = _getVariableOriginalValue(variable);
+    return currentValue !== originalValue;
+  };
+
+  const _onClearVariableOverride = (variableName) => {
+    // Get current configuration
+    const currentConfig = cdc.configuration || {};
+    const currentVariables = currentConfig.variables || [];
+    
+    // Remove the variable override
+    const updatedVariables = currentVariables.filter(v => v.name !== variableName);
+    
+    // Update the configuration
+    const updatedConfig = {
+      ...currentConfig,
+      variables: updatedVariables
+    };
+    
+    // Save to CDC
+    _onUpdateCdc({ configuration: updatedConfig });
+    
+    // Reset local state to default value
+    const variable = variables.find(v => v.name === variableName);
+    setVariableValues(prev => ({
+      ...prev,
+      [variableName]: variable?.default_value || ""
+    }));
+  };
+
   return (
     <div>
       <Row align="center">
@@ -258,7 +363,7 @@ function ChartDatasetConfig(props) {
               color="primary"
               isLoading={false}
               size="sm"
-              onClick={_onSaveLegend}
+              onPress={_onSaveLegend}
             >
               <LuCheck />
             </Button>
@@ -274,7 +379,7 @@ function ChartDatasetConfig(props) {
               variant="ghost"
               size="sm"
               endContent={<LuSettings size={18} />}
-              onClick={() => setEditConfirmation(true)}
+              onPress={() => setEditConfirmation(true)}
             >
               Edit dataset
             </Button>
@@ -308,13 +413,13 @@ function ChartDatasetConfig(props) {
       {chart.type !== "table" && (
         <>
           <Row align="center" justify={"space-between"}>
-            <Text>Sort records</Text>
+            <div className="text-sm">Sort records</div>
             <Row align="center">
               <Tooltip content="Sort the dataset in ascending order">
                 <Button
                   color={cdc.sort === "asc" ? "secondary" : "default"}
                   variant={cdc.sort !== "asc" ? "bordered" : "solid"}
-                  onClick={() => {
+                  onPress={() => {
                     if (cdc.sort === "asc") {
                       _onUpdateCdc({ sort: "" });
                     } else {
@@ -326,12 +431,12 @@ function ChartDatasetConfig(props) {
                   <LuArrowDown01 />
                 </Button>
               </Tooltip>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Tooltip content="Sort the dataset in descending order">
                 <Button
                   color={cdc.sort === "desc" ? "secondary" : "default"}
                   variant={cdc.sort !== "desc" ? "bordered" : "solid"}
-                  onClick={() => {
+                  onPress={() => {
                     if (cdc.sort === "desc") {
                       _onUpdateCdc({ sort: "" });
                     } else {
@@ -345,9 +450,9 @@ function ChartDatasetConfig(props) {
               </Tooltip>
               {cdc.sort && (
                 <>
-                  <Spacer x={0.5} />
+                  <Spacer x={1} />
                   <Tooltip content="Clear sorting">
-                    <Link className="text-danger" onClick={() => _onUpdateCdc({ sort: "" })}>
+                    <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
                       <LuCircleX className="text-danger" />
                     </Link>
                   </Tooltip>
@@ -358,7 +463,7 @@ function ChartDatasetConfig(props) {
           <Spacer y={2} />
 
           <Row align={"center"} justify={"space-between"}>
-            <Text>Max records</Text>
+            <div className="text-sm">Max records</div>
             <Row align="center">
               <Input
                 labelPlacement="outside"
@@ -375,7 +480,7 @@ function ChartDatasetConfig(props) {
                     {maxRecords !== cdc.maxRecords && (
                       <>
                         <Tooltip content="Save">
-                          <Link className="text-success" onClick={() => _onUpdateCdc({ maxRecords: maxRecords })}>
+                          <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords: maxRecords })}>
                             <LuCircleCheck className="text-success" />
                           </Link>
                         </Tooltip>
@@ -385,7 +490,7 @@ function ChartDatasetConfig(props) {
                     <Tooltip content="Clear limit">
                       <Link
                         className="text-danger"
-                        onClick={() => {
+                        onPress={() => {
                           _onUpdateCdc({ maxRecords: null });
                           setMaxRecords("");
                         }}
@@ -418,10 +523,10 @@ function ChartDatasetConfig(props) {
         <>
           <div>
             {!formula && (
-              <Link onClick={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
+              <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
                 <TbMathFunctionY size={24} />
-                <Spacer x={0.5} />
-                <Text>Apply formula on metrics</Text>
+                <Spacer x={1} />
+                <div className="text-sm text-foreground">Apply formula on metrics</div>
               </Link>
             )}
             {formula && (
@@ -430,9 +535,9 @@ function ChartDatasetConfig(props) {
                   <Popover>
                     <PopoverTrigger>
                       <div className="flex flex-row gap-1 items-center">
-                        <Text>
+                        <div className="text-sm">
                           {"Metric formula"}
-                        </Text>
+                        </div>
                         <LuInfo size={18} />
                       </div>
                     </PopoverTrigger>
@@ -455,18 +560,18 @@ function ChartDatasetConfig(props) {
                       <Tooltip
                         content={"Apply the formula"}
                       >
-                        <Link onClick={_onApplyFormula}>
+                        <Link onPress={_onApplyFormula}>
                           <LuCircleCheck className={"text-success"} />
                         </Link>
                       </Tooltip>
                     )}
                     <Tooltip content="Remove formula">
-                      <Link onClick={_onRemoveFormula}>
+                      <Link onPress={_onRemoveFormula}>
                         <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip>
                     <Tooltip content="Click for an example">
-                      <Link onClick={_onExampleFormula}>
+                      <Link onPress={_onExampleFormula}>
                         <LuWandSparkles className="text-primary" />
                       </Link>
                     </Tooltip>
@@ -483,17 +588,17 @@ function ChartDatasetConfig(props) {
           <div>
             {!goal && chart.type !== "table" && (
               <div>
-                <Link onClick={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
+                <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
                   <TbProgressCheck size={24} />
-                  <Spacer x={0.5} />
-                  <Text>Set a goal</Text>
+                  <Spacer x={1} />
+                  <div className="text-sm text-foreground">Set a goal</div>
                 </Link>
               </div>
             )}
             {goal && chart.type !== "table" && (
               <Row align={"center"} justify={"space-between"}>
                 <Row align="center">
-                  <Text>{"Goal"}</Text>
+                  <div className="text-sm text-foreground">{"Goal"}</div>
                   <Spacer x={1} />
                   <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
                     <div><LuInfo size={18} /></div>
@@ -511,13 +616,13 @@ function ChartDatasetConfig(props) {
                     <Tooltip
                       content={"Save goal"}
                     >
-                      <Link onClick={() => _onUpdateCdc({ goal })}>
+                      <Link onPress={() => _onUpdateCdc({ goal })}>
                         <LuCircleCheck className={"text-success"} />
                       </Link>
                     </Tooltip>
                   )}
                   <Tooltip content="Remove goal">
-                    <Link onClick={() => {
+                    <Link onPress={() => {
                       _onUpdateCdc({ goal: null });
                       setGoal("");
                     }}>
@@ -554,9 +659,79 @@ function ChartDatasetConfig(props) {
           <div>
             <LinkNext to={`/${params.teamId}/dataset/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}&editFilters=true`} className="flex items-center cursor-pointer chart-cdc-goal">
               <LuListFilter size={24} className="text-primary" />
-              <Spacer x={0.5} />
-              <Text>Edit filters</Text>
+              <Spacer x={1} />
+              <div className="text-sm text-foreground">Edit filters</div>
             </LinkNext>
+          </div>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+
+          <div className="flex flex-col gap-2">
+            <div className="font-bold">{"Variables"}</div>
+            {variables.map((variable) => (
+              <div key={variable.id} className="flex flex-col gap-1">
+                <Input
+                  startContent={
+                    <div className="flex flex-row gap-1 items-center">
+                      <LuVariable size={18} />
+                      <div className="text-sm text-gray-400">{variable.name}</div>
+                    </div>
+                  }
+                  placeholder={`Default: ${variable.default_value || "No default"}`}
+                  value={_getVariableCurrentValue(variable)}
+                  onChange={(e) => {
+                    setVariableValues(prev => ({
+                      ...prev,
+                      [variable.name]: e.target.value
+                    }));
+                  }}
+                  variant="bordered"
+                  endContent={
+                    _hasVariableChanged(variable) ? (
+                      <div className="flex flex-row gap-1">
+                        <Tooltip content="Save variable value">
+                          <Link 
+                            onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
+                            className="text-success"
+                          >
+                            <LuCircleCheck className="text-success" />
+                          </Link>
+                        </Tooltip>
+                        <Tooltip content="Reset to saved value">
+                          <Link 
+                            onClick={() => {
+                              const originalValue = _getVariableOriginalValue(variable);
+                              setVariableValues(prev => ({
+                                ...prev,
+                                [variable.name]: originalValue
+                              }));
+                            }}
+                            className="text-warning"
+                          >
+                            <LuCircleX className="text-warning" />
+                          </Link>
+                        </Tooltip>
+                      </div>
+                    ) : cdc.configuration?.variables?.find(v => v.name === variable.name) && (
+                      <div className="flex flex-row gap-1">
+                        <Tooltip content="Remove override and use default value">
+                          <Link onClick={() => _onClearVariableOverride(variable.name)}>
+                            <LuCircleX className="text-warning" />
+                          </Link>
+                        </Tooltip>
+                      </div>
+                    )
+                  }
+                />
+              </div>
+            ))}
+            {variables.length === 0 && (
+              <div className="text-sm text-gray-400 italic">
+                {"No variables found in the connected datasets."}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -720,9 +895,9 @@ function ChartDatasetConfig(props) {
 }
 
 ChartDatasetConfig.propTypes = {
-  datasetId: PropTypes.number.isRequired,
   chartId: PropTypes.number.isRequired,
   dataRequests: PropTypes.array,
+  cdcId: PropTypes.number.isRequired,
 };
 
 ChartDatasetConfig.defaultProps = {

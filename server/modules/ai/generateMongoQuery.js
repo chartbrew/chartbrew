@@ -33,6 +33,11 @@ async function generateMongoQuery(schema, question, conversationHistory = [], cu
                   .limit(10)
 
         Try to format the query in a way that is easy to read and understand.
+
+        If the user asks for a query with variables, you should use the variables in the query.
+        Example: collection('movies').find({status: {{status}}}).limit(10)
+
+        Don't add variables if not specified by the user.
       `,
       },
       ...conversationHistory,

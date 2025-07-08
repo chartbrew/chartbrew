@@ -4,7 +4,8 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Select, SelectItem, PopoverTrigger, PopoverContent,
-  Badge,
+  Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
+  Code,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -15,7 +16,7 @@ import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import {
   LuTriangleAlert, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuCirclePlus,
-  LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX,
+  LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX, LuVariable, LuChevronsRight,
 } from "react-icons/lu";
 import { useParams } from "react-router";
 
@@ -33,7 +34,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
 
 export const operators = [{
@@ -114,6 +115,8 @@ function FirestoreBuilder(props) {
   const [orderByDirection, setOrderByDirection] = useState("desc");
   const [requestError, setRequestError] = useState("");
   const [showTransform, setShowTransform] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -505,6 +508,80 @@ function FirestoreBuilder(props) {
     _onTest(newRequest);
   };
 
+  // Helper function to detect if a string contains variables
+  const _hasVariables = (value) => {
+    if (!value || typeof value !== "string") return false;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    return variableRegex.test(value);
+  };
+
+  // Helper function to get the first variable from a string
+  const _getFirstVariable = (value) => {
+    if (!value || typeof value !== "string") return null;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const match = variableRegex.exec(value);
+    if (match) {
+      return {
+        variable: match[1].trim(),
+        placeholder: match[0]
+      };
+    }
+    return null;
+  };
+
+  const _onVariableClick = (variable) => {
+    let selectedVariable = firestoreRequest.VariableBindings?.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          data: variableSettings,
+        }));
+      }
+
+      // Use the updated dataRequest from the API response, but preserve the current configuration
+      if (response.payload) {
+        setFirestoreRequest({
+          ...firestoreRequest,
+          ...response.payload,
+          query: firestoreRequest.query, // Preserve the current query being edited
+          configuration: firestoreRequest.configuration,
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
@@ -599,9 +676,14 @@ function FirestoreBuilder(props) {
             <Tooltip
               content="These filters are applied on the main collection only."
             >
-              <div><LuInfo /></div>
+              <div><LuInfo size={16} /></div>
             </Tooltip>
           </Row>
+          <Spacer y={1} />
+          <div className="text-sm italic text-default-500 flex items-center gap-1">
+            <div><LuVariable /></div>
+            {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
+          </div>
           <Spacer y={1} />
           <Row className="firestorebuilder-query-tut">
             <Conditions
@@ -618,6 +700,9 @@ function FirestoreBuilder(props) {
               updateCondition={_updateCondition}
               onChangeConditionValues={_onChangeConditionValues}
               collection={dataRequest.query}
+              hasVariables={_hasVariables}
+              getFirstVariable={_getFirstVariable}
+              onVariableClick={_onVariableClick}
             />
           </Row>
           <Spacer y={2} />
@@ -743,6 +828,11 @@ function FirestoreBuilder(props) {
                     </Tooltip>
                   </Row>
                   <Spacer y={1} />
+                  <div className="text-sm italic text-default-500 flex items-center gap-1">
+                    <div><LuVariable /></div>
+                    {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
+                  </div>
+                  <Spacer y={1} />
                   <Row>
                     <Conditions
                       conditions={
@@ -762,6 +852,9 @@ function FirestoreBuilder(props) {
                       updateCondition={_updateCondition}
                       onChangeConditionValues={_onChangeConditionValues}
                       collection={dataRequest.query}
+                      hasVariables={_hasVariables}
+                      getFirstVariable={_getFirstVariable}
+                      onVariableClick={_onVariableClick}
                     />
                   </Row>
                   {indexUrl && (
@@ -852,6 +945,103 @@ function FirestoreBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={firestoreRequest.transform}
       />
+
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
@@ -860,6 +1050,7 @@ function Conditions(props) {
   const {
     fieldOptions, conditions, updateCondition, onChangeConditionValues,
     onRemoveCondition, onApplyCondition, onRevertCondition, onAddCondition,
+    hasVariables, getFirstVariable, onVariableClick,
   } = props;
 
   const [tempConditionValue, setTempConditionValue] = useState("");
@@ -953,6 +1144,19 @@ function Conditions(props) {
                     onChange={(e) => updateCondition(condition.id, e.target.value, "value")}
                     isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                     variant="bordered"
+                    endContent={hasVariables && hasVariables(condition.value) && (
+                      <Tooltip content="Configure variable">
+                        <Button
+                          isIconOnly
+                          onPress={() => onVariableClick(getFirstVariable(condition.value))}
+                          color="primary"
+                          variant="light"
+                          size="sm"
+                        >
+                          <LuVariable />
+                        </Button>
+                      </Tooltip>
+                    )}
                   />
                 )}
               {_.find(fieldOptions, { value: condition.field })
@@ -1102,6 +1306,9 @@ Conditions.propTypes = {
   onAddCondition: PropTypes.func.isRequired,
   conditions: PropTypes.array.isRequired,
   fieldOptions: PropTypes.array.isRequired,
+  hasVariables: PropTypes.func,
+  getFirstVariable: PropTypes.func,
+  onVariableClick: PropTypes.func,
 };
 
 const styles = {

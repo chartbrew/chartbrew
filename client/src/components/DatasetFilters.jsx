@@ -1,23 +1,27 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { useDispatch } from "react-redux";
 import {
   Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader,
-  Checkbox, Chip, DatePicker, Divider, Dropdown, DropdownItem, DropdownMenu,
-  DropdownTrigger, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Spacer, Tooltip,
+  Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
+  DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, 
+  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem,
+  Spacer, Switch, Tooltip, Code,
 } from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
-  LuSettings, LuCircleX,
+  LuSettings, LuCircleX, LuChevronsRight,
 } from "react-icons/lu";
 import { find } from "lodash";
 import { nanoid } from "@reduxjs/toolkit";
 import { parseDate } from "@internationalized/date";
 import { I18nProvider } from "@react-aria/i18n";
+import toast from "react-hot-toast";
 
 import Row from "./Row";
 import Text from "./Text";
 import { operators } from "../modules/filterOperations";
+import { createDatasetVariableBinding, updateDatasetVariableBinding } from "../slices/dataset";
 
 function DatasetFilters(props) {
   const { onUpdate, fieldOptions, dataset } = props;
@@ -26,11 +30,17 @@ function DatasetFilters(props) {
   const [selectedCondition, setSelectedCondition] = useState({});
   const [conditionModal, setConditionModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
+  const [localDataset, setLocalDataset] = useState(dataset);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (dataset.conditions) {
       setConditions(dataset.conditions);
     }
+    setLocalDataset(dataset);
   }, [dataset]);
 
   const _updateCondition = (id, data, type, dataType) => {
@@ -140,6 +150,87 @@ function DatasetFilters(props) {
     return false;
   };
 
+  const _onVariableClick = (variable) => {
+    let selectedVariable = localDataset.VariableBindings?.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateDatasetVariableBinding({
+          team_id: localDataset.team_id,
+          dataset_id: localDataset.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createDatasetVariableBinding({
+          team_id: localDataset.team_id,
+          dataset_id: localDataset.id,
+          data: variableSettings,
+        }));
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+      
+      // Update the local dataset with the fresh data from the backend
+      if (response.payload) {
+        setLocalDataset(response.payload);
+        // Also trigger onUpdate to let parent know dataset was modified
+        await onUpdate({});
+      }
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
+
+  // Helper function to detect and render variables in input value
+  const _renderValueWithVariables = (value) => {
+    if (!value) return null;
+    
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = variableRegex.exec(value)) !== null) {
+      // Add text before the variable
+      if (match.index > lastIndex) {
+        parts.push(value.substring(lastIndex, match.index));
+      }
+      
+      // Add the variable as a clickable chip
+      parts.push({
+        type: "variable",
+        variable: match[1].trim(),
+        placeholder: match[0]
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < value.length) {
+      parts.push(value.substring(lastIndex));
+    }
+    
+    return parts;
+  };
+
   return (
     <div className="flex flex-col gap-2">
       {conditions && conditions.length === 0 && (
@@ -219,15 +310,17 @@ function DatasetFilters(props) {
                   {(!condition.field
                     || (find(fieldOptions, { value: condition.field })
                       && find(fieldOptions, { value: condition.field }).type !== "date")) && (
-                      <Input
-                        placeholder="Enter a value"
-                        value={condition.value}
-                        onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
-                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                        labelPlacement="outside"
-                        variant="bordered"
-                        size="sm"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          placeholder="Enter a value or {{variable_name}}"
+                          value={condition.value}
+                          onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
+                          disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                          labelPlacement="outside"
+                          variant="bordered"
+                          size="sm"
+                        />
+                      </div>
                     )}
 
                   {find(fieldOptions, { value: condition.field })
@@ -248,6 +341,30 @@ function DatasetFilters(props) {
                 </div>
               </Row>
             </CardBody>
+            {condition.value && _renderValueWithVariables(condition.value) && _renderValueWithVariables(condition.value).some(part => part.type === "variable") && (
+              <>
+                <Divider />
+                <CardBody>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Variables:</span>
+                    <div className="flex flex-row gap-1 items-center flex-wrap">
+                      {_renderValueWithVariables(condition.value).filter(part => part.type === "variable").map((part, index) => (
+                        <div key={index}>
+                          <Code
+                            size="sm"
+                            className="cursor-pointer hover:bg-primary-100 transition-colors duration-200"
+                            variant="flat"
+                            onClick={() => _onVariableClick(part)}
+                          >
+                            {part.variable}
+                          </Code>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardBody>
+              </>
+            )}
             <Divider />
             <CardFooter className="justify-between gap-2">
               {!condition.saved && condition.field && (
@@ -467,6 +584,103 @@ function DatasetFilters(props) {
         </ModalContent>
       </Modal>
 
+      {/* Variable Settings Drawer */}
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value || ""}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The filter will fail if you don't provide a value."}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
     </div>
   );

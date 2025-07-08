@@ -17,6 +17,7 @@ import {
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
   LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck,
+  LuVariable,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -108,19 +109,30 @@ function Chart(props) {
   const chartSize = useChartSize(chart.layout);
   const [isCompact, setIsCompact] = useState(false);
   const containerRef = useRef(null);
+  const variablesRef = useRef(variables);
 
-  useInterval(() => {
-    dispatch(getChart({
-      project_id: chart.project_id,
-      chart_id: chart.id,
-      password: isPublic ? window.localStorage.getItem("reportPassword") : null,
-      fromInterval: true
-    }));
+  // Update the variables ref whenever the variables prop changes
+  useEffect(() => {
+    variablesRef.current = variables;
+  }, [variables]);
 
-    if (params.projectId) {
-      _runFiltering(getFiltersFromStorage(params.projectId));
+  useInterval(async () => {
+    // Get the current filters and variables to check if we need filtering
+    const currentFilters = params.projectId ? getFiltersFromStorage(params.projectId) : null;
+    const hasVariables = variablesRef.current?.[params.projectId]?.length > 0;
+    
+    // If we have filters or variables, we should use filtering instead of just getting the chart
+    if ((currentFilters && currentFilters.length > 0) || hasVariables) {
+      // Just run filtering, which will get the filtered data
+      await _runFiltering(currentFilters, params.projectId);
     } else {
-      _runFiltering();
+      // No filters, just get the base chart data
+      await dispatch(getChart({
+        project_id: chart.project_id,
+        chart_id: chart.id,
+        password: isPublic ? window.localStorage.getItem("reportPassword") : null,
+        fromInterval: true
+      }));
     }
   }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
@@ -194,7 +206,7 @@ function Chart(props) {
       });
   };
 
-  const _runFiltering = async (filters) => {
+    const _runFiltering = async (filters, projectId = params.projectId) => {
     if (!chart.ChartDatasetConfigs) return;
 
     // Get all conditions from the chart's datasets
@@ -214,8 +226,8 @@ function Chart(props) {
     }
 
     // Add variable filters if they exist and match chart conditions
-    if (variables?.[params.projectId]) {
-      variables[params.projectId].forEach((variable) => {
+    if (variablesRef.current?.[projectId]) {
+      variablesRef.current[projectId].forEach((variable) => {
         const found = identifiedConditions.find((c) => c.variable === variable.variable && variable.value);
         if (found) {
           allFilters.push({
@@ -226,12 +238,15 @@ function Chart(props) {
       });
     }
 
-    // Only make an API call if there are filters to apply
-    if (allFilters.length > 0) {
+    // Make an API call if there are filters to apply OR if there are variables
+    const hasVariables = variablesRef.current?.[projectId]?.length > 0;
+    
+    if (allFilters.length > 0 || hasVariables) {
       await dispatch(runQueryWithFilters({
         project_id: chart.project_id,
         chart_id: chart.id,
         filters: allFilters,
+        variables: variablesRef.current || {},
       }));
     }
   };
@@ -536,6 +551,18 @@ function Chart(props) {
     }
   };
 
+  const _onGetVariables = () => {
+    const cdcs = chart.ChartDatasetConfigs;
+    const variables = [];
+    cdcs.forEach((cdc) => {
+      if (cdc?.configuration?.variables) {
+        variables.push(...cdc.configuration.variables);
+      }
+    });
+
+    return variables;
+  };
+
   const { projectId } = params;
 
   return (
@@ -621,6 +648,13 @@ function Chart(props) {
                       <Tooltip content="This chart has alerts">
                         <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
                           <LuBell size={12} />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {_onGetVariables()?.length > 0 && (
+                      <Tooltip content="This chart has variables">
+                        <div>
+                          <LuVariable size={12} />
                         </div>
                       </Tooltip>
                     )}

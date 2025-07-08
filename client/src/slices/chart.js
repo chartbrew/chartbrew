@@ -184,7 +184,7 @@ export const runQuery = createAsyncThunk(
 
 export const runQueryWithFilters = createAsyncThunk(
   "chart/runQueryWithFilters",
-  async ({ project_id, chart_id, filters }) => {
+  async ({ project_id, chart_id, filters, variables }) => {
     const token = getAuthToken();
     const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
     const method = "POST";
@@ -193,7 +193,7 @@ export const runQueryWithFilters = createAsyncThunk(
       "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({ filters });
+    const body = JSON.stringify({ filters, variables });
 
     const response = await fetch(url, { method, headers, body });
     const responseJson = await response.json();
@@ -479,6 +479,36 @@ export const chartSlice = createSlice({
     removeLocalChart: (state, action) => {
       state.data = state.data.filter((chart) => chart.id !== action.payload.id);
     },
+    updateChartFilterMetadata: (state, action) => {
+      const { chartId, filters, variables } = action.payload;
+      state.data = state.data.map((chart) => {
+        if (chart.id === chartId) {
+          const filterHash = JSON.stringify({ filters: filters || [], variables: variables || {} });
+          return {
+            ...chart,
+            filterMetadata: {
+              appliedFilters: filters || [],
+              appliedVariables: variables || {},
+              lastFilterHash: filterHash,
+              lastUpdated: Date.now(),
+            },
+          };
+        }
+        return chart;
+      });
+    },
+    clearChartFilterMetadata: (state, action) => {
+      const { chartId } = action.payload;
+      state.data = state.data.map((chart) => {
+        if (chart.id === chartId) {
+          return {
+            ...chart,
+            filterMetadata: null,
+          };
+        }
+        return chart;
+      });
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -653,12 +683,21 @@ export const chartSlice = createSlice({
       })
       .addCase(runQueryWithFilters.fulfilled, (state, action) => {
         state.loading = false;
+        const { filters, variables } = action.meta.arg;
+        const filterHash = JSON.stringify({ filters: filters || [], variables: variables || {} });
+        
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
             return {
               ...chart,
               ...action.payload,
               loading: false,
+              filterMetadata: {
+                appliedFilters: filters || [],
+                appliedVariables: variables || {},
+                lastFilterHash: filterHash,
+                lastUpdated: Date.now(),
+              },
             };
           }
           return chart;
@@ -840,7 +879,28 @@ export const {
   clearStagedCharts,
   updateLocalChart,
   removeLocalChart,
+  updateChartFilterMetadata,
+  clearChartFilterMetadata,
 } = chartSlice.actions;
+
+// Helper function to generate filter hash
+export const generateFilterHash = (filters, variables) => {
+  return JSON.stringify({ filters: filters || [], variables: variables || {} });
+};
+
+// Selector to check if current filters match chart's stored filter metadata
+export const shouldSkipFiltering = (chart, currentFilters, currentVariables) => {
+  if (!chart?.filterMetadata) return false;
+  
+  const currentHash = generateFilterHash(currentFilters, currentVariables);
+  return chart.filterMetadata.lastFilterHash === currentHash;
+};
+
+// Selector to get charts that need filtering
+export const getChartsNeedingFiltering = (charts, currentFilters, currentVariables) => {
+  return charts.filter(chart => !shouldSkipFiltering(chart, currentFilters, currentVariables));
+};
+
 export const selectCharts = (state) => state.chart.data;
 export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === id); 
 export const selectCdc = (state, chartId, cdcId) => {

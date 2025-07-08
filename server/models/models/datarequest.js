@@ -171,6 +171,7 @@ module.exports = (sequelize, DataTypes) => {
   DataRequest.associate = (models) => {
     models.DataRequest.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
     models.DataRequest.belongsTo(models.Connection, { foreignKey: "connection_id" });
+    models.DataRequest.hasMany(models.VariableBinding, { foreignKey: "entity_id", constraints: false, scope: { entity_type: "DataRequest" } });
   };
 
   return DataRequest;

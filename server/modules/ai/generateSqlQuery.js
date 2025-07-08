@@ -28,6 +28,11 @@ async function generateSqlQuery(schema, question, conversationHistory = [], curr
         ${formattedSchema}
 
         Output the SQL query only.
+
+        If the user asks for a query with variables, you should use the variables in the query.
+        Example: SELECT * FROM movies WHERE status = {{status}} LIMIT 10;
+
+        Don't add variables if not specified by the user.
       `,
       },
       ...conversationHistory,

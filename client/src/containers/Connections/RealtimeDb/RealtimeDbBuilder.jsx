@@ -3,11 +3,12 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
-  Badge,
+  Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
+  Code, Select, SelectItem, Switch,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuInfo, LuPlay, LuTrash, LuX } from "react-icons/lu";
+import { LuInfo, LuPlay, LuTrash, LuX, LuVariable, LuChevronsRight } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -18,7 +19,7 @@ import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
 
 /*
@@ -38,6 +39,8 @@ function RealtimeDbBuilder(props) {
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
   const [showTransform, setShowTransform] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
 
   const { isDark } = useTheme();
   const params = useParams();
@@ -47,6 +50,80 @@ function RealtimeDbBuilder(props) {
   const {
     dataRequest, onChangeRequest, connection, onSave, onDelete,
   } = props;
+
+  // Helper function to detect if a string contains variables
+  const _hasVariables = (value) => {
+    if (!value || typeof value !== "string") return false;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    return variableRegex.test(value);
+  };
+
+  // Helper function to get the first variable from a string
+  const _getFirstVariable = (value) => {
+    if (!value || typeof value !== "string") return null;
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const match = variableRegex.exec(value);
+    if (match) {
+      return {
+        variable: match[1].trim(),
+        placeholder: match[0]
+      };
+    }
+    return null;
+  };
+
+  const _onVariableClick = (variable) => {
+    let selectedVariable = firebaseRequest.VariableBindings?.find((v) => v.name === variable.variable);
+    if (selectedVariable) {
+      setVariableSettings(selectedVariable);
+    } else {
+      setVariableSettings({
+        name: variable.variable,
+        type: "string",
+        value: "",
+      });
+    }
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+    try {
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: params.teamId,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+          data: variableSettings,
+        }));
+      }
+
+      // Use the updated dataRequest from the API response, but preserve the current configuration
+      if (response.payload) {
+        setFirebaseRequest({
+          ...firebaseRequest,
+          ...response.payload,
+          route: firebaseRequest.route, // Preserve the current route being edited
+          configuration: firebaseRequest.configuration,
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
 
   // on init effect
   useEffect(() => {
@@ -214,6 +291,17 @@ function RealtimeDbBuilder(props) {
             <Divider />
           </Row>
           <Spacer y={4} />
+          <Row>
+            <Text>
+              {"Enter the data path"}
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <div className="text-xs italic text-default-500 flex items-center gap-1">
+            <div><LuVariable size={16} /></div>
+            {"You can add {{variable_name}} in the data path. Click on the variable icon to configure them."}
+          </div>
+          <Spacer y={1} />
           <Row className="RealtimeDb-route-tut">
             <Input
               value={fullConnection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
@@ -231,29 +319,38 @@ function RealtimeDbBuilder(props) {
               fullWidth
               disableAnimation
               labelPlacement="outside"
+              endContent={_hasVariables(firebaseRequest.route) && (
+                <Tooltip content="Configure variable">
+                  <Button
+                    isIconOnly
+                    onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))}
+                    color="primary"
+                    variant="light"
+                    size="sm"
+                  >
+                    <LuVariable />
+                  </Button>
+                </Tooltip>
+              )}
             />
           </Row>
           {(requestSuccess || requestError) && (
             <>
               <Spacer y={2} />
-              <Row>
+              <div className="flex flex-row items-center gap-1">
                 {requestSuccess && requestSuccess.statusCode < 300 && (
                   <>
-                    <Chip color="success">
+                    <Chip color="success" variant="flat" size="sm">
                       {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                    </Chip>
-                    <Spacer x={0.5} />
-                    <Chip>
-                      {`Length: ${result ? JSON.parse(result).length : 0}`}
                     </Chip>
                   </>
                 )}
                 {requestSuccess?.statusCode > 300 && (
-                  <Chip color="danger">
+                  <Chip color="danger" variant="flat" size="sm">
                     {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Chip>
                 )}
-              </Row>
+              </div>
             </>
           )}
 
@@ -520,6 +617,103 @@ function RealtimeDbBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={firebaseRequest.transform}
       />
+
+      <Drawer
+        isOpen={!!variableSettings}
+        onClose={() => setVariableSettings(null)}
+        placement="right"
+        classNames={{
+          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        }}
+        style={{
+          marginTop: "54px",
+        }}
+        backdrop="transparent"
+      >
+        <DrawerContent>
+          <DrawerHeader
+            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+          >
+            <Tooltip content="Close">
+              <Button
+                isIconOnly
+                onPress={() => setVariableSettings(null)}
+                size="sm"
+                variant="light"
+              >
+                <LuChevronsRight />
+              </Button>
+            </Tooltip>
+            <div className="text-sm font-bold">Variable settings</div>
+            <div className="flex flex-row items-center gap-2">
+              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+                {variableSettings?.name}
+              </Code>
+            </div>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable name</div>
+              <pre className="text-primary">
+                {variableSettings?.name}
+              </pre>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Variable type</div>
+              <Select
+                label="Select a type"
+                placeholder="Select a variable type"
+                fullWidth
+                selectedKeys={[variableSettings?.type]}
+                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
+                variant="bordered"
+              >
+                <SelectItem key="string">String</SelectItem>
+                <SelectItem key="number">Number</SelectItem>
+                <SelectItem key="boolean">Boolean</SelectItem>
+                <SelectItem key="date">Date</SelectItem>
+              </Select>
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Default value</div>
+              <Input
+                placeholder="Type a value here"
+                fullWidth
+                variant="bordered"
+                value={variableSettings?.default_value}
+                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
+              />
+            </div>
+            <Spacer y={1} />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-bold text-gray-500">Required</div>
+              <Switch
+                isSelected={variableSettings?.required}
+                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                size="sm"
+              />
+            </div>
+          </DrawerBody>
+          <DrawerFooter>
+            <Button
+              variant="flat"
+              onPress={() => setVariableSettings(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onPress={_onVariableSave}
+              isLoading={variableLoading}
+            >
+              Save
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

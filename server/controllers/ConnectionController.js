@@ -25,6 +25,7 @@ const CustomerioConnection = require("../connections/CustomerioConnection");
 const { getQueueOptions } = require("../redisConnection");
 const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
+const { applyApiVariables, applyVariables } = require("../modules/applyVariables");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -624,14 +625,16 @@ class ConnectionController {
       });
   }
 
-  async runMongo(id, dataRequest, getCache) {
+  async runMongo(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
     let mongoConnection;
-    let formattedQuery = dataRequest.query;
+
+    // Use the processed query if provided, otherwise use the original query
+    let formattedQuery = queryOverride || dataRequest.query;
 
     // formatting required since introducing the multiple mongo connection support
     if (formattedQuery.indexOf("connection.") === 0) {
@@ -662,7 +665,7 @@ class ConnectionController {
         if (formattedQuery.indexOf("count(") > -1) {
           finalData = { count: data };
         }
-        // cache the data for later use
+        // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
           responseData: {
@@ -693,7 +696,7 @@ class ConnectionController {
       });
   }
 
-  async runMysqlOrPostgres(id, dataRequest, getCache) {
+  async runMysqlOrPostgres(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -711,10 +714,12 @@ class ConnectionController {
           db.Connection.update({ schema }, { where: { id } });
         });
 
+      // Use the processed query if provided, otherwise use the original query
+      const queryToExecute = queryOverride || dataRequest.query;
       const results = await dbConnection
-        .query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
+        .query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
 
-      // cache the data for later use
+      // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
       const dataToCache = {
         dataRequest,
         responseData: {
@@ -736,7 +741,7 @@ class ConnectionController {
     }
   }
 
-  async runClickhouse(id, dataRequest, getCache) {
+  async runClickhouse(id, dataRequest, getCache, queryOverride = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -745,9 +750,12 @@ class ConnectionController {
     try {
       const connection = await this.findById(id);
       const clickhouse = new ClickhouseConnector(connection);
-      const result = await clickhouse.query(dataRequest.query);
 
-      // cache the data for later use
+      // Use the processed query if provided, otherwise use the original query
+      const queryToExecute = queryOverride || dataRequest.query;
+      const result = await clickhouse.query(queryToExecute);
+
+      // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
       const dataToCache = {
         dataRequest,
         responseData: {
@@ -763,7 +771,7 @@ class ConnectionController {
     }
   }
 
-  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "") {
+  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "", runtimeVariables = {}) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -775,8 +783,23 @@ class ConnectionController {
 
     return this.findById(id)
       .then(async (connection) => {
+        // Apply variable substitution for API requests
+        let processedRoute = dataRequest.route || "";
+        let processedHeaders = dataRequest.headers || {};
+        let processedBody = dataRequest.body || "";
+
+        try {
+          const result = applyApiVariables(dataRequest, runtimeVariables);
+          processedRoute = result.processedRoute || processedRoute;
+          processedHeaders = result.processedHeaders || processedHeaders;
+          processedBody = result.processedBody || processedBody;
+        } catch (error) {
+          // If there's an error in variable processing, return it
+          return Promise.reject(error);
+        }
+
         let tempUrl = connection.getApiUrl(connection);
-        let route = dataRequest.route || "";
+        let route = processedRoute;
         if (route && (route[0] !== "/" && route[0] !== "?")) {
           route = `/${route}`;
         }
@@ -921,15 +944,15 @@ class ConnectionController {
             headers = Object.assign(opt, headers);
           }
 
-          if (dataRequest.headers) {
-            headers = Object.assign(dataRequest.headers, headers);
+          if (processedHeaders) {
+            headers = Object.assign(processedHeaders, headers);
           }
         }
 
         options.headers = headers;
 
-        if (dataRequest.body && dataRequest.method !== "GET") {
-          options.body = dataRequest.body;
+        if (processedBody && dataRequest.method !== "GET") {
+          options.body = processedBody;
           options.headers["Content-Type"] = "application/json";
         }
 
@@ -1008,7 +1031,7 @@ class ConnectionController {
       });
   }
 
-  async runFirestore(id, dataRequest, getCache) {
+  async runFirestore(id, dataRequest, getCache, runtimeVariables = {}) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -1018,10 +1041,27 @@ class ConnectionController {
       .then((connection) => {
         const firestoreConnection = new FirestoreConnection(connection);
 
-        return firestoreConnection.get(dataRequest);
+        // Apply variable substitution using the centralized function
+        let processedDataRequest = dataRequest;
+        if (dataRequest.VariableBindings && dataRequest.VariableBindings.length > 0) {
+          try {
+            // Add connection info to dataRequest for applyVariables to work
+            const dataRequestWithConnection = {
+              ...JSON.parse(JSON.stringify(dataRequest)),
+              Connection: connection,
+            };
+            const result = applyVariables(dataRequestWithConnection, runtimeVariables);
+            processedDataRequest = result.processedDataRequest;
+          } catch (error) {
+            // If there's an error in variable processing, return it
+            return Promise.reject(error);
+          }
+        }
+
+        return firestoreConnection.get(processedDataRequest);
       })
       .then(async (responseData) => {
-        // cache the data for later use
+        // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
           responseData,
@@ -1037,7 +1077,7 @@ class ConnectionController {
       });
   }
 
-  async runRealtimeDb(id, dataRequest, getCache) {
+  async runRealtimeDb(id, dataRequest, getCache, runtimeVariables = {}) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -1047,10 +1087,27 @@ class ConnectionController {
       .then((connection) => {
         const realtimeDatabase = new RealtimeDatabase(connection);
 
-        return realtimeDatabase.getData(dataRequest);
+        // Apply variable substitution using the centralized function
+        let processedDataRequest = dataRequest;
+        if (dataRequest.VariableBindings && dataRequest.VariableBindings.length > 0) {
+          try {
+            // Add connection info to dataRequest for applyVariables to work
+            const dataRequestWithConnection = {
+              ...JSON.parse(JSON.stringify(dataRequest)),
+              Connection: connection,
+            };
+            const result = applyVariables(dataRequestWithConnection, runtimeVariables);
+            processedDataRequest = result.processedDataRequest;
+          } catch (error) {
+            // If there's an error in variable processing, return it
+            return Promise.reject(error);
+          }
+        }
+
+        return realtimeDatabase.getData(processedDataRequest);
       })
       .then(async (responseData) => {
-        // cache the data for later use
+        // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
           responseData: {
