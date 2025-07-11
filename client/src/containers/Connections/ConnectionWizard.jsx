@@ -65,14 +65,14 @@ function ConnectionWizard() {
 
   useEffect(() => {
     if (selectedType) {
-      bottomRef.current.scrollIntoView({
+      bottomRef?.current?.scrollIntoView({
         behavior: "smooth",
         block: "end",
         inline: "nearest",
       });
 
       setTimeout(() => {
-        asideRef.current.scrollIntoView({
+        asideRef?.current?.scrollIntoView({
           behavior: "smooth",
           block: "end",
           inline: "nearest",
