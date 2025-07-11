@@ -680,10 +680,12 @@ function FirestoreBuilder(props) {
             </Tooltip>
           </Row>
           <Spacer y={1} />
-          <div className="text-sm italic text-default-500 flex items-center gap-1">
-            <div><LuVariable /></div>
-            {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
-          </div>
+          {conditions.length > 0 && (
+            <div className="text-xs italic text-default-500 flex items-center gap-1">
+              <div><LuVariable size={16} /></div>
+              {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
+            </div>
+          )}
           <Spacer y={1} />
           <Row className="firestorebuilder-query-tut">
             <Conditions
