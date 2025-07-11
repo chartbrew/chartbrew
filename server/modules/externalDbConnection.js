@@ -162,6 +162,9 @@ module.exports = async (connection) => {
 
       // Create SSH tunnel
       sshTunnel = await createSshTunnel(sshConfig, dbConfig);
+
+      connectionConfig.host = "127.0.0.1";
+      connectionConfig.port = sshTunnel.port;
     } catch (error) {
       console.error("Failed to establish SSH tunnel:", error); // eslint-disable-line no-console
       throw new Error(`SSH tunnel error: ${error.message}`);
