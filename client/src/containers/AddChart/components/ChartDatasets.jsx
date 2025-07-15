@@ -8,7 +8,6 @@ import moment from "moment";
 import { createCdc, runQuery, selectChart } from "../../../slices/chart";
 import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs, Tooltip } from "@heroui/react";
 import Text from "../../../components/Text";
-import Row from "../../../components/Row";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -119,7 +118,7 @@ function ChartDatasets(props) {
 
   return (
     <div>
-      <Row align={"center"} className={"justify-between"}>
+      <div className="flex flex-row justify-between items-center">
         <Text size="h4">Datasets</Text>
         <div className="flex flex-row gap-1 items-center">
           {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
@@ -145,7 +144,7 @@ function ChartDatasets(props) {
             </Button>
           )}
         </div>
-      </Row>
+      </div>
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />

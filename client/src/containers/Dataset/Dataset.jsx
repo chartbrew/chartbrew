@@ -389,6 +389,9 @@ function Dataset() {
                   key="query"
                   startContent={<LuDatabase size={18} />}
                   isCurrent={datasetMenu === "query"}
+                  classNames={{
+                    item: "flex flex-row items-center gap-1",
+                  }}
                 >
                   Query
                 </BreadcrumbItem>
@@ -399,6 +402,9 @@ function Dataset() {
                   startContent={<LuChartArea size={18} />}
                   isCurrent={datasetMenu === "configure"}
                   isDisabled={dataset?.DataRequests.length === 0}
+                  classNames={{
+                    item: "flex flex-row items-center gap-1",
+                  }}
                 >
                   Configure
                 </BreadcrumbItem>
