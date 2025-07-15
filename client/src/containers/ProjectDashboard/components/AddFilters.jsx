@@ -99,7 +99,7 @@ function AddFilters(props) {
 
   return (
     <Drawer isOpen={open} onClose={onClose} closeButton size="2xl" placement="left" className="dashboard-filters-modal">
-      <DrawerContent className="pt-[3rem]">
+      <DrawerContent className="pt-12">
         <DrawerHeader>
           <span className="font-bold text-lg">Add dashboard filter</span>
         </DrawerHeader>

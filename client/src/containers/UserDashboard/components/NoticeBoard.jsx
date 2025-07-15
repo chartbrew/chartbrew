@@ -25,7 +25,7 @@ function NoticeBoard() {
   return (
     <div className="flex flex-col gap-1">
       {!user?.tutorials?.quickStartVideo && (
-        <Card className="mt-4 hidden sm:block" shadow="sm">
+        <Card className="mt-4 hidden sm:block" shadow-sm="sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Quick start guide</span>
             <Tooltip content="Close the guide">
@@ -60,7 +60,7 @@ function NoticeBoard() {
       )}
 
       {!user?.tutorials?.v4_announcement && (
-        <Card className="mt-4 hidden sm:block" shadow="sm">
+        <Card className="mt-4 hidden sm:block" shadow-sm="sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Chartbrew v4 is here!</span>
             <Tooltip content="Close the guide">
@@ -92,7 +92,7 @@ function NoticeBoard() {
       )}
 
       {!user?.tutorials?.twoFactorAuth && user?.User2fas && user?.User2fas?.length < 1 && (
-        <Card className="mt-4 hidden sm:block" shadow="sm">
+        <Card className="mt-4 hidden sm:block" shadow-sm="sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Two-factor Authentication</span>
             <Tooltip content="Close the guide">

@@ -566,7 +566,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
                 >
                   today
@@ -574,7 +574,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
                 >
                   yesterday
@@ -582,7 +582,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
                 >
                   30daysAgo
@@ -592,7 +592,7 @@ function GaBuilder(props) {
                   variant="bordered"
                   color={dateHelp ? "secondary" : "default"}
                   startContent={<LuInfo />}
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
                   info
                 </Chip>
@@ -617,7 +617,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
                 >
                   today
@@ -625,7 +625,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
                 >
                   yesterday
@@ -633,7 +633,7 @@ function GaBuilder(props) {
                 <Chip
                   variant="flat"
                   color="secondary"
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
                 >
                   30daysAgo
@@ -643,7 +643,7 @@ function GaBuilder(props) {
                   variant="bordered"
                   color={dateHelp ? "secondary" : "default"}
                   startContent={<LuInfo />}
-                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
+                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
                   info
                 </Chip>

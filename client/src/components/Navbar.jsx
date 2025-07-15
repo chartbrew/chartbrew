@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
+  Modal, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar, Breadcrumbs, BreadcrumbItem,
 } from "@heroui/react";
@@ -175,15 +175,15 @@ function NavbarContainer() {
         </NavbarBrand>
         <NavbarContent justify="end">
           <NavbarItem>
-            <LinkNext
-              className="changelog-trigger flex flex-row items-center text-foreground"
+            <div
+              className="changelog-trigger flex flex-row items-center text-foreground cursor-pointer"
               title="Changelog"
             >
-              <span className="changelog-badge">
+              <span className="changelog-badge text-primary-500">
                 {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
               </span>
               <div className={"hidden sm:block text-sm"}>Updates</div>
-            </LinkNext>
+            </div>
           </NavbarItem>
           <Dropdown aria-label="Select a help option">
             <NavbarItem>
@@ -311,7 +311,7 @@ function NavbarContainer() {
                 <CardBody>
                   <LuSun size={24} color="black" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className={"!text-black"}>Light</Text>
+                    <Text className={"text-black!"}>Light</Text>
                   </Row>
                 </CardBody>
               </Card>
@@ -326,7 +326,7 @@ function NavbarContainer() {
                 <CardBody>
                   <LuMoon size={24} color="white" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className="!text-[#FFFFFF]">Dark</Text>
+                    <Text className="text-[#FFFFFF]!">Dark</Text>
                   </Row>
                 </CardBody>
               </Card>

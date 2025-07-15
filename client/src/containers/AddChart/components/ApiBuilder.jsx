@@ -454,7 +454,7 @@ function ApiBuilder(props) {
   };
 
   return (
-    <div className="px-4 max-w-screen-2xl mx-auto">
+    <div className="px-4 max-w-(--breakpoint-2xl) mx-auto">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row justify="space-between" align="center">
@@ -932,7 +932,7 @@ function ApiBuilder(props) {
         onClose={() => setVariableSettings(null)}
         placement="right"
         classNames={{
-          base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+          base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
         }}
         style={{
           marginTop: "54px",

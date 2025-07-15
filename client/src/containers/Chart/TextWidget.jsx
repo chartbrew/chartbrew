@@ -77,7 +77,7 @@ function TextWidget({
         </pre>
       ) : (
         // Inline code (if no class)
-        <span className="bg-content2 text-foreground px-1 rounded">{formattedText}</span>
+        <span className="bg-content2 text-foreground px-1 rounded-sm">{formattedText}</span>
       );
     },
     li: ({ children, className }) => {
@@ -342,7 +342,7 @@ function TextWidget({
                         value={content}
                         onChange={(e) => _onEditContent(e.target.value)}
                         placeholder="Enter markdown text here..."
-                        className="!h-full font-mono"
+                        className="h-full! font-mono"
                         variant="bordered"
                         onMouseDown={handleInteractiveMouseDown}
                         ref={textareaRef}
@@ -370,7 +370,7 @@ function TextWidget({
                   </>
                 )}
                 {isPreview && (
-                  <div className="relative prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary hover:prose-a:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded prose-img:rounded prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 [&>*]:my-2">
+                  <div className="relative prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                     <Button
                       isIconOnly
                       size="sm" 
@@ -411,7 +411,7 @@ function TextWidget({
                   <Dropdown aria-label="Select a widget option">
                     <DropdownTrigger>
                       <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
-                        <LuEllipsisVertical />
+                        <LuEllipsisVertical className="text-gray-500" />
                       </LinkNext>
                     </DropdownTrigger>
                     <DropdownMenu>
@@ -462,7 +462,7 @@ function TextWidget({
                 </div>
               )}
 
-              <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary hover:prose-a:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded prose-img:rounded prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 [&>*]:my-2">
+              <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                 {MemoizedMarkdown}
               </div>
             </CardBody>

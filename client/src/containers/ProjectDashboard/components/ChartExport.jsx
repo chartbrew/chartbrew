@@ -88,7 +88,7 @@ function ChartExport(props) {
                       <Spacer x={0.5} />
                       <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
                         <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
-                          <LuEye />
+                          <LuEye className="text-warning" />
                         </LinkNext>
                       </Tooltip>
                     </>
@@ -121,7 +121,7 @@ function ChartExport(props) {
                   <div className="col-span-6 sm:col-span-12" key={chart.id}>
                     <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
                       <LinkNext className="text-success cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
-                        <LuEyeOff />
+                        <LuEyeOff className="text-success" />
                         {chart.name}
                       </LinkNext>
                     </Tooltip>

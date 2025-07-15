@@ -357,8 +357,8 @@ function AddChart() {
               {!editingTitle
                 && (
                   <Tooltip content="Edit the chart name">
-                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="primary">
-                      <LuPencilLine />
+                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="foreground">
+                      <LuPencilLine className="text-primary" />
                       <Spacer x={0.5} />
                       <Text b>
                         {newChart.name}

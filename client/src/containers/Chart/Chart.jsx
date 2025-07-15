@@ -685,7 +685,7 @@ function Chart(props) {
                           size="sm"
                           isInvisible={!conditions || conditions.length === 0}
                         >
-                          <LuListFilter />
+                          <LuListFilter className="text-default-500" />
                         </Badge>
                       </LinkNext>
                     </PopoverTrigger>
@@ -704,7 +704,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select a chart option">
                   <DropdownTrigger>
                     <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
-                      <LuEllipsisVertical />
+                      <LuEllipsisVertical className="text-default-500" />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu disabledKeys={["status"]}>

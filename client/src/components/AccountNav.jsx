@@ -240,7 +240,7 @@ function AccountNav() {
                 <CardBody>
                   <LuSun size={24} color="black" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className={"!text-black"}>Light</Text>
+                    <Text className={"text-black!"}>Light</Text>
                   </Row>
                 </CardBody>
               </Card>
@@ -255,7 +255,7 @@ function AccountNav() {
                 <CardBody>
                   <LuMoon size={24} color="white" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className="!text-[#FFFFFF]">Dark</Text>
+                    <Text className="text-[#FFFFFF]!">Dark</Text>
                   </Row>
                 </CardBody>
               </Card>

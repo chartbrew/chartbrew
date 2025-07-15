@@ -747,7 +747,7 @@ function PublicDashboard() {
                 <Tooltip content="Back to your dashboard" placement="right-end">
                   <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
                     <Link className="text-foreground cursor-pointer">
-                      <LuSquareArrowLeft size={26} />
+                      <LuSquareArrowLeft size={26} className="text-foreground" />
                     </Link>
                   </LinkDom>
                 </Tooltip>
@@ -758,7 +758,7 @@ function PublicDashboard() {
               <div>
                 <Tooltip content="Preview dashboard" placement="right-end">
                   <Link className="text-foreground cursor-pointer" onPress={() => setPreview(true)}>
-                    <LuEye size={26} />
+                    <LuEye size={26} className="text-foreground" />
                   </Link>
                 </Tooltip>
               </div>
@@ -770,7 +770,7 @@ function PublicDashboard() {
                       <Link className="text-foreground cursor-pointer">
                         <div {...getRootProps()}>
                           <input {...getInputProps()} />
-                          <LuImagePlus size={26} />
+                          <LuImagePlus size={26} className="text-foreground" />
                         </div>
                       </Link>
                     </Tooltip>
@@ -779,7 +779,7 @@ function PublicDashboard() {
                     <Popover placement="right-end">
                       <PopoverTrigger>
                         <Link className="text-foreground cursor-pointer">
-                          <LuPalette size={26} />
+                          <LuPalette size={26} className="text-foreground" />
                         </Link>
                       </PopoverTrigger>
                       <PopoverContent>
@@ -829,7 +829,7 @@ function PublicDashboard() {
                   <div>
                     <Tooltip content="Report settings" placement="right-end">
                       <Link className="text-foreground cursor-pointer" onPress={() => setEditingTitle(true)}>
-                        <LuClipboardPen size={26} />
+                        <LuClipboardPen size={26} className="text-foreground" />
                       </Link>
                     </Tooltip>
                   </div>
@@ -837,7 +837,7 @@ function PublicDashboard() {
                   <div>
                     <Tooltip content="Sharing settings" placement="right-end">
                       <Link className="text-foreground cursor-pointer" onPress={() => setShowSettings(true)}>
-                        <LuShare size={26} />
+                        <LuShare size={26} className="text-foreground" />
                       </Link>
                     </Tooltip>
                   </div>
@@ -854,7 +854,7 @@ function PublicDashboard() {
             isBordered
             maxWidth={"full"}
             isBlurred={false}
-            className={"header flex-grow-0 justify-between"}
+            className={"header grow-0 justify-between"}
             style={{ backgroundColor: removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor || project.backgroundColor || "#FFFFFF") }}
           >
             <NavbarBrand>

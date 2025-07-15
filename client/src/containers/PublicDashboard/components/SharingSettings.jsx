@@ -149,7 +149,7 @@ function SharingSettings(props) {
       onClose={onClose}
       size="xl"
       classNames={{
-        base: "data-[placement=right]:sm:m-2 data-[placement=left]:sm:m-2 rounded-medium",
+        base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
       }}
       style={{ marginTop: onReport ? "" : "54px" }}
       hideCloseButton={!onReport}

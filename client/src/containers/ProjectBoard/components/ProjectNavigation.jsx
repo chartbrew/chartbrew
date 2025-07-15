@@ -115,7 +115,7 @@ function ProjectNavigation(props) {
       <nav
         style={styles.mobileMenu}
       >
-        <div className="flex items-center justify-center shadow-md bg-content3-foreground w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
+        <div className="flex items-center justify-center shadow-md bg-content3-foreground w-full backdrop-blur-[10px] backdrop-saturate-180">
           <Container className="flex flex-nowrap justify-between w-full p-2">
             <Row justify="space-around" align="center">
               <Link to={`/${team.id}/${project.id}/dashboard`}>
