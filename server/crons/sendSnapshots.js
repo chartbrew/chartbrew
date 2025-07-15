@@ -47,7 +47,10 @@ async function checkSnapshots(queue) {
           .set({
             hour: time.hour, minute: time.minute, second: 0, millisecond: 0
           });
-        shouldSend = now > sendTime && now.diff(lastSnapshot, "days").as("days") >= 1;
+
+        // Check if we're past today's send time and haven't sent today yet
+        const lastSnapshotToday = lastSnapshot && lastSnapshot.hasSame(sendTime, "day");
+        shouldSend = now > sendTime && !lastSnapshotToday;
       } else if (frequency === "weekly" && dayOfWeek) {
         let weekdayNumber;
         if (typeof dayOfWeek === "number") {
@@ -65,7 +68,8 @@ async function checkSnapshots(queue) {
         }
 
         if (weekdayNumber) {
-          const sendTime = DateTime.now()
+          // Find the most recent occurrence of the target weekday
+          let sendTime = DateTime.now()
             .setZone(timezone)
             .set({
               hour: time.hour,
@@ -74,7 +78,15 @@ async function checkSnapshots(queue) {
               millisecond: 0,
               weekday: weekdayNumber
             });
-          shouldSend = now > sendTime && now.diff(lastSnapshot, "weeks").as("weeks") >= 1;
+
+          // If the target day is in the future this week, go back to last week
+          if (sendTime > now) {
+            sendTime = sendTime.minus({ weeks: 1 });
+          }
+
+          // Check if we're past this week's send time and haven't sent this week yet
+          const lastSnapshotThisWeek = lastSnapshot && lastSnapshot.hasSame(sendTime, "week");
+          shouldSend = now > sendTime && !lastSnapshotThisWeek;
         }
       } else if (frequency === "every_x_days") {
         shouldSend = now.diff(lastSnapshot, "days").as("days") >= frequencyNumber;
