@@ -10,7 +10,7 @@ import {
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuPin, LuPresentation, LuPuzzle, LuSettings,
-  LuTvMinimal, LuUser, LuVariable, LuSearch,
+  LuTvMinimal, LuUser, LuSearch,
 } from "react-icons/lu";
 import { useSelector } from "react-redux";
 
@@ -51,9 +51,6 @@ const _checkIfActive = (path) => {
       break;
     case "integrations":
       if (window.location.pathname.indexOf("integrations") > -1) return true;
-      break;
-    case "variables":
-      if (window.location.pathname.indexOf("variables") > -1) return true;
       break;
     default:
       return false;
@@ -265,39 +262,25 @@ function ProjectNavigation(props) {
                     </Tooltip>
                   )}
                 </ListboxItem>
-
-                <ListboxItem
-                  key="integrations"
-                  startContent={menuSize === "large" ? <LuPuzzle size={24} /> : null}
-                  onPress={() => navigate(`/${team.id}/${project.id}/integrations`)}
-                  className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
-                  classNames={{
-                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
-                  }}
-                >
-                  {menuSize === "large" ? "Integrations" : (
-                    <Tooltip content="Integrations" placement="right">
-                      <div className=""><LuPuzzle size={24} /></div>
-                    </Tooltip>
-                  )}
-                </ListboxItem>
-
-                <ListboxItem
-                  key="variables"
-                  startContent={menuSize === "large" ? <LuVariable size={24} /> : null}
-                  onPress={() => navigate(`/${team.id}/${project.id}/variables`)}
-                  className={_checkIfActive("variables") ? "text-primary" : "text-foreground"}
-                  classNames={{
-                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
-                  }}
-                >
-                  {menuSize === "large" ? "Variables" : (
-                    <Tooltip content="Variables" placement="right">
-                      <div className=""><LuVariable size={24} /></div>
-                    </Tooltip>
-                  )}
-                </ListboxItem>
               </>
+            )}
+
+            {canAccess("teamAdmin") && (
+              <ListboxItem
+                key="integrations"
+                startContent={menuSize === "large" ? <LuPuzzle size={24} /> : null}
+                onPress={() => navigate(`/${team.id}/${project.id}/integrations`)}
+                className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
+                classNames={{
+                  title: menuSize === "small" ? "flex flex-row justify-center" : "",
+                }}
+              >
+                {menuSize === "large" ? "Integrations" : (
+                  <Tooltip content="Integrations" placement="right">
+                    <div className=""><LuPuzzle size={24} /></div>
+                  </Tooltip>
+                )}
+              </ListboxItem>
             )}
           </Listbox>
         </div>

@@ -76,7 +76,7 @@ module.exports = (app) => {
       return res.status(400).send("Invalid team id");
     }
 
-    return checkAccess(req.params.team_id, null, req.user, "readOwn", "createAny")
+    return checkAccess(req.params.team_id, null, req.user, "updateOwn", "createAny")
       .then(() => {
         return integrationController.create(req.body);
       })
@@ -97,7 +97,7 @@ module.exports = (app) => {
   ** Update an integration
   */
   app.put("/team/:team_id/integration/:id", verifyToken, (req, res) => {
-    return checkAccess(req.params.team_id, req.params.id, req.user, "readOwn", "updateAny")
+    return checkAccess(req.params.team_id, req.params.id, req.user, "updateOwn", "updateAny")
       .then(() => {
         return integrationController.update(req.params.id, req.body);
       })
@@ -118,7 +118,7 @@ module.exports = (app) => {
   ** Delete an integration
   */
   app.delete("/team/:team_id/integration/:id", verifyToken, (req, res) => {
-    return checkAccess(req.params.team_id, req.params.id, req.user, "readOwn", "deleteAny")
+    return checkAccess(req.params.team_id, req.params.id, req.user, "updateOwn", "deleteAny")
       .then(() => {
         return integrationController.remove(req.params.id);
       })
