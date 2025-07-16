@@ -395,8 +395,8 @@ function ChartPreview(props) {
           </div>
           <Spacer y={2} />
           <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl chart-preview-types">
-            <div className={"flex flex-row gap-4 justify-around"}>
-              <div className={"flex flex-row gap-1"}>
+            <div className="flex flex-row gap-4 justify-around">
+              <div className="flex flex-row gap-1">
                 <Tooltip
                   content={"Get the average value of all the points on the chart"}
                 >
@@ -424,7 +424,7 @@ function ChartPreview(props) {
                 </Tooltip>
               </div>
 
-              <div className={"flex flex-row gap-1"}>
+              <div className="flex flex-row gap-1">
                 <Tooltip content="Display data in a table view">
                   <Button
                     variant={chart.type !== "table" ? "bordered" : "solid"}
