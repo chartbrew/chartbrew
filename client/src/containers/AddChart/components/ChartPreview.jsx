@@ -395,8 +395,8 @@ function ChartPreview(props) {
           </div>
           <Spacer y={2} />
           <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl chart-preview-types">
-            <Row align="center" wrap="wrap" className={"gap-4 justify-around"}>
-              <Row className={"gap-1"}>
+            <div className={"flex flex-row gap-4 justify-around"}>
+              <div className={"flex flex-row gap-1"}>
                 <Tooltip
                   content={"Get the average value of all the points on the chart"}
                 >
@@ -422,9 +422,9 @@ function ChartPreview(props) {
                     <FaChartLine size={20} />
                   </Button>
                 </Tooltip>
-              </Row>
+              </div>
 
-              <Row className={"gap-1"}>
+              <div className={"flex flex-row gap-1"}>
                 <Tooltip content="Display data in a table view">
                   <Button
                     variant={chart.type !== "table" ? "bordered" : "solid"}
@@ -475,9 +475,9 @@ function ChartPreview(props) {
                     <LuGauge size={24} />
                   </Button>
                 </Tooltip>
-              </Row>
+              </div>
 
-              <Row className={"gap-1"}>
+              <div className={"flex flex-row gap-1"}>
                 <Tooltip content="Display as pie chart">
                   <Button
                     variant={chart.type !== "pie" ? "bordered" : "solid"}
@@ -518,8 +518,8 @@ function ChartPreview(props) {
                     <TiChartPie size={24} />
                   </Button>
                 </Tooltip>
-              </Row>
-            </Row>
+              </div>
+            </div>
           </div>
         </>
       )}
