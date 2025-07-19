@@ -4,7 +4,7 @@ import {
   Spinner,
 } from "@heroui/react";
 import moment from "moment";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { useSearchParams } from "react-router-dom";
 import { LuListFilter } from "react-icons/lu";
 import { useParams } from "react-router";
@@ -403,6 +403,11 @@ function EmbeddedChart() {
   return (
     <div style={styles.container} id="chart-container">
       <Helmet>
+        <title>
+          {chart.name || "Chartbrew chart"}
+        </title>
+        <meta name="robots" content="noindex" />
+        <meta name="og:title" content={chart.name || "Chartbrew chart"} />
         <style type="text/css">
           {`
             body, html {

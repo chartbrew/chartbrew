@@ -6,7 +6,7 @@ import { connect, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Tooltip,
 } from "@heroui/react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { v4 as uuid } from "uuid";
 import { LuCheck, LuCircleChevronLeft, LuPrinter, LuRedo } from "react-icons/lu";
 

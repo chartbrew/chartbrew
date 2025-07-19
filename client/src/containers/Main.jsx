@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "@heroui/theme";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard/UserDashboard";

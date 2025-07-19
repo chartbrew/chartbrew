@@ -7,7 +7,7 @@ import {
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
@@ -622,6 +622,14 @@ function PublicDashboard() {
     return (
       <div>
         <Helmet>
+          <title>
+            {newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"}
+          </title>
+          <meta name="description" content={project.description || newChanges.description || "Chartbrew dashboard"} />
+          <meta name="robots" content="noindex" />
+          <meta name="og:title" content={newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"} />
+          <meta name="og:description" content={project.description || newChanges.description || "Chartbrew dashboard"} />
+
           {(newChanges?.headerCode || project?.headerCode) && !removeStyling && (
             <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
           )}
@@ -727,6 +735,18 @@ function PublicDashboard() {
   return (
     <div className="dashboard-container">
       <Helmet>
+        <title>
+          {newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"}
+        </title>
+        <meta name="description" content={project.description || newChanges.description || "Chartbrew dashboard"} />
+        <meta name="robots" content="noindex" />
+        <meta name="og:title" content={newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"} />
+        <meta name="og:description" content={project.description || newChanges.description || "Chartbrew dashboard"} />
+        <meta name="og:image" content={project.logo ? `${API_HOST}/${project.logo}` : logo} />
+        <meta name="og:url" content={window.location.href} />
+        <meta name="og:type" content="website" />
+        <meta name="og:site_name" content={project.name || "Chartbrew dashboard"} />
+        <meta name="og:locale" content="en_US" />
         {(newChanges?.headerCode || project?.headerCode) && !removeStyling && (
           <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
         )}

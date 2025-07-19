@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import { HeroUIProvider } from "@heroui/react";
+import { HelmetProvider } from "react-helmet-async";
 
 import Main from "./containers/Main";
 import reducer from "./reducers";
@@ -120,11 +121,13 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <HeroUIProvider locale="en-GB">
-          <RouterProvider router={router} />
-        </HeroUIProvider>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ThemeProvider>
+          <HeroUIProvider locale="en-GB">
+            <RouterProvider router={router} />
+          </HeroUIProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </Provider>
   );
 }
