@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import moment from "moment";
 import { v4 as uuid } from "uuid";
 import {
   Button, Divider, Drawer, DrawerFooter,
@@ -28,12 +27,7 @@ function AddFilters(props) {
     projectId,
   });
   const [filterType, setFilterType] = useState("date");
-  const [initSelectionRange] = useState({
-    startDate: moment().startOf("month").toISOString(),
-    endDate: moment().endOf("month").toISOString(),
-    key: "selection",
-  });
-  const [dateRange] = useState(initSelectionRange);
+
   const [variableCondition, setVariableCondition] = useState({
     variable: "", 
     value: "",
@@ -64,8 +58,8 @@ function AddFilters(props) {
     if (filterType === "date") {
       onAddFilter({
         id: uuid(),
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
+        startDate: filter.startDate,
+        endDate: filter.endDate,
         type: "date",
         charts: filter.charts || [],
       });
