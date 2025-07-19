@@ -182,16 +182,17 @@ function Chart(props) {
   const _onGetChartData = () => {
     const { projectId } = params;
 
-    const skipStateUpdate = getFiltersFromStorage(projectId)?.length > 0;
+    const filters = getFiltersFromStorage(projectId);
+    const skipStateUpdate = filters?.length > 0;
 
     setChartLoading(true);
     dispatch(runQuery({ project_id: projectId, chart_id: chart.id, skipStateUpdate }))
       .then(() => {
         setChartLoading(false);
 
-        setDashboardFilters(getFiltersFromStorage(projectId));
-        if (getFiltersFromStorage(projectId) && _chartHasFilter()) {
-          _runFiltering(getFiltersFromStorage(projectId));
+        setDashboardFilters(filters);
+        if (filters && _chartHasFilter(filters)) {
+          _runFiltering(filters);
         } else {
           _runFiltering();
         }
@@ -206,7 +207,7 @@ function Chart(props) {
       });
   };
 
-    const _runFiltering = async (filters, projectId = params.projectId) => {
+  const _runFiltering = async (filters, projectId = params.projectId) => {
     if (!chart.ChartDatasetConfigs) return;
 
     // Get all conditions from the chart's datasets
@@ -238,14 +239,22 @@ function Chart(props) {
       });
     }
 
+    // Filter out date filters that don't apply to this chart
+    const applicableFilters = allFilters.filter((filter) => {
+      if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
+        return filter.charts.includes(chart.id);
+      }
+      return true; // Keep all non-date filters
+    });
+
     // Make an API call if there are filters to apply OR if there are variables
     const hasVariables = variablesRef.current?.[projectId]?.length > 0;
     
-    if (allFilters.length > 0 || hasVariables) {
+    if (applicableFilters.length > 0 || hasVariables) {
       await dispatch(runQueryWithFilters({
         project_id: chart.project_id,
         chart_id: chart.id,
-        filters: allFilters,
+        filters: applicableFilters,
         variables: variablesRef.current || {},
       }));
     }
@@ -411,16 +420,27 @@ function Chart(props) {
     setShareLoading(false);
   };
 
-  const _chartHasFilter = () => {
+  const _chartHasFilter = (dashFilters = dashboardFilters) => {
     let found = false;
     if (chart.ChartDatasetConfigs) {
       chart.ChartDatasetConfigs.forEach((cdConfig) => {
         if (cdConfig.Dataset?.fieldsSchema) {
           Object.keys(cdConfig.Dataset.fieldsSchema).forEach((key) => {
-            if (_.find(dashboardFilters, (o) => o.field === key)) {
+            if (_.find(dashFilters, (o) => o.field === key)) {
               found = true;
             }
           });
+        }
+      });
+    }
+
+    // Also check for date filters that apply to this specific chart
+    if (dashFilters && Array.isArray(dashFilters)) {
+      dashFilters.forEach((filter) => {
+        if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
+          if (filter.charts.includes(chart.id)) {
+            found = true;
+          }
         }
       });
     }
@@ -461,10 +481,19 @@ function Chart(props) {
 
   const _onExport = () => {
     setExportLoading(true);
+    
+    // Filter out date filters that don't apply to this chart
+    const applicableFilters = dashboardFilters ? dashboardFilters.filter((filter) => {
+      if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
+        return filter.charts.includes(chart.id);
+      }
+      return true; // Keep all non-date filters
+    }) : [];
+    
     return dispatch(exportChart({
       project_id: params.projectId,
       chartIds: [chart.id],
-      filters: dashboardFilters,
+      filters: applicableFilters,
     }))
       .then(() => {
         setExportLoading(false);
@@ -1422,8 +1451,6 @@ const styles = {
 
 Chart.propTypes = {
   chart: PropTypes.object.isRequired,
-  team: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   onChangeOrder: PropTypes.func,
   print: PropTypes.string,
