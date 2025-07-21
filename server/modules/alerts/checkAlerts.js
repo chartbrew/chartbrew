@@ -274,7 +274,7 @@ async function checkChartForAlerts(chart) {
           });
 
           const anomalyOpt = {
-            url: "https://trendapi.org/anomalies",
+            url: "https://trends-api.depomo.com/anomalies",
             method: "POST",
             headers: {
               "Content-Type": "application/json",
