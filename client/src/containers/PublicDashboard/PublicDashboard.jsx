@@ -893,18 +893,19 @@ function PublicDashboard() {
                 )}
 
                 {(!editorVisible || preview) && (
-                  <div className="dashboard-logo-container min-w-[45px]">
+                  <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <a
                       href={newChanges.logoLink || project.logoLink || "#"}
                       target="_blank"
                       rel="noreferrer"
                     >
                       <img
+                        onLoad={_onLoadLogo}
                         className="dashboard-logo"
                         src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                        alt={`${project.name} Logo`}
                         height={45}
                         width={45 * logoAspectRatio}
-                        alt={`${project.name} Logo`}
                       />
                     </a>
                   </div>

@@ -13,7 +13,7 @@ import {
 } from "@heroui/react";
 import {
   LuBell,
-  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsis, LuEllipsisVertical, LuFileDown,
+  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsisVertical, LuFileDown,
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
   LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck,
@@ -897,8 +897,8 @@ function Chart(props) {
               {showExport && (
                 <Dropdown aria-label="Select an export option">
                   <DropdownTrigger>
-                    <LinkNext color="foreground">
-                      <LuEllipsis size={24} />
+                    <LinkNext className="text-gray-500 cursor-pointer">
+                      <LuEllipsisVertical className="text-default-500" />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
