@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
+const { nanoid } = require("nanoid");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
@@ -23,13 +24,40 @@ class TeamController {
   }
 
   // create a new team
-  createTeam(data) {
-    return db.Team.create({ "name": data.name })
-      .then((team) => {
-        return team;
-      }).catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async createTeam(data, userId) {
+    const team = await db.Team.create({ "name": data.name });
+    await db.TeamRole.create({
+      team_id: team.id,
+      user_id: userId,
+      role: "teamOwner",
+    });
+
+    // create an empty ghost project for the team
+    await db.Project.create({
+      team_id: team.id,
+      name: "Ghost Project",
+      brewName: `ghost-project-${nanoid(8)}`,
+      dashboardTitle: "Ghost Project",
+      ghost: true,
+      public: false,
+    });
+
+    // create a default dashboard for the team
+    await db.Project.create({
+      team_id: team.id,
+      name: "First Dashboard",
+      brewName: `first-dashboard-${nanoid(8)}`,
+      description: `First dashboard for ${team.name}`,
+      public: false,
+    });
+
+    // get the team with the TeamRoles
+    const teamWithRoles = await db.Team.findOne({
+      where: { id: team.id },
+      include: [{ model: db.TeamRole }],
+    });
+
+    return teamWithRoles;
   }
 
   deleteTeam(id) {

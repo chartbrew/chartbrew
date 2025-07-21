@@ -14,6 +14,28 @@ const initialState = {
   teamMembers: [],
 };
 
+export const createTeam = createAsyncThunk(
+  "team/createTeam",
+  async (data) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const body = JSON.stringify(data);
+    const response = await fetch(`${API_HOST}/team`, { method: "POST", headers, body });
+    
+    if (!response.ok) {
+      throw new Error("Error creating team");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const getTeams = createAsyncThunk(
   "team/getTeams",
   async (userId) => {
@@ -260,6 +282,19 @@ export const teamSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // CREATE TEAM
+      .addCase(createTeam.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data.push(action.payload);
+        state.active = action.payload;
+      })
+      .addCase(createTeam.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
       // GET TEAMS
       .addCase(getTeams.pending, (state) => {
         state.loading = true;

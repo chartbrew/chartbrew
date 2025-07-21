@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
@@ -7,10 +7,17 @@ import {
   Button, Spacer, Chip, CircularProgress,
   DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
   Spinner,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  Input,
+  ModalFooter,
 } from "@heroui/react";
 import {
-  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPuzzle, LuSettings, LuUsers,
+  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPlus, LuPuzzle, LuSettings, LuUsers,
 } from "react-icons/lu";
+import toast from "react-hot-toast";
 
 import { relog } from "../../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -23,6 +30,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers,
+  createTeam,
 } from "../../slices/team";
 import { clearDatasets, getDatasets } from "../../slices/dataset";
 import Segment from "../../components/Segment";
@@ -34,6 +42,10 @@ import DashboardList from "./DashboardList";
 */
 function UserDashboard(props) {
   const { cleanErrors } = props;
+
+  const [createTeamModal, setCreateTeamModal] = useState(false);
+  const [creatingTeam, setCreatingTeam] = useState(false);
+  const [teamName, setTeamName] = useState("");
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
@@ -118,6 +130,7 @@ function UserDashboard(props) {
   };
 
   const _getTeamRole = (teamRoles) => {
+    if (!teamRoles) return "";
     return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
   };
 
@@ -132,6 +145,18 @@ function UserDashboard(props) {
     dispatch(getDatasets({ team_id: team.id }));
 
     navigate("/");
+  };
+
+  const _onCreateTeam = async () => {
+    setCreatingTeam(true);
+    const teamData = await dispatch(createTeam({ name: teamName }));
+    if (teamData.error) {
+      toast.error(teamData.error);
+    }
+    
+    setCreateTeamModal(false);
+    setTeamName("");
+    setCreatingTeam(false);
   };
 
   if (!user.data.id) {
@@ -181,7 +206,7 @@ function UserDashboard(props) {
                       }}
                       selectionMode="single"
                     >
-                      {teams.map((t) => (
+                      {teams.map((t, index) => (
                         <DropdownItem
                           key={t.id}
                           textValue={t.name}
@@ -190,10 +215,20 @@ function UserDashboard(props) {
                               {_getTeamRole(t.TeamRoles)}
                             </Chip>
                           )}
+                          showDivider={index === teams.length - 1}
                         >
                           {t.name}
                         </DropdownItem>
                       ))}
+                      <DropdownItem
+                        key="createTeam"
+                        textValue="Create team"
+                        onClick={() => setCreateTeamModal(true)}
+                        color="primary"
+                        endContent={<LuPlus size={18} />}
+                      >
+                        Create team
+                      </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
                 </Row>
@@ -292,6 +327,36 @@ function UserDashboard(props) {
           </>
         )}
       </div>
+
+      <Modal isOpen={createTeamModal} onClose={() => setCreateTeamModal(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <span className="font-bold">Create team</span>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              label="Team name"
+              placeholder="Enter your new team name"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              variant="bordered"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="bordered" onPress={() => setCreateTeamModal(false)}>
+              Close
+            </Button>
+            <Button
+              color="primary"
+              isLoading={creatingTeam}
+              onPress={_onCreateTeam}
+              isDisabled={!teamName}
+            >
+              Create team
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

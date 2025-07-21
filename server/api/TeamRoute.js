@@ -1,10 +1,18 @@
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+
+const apiLimiter = (max = 10) => {
+  return rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max,
+  });
+};
 
 function filterProjects(projects, teamRole) {
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
@@ -86,23 +94,13 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to create a team
-  app.post("/team", (req, res) => {
-    if (!req.body.user_id) return res.status(400).send("Missing userID");
-    let newTeam = {};
-    return teamController.createTeam(req.body)
-      .then((team) => {
-        newTeam = team;
-        return teamController.addTeamRole(newTeam.id, req.body.user_id, "teamOwner");
-      })
-      .then(() => {
-        return teamController.findById(newTeam.id);
-      })
-      .then((team) => {
-        return res.status(200).send(team);
-      })
-      .catch((error) => {
-        return res.status(400).send(error);
-      });
+  app.post("/team", verifyToken, apiLimiter(10), async (req, res) => {
+    try {
+      const team = await teamController.createTeam(req.body, req.user.id);
+      return res.status(200).send(team);
+    } catch (error) {
+      return res.status(400).send({ error: "Error creating team" });
+    }
   });
   // --------------------------------------
 
