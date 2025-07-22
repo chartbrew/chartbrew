@@ -104,6 +104,19 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  // route to delete a team
+  app.delete("/team/:id", verifyToken, checkPermissions("deleteOwn", "team"), (req, res) => {
+    return teamController.deleteTeam(req.params.id, req.user.id)
+      .then(() => {
+        return res.status(200).send({ deleted: true });
+      })
+      .catch((error) => {
+        if (error?.message === "401") return res.status(401).send({ error: "Not authorized" });
+        return res.status(400).send({ error: error?.message || "Error deleting team" });
+      });
+  });
+  // --------------------------------------
+
   // route to update a team
   app.put("/team/:id", verifyToken, (req, res) => {
     if (!req.params || !req.body) return res.status(400).send("Missing fields");

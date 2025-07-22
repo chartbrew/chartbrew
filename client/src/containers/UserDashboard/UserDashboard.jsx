@@ -222,12 +222,12 @@ function UserDashboard(props) {
                       ))}
                       <DropdownItem
                         key="createTeam"
-                        textValue="Create team"
+                        textValue="Add new team"
                         onClick={() => setCreateTeamModal(true)}
                         color="primary"
                         endContent={<LuPlus size={18} />}
                       >
-                        Create team
+                        Add new team
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
@@ -331,7 +331,7 @@ function UserDashboard(props) {
       <Modal isOpen={createTeamModal} onClose={() => setCreateTeamModal(false)}>
         <ModalContent>
           <ModalHeader>
-            <span className="font-bold">Create team</span>
+            <span className="font-bold">Create a new team</span>
           </ModalHeader>
           <ModalBody>
             <Input

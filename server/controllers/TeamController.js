@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 const { nanoid } = require("nanoid");
+const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
@@ -60,14 +61,43 @@ class TeamController {
     return teamWithRoles;
   }
 
-  deleteTeam(id) {
-    return db.Team.destroy({ where: { id } })
-      .then(() => {
-        return true;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async deleteTeam(teamId, userId) {
+    // first check if the user owns other teams
+    const otherTeams = await db.TeamRole
+      .findAll({ where: { user_id: userId, role: "teamOwner", team_id: { [Op.ne]: teamId } } });
+
+    if (otherTeams.length < 1) {
+      return new Promise((resolve, reject) => reject(new Error("You cannot delete a team that you own if you have no other teams")));
+    }
+
+    // Use a transaction to ensure data consistency
+    const transaction = await db.sequelize.transaction();
+
+    try {
+      // Delete all related models with team_id
+      await db.PinnedDashboard.destroy({ where: { team_id: teamId }, transaction });
+      await db.SavedQuery.destroy({ where: { team_id: teamId }, transaction });
+      await db.Integration.destroy({ where: { team_id: teamId }, transaction });
+      await db.OAuth.destroy({ where: { team_id: teamId }, transaction });
+      await db.Template.destroy({ where: { team_id: teamId }, transaction });
+      await db.Apikey.destroy({ where: { team_id: teamId }, transaction });
+      await db.Connection.destroy({ where: { team_id: teamId }, transaction });
+      await db.Dataset.destroy({ where: { team_id: teamId }, transaction });
+      await db.Project.destroy({ where: { team_id: teamId }, transaction });
+      await db.TeamRole.destroy({ where: { team_id: teamId }, transaction });
+
+      // Finally delete the team (this will cascade delete TeamRole and TeamInvitation)
+      await db.Team.destroy({ where: { id: teamId }, transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      // Rollback the transaction on error
+      await transaction.rollback();
+      return new Promise((resolve, reject) => reject(error));
+    }
   }
 
   // add a new team role

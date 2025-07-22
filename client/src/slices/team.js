@@ -36,6 +36,27 @@ export const createTeam = createAsyncThunk(
   }
 );
 
+export const deleteTeam = createAsyncThunk(
+  "team/deleteTeam",
+  async (teamId) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(`${API_HOST}/team/${teamId}`, { method: "DELETE", headers });
+    if (!response.ok) {
+      throw new Error("Error deleting team");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const getTeams = createAsyncThunk(
   "team/getTeams",
   async (userId) => {
@@ -401,6 +422,20 @@ export const teamSlice = createSlice({
         state.teamMembers = state.teamMembers.filter((member) => member.id !== action.payload.id);
       })
       .addCase(deleteTeamMember.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // DELETE TEAM
+      .addCase(deleteTeam.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.filter((team) => team.id !== action.payload.id);
+        state.active = {};
+      })
+      .addCase(deleteTeam.rejected, (state) => {
         state.loading = false;
         state.error = true;
       })

@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      reference: {
+      references: {
         model: "User",
         key: "id",
         onDelete: "cascade",
@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     team_id: {
       type: DataTypes.INTEGER,
-      reference: {
+      references: {
         model: "Team",
         key: "id",
         onDelete: "cascade",
