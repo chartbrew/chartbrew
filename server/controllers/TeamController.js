@@ -100,6 +100,37 @@ class TeamController {
     }
   }
 
+  async transferOwnership(teamId, userId, newOwnerId) {
+    const newOwnerRole = await db.TeamRole
+      .findOne({ where: { team_id: teamId, user_id: newOwnerId } });
+
+    if (newOwnerRole?.role !== "teamAdmin") {
+      return new Promise((resolve, reject) => reject(new Error("New owner must be a team admin")));
+    }
+
+    const otherTeams = await db.TeamRole
+      .findAll({ where: { user_id: userId, role: "teamOwner", team_id: { [Op.ne]: teamId } } });
+
+    if (otherTeams.length < 1) {
+      return new Promise((resolve, reject) => reject(new Error("The user needs to be the owner of at least one other team")));
+    }
+
+    const transaction = await db.sequelize.transaction();
+
+    try {
+      // all good now, change the teamRole of the owner to teamAdmin, and vice versa
+      await db.TeamRole.update({ role: "teamAdmin" }, { where: { team_id: teamId, user_id: userId }, transaction });
+      await db.TeamRole.update({ role: "teamOwner" }, { where: { team_id: teamId, user_id: newOwnerId }, transaction });
+
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      await transaction.rollback();
+      return new Promise((resolve, reject) => reject(error));
+    }
+  }
+
   // add a new team role
   addTeamRole(teamId, userId, roleName, projects, canExport) {
     const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };

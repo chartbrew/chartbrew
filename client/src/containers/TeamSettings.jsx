@@ -78,10 +78,10 @@ function TeamSettings(props) {
     }
   };
 
-  const _teamOwned = () => {
+  const _teamsOwned = () => {
     // go through all the teams and get all the teams that the user is a teamOwner of
-    const teamOwned = teams.filter((t) => t.TeamRoles.some((tr) => tr.user_id === user.id && tr.role === "teamOwner"));
-    return teamOwned;
+    const teamsOwned = teams.filter((t) => t.TeamRoles.some((tr) => tr.user_id === user.id && tr.role === "teamOwner"));
+    return teamsOwned;
   };
 
   const _onDeleteTeam = async () => {
@@ -167,11 +167,11 @@ function TeamSettings(props) {
                 onPress={() => setDeleteConfirm(true)}
                 startContent={<LuTrash size={18} />}
                 size="sm"
-                isDisabled={_teamOwned()?.length < 2}
+                isDisabled={_teamsOwned()?.length < 2}
               >
                 Delete team
               </Button>
-              {_teamOwned()?.length < 2 && (
+              {_teamsOwned()?.length < 2 && (
                 <Tooltip content="You cannot delete your last owned team">
                   <div><LuInfo size={18} className="text-foreground" /></div>
                 </Tooltip>

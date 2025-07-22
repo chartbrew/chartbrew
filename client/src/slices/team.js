@@ -106,6 +106,28 @@ export const updateTeam = createAsyncThunk(
   }
 );
 
+export const transferOwnership = createAsyncThunk(
+  "team/transferOwnership",
+  async ({ team_id, newOwnerId }) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const body = JSON.stringify({ newOwnerId });
+
+    const response = await fetch(`${API_HOST}/team/${team_id}/transfer`, { method: "PUT", headers, body });
+    if (!response.ok) {
+      throw new Error("Error transferring ownership");
+    }
+
+    const jsonData = await response.json();
+
+    return jsonData;
+  }
+);
+
 export const generateInviteUrl = createAsyncThunk(
   "team/generateInviteUrl",
   async ({ team_id, projects, canExport, role }) => {
@@ -355,6 +377,18 @@ export const teamSlice = createSlice({
         });
       })
       .addCase(updateTeam.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // TRANSFER OWNERSHIP
+      .addCase(transferOwnership.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(transferOwnership.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(transferOwnership.rejected, (state) => {
         state.loading = false;
         state.error = true;
       })
