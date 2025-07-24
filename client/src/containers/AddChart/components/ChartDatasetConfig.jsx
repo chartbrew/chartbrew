@@ -79,7 +79,9 @@ function ChartDatasetConfig(props) {
       initVars.current = true;
       let tempVariables = [];
       drs?.forEach((dr) => {
-        tempVariables = [...tempVariables, ...dr.VariableBindings];
+        if (dr?.VariableBindings) {
+          tempVariables = [...tempVariables, ...dr.VariableBindings];
+        }
       });
       setVariables(tempVariables);
 
