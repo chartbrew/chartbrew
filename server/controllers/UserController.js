@@ -89,57 +89,103 @@ class UserController {
       });
   }
 
-  deleteUser(id) {
-    let gTeam;
-    return db.SavedQuery.destroy({ where: { "user_id": id } })
-      .then(() => {
-        return db.TeamRole.findAll({ where: { "user_id": id } });
-      })
-      .then((teamRoles) => {
-        const promises = [];
-        if (teamRoles.length > 0) {
-          teamRoles.forEach((tr) => {
-            if (tr.role === "teamOwner") {
-              gTeam = tr.team_id;
-              promises.push(db.Team.destroy({ where: { "id": tr.team_id } }));
-            }
-            promises.push(db.TeamRole.destroy({ where: { "user_id": id } }));
-          });
-        }
+  async deleteUser(id) {
+    const transaction = await db.sequelize.transaction();
 
-        return Promise.all(promises);
-      })
-      .then(() => {
-        return db.Project.findAll({ where: { "team_id": gTeam } });
-      })
-      .then((projects) => {
-        const promises = [];
+    try {
+      let gTeam;
 
-        // delete the charts
-        projects.forEach((project) => {
-          promises.push(db.Chart.destroy({ where: { "project_id": project.id } }));
+      // Delete saved queries for the user
+      await db.SavedQuery.destroy({
+        where: { "user_id": id },
+        transaction
+      });
+
+      // Find all team roles for the user
+      const teamRoles = await db.TeamRole.findAll({
+        where: { "user_id": id },
+        transaction
+      });
+
+      // Process team roles and identify teams to delete
+      if (teamRoles.length > 0) {
+        const teamDeletions = [];
+        const roleDeletions = [];
+
+        teamRoles.forEach((teamRole) => {
+          if (teamRole.role === "teamOwner") {
+            gTeam = teamRole.team_id;
+            // Batch team deletion
+            teamDeletions.push(
+              db.Team.destroy({
+                where: { "id": teamRole.team_id },
+                transaction
+              })
+            );
+          }
+          // Batch team role deletion
+          roleDeletions.push(
+            db.TeamRole.destroy({
+              where: { "user_id": id },
+              transaction
+            })
+          );
         });
 
-        // delete the projects
-        promises.push(db.Project.destroy({ where: { "team_id": gTeam } }));
+        // Execute all team and role deletions in parallel
+        await Promise.all([...teamDeletions, ...roleDeletions]);
+      }
 
-        // delete the datasets
-        promises.push(db.Dataset.destroy({ where: { "team_id": gTeam } }));
+      // If user was a team owner, delete all team-related data
+      if (gTeam) {
+        // Find all projects for the team
+        const projects = await db.Project.findAll({
+          where: { "team_id": gTeam },
+          transaction
+        });
 
-        // delete the connections
-        promises.push(db.Connection.destroy({ where: { "team_id": gTeam } }));
+        // Batch delete all charts for all projects
+        const chartDeletions = projects
+          .map((project) => db.Chart.destroy({
+            where: { "project_id": project.id },
+            transaction
+          }));
 
-        return Promise.all(promises);
-      })
-      .then(() => {
-        return db.User.destroy({ where: { id } });
-      })
-      .then(() => {
-        return { deleted: true };
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
+        // Execute chart deletions first, then team-related entities
+        await Promise.all(chartDeletions);
+
+        // Delete team-related entities
+        await Promise.all([
+          db.Project.destroy({
+            where: { "team_id": gTeam },
+            transaction
+          }),
+          db.Dataset.destroy({
+            where: { "team_id": gTeam },
+            transaction
+          }),
+          db.Connection.destroy({
+            where: { "team_id": gTeam },
+            transaction
+          })
+        ]);
+      }
+
+      // Delete the user
+      await db.User.destroy({
+        where: { id },
+        transaction
       });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      return { deleted: true };
+    } catch (error) {
+      // Rollback the transaction on any error
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async login(email, password) {

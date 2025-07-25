@@ -3,7 +3,6 @@ const request = require("request");
 const rateLimit = require("express-rate-limit");
 
 const UserController = require("../controllers/UserController");
-const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
 const userResponse = require("../modules/userResponse");
@@ -17,7 +16,6 @@ const apiLimiter = (max = 10) => {
 
 module.exports = (app) => {
   const userController = new UserController();
-  const teamController = new TeamController();
 
   const tokenizeUser = ((user, res) => {
     const userToken = {
@@ -109,23 +107,7 @@ module.exports = (app) => {
   */
   app.delete("/user/:id", verifyToken, (req, res) => {
     if (req.user.id !== parseInt(req.params.id, 10)) return res.status(401).send("Unauthorised user");
-    let user = {};
-    return userController.findById(req.params.id)
-      .then((foundUser) => {
-        user = foundUser;
-        const deletePromises = [];
-        // delete the team if user is owner
-        user.TeamRoles.forEach((teamRole) => {
-          if (teamRole.role === "teamOwner") {
-            deletePromises.push(teamController.deleteTeam(teamRole.team_id));
-          }
-        });
-
-        return Promise.all(deletePromises);
-      })
-      .then(() => {
-        return userController.deleteUser(user.id);
-      })
+    return userController.deleteUser(req.user.id)
       .then(() => {
         return res.status(200).send({});
       })
