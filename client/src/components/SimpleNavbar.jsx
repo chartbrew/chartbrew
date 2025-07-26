@@ -13,7 +13,7 @@ function SimpleNavbar() {
   const { isDark } = useTheme();
 
   return (
-    <Navbar maxWidth={"full"} className="z-50">
+    <Navbar maxWidth={"full"} className="z-50" isBordered>
       <NavbarBrand>
         <a href={`${SITE_HOST}`}>
           <Image src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={150} radius="sm" />
