@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
+const { nanoid } = require("nanoid");
+const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
@@ -23,23 +25,110 @@ class TeamController {
   }
 
   // create a new team
-  createTeam(data) {
-    return db.Team.create({ "name": data.name })
-      .then((team) => {
-        return team;
-      }).catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async createTeam(data, userId) {
+    const team = await db.Team.create({ "name": data.name });
+    await db.TeamRole.create({
+      team_id: team.id,
+      user_id: userId,
+      role: "teamOwner",
+    });
+
+    // create an empty ghost project for the team
+    await db.Project.create({
+      team_id: team.id,
+      name: "Ghost Project",
+      brewName: `ghost-project-${nanoid(8)}`,
+      dashboardTitle: "Ghost Project",
+      ghost: true,
+      public: false,
+    });
+
+    // create a default dashboard for the team
+    await db.Project.create({
+      team_id: team.id,
+      name: "First Dashboard",
+      brewName: `first-dashboard-${nanoid(8)}`,
+      description: `First dashboard for ${team.name}`,
+      public: false,
+    });
+
+    // get the team with the TeamRoles
+    const teamWithRoles = await db.Team.findOne({
+      where: { id: team.id },
+      include: [{ model: db.TeamRole }],
+    });
+
+    return teamWithRoles;
   }
 
-  deleteTeam(id) {
-    return db.Team.destroy({ where: { id } })
-      .then(() => {
-        return true;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async deleteTeam(teamId, userId) {
+    // first check if the user owns other teams
+    const otherTeams = await db.TeamRole
+      .findAll({ where: { user_id: userId, role: "teamOwner", team_id: { [Op.ne]: teamId } } });
+
+    if (otherTeams.length < 1) {
+      return new Promise((resolve, reject) => reject(new Error("You cannot delete a team that you own if you have no other teams")));
+    }
+
+    // Use a transaction to ensure data consistency
+    const transaction = await db.sequelize.transaction();
+
+    try {
+      // Delete all related models with team_id
+      await db.PinnedDashboard.destroy({ where: { team_id: teamId }, transaction });
+      await db.SavedQuery.destroy({ where: { team_id: teamId }, transaction });
+      await db.Integration.destroy({ where: { team_id: teamId }, transaction });
+      await db.OAuth.destroy({ where: { team_id: teamId }, transaction });
+      await db.Template.destroy({ where: { team_id: teamId }, transaction });
+      await db.Apikey.destroy({ where: { team_id: teamId }, transaction });
+      await db.Connection.destroy({ where: { team_id: teamId }, transaction });
+      await db.Dataset.destroy({ where: { team_id: teamId }, transaction });
+      await db.Project.destroy({ where: { team_id: teamId }, transaction });
+      await db.TeamRole.destroy({ where: { team_id: teamId }, transaction });
+
+      // Finally delete the team (this will cascade delete TeamRole and TeamInvitation)
+      await db.Team.destroy({ where: { id: teamId }, transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      // Rollback the transaction on error
+      await transaction.rollback();
+      return new Promise((resolve, reject) => reject(error));
+    }
+  }
+
+  async transferOwnership(teamId, userId, newOwnerId) {
+    const newOwnerRole = await db.TeamRole
+      .findOne({ where: { team_id: teamId, user_id: newOwnerId } });
+
+    if (newOwnerRole?.role !== "teamAdmin") {
+      return new Promise((resolve, reject) => reject(new Error("New owner must be a team admin")));
+    }
+
+    const otherTeams = await db.TeamRole
+      .findAll({ where: { user_id: userId, role: "teamOwner", team_id: { [Op.ne]: teamId } } });
+
+    if (otherTeams.length < 1) {
+      return new Promise((resolve, reject) => reject(new Error("The user needs to be the owner of at least one other team")));
+    }
+
+    const transaction = await db.sequelize.transaction();
+
+    try {
+      // all good now, change the teamRole of the owner to teamAdmin, and vice versa
+      await db.TeamRole.update({ role: "teamAdmin" }, { where: { team_id: teamId, user_id: userId }, transaction });
+      await db.TeamRole.update({ role: "teamOwner" }, { where: { team_id: teamId, user_id: newOwnerId }, transaction });
+
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      await transaction.rollback();
+      return new Promise((resolve, reject) => reject(error));
+    }
   }
 
   // add a new team role

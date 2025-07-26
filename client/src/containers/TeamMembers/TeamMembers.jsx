@@ -5,14 +5,17 @@ import {
   Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
   DropdownTrigger, ModalHeader, ModalBody, ModalFooter, ModalContent, Code,
+  Input,
 } from "@heroui/react";
 import _ from "lodash";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuContact, LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX } from "react-icons/lu";
+import { LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX, LuKeyRound, LuIdCard, LuCircleCheck } from "react-icons/lu";
 
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
+  transferOwnership,
+  selectTeams,
 } from "../../slices/team";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
@@ -35,11 +38,15 @@ function TeamMembers(props) {
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
   const [changedRole, setChangedRole] = useState({});
+  const [transferOwnershipMember, setTransferOwnershipMember] = useState(null);
+  const [transfering, setTransfering] = useState(false);
+  const [transferConfirmation, setTransferConfirmation] = useState("");
 
   const team = useSelector(selectTeam);
   const teamMembers = useSelector(selectTeamMembers);
   const projects = useSelector(selectProjects);
   const user = useSelector(selectUser);
+  const teams = useSelector(selectTeams);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -167,6 +174,26 @@ function TeamMembers(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  const _teamsOwned = () => {
+    // go through all the teams and get all the teams that the user is a teamOwner of
+    const teamsOwned = teams.filter((t) => t.TeamRoles.some((tr) => tr.user_id === user.id && tr.role === "teamOwner"));
+    return teamsOwned;
+  };
+
+  const _onTransferOwnership = async () => {
+    setTransfering(true);
+    const response = await dispatch(transferOwnership({ team_id: team.id, newOwnerId: transferOwnershipMember.id }));
+
+    if (response?.error) {
+      toast.error("Something went wrong. Please try again");
+    } else {
+      toast.success("Ownership transferred successfully");
+      window.location.reload();
+    }
+
+    setTransfering(false);
+  };
+
   if (!team) {
     return (
       <Container size="sm" justify="center">
@@ -217,11 +244,11 @@ function TeamMembers(props) {
                       <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
                     </TableCell>
                     <TableCell key="role">
-                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm" startContent={<LuStar size={18} />}>Team Owner</Chip>}
-                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm" startContent={<LuStar size={18} />}>Team Admin</Chip>}
-                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client admin</Chip>}
-                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client editor</Chip>}
-                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm" startContent={<LuUser size={18} />}>Client viewer</Chip>}
+                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm" startContent={<LuStar size={14} />}>Team Owner</Chip>}
+                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm" startContent={<LuStar size={14} />}>Team Admin</Chip>}
+                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client admin</Chip>}
+                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client editor</Chip>}
+                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client viewer</Chip>}
                     </TableCell>
                     <TableCell key="projectAccess">
                       {memberRole?.role !== "teamOwner" && memberRole?.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
@@ -232,109 +259,127 @@ function TeamMembers(props) {
                       {(!memberRole?.canExport && memberRole?.role?.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
                     </TableCell>
                     <TableCell key="actions">
-                      <div>
-                        <Row className={"gap-2"}>
-                          {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole !== "teamAdmin" && (
-                            <>
-                              <Tooltip content="Change dashboard access">
-                                <Button
-                                  variant="light"
-                                  isIconOnly
-                                  auto
-                                  onClick={() => _openProjectAccess(member)}
-                                  size="sm"
-                                >
-                                  <LuFolderKey />
-                                </Button>
-                              </Tooltip>
-                            </>
+                      <div className="flex flex-row items-center gap-1">
+                        {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (
+                          <>
+                            <Tooltip content="Change dashboard access">
+                              <Button
+                                variant="light"
+                                isIconOnly
+                                onPress={() => _openProjectAccess(member)}
+                                size="sm"
+                              >
+                                <LuFolderKey />
+                              </Button>
+                            </Tooltip>
+                          </>
+                        )}
+                        {_canAccess("teamOwner") && memberRole.role === "teamAdmin" && (
+                          <>
+                            <Tooltip content="Transfer ownership">
+                              <Button
+                                variant="light"
+                                isIconOnly
+                                onPress={() => {
+                                  if (_teamsOwned().length < 2) {
+                                    toast.error("You need to own at least one other team to transfer ownership", { position: "bottom-right" });
+                                    return;
+                                  }
+
+                                  setTransferOwnershipMember(member);
+                                }}
+                                size="sm"
+                              >
+                                <LuKeyRound />
+                              </Button>
+                            </Tooltip>
+                          </>
+                        )}
+                        {_canAccess("teamAdmin") && user.id !== member.id && memberRole.role !== "teamOwner" && (
+                          <>
+                            <Tooltip content="Change member role">
+                              <div>
+                                <Dropdown aria-label="Select a role">
+                                  <DropdownTrigger>
+                                    <Button variant="light" auto isIconOnly size="sm">
+                                      <LuIdCard />
+                                    </Button>
+                                  </DropdownTrigger>
+                                  <DropdownMenu
+                                    onAction={(key) => _onChangeRole(key, member)}
+                                    selectedKeys={[memberRole.role]}
+                                    selectionMode="single"
+                                    aria-label="Change member role"
+                                  >
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="teamAdmin"
+                                          textValue="Team Admin"
+                                          description={"Full access, but can't delete the team"}
+                                          className="max-w-[400px]"
+                                        >
+                                          <Text>Team Admin</Text>
+                                        </DropdownItem>
+                                      )}
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="projectAdmin"
+                                          textValue="Client admin"
+                                          description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
+                                          className="max-w-[400px]"
+                                        >
+                                          <Text>Client admin</Text>
+                                        </DropdownItem>
+                                      )}
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="projectEditor"
+                                          textValue="Client editor"
+                                          description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
+                                          className="max-w-[400px]"
+                                        >
+                                          <Text>Client editor</Text>
+                                        </DropdownItem>
+                                      )}
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="projectViewer"
+                                          textValue="Client viewer"
+                                          description={"Can view charts in assigned projects, but cannot edit or remove anything."}
+                                          className="max-w-[400px]"
+                                        >
+                                          <Text>Client viewer</Text>
+                                        </DropdownItem>
+                                      )}
+                                  </DropdownMenu>
+                                </Dropdown>
+                              </div>
+                            </Tooltip>
+                          </>
+                        )}
+                        {user.id !== member.id
+                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                          && (
+                            <Tooltip content="Remove user from the team">
+                              <Button
+                                variant="light"
+                                onPress={() => _onDeleteConfirmation(member.id)}
+                                isIconOnly
+                                color="danger"
+                                size="sm"
+                              >
+                                <LuCircleX />
+                              </Button>
+                            </Tooltip>
                           )}
-                          {_canAccess("teamAdmin") && user.id !== member.id && (
-                            <>
-                              <Tooltip content="Change member role">
-                                <div>
-                                  <Dropdown aria-label="Select a role">
-                                    <DropdownTrigger>
-                                      <Button variant="light" auto isIconOnly size="sm">
-                                        <LuContact />
-                                      </Button>
-                                    </DropdownTrigger>
-                                    <DropdownMenu
-                                      onAction={(key) => _onChangeRole(key, member)}
-                                      selectedKeys={[memberRole.role]}
-                                      selectionMode="single"
-                                      aria-label="Change member role"
-                                    >
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="teamAdmin"
-                                            textValue="Team Admin"
-                                            description={"Full access, but can't delete the team"}
-                                            className="max-w-[400px]"
-                                          >
-                                            <Text>Team Admin</Text>
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectAdmin"
-                                            textValue="Client admin"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
-                                            className="max-w-[400px]"
-                                          >
-                                            <Text>Client admin</Text>
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectEditor"
-                                            textValue="Client editor"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
-                                            className="max-w-[400px]"
-                                          >
-                                            <Text>Client editor</Text>
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectViewer"
-                                            textValue="Client viewer"
-                                            description={"Can view charts in assigned projects, but cannot edit or remove anything."}
-                                            className="max-w-[400px]"
-                                          >
-                                            <Text>Client viewer</Text>
-                                          </DropdownItem>
-                                        )}
-                                    </DropdownMenu>
-                                  </Dropdown>
-                                </div>
-                              </Tooltip>
-                            </>
-                          )}
-                          {user.id !== member.id
-                            && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                            && (
-                              <Tooltip content="Remove user from the team">
-                                <Button
-                                  variant="light"
-                                  onClick={() => _onDeleteConfirmation(member.id)}
-                                  isIconOnly
-                                  color="danger"
-                                  size="sm"
-                                >
-                                  <LuCircleX />
-                                </Button>
-                              </Tooltip>
-                            )}
-                        </Row>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -357,14 +402,14 @@ function TeamMembers(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setDeleteMember(false)}
+              onPress={() => setDeleteMember(false)}
             >
               Cancel
             </Button>
             <Button
               color="danger"
               isLoading={loading}
-              onClick={() => _onDeleteTeamMember(deleteMember)}
+              onPress={() => _onDeleteTeamMember(deleteMember)}
               endContent={<LuX />}
             >
               Remove
@@ -440,9 +485,47 @@ function TeamMembers(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setProjectModal(false)}
+              onPress={() => setProjectModal(false)}
             >
               Done
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Transfer ownership modal */}
+      <Modal isOpen={!!transferOwnershipMember} onClose={() => setTransferOwnershipMember(null)} size="lg">
+        <ModalContent>
+          <ModalHeader className="font-bold">
+            Are you sure you want to transfer ownership?
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              {`You are about to transfer ownership of the team to ${transferOwnershipMember?.name}.`}
+            </div>
+            <div>
+              {`This action will make ${transferOwnershipMember?.name} the new owner of the team. They will have full access to the team and all its resources, while you will become an admin.`}
+            </div>
+            <div>
+              <Input
+                label={<div>Type <span className="font-bold">transfer</span> to confirm</div>}
+                value={transferConfirmation}
+                onChange={(e) => setTransferConfirmation(e.target.value)}
+                variant="bordered"
+                color={transferConfirmation === "transfer" ? "success" : "default"}
+                endContent={transferConfirmation === "transfer" && <LuCircleCheck size={18} className="text-success" />}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="bordered" onPress={() => setTransferOwnershipMember(null)}>Cancel</Button>
+            <Button
+              color="primary"
+              isLoading={transfering}
+              onPress={_onTransferOwnership}
+              isDisabled={transferConfirmation !== "transfer"}
+            >
+              Transfer ownership
             </Button>
           </ModalFooter>
         </ModalContent>

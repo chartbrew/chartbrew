@@ -38,6 +38,7 @@ function EditUserForm() {
   const [removePassword, setRemovePassword] = useState("");
   const [removeLoading, setRemoveLoading] = useState(false);
   const [codesCopied, setCodesCopied] = useState(false);
+  const [confirmationText, setConfirmationText] = useState("");
 
   const userProp = useSelector(selectUser);
   const authMethods = useSelector((state) => state.user.auths);
@@ -428,7 +429,7 @@ function EditUserForm() {
         <Button
           iconRight={<LuTrash />}
           color="danger"
-          onClick={() => setOpenDeleteModal(true)}
+          onPress={() => setOpenDeleteModal(true)}
           bordered
           auto
         >
@@ -450,9 +451,20 @@ function EditUserForm() {
               <Text>{"We cannot reverse this action as all the content is deleted immediately."}</Text>
             </Row>
             <Spacer y={0.5} />
-            <Row>
-              <Text b>Are you sure you want to delete your user and team?</Text>
-            </Row>
+            <div className="font-bold">
+              {"We recommend you to transfer the ownership of your team to another user before deleting your account."}
+            </div>
+            <Spacer y={0.5} />
+            <div className="flex flex-col gap-1">
+              <Input
+                label="Confirm your email"
+                placeholder={`Enter ${userProp.email} to confirm`}
+                variant="bordered"
+                onChange={(e) => setConfirmationText(e.target.value)}
+                fullWidth
+                description={confirmationText ? userProp.email : ""}
+              />
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button
@@ -465,7 +477,7 @@ function EditUserForm() {
               color="danger"
               onPress={_onDeleteUser}
               isLoading={loading}
-              auto
+              isDisabled={confirmationText !== userProp.email}
             >
               {"Delete forever"}
             </Button>

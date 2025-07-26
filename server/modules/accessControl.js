@@ -19,6 +19,9 @@ const grantList = [
     role: "teamOwner", resource: "team", action: "update:own", attributes: "*",
   },
   {
+    role: "teamOwner", resource: "team", action: "update:any", attributes: "*",
+  },
+  {
     role: "teamOwner", resource: "team", action: "delete:own", attributes: "*",
   },
   // resource: project ---> Team Perspective

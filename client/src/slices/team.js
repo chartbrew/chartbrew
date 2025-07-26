@@ -14,6 +14,49 @@ const initialState = {
   teamMembers: [],
 };
 
+export const createTeam = createAsyncThunk(
+  "team/createTeam",
+  async (data) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const body = JSON.stringify(data);
+    const response = await fetch(`${API_HOST}/team`, { method: "POST", headers, body });
+    
+    if (!response.ok) {
+      throw new Error("Error creating team");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const deleteTeam = createAsyncThunk(
+  "team/deleteTeam",
+  async (teamId) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(`${API_HOST}/team/${teamId}`, { method: "DELETE", headers });
+    if (!response.ok) {
+      throw new Error("Error deleting team");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const getTeams = createAsyncThunk(
   "team/getTeams",
   async (userId) => {
@@ -57,6 +100,28 @@ export const updateTeam = createAsyncThunk(
       "authorization": `Bearer ${token}`,
     });
     const response = await fetch(`${API_HOST}/team/${team_id}`, { method: "PUT", headers, body: JSON.stringify(data) });
+    const jsonData = await response.json();
+
+    return jsonData;
+  }
+);
+
+export const transferOwnership = createAsyncThunk(
+  "team/transferOwnership",
+  async ({ team_id, newOwnerId }) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const body = JSON.stringify({ newOwnerId });
+
+    const response = await fetch(`${API_HOST}/team/${team_id}/transfer`, { method: "PUT", headers, body });
+    if (!response.ok) {
+      throw new Error("Error transferring ownership");
+    }
+
     const jsonData = await response.json();
 
     return jsonData;
@@ -260,6 +325,19 @@ export const teamSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // CREATE TEAM
+      .addCase(createTeam.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data.push(action.payload);
+        state.active = action.payload;
+      })
+      .addCase(createTeam.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
       // GET TEAMS
       .addCase(getTeams.pending, (state) => {
         state.loading = true;
@@ -299,6 +377,18 @@ export const teamSlice = createSlice({
         });
       })
       .addCase(updateTeam.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // TRANSFER OWNERSHIP
+      .addCase(transferOwnership.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(transferOwnership.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(transferOwnership.rejected, (state) => {
         state.loading = false;
         state.error = true;
       })
@@ -366,6 +456,20 @@ export const teamSlice = createSlice({
         state.teamMembers = state.teamMembers.filter((member) => member.id !== action.payload.id);
       })
       .addCase(deleteTeamMember.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // DELETE TEAM
+      .addCase(deleteTeam.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.filter((team) => team.id !== action.payload.id);
+        state.active = {};
+      })
+      .addCase(deleteTeam.rejected, (state) => {
         state.loading = false;
         state.error = true;
       })
