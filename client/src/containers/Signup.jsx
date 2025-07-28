@@ -89,7 +89,7 @@ function Signup() {
   return (
     <div>
       <SimpleNavbar />
-      <div className="flex flex-col pt-[20px] sm:pt-[80px] w-full">
+      <div className="flex flex-col pt-[20px] sm:pt-[50px] w-full">
         <div className="mx-auto max-w-[400px] sm:max-w-[500px] px-4 sm:px-10">
           <div className="flex flex-col gap-2 items-center">
             <img src={logo} alt="Chartbrew" width={60} />
