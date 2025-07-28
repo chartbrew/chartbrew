@@ -142,7 +142,7 @@ class RequestController {
           );
         } else if (connection.type === "api") {
           return this.connectionController.runApiRequest(
-            connection.id, chartId, originalDataRequest, getCache,
+            connection.id, chartId, originalDataRequest, getCache, [], "", variables,
           );
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(

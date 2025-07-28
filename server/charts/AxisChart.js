@@ -124,8 +124,8 @@ class AxisChart {
         if (dataset?.options?.conditions) {
           // Filter out conditions that contain mustache notation ({{variable}})
           // - save them for variable processing
-          const nonVariableConditions = dataset.options.conditions.filter((condition) => !condition.value || !condition.value.toString().includes("{{")
-          );
+          const nonVariableConditions = dataset.options.conditions
+            .filter((condition) => !condition.value || !condition.value.toString().includes("{{"));
 
           if (nonVariableConditions.length > 0) {
             filterData = dataFilter(

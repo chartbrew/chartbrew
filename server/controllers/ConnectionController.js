@@ -810,6 +810,117 @@ class ConnectionController {
 
         // if any queryParams has variables, modify them here
         if (queryParams && Object.keys(queryParams).length > 0) {
+          // First, process generic variables (excluding start_date and end_date)
+          if (dataRequest.VariableBindings && dataRequest.VariableBindings.length > 0) {
+            // Process each query parameter for variables
+            for (const q of Object.keys(queryParams)) {
+              const paramValue = queryParams[q];
+              if (typeof paramValue === "string") {
+                let processedValue = paramValue;
+
+                // Find all variables in this parameter value
+                const variableMatches = [...paramValue.matchAll(/\{\{([^}]+)\}\}/g)];
+
+                for (const match of variableMatches) {
+                  const variableName = match[1].trim();
+
+                  // Skip reserved date variables - they're handled separately below
+                  if (variableName === "start_date" || variableName === "end_date") {
+                    // eslint-disable-next-line no-continue
+                    continue;
+                  }
+
+                  const binding = dataRequest.VariableBindings
+                    .find((vb) => vb.name === variableName);
+
+                  // Check for runtime variable value first
+                  const runtimeValue = runtimeVariables[variableName];
+                  const hasRuntimeValue = runtimeValue !== null
+                    && runtimeValue !== undefined && runtimeValue !== "";
+
+                  // Check for default value
+                  const hasDefaultValue = binding?.default_value !== null
+                    && binding?.default_value !== undefined
+                    && binding?.default_value !== "";
+
+                  if (hasRuntimeValue) {
+                    // Priority 1: Use runtime value
+                    let replacementValue = runtimeValue;
+
+                    // Handle different data types based on binding type (if available)
+                    if (binding?.type) {
+                      switch (binding.type) {
+                        case "string":
+                          replacementValue = String(runtimeValue);
+                          break;
+                        case "number":
+                          replacementValue = Number.isNaN(Number(runtimeValue))
+                            ? "0" : String(runtimeValue);
+                          break;
+                        case "boolean":
+                          replacementValue = (runtimeValue === "true" || runtimeValue === true)
+                            ? "true" : "false";
+                          break;
+                        case "date":
+                          replacementValue = String(runtimeValue);
+                          break;
+                        default:
+                          replacementValue = String(runtimeValue);
+                      }
+                    } else {
+                      // No binding type info, treat as string
+                      replacementValue = String(runtimeValue);
+                    }
+
+                    processedValue = processedValue.replace(match[0], replacementValue);
+                  } else if (hasDefaultValue && binding) {
+                    // Priority 2: Use default value
+                    let replacementValue = binding.default_value;
+
+                    if (binding.type) {
+                      switch (binding.type) {
+                        case "string":
+                          replacementValue = String(binding.default_value);
+                          break;
+                        case "number":
+                          replacementValue = Number.isNaN(Number(binding.default_value))
+                            ? "0" : String(binding.default_value);
+                          break;
+                        case "boolean":
+                          replacementValue = binding.default_value === "true"
+                            || binding.default_value === true ? "true" : "false";
+                          break;
+                        case "date":
+                          replacementValue = String(binding.default_value);
+                          break;
+                        default:
+                          replacementValue = String(binding.default_value);
+                      }
+                    } else {
+                      replacementValue = String(binding.default_value);
+                    }
+
+                    processedValue = processedValue.replace(match[0], replacementValue);
+                  } else {
+                    // Priority 3: No runtime value and no default value
+                    if (binding?.required) {
+                      // Required variable without value - throw error
+                      const errorMsg = `Required variable '${variableName}' has no value provided and no default value`;
+                      throw new Error(errorMsg);
+                    }
+
+                    // Not required and no value - remove the placeholder
+                    processedValue = processedValue.replace(match[0], "");
+                  }
+                }
+
+                // Update the query parameter with processed value
+                queryParams[q] = processedValue;
+              }
+            }
+          }
+
+          // Now handle special date variables
           // first, check for the keys to avoid making an unnecessary query to the DB
           const keysFound = {};
           Object.keys(queryParams).forEach((q) => {
@@ -834,7 +945,7 @@ class ConnectionController {
             }
           });
 
-          // something was found, go through all and replace the variables
+          // something was found, go through all and replace the date variables
           if (Object.keys(keysFound).length > 0) {
             const chart = await db.Chart.findByPk(chartId);
             if (chart?.startDate && chart?.endDate) {

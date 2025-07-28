@@ -298,7 +298,13 @@ class DatasetController {
           } else if (connection.type === "api") {
             drPromises.push(
               this.connectionController.runApiRequest(
-                connection.id, chart_id, originalDataRequest, getCache, filters, timezone,
+                connection.id,
+                chart_id,
+                originalDataRequest,
+                getCache,
+                filters,
+                timezone,
+                variables,
               )
             );
           } else if (connection.type === "postgres" || connection.type === "mysql") {
