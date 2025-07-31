@@ -59,7 +59,8 @@
     "remark-gfm": "^4.0.0",
     "styled-components": "^4.4.1",
     "tailwind-variants": "^0.2.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",

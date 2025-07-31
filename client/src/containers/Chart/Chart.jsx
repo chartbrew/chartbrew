@@ -26,8 +26,8 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
 import {
-  removeChart, runQuery, runQueryWithFilters, getChart, exportChart,
-  exportChartPublic, createShareString, updateChart,
+  removeChart, runQuery, runQueryWithFilters, getChart,
+  createShareString, updateChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
@@ -49,6 +49,7 @@ import isMac from "../../modules/isMac";
 import GaugeChart from "./components/GaugeChart";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
+import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -69,7 +70,6 @@ function Chart(props) {
     print = "",
     height = 300,
     showExport = false,
-    password = "",
     editingLayout = false,
     onEditLayout = () => {},
     variables = {},
@@ -482,36 +482,45 @@ function Chart(props) {
   const _onExport = () => {
     setExportLoading(true);
     
-    // Filter out date filters that don't apply to this chart
-    const applicableFilters = dashboardFilters ? dashboardFilters.filter((filter) => {
-      if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
-        return filter.charts.includes(chart.id);
+    try {
+      // Check if chart can be exported
+      if (!canExportChart(chart)) {
+        toast.error("This chart cannot be exported - no data available");
+        setExportLoading(false);
+        return;
       }
-      return true; // Keep all non-date filters
-    }) : [];
-    
-    return dispatch(exportChart({
-      project_id: params.projectId,
-      chartIds: [chart.id],
-      filters: applicableFilters,
-    }))
-      .then(() => {
-        setExportLoading(false);
-      })
-      .catch(() => {
-        setExportLoading(false);
-      });
+
+      // Use client-side export with the already filtered data
+      exportChartToExcel(chart);
+      toast.success("Chart exported successfully");
+      setExportLoading(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(error.message || "Failed to export chart");
+      setExportLoading(false);
+    }
   };
 
   const _onPublicExport = (chart) => {
     setExportLoading(true);
-    return dispatch(exportChartPublic({ chart, password }))
-      .then(() => {
+    
+    try {
+      // Check if chart can be exported
+      if (!canExportChart(chart)) {
+        toast.error("This chart cannot be exported - no data available");
         setExportLoading(false);
-      })
-      .catch(() => {
-        setExportLoading(false);
-      });
+        return;
+      }
+
+      // Use client-side export with the already filtered data
+      exportChartToExcel(chart);
+      toast.success("Chart exported successfully");
+      setExportLoading(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(error.message || "Failed to export chart");
+      setExportLoading(false);
+    }
   };
 
   const _getUpdatedTime = (chart) => {

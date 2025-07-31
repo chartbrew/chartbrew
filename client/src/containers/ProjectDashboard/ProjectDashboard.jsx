@@ -32,7 +32,7 @@ import { v4 as uuidv4 } from "uuid";
 import Chart from "../Chart/Chart";
 import AddFilters from "./components/AddFilters";
 import {
-  getProjectCharts, runQueryWithFilters, runQuery, changeOrder, exportChart, updateChart, selectCharts,
+  getProjectCharts, runQueryWithFilters, runQuery, changeOrder, updateChart, selectCharts,
   clearStagedCharts,
   createChart,
   stageChart,
@@ -48,6 +48,7 @@ import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { completeTutorial, selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
+import { exportMultipleChartsToExcel, canExportChart } from "../../modules/exportChart";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
@@ -715,20 +716,36 @@ function ProjectDashboard(props) {
   const _onExport = (ids) => {
     setExportLoading(true);
     setExportError(false);
-    const appliedFilters = (filters && filters[params.projectId]) || null;
-    return dispatch(exportChart({
-      project_id: params.projectId,
-      chartIds: ids,
-      filters: appliedFilters
-    }))
-      .then(() => {
-        setExportLoading(false);
-        setViewExport(false);
-      })
-      .catch(() => {
+    
+    try {
+      // Get the selected charts by their IDs
+      const selectedCharts = charts.filter(chart => ids.includes(chart.id));
+      
+      // Filter out charts that cannot be exported
+      const exportableCharts = selectedCharts.filter(chart => canExportChart(chart));
+      
+      if (exportableCharts.length === 0) {
+        toast.error("No charts with data available for export");
         setExportLoading(false);
         setExportError(true);
-      });
+        return;
+      }
+
+      if (exportableCharts.length < selectedCharts.length) {
+        toast.error(`${selectedCharts.length - exportableCharts.length} chart(s) skipped due to missing data`);
+      }
+
+      // Use client-side export with the already filtered data
+      exportMultipleChartsToExcel(exportableCharts, "chartbrew-dashboard-export.xlsx");
+      toast.success(`${exportableCharts.length} chart(s) exported successfully`);
+      setExportLoading(false);
+      setViewExport(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(error.message || "Failed to export charts");
+      setExportLoading(false);
+      setExportError(true);
+    }
   };
 
   const _canExport = () => {
