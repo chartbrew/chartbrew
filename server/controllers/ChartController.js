@@ -414,7 +414,7 @@ class ChartController {
       .then(async (chartData) => {
         gChartData = chartData;
 
-        if (filters || isExport) {
+        if ((filters && filters.length > 0) || isExport) {
           return filters;
         }
 
@@ -455,7 +455,7 @@ class ChartController {
         return this.update(id, updateData);
       })
       .then(() => {
-        if (filters && !isExport) {
+        if (filters && filters.length > 0 && !isExport) {
           const filteredChart = gChart;
           filteredChart.chartData = gChartData.configuration;
           return filteredChart;

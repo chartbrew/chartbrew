@@ -389,19 +389,39 @@ function ProjectDashboard(props) {
       });
   };
 
-  const _throttleRefreshes = (refreshes, index, batchSize = 5) => {
+  const _throttleRefreshes = (refreshes, index, batchSize = 5, isRefresh = false) => {
     if (index >= refreshes.length) return Promise.resolve("done");
 
     // Get the next batch of refreshes to process
     const batch = refreshes.slice(index, index + batchSize);
     const batchPromises = batch.map((refresh) => {
-      // Use runQueryWithFilters if variables exist, otherwise use runQuery
-      if (refresh.variables && Object.keys(refresh.variables).length > 0) {
+      // Determine filters to use - if we have dateFilter (legacy) use that, otherwise use filters array
+      const filtersToUse = refresh.filters || (refresh.dateFilter ? [refresh.dateFilter] : []);
+      
+      // For refresh operations, always use runQuery to bypass cache (same pattern as _onGetChartData)
+      if (isRefresh) {
+        return dispatch(runQuery({
+          project_id: refresh.projectId,
+          chart_id: refresh.chartId,
+          filters: filtersToUse,
+          variables: refresh.variables || {},
+          noSource: false,
+          skipParsing: false,
+          getCache: false,
+        }))
+        .catch(() => {
+          // Continue even if one request fails
+          return null;
+        });
+      }
+      
+      // For filtering operations, use runQueryWithFilters if variables exist or we have non-variable filters
+      if ((refresh.variables && Object.keys(refresh.variables).length > 0) || filtersToUse.length > 0) {
         return dispatch(runQueryWithFilters({
           project_id: refresh.projectId,
           chart_id: refresh.chartId,
-          filters: refresh.dateFilter,
-          variables: refresh.variables,
+          filters: filtersToUse,
+          variables: refresh.variables || {},
         }))
         .catch(() => {
           // Continue even if one request fails
@@ -414,7 +434,6 @@ function ProjectDashboard(props) {
           noSource: false,
           skipParsing: false,
           getCache: false,
-          filters: refresh.dateFilter,
         }))
         .catch(() => {
           // Continue even if one request fails
@@ -429,7 +448,7 @@ function ProjectDashboard(props) {
         return Promise.resolve("done");
       })
       .then(() => {
-        return _throttleRefreshes(refreshes, index + batchSize, batchSize);
+        return _throttleRefreshes(refreshes, index + batchSize, batchSize, isRefresh);
       });
   };
 
@@ -567,7 +586,7 @@ function ProjectDashboard(props) {
     return Promise.all(refreshPromises)
       .then(() => {
         if (queries.length > 0) {
-          return _throttleRefreshes(queries, 0);
+          return _throttleRefreshes(queries, 0, 5, false); // isRefresh = false for filtering operations
         }
 
         return "done";
@@ -587,59 +606,25 @@ function ProjectDashboard(props) {
   const _onRefreshData = () => {
     const { projectId } = params;
 
-    // Extract variables from dashboard filters
-    const dashboardVariables = {};
-    if (filters?.[projectId]) {
-      filters[projectId].forEach((filter) => {
-        if (filter.type === "variable" && filter.variable && filter.value) {
-          dashboardVariables[filter.variable] = filter.value;
-        }
-      });
-    }
-
-    // Check if any charts actually need refreshing due to filter state
-    const allCharts = charts.filter(c => !c.staged || c.type === "markdown");
-    const chartsToRefresh = [];
-
-    // Process each chart to determine if it needs refreshing
-    allCharts.forEach(chart => {
-      // Calculate the current processed filters for this chart (same logic as in _onFilterCharts)
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
-      });
-
-      // Get current filters if they exist
-      const currentFilters = filters?.[projectId] || [];
-      
-      // Separate filters by type
-      const variableFilters = currentFilters.filter(f => f.type === "variable" && f.value);
-      const otherFilters = currentFilters.filter(f => f.type !== "variable" && f.type !== "date");
-
-      // Handle variable filters by matching against chart conditions (legacy behavior)
-      let newConditions = [];
-      variableFilters.forEach((variableFilter) => {
-        const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
-        if (found) {
-          newConditions.push({
-            ...found,
-            value: variableFilter.value,
-          });
-        }
-      });
-
-      // Combine non-date filters into a single array
-      const processedFilters = [...newConditions, ...otherFilters];
-      
-      if (!shouldSkipFiltering(chart, processedFilters, dashboardVariables)) {
-        chartsToRefresh.push(chart);
+    // Get current filters from state (which comes from localStorage)
+    const currentFilters = filters?.[projectId] || [];
+    
+    // Separate variable filters from other filters (same pattern as _onGetChartData)
+    const variableFilters = currentFilters.filter((f) => f.type === "variable");
+    const otherFilters = currentFilters.filter((f) => f.type !== "variable");
+    
+    // Convert variable filters to the expected format { [variable_name]: variable_value }
+    const variables = {};
+    variableFilters.forEach((f) => {
+      if (f.variable && f.value) {
+        variables[f.variable] = f.value;
       }
     });
 
-    if (chartsToRefresh.length === 0) {
-      // All charts already have the correct data, no refresh needed
+    // Get all charts that need refreshing
+    const allCharts = charts.filter(c => !c.staged || c.type === "markdown");
+
+    if (allCharts.length === 0) {
       setRefreshLoading(false);
       return Promise.resolve("done");
     }
@@ -647,26 +632,38 @@ function ProjectDashboard(props) {
     const queries = [];
     setRefreshLoading(true);
     
-    chartsToRefresh.forEach(chart => {
+    // Create a query for each chart following the same pattern as _onGetChartData
+    allCharts.forEach(chart => {
       const queryOpt = {
         projectId,
         chartId: chart.id,
       };
-      if (filters?.[projectId]?.find((o) => o.type === "date")) {
-        queryOpt.dateFilter = filters[projectId].find((o) => o.type === "date");
+      
+      // Filter out date filters that don't apply to this specific chart
+      const applicableFilters = otherFilters.filter((filter) => {
+        if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
+          return filter.charts.includes(chart.id);
+        }
+        return true; // Keep all non-date filters
+      });
+      
+      // Add applicable non-variable filters
+      if (applicableFilters.length > 0) {
+        queryOpt.filters = applicableFilters;
       }
-      // Include variables if they exist
-      if (Object.keys(dashboardVariables).length > 0) {
-        queryOpt.variables = dashboardVariables;
+      
+      // Add variables if they exist
+      if (Object.keys(variables).length > 0) {
+        queryOpt.variables = variables;
       }
 
       queries.push(queryOpt);
     });
 
-    return _throttleRefreshes(queries, 0)
+    return _throttleRefreshes(queries, 0, 5, true) // isRefresh = true to bypass cache
       .then(() => {
         setRefreshLoading(false);
-        // Apply variable filters after refresh is complete, but only if needed
+        // Apply filters after refresh is complete if needed
         if (_checkIfAnyKindOfFiltersAreAvailable()) {
           _runFiltering();
         }

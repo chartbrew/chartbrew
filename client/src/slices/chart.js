@@ -156,7 +156,7 @@ export const removeChart = createAsyncThunk(
 
 export const runQuery = createAsyncThunk(
   "chart/runQuery",
-  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters }) => {
+  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters, variables }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/query?no_source=${noSource || false}&skip_parsing=${skipParsing || false}`;
     const method = "POST";
@@ -165,7 +165,10 @@ export const runQuery = createAsyncThunk(
       "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({ filters: filters && !filters.length ? [filters] : filters });
+    const body = JSON.stringify({
+      filters: filters && isNaN(filters.length) ? [filters] : filters,
+      variables: variables || [],
+    });
 
     if (getCache) {
       url += "&getCache=true";
