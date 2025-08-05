@@ -100,6 +100,7 @@ function EditDateRangeFilter({
           onChange={_handleDateRangeChange}
           showLabel
           size="lg"
+          isEdit
         />
       </div>
       <div className="flex flex-row">

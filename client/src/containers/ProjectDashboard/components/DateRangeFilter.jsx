@@ -12,6 +12,7 @@ function DateRangeFilter({
   className = "",
   variant = "bordered",
   size = "sm",
+  isEdit = false,
 }) {
   // This is the actual value that is displayed to the user
   const [currentValue, setCurrentValue] = useState({
@@ -90,16 +91,23 @@ function DateRangeFilter({
 
   const _handleDateRangeChange = (value) => {
     setCurrentValue(value);
+    if (isEdit) {
+      _applyDateRange(value);
+    }
   }
 
-  const _applyDateRange = () => {
-    const startDate = moment([currentValue.start.year, currentValue.start.month - 1, currentValue.start.day])
+  const _applyDateRange = (appliedValue = currentValue) => {
+    if (!appliedValue?.start?.day || !appliedValue?.end?.day) {
+      return;
+    }
+
+    const startDate = moment([appliedValue.start.year, appliedValue.start.month - 1, appliedValue.start.day])
       .utcOffset(0, true).format();
-    const endDate = moment([currentValue.end.year, currentValue.end.month - 1, currentValue.end.day, 23, 59, 59])
+    const endDate = moment([appliedValue.end.year, appliedValue.end.month - 1, appliedValue.end.day, 23, 59, 59])
       .utcOffset(0, true).format();
 
     onChange({ startDate, endDate });
-    setCommittedValue(currentValue);
+    setCommittedValue(appliedValue);
   }
 
   const _hasChanges = () => {
@@ -206,6 +214,7 @@ DateRangeFilter.propTypes = {
   className: PropTypes.string,
   variant: PropTypes.string,
   size: PropTypes.string,
+  isEdit: PropTypes.bool,
 }
 
 export default DateRangeFilter
