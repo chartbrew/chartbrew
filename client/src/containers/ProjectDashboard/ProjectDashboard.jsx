@@ -359,7 +359,14 @@ function ProjectDashboard(props) {
       const newFilters = _.cloneDeep(filters);
       delete newFilters[projectId];
       setFilters(newFilters);
-      window.localStorage.removeItem("_cb_filters");
+      
+      // Only remove the entire localStorage if no other projects have filters
+      if (Object.keys(newFilters).length === 0) {
+        window.localStorage.removeItem("_cb_filters");
+      } else {
+        window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
+      }
+      
       _onFilterCharts({});
       return;
     }
