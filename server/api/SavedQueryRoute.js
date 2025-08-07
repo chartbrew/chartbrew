@@ -80,7 +80,7 @@ module.exports = (app) => {
   */
   app.post("/team/:team_id/savedQuery", verifyToken, checkPermissions("createAny"), (req, res) => {
     const newSavedQuery = req.body;
-    newSavedQuery.team_id = req.params.team_id;
+    newSavedQuery.team_id = parseInt(req.params.team_id, 10);
     newSavedQuery.user_id = req.user.id;
 
     return savedQueryController.create(newSavedQuery)
@@ -102,7 +102,7 @@ module.exports = (app) => {
   */
   app.put("/team/:team_id/savedQuery/:id", verifyToken, checkPermissions("updateAny"), (req, res) => {
     const newSavedQuery = req.body;
-    newSavedQuery.team_id = req.params.team_id;
+    newSavedQuery.team_id = parseInt(req.params.team_id, 10);
     newSavedQuery.user_id = req.user.id;
 
     return savedQueryController.update(req.params.id, newSavedQuery)

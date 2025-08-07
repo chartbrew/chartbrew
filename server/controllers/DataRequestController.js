@@ -25,7 +25,7 @@ class RequestController {
 
   findById(id) {
     return db.DataRequest.findOne({
-      where: { id },
+      where: { id: parseInt(id, 10) },
       include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }],
     })
       .then((dataRequest) => {
@@ -41,7 +41,7 @@ class RequestController {
 
   findByChart(chartId) {
     return db.DataRequest.findOne({
-      where: { chart_id: chartId },
+      where: { chart_id: parseInt(chartId, 10) },
       include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequest) => {
@@ -57,7 +57,7 @@ class RequestController {
 
   findByDataset(datasetId) {
     return db.DataRequest.findAll({
-      where: { dataset_id: datasetId },
+      where: { dataset_id: parseInt(datasetId, 10) },
       include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
     })
       .then((dataRequests) => {
@@ -73,7 +73,7 @@ class RequestController {
 
   update(id, data) {
     return db.DataRequest.update(data, {
-      where: { id },
+      where: { id: parseInt(id, 10) },
     })
       .then(() => {
         return this.findById(id);
@@ -235,7 +235,7 @@ class RequestController {
 
   delete(id) {
     return db.DataRequest.destroy({
-      where: { id },
+      where: { id: parseInt(id, 10) },
     })
       .then(() => {
         return new Promise((resolve) => resolve({ deleted: true }));

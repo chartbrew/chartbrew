@@ -202,9 +202,12 @@ module.exports = (app) => {
   ** [DEPRECATED] Route to run the request attached to the dataset
   */
   app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
-    return datasetController.runRequest(
-      req.params.dataset_id, req.params.chart_id, req.query.noSource, req.query.getCache
-    )
+    return datasetController.runRequest({
+      dataset_id: req.params.dataset_id,
+      chart_id: req.params.chart_id,
+      noSource: req.query.noSource,
+      getCache: req.query.getCache,
+    })
       .then((dataset) => {
         const newDataset = dataset;
         if (newDataset?.data) {

@@ -73,7 +73,7 @@ module.exports = (app) => {
     return googleConnector.getToken(code)
       .then((data) => {
         return oauthController.create({
-          team_id: req.params.team_id,
+          team_id: parseInt(req.params.team_id, 10),
           email: data.user.email,
           refreshToken: data.tokens.refresh_token,
           type: "google",

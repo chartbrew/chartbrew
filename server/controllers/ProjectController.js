@@ -22,7 +22,7 @@ class ProjectController {
 
   findById(id) {
     return db.Project.findOne({
-      where: { id },
+      where: { id: parseInt(id, 10) },
       order: [[db.Chart, "dashboardOrder", "ASC"], [db.Chart, db.ChartDatasetConfig, "order", "ASC"]],
       include: [
         {
@@ -84,7 +84,7 @@ class ProjectController {
         if (data.passwordProtected && !project.password) {
           newFields.password = nanoid(8);
         }
-        return db.Project.update(newFields, { where: { id } });
+        return db.Project.update(newFields, { where: { id: parseInt(id, 10) } });
       })
       .then(() => {
         return this.findById(id);
@@ -96,13 +96,13 @@ class ProjectController {
 
   remove(id) {
     // remove the project and any associated items alongs with that
-    return db.Variable.destroy({ where: { project_id: id } })
+    return db.Variable.destroy({ where: { project_id: parseInt(id, 10) } })
       .then(() => {
-        return db.Project.destroy({ where: { id } });
+        return db.Project.destroy({ where: { id: parseInt(id, 10) } });
       })
       .then(() => {
         // make sure all charts from this project are deleted as well
-        return db.Chart.destroy({ where: { project_id: id } });
+        return db.Chart.destroy({ where: { project_id: parseInt(id, 10) } });
       })
       .then(() => {
         return { removed: true };
@@ -115,8 +115,8 @@ class ProjectController {
   updateProjectRole(projectId, userId, role) {
     return db.ProjectRole.findOne({
       where: {
-        project_id: projectId,
-        user_id: userId,
+        project_id: parseInt(projectId, 10),
+        user_id: parseInt(userId, 10),
       }
     })
       .then((projectRole) => {
@@ -126,8 +126,8 @@ class ProjectController {
         }
 
         return db.ProjectRole.create({
-          project_id: projectId,
-          user_id: userId,
+          project_id: parseInt(projectId, 10),
+          user_id: parseInt(userId, 10),
           role,
         });
       })
@@ -141,7 +141,7 @@ class ProjectController {
 
   getTeamProjects(teamId) {
     return db.Project.findAll({
-      where: { team_id: teamId },
+      where: { team_id: parseInt(teamId, 10) },
       include: [{ model: db.Chart, attributes: ["id", "layout"] }, { model: db.Variable }],
     })
       .then((projects) => {
@@ -203,7 +203,7 @@ class ProjectController {
 
   getVariables(projectId) {
     return db.Variable.findAll({
-      where: { project_id: projectId },
+      where: { project_id: parseInt(projectId, 10) },
     })
       .then((variables) => {
         return variables;
@@ -214,7 +214,7 @@ class ProjectController {
   }
 
   createVariable(projectId, data) {
-    return db.Variable.create({ project_id: projectId, ...data })
+    return db.Variable.create({ project_id: parseInt(projectId, 10), ...data })
       .then((variable) => {
         return variable;
       })
@@ -251,7 +251,7 @@ class ProjectController {
   createDashboardFilter(projectId, data) {
     return db.DashboardFilter.create({
       ...data,
-      project_id: projectId,
+      project_id: parseInt(projectId, 10),
     })
       .then((dashboardFilter) => {
         return dashboardFilter;
@@ -273,7 +273,7 @@ class ProjectController {
 
   getDashboardFilters(projectId) {
     return db.DashboardFilter.findAll({
-      where: { project_id: projectId },
+      where: { project_id: parseInt(projectId, 10) },
       order: [["createdAt", "DESC"]],
     })
       .then((dashboardFilters) => {

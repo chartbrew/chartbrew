@@ -174,7 +174,10 @@ module.exports = (app) => {
   ** Route to duplicate a connection
   */
   app.post("/team/:team_id/connections/:connection_id/duplicate", verifyToken, checkPermissions("createOwn"), (req, res) => {
-    return connectionController.duplicateConnection(req.params.connection_id, req.body.name)
+    return connectionController.duplicateConnection(
+      req.params.connection_id,
+      req.body.name
+    )
       .then((connection) => {
         return res.status(200).send(connection);
       })
@@ -325,7 +328,10 @@ module.exports = (app) => {
   ** Route to remove a connection
   */
   app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
-    return connectionController.removeConnection(req.params.connection_id, req.query.removeDatasets)
+    return connectionController.removeConnection(
+      req.params.connection_id,
+      req.query.removeDatasets
+    )
       .then((success) => {
         if (success) {
           return res.status(200).send({ removed: success });

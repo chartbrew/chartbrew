@@ -17,7 +17,7 @@ module.exports.update = (id, data) => {
 };
 
 module.exports.create = (teamId, data) => {
-  return db.Template.create({ team_id: teamId, model: data.model, name: data.name })
+  return db.Template.create({ team_id: parseInt(teamId, 10), model: data.model, name: data.name })
     .then((template) => this.findById(template.id));
 };
 
@@ -32,7 +32,7 @@ module.exports.getDashboardModel = async (projectId) => {
     Datasets: [],
   };
 
-  const project = await db.Project.findByPk(projectId, {
+  const project = await db.Project.findByPk(parseInt(projectId, 10), {
     include: [{
       model: db.Variable,
     }],
@@ -43,7 +43,7 @@ module.exports.getDashboardModel = async (projectId) => {
   }
 
   return db.Chart.findAll({
-    where: { project_id: projectId },
+    where: { project_id: parseInt(projectId, 10) },
     attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
     include: [{
       model: db.ChartDatasetConfig,

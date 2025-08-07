@@ -108,7 +108,7 @@ class ConnectionController {
   }
 
   findById(id) {
-    return db.Connection.findByPk(id, {
+    return db.Connection.findByPk(parseInt(id, 10), {
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
     })
       .then((connection) => {
@@ -124,7 +124,7 @@ class ConnectionController {
 
   findByTeam(teamId) {
     return db.Connection.findAll({
-      where: { team_id: teamId },
+      where: { team_id: parseInt(teamId, 10) },
       attributes: { exclude: ["password", "schema"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
       order: [["createdAt", "DESC"]],
@@ -139,7 +139,7 @@ class ConnectionController {
 
   findByProject(projectId) {
     return db.Connection.findAll({
-      where: { project_id: projectId },
+      where: { project_id: parseInt(projectId, 10) },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
     })
@@ -153,7 +153,7 @@ class ConnectionController {
 
   findByProjects(teamId, projects) {
     return db.Connection.findAll({
-      where: { team_id: teamId },
+      where: { team_id: parseInt(teamId, 10) },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
       order: [["createdAt", "DESC"]],
@@ -201,7 +201,7 @@ class ConnectionController {
   }
 
   update(id, data) {
-    return db.Connection.update(data, { where: { id } })
+    return db.Connection.update(data, { where: { id: parseInt(id, 10) } })
       .then(() => {
         return this.findById(id);
       })
@@ -231,10 +231,10 @@ class ConnectionController {
   async removeConnection(id, removeDatasets) {
     if (removeDatasets) {
       try {
-        const drs = await db.DataRequest.findAll({ where: { connection_id: id } });
+        const drs = await db.DataRequest.findAll({ where: { connection_id: parseInt(id, 10) } });
         const datasetIds = drs.map((dr) => dr.dataset_id);
 
-        await db.DataRequest.destroy({ where: { connection_id: id } });
+        await db.DataRequest.destroy({ where: { connection_id: parseInt(id, 10) } });
         await db.Dataset.destroy({ where: { id: datasetIds } });
       } catch (e) {
         //
@@ -260,7 +260,7 @@ class ConnectionController {
       //
     }
 
-    return db.Connection.destroy({ where: { id } })
+    return db.Connection.destroy({ where: { id: parseInt(id, 10) } })
       .then(() => {
         return true;
       })
@@ -480,7 +480,7 @@ class ConnectionController {
   testConnection(id) {
     let gConnection;
     let mongoConnection;
-    return db.Connection.findByPk(id)
+    return db.Connection.findByPk(parseInt(id, 10))
       .then((connection) => {
         gConnection = connection;
         switch (connection.type) {
@@ -1391,7 +1391,7 @@ class ConnectionController {
   }
 
   async duplicateConnection(connectionId, name) {
-    const connection = await db.Connection.findByPk(connectionId);
+    const connection = await db.Connection.findByPk(parseInt(connectionId, 10));
     const connectionToSave = connection.toJSON();
     delete connectionToSave.id;
     delete connectionToSave.createdAt;
@@ -1443,7 +1443,7 @@ class ConnectionController {
   async updateMongoSchema(connectionId) {
     await updateMongoSchema({
       data: {
-        connection_id: connectionId,
+        connection_id: parseInt(connectionId, 10),
       },
     });
 

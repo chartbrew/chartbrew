@@ -512,7 +512,11 @@ module.exports = (app) => {
   app.post("/project/:project_id/chart/export/public/:chart_id", apiLimiter(20), (req, res) => {
     return checkPublicAccess(req, "export")
       .then(() => {
-        return chartController.exportChartData(null, [req.params.chart_id], req.body.filters);
+        return chartController.exportChartData(
+          null,
+          [req.params.chart_id],
+          req.body.filters
+        );
       })
       .then((data) => {
         return spreadsheetExport(data);

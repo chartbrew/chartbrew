@@ -29,7 +29,7 @@ class SavedQueryController {
 
   findByTeam(teamId, type) {
     return db.SavedQuery.findAll({
-      where: { team_id: teamId, type },
+      where: { team_id: parseInt(teamId, 10), type },
       include: [{ model: db.User }],
     })
       .then((savedQueries) => {

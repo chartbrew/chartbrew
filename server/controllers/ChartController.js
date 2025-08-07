@@ -53,7 +53,7 @@ class ChartController {
 
   findByProject(projectId) {
     return db.Chart.findAll({
-      where: { project_id: projectId },
+      where: { project_id: parseInt(projectId, 10) },
       order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
       include: [
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },

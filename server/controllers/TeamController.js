@@ -342,7 +342,7 @@ class TeamController {
   }
 
   getUserTeams(userId) {
-    return db.TeamRole.findAll({ where: { user_id: userId } })
+    return db.TeamRole.findAll({ where: { user_id: parseInt(userId, 10) } })
       .then((teamIds) => {
         const idsArray = [];
         teamIds.forEach((role) => {

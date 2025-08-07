@@ -44,7 +44,7 @@ module.exports = (app) => {
       return formatError(error, res);
     }
 
-    return templateController.find({ team_id: req.params.team_id })
+    return templateController.find({ team_id: parseInt(req.params.team_id, 10) })
       .then((templates) => {
         return res.status(200).send(templates);
       })

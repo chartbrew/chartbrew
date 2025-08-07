@@ -96,7 +96,7 @@ class DatasetController {
 
   findByTeam(teamId) {
     return db.Dataset.findAll({
-      where: { team_id: teamId },
+      where: { team_id: parseInt(teamId, 10) },
       include: [
         {
           model: db.DataRequest,
@@ -119,7 +119,7 @@ class DatasetController {
 
   findById(id) {
     return db.Dataset.findOne({
-      where: { id },
+      where: { id: parseInt(id, 10) },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
         { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
@@ -138,7 +138,7 @@ class DatasetController {
 
   findByChart(chartId) {
     return db.Dataset.findAll({
-      where: { chart_id: chartId },
+      where: { chart_id: parseInt(chartId, 10) },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
         { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
@@ -155,7 +155,7 @@ class DatasetController {
 
   async findByProjects(teamId, projects) {
     const datasets = await db.Dataset.findAll({
-      where: { team_id: teamId },
+      where: { team_id: parseInt(teamId, 10) },
     });
 
     return datasets.filter((dataset) => {
@@ -185,7 +185,7 @@ class DatasetController {
         });
     }
 
-    return db.Dataset.update(data, { where: { id } })
+    return db.Dataset.update(data, { where: { id: parseInt(id, 10) } })
       .then(() => {
         return this.findById(id);
       })
@@ -195,7 +195,7 @@ class DatasetController {
   }
 
   remove(id) {
-    return db.Dataset.destroy({ where: { id } })
+    return db.Dataset.destroy({ where: { id: parseInt(id, 10) } })
       .then(() => {
         return true;
       })
@@ -210,7 +210,7 @@ class DatasetController {
     let gDataset;
     let mainDr;
     return db.Dataset.findOne({
-      where: { id: dataset_id },
+      where: { id: parseInt(dataset_id, 10) },
       include: [
         {
           model: db.DataRequest,
@@ -402,7 +402,7 @@ class DatasetController {
     try {
       // get cdcs, but make sure to avoid getting them for ghost projects
       const cdcs = await db.ChartDatasetConfig.findAll({
-        where: { dataset_id: id, "$Chart.Project.ghost$": false },
+        where: { dataset_id: parseInt(id, 10), "$Chart.Project.ghost$": false },
         include: [{
           model: db.Chart,
           attributes: ["id", "name"],
@@ -425,7 +425,7 @@ class DatasetController {
   }
 
   async duplicateDataset(id, name) {
-    const dataset = await db.Dataset.findByPk(id);
+    const dataset = await db.Dataset.findByPk(parseInt(id, 10));
     const datasetToSave = dataset.toJSON();
     delete datasetToSave.id;
     delete datasetToSave.createdAt;
@@ -473,7 +473,7 @@ class DatasetController {
   }
 
   async removeDrafts(teamId) {
-    return db.Dataset.destroy({ where: { team_id: teamId, draft: true } })
+    return db.Dataset.destroy({ where: { team_id: parseInt(teamId, 10), draft: true } })
       .then(() => {
         return true;
       })

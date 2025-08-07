@@ -7,7 +7,7 @@ function findById(id) {
 function findByTeam(teamId) {
   return db.Integration.findAll({
     where: {
-      team_id: teamId,
+      team_id: parseInt(teamId, 10),
     },
   });
 }
