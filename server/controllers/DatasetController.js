@@ -1,4 +1,5 @@
 const _ = require("lodash");
+const Sequelize = require("sequelize");
 
 const db = require("../models/models");
 const ConnectionController = require("./ConnectionController");
@@ -102,10 +103,30 @@ class DatasetController {
           model: db.DataRequest,
           include: [
             { model: db.Connection, attributes: ["id", "name", "type", "subType"] },
-            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+            {
+              model: db.VariableBinding,
+              on: Sequelize.and(
+                { "$DataRequests->VariableBindings.entity_type$": "DataRequest" },
+                Sequelize.where(
+                  Sequelize.cast(Sequelize.col("DataRequests->VariableBindings.entity_id"), "INTEGER"),
+                  Sequelize.col("DataRequests.id")
+                )
+              ),
+              required: false
+            },
           ],
         },
-        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "Dataset" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("Dataset.id")
+            )
+          ),
+          required: false
+        },
       ],
       order: [["createdAt", "DESC"]],
     })
@@ -122,7 +143,17 @@ class DatasetController {
       where: { id },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
-        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "Dataset" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("Dataset.id")
+            )
+          ),
+          required: false
+        },
       ],
     })
       .then((dataset) => {
@@ -141,7 +172,17 @@ class DatasetController {
       where: { chart_id: chartId },
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
-        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "Dataset" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("Dataset.id")
+            )
+          ),
+          required: false
+        },
       ],
       order: [["order", "ASC"]],
     })
@@ -216,10 +257,30 @@ class DatasetController {
           model: db.DataRequest,
           include: [
             { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
-            { model: db.VariableBinding, scope: { entity_type: "DataRequest" } },
+            {
+              model: db.VariableBinding,
+              on: Sequelize.and(
+                { "$DataRequests->VariableBindings.entity_type$": "DataRequest" },
+                Sequelize.where(
+                  Sequelize.cast(Sequelize.col("DataRequests->VariableBindings.entity_id"), "INTEGER"),
+                  Sequelize.col("DataRequests.id")
+                )
+              ),
+              required: false
+            },
           ]
         },
-        { model: db.VariableBinding, scope: { entity_type: "Dataset" } },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "Dataset" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("Dataset.id")
+            )
+          ),
+          required: false
+        },
       ],
     })
       .then((dataset) => {
