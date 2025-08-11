@@ -88,7 +88,17 @@ class RequestController {
       where: { dataset_id: datasetId },
       include: [
         { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
-        { model: db.VariableBinding, scope: { entity_type: "DataRequest" } }
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "DataRequest" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("DataRequest.id")
+            )
+          ),
+          required: false
+        }
       ]
     })
       .then((dataRequests) => {
