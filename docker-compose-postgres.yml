@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      # These values are taken from the .env file
+      POSTGRES_DB: ${CB_DB_NAME}
+      POSTGRES_USER: ${CB_DB_USERNAME}
+      POSTGRES_PASSWORD: ${CB_DB_PASSWORD}
+    volumes:
+      - chartbrew-postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CB_DB_USERNAME} -d ${CB_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    environment:
+      CB_REDIS_HOST: redis
+      REDIS_PASSWORD: ${CB_REDIS_PASSWORD}
+    ports:
+      - 6379:6379
+
+  chartbrew:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # Feel free to remap these ports on the left side to your desired ports.
+      # If you do change these ports you also need to update them in the VITE_APP_CLIENT_HOST and VITE_APP_API_HOST variables in your .env file
+      - 4018:4018 # Frontend
+      - 4019:4019 # API
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    links:
+      - db
+      - redis
+
+volumes:
+  chartbrew-postgres-db:
