@@ -1,3 +1,5 @@
+const Sequelize = require("sequelize");
+
 const ConnectionController = require("./ConnectionController");
 const drCacheController = require("./DataRequestCacheController");
 const db = require("../models/models");
@@ -26,7 +28,20 @@ class RequestController {
   findById(id) {
     return db.DataRequest.findOne({
       where: { id },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }],
+      include: [
+        { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "DataRequest" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("DataRequest.id")
+            )
+          ),
+          required: false
+        }
+      ],
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -42,7 +57,20 @@ class RequestController {
   findByChart(chartId) {
     return db.DataRequest.findOne({
       where: { chart_id: chartId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
+      include: [
+        { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "DataRequest" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("DataRequest.id")
+            )
+          ),
+          required: false
+        }
+      ]
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -58,7 +86,20 @@ class RequestController {
   findByDataset(datasetId) {
     return db.DataRequest.findAll({
       where: { dataset_id: datasetId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }, { model: db.VariableBinding }]
+      include: [
+        { model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "DataRequest" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("DataRequest.id")
+            )
+          ),
+          required: false
+        }
+      ]
     })
       .then((dataRequests) => {
         if (!dataRequests || dataRequests.length === 0) {
