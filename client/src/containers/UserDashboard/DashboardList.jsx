@@ -1,6 +1,6 @@
 import {
   Button, Card, CardHeader, Dropdown, DropdownTrigger, Input, Spacer,
-  Link as LinkNext, DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
+  DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
   Avatar, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
 } from "@heroui/react";
