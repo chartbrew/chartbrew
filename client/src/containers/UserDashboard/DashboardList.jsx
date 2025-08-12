@@ -15,6 +15,7 @@ import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
 import { getTemplates } from "../../slices/template";
 import { removeProject, selectProjects, updateProject } from "../../slices/project";
 import ProjectForm from "../../components/ProjectForm";
+import { Link } from "react-router-dom";
 
 function DashboardList() {
   const [addProject, setAddProject] = useState(false);
@@ -94,8 +95,6 @@ function DashboardList() {
   };
 
   const directToProject = (projectId) => {
-    dispatch(saveActiveTeam(team));
-    // window.location.href = `/${team.id}/${projectId}/dashboard`;
     navigate(`/${team.id}/${projectId}/dashboard`);
   };
 
@@ -226,7 +225,9 @@ function DashboardList() {
                   {pinnedDashboards.find((p) => p.project_id === project.id) && (
                     <LuPin className="text-foreground-500" size={18} />
                   )}
-                  <span className="text-sm font-medium">{project.name}</span>
+                  <Link to={`/${team.id}/${project.id}/dashboard`} className="cursor-pointer !text-foreground hover:underline">
+                    <span className="text-sm font-medium">{project.name}</span>
+                  </Link>
                 </div>
                 {_canAccess("teamAdmin", team.TeamRoles) && (
                   <Dropdown size="sm">
@@ -341,9 +342,9 @@ function DashboardList() {
                         </Button>
                       </Tooltip>
                     )}
-                    <LinkNext onPress={() => directToProject(project.id)} className="cursor-pointer flex flex-row items-center">
+                    <Link to={`/${team.id}/${project.id}/dashboard`} className="cursor-pointer flex flex-row items-center select-none">
                       <span className={"text-foreground font-medium"}>{project.name}</span>
-                    </LinkNext>
+                    </Link>
                   </div>
                 </TableCell>
                 <TableCell key="members">
