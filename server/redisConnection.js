@@ -24,9 +24,47 @@ const getRedisOptions = () => {
   }
 };
 
+const getRedisClusterOptions = () => {
+  const clusterNodes = process.env.NODE_ENV === "production"
+    ? process.env.CB_REDIS_CLUSTER_NODES
+    : process.env.CB_REDIS_CLUSTER_NODES_DEV;
+
+  if (clusterNodes) {
+    const nodes = clusterNodes.split(",").map((node) => {
+      const [host, port] = node.trim().split(":");
+      return { host, port: parseInt(port, 10) || 6379 };
+    });
+
+    const clusterOptions = {
+      enableReadyCheck: false,
+      redisOptions: {
+        password: process.env.NODE_ENV === "production"
+          ? process.env.CB_REDIS_PASSWORD
+          : process.env.CB_REDIS_PASSWORD_DEV,
+      }
+    };
+
+    // Add TLS configuration if provided
+    const tlsCa = process.env.NODE_ENV === "production"
+      ? process.env.CB_REDIS_CA
+      : process.env.CB_REDIS_CA_DEV;
+
+    if (tlsCa) {
+      clusterOptions.redisOptions.tls = { ca: tlsCa };
+    }
+
+    return { cluster: { nodes, options: clusterOptions } };
+  }
+
+  return null;
+};
+
 const getQueueOptions = () => {
+  // Check if cluster configuration is available
+  const clusterConfig = getRedisClusterOptions();
+
   return {
-    connection: getRedisOptions(),
+    connection: clusterConfig || getRedisOptions(),
     defaultJobOptions: {
       attempts: 3,
       backoff: {
@@ -45,5 +83,6 @@ const getQueueOptions = () => {
 
 module.exports = {
   getRedisOptions,
+  getRedisClusterOptions,
   getQueueOptions,
 };
