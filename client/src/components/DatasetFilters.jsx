@@ -306,21 +306,20 @@ function DatasetFilters(props) {
                     ))}
                   </DropdownMenu>
                 </Dropdown>
-                <div className="min-w-[150px]">
+                <div className="min-w-[150px] w-full">
                   {(!condition.field
                     || (find(fieldOptions, { value: condition.field })
-                      && find(fieldOptions, { value: condition.field }).type !== "date")) && (
-                      <div className="flex flex-col gap-2">
-                        <Input
-                          placeholder="Enter a value or {{variable_name}}"
-                          value={condition.value}
-                          onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
-                          disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                          labelPlacement="outside"
-                          variant="bordered"
-                          size="sm"
-                        />
-                      </div>
+                    && find(fieldOptions, { value: condition.field }).type !== "date")) && (
+                      <Input
+                        placeholder="Value or {{variable_name}}"
+                        value={condition.value}
+                        onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
+                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                        labelPlacement="outside"
+                        variant="bordered"
+                        size="sm"
+                        fullWidth
+                      />
                     )}
 
                   {find(fieldOptions, { value: condition.field })
