@@ -1291,7 +1291,7 @@ function Chart(props) {
                   <Row align="center">
                     <Button
                       endContent={<LuPlus />}
-                      onClick={_onCreateSharingString}
+                      onPress={_onCreateSharingString}
                       color="primary"
                     >
                       Create a sharing code
@@ -1313,14 +1313,16 @@ function Chart(props) {
                       label="Select a theme"
                       orientation="horizontal"
                       size="sm"
+                      value={embedTheme}
+                      onValueChange={(value) => setEmbedTheme(value)}
                     >
-                      <Radio value="os" onClick={() => setEmbedTheme("")} checked={embedTheme === ""}>
+                      <Radio value="os" checked={embedTheme === ""}>
                         System default
                       </Radio>
-                      <Radio value="dark" onClick={() => setEmbedTheme("dark")} checked={embedTheme === "dark"}>
+                      <Radio value="dark" checked={embedTheme === "dark"}>
                         Dark
                       </Radio>
-                      <Radio value="light" onClick={() => setEmbedTheme("light")} checked={embedTheme === "light"}>
+                      <Radio value="light" checked={embedTheme === "light"}>
                         Light
                       </Radio>
                     </RadioGroup>
@@ -1340,7 +1342,7 @@ function Chart(props) {
                     <Button
                       color={iframeCopied ? "success" : "primary"}
                       endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                      onClick={_onCopyIframe}
+                      onPress={_onCopyIframe}
                       variant={iframeCopied ? "flat" : "solid"}
                       size="sm"
                     >
@@ -1365,7 +1367,7 @@ function Chart(props) {
                       color={urlCopied ? "success" : "primary"}
                       endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
                       variant={urlCopied ? "flat" : "solid"}
-                      onClick={_onCopyUrl}
+                      onPress={_onCopyUrl}
                       size="sm"
                     >
                       {!urlCopied && "Copy URL"}
@@ -1377,10 +1379,8 @@ function Chart(props) {
             </ModalBody>
             <ModalFooter>
               <Button
-                variant="flat"
-                color="warning"
-                onClick={() => setEmbedModal(false)}
-                auto
+                variant="bordered"
+                onPress={() => setEmbedModal(false)}
               >
                 Close
               </Button>
