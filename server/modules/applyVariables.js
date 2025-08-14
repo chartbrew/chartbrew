@@ -24,11 +24,20 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
   // eslint-disable-next-line no-cond-assign
   while ((match = variableRegex.exec(processedQuery)) !== null) {
     const variableName = match[1].trim();
+    const startIndex = match.index;
+    const endIndex = match.index + match[0].length;
+
+    // Check if the variable is already quoted
+    const beforeChar = startIndex > 0 ? processedQuery[startIndex - 1] : "";
+    const afterChar = endIndex < processedQuery.length ? processedQuery[endIndex] : "";
+    const isAlreadyQuoted = (beforeChar === "'" && afterChar === "'") || (beforeChar === "\"" && afterChar === "\"");
+
     foundVariables.push({
       placeholder: match[0],
       name: variableName,
-      startIndex: match.index,
-      endIndex: match.index + match[0].length
+      startIndex,
+      endIndex,
+      isAlreadyQuoted
     });
   }
 
@@ -53,7 +62,9 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
       if (binding?.type) {
         switch (binding.type) {
           case "string":
-            replacementValue = `'${String(runtimeValue).replace(/'/g, "''")}'`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue).replace(/'/g, "''").replace(/"/g, "\"\"")
+              : `'${String(runtimeValue).replace(/'/g, "''")}'`;
             break;
           case "number":
             replacementValue = Number.isNaN(Number(runtimeValue)) ? "0" : String(runtimeValue);
@@ -62,14 +73,20 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
             replacementValue = (runtimeValue === "true" || runtimeValue === true) ? "TRUE" : "FALSE";
             break;
           case "date":
-            replacementValue = `'${String(runtimeValue)}'`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue)
+              : `'${String(runtimeValue)}'`;
             break;
           default:
-            replacementValue = `'${String(runtimeValue).replace(/'/g, "''")}'`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue).replace(/'/g, "''").replace(/"/g, "\"\"")
+              : `'${String(runtimeValue).replace(/'/g, "''")}'`;
         }
       } else {
         // No binding type info, treat as string
-        replacementValue = `'${String(runtimeValue).replace(/'/g, "''")}'`;
+        replacementValue = variable.isAlreadyQuoted
+          ? String(runtimeValue).replace(/'/g, "''").replace(/"/g, "\"\"")
+          : `'${String(runtimeValue).replace(/'/g, "''")}'`;
       }
 
       processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
@@ -79,7 +96,9 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
 
       switch (binding.type) {
         case "string":
-          replacementValue = `'${binding.default_value.replace(/'/g, "''")}'`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value.replace(/'/g, "''").replace(/"/g, "\"\"")
+            : `'${binding.default_value.replace(/'/g, "''")}'`;
           break;
         case "number":
           replacementValue = Number.isNaN(Number(binding.default_value)) ? "0" : binding.default_value;
@@ -88,10 +107,14 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
           replacementValue = binding.default_value === "true" || binding.default_value === true ? "TRUE" : "FALSE";
           break;
         case "date":
-          replacementValue = `'${binding.default_value}'`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value
+            : `'${binding.default_value}'`;
           break;
         default:
-          replacementValue = `'${binding.default_value.replace(/'/g, "''")}'`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value.replace(/'/g, "''").replace(/"/g, "\"\"")
+            : `'${binding.default_value.replace(/'/g, "''")}'`;
       }
 
       processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
@@ -139,11 +162,20 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
   // eslint-disable-next-line no-cond-assign
   while ((match = variableRegex.exec(processedQuery)) !== null) {
     const variableName = match[1].trim();
+    const startIndex = match.index;
+    const endIndex = match.index + match[0].length;
+
+    // Check if the variable is already quoted
+    const beforeChar = startIndex > 0 ? processedQuery[startIndex - 1] : "";
+    const afterChar = endIndex < processedQuery.length ? processedQuery[endIndex] : "";
+    const isAlreadyQuoted = (beforeChar === "'" && afterChar === "'") || (beforeChar === "\"" && afterChar === "\"");
+
     foundVariables.push({
       placeholder: match[0],
       name: variableName,
-      startIndex: match.index,
-      endIndex: match.index + match[0].length
+      startIndex,
+      endIndex,
+      isAlreadyQuoted
     });
   }
 
@@ -169,7 +201,9 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
         switch (binding.type) {
           case "string":
             // For MongoDB, strings need to be properly quoted
-            replacementValue = `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
+              : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
             break;
           case "number":
             replacementValue = Number.isNaN(Number(runtimeValue)) ? "0" : Number(runtimeValue);
@@ -179,14 +213,20 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
             break;
           case "date":
             // For MongoDB dates, we can use ISODate or just a string
-            replacementValue = `"${String(runtimeValue)}"`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue)
+              : `"${String(runtimeValue)}"`;
             break;
           default:
-            replacementValue = `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+            replacementValue = variable.isAlreadyQuoted
+              ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
+              : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
         }
       } else {
         // No binding type info, treat as string
-        replacementValue = `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+        replacementValue = variable.isAlreadyQuoted
+          ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
+          : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
       }
 
       processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
@@ -196,7 +236,9 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
 
       switch (binding.type) {
         case "string":
-          replacementValue = `"${binding.default_value.replace(/"/g, "\\\"")}"`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value.replace(/"/g, "\\\"").replace(/'/g, "\\'")
+            : `"${binding.default_value.replace(/"/g, "\\\"")}"`;
           break;
         case "number":
           replacementValue = Number.isNaN(Number(binding.default_value)) ? "0" : Number(binding.default_value);
@@ -205,10 +247,14 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
           replacementValue = binding.default_value === "true" || binding.default_value === true ? "true" : "false";
           break;
         case "date":
-          replacementValue = `"${binding.default_value}"`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value
+            : `"${binding.default_value}"`;
           break;
         default:
-          replacementValue = `"${binding.default_value.replace(/"/g, "\\\"")}"`;
+          replacementValue = variable.isAlreadyQuoted
+            ? binding.default_value.replace(/"/g, "\\\"").replace(/'/g, "\\'")
+            : `"${binding.default_value.replace(/"/g, "\\\"")}"`;
       }
 
       processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
@@ -220,7 +266,7 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
       }
 
       // Not required and no value - remove the placeholder
-      processedQuery = processedQuery.replace(variable.placeholder, "\"\"");
+      processedQuery = processedQuery.replace(variable.placeholder, variable.isAlreadyQuoted ? "" : "\"\"");
     }
   });
 
