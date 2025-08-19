@@ -3,6 +3,7 @@ const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
+const jwt = require("jsonwebtoken");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -17,6 +18,9 @@ const { snapChart } = require("../modules/snapshots");
 // charts
 const AxisChart = require("../charts/AxisChart");
 const TableView = require("../charts/TableView");
+const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
+
+const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 class ChartController {
   constructor() {
@@ -59,6 +63,7 @@ class ChartController {
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
         { model: db.Chartshare },
         { model: db.Alert },
+        { model: db.SharePolicy, scope: { entity_type: "Chart" } },
       ],
     })
       .then((charts) => {
@@ -76,6 +81,7 @@ class ChartController {
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
         { model: db.Chartshare },
         { model: db.Alert },
+        { model: db.SharePolicy },
       ],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     };
@@ -737,8 +743,8 @@ class ChartController {
       });
   }
 
-  async findByShareString(shareString, snapshot = false) {
-    if (snapshot) {
+  async findByShareString(shareString, queryParams) {
+    if (queryParams.snapshot) {
       const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
       if (!chart) {
         return Promise.reject("Chart not found");
@@ -747,23 +753,100 @@ class ChartController {
       return this.findById(chart.id);
     }
 
-    return db.Chartshare.findOne({ where: { shareString } })
-      .then((share) => {
-        return this.findById(share.chart_id);
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+    const chartShare = await db.Chartshare.findOne({ where: { shareString } });
+    if (!chartShare) {
+      return Promise.reject("Chart share not found");
+    }
+
+    const sharePolicy = await db.SharePolicy.findOne({
+      where: {
+        entity_type: "Chart",
+        entity_id: chartShare.chart_id,
+      },
+    });
+
+    if (sharePolicy?.visibility === "disabled") {
+      return Promise.reject("Share policy is disabled");
+    }
+
+    if (sharePolicy?.visibility !== "public") {
+      // check if the call can pass the policy
+      const decodedToken = jwt.verify(queryParams.token, settings.secret);
+      if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${chartShare.chart_id}`) {
+        return Promise.reject("Invalid token");
+      }
+
+      if (decodedToken?.exp < Date.now() / 1000) {
+        return Promise.reject("Token expired");
+      }
+    }
+
+    // get the team's branding status
+    const chart = await this.findById(chartShare.chart_id);
+    const project = await db.Project.findByPk(chart.project_id);
+    const team = await db.Team.findByPk(project.team_id);
+
+    if (!chart.public && !chart.shareable) {
+      return Promise.reject("401");
+    }
+
+    const embeddedChartData = getEmbeddedChartData(chart, team);
+
+    return embeddedChartData;
   }
 
-  createShare(chartId) {
-    return db.Chartshare.create({
+  async generateShareToken(chartId, data) {
+    const sharePolicy = await db.SharePolicy.findOne({
+      where: {
+        entity_type: "Chart",
+        entity_id: chartId,
+      },
+    });
+
+    if (!sharePolicy) {
+      return Promise.reject("Share policy not found");
+    }
+
+    const payload = {
+      sub: { type: "Chart", id: chartId },
+    };
+
+    if (data.exp) {
+      payload.exp = data.exp;
+    }
+
+    if (data.params) {
+      payload.params = data.params;
+    }
+
+    const token = jwt.sign(payload, settings.secret, { expiresIn: "99999d" });
+
+    return token;
+  }
+
+  async createShare(chartId) {
+    const shareString = uuid();
+    const transaction = await db.sequelize.transaction();
+
+    const sharePolicy = await db.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: chartId,
+      visibility: "private",
+    }, { transaction });
+
+    const chartShare = await db.Chartshare.create({
       chart_id: chartId,
-      shareString: uuid(),
-    })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+      shareString,
+    }, { transaction });
+
+    if (!sharePolicy || !chartShare) {
+      await transaction.rollback();
+      return Promise.reject("Failed to create share");
+    }
+
+    await transaction.commit();
+
+    return shareString;
   }
 
   updateShare(id, data) {

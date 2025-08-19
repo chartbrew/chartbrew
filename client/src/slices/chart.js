@@ -280,8 +280,11 @@ export const testQuery = createAsyncThunk(
 
 export const getEmbeddedChart = createAsyncThunk(
   "chart/getEmbeddedChart",
-  async ({ embed_id, snapshot }) => {
-    const url = `${API_HOST}/chart/${embed_id}/embedded${snapshot ? "?snapshot=true" : ""}`;
+  async ({ embed_id, snapshot, token }) => {
+    let url = `${API_HOST}/chart/${embed_id}/embedded`;
+    if (snapshot) url += `${url.includes("?") ? "&" : "?"}snapshot=true`;
+    if (token) url += `${url.includes("?") ? "&" : "?"}token=${token}`;
+
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
@@ -452,6 +455,28 @@ export const removeCdc = createAsyncThunk(
     }
 
     return responseJson;
+  }
+);
+
+export const generateShareToken = createAsyncThunk(
+  "chart/generateShareToken",
+  async ({ project_id, chart_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/share/token`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
   }
 );
 

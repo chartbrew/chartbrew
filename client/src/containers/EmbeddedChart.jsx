@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
   Spinner,
+  Alert,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
@@ -24,7 +25,6 @@ import PolarChart from "./Chart/components/PolarChart";
 import useInterval from "../modules/useInterval";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import Callout from "../components/Callout";
 import KpiMode from "./Chart/components/KpiMode";
 import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
@@ -103,12 +103,20 @@ function EmbeddedChart() {
         });
     } else {
       // No variables, use the original approach
-      dispatch(getEmbeddedChart({ embed_id: params.chartId }))
+      dispatch(getEmbeddedChart({ embed_id: params.chartId, token: searchParams.get("token") }))
         .then((chart) => {
-          setChart(chart.payload);
+          if (chart?.error) {
+            setError(true);
+            setChart({ error: "no chart" });
+          } else {
+            setChart(chart.payload);
+          }
+
           setDataLoading(false);
         })
         .catch(() => {
+          setError(true);
+          setChart({ error: "no chart" });
           setDataLoading(false);
         });
     }
@@ -124,7 +132,7 @@ function EmbeddedChart() {
 
     setLoading(true);
     setTimeout(() => {
-      dispatch(getEmbeddedChart({ embed_id: params.chartId, snapshot: urlParams.has("isSnapshot") }))
+      dispatch(getEmbeddedChart({ embed_id: params.chartId, snapshot: urlParams.has("isSnapshot"), token: searchParams.get("token") }))
         .then((chart) => {
           if (chart?.error) {
             setError(true);
@@ -366,7 +374,7 @@ function EmbeddedChart() {
     return filterCount > 0;
   };
 
-  if (loading || !chart || !showChart) {
+  if ((loading || !chart || !showChart) && !error) {
     return (
       <>
         <Helmet>
@@ -393,10 +401,12 @@ function EmbeddedChart() {
 
   if (error) {
     return (
-      <Callout
-        title={"Error loading the chart"}
-        text="The chart might not be public in the Chartbrew dashboard."
-      />
+      <div className="p-2">
+        <Alert
+          title={"Chart cannot be loaded"}
+          description="The chart might be private or the link expired."
+        />
+      </div>
     );
   }
 

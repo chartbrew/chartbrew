@@ -218,6 +218,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Chart.hasMany(models.Chartshare, { foreignKey: "chart_id" });
     models.Chart.belongsTo(models.Project, { foreignKey: "project_id" });
     models.Chart.hasMany(models.Alert, { foreignKey: "chart_id" });
+    models.Chart.hasOne(models.SharePolicy, { foreignKey: "entity_id", scope: { entity_type: "Chart" } });
   };
 
   return Chart;
