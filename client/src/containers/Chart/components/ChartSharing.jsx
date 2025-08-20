@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import {
-  Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup,
+  Button, Checkbox, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup,
   Spacer, Spinner, Switch,
+  Tooltip,
 } from "@heroui/react"
-import { LuCopy, LuCopyCheck, LuPlus } from "react-icons/lu";
+import { LuCopy, LuCopyCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { toast } from "react-hot-toast";
@@ -18,6 +19,9 @@ function ChartSharing({ chart, isOpen, onClose }) {
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [shareToken, setShareToken] = useState("");
+  const [parameters, setParameters] = useState([]);
+  const [allowParams, setAllowParams] = useState(false);
+  const [expirationDate, setExpirationDate] = useState("");
 
   const dispatch = useDispatch();
   const params = useParams();
@@ -25,6 +29,8 @@ function ChartSharing({ chart, isOpen, onClose }) {
   useEffect(() => {
     if (isOpen && chart?.Chartshares && chart.Chartshares.length > 0 && !shareToken) {
       _onGenerateShareToken();
+      setParameters(chart?.SharePolicy?.params || []);
+      setAllowParams(chart?.SharePolicy?.allow_params || false);
     }
   }, [shareToken, chart, isOpen]);
 
@@ -55,7 +61,13 @@ function ChartSharing({ chart, isOpen, onClose }) {
 
   const _onGenerateShareToken = async () => {
     setShareLoading(true);
-    const data = await dispatch(generateShareToken({ project_id: params.projectId, chart_id: chart.id }));
+    const data = await dispatch(generateShareToken({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: {
+        exp: expirationDate,
+      },
+    }));
     setShareToken(data?.payload?.token);
     setShareLoading(false);
   };
@@ -90,6 +102,40 @@ function ChartSharing({ chart, isOpen, onClose }) {
     if (!chart.Chartshares || !chart.Chartshares[0]) return "";
     const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
     return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded?token=${shareToken}${embedTheme ? `&theme=${embedTheme}` : ""}" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
+  };
+
+  const _onSaveSharePolicy = async () => {
+    setShareLoading(true);
+    const data = await dispatch(generateShareToken({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: {
+        share_policy: {
+          params: parameters,
+          allow_params: allowParams,
+        },
+        exp: expirationDate,
+      },
+    }));
+    setShareToken(data?.payload?.token);
+    setShareLoading(false);
+  };
+
+  const _hasUnsavedChanges = () => {
+    // Filter out incomplete parameters (where key or value are empty)
+    const filterCompleteParams = (params) => {
+      if (!Array.isArray(params)) return [];
+      return params.filter(
+        (param) => param && param.key && param.value
+      );
+    };
+
+    const filteredParameters = filterCompleteParams(parameters);
+    const filteredChartParams = filterCompleteParams(chart?.SharePolicy?.params);
+
+    const changedParams = JSON.stringify(filteredParameters) !== JSON.stringify(filteredChartParams);
+    const changedAllowParams = allowParams !== chart?.SharePolicy?.allow_params;
+    return expirationDate || changedParams || changedAllowParams;
   };
 
   return (
@@ -165,6 +211,118 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   </Radio>
                 </RadioGroup>
               </div>
+              <Spacer y={1} />
+              <div>
+                <div className="flex flex-row justify-between items-center">
+                  <div className="flex flex-row items-center gap-2">
+                    <div className="text-gray-500">{"Parameters"}</div>
+                    <Tooltip content="Parameters allow you to pass data to variables in your chart's datasets.">
+                      <div className="text-gray-500"><LuInfo size={16} /></div>
+                    </Tooltip>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => {
+                      setParameters([...parameters, { key: "", value: "" }]);
+                    }}
+                    startContent={<LuPlus />}
+                  >
+                    Add parameter
+                  </Button>
+                </div>
+                <Spacer y={1} />
+                <div className="flex flex-col gap-2">
+                  {parameters?.map((param, index) => (
+                    <div key={index} className="flex flex-row items-center gap-2">
+                      <Input
+                        value={param.key}
+                        onChange={(e) => {
+                          const newParameters = [...parameters];
+                          newParameters[index].key = e.target.value;
+                          setParameters(newParameters);
+                        }}
+                        size="sm"
+                        variant="bordered"
+                        placeholder="Parameter name"
+                      />
+                      <Input
+                        value={param.value}
+                        onChange={(e) => {
+                          const newParameters = [...parameters];
+                          newParameters[index].value = e.target.value;
+                          setParameters(newParameters);
+                        }}
+                        size="sm"
+                        variant="bordered"
+                        placeholder="Parameter value"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {parameters.length === 0 && (
+                  <div className="text-gray-500 text-xs italic">{"No parameters added"}</div>
+                )}
+                <Spacer y={2} />
+                <div className="flex flex-row items-center gap-2">
+                  <Checkbox
+                    isSelected={allowParams}
+                    onValueChange={() => {
+                      setAllowParams(!allowParams);
+                    }}
+                    size="sm"
+                  >
+                    Allow parameters in the URL
+                  </Checkbox>
+                  <Tooltip
+                    content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the chart."
+                    className="max-w-xs"
+                  >
+                    <div className="text-gray-500"><LuInfo size={16} /></div>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <Spacer y={2} />
+              <div>
+                <div className="text-gray-500">{"Set links to expire"}</div>
+                <div className="text-gray-500 text-xs italic">{"Set a date and time for the link to expire. If no date is set, the link will never expire."}</div>
+                <Input
+                  type="datetime-local"
+                  value={expirationDate}
+                  onChange={(e) => setExpirationDate(e.target.value)}
+                />
+                <Spacer y={1} />
+                {expirationDate && (
+                  <Button
+                    size="sm"
+                    variant="light"
+                    onPress={() => {
+                      setExpirationDate("");
+                    }}
+                    startContent={<LuX size={16} />}
+                  >
+                    Clear expiration date
+                  </Button>
+                )}
+              </div>
+              {_hasUnsavedChanges() && (
+                <>
+                  <Spacer y={2} />
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                    onPress={() => {
+                      _onSaveSharePolicy();
+                    }}
+                  >
+                    Refresh sharing links
+                  </Button>
+                </>
+              )}
+              <Spacer y={1} />
+              <Divider />
               <Spacer y={1} />
               <div>
                 <Input

@@ -811,17 +811,30 @@ class ChartController {
       sub: { type: "Chart", id: chartId },
     };
 
-    if (data.exp) {
-      payload.exp = data.exp;
+    if (data?.share_policy) {
+      await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
     }
 
-    if (data.params) {
-      payload.params = data.params;
+    let expiresIn = "99999d";
+    if (data?.exp) {
+      const expDate = new Date(data.exp);
+      const now = new Date();
+      const diffMs = expDate - now;
+      if (diffMs > 0) {
+        expiresIn = `${Math.floor(diffMs / 1000)}s`;
+      } else {
+        // If expiration is in the past, set to 0s (immediate expiry)
+        expiresIn = "0s";
+      }
     }
 
-    const token = jwt.sign(payload, settings.secret, { expiresIn: "99999d" });
+    const token = jwt.sign(payload, settings.secret, { expiresIn });
 
-    return token;
+    const chart = await this.findById(chartId);
+    const shareString = chart?.Chartshares?.[0]?.shareString;
+    const url = `${settings.client}/chart/${shareString}/embedded?token=${token}`;
+
+    return { token, url };
   }
 
   async createShare(chartId) {

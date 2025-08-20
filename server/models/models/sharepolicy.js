@@ -23,6 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     params: {
       type: DataTypes.TEXT,
       allowNull: true,
+      get() {
+        return this.getDataValue("params") ? JSON.parse(this.getDataValue("params")) : [];
+      },
+      set(value) {
+        this.setDataValue("params", JSON.stringify(value));
+      },
     },
     allow_params: {
       type: DataTypes.BOOLEAN,

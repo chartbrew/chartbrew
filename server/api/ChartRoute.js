@@ -404,8 +404,8 @@ module.exports = (app) => {
   */
   app.post("/project/:project_id/chart/:id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     return chartController.generateShareToken(req.params.id, req.body)
-      .then((token) => {
-        return res.status(200).send({ token });
+      .then(({ token, url }) => {
+        return res.status(200).send({ token, url });
       })
       .catch((error) => {
         return res.status(400).send(error);
