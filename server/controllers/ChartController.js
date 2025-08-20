@@ -765,11 +765,11 @@ class ChartController {
       },
     });
 
-    if (sharePolicy?.visibility === "disabled") {
+    if (sharePolicy && sharePolicy?.visibility === "disabled") {
       return Promise.reject("Share policy is disabled");
     }
 
-    if (sharePolicy?.visibility !== "public") {
+    if (sharePolicy && sharePolicy?.visibility !== "public") {
       // check if the call can pass the policy
       const decodedToken = jwt.verify(queryParams.token, settings.secret);
       if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${chartShare.chart_id}`) {
@@ -790,9 +790,85 @@ class ChartController {
       return Promise.reject("401");
     }
 
-    const embeddedChartData = getEmbeddedChartData(chart, team);
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
+    // If we have variables to apply, update the chart data with filters
+    if (Object.keys(finalVariables).length > 0) {
+      try {
+        const updatedChart = await this.updateChartData(
+          chart.id,
+          null, // no user for embedded charts
+          {
+            noSource: false,
+            skipParsing: false,
+            variables: finalVariables,
+            getCache: false,
+          }
+        );
 
+        // Merge the updated chart data with the embedded chart structure
+        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
+        return embeddedChartData;
+      } catch (error) {
+        // If variable filtering fails, return the chart without filtering
+        // eslint-disable-next-line no-console
+        console.error("Failed to apply variables to embedded chart:", error);
+        const embeddedChartData = getEmbeddedChartData(chart, team);
+        return embeddedChartData;
+      }
+    }
+
+    const embeddedChartData = getEmbeddedChartData(chart, team);
     return embeddedChartData;
+  }
+
+  /**
+   * Extract variables from query parameters, excluding special parameters
+   * @param {Object} queryParams - The query parameters object
+   * @returns {Object} - Object containing extracted variables
+   */
+  _extractVariablesFromQuery(queryParams) {
+    const variables = {};
+    const specialParams = ["token", "theme", "isSnapshot", "snapshot"];
+
+    if (queryParams && typeof queryParams === "object") {
+      Object.keys(queryParams).forEach((key) => {
+        if (!specialParams.includes(key)) {
+          variables[key] = queryParams[key];
+        }
+      });
+    }
+
+    return variables;
+  }
+
+  /**
+   * Merge URL variables with share policy variables based on policy rules
+   * @param {Object} urlVariables - Variables extracted from URL
+   * @param {Object} sharePolicy - The share policy object
+   * @returns {Object} - Final variables to be used
+   */
+  _mergeVariablesWithPolicy(urlVariables, sharePolicy) {
+    const finalVariables = {};
+
+    // Start with policy parameters if they exist
+    if (sharePolicy?.params && Array.isArray(sharePolicy.params)) {
+      sharePolicy.params.forEach((param) => {
+        if (param.key && param.value) {
+          finalVariables[param.key] = param.value;
+        }
+      });
+    }
+
+    // If URL parameters are allowed, merge them with policy variables
+    if (sharePolicy?.allow_params && Object.keys(urlVariables).length > 0) {
+      // URL variables override policy variables if allow_params is true
+      Object.assign(finalVariables, urlVariables);
+    }
+    // If URL parameters are not allowed, only use policy variables (already set above)
+
+    return finalVariables;
   }
 
   async generateShareToken(chartId, data) {
@@ -877,6 +953,14 @@ class ChartController {
       .catch((err) => {
         return Promise.reject(err);
       });
+  }
+
+  async createSharePolicy(chartId) {
+    return db.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: chartId,
+      visibility: "private",
+    });
   }
 
   async createChartDatasetConfig(chartId, data) {

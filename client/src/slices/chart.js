@@ -280,10 +280,29 @@ export const testQuery = createAsyncThunk(
 
 export const getEmbeddedChart = createAsyncThunk(
   "chart/getEmbeddedChart",
-  async ({ embed_id, snapshot, token }) => {
+  async ({ embed_id, snapshot, token, queryParams }) => {
     let url = `${API_HOST}/chart/${embed_id}/embedded`;
-    if (snapshot) url += `${url.includes("?") ? "&" : "?"}snapshot=true`;
-    if (token) url += `${url.includes("?") ? "&" : "?"}token=${token}`;
+    
+    const urlParams = new URLSearchParams();
+    
+    // Add specific parameters
+    if (snapshot) urlParams.set("snapshot", "true");
+    if (token) urlParams.set("token", token);
+    
+    // Add any additional query parameters (for variables)
+    if (queryParams && typeof queryParams === "object") {
+      Object.keys(queryParams).forEach((key) => {
+        // Don't override snapshot and token if they were explicitly set
+        if (!urlParams.has(key)) {
+          urlParams.set(key, queryParams[key]);
+        }
+      });
+    }
+    
+    const queryString = urlParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
 
     const method = "GET";
     const headers = new Headers({
@@ -409,6 +428,26 @@ export const createCdc = createAsyncThunk(
     }
 
     return responseJson;
+  }
+);
+
+export const createSharePolicy = createAsyncThunk(
+  "chart/createSharePolicy",
+  async ({ project_id, chart_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/share/policy`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
   }
 );
 
@@ -823,6 +862,27 @@ export const chartSlice = createSlice({
           }
           return chart;
         });
+      })
+
+      // createSharePolicy
+      .addCase(createSharePolicy.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createSharePolicy.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (chart.id === action.meta.arg.chart_id) {
+            return {
+              ...chart,
+              SharePolicy: action.payload,
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(createSharePolicy.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       })
 
       // createCdc

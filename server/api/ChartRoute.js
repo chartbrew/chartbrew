@@ -575,6 +575,19 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to create a new share policy
+  */
+  app.post("/project/:project_id/chart/:id/share/policy", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      const policy = await chartController.createSharePolicy(req.params.id);
+      return res.status(200).send(policy);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to get chart alerts
   */
   app.get("/project/:project_id/chart/:id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {

@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { toast } from "react-hot-toast";
 
-import { createShareString, generateShareToken, updateChart } from "../../../slices/chart";
+import { createSharePolicy, createShareString, generateShareToken, updateChart } from "../../../slices/chart";
 import { SITE_HOST } from "../../../config/settings";
 
 function ChartSharing({ chart, isOpen, onClose }) {
@@ -95,13 +95,35 @@ function ChartSharing({ chart, isOpen, onClose }) {
   const _getEmbedUrl = () => {
     if (!chart.Chartshares || !chart.Chartshares[0]) return "";
     const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `${SITE_HOST}/chart/${shareString}/embedded?token=${shareToken}${embedTheme ? `&theme=${embedTheme}` : ""}`;
+    let url = `${SITE_HOST}/chart/${shareString}/embedded?token=${shareToken}${embedTheme ? `&theme=${embedTheme}` : ""}`;
+    
+    // If URL parameters are allowed and we have parameters, show example
+    if (allowParams && parameters && parameters.length > 0) {
+      const validParams = parameters.filter(p => p.key && p.value);
+      if (validParams.length > 0) {
+        const paramString = validParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join("&");
+        url += `&${paramString}`;
+      }
+    }
+    
+    return url;
   };
 
   const _getEmbedString = () => {
     if (!chart.Chartshares || !chart.Chartshares[0]) return "";
     const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded?token=${shareToken}${embedTheme ? `&theme=${embedTheme}` : ""}" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
+    let url = `${SITE_HOST}/chart/${shareString}/embedded?token=${shareToken}${embedTheme ? `&theme=${embedTheme}` : ""}`;
+    
+    // If URL parameters are allowed and we have parameters, show example
+    if (allowParams && parameters && parameters.length > 0) {
+      const validParams = parameters.filter(p => p.key && p.value);
+      if (validParams.length > 0) {
+        const paramString = validParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join("&");
+        url += `&${paramString}`;
+      }
+    }
+    
+    return `<iframe src="${url}" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
   const _onSaveSharePolicy = async () => {
@@ -136,6 +158,13 @@ function ChartSharing({ chart, isOpen, onClose }) {
     const changedParams = JSON.stringify(filteredParameters) !== JSON.stringify(filteredChartParams);
     const changedAllowParams = allowParams !== chart?.SharePolicy?.allow_params;
     return expirationDate || changedParams || changedAllowParams;
+  };
+
+  const _onCreateSharePolicy = async () => {
+    setShareLoading(true);
+    await dispatch(createSharePolicy({ project_id: params.projectId, chart_id: chart.id }));
+    _onGenerateShareToken();
+    setShareLoading(false);
   };
 
   return (
@@ -212,114 +241,138 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 </RadioGroup>
               </div>
               <Spacer y={1} />
-              <div>
-                <div className="flex flex-row justify-between items-center">
-                  <div className="flex flex-row items-center gap-2">
-                    <div className="text-gray-500">{"Parameters"}</div>
-                    <Tooltip content="Parameters allow you to pass data to variables in your chart's datasets.">
-                      <div className="text-gray-500"><LuInfo size={16} /></div>
-                    </Tooltip>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="flat"
-                    onPress={() => {
-                      setParameters([...parameters, { key: "", value: "" }]);
-                    }}
-                    startContent={<LuPlus />}
-                  >
-                    Add parameter
-                  </Button>
-                </div>
-                <Spacer y={1} />
-                <div className="flex flex-col gap-2">
-                  {parameters?.map((param, index) => (
-                    <div key={index} className="flex flex-row items-center gap-2">
-                      <Input
-                        value={param.key}
-                        onChange={(e) => {
-                          const newParameters = [...parameters];
-                          newParameters[index].key = e.target.value;
-                          setParameters(newParameters);
-                        }}
-                        size="sm"
-                        variant="bordered"
-                        placeholder="Parameter name"
-                      />
-                      <Input
-                        value={param.value}
-                        onChange={(e) => {
-                          const newParameters = [...parameters];
-                          newParameters[index].value = e.target.value;
-                          setParameters(newParameters);
-                        }}
-                        size="sm"
-                        variant="bordered"
-                        placeholder="Parameter value"
-                      />
-                    </div>
-                  ))}
-                </div>
-                {parameters.length === 0 && (
-                  <div className="text-gray-500 text-xs italic">{"No parameters added"}</div>
-                )}
-                <Spacer y={2} />
-                <div className="flex flex-row items-center gap-2">
-                  <Checkbox
-                    isSelected={allowParams}
-                    onValueChange={() => {
-                      setAllowParams(!allowParams);
-                    }}
-                    size="sm"
-                  >
-                    Allow parameters in the URL
-                  </Checkbox>
-                  <Tooltip
-                    content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the chart."
-                    className="max-w-xs"
-                  >
-                    <div className="text-gray-500"><LuInfo size={16} /></div>
-                  </Tooltip>
-                </div>
-              </div>
-
-              <Spacer y={2} />
-              <div>
-                <div className="text-gray-500">{"Set links to expire"}</div>
-                <div className="text-gray-500 text-xs italic">{"Set a date and time for the link to expire. If no date is set, the link will never expire."}</div>
-                <Input
-                  type="datetime-local"
-                  value={expirationDate}
-                  onChange={(e) => setExpirationDate(e.target.value)}
-                />
-                <Spacer y={1} />
-                {expirationDate && (
-                  <Button
-                    size="sm"
-                    variant="light"
-                    onPress={() => {
-                      setExpirationDate("");
-                    }}
-                    startContent={<LuX size={16} />}
-                  >
-                    Clear expiration date
-                  </Button>
-                )}
-              </div>
-              {_hasUnsavedChanges() && (
+              {chart.SharePolicy && (
                 <>
+                  <div>
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="flex flex-row items-center gap-2">
+                        <div className="text-gray-500">{"Parameters"}</div>
+                        <Tooltip content="Parameters allow you to pass data to variables in your chart's datasets.">
+                          <div className="text-gray-500"><LuInfo size={16} /></div>
+                        </Tooltip>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        onPress={() => {
+                          setParameters([...parameters, { key: "", value: "" }]);
+                        }}
+                        startContent={<LuPlus />}
+                      >
+                        Add parameter
+                      </Button>
+                    </div>
+                    <Spacer y={1} />
+                    <div className="flex flex-col gap-2">
+                      {parameters?.map((param, index) => (
+                        <div key={index} className="flex flex-row items-center gap-2">
+                          <Input
+                            value={param.key}
+                            onChange={(e) => {
+                              const newParameters = parameters.map((p, i) =>
+                                i === index ? { ...p, key: e.target.value } : p
+                              );
+                              setParameters(newParameters);
+                            }}
+                            size="sm"
+                            variant="bordered"
+                            placeholder="Parameter name"
+                          />
+                          <Input
+                            value={param.value}
+                            onChange={(e) => {
+                              const newParameters = parameters.map((p, i) =>
+                                i === index ? { ...p, value: e.target.value } : p
+                              );
+                              setParameters(newParameters);
+                            }}
+                            size="sm"
+                            variant="bordered"
+                            placeholder="Parameter value"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {parameters.length === 0 && (
+                      <div className="text-gray-500 text-xs italic">{"No parameters added"}</div>
+                    )}
+                    <Spacer y={2} />
+                    <div className="flex flex-row items-center gap-2">
+                      <Checkbox
+                        isSelected={allowParams}
+                        onValueChange={() => {
+                          setAllowParams(!allowParams);
+                        }}
+                        size="sm"
+                      >
+                        Allow parameters in the URL
+                      </Checkbox>
+                      <Tooltip
+                        content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the chart."
+                        className="max-w-xs"
+                      >
+                        <div className="text-gray-500"><LuInfo size={16} /></div>
+                      </Tooltip>
+                    </div>
+                  </div>
+
                   <Spacer y={2} />
+                  <div>
+                    <div className="text-gray-500">{"Set links to expire"}</div>
+                    <div className="text-gray-500 text-xs italic">{"Set a date and time for the link to expire. If no date is set, the link will never expire."}</div>
+                    <Input
+                      type="datetime-local"
+                      value={expirationDate}
+                      onChange={(e) => setExpirationDate(e.target.value)}
+                    />
+                    <Spacer y={1} />
+                    {expirationDate && (
+                      <Button
+                        size="sm"
+                        variant="light"
+                        onPress={() => {
+                          setExpirationDate("");
+                        }}
+                        startContent={<LuX size={16} />}
+                      >
+                        Clear expiration date
+                      </Button>
+                    )}
+                  </div>
+                  {_hasUnsavedChanges() && (
+                    <>
+                      <Spacer y={2} />
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        onPress={() => {
+                          _onSaveSharePolicy();
+                        }}
+                      >
+                        Refresh sharing links
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+              {!chart.SharePolicy && (
+                <div>
                   <Button
                     size="sm"
                     variant="flat"
                     color="primary"
                     onPress={() => {
-                      _onSaveSharePolicy();
+                      _onCreateSharePolicy();
                     }}
                   >
-                    Refresh sharing links
+                    Enable signed links
                   </Button>
-                </>
+                  <Spacer y={1} />
+                  <div className="text-gray-500 text-xs">
+                    {"This chart is using legacy sharing links. You can enable signed links to better control and secure the chart. Please be aware that this operation will break existing links you already shared or embedded on other websites."}
+                  </div>
+                </div>
               )}
               <Spacer y={1} />
               <Divider />
