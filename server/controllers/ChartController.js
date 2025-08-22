@@ -294,7 +294,7 @@ class ChartController {
   }
 
   updateChartData(id, user, {
-    noSource, skipParsing, filters, isExport, getCache, variables,
+    noSource, skipParsing, filters, isExport, getCache, variables, skipSave,
   }) {
     let gChart;
     let gCache;
@@ -458,9 +458,25 @@ class ChartController {
           updateData.chartDataUpdated = moment();
         }
 
+        // Skip saving to database if skipSave flag is set
+        if (skipSave) {
+          // Return chart with updated data without saving to database
+          const updatedChart = { ...gChart.toJSON() };
+          updatedChart.chartData = gChartData.configuration;
+          if (!getCache) {
+            updatedChart.chartDataUpdated = moment();
+          }
+          return Promise.resolve(updatedChart);
+        }
+
         return this.update(id, updateData);
       })
-      .then(() => {
+      .then((chart) => {
+        if (skipSave) {
+          // Chart is already processed above when skipSave is true
+          return chart;
+        }
+
         if (filters && filters.length > 0 && !isExport) {
           const filteredChart = gChart;
           filteredChart.chartData = gChartData.configuration;
@@ -475,8 +491,19 @@ class ChartController {
       })
       .then((chart) => {
         if (!isExport) {
-          chart.setDataValue("isTimeseries", gChartData.isTimeseries);
-          chart.setDataValue("dateFormat", gChartData.dateFormat);
+          if (skipSave) {
+            // For skipSave, chart is a plain object, so we create a new object with properties
+            const chartWithTimeseries = {
+              ...chart,
+              isTimeseries: gChartData.isTimeseries,
+              dateFormat: gChartData.dateFormat,
+            };
+            return chartWithTimeseries;
+          } else {
+            // For normal saves, chart is a Sequelize model
+            chart.setDataValue("isTimeseries", gChartData.isTimeseries);
+            chart.setDataValue("dateFormat", gChartData.dateFormat);
+          }
         }
         return chart;
       })

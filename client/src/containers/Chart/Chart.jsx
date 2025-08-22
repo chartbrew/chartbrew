@@ -120,7 +120,7 @@ function Chart(props) {
         fromInterval: true
       }));
     }
-  }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
+  }, !isPublic && chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
   useEffect(() => {
     if (customUpdateFreq && updateFreqType) {

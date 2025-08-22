@@ -12,6 +12,7 @@ const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const refreshChartsApi = require("../modules/refreshChartsApi");
 const getUserFromToken = require("../modules/getUserFromToken");
+const db = require("../models/models");
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -211,52 +212,162 @@ module.exports = (app) => {
   /*
   ** Route to get a project with a public dashboard
   */
-  app.get("/project/dashboard/:brewName", getUserFromToken, (req, res) => {
+  app.get("/project/dashboard/:brewName", getUserFromToken, async (req, res) => {
     let processedProject;
-    return projectController.getPublicDashboard(req.params.brewName)
-      .then(async (project) => {
-        processedProject = _.cloneDeep(project);
-        processedProject.setDataValue("password", "");
+    try {
+      const project = await projectController.getPublicDashboard(req.params.brewName);
+      processedProject = _.cloneDeep(project);
+      processedProject.setDataValue("password", "");
 
-        if (req.user) {
-          // now determine whether to show the dashboard or not
-          const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
+      if (req.user) {
+        // now determine whether to show the dashboard or not
+        const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
 
-          if ((teamRole && teamRole.role)) {
-            return res.status(200).send(project);
-          }
+        if ((teamRole && teamRole.role)) {
+          return res.status(200).send(project);
+        }
+      }
+
+      // Check if there's a SharePolicy for this project
+      const sharePolicy = await db.SharePolicy.findOne({
+        where: {
+          entity_type: "Project",
+          entity_id: project.id,
+        },
+      });
+
+      // If SharePolicy exists, check the policy
+      if (sharePolicy) {
+        if (sharePolicy.visibility === "disabled") {
+          return res.status(403).send("Share policy is disabled");
         }
 
-        // check if accessToken is present and valid
-        if (req.query.accessToken) {
-          const decodedToken = await jwt.verify(req.query.accessToken, settings.encryptionKey);
+        // SECURITY: SharePolicy tokens only work for public projects
+        if (!project.public) {
+          return res.status(401).send("Not authorized to access this page");
+        }
+
+        if (sharePolicy.visibility !== "public") {
+          // SharePolicy exists and requires token verification
+          if (!req.query.accessToken) {
+            if (project.public
+              && project.passwordProtected
+              && req.query.pass === project.password
+            ) {
+              // Allow password access for backwards compatibility if no token provided
+              return res.status(200).send(processedProject);
+            }
+            return res.status(401).send("Access token required");
+          }
+
+          try {
+            const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
+            if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${project.id}`) {
+              return res.status(401).send("Invalid token");
+            }
+
+            if (decodedToken?.exp < Date.now() / 1000) {
+              return res.status(401).send("Token expired");
+            }
+
+            // SECURITY: If dashboard is password protected, require password even with valid token
+            if (project.passwordProtected) {
+              if (!req.query.pass || req.query.pass !== project.password) {
+                return res.status(403).send("Enter the correct password");
+              }
+            }
+
+            // Handle variable filtering based on share policy
+            const urlVariables = projectController
+              ._extractVariablesFromQuery(req.query);
+            const finalVariables = projectController
+              ._mergeVariablesWithPolicy(urlVariables, sharePolicy);
+
+            // Apply variables to the charts if needed
+            if (Object.keys(finalVariables).length > 0) {
+              try {
+                const updatedProject = await projectController
+                  .applyVariablesToCharts(project, finalVariables);
+                return res.status(200).send(updatedProject);
+              } catch (error) {
+                // If variable application fails, return the project without variables
+                // eslint-disable-next-line no-console
+                console.error("Failed to apply variables to dashboard:", error);
+                return res.status(200).send(processedProject);
+              }
+            }
+
+            return res.status(200).send(processedProject);
+          } catch (tokenError) {
+            return res.status(401).send("Invalid or expired token");
+          }
+        }
+      }
+
+      // Backwards compatibility: if no SharePolicy exists, use legacy logic
+      // SECURITY: Legacy tokens only work for public projects
+      if (req.query.accessToken && project.public) {
+        try {
+          const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
           if (decodedToken.project_id === project.id) {
+            // SECURITY: If dashboard is password protected, require password even with valid token
+            if (project.passwordProtected) {
+              if (!req.query.pass || req.query.pass !== project.password) {
+                return res.status(403).send("Enter the correct password");
+              }
+            }
             return res.status(200).send(processedProject);
           }
+        } catch (error) {
+          // Token is invalid, continue with normal flow
         }
+      }
 
-        if (project.public && !project.passwordProtected) {
-          return res.status(200).send(processedProject);
+      // Handle variables for projects without SharePolicy (backwards compatibility)
+      // SECURITY: URL variables only processed for public projects
+      if (project.public) {
+        const urlVariables = projectController._extractVariablesFromQuery(req.query);
+        if (Object.keys(urlVariables).length > 0) {
+          // SECURITY: If dashboard is password protected, require password for URL variables
+          if (project.passwordProtected) {
+            if (!req.query.pass || req.query.pass !== project.password) {
+              return res.status(403).send("Enter the correct password");
+            }
+          }
+
+          try {
+            const updatedProject = await projectController
+              .applyVariablesToCharts(project, urlVariables);
+            return res.status(200).send(updatedProject);
+          } catch (error) {
+            // If variable application fails, return the project without variables
+            // eslint-disable-next-line no-console
+            console.error("Failed to apply variables to dashboard:", error);
+          }
         }
+      }
 
-        if (project.public && project.passwordProtected && req.query.pass === project.password) {
-          return res.status(200).send(processedProject);
-        }
+      if (project.public && !project.passwordProtected) {
+        return res.status(200).send(processedProject);
+      }
 
-        if (project.public && project.passwordProtected && req.query.pass !== project.password) {
-          return res.status(403).send("Enter the correct password");
-        }
+      if (project.public && project.passwordProtected && req.query.pass === project.password) {
+        return res.status(200).send(processedProject);
+      }
 
-        if (!project.isPublic) return res.status(401).send("Not authorized to access this page");
+      if (project.public && project.passwordProtected && req.query.pass !== project.password) {
+        return res.status(403).send("Enter the correct password");
+      }
 
-        return res.status(400).send("Cannot get the data");
-      })
-      .catch((error) => {
-        if (error && error.message === "404") {
-          return res.status(404).send(error);
-        }
-        return res.status(400).send(error);
-      });
+      if (!project.public) return res.status(401).send("Not authorized to access this page");
+
+      return res.status(400).send("Cannot get the data");
+    } catch (error) {
+      if (error && error.message === "404") {
+        return res.status(404).send(error);
+      }
+      return res.status(400).send(error);
+    }
   });
   // -------------------------------------------
 
@@ -415,6 +526,34 @@ module.exports = (app) => {
     return projectController.deleteDashboardFilter(req.params.dashboardFilterId)
       .then(() => {
         return res.status(200).send({ removed: true });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to create a project share policy
+  */
+  app.post("/project/:id/share/policy", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.createSharePolicy(req.params.id)
+      .then((sharePolicy) => {
+        return res.status(200).send(sharePolicy);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to generate a project share token
+  */
+  app.post("/project/:id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.generateShareToken(req.params.id, req.body)
+      .then(({ token, url }) => {
+        return res.status(200).send({ token, url });
       })
       .catch((error) => {
         return res.status(400).send(error);

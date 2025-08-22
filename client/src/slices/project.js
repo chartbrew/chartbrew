@@ -171,7 +171,7 @@ export const removeProject = createAsyncThunk(
 
 export const getPublicDashboard = createAsyncThunk(
   "project/getPublicDashboard",
-  async ({ brewName, password, accessToken }, thunkAPI) => {
+  async ({ brewName, password, accessToken, queryParams }, thunkAPI) => {
     let token;
     try {
       token = getAuthToken();
@@ -185,12 +185,28 @@ export const getPublicDashboard = createAsyncThunk(
       "authorization": `Bearer ${token}`,
     });
 
+    // Build query parameters
+    const urlParams = new URLSearchParams();
+    
     if (password) {
-      url += `?pass=${password}`;
+      urlParams.append("pass", password);
     }
 
     if (accessToken) {
-      url += `${url.includes("?") ? "&" : "?"}accessToken=${accessToken}`;
+      urlParams.append("accessToken", accessToken);
+    }
+
+    // Add all other query parameters (variables, theme, etc.)
+    if (queryParams) {
+      Object.keys(queryParams).forEach(key => {
+        if (key !== "pass" && key !== "accessToken") {
+          urlParams.append(key, queryParams[key]);
+        }
+      });
+    }
+
+    if (urlParams.toString()) {
+      url += `?${urlParams.toString()}`;
     }
 
     const response = await fetch(url, { headers });
@@ -342,6 +358,51 @@ export const deleteDashboardFilter = createAsyncThunk(
     }
 
     return response.json();
+  }
+);
+
+export const createSharePolicy = createAsyncThunk(
+  "project/createSharePolicy",
+  async ({ project_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/share/policy`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const sharePolicy = await response.json();
+    return sharePolicy;
+  }
+);
+
+export const generateShareToken = createAsyncThunk(
+  "project/generateShareToken",
+  async ({ project_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/share/token`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const body = JSON.stringify(data);
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const result = await response.json();
+    return result;
   }
 );
 
@@ -585,6 +646,41 @@ export const projectSlice = createSlice({
       });
     });
     builder.addCase(deleteDashboardFilter.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // createSharePolicy
+    builder.addCase(createSharePolicy.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(createSharePolicy.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.active) {
+        state.active.SharePolicy = action.payload;
+      }
+
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.SharePolicy = action.payload;
+        }
+        return project;
+      });
+    });
+    builder.addCase(createSharePolicy.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // generateShareToken
+    builder.addCase(generateShareToken.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(generateShareToken.fulfilled, (state) => {
+      state.loading = false;
+      // Token generation doesn't modify state, just returns the token
+    });
+    builder.addCase(generateShareToken.rejected, (state) => {
       state.loading = false;
       state.error = true;
     });
