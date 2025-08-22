@@ -171,10 +171,10 @@ export const removeProject = createAsyncThunk(
 
 export const getPublicDashboard = createAsyncThunk(
   "project/getPublicDashboard",
-  async ({ brewName, password, accessToken, queryParams }, thunkAPI) => {
-    let token;
+  async ({ brewName, password, token, queryParams }, thunkAPI) => {
+    let authToken;
     try {
-      token = getAuthToken();
+      authToken = getAuthToken();
     } catch (err) {
       // no token
     }
@@ -182,7 +182,7 @@ export const getPublicDashboard = createAsyncThunk(
     let url = `${API_HOST}/project/dashboard/${brewName}`;
     const headers = new Headers({
       "Accept": "application/json",
-      "authorization": `Bearer ${token}`,
+      "authorization": `Bearer ${authToken}`,
     });
 
     // Build query parameters
@@ -192,14 +192,14 @@ export const getPublicDashboard = createAsyncThunk(
       urlParams.append("pass", password);
     }
 
-    if (accessToken) {
-      urlParams.append("accessToken", accessToken);
+    if (token) {
+      urlParams.append("token", token);
     }
 
     // Add all other query parameters (variables, theme, etc.)
     if (queryParams) {
       Object.keys(queryParams).forEach(key => {
-        if (key !== "pass" && key !== "accessToken") {
+        if (key !== "pass" && key !== "token") {
           urlParams.append(key, queryParams[key]);
         }
       });

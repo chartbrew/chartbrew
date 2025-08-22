@@ -391,7 +391,7 @@ class ProjectController {
     const token = jwt.sign(payload, settings.encryptionKey, { expiresIn });
 
     const project = await this.findById(projectId);
-    const url = `${settings.client}/b/${project.brewName}?accessToken=${token}`;
+    const url = `${settings.client}/b/${project.brewName}?token=${token}`;
 
     return { token, url };
   }
@@ -403,7 +403,7 @@ class ProjectController {
    */
   _extractVariablesFromQuery(queryParams) {
     const variables = {};
-    const specialParams = ["accessToken", "theme", "pass", "removeStyling", "removeHeader"];
+    const specialParams = ["token", "accessToken", "theme", "pass", "removeStyling", "removeHeader"];
 
     if (queryParams && typeof queryParams === "object") {
       Object.keys(queryParams).forEach((key) => {

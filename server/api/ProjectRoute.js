@@ -228,6 +228,39 @@ module.exports = (app) => {
         }
       }
 
+      // LEGACY/INTERNAL: Check for accessToken first (bypasses SharePolicy for snapshots/internal)
+      if (req.query.accessToken && project.public) {
+        try {
+          const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
+          if (decodedToken.project_id === project.id) {
+            // SECURITY: If dashboard is password protected, require password even with accessToken
+            if (project.passwordProtected) {
+              if (!req.query.pass || req.query.pass !== project.password) {
+                return res.status(403).send("Enter the correct password");
+              }
+            }
+
+            // Handle variables for legacy accessToken
+            const urlVariables = projectController._extractVariablesFromQuery(req.query);
+            if (Object.keys(urlVariables).length > 0) {
+              try {
+                const updatedProject = await projectController
+                  .applyVariablesToCharts(project, urlVariables);
+                return res.status(200).send(updatedProject);
+              } catch (error) {
+                // If variable application fails, return the project without variables
+                // eslint-disable-next-line no-console
+                console.error("Failed to apply variables to dashboard:", error);
+              }
+            }
+
+            return res.status(200).send(processedProject);
+          }
+        } catch (error) {
+          // Token is invalid, continue with SharePolicy flow
+        }
+      }
+
       // Check if there's a SharePolicy for this project
       const sharePolicy = await db.SharePolicy.findOne({
         where: {
@@ -249,7 +282,7 @@ module.exports = (app) => {
 
         if (sharePolicy.visibility !== "public") {
           // SharePolicy exists and requires token verification
-          if (!req.query.accessToken) {
+          if (!req.query.token) {
             if (project.public
               && project.passwordProtected
               && req.query.pass === project.password
@@ -261,7 +294,7 @@ module.exports = (app) => {
           }
 
           try {
-            const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
+            const decodedToken = jwt.verify(req.query.token, settings.encryptionKey);
             if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${project.id}`) {
               return res.status(401).send("Invalid token");
             }
@@ -301,25 +334,6 @@ module.exports = (app) => {
           } catch (tokenError) {
             return res.status(401).send("Invalid or expired token");
           }
-        }
-      }
-
-      // Backwards compatibility: if no SharePolicy exists, use legacy logic
-      // SECURITY: Legacy tokens only work for public projects
-      if (req.query.accessToken && project.public) {
-        try {
-          const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
-          if (decodedToken.project_id === project.id) {
-            // SECURITY: If dashboard is password protected, require password even with valid token
-            if (project.passwordProtected) {
-              if (!req.query.pass || req.query.pass !== project.password) {
-                return res.status(403).send("Enter the correct password");
-              }
-            }
-            return res.status(200).send(processedProject);
-          }
-        } catch (error) {
-          // Token is invalid, continue with normal flow
         }
       }
 

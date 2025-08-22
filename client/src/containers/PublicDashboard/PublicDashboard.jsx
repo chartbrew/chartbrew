@@ -137,7 +137,7 @@ function PublicDashboard() {
         const data = await dispatch(getPublicDashboard({ 
           brewName: params.brewName, 
           password: window.localStorage.getItem("reportPassword"), 
-          accessToken: searchParams.get("accessToken"),
+          token: searchParams.get("token"),
           queryParams: allQueryParams
         }));
 
@@ -253,7 +253,7 @@ function PublicDashboard() {
     dispatch(getPublicDashboard({ 
       brewName: params.brewName, 
       password, 
-      accessToken: searchParams.get("accessToken"),
+      token: searchParams.get("token"),
       queryParams: allQueryParams
     }))
       .then((data) => {

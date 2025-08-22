@@ -222,7 +222,7 @@ function SharingSettings(props) {
     
     // If SharePolicy exists and we have a token, add it to the URL
     if (project.SharePolicy && shareToken) {
-      url += `${url.includes("?") ? "&" : "?"}accessToken=${shareToken}`;
+      url += `${url.includes("?") ? "&" : "?"}token=${shareToken}`;
       
       // If URL parameters are allowed and we have parameters, show example
       if (allowParams && parameters && parameters.length > 0) {
@@ -243,7 +243,7 @@ function SharingSettings(props) {
     
     // If SharePolicy exists and we have a token, add it to the URL
     if (project.SharePolicy && shareToken) {
-      url += `${url.includes("?") ? "&" : "?"}accessToken=${shareToken}`;
+      url += `${url.includes("?") ? "&" : "?"}token=${shareToken}`;
       
       // If URL parameters are allowed and we have parameters, show example
       if (allowParams && parameters && parameters.length > 0) {
