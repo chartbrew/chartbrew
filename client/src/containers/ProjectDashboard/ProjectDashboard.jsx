@@ -1140,7 +1140,13 @@ function ProjectDashboard(props) {
                           <DropdownItem
                             startContent={<LuMonitorUp />}
                             onPress={() => setSnapshotScheduleVisible(true)}
-                            endContent={<Chip size="sm" radius="sm" variant="flat" color="secondary">New!</Chip>}
+                            endContent={
+                              project?.snapshotSchedule?.frequency && (
+                                <Chip size="sm" radius="sm" variant="flat" color="success">
+                                  Active
+                                </Chip>
+                              )
+                            }
                           >
                             {"Dashboard snapshots"}
                           </DropdownItem>
