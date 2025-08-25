@@ -37,7 +37,7 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
     throw new Error("Dashboard not found");
   }
 
-  // create a temporary accessToken
+  // create a temporary accessToken (bypasses SharePolicy for internal snapshots)
   const accessToken = jwt.sign(
     { project_id: dashboard.id },
     settings.encryptionKey,

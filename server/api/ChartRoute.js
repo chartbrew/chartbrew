@@ -338,7 +338,6 @@ module.exports = (app) => {
         const team = await teamController.findById(project.team_id);
 
         chart.setDataValue("showBranding", team.showBranding);
-        chart.setDataValue("Chartshares", null);
         return res.status(200).send(chart);
       })
       .catch((error) => {
@@ -384,25 +383,31 @@ module.exports = (app) => {
     }
 
     // New! taking advantage of the share strings
-    return chartController.findByShareString(req.params.share_string, req.query.snapshot)
+    return chartController.findByShareString(req.params.share_string, req.query)
       .then(async (chart) => {
-        if (!chart.public && !chart.shareable) {
-          return new Promise((resolve, reject) => reject(new Error("401")));
-        }
-
-        // get the team's branding status
-        const project = await projectController.findById(chart.project_id);
-        const team = await teamController.findById(project.team_id);
-
-        return res.status(200).send(getEmbeddedChartData(chart, team));
+        return res.status(200).send(chart);
       })
       .catch((error) => {
-        if (error.message === "401") {
+        if (error?.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
-        if (error.message.indexOf("413") > -1) {
+        if (error?.message?.indexOf("413") > -1) {
           return res.status(413).send(error);
         }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to generate a share token
+  */
+  app.post("/project/:project_id/chart/:id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.generateShareToken(req.params.id, req.body)
+      .then(({ token, url }) => {
+        return res.status(200).send({ token, url });
+      })
+      .catch((error) => {
         return res.status(400).send(error);
       });
   });
@@ -566,6 +571,19 @@ module.exports = (app) => {
         }
         return res.status(400).send(error);
       });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to create a new share policy
+  */
+  app.post("/project/:project_id/chart/:id/share/policy", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      const policy = await chartController.createSharePolicy(req.params.id);
+      return res.status(200).send(policy);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
   });
   // --------------------------------------------------------
 

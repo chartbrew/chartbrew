@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Divider, Input, Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
-  Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent,
+  Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
 } from "@heroui/react";
-import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuSettings } from "react-icons/lu";
+import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuSettings, LuPlus, LuX } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -12,7 +12,7 @@ import Row from "../../../components/Row";
 import { useDispatch, useSelector } from "react-redux";
 import { updateTeam } from "../../../slices/team";
 import toast from "react-hot-toast";
-import { getProject, selectProject, updateProject } from "../../../slices/project";
+import { getProject, selectProject, updateProject, createSharePolicy, generateShareToken } from "../../../slices/project";
 import { useNavigate } from "react-router";
 
 const urlPathRegex = /^[a-zA-Z0-9\-._~!$&'()*+,;=:@]+$/;
@@ -31,6 +31,12 @@ function SharingSettings(props) {
   const [embedTheme, setEmbedTheme] = useState("os");
   const [urlError, setUrlError] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
+  const [shareToken, setShareToken] = useState("");
+  const [shareLoading, setShareLoading] = useState(false);
+  const [parameters, setParameters] = useState([]);
+  const [allowParams, setAllowParams] = useState(false);
+  const [expirationDate, setExpirationDate] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -39,6 +45,15 @@ function SharingSettings(props) {
     if (project && project.id) {
       setNewBrewName(project.brewName);
       setNewPassword(project.password);
+      
+      // Initialize SharePolicy states
+      if (project.SharePolicy) {
+        setParameters(project.SharePolicy.params || []);
+        setAllowParams(project.SharePolicy.allow_params || false);
+        if (project.SharePolicy && !shareToken) {
+          _onGenerateShareToken();
+        }
+      }
     }
   }, [project]);
 
@@ -48,7 +63,8 @@ function SharingSettings(props) {
 
   const _onCopyUrl = () => {
     setUrlCopied(true);
-    navigator.clipboard.writeText(`${SITE_HOST}/b/${newBrewName}`);
+    const url = project.SharePolicy ? _getEmbedUrl() : `${SITE_HOST}/b/${newBrewName}`;
+    navigator.clipboard.writeText(url);
     toast.success("Copied to clipboard!");
     setTimeout(() => {
       setUrlCopied(false);
@@ -57,7 +73,8 @@ function SharingSettings(props) {
 
   const _onCopyEmbed = () => {
     setEmbedCopied(true);
-    navigator.clipboard.writeText(`<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`);
+    const embedCode = project.SharePolicy ? _getSignedEmbedString() : _getEmbedString();
+    navigator.clipboard.writeText(embedCode);
     toast.success("Copied to clipboard!");
     setTimeout(() => {
       setEmbedCopied(false);
@@ -77,6 +94,7 @@ function SharingSettings(props) {
   };
 
   const _onTogglePassword = (value) => {
+    setPasswordLoading(true);
     dispatch(updateProject({ project_id: project.id, data: { passwordProtected: value } }))
       .then(() => {
         if (value) {
@@ -84,8 +102,12 @@ function SharingSettings(props) {
         } else {
           toast.success("The report is no longer password protected!");
         }
+
+        setPasswordLoading(false);
       })
-      .catch(() => { });
+      .catch(() => {
+        setPasswordLoading(false);
+      });
   };
 
   const _onSavePassword = (value) => {
@@ -140,6 +162,100 @@ function SharingSettings(props) {
           toast.success("The dashboard URL is saved!");
         }
       })
+  };
+
+  const _onCreateSharePolicy = async () => {
+    setShareLoading(true);
+    await dispatch(createSharePolicy({ project_id: project.id }));
+    _onGenerateShareToken();
+    setShareLoading(false);
+  };
+
+  const _onGenerateShareToken = async () => {
+    setShareLoading(true);
+    const data = await dispatch(generateShareToken({
+      project_id: project.id,
+      data: {
+        exp: expirationDate,
+      },
+    }));
+    setShareToken(data?.payload?.token);
+    setShareLoading(false);
+  };
+
+  const _onSaveSharePolicy = async () => {
+    setShareLoading(true);
+    const data = await dispatch(generateShareToken({
+      project_id: project.id,
+      data: {
+        share_policy: {
+          params: parameters,
+          allow_params: allowParams,
+        },
+        exp: expirationDate,
+      },
+    }));
+    setShareToken(data?.payload?.token);
+    setShareLoading(false);
+  };
+
+  const _hasUnsavedChanges = () => {
+    // Filter out incomplete parameters (where key or value are empty)
+    const filterCompleteParams = (params) => {
+      if (!Array.isArray(params)) return [];
+      return params.filter(
+        (param) => param && param.key && param.value
+      );
+    };
+
+    const filteredParameters = filterCompleteParams(parameters);
+    const filteredProjectParams = filterCompleteParams(project?.SharePolicy?.params);
+
+    const changedParams = JSON.stringify(filteredParameters) !== JSON.stringify(filteredProjectParams);
+    const changedAllowParams = allowParams !== project?.SharePolicy?.allow_params;
+    return expirationDate || changedParams || changedAllowParams;
+  };
+
+  const _getEmbedUrl = () => {
+    if (!project.brewName) return "";
+    let url = `${SITE_HOST}/b/${newBrewName}${embedTheme !== "os" ? `?theme=${embedTheme}` : ""}`;
+    
+    // If SharePolicy exists and we have a token, add it to the URL
+    if (project.SharePolicy && shareToken) {
+      url += `${url.includes("?") ? "&" : "?"}token=${shareToken}`;
+      
+      // If URL parameters are allowed and we have parameters, show example
+      if (allowParams && parameters && parameters.length > 0) {
+        const validParams = parameters.filter(p => p.key && p.value);
+        if (validParams.length > 0) {
+          const paramString = validParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join("&");
+          url += `&${paramString}`;
+        }
+      }
+    }
+    
+    return url;
+  };
+
+  const _getSignedEmbedString = () => {
+    if (!project.brewName) return "";
+    let url = `${SITE_HOST}/b/${newBrewName}${embedTheme !== "os" ? `?theme=${embedTheme}` : ""}`;
+    
+    // If SharePolicy exists and we have a token, add it to the URL
+    if (project.SharePolicy && shareToken) {
+      url += `${url.includes("?") ? "&" : "?"}token=${shareToken}`;
+      
+      // If URL parameters are allowed and we have parameters, show example
+      if (allowParams && parameters && parameters.length > 0) {
+        const validParams = parameters.filter(p => p.key && p.value);
+        if (validParams.length > 0) {
+          const paramString = validParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join("&");
+          url += `&${paramString}`;
+        }
+      }
+    }
+    
+    return `<iframe src="${url}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
   return (
@@ -221,7 +337,7 @@ function SharingSettings(props) {
               <Switch
                 isSelected={project.passwordProtected}
                 onValueChange={_onTogglePassword}
-                isDisabled={!project.public}
+                isDisabled={!project.public || passwordLoading}
                 size="sm"
               >
                 Require password to view
@@ -319,6 +435,150 @@ function SharingSettings(props) {
 
           <Divider />
 
+          {shareLoading && (
+            <div className="flex items-center justify-center">
+              <Spinner variant="simple" size="sm" aria-label="Managing share policy" />
+            </div>
+          )}
+
+          {project.SharePolicy && !shareLoading && (
+            <div className="flex flex-col gap-2">
+              <div>
+                <div className="flex flex-row justify-between items-center">
+                  <div className="flex flex-row items-center gap-2">
+                    <div className="font-medium text-gray-500">{"Parameters"}</div>
+                    <Tooltip content="Parameters allow you to pass data to variables in your dashboard's charts.">
+                      <div className="text-gray-500"><LuInfo size={16} /></div>
+                    </Tooltip>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => {
+                      setParameters([...parameters, { key: "", value: "" }]);
+                    }}
+                    startContent={<LuPlus />}
+                  >
+                    Add parameter
+                  </Button>
+                </div>
+                <Spacer y={1} />
+                <div className="flex flex-col gap-2">
+                  {parameters?.map((param, index) => (
+                    <div key={index} className="flex flex-row items-center gap-2">
+                      <Input
+                        value={param.key}
+                        onChange={(e) => {
+                          const newParameters = parameters.map((p, i) =>
+                            i === index ? { ...p, key: e.target.value } : p
+                          );
+                          setParameters(newParameters);
+                        }}
+                        size="sm"
+                        variant="bordered"
+                        placeholder="Parameter name"
+                      />
+                      <Input
+                        value={param.value}
+                        onChange={(e) => {
+                          const newParameters = parameters.map((p, i) =>
+                            i === index ? { ...p, value: e.target.value } : p
+                          );
+                          setParameters(newParameters);
+                        }}
+                        size="sm"
+                        variant="bordered"
+                        placeholder="Parameter value"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {parameters.length === 0 && (
+                  <div className="text-gray-500 text-xs italic">{"No parameters added"}</div>
+                )}
+                <Spacer y={2} />
+                <div className="flex flex-row items-center gap-2">
+                  <Checkbox
+                    isSelected={allowParams}
+                    onValueChange={() => {
+                      setAllowParams(!allowParams);
+                    }}
+                    size="sm"
+                  >
+                    Allow parameters in the URL
+                  </Checkbox>
+                  <Tooltip
+                    content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the dashboard."
+                    className="max-w-xs"
+                  >
+                    <div className="text-gray-500"><LuInfo size={16} /></div>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <Spacer y={2} />
+              <div>
+                <div className="font-medium text-gray-500">{"Set links to expire"}</div>
+                <div className="text-gray-500 text-xs italic">{"Set a date and time for the link to expire. If no date is set, the link will never expire."}</div>
+                <Input
+                  type="datetime-local"
+                  value={expirationDate}
+                  onChange={(e) => setExpirationDate(e.target.value)}
+                />
+                <Spacer y={1} />
+                {expirationDate && (
+                  <Button
+                    size="sm"
+                    variant="light"
+                    onPress={() => {
+                      setExpirationDate("");
+                    }}
+                    startContent={<LuX size={16} />}
+                  >
+                    Clear expiration date
+                  </Button>
+                )}
+              </div>
+              {_hasUnsavedChanges() && (
+                <>
+                  <Spacer y={2} />
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                    onPress={() => {
+                      _onSaveSharePolicy();
+                    }}
+                  >
+                    Refresh sharing links
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
+          {!project.SharePolicy && !shareLoading && (
+            <div>
+              <Button
+                size="sm"
+                variant="flat"
+                color="primary"
+                onPress={() => {
+                  _onCreateSharePolicy();
+                }}
+              >
+                Enable signed links
+              </Button>
+              <Spacer y={1} />
+              <div className="text-gray-500 text-xs">
+                {"This dashboard is using legacy sharing links. You can enable signed links to better control and secure the dashboard. Please be aware that this operation will break existing links you already shared or embedded on other websites."}
+              </div>
+            </div>
+          )}
+
+          <Spacer y={1} />
+          <Divider />
+
           <div>
             <div className="font-medium text-gray-500">Embed this dashboard</div>
             <Spacer y={1} />
@@ -343,7 +603,7 @@ function SharingSettings(props) {
             <Textarea
               label="Embedding code"
               id="iframe-text"
-              value={_getEmbedString()}
+              value={project.SharePolicy ? _getSignedEmbedString() : _getEmbedString()}
               fullWidth
               variant="bordered"
               readOnly

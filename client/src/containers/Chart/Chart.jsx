@@ -4,20 +4,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
-  Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
+  Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
   PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader,
-  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, RadioGroup, Radio,
+  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
   Badge,
   Divider,
   Kbd,
 } from "@heroui/react";
 import {
-  LuBell,
-  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuEllipsisVertical, LuFileDown,
+  LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsisVertical, LuFileDown,
   LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
-  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
-  LuCircleCheck,
-  LuVariable,
+  LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
+  LuCircleCheck, LuVariable,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -26,11 +24,9 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
 import {
-  removeChart, runQuery, runQueryWithFilters, getChart,
-  createShareString, updateChart,
+  removeChart, runQuery, runQueryWithFilters, getChart, updateChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
-import { SITE_HOST } from "../../config/settings";
 import LineChart from "./components/LineChart";
 import BarChart from "./components/BarChart";
 import RadarChart from "./components/RadarChart";
@@ -50,6 +46,7 @@ import GaugeChart from "./components/GaugeChart";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
+import ChartSharing from "./components/ChartSharing";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -90,19 +87,15 @@ function Chart(props) {
   const [updateFrequency, setUpdateFrequency] = useState(false);
   const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
   const [publicLoading, setPublicLoading] = useState(false);
-  const [iframeCopied, setIframeCopied] = useState(false);
-  const [urlCopied, setUrlCopied] = useState(false);
   const [dashboardFilters, setDashboardFilters] = useState(
     getFiltersFromStorage(params.projectId)
   );
   const [conditions, setConditions] = useState([]);
-  const [shareLoading, setShareLoading] = useState(false);
   const [redraw, setRedraw] = useState(false);
   const [updateFreqType, setUpdateFreqType] = useState("hours");
   const [customUpdateFreq, setCustomUpdateFreq] = useState("");
   const [autoUpdateError, setAutoUpdateError] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
-  const [embedTheme, setEmbedTheme] = useState("");
   const [alertsModal, setAlertsModal] = useState(false);
   const [alertsDatasetId, setAlertsDatasetId] = useState(null);
   const chartSize = useChartSize(chart.layout);
@@ -127,12 +120,7 @@ function Chart(props) {
         fromInterval: true
       }));
     }
-  }, chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
-
-  useEffect(() => {
-    setIframeCopied(false);
-    setUrlCopied(false);
-  }, [embedModal]);
+  }, !isPublic && chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
 
   useEffect(() => {
     if (customUpdateFreq && updateFreqType) {
@@ -412,22 +400,6 @@ function Chart(props) {
       });
   };
 
-  const _onToggleShareable = async () => {
-    // first, check if the chart has a share string
-    if (!chart.Chartshares || chart.Chartshares.length === 0) {
-      setShareLoading(true);
-      await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
-    }
-
-    await dispatch(updateChart({
-      project_id: params.projectId,
-      chart_id: chart.id,
-      data: { shareable: !chart.shareable },
-      justUpdates: true,
-    }));
-    setShareLoading(false);
-  };
-
   const _chartHasFilter = (dashFilters = dashboardFilters) => {
     let found = false;
     if (chart.ChartDatasetConfigs) {
@@ -471,20 +443,6 @@ function Chart(props) {
 
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
-  };
-
-  const _onCopyIframe = () => {
-    const iframeText = document.getElementById("iframe-text");
-    iframeText.select();
-    document.execCommand("copy");
-    setIframeCopied(true);
-  };
-
-  const _onCopyUrl = () => {
-    const urlText = document.getElementById("url-text");
-    urlText.select();
-    document.execCommand("copy");
-    setUrlCopied(true);
   };
 
   const _onExport = () => {
@@ -563,24 +521,6 @@ function Chart(props) {
 
     setConditions(newConditions);
     _runFiltering(newConditions);
-  };
-
-  const _getEmbedUrl = () => {
-    if (!chart.Chartshares || !chart.Chartshares[0]) return "";
-    const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `${SITE_HOST}/chart/${shareString}/embedded${embedTheme ? `?theme=${embedTheme}` : ""}`;
-  };
-
-  const _getEmbedString = () => {
-    if (!chart.Chartshares || !chart.Chartshares[0]) return "";
-    const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
-    return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded${embedTheme ? `?theme=${embedTheme}` : ""}" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
-  };
-
-  const _onCreateSharingString = async () => {
-    setShareLoading(true);
-    await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
-    setShareLoading(false);
   };
 
   const _onPublishChart = async () => {
@@ -1234,159 +1174,11 @@ function Chart(props) {
 
       {/* EMBED CHART MODAL */}
       {chart && (
-        <Modal isOpen={embedModal} onClose={() => setEmbedModal(false)} size="xl">
-          <ModalContent>
-            <ModalHeader>
-              <Text size="h4">{"Embed your chart on other websites"}</Text>
-            </ModalHeader>
-            <ModalBody>
-              <Row align="center">
-                <Switch
-                  label={chart.shareable ? "Disable sharing" : "Enable sharing"}
-                  onChange={_onToggleShareable}
-                  isSelected={chart.shareable}
-                  disabled={!_canAccess("projectEditor")}
-                  size="sm"
-                />
-                <Spacer x={0.5} />
-                <Text>
-                  {chart.shareable ? "Disable sharing" : "Enable sharing"}
-                </Text>
-                <Spacer x={0.5} />
-                {shareLoading && (<CircularProgress size="sm" aria-label="Sharing chart" />)}
-              </Row>
-              <Spacer y={2} />
-              {chart.public && !chart.shareable && (
-                <Row>
-                  <Text color="primary">
-                    {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
-                  </Text>
-                </Row>
-              )}
-              {!chart.public && !chart.shareable && (
-                <>
-                  <Spacer y={2} />
-                  <Row align="center">
-                    <Text>
-                      {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
-                    </Text>
-                  </Row>
-                </>
-              )}
-              {!_canAccess("projectEditor") && !chart.public && !chart.shareable && (
-                <>
-                  <Spacer y={2} />
-                  <Row>
-                    <Text color="danger">
-                      {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
-                    </Text>
-                  </Row>
-                </>
-              )}
-              {(chart.public || chart.shareable)
-              && (!chart.Chartshares || chart.Chartshares.length === 0)
-              && (
-                <>
-                  <Spacer y={2} />
-                  <Row align="center">
-                    <Button
-                      endContent={<LuPlus />}
-                      onPress={_onCreateSharingString}
-                      color="primary"
-                    >
-                      Create a sharing code
-                    </Button>
-                  </Row>
-                </>
-              )}
-              {shareLoading && (
-                <Row><CircularProgress aria-label="Creating sharing code" /></Row>
-              )}
-
-              {(chart.shareable || chart.public)
-              && !chartLoading
-              && (chart.Chartshares && chart.Chartshares.length > 0)
-              && (
-                <>
-                  <div className="flex items-center">
-                    <RadioGroup
-                      label="Select a theme"
-                      orientation="horizontal"
-                      size="sm"
-                      value={embedTheme}
-                      onValueChange={(value) => setEmbedTheme(value)}
-                    >
-                      <Radio value="os" checked={embedTheme === ""}>
-                        System default
-                      </Radio>
-                      <Radio value="dark" checked={embedTheme === "dark"}>
-                        Dark
-                      </Radio>
-                      <Radio value="light" checked={embedTheme === "light"}>
-                        Light
-                      </Radio>
-                    </RadioGroup>
-                  </div>
-                  <Spacer y={1} />
-                  <Row>
-                    <Textarea
-                      label={"Copy the following code on the website you wish to add your chart in."}
-                      labelPlacement="outside"
-                      id="iframe-text"
-                      value={_getEmbedString()}
-                      fullWidth
-                      readOnly
-                    />
-                  </Row>
-                  <Row>
-                    <Button
-                      color={iframeCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                      onPress={_onCopyIframe}
-                      variant={iframeCopied ? "flat" : "solid"}
-                      size="sm"
-                    >
-                      {!iframeCopied && "Copy the code"}
-                      {iframeCopied && "Copied to your clipboard"}
-                    </Button>
-                  </Row>
-
-                  <Spacer y={1} />
-                  <Row>
-                    <Input
-                      label={"Or copy the following URL"}
-                      labelPlacement="outside"
-                      value={_getEmbedUrl()}
-                      id="url-text"
-                      fullWidth
-                      readOnly
-                    />
-                  </Row>
-                  <Row>
-                    <Button
-                      color={urlCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                      variant={urlCopied ? "flat" : "solid"}
-                      onPress={_onCopyUrl}
-                      size="sm"
-                    >
-                      {!urlCopied && "Copy URL"}
-                      {urlCopied && "Copied to your clipboard"}
-                    </Button>
-                  </Row>
-                </>
-              )}
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                variant="bordered"
-                onPress={() => setEmbedModal(false)}
-              >
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+        <ChartSharing
+          chart={chart}
+          isOpen={embedModal}
+          onClose={() => setEmbedModal(false)}
+        />
       )}
 
 

@@ -3,6 +3,7 @@ const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
+const jwt = require("jsonwebtoken");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -17,6 +18,9 @@ const { snapChart } = require("../modules/snapshots");
 // charts
 const AxisChart = require("../charts/AxisChart");
 const TableView = require("../charts/TableView");
+const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
+
+const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 class ChartController {
   constructor() {
@@ -59,6 +63,7 @@ class ChartController {
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
         { model: db.Chartshare },
         { model: db.Alert },
+        { model: db.SharePolicy, scope: { entity_type: "Chart" } },
       ],
     })
       .then((charts) => {
@@ -76,6 +81,7 @@ class ChartController {
         { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
         { model: db.Chartshare },
         { model: db.Alert },
+        { model: db.SharePolicy },
       ],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     };
@@ -288,7 +294,7 @@ class ChartController {
   }
 
   updateChartData(id, user, {
-    noSource, skipParsing, filters, isExport, getCache, variables,
+    noSource, skipParsing, filters, isExport, getCache, variables, skipSave,
   }) {
     let gChart;
     let gCache;
@@ -452,9 +458,25 @@ class ChartController {
           updateData.chartDataUpdated = moment();
         }
 
+        // Skip saving to database if skipSave flag is set
+        if (skipSave) {
+          // Return chart with updated data without saving to database
+          const updatedChart = { ...gChart.toJSON() };
+          updatedChart.chartData = gChartData.configuration;
+          if (!getCache) {
+            updatedChart.chartDataUpdated = moment();
+          }
+          return Promise.resolve(updatedChart);
+        }
+
         return this.update(id, updateData);
       })
-      .then(() => {
+      .then((chart) => {
+        if (skipSave) {
+          // Chart is already processed above when skipSave is true
+          return chart;
+        }
+
         if (filters && filters.length > 0 && !isExport) {
           const filteredChart = gChart;
           filteredChart.chartData = gChartData.configuration;
@@ -469,8 +491,19 @@ class ChartController {
       })
       .then((chart) => {
         if (!isExport) {
-          chart.setDataValue("isTimeseries", gChartData.isTimeseries);
-          chart.setDataValue("dateFormat", gChartData.dateFormat);
+          if (skipSave) {
+            // For skipSave, chart is a plain object, so we create a new object with properties
+            const chartWithTimeseries = {
+              ...chart,
+              isTimeseries: gChartData.isTimeseries,
+              dateFormat: gChartData.dateFormat,
+            };
+            return chartWithTimeseries;
+          } else {
+            // For normal saves, chart is a Sequelize model
+            chart.setDataValue("isTimeseries", gChartData.isTimeseries);
+            chart.setDataValue("dateFormat", gChartData.dateFormat);
+          }
         }
         return chart;
       })
@@ -737,8 +770,8 @@ class ChartController {
       });
   }
 
-  async findByShareString(shareString, snapshot = false) {
-    if (snapshot) {
+  async findByShareString(shareString, queryParams) {
+    if (queryParams.snapshot) {
       const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
       if (!chart) {
         return Promise.reject("Chart not found");
@@ -747,23 +780,189 @@ class ChartController {
       return this.findById(chart.id);
     }
 
-    return db.Chartshare.findOne({ where: { shareString } })
-      .then((share) => {
-        return this.findById(share.chart_id);
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+    const chartShare = await db.Chartshare.findOne({ where: { shareString } });
+    if (!chartShare) {
+      return Promise.reject("Chart share not found");
+    }
+
+    const sharePolicy = await db.SharePolicy.findOne({
+      where: {
+        entity_type: "Chart",
+        entity_id: chartShare.chart_id,
+      },
+    });
+
+    if (sharePolicy && sharePolicy?.visibility === "disabled") {
+      return Promise.reject("Share policy is disabled");
+    }
+
+    if (sharePolicy && sharePolicy?.visibility !== "public") {
+      // check if the call can pass the policy
+      const decodedToken = jwt.verify(queryParams.token, settings.secret);
+      if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${chartShare.chart_id}`) {
+        return Promise.reject("Invalid token");
+      }
+
+      if (decodedToken?.exp < Date.now() / 1000) {
+        return Promise.reject("Token expired");
+      }
+    }
+
+    // get the team's branding status
+    const chart = await this.findById(chartShare.chart_id);
+    const project = await db.Project.findByPk(chart.project_id);
+    const team = await db.Team.findByPk(project.team_id);
+
+    if (!chart.public && !chart.shareable) {
+      return Promise.reject("401");
+    }
+
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
+    // If we have variables to apply, update the chart data with filters
+    if (Object.keys(finalVariables).length > 0) {
+      try {
+        const updatedChart = await this.updateChartData(
+          chart.id,
+          null, // no user for embedded charts
+          {
+            noSource: false,
+            skipParsing: false,
+            variables: finalVariables,
+            getCache: false,
+          }
+        );
+
+        // Merge the updated chart data with the embedded chart structure
+        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
+        return embeddedChartData;
+      } catch (error) {
+        // If variable filtering fails, return the chart without filtering
+        // eslint-disable-next-line no-console
+        console.error("Failed to apply variables to embedded chart:", error);
+        const embeddedChartData = getEmbeddedChartData(chart, team);
+        return embeddedChartData;
+      }
+    }
+
+    const embeddedChartData = getEmbeddedChartData(chart, team);
+    return embeddedChartData;
   }
 
-  createShare(chartId) {
-    return db.Chartshare.create({
-      chart_id: chartId,
-      shareString: uuid(),
-    })
-      .catch((err) => {
-        return Promise.reject(err);
+  /**
+   * Extract variables from query parameters, excluding special parameters
+   * @param {Object} queryParams - The query parameters object
+   * @returns {Object} - Object containing extracted variables
+   */
+  _extractVariablesFromQuery(queryParams) {
+    const variables = {};
+    const specialParams = ["token", "theme", "isSnapshot", "snapshot"];
+
+    if (queryParams && typeof queryParams === "object") {
+      Object.keys(queryParams).forEach((key) => {
+        if (!specialParams.includes(key)) {
+          variables[key] = queryParams[key];
+        }
       });
+    }
+
+    return variables;
+  }
+
+  /**
+   * Merge URL variables with share policy variables based on policy rules
+   * @param {Object} urlVariables - Variables extracted from URL
+   * @param {Object} sharePolicy - The share policy object
+   * @returns {Object} - Final variables to be used
+   */
+  _mergeVariablesWithPolicy(urlVariables, sharePolicy) {
+    const finalVariables = {};
+
+    // Start with policy parameters if they exist
+    if (sharePolicy?.params && Array.isArray(sharePolicy.params)) {
+      sharePolicy.params.forEach((param) => {
+        if (param.key && param.value) {
+          finalVariables[param.key] = param.value;
+        }
+      });
+    }
+
+    // If URL parameters are allowed, merge them with policy variables
+    if (sharePolicy?.allow_params && Object.keys(urlVariables).length > 0) {
+      // URL variables override policy variables if allow_params is true
+      Object.assign(finalVariables, urlVariables);
+    }
+    // If URL parameters are not allowed, only use policy variables (already set above)
+
+    return finalVariables;
+  }
+
+  async generateShareToken(chartId, data) {
+    const sharePolicy = await db.SharePolicy.findOne({
+      where: {
+        entity_type: "Chart",
+        entity_id: chartId,
+      },
+    });
+
+    if (!sharePolicy) {
+      return Promise.reject("Share policy not found");
+    }
+
+    const payload = {
+      sub: { type: "Chart", id: chartId },
+    };
+
+    if (data?.share_policy) {
+      await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
+    }
+
+    let expiresIn = "99999d";
+    if (data?.exp) {
+      const expDate = new Date(data.exp);
+      const now = new Date();
+      const diffMs = expDate - now;
+      if (diffMs > 0) {
+        expiresIn = `${Math.floor(diffMs / 1000)}s`;
+      } else {
+        // If expiration is in the past, set to 0s (immediate expiry)
+        expiresIn = "0s";
+      }
+    }
+
+    const token = jwt.sign(payload, settings.secret, { expiresIn });
+
+    const chart = await this.findById(chartId);
+    const shareString = chart?.Chartshares?.[0]?.shareString;
+    const url = `${settings.client}/chart/${shareString}/embedded?token=${token}`;
+
+    return { token, url };
+  }
+
+  async createShare(chartId) {
+    const shareString = uuid();
+    const transaction = await db.sequelize.transaction();
+
+    const sharePolicy = await db.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: chartId,
+      visibility: "private",
+    }, { transaction });
+
+    const chartShare = await db.Chartshare.create({
+      chart_id: chartId,
+      shareString,
+    }, { transaction });
+
+    if (!sharePolicy || !chartShare) {
+      await transaction.rollback();
+      return Promise.reject("Failed to create share");
+    }
+
+    await transaction.commit();
+
+    return shareString;
   }
 
   updateShare(id, data) {
@@ -781,6 +980,14 @@ class ChartController {
       .catch((err) => {
         return Promise.reject(err);
       });
+  }
+
+  async createSharePolicy(chartId) {
+    return db.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: chartId,
+      visibility: "private",
+    });
   }
 
   async createChartDatasetConfig(chartId, data) {
