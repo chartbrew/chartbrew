@@ -5,7 +5,7 @@ import {
   Spacer, Spinner, Switch,
   Tooltip,
 } from "@heroui/react"
-import { LuCopy, LuCopyCheck, LuInfo, LuPlus, LuX } from "react-icons/lu";
+import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { toast } from "react-hot-toast";
@@ -402,9 +402,14 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 fullWidth
                 readOnly
                 endContent={
-                  <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
-                    {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
-                  </Button>
+                  <div className="flex flex-row items-center gap-1">
+                    <Button isIconOnly size="sm" variant="flat" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <LuExternalLink />
+                    </Button>
+                    <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
+                      {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
+                    </Button>
+                  </div>
                 }
               />
             </div>
