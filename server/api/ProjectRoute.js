@@ -229,18 +229,11 @@ module.exports = (app) => {
       }
 
       // LEGACY/INTERNAL: Check for accessToken first (bypasses SharePolicy for snapshots/internal)
-      if (req.query.accessToken && project.public) {
+      if (req.query.accessToken) {
         try {
           const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
           if (decodedToken.project_id === project.id) {
-            // SECURITY: If dashboard is password protected, require password even with accessToken
-            if (project.passwordProtected) {
-              if (!req.query.pass || req.query.pass !== project.password) {
-                return res.status(403).send("Enter the correct password");
-              }
-            }
-
-            // Handle variables for legacy accessToken
+            // Handle variables for legacy accessToken - not implemented yet
             const urlVariables = projectController._extractVariablesFromQuery(req.query);
             if (Object.keys(urlVariables).length > 0) {
               try {
