@@ -102,7 +102,7 @@ function Main(props) {
       dispatch(relog())
         .then((data) => {
           if (data.payload?.id) {
-            return dispatch(getTeams(data.payload?.id));
+            return dispatch(getTeams());
           }
 
           if (authenticatePage()) {

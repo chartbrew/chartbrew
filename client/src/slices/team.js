@@ -59,7 +59,7 @@ export const deleteTeam = createAsyncThunk(
 
 export const getTeams = createAsyncThunk(
   "team/getTeams",
-  async (userId) => {
+  async () => {
     const token = getAuthToken();
     const headers = new Headers({
       "Accept": "application/json",
@@ -67,7 +67,7 @@ export const getTeams = createAsyncThunk(
       "authorization": `Bearer ${token}`,
     });
     
-    const response = await fetch(`${API_HOST}/team/user/${userId}`, { method: "GET", headers });
+    const response = await fetch(`${API_HOST}/team`, { method: "GET", headers });
     const data = await response.json();
 
     return data;

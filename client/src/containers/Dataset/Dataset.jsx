@@ -64,7 +64,7 @@ function Dataset() {
 
   useEffect(() => {
     if (user?.id && !team) {
-      dispatch(getTeams(user.id));
+      dispatch(getTeams());
     }
   }, [user]);
 

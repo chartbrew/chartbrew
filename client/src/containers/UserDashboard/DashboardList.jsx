@@ -107,7 +107,7 @@ function DashboardList() {
       setModifyingProject(true);
       dispatch(updateProject({ project_id: projectToEdit.id, data: { name: projectToEdit.name } }))
         .then(() => {
-          return dispatch(getTeams(user.id))
+          return dispatch(getTeams())
         })
         .then(() => {
           setModifyingProject(false);
@@ -128,7 +128,7 @@ function DashboardList() {
       setModifyingProject(true);
       dispatch(removeProject({ project_id: projectToDelete.id }))
         .then(() => {
-          return dispatch(getTeams(user.id))
+          return dispatch(getTeams())
         })
         .then(() => {
           setProjectToDelete(null);
@@ -141,7 +141,7 @@ function DashboardList() {
   };
 
   const _onProjectCreated = (project, isNew = true) => {
-    dispatch(getTeams(user.id));
+    dispatch(getTeams());
     setAddProject(false);
 
     let url = `/${project.team_id}/${project.id}/dashboard`;

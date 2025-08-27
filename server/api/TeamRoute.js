@@ -60,14 +60,10 @@ module.exports = (app) => {
   };
 
   /**
-   * [MASTER] Route to get all the teams
+   * Get all teams based on the authentication token
    */
   app.get("/team", verifyToken, (req, res) => {
-    if (!req.user.admin) {
-      return res.status(401).send({ error: "Not authorized" });
-    }
-
-    return teamController.findAll()
+    return teamController.getUserTeams(req.user.id)
       .then((teams) => {
         return res.status(200).send(teams);
       })
@@ -151,19 +147,6 @@ module.exports = (app) => {
     return teamController.transferOwnership(req.params.id, req.user.id, req.body.newOwnerId)
       .then((updated) => {
         return res.status(200).send(updated);
-      })
-      .catch((error) => {
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------
-
-  // route to get all user's teams
-  app.get("/team/user/:user_id", verifyToken, (req, res) => {
-    if (!req.params.user_id) return res.status(400).send("Missing userId");
-    return teamController.getUserTeams(req.params.user_id)
-      .then((teams) => {
-        return res.status(200).send(teams);
       })
       .catch((error) => {
         return res.status(400).send(error);

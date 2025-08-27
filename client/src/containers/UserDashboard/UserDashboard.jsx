@@ -66,7 +66,7 @@ function UserDashboard(props) {
       dispatch(relog())
         .then((data) => {
           if (data?.payload?.id) {
-            return dispatch(getTeams(data.payload.id));
+            return dispatch(getTeams());
           } else {
             throw new Error("No user");
           }
