@@ -3,11 +3,13 @@ const rateLimit = require("express-rate-limit");
 const ChartController = require("../controllers/ChartController");
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
+const SharePolicyController = require("../controllers/SharePolicyController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const spreadsheetExport = require("../modules/spreadsheetExport");
 const alertController = require("../controllers/AlertController");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
+const db = require("../models/models");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -353,7 +355,7 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
-  ** Route to get a chart for embedding (must be public for success)
+  ** [DEPRECATED] Route to get a chart for embedding (must be public for success)
   */
   app.get("/chart/:share_string/embedded", apiLimiter(50), (req, res) => {
     // backwards-compatible code for public charts with ID-enabled embed
@@ -385,6 +387,26 @@ module.exports = (app) => {
     // New! taking advantage of the share strings
     return chartController.findByShareString(req.params.share_string, req.query)
       .then(async (chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error?.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error?.message?.indexOf("413") > -1) {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to share a chart with a share policy
+  */
+  app.get("/chart/:share_string/share", apiLimiter(50), (req, res) => {
+    return chartController.findBySharePolicy(req.params.share_string, req.query)
+      .then((chart) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
@@ -581,6 +603,46 @@ module.exports = (app) => {
     try {
       const policy = await chartController.createSharePolicy(req.params.id);
       return res.status(200).send(policy);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to get all share policies for a chart
+  */
+  app.get("/project/:project_id/chart/:id/share/policy", verifyToken, checkPermissions("readAny"), async (req, res) => {
+    try {
+      const policies = await SharePolicyController.findByEntityId(req.params.id);
+      return res.status(200).send(policies);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to update a share policy
+  */
+  app.put("/project/:project_id/chart/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await SharePolicyController.updateSharePolicy(req.params.policy_id, req.body);
+      const updatedPolicy = await db.SharePolicy.findByPk(req.params.policy_id);
+      return res.status(200).send(updatedPolicy);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to delete a share policy
+  */
+  app.delete("/project/:project_id/chart/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await SharePolicyController.deleteSharePolicy(req.params.policy_id);
+      return res.status(200).send({ deleted: true });
     } catch (error) {
       return res.status(400).send(error);
     }

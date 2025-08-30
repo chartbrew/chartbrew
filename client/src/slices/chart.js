@@ -320,6 +320,48 @@ export const getEmbeddedChart = createAsyncThunk(
   }
 );
 
+export const getSharedChart = createAsyncThunk(
+  "chart/getSharedChart",
+  async ({ share_string, snapshot, token, queryParams }) => {
+    let url = `${API_HOST}/chart/${share_string}/share`;
+
+    const urlParams = new URLSearchParams();
+
+    // Add specific parameters
+    if (snapshot) urlParams.set("snapshot", "true");
+    if (token) urlParams.set("token", token);
+
+    // Add any additional query parameters (for variables)
+    if (queryParams && typeof queryParams === "object") {
+      Object.keys(queryParams).forEach((key) => {
+        // Don't override snapshot and token if they were explicitly set
+        if (!urlParams.has(key)) {
+          urlParams.set(key, queryParams[key]);
+        }
+      });
+    }
+
+    const queryString = urlParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+    });
+
+    const response = await fetch(url, { method, headers });
+    const data = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(data.message);
+    }
+
+    return data;
+  }
+);
+
 export const exportChart = createAsyncThunk(
   "chart/exportChart",
   async ({ project_id, chartIds, filters }) => {
@@ -448,6 +490,68 @@ export const createSharePolicy = createAsyncThunk(
     }
 
     return response.json();
+  }
+);
+
+export const getSharePolicies = createAsyncThunk(
+  "chart/getSharePolicies",
+  async ({ project_id, chart_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/share/policy`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
+export const updateSharePolicy = createAsyncThunk(
+  "chart/updateSharePolicy",
+  async ({ project_id, chart_id, policy_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/share/policy/${policy_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
+export const deleteSharePolicy = createAsyncThunk(
+  "chart/deleteSharePolicy",
+  async ({ project_id, chart_id, policy_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/share/policy/${policy_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return { policy_id, ...response.json() };
   }
 );
 
@@ -874,13 +978,80 @@ export const chartSlice = createSlice({
           if (chart.id === action.meta.arg.chart_id) {
             return {
               ...chart,
-              SharePolicy: action.payload,
+              SharePolicies: chart.SharePolicies ? [...chart.SharePolicies, action.payload] : [action.payload],
             };
           }
           return chart;
         });
       })
       .addCase(createSharePolicy.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // getSharePolicies
+      .addCase(getSharePolicies.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getSharePolicies.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (chart.id === action.meta.arg.chart_id) {
+            return {
+              ...chart,
+              SharePolicies: action.payload,
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(getSharePolicies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // updateSharePolicy
+      .addCase(updateSharePolicy.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateSharePolicy.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (chart.id === action.meta.arg.chart_id) {
+            return {
+              ...chart,
+              SharePolicies: chart.SharePolicies?.map((policy) => 
+                policy.id === action.payload.id ? action.payload : policy
+              ) || [],
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(updateSharePolicy.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // deleteSharePolicy
+      .addCase(deleteSharePolicy.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteSharePolicy.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (chart.id === action.meta.arg.chart_id) {
+            return {
+              ...chart,
+              SharePolicies: chart.SharePolicies?.filter((policy) => 
+                policy.id !== action.payload.policy_id
+              ) || [],
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(deleteSharePolicy.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })

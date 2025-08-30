@@ -114,7 +114,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Project.hasMany(models.Variable, { foreignKey: "project_id" });
     models.Project.hasMany(models.DashboardFilter, { foreignKey: "project_id" });
     models.Project.belongsTo(models.Team, { foreignKey: "team_id" });
-    models.Project.hasOne(models.SharePolicy, { foreignKey: "entity_id", scope: { entity_type: "Project" } });
+    models.Project.hasMany(models.SharePolicy, { foreignKey: "entity_id", scope: { entity_type: "Project" } });
   };
 
   return Project;

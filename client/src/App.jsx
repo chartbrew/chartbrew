@@ -45,6 +45,9 @@ const router = createBrowserRouter([
         path: "chart/:chartId/embedded",
       },
       {
+        path: "chart/:share_string/share",
+      },
+      {
         path: "invite",
       },
       {

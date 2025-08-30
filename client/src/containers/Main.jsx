@@ -34,6 +34,7 @@ import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
 import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
+import SharedChart from "./SharedChart";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -275,6 +276,12 @@ function Main(props) {
                 path="/chart/:chartId/embedded"
                 element={<EmbeddedChart />}
               />
+              <Route
+                exact
+                path="/chart/:share_string/share"
+                element={<SharedChart />}
+              />
+
               <Route exact path="/invite" element={<UserInvite />} />
 
               <Route

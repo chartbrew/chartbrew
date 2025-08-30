@@ -657,12 +657,12 @@ export const projectSlice = createSlice({
     builder.addCase(createSharePolicy.fulfilled, (state, action) => {
       state.loading = false;
       if (state.active) {
-        state.active.SharePolicy = action.payload;
+        state.active.SharePolicies = [...(state.active?.SharePolicies || []), action.payload];
       }
 
       state.data = state.data.map((project) => {
         if (project.id === action.meta.arg.project_id) {
-          project.SharePolicy = action.payload;
+          project.SharePolicies = [...(project?.SharePolicies || []), action.payload];
         }
         return project;
       });
