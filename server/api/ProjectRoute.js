@@ -8,6 +8,7 @@ const settings = process.env.NODE_ENV === "production" ? require("../settings") 
 
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
+const SharePolicyController = require("../controllers/SharePolicyController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const refreshChartsApi = require("../modules/refreshChartsApi");
@@ -379,6 +380,31 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
+  ** Route to get a project with a share policy
+  */
+  app.get("/project/:brew_name/report", getUserFromToken, (req, res) => {
+    return projectController.findBySharePolicy(
+      req.params.brew_name, req.headers.pass, req.query, req.user,
+    )
+      .then((processedProject) => {
+        return res.status(200).send(processedProject);
+      })
+      .catch((error) => {
+        if (error?.indexOf("401") > -1) {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error?.indexOf("403") > -1) {
+          return res.status(403).send({ error: "Enter the correct password" });
+        }
+        if (error?.indexOf("413") > -1) {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
   ** Route to generate a dashboard template
   */
   app.post("/project/:id/template/:template", verifyToken, checkPermissions("createAny"), (req, res) => {
@@ -565,6 +591,46 @@ module.exports = (app) => {
       .catch((error) => {
         return res.status(400).send(error);
       });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to get all share policies for a project
+  */
+  app.get("/project/:id/share/policy", verifyToken, checkPermissions("readAny"), async (req, res) => {
+    try {
+      const policies = await SharePolicyController.findByEntityId(req.params.id);
+      return res.status(200).send(policies);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to update a project share policy
+  */
+  app.put("/project/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await SharePolicyController.updateSharePolicy(req.params.policy_id, req.body);
+      const updatedPolicy = await db.SharePolicy.findByPk(req.params.policy_id);
+      return res.status(200).send(updatedPolicy);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to delete a project share policy
+  */
+  app.delete("/project/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await SharePolicyController.deleteSharePolicy(req.params.policy_id);
+      return res.status(200).send({ deleted: true });
+    } catch (error) {
+      return res.status(400).send(error);
+    }
   });
   // -------------------------------------------
 

@@ -323,7 +323,7 @@ export const getEmbeddedChart = createAsyncThunk(
 export const getSharedChart = createAsyncThunk(
   "chart/getSharedChart",
   async ({ share_string, snapshot, token, queryParams }) => {
-    let url = `${API_HOST}/chart/${share_string}/share`;
+    let url = `${API_HOST}/chart/share/${share_string}`;
 
     const urlParams = new URLSearchParams();
 

@@ -862,6 +862,35 @@ class ChartController {
     const project = await db.Project.findByPk(chart.project_id);
     const team = await db.Team.findByPk(project.team_id);
 
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
+    // If we have variables to apply, update the chart data with filters
+    if (Object.keys(finalVariables).length > 0) {
+      try {
+        const updatedChart = await this.updateChartData(
+          chart.id,
+          null, // no user for embedded charts
+          {
+            noSource: false,
+            skipParsing: false,
+            variables: finalVariables,
+            getCache: false,
+          }
+        );
+
+        // Merge the updated chart data with the embedded chart structure
+        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
+        return embeddedChartData;
+      } catch (error) {
+        // If variable filtering fails, return the chart without filtering
+        // eslint-disable-next-line no-console
+        console.error("Failed to apply variables to embedded chart:", error);
+        const embeddedChartData = getEmbeddedChartData(chart, team);
+        return embeddedChartData;
+      }
+    }
+
     const embeddedChartData = getEmbeddedChartData(chart, team);
     return embeddedChartData;
   }

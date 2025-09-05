@@ -54,6 +54,9 @@ const router = createBrowserRouter([
         path: "b/:brewName",
       },
       {
+        path: "report/:brewName",
+      },
+      {
         path: "login",
       },
       {

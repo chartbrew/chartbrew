@@ -120,7 +120,7 @@ function ProjectNavigation(props) {
                   <LuMenu color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
-              <Link to={`/b/${project.brewName}`}>
+              <Link to={`/report/${project.brewName}`}>
                 <LinkNext className="pointer-events-none">
                   <LuPresentation color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
@@ -214,7 +214,7 @@ function ProjectNavigation(props) {
             <ListboxItem
               key="public"
               startContent={menuSize === "large" ? <LuTvMinimal size={24} /> : null}
-              onPress={() => navigate(`/b/${project.brewName}`)}
+              onPress={() => navigate(`/report/${project.brewName}`)}
               className={_checkIfActive("public") ? "text-primary" : "text-foreground"}
               classNames={{
                 title: menuSize === "small" ? "flex flex-row justify-center" : "",

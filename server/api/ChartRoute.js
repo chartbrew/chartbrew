@@ -404,7 +404,7 @@ module.exports = (app) => {
   /*
   ** Route to share a chart with a share policy
   */
-  app.get("/chart/:share_string/share", apiLimiter(50), (req, res) => {
+  app.get("/chart/share/:share_string", apiLimiter(50), (req, res) => {
     return chartController.findBySharePolicy(req.params.share_string, req.query)
       .then((chart) => {
         return res.status(200).send(chart);
