@@ -13,7 +13,7 @@ import {
 } from "@heroui/react";
 import {
   LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsisVertical, LuFileDown,
-  LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuLockOpen,
+  LuLayoutDashboard, LuListFilter, LuLock, LuLockOpen,
   LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck, LuVariable,
 } from "react-icons/lu";
@@ -328,16 +328,6 @@ function Chart(props) {
 
   const _onEmbed = () => {
     setEmbedModal(true);
-  };
-
-  const _onOpenEmbed = () => {
-    if (chart.Chartshares && chart.Chartshares.length > 0) {
-      // open the chart in a new tab
-      window.open(
-        `/chart/${chart.Chartshares[0].shareString}/embedded`,
-        "_blank"
-      );
-    }
   };
 
   const _openUpdateModal = () => {
@@ -752,23 +742,16 @@ function Chart(props) {
                             {chart?.Alerts?.length}
                           </Chip>
                         )}
+                        showDivider
                       >
                         Alerts
                       </DropdownItem>
                     )}
-                    <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
-                      onPress={_onExport}
-                      textValue="Export to Excel"
-                    >
-                      Export to Excel
-                    </DropdownItem>
                     {!chart.draft && _canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
                         onPress={_onChangeReport}
                         textValue={chart.onReport ? "Remove from report" : "Add to report"}
-                        showDivider
                       >
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
@@ -791,16 +774,14 @@ function Chart(props) {
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
-                    {!chart.draft && chart.shareable && (
-                      <DropdownItem
-                        startContent={<LuLink />}
-                        onPress={_onOpenEmbed}
-                        textValue="Open in a new tab"
-                        showDivider
-                      >
-                        {"Open in a new tab"}
-                      </DropdownItem>
-                    )}
+                    <DropdownItem
+                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                      onPress={_onExport}
+                      textValue="Export to Excel"
+                      showDivider
+                    >
+                      Export to Excel
+                    </DropdownItem>
                     {_canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuTrash />}

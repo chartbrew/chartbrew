@@ -224,6 +224,55 @@ export const getPublicDashboard = createAsyncThunk(
   }
 );
 
+export const getReport = createAsyncThunk(
+  "project/getReport",
+  async ({ brewName, password, token, queryParams }, thunkAPI) => {
+    const authToken = getAuthToken();
+    let url = `${API_HOST}/project/${brewName}/report`;
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${authToken}`,
+    });
+
+    // Add token and queryParams to the URL as query parameters, not headers
+    const urlParams = new URLSearchParams();
+
+    if (token) {
+      urlParams.append("token", token);
+    }
+
+    if (queryParams) {
+      Object.keys(queryParams).forEach(key => {
+        if (key !== "token") {
+          urlParams.append(key, queryParams[key]);
+        }
+      });
+    }
+
+    if (urlParams.toString()) {
+      url += `?${urlParams.toString()}`;
+    }
+
+    if (password) {
+      headers.append("pass", password);
+    }
+
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+
+    const project = await response.json();
+
+    if (project.Charts) {
+      thunkAPI.dispatch(setCharts(project.Charts));
+    }
+
+    return project;
+  }
+);
+
 export const generateDashboard = createAsyncThunk(
   "project/generateDashboard",
   async ({ project_id, data, template }) => {
@@ -403,6 +452,68 @@ export const generateShareToken = createAsyncThunk(
 
     const result = await response.json();
     return result;
+  }
+);
+
+export const getSharePolicies = createAsyncThunk(
+  "project/getSharePolicies",
+  async ({ project_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/share/policy`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
+export const updateSharePolicy = createAsyncThunk(
+  "project/updateSharePolicy",
+  async ({ project_id, policy_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/share/policy/${policy_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
+export const deleteSharePolicy = createAsyncThunk(
+  "project/deleteSharePolicy",
+  async ({ project_id, policy_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/share/policy/${policy_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return { policy_id, ...response.json() };
   }
 );
 
@@ -657,12 +768,12 @@ export const projectSlice = createSlice({
     builder.addCase(createSharePolicy.fulfilled, (state, action) => {
       state.loading = false;
       if (state.active) {
-        state.active.SharePolicy = action.payload;
+        state.active.SharePolicies = [...(state.active?.SharePolicies || []), action.payload];
       }
 
       state.data = state.data.map((project) => {
         if (project.id === action.meta.arg.project_id) {
-          project.SharePolicy = action.payload;
+          project.SharePolicies = [...(project?.SharePolicies || []), action.payload];
         }
         return project;
       });
@@ -681,6 +792,80 @@ export const projectSlice = createSlice({
       // Token generation doesn't modify state, just returns the token
     });
     builder.addCase(generateShareToken.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // getSharePolicies
+    builder.addCase(getSharePolicies.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(getSharePolicies.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.active) {
+        state.active.SharePolicies = action.payload;
+      }
+
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.SharePolicies = action.payload;
+        }
+        return project;
+      });
+    });
+    builder.addCase(getSharePolicies.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // updateSharePolicy
+    builder.addCase(updateSharePolicy.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(updateSharePolicy.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.active) {
+        state.active.SharePolicies = state.active.SharePolicies?.map((policy) => 
+          policy.id === action.payload.id ? action.payload : policy
+        ) || [];
+      }
+
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.SharePolicies = project.SharePolicies?.map((policy) => 
+            policy.id === action.payload.id ? action.payload : policy
+          ) || [];
+        }
+        return project;
+      });
+    });
+    builder.addCase(updateSharePolicy.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // deleteSharePolicy
+    builder.addCase(deleteSharePolicy.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(deleteSharePolicy.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.active) {
+        state.active.SharePolicies = state.active.SharePolicies?.filter((policy) => 
+          policy.id !== action.payload.policy_id
+        ) || [];
+      }
+
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.SharePolicies = project.SharePolicies?.filter((policy) => 
+            policy.id !== action.payload.policy_id
+          ) || [];
+        }
+        return project;
+      });
+    });
+    builder.addCase(deleteSharePolicy.rejected, (state) => {
       state.loading = false;
       state.error = true;
     });

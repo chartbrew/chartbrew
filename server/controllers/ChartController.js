@@ -770,6 +770,12 @@ class ChartController {
       });
   }
 
+  /**
+   * Find a chart by share string [DEPRECATED]
+   * @param {string} shareString - The share string from the share policy
+   * @param {Object} queryParams - The query parameters
+   * @returns {Promise<Object>} - The embedded chart data
+   */
   async findByShareString(shareString, queryParams) {
     if (queryParams.snapshot) {
       const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
@@ -785,29 +791,6 @@ class ChartController {
       return Promise.reject("Chart share not found");
     }
 
-    const sharePolicy = await db.SharePolicy.findOne({
-      where: {
-        entity_type: "Chart",
-        entity_id: chartShare.chart_id,
-      },
-    });
-
-    if (sharePolicy && sharePolicy?.visibility === "disabled") {
-      return Promise.reject("Share policy is disabled");
-    }
-
-    if (sharePolicy && sharePolicy?.visibility !== "public") {
-      // check if the call can pass the policy
-      const decodedToken = jwt.verify(queryParams.token, settings.secret);
-      if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${chartShare.chart_id}`) {
-        return Promise.reject("Invalid token");
-      }
-
-      if (decodedToken?.exp < Date.now() / 1000) {
-        return Promise.reject("Token expired");
-      }
-    }
-
     // get the team's branding status
     const chart = await this.findById(chartShare.chart_id);
     const project = await db.Project.findByPk(chart.project_id);
@@ -816,6 +799,68 @@ class ChartController {
     if (!chart.public && !chart.shareable) {
       return Promise.reject("401");
     }
+
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    // If we have variables to apply, update the chart data with filters
+    if (Object.keys(urlVariables).length > 0) {
+      try {
+        const updatedChart = await this.updateChartData(
+          chart.id,
+          null, // no user for embedded charts
+          {
+            noSource: false,
+            skipParsing: false,
+            variables: urlVariables,
+            getCache: false,
+          }
+        );
+
+        // Merge the updated chart data with the embedded chart structure
+        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
+        return embeddedChartData;
+      } catch (error) {
+        // If variable filtering fails, return the chart without filtering
+        // eslint-disable-next-line no-console
+        console.error("Failed to apply variables to embedded chart:", error);
+        const embeddedChartData = getEmbeddedChartData(chart, team);
+        return embeddedChartData;
+      }
+    }
+
+    const embeddedChartData = getEmbeddedChartData(chart, team);
+    return embeddedChartData;
+  }
+
+  /**
+   * Find a chart by share policy
+   * @param {string} shareString - The share string from the share policy
+   * @param {Object} queryParams - The query parameters
+   * @returns {Promise<Object>} - The embedded chart data
+   */
+  async findBySharePolicy(shareString, queryParams) {
+    if (!queryParams.token) {
+      return Promise.reject("Token is missing");
+    }
+
+    const sharePolicy = await db.SharePolicy.findOne({ where: { share_string: shareString } });
+    if (!sharePolicy) {
+      return Promise.reject("Share policy not found");
+    }
+
+    // check if the token from the query parameters is valid
+    const decodedToken = jwt.verify(queryParams.token, settings.secret);
+    if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
+      return Promise.reject("Invalid token");
+    }
+
+    if (decodedToken?.exp < Date.now() / 1000) {
+      return Promise.reject("Token expired");
+    }
+
+    const chart = await this.findById(sharePolicy.entity_id);
+    const project = await db.Project.findByPk(chart.project_id);
+    const team = await db.Team.findByPk(project.team_id);
 
     // Handle variable filtering based on share policy
     const urlVariables = this._extractVariablesFromQuery(queryParams);
@@ -899,23 +944,31 @@ class ChartController {
   }
 
   async generateShareToken(chartId, data) {
-    const sharePolicy = await db.SharePolicy.findOne({
-      where: {
-        entity_type: "Chart",
-        entity_id: chartId,
-      },
-    });
+    // Find the first share policy if no specific policy ID is provided
+    let sharePolicy;
+    if (data?.sharePolicyId) {
+      sharePolicy = await db.SharePolicy.findByPk(data.sharePolicyId);
+    } else {
+      sharePolicy = await db.SharePolicy.findOne({
+        where: {
+          entity_type: "Chart",
+          entity_id: chartId,
+        },
+      });
+    }
 
     if (!sharePolicy) {
       return Promise.reject("Share policy not found");
     }
 
     const payload = {
-      sub: { type: "Chart", id: chartId },
+      sub: { type: "Chart", id: chartId, sharePolicyId: sharePolicy.id },
     };
 
     if (data?.share_policy) {
       await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
+      // Refresh the sharePolicy to get updated data
+      sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
 
     let expiresIn = "99999d";
@@ -933,9 +986,9 @@ class ChartController {
 
     const token = jwt.sign(payload, settings.secret, { expiresIn });
 
-    const chart = await this.findById(chartId);
-    const shareString = chart?.Chartshares?.[0]?.shareString;
-    const url = `${settings.client}/chart/${shareString}/embedded?token=${token}`;
+    // Use the SharePolicy's share_string instead of Chartshares
+    const shareString = sharePolicy.share_string;
+    const url = `${settings.client}/chart/${shareString}/share?token=${token}`;
 
     return { token, url };
   }

@@ -1,5 +1,6 @@
 const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
+const { cloneDeep } = require("lodash");
 
 const db = require("../models/models");
 const TeamController = require("./TeamController");
@@ -356,23 +357,31 @@ class ProjectController {
   }
 
   async generateShareToken(projectId, data) {
-    const sharePolicy = await db.SharePolicy.findOne({
-      where: {
-        entity_type: "Project",
-        entity_id: projectId,
-      },
-    });
+    // Find the specific share policy if policy ID is provided, otherwise find the first one
+    let sharePolicy;
+    if (data?.sharePolicyId) {
+      sharePolicy = await db.SharePolicy.findByPk(data.sharePolicyId);
+    } else {
+      sharePolicy = await db.SharePolicy.findOne({
+        where: {
+          entity_type: "Project",
+          entity_id: projectId,
+        },
+      });
+    }
 
     if (!sharePolicy) {
       return Promise.reject("Share policy not found");
     }
 
     const payload = {
-      sub: { type: "Project", id: projectId },
+      sub: { type: "Project", id: projectId, sharePolicyId: sharePolicy.id },
     };
 
     if (data?.share_policy) {
       await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
+      // Refresh the sharePolicy to get updated data
+      sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
 
     let expiresIn = "99999d";
@@ -388,10 +397,11 @@ class ProjectController {
       }
     }
 
-    const token = jwt.sign(payload, settings.encryptionKey, { expiresIn });
+    const token = jwt.sign(payload, settings.secret, { expiresIn });
 
+    // Use the SharePolicy's share_string for the URL
     const project = await this.findById(projectId);
-    const url = `${settings.client}/b/${project.brewName}?token=${token}`;
+    const url = `${settings.client}/report/${project.brewName}?token=${token}`;
 
     return { token, url };
   }
@@ -422,6 +432,108 @@ class ProjectController {
     }
 
     return variables;
+  }
+
+  /**
+   * Find a project by share policy
+   * @param {string} brewName - The brew name of the project
+   * @param {Object} queryParams - The query parameters
+   * @returns {Promise<Object>} - The processed project data
+   */
+  async findBySharePolicy(brewName, password, queryParams, user) {
+    if (!queryParams.token && !user?.id) {
+      return Promise.reject("Token is missing");
+    }
+
+    const project = await db.Project.findOne({ where: { brewName } });
+    if (!project) {
+      return Promise.reject("Project not found");
+    }
+
+    const sharePolicy = await db.SharePolicy.findOne({
+      where: {
+        entity_id: project.id,
+        entity_type: "Project"
+      }
+    });
+
+    if (!sharePolicy) {
+      return Promise.reject("Share policy not found");
+    }
+
+    let overridePolicy = false;
+    // check if we get a team member from the token
+    if (user?.id) {
+      // now determine whether to show the dashboard or not
+      const teamRole = await db.TeamRole.findOne({
+        where: {
+          team_id: project.team_id,
+          user_id: user?.id,
+        }
+      });
+
+      const hasProjectAccess = teamRole?.projects?.includes(project.id);
+
+      if (
+        teamRole
+      && (
+        teamRole.role === "teamOwner"
+        || teamRole.role === "teamAdmin"
+        || hasProjectAccess
+      )
+      ) {
+        overridePolicy = true;
+      }
+    }
+
+    if (!overridePolicy) {
+      // Check if the token from the query parameters is valid
+      const decodedToken = jwt.verify(queryParams.token, settings.secret);
+      if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
+        return Promise.reject("Invalid token");
+      }
+
+      if (decodedToken?.exp < Date.now() / 1000) {
+        return Promise.reject("Token expired");
+      }
+
+      // Check if the project is public (required for SharePolicy access)
+      if (!project.public) {
+        return Promise.reject("Project is not public");
+      }
+
+      // Handle password protection
+      if (project.passwordProtected) {
+        if (!password || password !== project.password) {
+          return Promise.reject("403");
+        }
+      }
+    }
+
+    const report = await this.getPublicDashboard(project.brewName);
+
+    // Process the project for public access
+    const processedProject = cloneDeep(report);
+    processedProject.setDataValue("password", "");
+
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
+
+    // Apply variables to the charts if needed
+    if (Object.keys(finalVariables).length > 0) {
+      try {
+        const updatedProject = await this.applyVariablesToCharts(processedProject, finalVariables);
+        return updatedProject;
+      } catch (error) {
+        // If variable application fails, return the project without variables
+        // eslint-disable-next-line no-console
+        console.error("Failed to apply variables to dashboard:", error);
+        return processedProject;
+      }
+    }
+
+    return processedProject;
   }
 
   /**

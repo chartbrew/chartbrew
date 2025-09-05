@@ -478,7 +478,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <Button
                     variant="flat"
                     size="sm"
-                    onPress={() => navigate(`/b/${project.brewName}`)}
+                    onPress={() => navigate(`/report/${project.brewName}`)}
                     startContent={<LuSettings size={18} />}
                   >
                     Edit visuals

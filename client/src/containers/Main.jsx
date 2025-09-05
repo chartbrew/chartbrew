@@ -34,6 +34,8 @@ import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
 import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
+import SharedChart from "./SharedChart";
+import Report from "./PublicDashboard/Report";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -54,6 +56,8 @@ function authenticatePage() {
   } else if (window.location.pathname === "/signup") {
     return false;
   } else if (window.location.pathname.indexOf("/b/") > -1) {
+    return false;
+  } else if (window.location.pathname.indexOf("/report/") > -1) {
     return false;
   } else if (window.location.pathname === "/passwordReset") {
     return false;
@@ -191,6 +195,7 @@ function Main(props) {
                 <Route path="integrations" element={<Integrations />} />
               </Route>
               <Route exact path="/b/:brewName" element={<PublicDashboard />} />
+              <Route path="/report/:brewName" element={<Report />} />
               <Route
                 exact
                 path="/feedback"
@@ -275,6 +280,12 @@ function Main(props) {
                 path="/chart/:chartId/embedded"
                 element={<EmbeddedChart />}
               />
+              <Route
+                exact
+                path="/chart/:share_string/share"
+                element={<SharedChart />}
+              />
+
               <Route exact path="/invite" element={<UserInvite />} />
 
               <Route

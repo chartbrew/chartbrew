@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    share_string: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+    },
     visibility: {
       type: DataTypes.ENUM("public", "private", "password", "disabled"),
       // public: anyone can view
@@ -36,6 +41,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     password: {
       type: DataTypes.STRING,
+    },
+    expires_at: {
+      type: DataTypes.DATE,
     },
     createdAt: {
       allowNull: false,
