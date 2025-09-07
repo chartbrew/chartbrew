@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "db:migrate": "cd models && npx sequelize-cli db:migrate",
     "precommit": "lint-staged",
-    "postinstall": "npx playwright install && npx playwright install-deps"
+    "postinstall": "npx --yes playwright install chromium --with-deps"
   },
   "author": {
     "email": "hello@chartbrew.com",
@@ -23,7 +23,6 @@
     "@clickhouse/client": "^1.10.1",
     "@google-analytics/admin": "^8.2.0",
     "@google-analytics/data": "^5.1.0",
-    "@playwright/test": "^1.48.2",
     "accesscontrol": "^2.2.1",
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
