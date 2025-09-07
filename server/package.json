@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
+    "@playwright/test": "^1.48.2",
     "babel-eslint": "^10.1.0",
     "eslint": "^8.28.0",
     "eslint-config-airbnb-base": "^15.0.0",
