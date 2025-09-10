@@ -420,6 +420,10 @@ class ChartController {
       .then(async (chartData) => {
         gChartData = chartData;
 
+        if (!getCache && !noSource) {
+          gChart = await this.update(id, { chartDataUpdated: moment() });
+        }
+
         if ((filters && filters.length > 0) || isExport) {
           return filters;
         }

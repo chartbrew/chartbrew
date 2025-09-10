@@ -480,12 +480,11 @@ function Chart(props) {
   };
 
   const _getUpdatedTime = (chart) => {
-    const updatedAt = chart.chartDataUpdated || chart.lastAutoUpdate;
-    if (moment().diff(moment(updatedAt), "days") > 1) {
-      return moment(updatedAt).calendar();
+    if (moment().diff(moment(chart.chartDataUpdated), "days") > 1) {
+      return moment(chart.chartDataUpdated).calendar();
     }
 
-    return moment(updatedAt).fromNow();
+    return moment(chart.chartDataUpdated).fromNow();
   };
 
   const _onAddFilter = (condition) => {
