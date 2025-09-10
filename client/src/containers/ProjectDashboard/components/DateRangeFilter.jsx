@@ -87,6 +87,9 @@ function DateRangeFilter({
     };
 
     setCurrentValue(newValue);
+    if (isEdit) {
+      _applyDateRange(newValue);
+    }
   }
 
   const _handleDateRangeChange = (value) => {
@@ -135,7 +138,11 @@ function DateRangeFilter({
         input: "text-xs",
       }}
       endContent={_hasChanges() && (
-        <Link onPress={_applyDateRange} className="text-foreground hover:text-foreground-500 cursor-pointer">
+        <Link
+          onPress={() => _applyDateRange()}
+          disabled={!_hasChanges()}
+          className="text-foreground hover:text-foreground-500 cursor-pointer"
+        >
           <LuArrowRight size={18} />
         </Link>
       )}
@@ -192,7 +199,7 @@ function DateRangeFilter({
             <div className="px-2">
               <Button
                 variant="bordered"
-                onPress={_applyDateRange}
+                onPress={() => _applyDateRange()}
                 endContent={<LuArrowRight size={18} />}
                 size="sm"
                 fullWidth

@@ -108,6 +108,7 @@ function DashboardFilters({
     if (!onReport) {
       window.localStorage.setItem("_cb_filters", JSON.stringify(updatedFilters));
     }
+
     onApplyFilterValue(updatedFilters);
     setEditingFilter(null);
   }
