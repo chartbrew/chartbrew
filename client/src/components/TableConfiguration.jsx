@@ -158,7 +158,7 @@ function TableConfiguration(props) {
                           onPress={() => _onExcludeField(field.accessor)}
                           title="Hide field"
                         >
-                          <LuEye />
+                          <LuEye className="text-content3 cursor-pointer" size={14} />
                         </Link>
                       )}
                       endContent={
@@ -168,7 +168,7 @@ function TableConfiguration(props) {
                               className="flex items-center text-background cursor-pointer"
                               title="Field options"
                             >
-                              <LuEllipsisVertical size={16} />
+                              <LuEllipsisVertical className="text-background cursor-pointer" size={14} />
                             </Link>
                           </DropdownTrigger>
                           <DropdownMenu variant="flat">
@@ -219,6 +219,11 @@ function TableConfiguration(props) {
                 <Spacer y={1} />
               )}
 
+            {dataset.excludedFields && dataset.excludedFields?.length > 0 && (
+              <div className="text-gray-500 text-sm py-2">
+                Hidden fields
+              </div>
+            )}
             <Row wrap="wrap" align="center" className={"gap-2"}>
               {!isDragState
                 && dataset.excludedFields
@@ -227,11 +232,10 @@ function TableConfiguration(props) {
                     radius="sm"
                     key={field}
                     onClick={() => _onShowField(field)}
-                    color="warning"
-                    variant="faded"
+                    variant="flat"
                     startContent={(
-                      <Link className="flex items-center text-warning" onClick={() => _onShowField(field)}>
-                        <LuEyeOff />
+                      <Link className="flex items-center" onClick={() => _onShowField(field)}>
+                        <LuEyeOff className="text-gray-500 cursor-pointer" size={14} />
                       </Link>
                     )}
                   >
