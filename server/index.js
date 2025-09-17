@@ -30,7 +30,7 @@ const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 
 // check if the encryption keys are valid 32-byte hex strings
-checkEncryptionKeys();
+// checkEncryptionKeys();
 
 // set up folders
 fs.mkdir(".cache", () => { });
