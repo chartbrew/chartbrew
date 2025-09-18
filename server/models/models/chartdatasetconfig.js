@@ -90,8 +90,8 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     order: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      type: DataTypes.FLOAT,
+      defaultValue: 1,
     },
     maxRecords: {
       type: DataTypes.INTEGER,

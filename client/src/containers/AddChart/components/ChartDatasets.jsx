@@ -1,17 +1,20 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { LuExternalLink, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
+import { LuExternalLink, LuGripVertical, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import moment from "moment";
 
-import { createCdc, runQuery, selectChart } from "../../../slices/chart";
-import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs, Tooltip } from "@heroui/react";
+import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
+import {
+  Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tooltip
+} from "@heroui/react";
 import Text from "../../../components/Text";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
 import { useTheme } from "../../../modules/ThemeContext";
 import ChartDatasetConfig from "./ChartDatasetConfig";
+import DraggableList from "../../../components/DraggableList";
 import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
@@ -58,10 +61,11 @@ function ChartDatasets(props) {
   }, [datasets]);
 
   useEffect(() => {
-    if (chart?.ChartDatasetConfigs?.length > 0 && !activeCdc) {
-      setActiveCdc(chart?.ChartDatasetConfigs[0]?.id);
+    if (chart?.ChartDatasetConfigs?.length > 0 && !activeCdc?.id) {
+      setActiveCdc(chart?.ChartDatasetConfigs[0]);
     }
   }, [chart]);
+
 
   const _filteredDatasets = () => {
     if (tag === "project") {
@@ -103,7 +107,7 @@ function ChartDatasets(props) {
       },
     }))
       .then((res) => {
-        setActiveCdc(res.payload.id);
+        setActiveCdc(res.payload);
         dispatch(runQuery({
           project_id: chart.project_id,
           chart_id: chart.id,
@@ -114,6 +118,30 @@ function ChartDatasets(props) {
       });
     
     setAddMode(false);
+  };
+
+  const _onReorderCdc = async ({ dragId, newOrder }) => {
+    const dragged = chart.ChartDatasetConfigs.find((c) => c.id === dragId);
+    if (dragged && newOrder !== dragged.order) {
+      await dispatch(updateCdc({
+        project_id: chart.project_id,
+        chart_id: chart.id,
+        cdc_id: dragged.id,
+        data: { order: newOrder },
+      }));
+
+      _refreshChart();
+    }
+  };
+
+  const _refreshChart = () => {
+    dispatch(runQuery({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      noSource: false,
+      skiParsing: false,
+      getCache: true,
+    }));
   };
 
   return (
@@ -274,32 +302,51 @@ function ChartDatasets(props) {
           <Spacer y={4} />
           <Button
             color="primary"
-            onClick={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
+            onPress={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             fullWidth
           >
             Create dataset
           </Button>
         </div>
       )}
-      
+
       {chart?.ChartDatasetConfigs.length > 0 && (
-        <div>
-          <Tabs
-            selectedKey={`${activeCdc}`}
-            onSelectionChange={(key) => setActiveCdc(key)}
-            fullWidth
-          >
-            {chart?.ChartDatasetConfigs.map((cdc) => (
-              <Tab title={`${cdc.legend}`} key={cdc.id}>
-                <ChartDatasetConfig
-                  chartId={chartId}
-                  cdcId={cdc.id}
-                  dataRequests={datasets.find((d) => d.id === cdc.dataset_id)?.DataRequests}
-                />
-              </Tab>
-            ))}
-          </Tabs>
-        </div>
+        <DraggableList
+          items={chart.ChartDatasetConfigs}
+          getId={(item) => item.id}
+          getOrder={(item) => item.order}
+          onReorder={({ dragId, newOrder }) => {
+            _onReorderCdc({ dragId, newOrder });
+          }}
+          orientation="horizontal"
+          renderItem={(cdc, { isDragging }) => (
+            <Chip
+              key={cdc.id}
+              title={`${cdc.legend}`}
+              radius="sm"
+              color={activeCdc?.id === cdc.id ? "primary" : "default"}
+              variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
+              onClick={() => setActiveCdc(cdc)}
+              className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
+              size="lg"
+              endContent={<LuGripVertical size={16} className="cursor-grab" />}
+            >
+              {cdc.legend}
+            </Chip>
+          )}
+        />
+      )}
+
+      <Spacer y={4} />
+      <Divider />
+      <Spacer y={4} />
+
+      {activeCdc?.id && (
+        <ChartDatasetConfig
+          chartId={chartId}
+          cdcId={activeCdc.id}
+          dataRequests={datasets.find((d) => d.id === activeCdc.dataset_id)?.DataRequests}
+        />
       )}
     </div>
   );
