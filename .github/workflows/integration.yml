@@ -23,11 +23,7 @@ jobs:
     
     strategy:
       matrix:
-        database: ${{ 
-          github.event.inputs.database == 'both' && fromJSON('["mysql", "postgres"]') ||
-          github.event.inputs.database && fromJSON(format('["{0}"]', github.event.inputs.database)) ||
-          fromJSON('["mysql", "postgres"]')
-        }}
+        database: ["mysql", "postgres"]
     
     steps:
     - name: Checkout code
@@ -36,7 +32,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22.x'
+        node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
 
@@ -45,10 +41,20 @@ jobs:
         cd server
         npm ci
 
+    - name: Set database type
+      run: |
+        # For manual dispatch, use input if single database, otherwise use matrix
+        # For scheduled runs, always use matrix
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.database }}" != "both" ]; then
+          echo "DB_TYPE=${{ github.event.inputs.database }}" >> $GITHUB_ENV
+        else
+          echo "DB_TYPE=${{ matrix.database }}" >> $GITHUB_ENV
+        fi
+
     - name: Run integration tests
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export CB_DB_DIALECT_DEV=${{ env.DB_TYPE }}
         export FORCE_CONTAINERS=true
         npm run test:integration
       env:
@@ -59,7 +65,7 @@ jobs:
     - name: Performance baseline check
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export CB_DB_DIALECT_DEV=${{ env.DB_TYPE }}
         export FORCE_CONTAINERS=true
         # Run tests and check for performance regressions
         time npm run test:run
@@ -78,7 +84,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22.x'
+        node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
 

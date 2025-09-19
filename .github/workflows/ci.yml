@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  NODE_VERSION: '22.x'
+  NODE_VERSION: '20.x'
 
 jobs:
   # Security and dependency checks

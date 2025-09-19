@@ -64,7 +64,7 @@ jobs:
         NODE_ENV: test
 
     - name: Generate coverage report
-      if: matrix.database == 'mysql' && matrix.node-version == '22.x'
+      if: matrix.database == 'mysql' && matrix.node-version == '20.x'
       run: |
         cd server
         export CB_DB_DIALECT_DEV=mysql
@@ -75,7 +75,7 @@ jobs:
         NODE_ENV: test
 
     - name: Upload coverage to Codecov
-      if: matrix.database == 'mysql' && matrix.node-version == '22.x'
+      if: matrix.database == 'mysql' && matrix.node-version == '20.x'
       uses: codecov/codecov-action@v3
       with:
         directory: ./server/coverage
@@ -95,7 +95,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22.x'
+        node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
 
