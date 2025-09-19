@@ -175,7 +175,7 @@ class TestDbManager {
         },
       };
 
-      // Add MySQL-specific options
+      // Add database-specific options
       if (dbDialect === "mysql") {
         sequelizeOptions.define = {
           charset: "utf8mb4",
@@ -183,6 +183,11 @@ class TestDbManager {
         };
         sequelizeOptions.dialectOptions = {
           charset: "utf8mb4",
+        };
+      } else if (dbDialect === "postgres") {
+        // Disable SSL for test PostgreSQL connections
+        sequelizeOptions.dialectOptions = {
+          ssl: false,
         };
       }
 

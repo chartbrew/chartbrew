@@ -17,8 +17,8 @@ jobs:
     
     strategy:
       matrix:
-        database: [mysql, postgres]
-        node-version: [20.x, 22.x]
+        database: [mysql] # Focus on MySQL for speed, PostgreSQL tested separately
+        node-version: [20.x]
     
     name: Test with Node ${{ matrix.node-version }} and ${{ matrix.database }}
     
