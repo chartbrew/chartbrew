@@ -31,6 +31,16 @@ class TestDbManager {
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
     const forceContainers = process.env.FORCE_CONTAINERS === "true";
 
+    // Set PostgreSQL SSL environment variables early if using PostgreSQL
+    if (dbDialect === "postgres") {
+      process.env.PGSSLMODE = "disable";
+      process.env.PGSSL = "false";
+      process.env.PGSSLROOTCERT = "";
+      process.env.PGSSLCERT = "";
+      process.env.PGSSLKEY = "";
+      console.log("🔧 Set PostgreSQL SSL environment variables to disable SSL");
+    }
+
     if (dbDialect !== "sqlite") {
       // Try to load testcontainers
       try {
@@ -129,18 +139,20 @@ class TestDbManager {
   setTestEnvVars() {
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
 
-    process.env.CB_DB_HOST_DEV = "localhost";
+    process.env.CB_DB_HOST_DEV = "127.0.0.1";
     process.env.CB_DB_PORT_DEV = this.port.toString();
     process.env.CB_DB_NAME_DEV = this.database;
     process.env.CB_DB_USERNAME_DEV = this.username;
     process.env.CB_DB_PASSWORD_DEV = this.password;
     process.env.CB_DB_DIALECT_DEV = dbDialect;
-    process.env.CB_DB_SSL_DEV = "false";
 
-    // For PostgreSQL, also set the standard pg driver environment variables
+    // For PostgreSQL, set the standard pg driver environment variables
     if (dbDialect === "postgres") {
       process.env.PGSSLMODE = "disable";
       process.env.PGSSL = "false";
+      process.env.PGSSLROOTCERT = "";
+      process.env.PGSSLCERT = "";
+      process.env.PGSSLKEY = "";
     }
   }
 
@@ -151,7 +163,6 @@ class TestDbManager {
     process.env.CB_DB_USERNAME_DEV = "";
     process.env.CB_DB_PASSWORD_DEV = "";
     process.env.CB_DB_DIALECT_DEV = "sqlite";
-    process.env.CB_DB_SSL_DEV = "false";
   }
 
   async initializeDatabase() {
@@ -190,25 +201,14 @@ class TestDbManager {
         sequelizeOptions.dialectOptions = {
           charset: "utf8mb4",
         };
-      } else if (dbDialect === "postgres") {
-        // Disable SSL for test PostgreSQL connections - use the correct pg driver format
-        sequelizeOptions.dialectOptions = {
-          ssl: false
-        };
       }
 
-      if (dbDialect === "postgres") {
-        // Use connection string for PostgreSQL to ensure SSL is disabled
-        const connectionString = `postgres://${this.username}:${this.password}@localhost:${this.port}/${this.database}?sslmode=disable`;
-        this.sequelize = new Sequelize(connectionString, sequelizeOptions);
-      } else {
-        this.sequelize = new Sequelize(
-          this.database,
-          this.username,
-          this.password,
-          sequelizeOptions
-        );
-      }
+      this.sequelize = new Sequelize(
+        this.database,
+        this.username,
+        this.password,
+        sequelizeOptions
+      );
     }
 
     // Test connection with retry logic
