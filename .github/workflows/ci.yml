@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CI Tests
 
 on:
   push: # Run on all branches for early issue detection

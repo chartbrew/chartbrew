@@ -2,7 +2,7 @@ name: Update Badges
 
 on:
   workflow_run:
-    workflows: ["Continuous Integration", "Backend Tests"]
+    workflows: ["CI Tests"]
     types:
       - completed
   schedule:
