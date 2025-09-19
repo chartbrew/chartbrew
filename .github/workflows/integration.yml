@@ -56,6 +56,9 @@ jobs:
         cd server
         export CB_DB_DIALECT_DEV=${{ env.DB_TYPE }}
         export FORCE_CONTAINERS=true
+        if [ "${{ env.DB_TYPE }}" = "postgres" ]; then
+          export PGSSLMODE=disable
+        fi
         npm run test:integration
       env:
         CI: true
@@ -67,6 +70,9 @@ jobs:
         cd server
         export CB_DB_DIALECT_DEV=${{ env.DB_TYPE }}
         export FORCE_CONTAINERS=true
+        if [ "${{ env.DB_TYPE }}" = "postgres" ]; then
+          export PGSSLMODE=disable
+        fi
         # Run tests and check for performance regressions
         time npm run test:run
       env:

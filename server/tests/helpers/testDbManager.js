@@ -136,6 +136,12 @@ class TestDbManager {
     process.env.CB_DB_PASSWORD_DEV = this.password;
     process.env.CB_DB_DIALECT_DEV = dbDialect;
     process.env.CB_DB_SSL_DEV = "false";
+    
+    // For PostgreSQL, also set the standard pg driver environment variables
+    if (dbDialect === "postgres") {
+      process.env.PGSSLMODE = "disable";
+      process.env.PGSSL = "false";
+    }
   }
 
   setTestEnvVarsSQLite() {
@@ -185,18 +191,24 @@ class TestDbManager {
           charset: "utf8mb4",
         };
       } else if (dbDialect === "postgres") {
-        // Disable SSL for test PostgreSQL connections
+        // Disable SSL for test PostgreSQL connections - use the correct pg driver format
         sequelizeOptions.dialectOptions = {
-          ssl: false,
+          ssl: false
         };
       }
 
-      this.sequelize = new Sequelize(
-        this.database,
-        this.username,
-        this.password,
-        sequelizeOptions
-      );
+      if (dbDialect === "postgres") {
+        // Use connection string for PostgreSQL to ensure SSL is disabled
+        const connectionString = `postgres://${this.username}:${this.password}@localhost:${this.port}/${this.database}?sslmode=disable`;
+        this.sequelize = new Sequelize(connectionString, sequelizeOptions);
+      } else {
+        this.sequelize = new Sequelize(
+          this.database,
+          this.username,
+          this.password,
+          sequelizeOptions
+        );
+      }
     }
 
     // Test connection with retry logic

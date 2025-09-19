@@ -96,17 +96,7 @@ jobs:
         cd server
         npm ci
 
-    - name: Run tests with MySQL
-      run: |
-        cd server
-        export CB_DB_DIALECT_DEV=mysql
-        export FORCE_CONTAINERS=true
-        npm run test:run
-      env:
-        CI: true
-        NODE_ENV: test
-
-    - name: Generate coverage report
+    - name: Run tests with coverage (MySQL)
       run: |
         cd server
         export CB_DB_DIALECT_DEV=mysql
@@ -117,14 +107,17 @@ jobs:
         NODE_ENV: test
 
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         directory: ./server/coverage
         flags: backend-mysql
         name: backend-mysql-coverage
         fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: chartbrew/chartbrew
+      continue-on-error: true
 
-  # Backend tests with PostgreSQL
+  # Backend tests with PostgreSQL (migration testing)
   test-backend-postgres:
     name: Backend Tests (PostgreSQL)
     runs-on: ubuntu-latest
@@ -146,11 +139,12 @@ jobs:
         cd server
         npm ci
 
-    - name: Run tests with PostgreSQL
+    - name: Run tests (PostgreSQL)
       run: |
         cd server
         export CB_DB_DIALECT_DEV=postgres
         export FORCE_CONTAINERS=true
+        export PGSSLMODE=disable
         npm run test:run
       env:
         CI: true

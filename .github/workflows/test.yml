@@ -1,4 +1,4 @@
-name: Backend Tests
+name: Quick Tests
 
 on:
   push:
@@ -13,23 +13,17 @@ on:
 
 jobs:
   test:
+    name: Quick Tests (MySQL)
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        database: [mysql] # Focus on MySQL for speed, PostgreSQL tested separately
-        node-version: [20.x]
-    
-    name: Test with Node ${{ matrix.node-version }} and ${{ matrix.database }}
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Node.js ${{ matrix.node-version }}
+    - name: Set up Node.js 20.x
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
 
@@ -52,35 +46,17 @@ jobs:
         cd server
         npm run lint
 
-    - name: Run tests with ${{ matrix.database }}
+    - name: Run tests with MySQL
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export CB_DB_DIALECT_DEV=mysql
         export FORCE_CONTAINERS=true
         npm run test:run
       env:
         CI: true
         NODE_ENV: test
 
-    - name: Generate coverage report
-      if: matrix.database == 'mysql' && matrix.node-version == '20.x'
-      run: |
-        cd server
-        export CB_DB_DIALECT_DEV=mysql
-        export FORCE_CONTAINERS=true
-        npm run test:coverage
-      env:
-        CI: true
-        NODE_ENV: test
-
-    - name: Upload coverage to Codecov
-      if: matrix.database == 'mysql' && matrix.node-version == '20.x'
-      uses: codecov/codecov-action@v3
-      with:
-        directory: ./server/coverage
-        flags: backend
-        name: backend-coverage
-        fail_ci_if_error: false
+    # Coverage is handled in CI workflow to avoid duplication
 
   # Test with SQLite fallback (in case containers fail)
   test-sqlite-fallback:
