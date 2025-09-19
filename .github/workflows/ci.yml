@@ -1,8 +1,7 @@
 name: Continuous Integration
 
 on:
-  push:
-    branches: [ main, develop ]
+  push: # Run on all branches for early issue detection
   pull_request:
     branches: [ main, develop ]
 
