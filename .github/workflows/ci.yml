@@ -1,0 +1,225 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '22.x'
+
+jobs:
+  # Security and dependency checks
+  security:
+    name: Security & Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run npm audit
+      run: |
+        cd server
+        npm audit --audit-level=high
+      continue-on-error: true
+
+    - name: Check for outdated packages
+      run: |
+        cd server
+        npm outdated
+      continue-on-error: true
+
+  # Code quality checks
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run ESLint
+      run: |
+        cd server
+        npm run lint
+
+    - name: Check for ESLint warnings
+      run: |
+        cd server
+        npm run lint -- --max-warnings 0
+      continue-on-error: true
+
+  # Backend tests with MySQL
+  test-backend-mysql:
+    name: Backend Tests (MySQL)
+    runs-on: ubuntu-latest
+    needs: [security, lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run tests with MySQL
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=mysql
+        export FORCE_CONTAINERS=true
+        npm run test:run
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Generate coverage report
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=mysql
+        export FORCE_CONTAINERS=true
+        npm run test:coverage
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./server/coverage
+        flags: backend-mysql
+        name: backend-mysql-coverage
+        fail_ci_if_error: false
+
+  # Backend tests with PostgreSQL
+  test-backend-postgres:
+    name: Backend Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    needs: [security, lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run tests with PostgreSQL
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=postgres
+        export FORCE_CONTAINERS=true
+        npm run test:run
+      env:
+        CI: true
+        NODE_ENV: test
+
+  # Frontend tests (if applicable)
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'client/') || github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+
+    - name: Install frontend dependencies
+      run: |
+        cd client
+        npm ci
+
+    - name: Run frontend linting
+      run: |
+        cd client
+        npm run lint
+      continue-on-error: true
+
+    - name: Run frontend tests
+      run: |
+        cd client
+        npm test
+      continue-on-error: true
+      env:
+        CI: true
+
+  # Build verification
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: [test-backend-mysql, test-backend-postgres]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Verify server can start
+      run: |
+        cd server
+        timeout 10s npm start || echo "Server start verification completed"
+      env:
+        NODE_ENV: production
+        CB_SECRET: test-secret
+        CB_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef

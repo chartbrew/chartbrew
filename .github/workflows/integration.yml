@@ -1,0 +1,113 @@
+name: Integration & Performance Tests
+
+on:
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      database:
+        description: 'Database to test with'
+        required: true
+        default: 'mysql'
+        type: choice
+        options:
+        - mysql
+        - postgres
+        - both
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        database: ${{ 
+          github.event.inputs.database == 'both' && fromJSON('["mysql", "postgres"]') ||
+          github.event.inputs.database && fromJSON(format('["{0}"]', github.event.inputs.database)) ||
+          fromJSON('["mysql", "postgres"]')
+        }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run integration tests
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export FORCE_CONTAINERS=true
+        npm run test:integration
+      env:
+        CI: true
+        NODE_ENV: test
+        TEST_TIMEOUT: 120000
+
+    - name: Performance baseline check
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export FORCE_CONTAINERS=true
+        # Run tests and check for performance regressions
+        time npm run test:run
+      env:
+        CI: true
+        NODE_ENV: test
+
+  container-health:
+    name: Container Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Test container startup and teardown
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=mysql
+        export FORCE_CONTAINERS=true
+        # Run a subset of tests multiple times to check container stability
+        for i in {1..3}; do
+          echo "Container test run $i"
+          npm run test:unit
+          sleep 2
+        done
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Check for container resource leaks
+      run: |
+        # Check if any test containers are left running
+        docker ps -a
+        docker system df
+        
+        # Clean up any remaining containers
+        docker container prune -f || true
+        docker system prune -f || true

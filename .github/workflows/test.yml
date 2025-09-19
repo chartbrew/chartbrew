@@ -1,0 +1,115 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        database: [mysql, postgres]
+        node-version: [20.x, 22.x]
+    
+    name: Test with Node ${{ matrix.node-version }} and ${{ matrix.database }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Start Docker services
+      run: |
+        # Docker daemon should already be running in GitHub Actions
+        docker --version
+        docker ps
+
+    - name: Run ESLint
+      run: |
+        cd server
+        npm run lint
+
+    - name: Run tests with ${{ matrix.database }}
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=${{ matrix.database }}
+        export FORCE_CONTAINERS=true
+        npm run test:run
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Generate coverage report
+      if: matrix.database == 'mysql' && matrix.node-version == '22.x'
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=mysql
+        export FORCE_CONTAINERS=true
+        npm run test:coverage
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Upload coverage to Codecov
+      if: matrix.database == 'mysql' && matrix.node-version == '22.x'
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./server/coverage
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+
+  # Test with SQLite fallback (in case containers fail)
+  test-sqlite-fallback:
+    runs-on: ubuntu-latest
+    name: Test SQLite Fallback
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run tests with SQLite fallback
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=sqlite
+        export FORCE_CONTAINERS=false
+        npm run test:run
+      env:
+        CI: true
+        NODE_ENV: test
