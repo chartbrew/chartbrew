@@ -136,7 +136,7 @@ class TestDbManager {
     process.env.CB_DB_PASSWORD_DEV = this.password;
     process.env.CB_DB_DIALECT_DEV = dbDialect;
     process.env.CB_DB_SSL_DEV = "false";
-    
+
     // For PostgreSQL, also set the standard pg driver environment variables
     if (dbDialect === "postgres") {
       process.env.PGSSLMODE = "disable";
