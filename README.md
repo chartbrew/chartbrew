@@ -10,6 +10,7 @@
   <a href="https://circleci.com/gh/chartbrew/chartbrew" target="_blank"><img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" /></a>
   <a href="https://discord.gg/KwGEbFk" target="_blank"><img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" /></a>
   <a href="https://hub.docker.com/r/razvanilin/chartbrew" target="_blank"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/razvanilin/chartbrew"></a>
+  <a href="https://github.com/chartbrew/chartbrew/actions/workflows/ci.yml" target="_blank"><img alt="CI Status" src="https://github.com/chartbrew/chartbrew/actions/workflows/ci.yml/badge.svg"></a>
 </p>
 
 <p align="center">

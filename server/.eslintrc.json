@@ -36,5 +36,30 @@
   },
   "globals": {
     "Headers": false
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "tests/**/*.js",
+        "**/*.test.js",
+        "**/*.spec.js",
+        "vitest.config.js"
+      ],
+      "plugins": ["vitest-globals"],
+      "env": {
+        "vitest-globals/env": true
+      },
+      "rules": {
+        "no-console": "off",
+        "import/no-extraneous-dependencies": "off",
+        "import/prefer-default-export": "off",
+        "no-await-in-loop": "off",
+        "global-require": "off",
+        "import/no-dynamic-require": "off",
+        "no-return-await": "off",
+        "no-unused-vars": "off",
+        "import/no-unresolved": "off"
+      }
+    }
+  ]
 }

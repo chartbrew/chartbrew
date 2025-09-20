@@ -5,3 +5,4 @@ models/.env
 .cache
 .connectionFiles
 uploads
+coverage/**
