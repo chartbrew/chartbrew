@@ -4,6 +4,7 @@ const DataRequestController = require("../controllers/DataRequestController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const DatasetController = require("../controllers/DatasetController");
+const ConnectionController = require("../controllers/ConnectionController");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -16,6 +17,7 @@ module.exports = (app) => {
   const dataRequestController = new DataRequestController();
   const teamController = new TeamController();
   const datasetController = new DatasetController();
+  const connectionController = new ConnectionController();
 
   const root = "/team/:team_id/datasets/:dataset_id/dataRequests";
 
@@ -33,13 +35,34 @@ module.exports = (app) => {
 
     // Handle permissions for teamOwner and teamAdmin
     if (["teamOwner", "teamAdmin"].includes(role)) {
+      if (req?.body?.connection_id) {
+        const connection = await connectionController.findById(req.body.connection_id);
+        if (connection.team_id !== teamRole?.team_id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      if (req?.body?.dataset_id) {
+        const dataset = await datasetController.findById(req.body.dataset_id);
+        if (dataset.team_id !== teamRole?.team_id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
       return next();
     }
 
     if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
-      const connections = await datasetController.findByProjects(team_id, projects);
-      if (!connections || connections.length === 0) {
-        return res.status(404).json({ message: "No connections found" });
+      const datasets = await datasetController.findByProjects(team_id, projects);
+      if (!datasets || datasets.length === 0) {
+        return res.status(404).json({ message: "No datasets found" });
+      }
+
+      if (req?.body?.connection_id) {
+        const connections = await connectionController.findByProjects(team_id, projects);
+        if (!connections || connections.length === 0) {
+          return res.status(404).json({ message: "No connections found" });
+        }
       }
 
       return next();
