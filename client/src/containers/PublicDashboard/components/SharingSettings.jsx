@@ -4,6 +4,7 @@ import {
   Button, Divider, Input, Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
   Listbox, ListboxItem,
+  Alert,
 } from "@heroui/react";
 import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuSettings, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
 
@@ -786,6 +787,16 @@ function SharingSettings(props) {
               <div className="col-span-8 pl-4 overflow-y-auto max-h-96">
                 {_renderPolicyDetails()}
               </div>
+            </div>
+          )}
+
+          {!project?.public && sharePolicies?.length > 0 && (
+            <div className="mt-2">
+              <Alert
+                variant="flat"
+                title="Report not shareable"
+                description="Toggle 'Allow sharing' to make it shareable. Right now, only team members can view it."
+              />
             </div>
           )}
           
