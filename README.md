@@ -86,13 +86,16 @@ npm run start-dev
 
 Head over to `http://localhost:4018` to see the app running and create your first user account.
 
-## Deploy Chartbrew on Render
+## Deploy Chartbrew on DigitalOcean
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-render/)
+Chartbrew can be deployed on DigitalOcean using the 1-click droplet from the marketplace. This allows you to quickly set up and run Chartbrew with minimal configuration.
 
-## Deploy Chartbrew on Heroku and Vercel
-
-[Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
+<!-- DigitalOcean Deploy Button -->
+<p>
+  <a href="https://marketplace.digitalocean.com/apps/chartbrew?refcode=ad35bbba717a&action=deploy" target="_blank" rel="noopener noreferrer">
+    <img src="https://chartbrew-static.b-cdn.net/logos/do-btn-blue.png" alt="Deploy to DigitalOcean" style="height: 40px;" />
+  </a>
+</p>
 
 ## Run with Docker
 
