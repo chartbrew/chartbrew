@@ -382,7 +382,7 @@ module.exports = (app) => {
   /*
   ** Route to get a project with a share policy
   */
-  app.get("/project/:brew_name/report", getUserFromToken, (req, res) => {
+  app.get("/project/:brew_name/report", getUserFromToken, async (req, res) => {
     return projectController.findBySharePolicy(
       req.params.brew_name, req.headers.pass, req.query, req.user,
     )

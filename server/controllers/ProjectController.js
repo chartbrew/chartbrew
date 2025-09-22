@@ -450,17 +450,6 @@ class ProjectController {
       return Promise.reject("Project not found");
     }
 
-    const sharePolicy = await db.SharePolicy.findOne({
-      where: {
-        entity_id: project.id,
-        entity_type: "Project"
-      }
-    });
-
-    if (!sharePolicy) {
-      return Promise.reject("Share policy not found");
-    }
-
     let overridePolicy = false;
     // check if we get a team member from the token
     if (user?.id) {
@@ -486,7 +475,22 @@ class ProjectController {
       }
     }
 
+    // Handle variable filtering based on share policy
+    const urlVariables = this._extractVariablesFromQuery(queryParams);
+    let finalVariables = {};
+
     if (!overridePolicy) {
+      const sharePolicy = await db.SharePolicy.findOne({
+        where: {
+          entity_id: project.id,
+          entity_type: "Project"
+        }
+      });
+
+      if (!sharePolicy) {
+        return Promise.reject("Share policy not found");
+      }
+
       // Check if the token from the query parameters is valid
       const decodedToken = jwt.verify(queryParams.token, settings.secret);
       if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
@@ -508,6 +512,8 @@ class ProjectController {
           return Promise.reject("403");
         }
       }
+
+      finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
     }
 
     const report = await this.getPublicDashboard(project.brewName);
@@ -515,10 +521,6 @@ class ProjectController {
     // Process the project for public access
     const processedProject = cloneDeep(report);
     processedProject.setDataValue("password", "");
-
-    // Handle variable filtering based on share policy
-    const urlVariables = this._extractVariablesFromQuery(queryParams);
-    const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
 
     // Apply variables to the charts if needed
     if (Object.keys(finalVariables).length > 0) {
