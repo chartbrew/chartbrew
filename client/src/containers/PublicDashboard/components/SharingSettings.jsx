@@ -381,7 +381,7 @@ function SharingSettings(props) {
             {sharePolicies.map((policy, index) => (
               <ListboxItem
                 key={policy.id.toString()}
-                className={`mb-2 ${selectedPolicy?.id === policy.id ? "bg-gray-100" : ""}`}
+                className={`mb-2 ${selectedPolicy?.id === policy.id ? "bg-content3" : ""}`}
                 endContent={
                   <Button
                     isIconOnly
