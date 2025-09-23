@@ -660,12 +660,12 @@ function ChartSharing({ chart, isOpen, onClose }) {
           {(chart.shareable || chart.public) && ((chart.Chartshares && chart.Chartshares.length > 0) || (chart.SharePolicies && chart.SharePolicies.length > 0)) && !shareLoading && (
             <div className="grid grid-cols-12 gap-2 h-96">
               {/* Left panel - Share policies list */}
-              <div className="col-span-4 border-r pr-4 overflow-y-auto max-h-96">
+              <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r pr-4 overflow-y-auto max-h-96">
                 {_renderPolicyList()}
               </div>
               
               {/* Right panel - Selected policy details */}
-              <div className="col-span-8 pl-4 overflow-y-auto max-h-96">
+              <div className="col-span-12 md:col-span-8 pl-4 overflow-y-auto max-h-96">
                 {_renderPolicyDetails()}
               </div>
             </div>

@@ -647,7 +647,7 @@ function SharingSettings(props) {
         )}
         <DrawerBody>
           <div className="font-medium text-gray-500">Dashboard visibility</div>
-          <div className="flex flex-row items-center justify-between flex-wrap">
+          <div className="flex flex-row items-center justify-between flex-wrap gap-2">
             <div className="flex items-center">
               <Switch
                 isSelected={project.public}
@@ -779,12 +779,12 @@ function SharingSettings(props) {
           {!shareLoading && (
             <div className="grid grid-cols-12 gap-4">
               {/* Left panel - Share policies list */}
-              <div className="col-span-4 border-r pr-4 overflow-y-auto max-h-96">
+              <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r pr-4 overflow-y-auto max-h-96">
                 {_renderPolicyList()}
               </div>
               
               {/* Right panel - Selected policy details */}
-              <div className="col-span-8 pl-4 overflow-y-auto max-h-96">
+              <div className="col-span-12 md:col-span-8 pl-4 overflow-y-auto max-h-96">
                 {_renderPolicyDetails()}
               </div>
             </div>

@@ -11,7 +11,6 @@ import {
   Badge,
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useWindowSize } from "react-use";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
 import {
@@ -59,12 +58,6 @@ import { selectConnections } from "../../slices/connection";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
-const breakpoints = {
-  mobile: 0,
-  tablet: 640,
-  computer: 1024,
-};
-
 const getFiltersFromStorage = () => {
   try {
     const filters = JSON.parse(window.localStorage.getItem("_cb_filters"));
@@ -77,9 +70,7 @@ const getFiltersFromStorage = () => {
 /*
   Dashboard container (for the charts)
 */
-function ProjectDashboard(props) {
-  const { mobile } = props;
-
+function ProjectDashboard() {
   const [filters, setFilters] = useState(getFiltersFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
@@ -108,7 +99,6 @@ function ProjectDashboard(props) {
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
   const connections = useSelector(selectConnections);
 
-  const { width } = useWindowSize();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
   const dashboardRef = useRef(null);
@@ -925,9 +915,7 @@ function ProjectDashboard(props) {
         && (
           <div ref={dashboardParentRef}>
             <div
-              className={"bg-content1 w-full border-b-1 border-solid border-content3"}
-              size="xl"
-              style={mobile ? styles.actionBarMobile : styles.actionBar}
+              className={"bg-content1 w-full border-b-1 border-solid border-content3 p-2 box-shadow-none radius-0"}
             >
               <div className="flex flex-row justify-between gap-1 w-full">
                 <div className="flex flex-row items-center gap-1">
@@ -1004,7 +992,7 @@ function ProjectDashboard(props) {
                       <LuListFilter size={18} />
                     </Button>
                   </Tooltip>
-                  <div style={mobile ? {} : { paddingLeft: 4 }}>
+                  <div className="md:pl-2">
                     <DashboardFilters
                       filters={filters}
                       projectId={params.projectId}
@@ -1077,7 +1065,7 @@ function ProjectDashboard(props) {
                         size="sm"
                         className="flex sm:hidden"
                       >
-                        <LuRefreshCw size={24} />
+                        <LuRefreshCw />
                       </Button>
                     </Tooltip>
                     <Dropdown aria-label="Dashboard actions">
@@ -1195,9 +1183,8 @@ function ProjectDashboard(props) {
           </div>
         )}
       <div
-        className={`bg-content2 w-full relative ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
+        className={`bg-content2 w-full relative p-0 md:p-2 pt-2 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
         style={{
-          ...styles.container(width < breakpoints.tablet),
           ...(editingLayout && previewSize?.breakpoint && {
             width: previewSize.size,
             margin: "0 auto",
@@ -1356,13 +1343,6 @@ function ProjectDashboard(props) {
         open={showShare}
         onClose={() => setShowShare(false)}
         project={project}
-        // error={error}
-        // onSaveBrewName={_onSaveBrewName}
-        // brewLoading={saveLoading}
-        // onToggleBranding={_onToggleBranding}
-        // onTogglePublic={_onTogglePublic}
-        // onTogglePassword={_onTogglePassword}
-        // onSavePassword={_onSavePassword}
       />
 
       {editingLayout && (
@@ -1416,50 +1396,6 @@ function ProjectDashboard(props) {
     </div>
   );
 }
-
-const styles = {
-  container: (mobile) => ({
-    flex: 1,
-    padding: mobile ? 0 : 6,
-    paddingTop: 6,
-    paddingLeft: mobile ? 0 : 6,
-  }),
-  actionBar: {
-    padding: 10,
-    borderRadius: 0,
-    boxShadow: "none",
-    width: "100%",
-  },
-  actionBarMobile: {
-    boxShadow: "none",
-    padding: 5,
-  },
-  addChartBtn: {
-    boxShadow: "0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5",
-  },
-  refreshBtn: {
-    position: "fixed",
-    bottom: 25,
-    right: 25,
-  },
-  chartGrid: (mobile) => ({
-    padding: mobile ? 0 : 10,
-    paddingTop: 10,
-    paddingBottom: 10,
-  }),
-  mainGrid: (mobile) => ({
-    padding: mobile ? 0 : 10,
-    paddingTop: 10,
-    paddingBottom: 10,
-  }),
-  addCard: {
-    paddingTop: 50,
-  },
-};
-
-ProjectDashboard.defaultProps = {
-  mobile: false,
-};
 
 ProjectDashboard.propTypes = {
   mobile: PropTypes.bool,

@@ -9,7 +9,7 @@ import {
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
-  LuPanelLeftOpen, LuPin, LuPresentation, LuPuzzle, LuSettings,
+  LuPanelLeftOpen, LuPin, LuPuzzle, LuSettings,
   LuTvMinimal, LuUser, LuSearch,
 } from "react-icons/lu";
 import { useSelector } from "react-redux";
@@ -18,8 +18,6 @@ import {
   dark, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
-import Container from "../../../components/Container";
-import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { selectProject, selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
@@ -61,7 +59,7 @@ const _checkIfActive = (path) => {
 
 function ProjectNavigation(props) {
   const {
-    menuSize = "large", mobile = false, update = {},
+    menuSize = "large", update = {},
     onSetMenuSize, canAccess, onChangeProject,
   } = props;
 
@@ -107,50 +105,9 @@ function ProjectNavigation(props) {
     });
   };
 
-  if (mobile) {
-    return (
-      <nav
-        style={styles.mobileMenu}
-      >
-        <div className="flex items-center justify-center shadow-md bg-content3-foreground w-full backdrop-blur-[10px] backdrop-saturate-180">
-          <Container className="flex flex-nowrap justify-between w-full p-2">
-            <Row justify="space-around" align="center">
-              <Link to={`/${team.id}/${project.id}/dashboard`}>
-                <LinkNext className="pointer-events-none">
-                  <LuMenu color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
-                </LinkNext>
-              </Link>
-              <Link to={`/report/${project.brewName}/edit`}>
-                <LinkNext className="pointer-events-none">
-                  <LuPresentation color={_checkIfActive("public") ? secondary : "white"} size={24} />
-                </LinkNext>
-              </Link>
-              {canAccess("projectEditor")
-                && (
-                  <Link to={`/${team.id}/${project.id}/members`}>
-                    <LinkNext className="pointer-events-none">
-                      <LuUser color={_checkIfActive("members") ? secondary : "white"} size={24} />
-                    </LinkNext>
-                  </Link>
-                )}
-              {canAccess("projectEditor")
-                && (
-                  <Link to={`/${team.id}/${project.id}/settings`}>
-                    <LinkNext className="pointer-events-none">
-                      <LuSettings color={_checkIfActive("settings") ? secondary : "white"} size={24} />
-                    </LinkNext>
-                  </Link>
-                )}
-            </Row>
-          </Container>
-        </div>
-      </nav>
-    );
-  }
-
   return (
     <div>
-      <div className={"bg-content1 flex flex-col justify-between"} style={styles.mainSideMenu(height)}>
+      <div className={"hidden md:flex bg-content1 flex-col justify-between"} style={styles.mainSideMenu(height)}>
         <div className="p-2">
           <div className="flex justify-center items-center">
             <Popover>
@@ -286,7 +243,7 @@ function ProjectNavigation(props) {
         </div>
         <div className="translate-y-[-50px]">
           {menuSize === "large" && (
-            <Row justify="flex-end" align="center" className={"mr-5"}>
+            <div className="flex justify-end items-center mr-5">
               <Tooltip content="Click to collapse menu" placement="right">
                 <Button
                   isIconOnly
@@ -297,10 +254,10 @@ function ProjectNavigation(props) {
                   <LuPanelLeftClose size={24} />
                 </Button>
               </Tooltip>
-            </Row>
+            </div>
           )}
           {menuSize === "small" && (
-            <Row justify="center" align="center">
+            <div className="flex justify-center items-center">
               <Tooltip content="Click to expand menu" placement="right">
                 <Button
                   isIconOnly
@@ -311,7 +268,7 @@ function ProjectNavigation(props) {
                   <LuPanelLeftOpen size={24} />
                 </Button>
               </Tooltip>
-            </Row>
+            </div>
           )}
           <Spacer y={4} />
           <div style={styles.absoluteLogo} className="flex justify-center items-center">
@@ -324,13 +281,13 @@ function ProjectNavigation(props) {
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
-                <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                <div className={"text-default-600 text-xs font-tw font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                   {update && update.tag_name && (
                     <LuChevronsUp color={secondary} />
                   )}
                   Chartbrew
                   { ` ${APP_VERSION || "v3.0.0"}`}
-                </Text>
+                </div>
               </LinkNext>
             )}
             {menuSize === "small" && (
@@ -342,17 +299,48 @@ function ProjectNavigation(props) {
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
-                <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                <div className={"text-default-600 text-xs font-tw font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                   {update && update.tag_name && (
                     <LuChevronsUp color={secondary} />
                   )}
                   {APP_VERSION || "v3.0.0"}
-                </Text>
+                </div>
               </LinkNext>
             )}
           </div>
         </div>
       </div>
+
+      <nav className="flex md:hidden fixed bottom-0 z-10 h-12 w-full items-center justify-center shadow-md bg-content1 backdrop-blur-[10px] backdrop-saturate-180">
+        <div className="flex flex-row flex-nowrap justify-around w-full p-2">
+          <Link to={`/${team.id}/${project.id}/dashboard`}>
+            <LinkNext className="pointer-events-none">
+              <LuLayoutGrid className={_checkIfActive("dashboard") ? "text-foreground" : "text-gray-500"} size={24} />
+            </LinkNext>
+          </Link>
+          <Link to={`/report/${project.brewName}/edit`}>
+            <LinkNext className="pointer-events-none">
+              <LuTvMinimal className={_checkIfActive("public") ? "text-foreground" : "text-gray-500"} size={24} />
+            </LinkNext>
+          </Link>
+          {canAccess("projectEditor")
+            && (
+              <Link to={`/${team.id}/${project.id}/members`}>
+                <LinkNext className="pointer-events-none">
+                  <LuUser className={_checkIfActive("members") ? "text-foreground" : "text-gray-500"} size={24} />
+                </LinkNext>
+              </Link>
+            )}
+          {canAccess("projectEditor")
+            && (
+              <Link to={`/${team.id}/${project.id}/settings`}>
+                <LinkNext className="pointer-events-none">
+                  <LuSettings className={_checkIfActive("settings") ? "text-foreground" : "text-gray-500"} size={24} />
+                </LinkNext>
+              </Link>
+            )}
+        </div>
+      </nav>
 
       <Modal isOpen={showUpdate} closeButton onClose={() => setShowUpdate(false)}>
         <ModalContent>
