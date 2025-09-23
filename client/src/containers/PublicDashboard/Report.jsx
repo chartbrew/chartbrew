@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router-dom";
+import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
   Link, Image, CircularProgress, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarBrand,
@@ -57,7 +58,7 @@ const defaultColors = [
   "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
 ];
 
-function Report() {
+function Report({ editMode = false }) {
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -106,6 +107,8 @@ function Report() {
   };
 
   const onDrop = useCallback((acceptedFiles) => {
+    if (!editMode) return;
+    
     setNewChanges({ ...newChanges, logo: acceptedFiles });
     setIsSaved(false);
 
@@ -115,7 +118,7 @@ function Report() {
     };
 
     reader.readAsDataURL(acceptedFiles[0]);
-  });
+  }, [editMode, newChanges]);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: "image/*",
@@ -158,9 +161,9 @@ function Report() {
     setLoading(true);
     _fetchProject(window.localStorage.getItem("reportPassword"));
 
-    if (searchParams.get("theme") === "light" || searchParams.get("theme") === "dark") {
+    if (!editMode && (searchParams.get("theme") === "light" || searchParams.get("theme") === "dark")) {
       setTheme(searchParams.get("theme"));
-    } else {
+    } else if (!editMode) {
       setTheme("system");
     }
   }, []);
@@ -284,7 +287,7 @@ function Report() {
               if (!projectData.payload) throw new Error(projectData.error.status);
 
               setProject({ ...projectData.payload });
-              setEditorVisible(true);
+              setEditorVisible(editMode);
             })
             .catch(() => {});
           }
@@ -678,7 +681,7 @@ function Report() {
         </style>
       </Helmet>
 
-      {editorVisible && !preview && (
+      {editMode && editorVisible && !preview && (
         <aside className="fixed top-0 left-0 z-40 w-16 h-screen" aria-label="Sidebar">
           <div className="h-full px-3 py-2 overflow-y-auto bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col gap-4 p-2">
@@ -696,13 +699,13 @@ function Report() {
 
               <div>
                 <Tooltip content="Preview dashboard" placement="right-end">
-                  <Link className="text-foreground cursor-pointer" onPress={() => setPreview(true)}>
+                  <Link className="text-foreground cursor-pointer" onPress={() => editMode && setPreview(true)}>
                     <LuEye size={26} className="text-foreground" />
                   </Link>
                 </Tooltip>
               </div>
 
-              {project?.id && _canAccess("projectEditor") && (
+              {editMode && project?.id && _canAccess("projectEditor") && (
                 <>
                   <div>
                     <Tooltip content="Change logo" placement="right-end">
@@ -787,7 +790,7 @@ function Report() {
         </aside>
       )}
 
-      <div className={editorVisible && !preview ? "ml-16" : ""}>
+      <div className={editMode && editorVisible && !preview ? "ml-16" : ""}>
         {!removeHeader && (
           <Navbar
             isBordered
@@ -798,7 +801,7 @@ function Report() {
           >
             <NavbarBrand>
               <div className="flex flex-row items-center gap-4">
-                {editorVisible && !preview && (
+                {editMode && editorVisible && !preview && (
                   <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <img
                       onLoad={_onLoadLogo}
@@ -811,7 +814,7 @@ function Report() {
                   </div>
                 )}
 
-                {(!editorVisible || preview) && (
+                {(!editMode || !editorVisible || preview) && (
                   <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <a
                       href={newChanges.logoLink || project.logoLink || "#"}
@@ -837,7 +840,7 @@ function Report() {
                   >
                     {newChanges.dashboardTitle || project.dashboardTitle || project.name}
                   </span>
-                  {!editorVisible && project.description && (
+                  {(!editMode || !editorVisible) && project.description && (
                     <span
                       className="dashboard-sub-title truncate"
                       style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
@@ -845,7 +848,7 @@ function Report() {
                       {project.description}
                     </span>
                   )}
-                  {editorVisible && newChanges.description && (
+                  {editMode && editorVisible && newChanges.description && (
                     <span
                       className="dashboard-sub-title truncate"
                       style={{ color: removeStyling ? (isDark ? "#FFFFFF" : "#000000") : (newChanges.titleColor || project.titleColor || "#000000") }}
@@ -860,7 +863,7 @@ function Report() {
         )}
 
         <div className="absolute top-4 right-4 z-50">
-          {!isSaved && !preview && project?.id && _canAccess("projectEditor") && (
+          {editMode && !isSaved && !preview && project?.id && _canAccess("projectEditor") && (
             <div className="hidden sm:block">
               <Button
                 color="success"
@@ -872,10 +875,10 @@ function Report() {
               </Button>
             </div>
           )}
-          {preview && (
+          {editMode && preview && (
             <div>
               <Button
-                onPress={() => setPreview(false)}
+                onPress={() => editMode && setPreview(false)}
                 endContent={<LuCircleX />}
                 color="primary"
                 variant="faded"
@@ -998,7 +1001,7 @@ function Report() {
         )}
       </div>
 
-      <Modal isOpen={editingTitle} onClose={() => setEditingTitle(false)} size="2xl">
+      <Modal isOpen={editMode && editingTitle} onClose={() => setEditingTitle(false)} size="2xl">
         <ModalContent>
           <ModalHeader>
             <Text size="h4">Edit the title and description</Text>
@@ -1088,7 +1091,7 @@ function Report() {
         </ModalContent>
       </Modal>
 
-      {project && (
+      {editMode && project && (
         <SharingSettings
           open={showSettings}
           onClose={() => setShowSettings(false)}
@@ -1142,6 +1145,10 @@ const styles = {
     paddingBottom: 20,
     position: "relative",
   })
+};
+
+Report.propTypes = {
+  editMode: PropTypes.bool,
 };
 
 export default Report;

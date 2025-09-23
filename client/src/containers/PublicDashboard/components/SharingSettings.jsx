@@ -638,7 +638,7 @@ function SharingSettings(props) {
                 size="sm"
                 variant="flat"
                 endContent={<LuSettings size={18} />}
-                onPress={() => navigate(`/report/${newBrewName}`)}
+                onPress={() => navigate(`/report/${newBrewName}/edit`)}
               >
                 Edit visuals
               </Button>

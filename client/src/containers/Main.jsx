@@ -198,6 +198,7 @@ function Main(props) {
               </Route>
               <Route exact path="/b/:brewName" element={<PublicDashboard />} />
               <Route path="/report/:brewName" element={<Report />} />
+              <Route path="/report/:brewName/edit" element={<Report editMode />} />
               <Route
                 exact
                 path="/feedback"
