@@ -23,6 +23,7 @@ import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
+import { placeNewWidget } from "../../modules/autoLayout";
 
 /*
   Container used for setting up a new chart
@@ -114,22 +115,12 @@ function AddChart() {
 
     // add chart at the end of the dashboard
     const layouts = getDashboardLayout(charts);
-    let bottomY = 0;
     const chartLayout = {};
     Object.keys(layouts).map((bp) => {
-      layouts[bp].forEach((item) => {
-        const bottom = item.y + item.h;
-        if (bottom > bottomY) {
-          bottomY = bottom;
-        }
-      });
-
-      chartLayout[bp] = [
-        0,
-        bottomY,
-        bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2,
-        2,
-      ];
+      const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
+      const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
+      chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
+      return bp;
     });
 
     tempChart.layout = chartLayout;
