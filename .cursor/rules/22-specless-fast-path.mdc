@@ -1,0 +1,11 @@
+---
+description: Implement tiny changes without a full spec
+globs:
+alwaysApply: false
+---
+If the user says "quick change", "tiny fix", specifically mentions to avoid creating specs, or provides a one-paragraph description:
+1) Generate a 3-bullet Patch Plan.
+2) Implement directly with tests.
+3) Add a 1-line changelog entry and skip spec/ADR.
+
+If unclear, ask the user if they want to create a spec.

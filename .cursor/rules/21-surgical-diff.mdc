@@ -1,0 +1,9 @@
+---
+description: Bias toward minimal, local edits and safe refactors
+globs:
+alwaysApply: true
+---
+- Prefer editing the smallest number of files.
+- If a change spans multiple layers, adjust integration points first, then propagate.
+- Keep import graphs stable. Reuse existing helpers instead of adding new ones.
+- When adding a dependency, justify it in the Patch Plan and consider an internal helper first.

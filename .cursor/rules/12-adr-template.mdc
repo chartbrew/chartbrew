@@ -1,0 +1,23 @@
+---
+description: Insert an ADR file template
+globs:
+alwaysApply: false
+---
+Create `docs/adrs/ADR-{{today:YYYYMMDD}}-<decision>.md`:
+
+---
+adr: ADR-{{today:YYYYMMDD}}-<decision>
+status: proposed
+---
+
+## Context
+<short>
+
+## Decision
+<one sentence>
+
+## Consequences
+- <bullet>
+
+## Alternatives
+- <bullet>

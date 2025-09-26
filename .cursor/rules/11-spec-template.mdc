@@ -1,0 +1,37 @@
+---
+description: Insert a Feature Spec file template
+globs:
+alwaysApply: false
+---
+Create a file `docs/specs/FS-{{today:YYYYMMDD}}-<slug>.md` with:
+
+---
+id: FS-{{today:YYYYMMDD}}-<slug>
+owner: Raz
+status: draft
+links: ["#<issue>", "PR #<pr>"]
+scope: web | api | worker | cli
+---
+
+## Problem
+<one tight paragraph>
+
+## Goals
+- <goal 1>
+- <goal 2>
+
+## Non-goals
+- <not doing>
+
+## UX & API
+- UI states and edge cases in bullets
+- For API, routes with method, params, responses
+
+## Data & Permissions
+- New tables/fields, ACL, rate limits
+
+## Risks
+- Unknowns + cheap spike
+
+## Definition of Done
+- Tests (backend only in '/server/tests'), docs, migration run

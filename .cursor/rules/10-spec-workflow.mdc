@@ -1,0 +1,10 @@
+---
+description: Spec-first workflow the agent can attach when relevant
+globs:
+alwaysApply: false
+---
+When a new feature is discussed:
+1) Draft a Feature Spec (FS) under docs/specs using @Spec-Template.
+2) Ask at most 3 essential questions only if blocking.
+3) After "accept", create a concise Patch Plan and implement with minimal diffs.
+4) Update tests and link FS in the PR.

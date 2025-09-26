@@ -1,0 +1,16 @@
+---
+description: Implement changes directly from the latest Feature Spec with minimal diffs
+globs:
+alwaysApply: false
+---
+Workflow:
+1) Locate the most recent FS in docs/specs with status draft|accepted.
+2) Produce a short "Patch Plan" listing exact files and functions to change.
+3) Apply edits in place. Avoid new files unless the FS explicitly requires it.
+4) Update or add tests next to touched code.
+5) Update the FS status or links if needed when merged.
+
+Constraints:
+- JavaScript only, double quotes, no TypeScript.
+- Keep diffs surgical, prefer modifying existing code over adding new modules.
+- No scaffolding, no placeholders unless a blocker is explicitly identified.

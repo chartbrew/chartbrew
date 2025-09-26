@@ -1,0 +1,10 @@
+---
+description: Core behavior for Chartbrew in Cursor
+globs:
+alwaysApply: true
+---
+- Use JavaScript only, no TypeScript.
+- Use double quotes in JS.
+- No dead code.
+- Prefer text docs, Mermaid for diagrams, no images by default.
+- Keep feature specs under 2 pages.

@@ -1,0 +1,12 @@
+---
+description: Review guardrails for specs, correct PRs
+globs:
+  - ".github/PULL_REQUEST_TEMPLATE.md"
+alwaysApply: false
+---
+During review ensure:
+- PR body references FS-* or ADR-*.
+- Backward compatibility notes if migrations exist.
+- Tests updated.
+
+If missing FS/ADR, request linking the relevant doc before merge.
