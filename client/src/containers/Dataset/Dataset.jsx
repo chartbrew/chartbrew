@@ -17,6 +17,7 @@ import DatasetBuilder from "./DatasetBuilder";
 import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
 import getDashboardLayout from "../../modules/getDashboardLayout";
+import { placeNewWidget } from "../../modules/autoLayout";
 import useQuery from "../../modules/useQuery";
 import { selectUser } from "../../slices/user";
 import { getTeams, selectTeam } from "../../slices/team";
@@ -263,22 +264,12 @@ function Dataset() {
       const currentProject = projects.find((p) => p.id === projectId);
       // add chart at the end of the dashboard
       const layouts = getDashboardLayout(currentProject.Charts);
-      let bottomY = 0;
       const chartLayout = {};
       Object.keys(layouts).map((bp) => {
-        layouts[bp].forEach((item) => {
-          const bottom = item.y + item.h;
-          if (bottom > bottomY) {
-            bottomY = bottom;
-          }
-        });
-
-        chartLayout[bp] = [
-          0,
-          bottomY,
-          bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2,
-          2,
-        ];
+        const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
+        const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
+        chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
+        return bp;
       });
 
       const newChart = {

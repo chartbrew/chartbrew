@@ -55,6 +55,7 @@ import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
 import { selectConnections } from "../../slices/connection";
+import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -86,6 +87,7 @@ function ProjectDashboard() {
   const [stagedContent, setStagedContent] = useState({});
   const [previewSize, setPreviewSize] = useState({});
   const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
+  const [gridBreakpoint, setGridBreakpoint] = useState(null);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -277,6 +279,25 @@ function ProjectDashboard() {
       size: newSize,
       breakpoint: key,
     });
+  };
+
+  const _applyAutoLayout = (scope = "current") => {
+    if (!layouts) return;
+
+    const currentBp = gridBreakpoint
+      || ((previewSize?.breakpoint && previewSize.breakpoint !== "auto") ? previewSize.breakpoint : _getUserBreakpoint());
+    const newLayouts = _.cloneDeep(layouts);
+
+    if (scope === "current") {
+      newLayouts[currentBp] = tidyLayout(newLayouts[currentBp] || [], charts, currentBp);
+    } else {
+      Object.keys(newLayouts).forEach((bp) => {
+        newLayouts[bp] = tidyLayout(newLayouts[bp] || [], charts, bp);
+      });
+    }
+
+    setLayouts(newLayouts);
+    _onChangeLayout(null, newLayouts);
   };
 
   const _prepareLayout = (chartsToProcess = charts) => {
@@ -882,20 +903,22 @@ function ProjectDashboard() {
   };
 
   const _onAddMarkdown = async () => {
+    const defaultW = 3;
+    const defaultH = 2;
+
+    const computedLayout = {};
+    Object.keys(widthSize).forEach((bp) => {
+      const bpLayout = layouts?.[bp] || [];
+      const pos = placeNewWidget(bpLayout, { w: defaultW, h: defaultH }, bp);
+      computedLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
+    });
+
     const newChart = {
       id: uuidv4(),
       project_id: parseInt(params.projectId, 10),
       type: "markdown",
       name: "Markdown",
-      layout: {
-        xxs: [0, 0, 4, 2],
-        xs: [0, 0, 4, 2],
-        sm: [0, 0, 2, 2],
-        md: [0, 0, 3, 2],
-        lg: [0, 0, 3, 2],
-        xl: [0, 0, 3, 2],
-        xxl: [0, 0, 3, 2],
-      },
+      layout: computedLayout,
       staged: true,
     };
 
@@ -1249,6 +1272,7 @@ function ProjectDashboard() {
             cols={cols}
             rowHeight={150}
             onLayoutChange={_onChangeLayout}
+            onBreakpointChange={(bp) => setGridBreakpoint(bp)}
             resizeHandle={(
               <div className="react-resizable-handle react-resizable-handle-se">
                 <LuArrowDownRight className="text-primary" size={20} />
@@ -1369,6 +1393,24 @@ function ProjectDashboard() {
                   <Tab key="sm" title="Tablet" />
                   <Tab key="xs" title="Mobile" />
                 </Tabs>
+              </div>
+
+              <Divider orientation="vertical" className="h-8" />
+
+              <div className="flex gap-2 items-center">
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button size="sm" variant="flat" startContent={<LuLayoutDashboard />}>Auto-layout</Button>
+                  </DropdownTrigger>
+                  <DropdownMenu>
+                    <DropdownItem onPress={() => _applyAutoLayout("current")}>
+                      Apply to current
+                    </DropdownItem>
+                    <DropdownItem onPress={() => _applyAutoLayout("all")}>
+                      Apply to all breakpoints
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
               </div>
 
               <Divider orientation="vertical" className="h-8" />
