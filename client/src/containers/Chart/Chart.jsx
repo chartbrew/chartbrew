@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,

@@ -9,7 +9,7 @@ import {
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";
-import { Link as LinkNext } from "react-router-dom";
+import { Link as LinkNext } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCheck, LuCircleCheck, LuInfo,
   LuListFilter,

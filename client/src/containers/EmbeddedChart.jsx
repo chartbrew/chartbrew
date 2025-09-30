@@ -6,7 +6,7 @@ import {
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { LuListFilter } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";

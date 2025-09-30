@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { connect } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import {
   Spacer, Button, CircularProgress,
 } from "@heroui/react";

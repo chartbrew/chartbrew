@@ -2,7 +2,7 @@ import { Button, Card, CardBody, Chip, Dropdown, DropdownItem, DropdownMenu, Dro
 import React, { useEffect, useState } from "react"
 import { LuBook, LuBookOpenText, LuChevronRight, LuConstruction, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuLogOut, LuMoon, LuSettings, LuSmile, LuSquareKanban, LuSun, LuUser, LuWallpaper } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router"
 import { TbBrandDiscord } from "react-icons/tb"
 
 import { logout, selectUser } from "../slices/user"

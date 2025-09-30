@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect, useDispatch } from "react-redux";
 import { PropTypes } from "prop-types";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import {
   Button, Input, Spacer,
 } from "@heroui/react";

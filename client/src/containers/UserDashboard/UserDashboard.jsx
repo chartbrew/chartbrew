@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router";
 import { useWindowSize } from "react-use";
 import {
   Button, Spacer, Chip, CircularProgress,

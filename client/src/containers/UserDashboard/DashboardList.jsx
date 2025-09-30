@@ -15,7 +15,7 @@ import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
 import { getTemplates } from "../../slices/template";
 import { removeProject, selectProjects, updateProject } from "../../slices/project";
 import ProjectForm from "../../components/ProjectForm";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 function DashboardList() {
   const [addProject, setAddProject] = useState(false);

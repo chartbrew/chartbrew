@@ -4,7 +4,7 @@ import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Image, Input, Mod
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 
 import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";

@@ -4,7 +4,7 @@ import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@heroui/react";
 import { connect, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";

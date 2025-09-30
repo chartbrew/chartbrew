@@ -4,7 +4,7 @@ import {
 import React, { useState } from "react"
 import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { completeTutorial, selectUser } from "../../../slices/user";
 import startVideoThumbnail from "../../../assets/quick-start-video.jpg";

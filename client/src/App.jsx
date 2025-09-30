@@ -2,7 +2,7 @@ import React from "react";
 import { Provider } from "react-redux";
 import {
   createBrowserRouter, RouterProvider,
-} from "react-router-dom";
+} from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
 import { HeroUIProvider } from "@heroui/react";
 import { HelmetProvider } from "react-helmet-async";

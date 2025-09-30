@@ -2,7 +2,7 @@ import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, D
 import React, { useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router"
 import { toast } from "react-hot-toast"
 
 import { selectTeam } from "../../slices/team"

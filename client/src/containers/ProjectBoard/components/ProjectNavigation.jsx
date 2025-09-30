@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
   Link as LinkNext, Tooltip, Spacer, Button, Modal, ModalHeader, ModalBody,ModalFooter,

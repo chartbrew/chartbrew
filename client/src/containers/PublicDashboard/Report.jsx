@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Link as LinkDom, useParams, useSearchParams } from "react-router-dom";
+import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,

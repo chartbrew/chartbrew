@@ -10,7 +10,7 @@ import {
   Tab,
   Badge,
 } from "@heroui/react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
 import {

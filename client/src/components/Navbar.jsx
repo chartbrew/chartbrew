@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   Modal, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,

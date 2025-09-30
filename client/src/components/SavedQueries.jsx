@@ -5,7 +5,7 @@ import {
   Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
 } from "@heroui/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery, selectSavedQueries } from "../slices/savedQuery";
 import { secondaryTransparent } from "../config/colors";

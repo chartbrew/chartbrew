@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { LuExternalLink, LuGripVertical, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
