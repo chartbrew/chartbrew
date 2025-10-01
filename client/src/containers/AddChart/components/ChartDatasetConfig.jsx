@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -57,7 +57,7 @@ function ChartDatasetConfig(props) {
   const params = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const initVars = useRef(false);
+  // removed initVars; variables are initialized per CDC change
 
   useEffect(() => {
     if (cdc.formula) {
@@ -75,33 +75,40 @@ function ChartDatasetConfig(props) {
   }, [cdc]);
 
   useEffect(() => {
-    if (drs && !initVars.current) {
-      initVars.current = true;
-      let tempVariables = [];
-      drs?.forEach((dr) => {
-        if (dr?.VariableBindings) {
-          tempVariables = [...tempVariables, ...dr.VariableBindings];
+    // Build variables list from the dataset requests, but scope values per CDC
+    let tempVariables = [];
+    if (drs && Array.isArray(drs)) {
+      const variableByName = {};
+      drs.forEach((dr) => {
+        if (dr?.VariableBindings && Array.isArray(dr.VariableBindings)) {
+          dr.VariableBindings.forEach((vb) => {
+            // De-duplicate variables by name, keep the first occurrence
+            if (vb?.name && !variableByName[vb.name]) {
+              variableByName[vb.name] = vb;
+            }
+          });
         }
       });
-      setVariables(tempVariables);
-
-      // Load existing variable values from CDC configuration
-      const existingValues = {};
-      if (cdc.configuration?.variables) {
-        cdc.configuration.variables.forEach((configVar) => {
-          existingValues[configVar.name] = configVar.value;
-        });
-      }
-      
-      // Initialize variable values with existing overrides or default values
-      const initialValues = {};
-      tempVariables.forEach((variable) => {
-        initialValues[variable.name] = existingValues[variable.name] || variable.default_value || "";
-      });
-      
-      setVariableValues(initialValues);
+      tempVariables = Object.values(variableByName);
     }
-  }, [drs, cdc.configuration]);
+    setVariables(tempVariables);
+
+    // Load existing variable values from CDC configuration
+    const existingValues = {};
+    if (cdc?.configuration?.variables) {
+      cdc.configuration.variables.forEach((configVar) => {
+        existingValues[configVar.name] = configVar.value;
+      });
+    }
+
+    // Initialize variable values with existing overrides or default values
+    const initialValues = {};
+    tempVariables.forEach((variable) => {
+      initialValues[variable.name] = existingValues[variable.name] || variable.default_value || "";
+    });
+
+    setVariableValues(initialValues);
+  }, [drs, cdc.id, cdc.configuration]);
 
   useEffect(() => {
     let tempDataItems;
@@ -183,7 +190,7 @@ function ChartDatasetConfig(props) {
     let skipParsing = true;
 
     Object.keys(data).forEach((key) => {
-      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal" || key === "configuration") {
+      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal" || key === "configuration" || key === "variables") {
         skipParsing = false;
       }
     });

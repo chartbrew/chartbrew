@@ -324,27 +324,20 @@ class ChartController {
           gCache = cache;
         }
 
-        // Merge CDC configuration variables with the provided variables
-        // Existing variables take precedence over CDC configuration values
-        const mergedVariables = { ...variables };
-
-        if (gChart.ChartDatasetConfigs && gChart.ChartDatasetConfigs.length > 0) {
-          gChart.ChartDatasetConfigs.forEach((cdc) => {
-            if (cdc.configuration && cdc.configuration.variables) {
-              cdc.configuration.variables.forEach((configVar) => {
-                // Only use CDC value if no value already exists in variables
-                if (mergedVariables[configVar.name] === undefined
-                    || mergedVariables[configVar.name] === null
-                    || mergedVariables[configVar.name] === "") {
-                  mergedVariables[configVar.name] = configVar.value;
-                }
-              });
-            }
-          });
-        }
-
         const requestPromises = [];
         gChart.ChartDatasetConfigs.forEach((cdc) => {
+          // Build variables per CDC: start with provided variables and merge CDC-specific overrides
+          const cdcVariables = { ...(variables || {}) };
+          if (cdc?.configuration?.variables) {
+            cdc.configuration.variables.forEach((configVar) => {
+              if (cdcVariables[configVar.name] === undefined
+                  || cdcVariables[configVar.name] === null
+                  || cdcVariables[configVar.name] === "") {
+                cdcVariables[configVar.name] = configVar.value;
+              }
+            });
+          }
+
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
               this.datasetController.runRequest({
@@ -352,7 +345,7 @@ class ChartController {
                 chart_id: gChart.id,
                 noSource: true,
                 getCache,
-                variables: mergedVariables,
+                variables: cdcVariables,
               })
             );
           } else {
@@ -364,7 +357,7 @@ class ChartController {
                 getCache,
                 filters,
                 timezone: project.timezone,
-                variables: mergedVariables,
+                variables: cdcVariables,
               })
             );
           }
