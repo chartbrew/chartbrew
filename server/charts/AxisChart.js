@@ -56,6 +56,39 @@ class AxisChart {
     let startDate;
     let endDate;
 
+    // Compute dates for all chart types (needed for matrix charts and date filtering)
+    // Only compute if chart has startDate/endDate configured
+    if (this.chart.startDate && this.chart.endDate) {
+      if (this.timezone) {
+        startDate = this.moment(this.chart.startDate);
+        endDate = this.moment(this.chart.endDate);
+      } else {
+        startDate = momentObj.utc(this.chart.startDate);
+        endDate = momentObj.utc(this.chart.endDate);
+      }
+
+      if (this.chart.timeInterval === "month" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
+        startDate = startDate.startOf("month").startOf("day");
+      } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
+        startDate = startDate.startOf("year").startOf("day");
+      } else if (!this.chart.fixedStartDate) {
+        startDate = startDate.startOf("day");
+      }
+
+      endDate = endDate.endOf("day");
+
+      if (this.chart.currentEndDate) {
+        const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
+        endDate = this.moment().endOf(this.chart.timeInterval);
+
+        if (!this.chart.fixedStartDate) {
+          startDate = endDate.clone()
+            .subtract(timeDiff, this.chart.timeInterval)
+            .startOf(this.chart.timeInterval);
+        }
+      }
+    }
+
     if (
       !skipDataProcessing
       || !this.chart.chartData
@@ -73,39 +106,6 @@ class AxisChart {
 
         return dataset;
       });
-
-      if (this.timezone) {
-        startDate = this.moment(this.chart.startDate);
-        endDate = this.moment(this.chart.endDate);
-      } else {
-        startDate = momentObj.utc(this.chart.startDate);
-        endDate = momentObj.utc(this.chart.endDate);
-      }
-
-      if (this.chart.startDate && this.chart.endDate) {
-        if (this.chart.timeInterval === "month" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
-          startDate = startDate.startOf("month").startOf("day");
-        } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
-          startDate = startDate.startOf("year").startOf("day");
-        } else if (!this.chart.fixedStartDate) {
-          startDate = startDate.startOf("day");
-        }
-
-        endDate = endDate.endOf("day");
-      }
-
-      if (this.chart.startDate && this.chart.endDate) {
-        if (this.chart.currentEndDate) {
-          const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
-          endDate = this.moment().endOf(this.chart.timeInterval);
-
-          if (!this.chart.fixedStartDate) {
-            startDate = endDate.clone()
-              .subtract(timeDiff, this.chart.timeInterval)
-              .startOf(this.chart.timeInterval);
-          }
-        }
-      }
 
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
