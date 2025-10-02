@@ -53,6 +53,8 @@ class AxisChart {
     // skip the data processing if not required (this algorithm is CPU-intensive)
     const conditionsOptions = [];
     let gXType;
+    let startDate;
+    let endDate;
 
     if (
       !skipDataProcessing
@@ -71,9 +73,6 @@ class AxisChart {
 
         return dataset;
       });
-
-      let startDate;
-      let endDate;
 
       if (this.timezone) {
         startDate = this.moment(this.chart.startDate);
@@ -677,7 +676,13 @@ class AxisChart {
         break;
       case "matrix":
         chart = new MatrixChart(
-          this.chart, this.datasets, this.axisData, this.dateFormat, this.moment.bind(this)
+          this.chart,
+          this.datasets,
+          this.axisData,
+          this.dateFormat,
+          this.moment.bind(this),
+          startDate,
+          endDate
         );
         break;
       default:

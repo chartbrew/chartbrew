@@ -1,10 +1,12 @@
 class MatrixChart {
-  constructor(chart, datasets, axisData, dateFormat, momentFn) {
+  constructor(chart, datasets, axisData, dateFormat, momentFn, startDate, endDate) {
     this.chart = chart;
     this.datasets = datasets;
     this.axisData = axisData;
     this.dateFormat = dateFormat;
     this.moment = momentFn;
+    this.startDate = startDate; // Computed start date from AxisChart (respects currentEndDate)
+    this.endDate = endDate; // Computed end date from AxisChart (respects currentEndDate)
   }
 
   getConfiguration() {
@@ -42,11 +44,17 @@ class MatrixChart {
       dataMap.set(dateOnly, v);
     }
 
-    // Use chart's date range if available, otherwise fall back to data range
+    // Use computed date range from AxisChart (respects currentEndDate),
+    // otherwise fall back to chart dates or data range
     let minDate;
     let maxDate;
 
-    if (this.chart.startDate && this.chart.endDate) {
+    if (this.startDate && this.endDate) {
+      // Use the computed dates passed from AxisChart
+      minDate = this.startDate.clone();
+      maxDate = this.endDate.clone();
+    } else if (this.chart.startDate && this.chart.endDate) {
+      // Fallback to chart's original dates
       minDate = this.moment(this.chart.startDate).startOf("day");
       maxDate = this.moment(this.chart.endDate).endOf("day");
     } else if (labels.length > 0) {
