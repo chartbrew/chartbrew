@@ -15,6 +15,8 @@ export function exportChartToExcel(chart, filename) {
   try {
     if (chartType === "table") {
       _addTableChartToWorkbook(workbook, chart.chartData, sheetName);
+    } else if (chartType === "matrix") {
+      _addMatrixChartToWorkbook(workbook, chart.chartData, sheetName);
     } else {
       _addRegularChartToWorkbook(workbook, chart.chartData, sheetName, chartType);
     }
@@ -148,6 +150,31 @@ function _addRegularChartToWorkbook(workbook, chartData, sheetName) {
     worksheet["!cols"] = colWidths;
   }
 
+  utils.book_append_sheet(workbook, worksheet, sheetName);
+}
+
+function _addMatrixChartToWorkbook(workbook, chartData, sheetName) {
+  const { data } = chartData;
+  if (!data || !data.datasets || !Array.isArray(data.datasets) || !data.datasets[0]) {
+    throw new Error("Invalid matrix chart data structure");
+  }
+
+  const dataset = data.datasets[0];
+  const points = dataset.data || [];
+  const xLabels = data.labels || [];
+
+  // Attempt to read y labels from options if provided
+  // We export as a flat table: Column (x), Row (y), Value
+  const worksheetData = [["Column", "Row", "Value"]];
+
+  points.forEach((p) => {
+    // x and y are indices in category scales for matrix
+    const xLabel = xLabels[p.x] !== undefined ? xLabels[p.x] : p.x;
+    const yLabel = p.y;
+    worksheetData.push([xLabel, yLabel, p.v]);
+  });
+
+  const worksheet = utils.aoa_to_sheet(worksheetData);
   utils.book_append_sheet(workbook, worksheet, sheetName);
 }
 

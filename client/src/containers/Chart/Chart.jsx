@@ -33,6 +33,7 @@ import RadarChart from "./components/RadarChart";
 import PolarChart from "./components/PolarChart";
 import DoughnutChart from "./components/DoughnutChart";
 import PieChart from "./components/PieChart";
+import MatrixChart from "./components/MatrixChart";
 import TableContainer from "./components/TableView/TableContainer";
 import ChartFilters from "./components/ChartFilters";
 import useInterval from "../../modules/useInterval";
@@ -904,6 +905,14 @@ function Chart(props) {
                     <PolarChart
                       chart={chart}
                       height={height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
+                    />
+                  )}
+                {chart.type === "matrix"
+                  && (
+                    <MatrixChart
+                      chart={chart}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />

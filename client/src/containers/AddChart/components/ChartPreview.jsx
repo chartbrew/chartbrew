@@ -5,13 +5,12 @@ import {
   Button, Checkbox, Chip, CircularProgress, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
 } from "@heroui/react";
 import {
-  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg,
+  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg, TbMatrix,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import { LuGauge, LuX, LuPlus } from "react-icons/lu";
-import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX } from "react-icons/lu";
+import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus } from "react-icons/lu";
 import { findIndex, isEqual } from "lodash";
 import { TwitterPicker } from "react-color";
 import { chartColors } from "../../../config/colors";
@@ -22,6 +21,7 @@ import RadarChart from "../../Chart/components/RadarChart";
 import DoughnutChart from "../../Chart/components/DoughnutChart";
 import PolarChart from "../../Chart/components/PolarChart";
 import PieChart from "../../Chart/components/PieChart";
+import MatrixChart from "../../Chart/components/MatrixChart";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -33,7 +33,7 @@ import GaugeChart from "../../Chart/components/GaugeChart";
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, changeCache, useCache,
+    chart, onChange, onRefreshData, chartLoading, changeCache, useCache,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -42,12 +42,8 @@ function ChartPreview(props) {
   const [rangeErrors, setRangeErrors] = useState(null);
 
   useEffect(() => {
-    _onRefreshPreview();
-  }, [chart.type]);
-
-  useEffect(() => {
     setRedraw(true);
-  }, [chart.dataLabels]);
+  }, [chart.dataLabels, chart.type]);
 
   useEffect(() => {
     setRanges(chart.ranges || [{ 
@@ -144,11 +140,6 @@ function ChartPreview(props) {
 
   const _redrawComplete = () => {
     setRedraw(false);
-  };
-
-  const _onRefreshPreview = () => {
-    setRedraw(true);
-    onRefreshPreview();
   };
 
   const _onRefreshData = () => {
@@ -368,6 +359,16 @@ function ChartPreview(props) {
                     editMode
                   />
                 )}
+              {chart.type === "matrix"
+                && (
+                  <MatrixChart
+                    chart={chart}
+                    height={300}
+                    editMode
+                    redraw={redraw}
+                    redrawComplete={() => setRedraw(false)}
+                  />
+                )}
               {chart.type === "table"
                 && (
                   <div className="h-full">
@@ -395,7 +396,7 @@ function ChartPreview(props) {
           </div>
           <Spacer y={2} />
           <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl chart-preview-types">
-            <div className="flex flex-row gap-4 justify-around">
+            <div className="flex flex-row gap-4 justify-around flex-wrap">
               <div className="flex flex-row gap-1">
                 <Tooltip
                   content={"Get the average value of all the points on the chart"}
@@ -473,6 +474,16 @@ function ChartPreview(props) {
                     isIconOnly
                   >
                     <LuGauge size={24} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Display as a matrix chart">
+                  <Button
+                    variant={chart.type !== "matrix" ? "bordered" : "solid"}
+                    onPress={() => _onChangeChartType({ type: "matrix" })}
+                    color={chart.type === "matrix" ? "primary" : "default"}
+                    isIconOnly
+                  >
+                    <TbMatrix size={24} />
                   </Button>
                 </Tooltip>
               </div>

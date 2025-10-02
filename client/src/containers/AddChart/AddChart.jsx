@@ -221,7 +221,7 @@ function AddChart() {
 
     const getCache = useCache;
 
-    dispatch(runQuery({
+    return dispatch(runQuery({
       project_id: params.projectId,
       chart_id: params.chartId,
       noSource: false,
