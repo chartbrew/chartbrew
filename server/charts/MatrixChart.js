@@ -181,6 +181,33 @@ class MatrixChart {
       }
     };
 
+    // check how many ticks should the X Axis have
+    let maxTicksLimit = 10;
+
+    if (this.axisData.x.length) {
+      switch (this.chart.xLabelTicks) {
+        case "showAll":
+          maxTicksLimit = this.axisData.x.length;
+          break;
+        case "half":
+          maxTicksLimit = parseInt(this.axisData.x.length / 2, 10);
+          break;
+        case "third":
+          maxTicksLimit = parseInt(this.axisData.x.length / 3, 10);
+          break;
+        case "fourth":
+          maxTicksLimit = parseInt(this.axisData.x.length / 4, 10);
+          break;
+        default:
+          if (this.chart.xLabelTicks && !Number.isNaN(parseInt(this.chart.xLabelTicks, 10))) {
+            maxTicksLimit = parseInt(this.chart.xLabelTicks, 10);
+          }
+          break;
+      }
+    }
+
+    options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
+
     return { data, options };
   }
 }

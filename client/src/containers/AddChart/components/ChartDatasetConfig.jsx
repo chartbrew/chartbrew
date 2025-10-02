@@ -415,13 +415,11 @@ function ChartDatasetConfig(props) {
       <Spacer y={2} />
 
       <div className="chart-cdc-colors">
-        <Row>
-          <Text b>{"Dataset colors"}</Text>
-        </Row>
+        <div className="font-bold">{"Dataset colors"}</div>
         <Spacer y={2} />
 
         <Row align={"center"} justify={"space-between"}>
-          <Text>Primary color</Text>
+          <div className="text-sm">Primary color</div>
           <div>
             <Popover>
               <PopoverTrigger>
@@ -527,14 +525,13 @@ function ChartDatasetConfig(props) {
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
-      
-      <Row>
-        <Text b>{"Dataset settings"}</Text>
-      </Row>
-      <Spacer y={1} />
 
-      {chart.type !== "table" && (
+      {chart.type !== "table" && chart.type !== "matrix" && (
         <>
+          <Row>
+            <Text b>{"Dataset settings"}</Text>
+          </Row>
+          <Spacer y={1} />
           <Row align="center" justify={"space-between"}>
             <div className="text-sm">Sort records</div>
             <Row align="center">

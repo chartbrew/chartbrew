@@ -5,7 +5,7 @@ import {
   Button, Checkbox, Chip, CircularProgress, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
 } from "@heroui/react";
 import {
-  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg, TbMatrix,
+  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
@@ -93,7 +93,7 @@ function ChartPreview(props) {
 
   const _onChangeChartType = (data) => {
     const newType = data;
-    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table") {
+    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table" || data.type === "matrix") {
       newType.subType = "timeseries";
       newType.mode = "chart";
     }
@@ -476,14 +476,14 @@ function ChartPreview(props) {
                     <LuGauge size={24} />
                   </Button>
                 </Tooltip>
-                <Tooltip content="Display as a matrix chart">
+                <Tooltip content="Display as a time-based matrix chart (heatmap)">
                   <Button
                     variant={chart.type !== "matrix" ? "bordered" : "solid"}
                     onPress={() => _onChangeChartType({ type: "matrix" })}
                     color={chart.type === "matrix" ? "primary" : "default"}
                     isIconOnly
                   >
-                    <TbMatrix size={24} />
+                    <TbGridDots size={24} />
                   </Button>
                 </Tooltip>
               </div>
@@ -566,7 +566,7 @@ function ChartPreview(props) {
       </div>
 
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0
-        && chart.type !== "gauge" && (
+        && chart.type !== "gauge" && chart.type !== "matrix" && (
         <div style={styles.topBuffer} className="chart-preview-growth">
           <div className="flex flex-row items-center gap-4">
             <Checkbox

@@ -420,6 +420,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
             isSelected={chart.displayLegend}
             onChange={() => onChange({ displayLegend: !chart.displayLegend })}
             size="sm"
+            isDisabled={chart.type === "matrix"}
           >
             Legend
           </Checkbox>
@@ -429,6 +430,7 @@ function ChartSettings({ chart, onChange, onComplete }) {
             isSelected={chart.dataLabels}
             onChange={() => onChange({ dataLabels: !chart.dataLabels })}
             size="sm"
+            isDisabled={chart.type === "matrix"}
           >
             Data labels
           </Checkbox>
