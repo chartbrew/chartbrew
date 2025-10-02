@@ -260,8 +260,8 @@ function DatasetBuilder(props) {
       });
   };
 
-  const _onUpdateChart = (data) => {
-    dispatch(updateChart({
+  const _onUpdateChart = async (data) => {
+    await dispatch(updateChart({
       project_id: projectId,
       chart_id: chart.id,
       data,
@@ -269,6 +269,8 @@ function DatasetBuilder(props) {
       .catch(() => {
         toast.error("Could not update the chart. Please check your query.");
       });
+
+    _onRefreshPreview();
   };
 
   const _onAddFormula = () => {
@@ -556,7 +558,6 @@ function DatasetBuilder(props) {
       <div className="col-span-12 md:col-span-8 pl-4">
         <ChartPreview
           chart={chart}
-          onRefreshPreview={() => _onRefreshPreview()}
           onRefreshData={() => _onRefreshPreview(useCache)}
           onChange={(data) => _onUpdateChart(data)}
           changeCache={() => setUseCache(!useCache)}
