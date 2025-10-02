@@ -1,8 +1,8 @@
 ---
 id: FS-20251001-heatmap-matrix
 owner: Raz
-status: draft
-links: ["#<issue>", "PR #<pr>"]
+status: done
+links: ["PR #336"]
 scope: web
 ---
 
