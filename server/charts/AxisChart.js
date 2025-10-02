@@ -5,6 +5,7 @@ const FormulaParser = require("hot-formula-parser").Parser;
 const BarChart = require("./BarChart");
 const LineChart = require("./LineChart");
 const PieChart = require("./PieChart");
+const MatrixChart = require("./MatrixChart");
 const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
 
@@ -525,7 +526,7 @@ class AxisChart {
           }
 
           // if it's an accumulation chart
-          if (this.chart.subType?.indexOf("AddTimeseries") > -1) {
+          if (this.chart.subType?.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
             const newY = [];
             this.axisData.y[yLength].map((item, index) => {
               let formattedItem = item;
@@ -607,7 +608,7 @@ class AxisChart {
           if (_.indexOf(this.axisData.x[i], x) === -1) {
             this.axisData.x[i].splice(index, 0, x);
 
-            if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+            if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
               this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
             } else if (this.chart.timeInterval === "second" && this.datasets.length > 1) {
               this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1] || 0);
@@ -674,6 +675,11 @@ class AxisChart {
         });
         chart = new LineChart(this.chart, this.datasets, this.axisData);
         break;
+      case "matrix":
+        chart = new MatrixChart(
+          this.chart, this.datasets, this.axisData, this.dateFormat, this.moment.bind(this)
+        );
+        break;
       default:
         chart = new PieChart(this.chart, this.datasets, this.axisData);
         break;
@@ -684,43 +690,45 @@ class AxisChart {
     const newDatasets = configuration.data.datasets;
     let newLabels = configuration.data.labels;
 
-    // apply sorting if available
-    let shouldSort = false;
-    let sortIndex;
-    this.chart.ChartDatasetConfigs.forEach((cdc, index) => {
-      if (cdc.sort) {
-        sortIndex = index;
-        shouldSort = true;
-      }
-    });
+    // apply sorting if available (skip for matrix)
+    if (this.chart.type !== "matrix") {
+      let shouldSort = false;
+      let sortIndex;
+      this.chart.ChartDatasetConfigs.forEach((cdc, index) => {
+        if (cdc.sort) {
+          sortIndex = index;
+          shouldSort = true;
+        }
+      });
 
-    if (shouldSort) {
-      for (let i = 0; i < newDatasets[sortIndex].data.length - 1; i++) {
-        for (let j = i + 1; j < newDatasets[sortIndex].data.length; j++) {
-          let sortCondition;
-          if (this.chart.ChartDatasetConfigs[sortIndex].sort === "asc") {
-            sortCondition = newDatasets[sortIndex].data[i] > newDatasets[sortIndex].data[j];
-          } else if (this.chart.ChartDatasetConfigs[sortIndex].sort === "desc") {
-            sortCondition = newDatasets[sortIndex].data[i] < newDatasets[sortIndex].data[j];
-          }
+      if (shouldSort) {
+        for (let i = 0; i < newDatasets[sortIndex].data.length - 1; i++) {
+          for (let j = i + 1; j < newDatasets[sortIndex].data.length; j++) {
+            let sortCondition;
+            if (this.chart.ChartDatasetConfigs[sortIndex].sort === "asc") {
+              sortCondition = newDatasets[sortIndex].data[i] > newDatasets[sortIndex].data[j];
+            } else if (this.chart.ChartDatasetConfigs[sortIndex].sort === "desc") {
+              sortCondition = newDatasets[sortIndex].data[i] < newDatasets[sortIndex].data[j];
+            }
 
-          if (sortCondition) {
-            // first, sort the dataset with the sorting option enabled
-            const saved = newDatasets[sortIndex].data[i];
-            newDatasets[sortIndex].data[i] = newDatasets[sortIndex].data[j];
-            newDatasets[sortIndex].data[j] = saved;
+            if (sortCondition) {
+              // first, sort the dataset with the sorting option enabled
+              const saved = newDatasets[sortIndex].data[i];
+              newDatasets[sortIndex].data[i] = newDatasets[sortIndex].data[j];
+              newDatasets[sortIndex].data[j] = saved;
 
-            // then sort the labels in the same way
-            const savedLabel = newLabels[i];
-            newLabels[i] = newLabels[j];
-            newLabels[j] = savedLabel;
+              // then sort the labels in the same way
+              const savedLabel = newLabels[i];
+              newLabels[i] = newLabels[j];
+              newLabels[j] = savedLabel;
 
-            // finally, sort the rest of the datasets
-            for (let d = 0; d < newDatasets.length; d++) {
-              if (d !== sortIndex) {
-                const savedDataset = newDatasets[d].data[i];
-                newDatasets[d].data[i] = newDatasets[d].data[j];
-                newDatasets[d].data[j] = savedDataset;
+              // finally, sort the rest of the datasets
+              for (let d = 0; d < newDatasets.length; d++) {
+                if (d !== sortIndex) {
+                  const savedDataset = newDatasets[d].data[i];
+                  newDatasets[d].data[i] = newDatasets[d].data[j];
+                  newDatasets[d].data[j] = savedDataset;
+                }
               }
             }
           }
@@ -728,123 +736,127 @@ class AxisChart {
       }
     }
 
-    // apply max records if available
-    this.chart.ChartDatasetConfigs.forEach((d, index) => {
-      if (d.maxRecords) {
-        newDatasets[index].data = newDatasets[index].data.slice(0, d.maxRecords);
-        newLabels = newLabels.slice(0, d.maxRecords);
-      }
-    });
+    // apply max records if available (skip for matrix)
+    if (this.chart.type !== "matrix") {
+      this.chart.ChartDatasetConfigs.forEach((d, index) => {
+        if (d.maxRecords) {
+          newDatasets[index].data = newDatasets[index].data.slice(0, d.maxRecords);
+          newLabels = newLabels.slice(0, d.maxRecords);
+        }
+      });
+    }
 
     // remove the year from the labels
     if (this.removeYear) {
-      newLabels = newLabels.map((label) => {
+      newLabels = newLabels?.map((label) => {
         return label.replace(/\b\d{4}\b/g, "").trim();
       });
     }
 
     configuration.data.datasets = newDatasets;
     configuration.data.labels = newLabels;
-    // calculate the growth values
+    // calculate the growth values (skip for matrix)
     configuration.growth = [];
     configuration.goals = [];
-    configuration.data.datasets.forEach((d, index) => {
-      const { formula, goal } = this.chart.ChartDatasetConfigs[index] || {};
+    if (this.chart.type !== "matrix") {
+      configuration.data.datasets.forEach((d, index) => {
+        const { formula, goal } = this.chart.ChartDatasetConfigs[index] || {};
 
-      const before = formula ? formula.substring(0, formula.indexOf("{")) : "";
-      const after = formula ? formula.substring(formula.indexOf("}") + 1) : "";
+        const before = formula ? formula.substring(0, formula.indexOf("{")) : "";
+        const after = formula ? formula.substring(formula.indexOf("}") + 1) : "";
 
-      if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
+        if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
         // get the last and previous values and make sure to format them as numbers
-        let numericCurrValue;
-        let numericPrevValue;
-        let currentValue;
-        let previousValue;
+          let numericCurrValue;
+          let numericPrevValue;
+          let currentValue;
+          let previousValue;
 
-        try {
-          numericCurrValue = `${d.data[d.data.length - 1]}`.replace(",", "").match(/-?[\d.]+/g);
-          numericPrevValue = `${d.data[d.data.length - 2]}`.replace(",", "").match(/-?[\d.]+/g);
-          currentValue = parseFloat(numericCurrValue.filter((n) => n !== "." && n !== ",")[0]);
-          previousValue = parseFloat(numericPrevValue.filter((n) => n !== "." && n !== ",")[0]);
-        } catch (e) { /** */ }
+          try {
+            numericCurrValue = `${d.data[d.data.length - 1]}`.replace(",", "").match(/-?[\d.]+/g);
+            numericPrevValue = `${d.data[d.data.length - 2]}`.replace(",", "").match(/-?[\d.]+/g);
+            currentValue = parseFloat(numericCurrValue.filter((n) => n !== "." && n !== ",")[0]);
+            previousValue = parseFloat(numericPrevValue.filter((n) => n !== "." && n !== ",")[0]);
+          } catch (e) { /** */ }
 
-        if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
-          let result = (currentValue - previousValue)
+          if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
+            let result = (currentValue - previousValue)
             / previousValue;
-          result *= 100;
+            result *= 100;
 
-          // Invert the growth if invertGrowth is true
-          if (this.chart.invertGrowth) {
-            result = -result;
+            // Invert the growth if invertGrowth is true
+            if (this.chart.invertGrowth) {
+              result = -result;
+            }
+
+            configuration.growth.push({
+              value: `${before}${currentValue.toLocaleString()}${after}`,
+              comparison: (result === 0 && 0) || +(result.toFixed(2)).toLocaleString(),
+              status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
+              label: d.label,
+            });
+
+            if (goal) {
+              const valueIndex = this.chart.subType.indexOf("AddTimeseries") > -1
+                ? d.data.length - 1 : index;
+              const goalCurrentValue = `${d.data[valueIndex]}`.replace(",", "").match(/[\d.]+/g);
+              configuration.goals.push({
+                max: goal,
+                formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
+                value: goalCurrentValue,
+                formattedValue: `${before}${numericCurrValue.toLocaleString()}${after}`,
+                goalIndex: index,
+              });
+            }
           }
-
+        } else if (d.data && d.data.length === 1) {
           configuration.growth.push({
-            value: `${before}${currentValue.toLocaleString()}${after}`,
-            comparison: (result === 0 && 0) || +(result.toFixed(2)).toLocaleString(),
-            status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
+            value: `${before}${d.data[0]}${after}`,
+            comparison: this.chart.invertGrowth ? -100 : 100,
+            status: this.chart.invertGrowth ? "negative" : "positive",
             label: d.label,
           });
 
           if (goal) {
-            const valueIndex = this.chart.subType.indexOf("AddTimeseries") > -1
-              ? d.data.length - 1 : index;
-            const goalCurrentValue = `${d.data[valueIndex]}`.replace(",", "").match(/[\d.]+/g);
+            const numericVal = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
             configuration.goals.push({
               max: goal,
               formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
-              value: goalCurrentValue,
-              formattedValue: `${before}${numericCurrValue.toLocaleString()}${after}`,
+              value: numericVal,
+              formattedValue: `${before}${numericVal.toLocaleString()}${after}`,
+              goalIndex: index,
+            });
+          }
+        } else if (d.data?.length > 1) {
+          let currentValue;
+          try {
+            const currArr = `${d.data[d.data.length - 1]}`.match(/-?[\d.]+/g);
+            currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
+          } catch (e) {
+          //
+          }
+
+          configuration.growth.push({
+            value: `${before}${currentValue.toLocaleString()}${after}`,
+            comparison: this.chart.invertGrowth ? -currentValue * 100 : currentValue * 100,
+            status: this.chart.invertGrowth
+              ? (currentValue > 0 && "negative") || (currentValue < 0 && "positive") || "neutral"
+              : (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
+            label: d.label,
+          });
+
+          if (goal) {
+            configuration.goals.push({
+              max: goal,
+              formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
+              value: d.data[d.data.length - 1],
+              formattedValue: `${before}${d.data[d.data.length - 1]}${after}`,
               goalIndex: index,
             });
           }
         }
-      } else if (d.data && d.data.length === 1) {
-        configuration.growth.push({
-          value: `${before}${d.data[0]}${after}`,
-          comparison: this.chart.invertGrowth ? -100 : 100,
-          status: this.chart.invertGrowth ? "negative" : "positive",
-          label: d.label,
-        });
-
-        if (goal) {
-          const numericVal = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
-          configuration.goals.push({
-            max: goal,
-            formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
-            value: numericVal,
-            formattedValue: `${before}${numericVal.toLocaleString()}${after}`,
-            goalIndex: index,
-          });
-        }
-      } else if (d.data?.length > 1) {
-        let currentValue;
-        try {
-          const currArr = `${d.data[d.data.length - 1]}`.match(/-?[\d.]+/g);
-          currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
-        } catch (e) {
-          //
-        }
-
-        configuration.growth.push({
-          value: `${before}${currentValue.toLocaleString()}${after}`,
-          comparison: this.chart.invertGrowth ? -currentValue * 100 : currentValue * 100,
-          status: this.chart.invertGrowth
-            ? (currentValue > 0 && "negative") || (currentValue < 0 && "positive") || "neutral"
-            : (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
-          label: d.label,
-        });
-
-        if (goal) {
-          configuration.goals.push({
-            max: goal,
-            formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
-            value: d.data[d.data.length - 1],
-            formattedValue: `${before}${d.data[d.data.length - 1]}${after}`,
-            goalIndex: index,
-          });
-        }
-      }
-    });
+      });
+    }
 
     return {
       isTimeseries: gXType === "date",

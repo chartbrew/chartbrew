@@ -134,6 +134,7 @@ function ProjectNavigation(props) {
                         key={p.id}
                         onPress={() => onChangeProject(p.id)}
                         startContent={pinnedDashboards.find((pd) => pd.project_id === p.id) && <LuPin className="text-gray-500" size={18} />}
+                        textValue={p.name}
                       >
                         {p.name}
                       </ListboxItem>
@@ -160,6 +161,7 @@ function ProjectNavigation(props) {
               classNames={{
                 title: menuSize === "small" ? "flex flex-row justify-center" : "",
               }}
+              textValue="Dashboard report"
             >
               {menuSize === "large" ? "Dashboard" : (
                 <Tooltip content="Dashboard" placement="right">
@@ -176,6 +178,7 @@ function ProjectNavigation(props) {
               classNames={{
                 title: menuSize === "small" ? "flex flex-row justify-center" : "",
               }}
+              textValue="Dashboard report"
             >
               {menuSize === "large" ? "Dashboard report" : (
                 <Tooltip content="Dashboard report" placement="right">
@@ -193,6 +196,7 @@ function ProjectNavigation(props) {
                 classNames={{
                   title: menuSize === "small" ? "flex flex-row justify-center" : "",
                 }}
+                textValue="Members"
               >
                 {menuSize === "large" ? "Members" : (
                   <Tooltip content="Members" placement="right">
@@ -212,6 +216,7 @@ function ProjectNavigation(props) {
                   classNames={{
                     title: menuSize === "small" ? "flex flex-row justify-center" : "",
                   }}
+                  textValue="Settings"
                 >
                   {menuSize === "large" ? "Settings" : (
                     <Tooltip content="Dashboard settings" placement="right">
@@ -231,6 +236,7 @@ function ProjectNavigation(props) {
                 classNames={{
                   title: menuSize === "small" ? "flex flex-row justify-center" : "",
                 }}
+                textValue="Integrations"
               >
                 {menuSize === "large" ? "Integrations" : (
                   <Tooltip content="Integrations" placement="right">

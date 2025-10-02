@@ -154,7 +154,7 @@ function ChartDatasetConfig(props) {
       chart_id: chartId,
       cdc_id: cdc.id,
       noSource: true,
-      skipParsing,
+      skipParsing: chart?.type === "matrix" ? false : skipParsing,
       getCache: true
     }));
   };
@@ -413,14 +413,125 @@ function ChartDatasetConfig(props) {
       <Spacer y={4} />
       <Divider />
       <Spacer y={2} />
-      
-      <Row>
-        <Text b>{"Dataset settings"}</Text>
-      </Row>
-      <Spacer y={1} />
 
-      {chart.type !== "table" && (
+      <div className="chart-cdc-colors">
+        <div className="font-bold">{"Dataset colors"}</div>
+        <Spacer y={2} />
+
+        <Row align={"center"} justify={"space-between"}>
+          <div className="text-sm">Primary color</div>
+          <div>
+            <Popover>
+              <PopoverTrigger>
+                <Chip
+                  style={_getDatasetColor(cdc.datasetColor)}
+                  size="lg"
+                  radius="sm"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="border-none bg-transparent shadow-none">
+                <TwitterPicker
+                  triangle={"hide"}
+                  color={cdc.datasetColor}
+                  colors={Object.values(chartColors).map((c) => c.hex)}
+                  onChangeComplete={_onChangeDatasetColor}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </Row>
+        <Spacer y={2} />
+
+        {chart.type !== "matrix" && (
+          <Row align={"center"} justify={"space-between"}>
+            <Row align={"center"}>
+              <Checkbox
+                isSelected={cdc.fill}
+                onChange={() => _onUpdateCdc({ fill: !cdc.fill, fillColor: ["transparent"] })}
+                isDisabled={cdc.multiFill}
+              >
+                Fill Color
+              </Checkbox>
+            </Row>
+            {cdc.fill && !cdc.multiFill && (
+              <div>
+                <Popover>
+                  <PopoverTrigger>
+                    <Chip
+                      style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
+                      size="lg"
+                      radius="sm"
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="border-none bg-transparent shadow-none">
+                    <SketchPicker
+                      color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
+                      presetColors={Object.values(chartColors).map((c) => c.hex)}
+                      onChangeComplete={(color) => _onChangeFillColor(color)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </Row>
+        )}
+        <Spacer y={2} />
+
+        {chart.type !== "line" && chart.type !== "matrix" && (
+          <Row>
+            <Checkbox
+              isSelected={cdc.multiFill}
+              onChange={() => _onChangeMultiFill()}
+            >
+              Multiple colors
+            </Checkbox>
+          </Row>
+        )}
+
+        {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
+          <>
+            <Spacer y={2} />
+            <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
+              {dataItems?.labels?.map((label, index) => (
+                <Row key={label} justify={"space-between"}>
+                  <Text size="sm">{label}</Text>
+
+                  <div>
+                    <Popover>
+                      <PopoverTrigger>
+                        <Chip
+                          style={_getDatasetColor(cdc.fillColor[index] || "white")}
+                          radius="sm"
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="border-none bg-transparent shadow-none">
+                        <TwitterPicker
+                          triangle={"hide"}
+                          color={cdc.fillColor[index] || "white"}
+                          colors={Object.values(chartColors).map((c) => c.hex)}
+                          onChangeComplete={(color) => _onChangeFillColor(color, index)}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </Row>
+              ))}
+            </ScrollShadow>
+            <Spacer y={2} />
+          </>
+        )}
+      </div>
+
+      <Spacer y={4} />
+      <Divider />
+      <Spacer y={4} />
+
+      {chart.type !== "table" && chart.type !== "matrix" && (
         <>
+          <Row>
+            <Text b>{"Dataset settings"}</Text>
+          </Row>
+          <Spacer y={1} />
           <Row align="center" justify={"space-between"}>
             <div className="text-sm">Sort records</div>
             <Row align="center">
@@ -744,118 +855,6 @@ function ChartDatasetConfig(props) {
           </div>
         </>
       )}
-
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
-
-      <div className="chart-cdc-colors">
-        <Row>
-          <Text b>{"Dataset colors"}</Text>
-        </Row>
-        <Spacer y={2} />
-
-        <Row align={"center"} justify={"space-between"}>
-          <Text>Primary color</Text>
-          <div>
-            <Popover>
-              <PopoverTrigger>
-                <Chip
-                  style={_getDatasetColor(cdc.datasetColor)}
-                  size="lg"
-                  radius="sm"
-                />
-              </PopoverTrigger>
-              <PopoverContent className="border-none bg-transparent shadow-none">
-                <TwitterPicker
-                  triangle={"hide"}
-                  color={cdc.datasetColor}
-                  colors={Object.values(chartColors).map((c) => c.hex)}
-                  onChangeComplete={_onChangeDatasetColor}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </Row>
-        <Spacer y={2} />
-
-        <Row align={"center"} justify={"space-between"}>
-          <Row align={"center"}>
-            <Checkbox
-              isSelected={cdc.fill}
-              onChange={() => _onUpdateCdc({ fill: !cdc.fill, fillColor: ["transparent"] })}
-              isDisabled={cdc.multiFill}
-            >
-              Fill Color
-            </Checkbox>
-          </Row>
-          {cdc.fill && !cdc.multiFill && (
-            <div>
-              <Popover>
-                <PopoverTrigger>
-                  <Chip
-                    style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
-                    size="lg"
-                    radius="sm"
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="border-none bg-transparent shadow-none">
-                  <SketchPicker
-                    color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
-                    presetColors={Object.values(chartColors).map((c) => c.hex)}
-                    onChangeComplete={(color) => _onChangeFillColor(color)}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-        </Row>
-        <Spacer y={2} />
-
-        {chart.type !== "line" && (
-          <Row>
-            <Checkbox
-              isSelected={cdc.multiFill}
-              onChange={() => _onChangeMultiFill()}
-            >
-              Multiple colors
-            </Checkbox>
-          </Row>
-        )}
-
-        {chart.type !== "line" && cdc.multiFill && (
-          <>
-            <Spacer y={2} />
-            <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
-              {dataItems?.labels?.map((label, index) => (
-                <Row key={label} justify={"space-between"}>
-                  <Text size="sm">{label}</Text>
-
-                  <div>
-                    <Popover>
-                      <PopoverTrigger>
-                        <Chip
-                          style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                          radius="sm"
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent className="border-none bg-transparent shadow-none">
-                        <TwitterPicker
-                          triangle={"hide"}
-                          color={cdc.fillColor[index] || "white"}
-                          colors={Object.values(chartColors).map((c) => c.hex)}
-                          onChangeComplete={(color) => _onChangeFillColor(color, index)}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </Row>
-              ))}
-            </ScrollShadow>
-            <Spacer y={2} />
-          </>
-        )}
-      </div>
 
       <Spacer y={4} />
       <Divider />
