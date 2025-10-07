@@ -29,11 +29,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     backgroundColor: {
       type: DataTypes.STRING,
-      defaultValue: "#103751",
+      defaultValue: "#FFFFFF",
     },
     titleColor: {
       type: DataTypes.STRING,
-      defaultValue: "white",
+      defaultValue: "#000000",
     },
     headerCode: {
       type: DataTypes.TEXT,
