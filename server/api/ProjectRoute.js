@@ -11,7 +11,6 @@ const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
-const refreshChartsApi = require("../modules/refreshChartsApi");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
 
@@ -414,8 +413,6 @@ module.exports = (app) => {
       req.params.template,
     )
       .then((result) => {
-        refreshChartsApi(req.params.id, result, req.headers.authorization);
-
         return res.status(200).send(result);
       })
       .catch((err) => {

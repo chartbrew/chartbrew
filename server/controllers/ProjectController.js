@@ -238,6 +238,22 @@ class ProjectController {
 
     return templateModels[template].build(project.team_id, projectId, data)
       .then((result) => {
+        // now refresh all the charts in the background
+        // with a slight delay to make sure the CDCs are created
+        setTimeout(() => {
+          const ChartController = require("./ChartController"); // eslint-disable-line
+          const chartController = new ChartController();
+          if (result?.length > 0) {
+            result.forEach((chart) => {
+              const createdChart = chart.dataValues;
+              chartController.updateChartData(createdChart.id, null, {
+                noSource: false,
+                skipParsing: false,
+                getCache: false,
+              });
+            });
+          }
+        }, 2000);
         return result;
       })
       .catch((err) => {

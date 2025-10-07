@@ -301,11 +301,12 @@ class ChartController {
     let gChartData;
     let skipCache = false;
     let project;
+
     return this.findById(id)
       .then(async (chart) => {
         gChart = chart;
         if (!chart || !chart.ChartDatasetConfigs || chart.ChartDatasetConfigs.length === 0) {
-          return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
+          return new Promise((_resolve, reject) => reject("The chart doesn't have any datasets"));
         }
 
         if (chart.project_id) {
