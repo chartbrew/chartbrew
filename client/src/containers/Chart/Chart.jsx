@@ -12,7 +12,7 @@ import {
   Kbd,
 } from "@heroui/react";
 import {
-  LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsisVertical, LuFileDown,
+  LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsis, LuFileDown,
   LuLayoutDashboard, LuListFilter, LuLock, LuLockOpen,
   LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck, LuVariable,
@@ -638,7 +638,7 @@ function Chart(props) {
                 )}
               </div>
             </div>
-            <div className={`col-span-6 sm:col-span-4 flex items-start justify-end ${isCompact ? "absolute right-2 top-2" : ""}`}>
+            <div className={`col-span-6 sm:col-span-4 flex items-start justify-end gap-1 ${isCompact ? "absolute right-2 top-2" : ""}`}>
               {_checkIfFilters() && (
                 <div className="flex items-start gap-1">
                   {chartSize?.[2] > 3 && (
@@ -679,8 +679,8 @@ function Chart(props) {
               {projectId && !print && (
                 <Dropdown aria-label="Select a chart option">
                   <DropdownTrigger>
-                    <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
-                      <LuEllipsisVertical className="text-default-500" />
+                    <LinkNext className="cursor-pointer chart-settings-tutorial">
+                      <LuEllipsis className="text-default-500" />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu disabledKeys={["status"]}>
@@ -836,7 +836,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select an export option">
                   <DropdownTrigger>
                     <LinkNext className="text-gray-500 cursor-pointer">
-                      <LuEllipsisVertical className="text-default-500" />
+                      <LuEllipsis className="text-default-500" />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
