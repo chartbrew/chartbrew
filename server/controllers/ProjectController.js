@@ -496,19 +496,17 @@ class ProjectController {
     let finalVariables = {};
 
     if (!overridePolicy) {
-      const sharePolicy = await db.SharePolicy.findOne({
-        where: {
-          entity_id: project.id,
-          entity_type: "Project"
-        }
-      });
+      // Check if the token from the query parameters is valid
+      const decodedToken = await jwt.verify(queryParams.token, settings.secret);
+      if (!decodedToken?.sub?.sharePolicyId) {
+        return Promise.reject("Invalid token");
+      }
 
+      const sharePolicy = await db.SharePolicy.findByPk(decodedToken.sub.sharePolicyId);
       if (!sharePolicy) {
         return Promise.reject("Share policy not found");
       }
 
-      // Check if the token from the query parameters is valid
-      const decodedToken = jwt.verify(queryParams.token, settings.secret);
       if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
         return Promise.reject("Invalid token");
       }
