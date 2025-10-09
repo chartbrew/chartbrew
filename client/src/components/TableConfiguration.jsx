@@ -138,8 +138,8 @@ function TableConfiguration(props) {
 
   return (
     <div>
-      <Accordion fullWidth variant="bordered">
-        <AccordionItem subtitle="Table columns options" className="text-default" indicator={<LuSettings />}>
+      <Accordion fullWidth variant="bordered" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
+        <AccordionItem key="table-columns-options" subtitle="Table columns options" className="text-default" indicator={<LuSettings />}>
           <div>
             {!isDragState && (
               <div className="flex flex-wrap gap-2">

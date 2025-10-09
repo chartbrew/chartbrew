@@ -53,17 +53,15 @@ const isLongText = (str) => {
 };
 
 // Add text rendering rules
-const renderCellContent = (value) => {
-  // Handle boolean values
-  if (value === true || value === false) {
-    return `${value}`;
-  }
+const renderCellContent = (value, columnKey, columnsFormatting) => {
+  // 1) Compute base content (type-aware rendering)
+  let baseContent = value;
 
-  // Handle string values with special cases
-  if (typeof value === "string") {
-    // URL case
+  if (value === true || value === false) {
+    baseContent = `${value}`;
+  } else if (typeof value === "string") {
     if (isUrl(value)) {
-      return (
+      baseContent = (
         <LinkNext
           href={value}
           target="_blank"
@@ -73,11 +71,8 @@ const renderCellContent = (value) => {
           {value}
         </LinkNext>
       );
-    }
-
-    // Long text case
-    if (isLongText(value)) {
-      return (
+    } else if (isLongText(value)) {
+      baseContent = (
         <div className="flex flex-row items-center gap-1">
           <Popover>
             <PopoverTrigger>
@@ -107,15 +102,33 @@ const renderCellContent = (value) => {
     }
   }
 
-  // Default case - return the value as is
-  return value;
+  // 2) Apply mapping wrapper if configured and rule with color matches
+  const columnConfig = columnsFormatting?.[columnKey];
+  if (
+    columnConfig?.display?.format === "mapping"
+    && Array.isArray(columnConfig.display.rules)
+  ) {
+    const matchRule = columnConfig.display.rules.find((rule) => (
+      (rule?.label === value || rule?.value === value) && !!rule?.color
+    ));
+
+    if (matchRule) {
+      return (
+        <Chip size="sm" radius="sm" variant="flat" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
+          {baseContent}
+        </Chip>
+      );
+    }
+  }
+
+  return baseContent;
 };
 
-function TableComponent(props) {
-  const {
-    columns, data, embedded,
-  } = props;
-
+function TableComponent({
+  columns, data, embedded, dataset,
+}) {
+  const columnsFormatting = dataset?.configuration?.columnsFormatting;
+  
   const {
     getTableProps,
     getTableBodyProps,
@@ -164,6 +177,7 @@ function TableComponent(props) {
                       gotoPage(page - 1);
                     }}
                     size="sm"
+                    aria-label="Pagination"
                   />
                   <Spacer x={0.5} />
                   <Dropdown aria-label="Select a page size">
@@ -270,12 +284,15 @@ function TableComponent(props) {
                                 onMouseDown={(e) => e.stopPropagation()}
                                 role="presentation"
                               >
-                                {renderCellContent(cellObj.props.value)}
+                                {(() => {
+                                  const accessorKey = cell?.column?.id || cell?.column?.accessor || cell?.column?.Header;
+                                  return renderCellContent(cellObj.props.value, accessorKey, columnsFormatting);
+                                })()}
                               </span>
                             </div>
                           )}
                           {(isObject || isArray) && (
-                            <Popover>
+                            <Popover aria-label="Object details">
                               <PopoverTrigger>
                                 <LinkNext>
                                   <Chip color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>

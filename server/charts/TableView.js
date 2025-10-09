@@ -29,6 +29,14 @@ function formatValue(value, config, timezone) {
     return finalNumber;
   }
 
+  // value mapping
+  if (config.display?.format === "mapping" && config.display?.rules) {
+    const rule = config.display.rules.find((rule) => rule.value === value);
+    if (rule) {
+      return rule.label;
+    }
+  }
+
   return value;
 }
 

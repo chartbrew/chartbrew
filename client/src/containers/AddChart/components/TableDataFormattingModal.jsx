@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
+  Button, Checkbox, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select, SelectItem, Spacer,
 } from "@heroui/react";
+import { LuPlus, LuX } from "react-icons/lu";
+import { TwitterPicker } from "react-color";
+import { chartColors } from "../../../config/colors";
 
 const dataTypes = [{
   value: "none",
@@ -60,6 +66,14 @@ const dateFormats = [{
   text: "2020-11-23",
 }];
 
+const displayFormats = [{
+  value: "default",
+  text: "Default",
+}, {
+  value: "mapping",
+  text: "Value mapping",
+}];
+
 function TableDataFormattingModal(props) {
   const {
     open, onUpdate, onClose, config, loading,
@@ -72,6 +86,8 @@ function TableDataFormattingModal(props) {
   const [decimals, setDecimals] = useState(0);
   const [allowDecimals, setAllowDecimals] = useState(false);
   const [symbol, setSymbol] = useState("");
+  const [displayFormat, setDisplayFormat] = useState("default");
+  const [rules, setRules] = useState([]);
 
   useEffect(() => {
     if (config) {
@@ -99,6 +115,14 @@ function TableDataFormattingModal(props) {
       if (config.symbol) {
         setSymbol(config.symbol);
       }
+
+      if (config.display?.format) {
+        setDisplayFormat(config.display.format);
+      }
+
+      if (config.display?.rules) {
+        setRules(config.display.rules);
+      }
     } else {
       setDataType("none");
       setFormatValue("");
@@ -107,13 +131,15 @@ function TableDataFormattingModal(props) {
       setDecimals(0);
       setAllowDecimals(false);
       setSymbol("");
+      setDisplayFormat("default");
+      setRules([]);
     }
   }, [config]);
 
   const _onSave = () => {
     const newConfig = {};
 
-    if (dataType === "none") {
+    if (dataType === "none" && displayFormat === "default") {
       onUpdate(null);
     }
 
@@ -130,6 +156,8 @@ function TableDataFormattingModal(props) {
       newConfig.allowDecimals = allowDecimals;
     }
     if (symbol) newConfig.symbol = symbol;
+    if (displayFormat) newConfig.display = { ...(newConfig.display || {}), format: displayFormat };
+    if (rules) newConfig.display = { ...(newConfig.display || {}), rules };
 
     onUpdate(newConfig);
   };
@@ -251,6 +279,93 @@ function TableDataFormattingModal(props) {
                 />
               </div>
             </>
+          )}
+
+          <Divider />
+          <Select 
+            label="Display format"
+            variant="bordered"
+            selectedKeys={[displayFormat]}
+            onSelectionChange={(keys) => setDisplayFormat(keys.currentKey)}
+            selectionMode="single"
+            aria-label="Select a display format"
+            disallowEmptySelection
+          >
+            {displayFormats.map((d) => (
+              <SelectItem key={d.value} textValue={d.text}>
+                {d.text}
+              </SelectItem>
+            ))}
+          </Select>
+
+          {displayFormat === "mapping" && (
+            <div className="flex flex-col items-start gap-1">
+              {rules.map((r, index) => (
+                <div key={index} className="flex flex-row items-center gap-2 w-full">
+                  <Input
+                    placeholder="Enter the original value here"
+                    value={r.value}
+                    onChange={(e) => setRules(rules.map((r, i) => (i === index ? { ...r, value: e.target.value } : r)))}
+                    variant="bordered"
+                    size="sm"
+                  />
+                  <Input
+                    placeholder="Enter the display value here"
+                    value={r.label}
+                    onChange={(e) => setRules(rules.map((r, i) => (i === index ? { ...r, label: e.target.value } : r)))}
+                    variant="bordered"
+                    size="sm"
+                  />
+                  <Popover aria-label="Color picker">
+                    <PopoverTrigger>
+                      <Chip
+                        size="sm"
+                        variant="light"
+                        onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : "rgba(0,0,0,0)" } : r)))}
+                        className="pl-10 border-1 border-solid border-content3"
+                        radius="sm"
+                        style={{
+                          backgroundColor: r.color || "transparent",
+                        }}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="flex flex-col items-start py-2">
+                      <TwitterPicker
+                        triangle={"hide"}
+                        color={r.color || "rgba(0,0,0,0)"}
+                        onChange={(color) => setRules(rules.map((r, i) => (i === index ? { ...r, color: color.hex } : r)))}
+                        colors={Object.values(chartColors).map((c) => c.hex)}
+                        styles={{ default: { card: { boxShadow: "none" } } }}
+                      />
+                      <Button
+                        variant="light"
+                        onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: null } : r)))}
+                        size="sm"
+                        startContent={<LuX />}
+                      >
+                        Remove color
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    onPress={() => setRules(rules.filter((_, i) => i !== index))}
+                    size="sm"
+                  >
+                    <LuX />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="light"
+                onPress={() => setRules([...rules, { value: "", label: "" }])}
+                size="sm"
+                startContent={<LuPlus className="text-gray-500" size={16} />}
+              >
+                Add rule
+              </Button>
+            </div>
           )}
         </ModalBody>
         <ModalFooter>
