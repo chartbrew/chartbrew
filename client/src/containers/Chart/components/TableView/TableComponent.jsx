@@ -9,6 +9,8 @@ import {
   DropdownMenu,
   Button,
   DropdownItem,
+  Progress,
+  Tooltip,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
 
@@ -119,6 +121,18 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
         </Chip>
       );
     }
+  }
+
+  if (columnConfig?.display?.format === "progress") {
+    return (
+      <Tooltip content={`${value} / ${columnConfig.display.progress.max}`}>
+        <Progress
+          aria-label="Progress"
+          value={value}
+          maxValue={columnConfig.display.progress.max}
+        />
+      </Tooltip>
+    );
   }
 
   return baseContent;

@@ -72,6 +72,9 @@ const displayFormats = [{
 }, {
   value: "mapping",
   text: "Value mapping",
+}, {
+  value: "progress",
+  text: "Progress bar",
 }];
 
 function TableDataFormattingModal(props) {
@@ -88,6 +91,7 @@ function TableDataFormattingModal(props) {
   const [symbol, setSymbol] = useState("");
   const [displayFormat, setDisplayFormat] = useState("default");
   const [rules, setRules] = useState([]);
+  const [progress, setProgress] = useState(null);
 
   useEffect(() => {
     if (config) {
@@ -122,6 +126,10 @@ function TableDataFormattingModal(props) {
 
       if (config.display?.rules) {
         setRules(config.display.rules);
+      }
+
+      if (config.display?.progress) {
+        setProgress(config.display.progress);
       }
     } else {
       setDataType("none");
@@ -158,6 +166,7 @@ function TableDataFormattingModal(props) {
     if (symbol) newConfig.symbol = symbol;
     if (displayFormat) newConfig.display = { ...(newConfig.display || {}), format: displayFormat };
     if (rules) newConfig.display = { ...(newConfig.display || {}), rules };
+    if (progress) newConfig.display = { ...(newConfig.display || {}), progress };
 
     onUpdate(newConfig);
   };
@@ -365,6 +374,30 @@ function TableDataFormattingModal(props) {
               >
                 Add rule
               </Button>
+            </div>
+          )}
+
+          {displayFormat === "progress" && (
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex flex-row items-center gap-1">
+                <Input
+                  type="number"
+                  placeholder="Min value"
+                  value={progress?.min}
+                  onChange={(e) => setProgress({ ...progress, min: e.target.value })}
+                  variant="bordered"
+                  size="sm"
+                />
+                <div className="text-sm text-gray-500">to</div>
+                <Input
+                  type="number"
+                  placeholder="Max value"
+                  value={progress?.max}
+                  onChange={(e) => setProgress({ ...progress, max: e.target.value })}
+                  variant="bordered"
+                  size="sm"
+                />
+              </div>
             </div>
           )}
         </ModalBody>
