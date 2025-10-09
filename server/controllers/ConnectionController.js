@@ -89,6 +89,35 @@ function isArrayPresent(responseData) {
   return arrayFound;
 }
 
+// Recursively convert MongoDB ObjectId instances into hex string values
+function stringifyMongoIds(value, seen = new WeakSet()) {
+  if (value === null || value === undefined) return value;
+  const valueType = typeof value;
+  if (valueType !== "object") return value;
+
+  // Detect ObjectId from mongoose or native driver
+  if ((value instanceof ObjectId) || (value && value._bsontype === "ObjectId")) {
+    return typeof value.toHexString === "function" ? value.toHexString() : String(value);
+  }
+
+  // Avoid converting Date or Buffer-like values
+  if (value instanceof Date || Buffer.isBuffer(value)) return value;
+
+  // Prevent circular references
+  if (seen.has(value)) return value;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => stringifyMongoIds(item, seen));
+  }
+
+  const result = {};
+  Object.keys(value).forEach((key) => {
+    result[key] = stringifyMongoIds(value[key], seen);
+  });
+  return result;
+}
+
 class ConnectionController {
   constructor() {
     this.projectController = new ProjectController();
@@ -665,6 +694,8 @@ class ConnectionController {
         if (formattedQuery.indexOf("count(") > -1) {
           finalData = { count: data };
         }
+        // Ensure ObjectId instances are returned as strings for UI rendering
+        finalData = stringifyMongoIds(finalData);
         // cache the data for later use - use ORIGINAL dataRequest to preserve variable placeholders
         const dataToCache = {
           dataRequest,
