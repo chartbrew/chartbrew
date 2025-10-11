@@ -2,11 +2,10 @@
 
 ## Supported Versions
 
-As of January 2024 (and until this document is updated), only the v3.x.x releases of Chartbrew are supported for updates and bug fixes. Any previous versions are currently not supported and users are advised to use them "at their own risk".
+As of April 2025 (and until this document is updated), only the v4.x.x releases of Chartbrew are supported for updates and bug fixes. Any previous versions are currently not supported and users are advised to use them "at their own risk".
 
-- v3.x.x **Stable** is considered LTS until further notice
-- v2.x.x is considered deprecated and not supported
-- v1.x.x is considered deprecated and not supported
+- v4.x.x **Stable** is considered LTS until further notice
+- v3.x.x or lower are considered deprecated and not supported
 
 ## Reporting a Vulnerability
 
