@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, Chip, ModalHeader, ModalBody, ModalFooter, ModalContent, Select, SelectItem,
+  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Select, SelectItem,
+  Code,
 } from "@heroui/react";
 import moment from "moment";
-import { DateRangePicker } from "react-date-range";
-import { enGB } from "date-fns/locale";
-import { LuCalendarDays, LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
+import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-import { secondary, primary } from "../../../config/colors";
-import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import DateRangeFilter from "../../ProjectDashboard/components/DateRangeFilter";
 
 const xLabelOptions = [{
   key: "default",
@@ -65,28 +63,19 @@ const timeIntervalOptions = [{
   value: "year",
 }];
 
-function ChartSettings({ chart, onChange, onComplete }) {
+function ChartSettings({ chart, onChange }) {
   const [initSelectionRange] = useState({
     startDate: moment().startOf("month").toDate(),
     endDate: moment().endOf("month").toDate(),
     key: "selection",
   });
-  const [dateRangeModal, setDateRangeModal] = useState(false);
   const [dateRange, setDateRange] = useState(initSelectionRange);
-  const [labelStartDate, setLabelStartDate] = useState("");
-  const [labelEndDate, setLabelEndDate] = useState("");
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
   const [ticksNumber, setTicksNumber] = useState("");
   const [ticksSelection, setTicksSelection] = useState("default");
   const [dateFormattingModal, setDateFormattingModal] = useState(false);
   const [datesFormat, setDatesFormat] = useState(null);
-
-  useEffect(() => {
-    if (chart.startDate) {
-      _onViewRange(true, true);
-    }
-  }, []);
 
   useEffect(() => {
     if (chart.maxValue || chart.maxValue === 0) {
@@ -134,24 +123,8 @@ function ChartSettings({ chart, onChange, onComplete }) {
           newStartDate = newEndDate.clone().subtract(timeDiff, chart.timeInterval).startOf(chart.timeInterval);
         }
       }
-
-      setLabelStartDate(newStartDate.format("ll"));
-      setLabelEndDate(newEndDate.format("ll"));
     }
   }, [chart.currentEndDate, dateRange, chart.fixedStartDate]);
-
-  const _onViewRange = (value, init) => {
-    if (!value) {
-      onChange({ dateRange: { startDate: null, endDate: null } });
-    }
-
-    let isModalOpen = value;
-    if (init) {
-      isModalOpen = false;
-    }
-
-    setDateRangeModal(isModalOpen);
-  };
 
   const _onRemoveDateFiltering = () => {
     onChange({ dateRange: { startDate: null, endDate: null } });
@@ -169,24 +142,14 @@ function ChartSettings({ chart, onChange, onComplete }) {
     onChange({ horizontal: !chart.horizontal });
   };
 
-  const _onChangeDateRange = (range) => {
-    const { startDate, endDate } = range.selection;
+  const _onChangeDateRangeNew = ({ startDate, endDate }) => {
     setDateRange({ startDate, endDate });
-  };
-
-  const _onComplete = () => {
-    const { startDate, endDate } = dateRange;
-
     onChange({
       dateRange: {
         startDate: moment(startDate).utcOffset(0, true).format(),
         endDate: moment(endDate).utcOffset(0, true).format(),
       }
     });
-
-    setDateRangeModal(false);
-
-    onComplete();
   };
 
   const _onChangeTicks = (value) => {
@@ -216,65 +179,44 @@ function ChartSettings({ chart, onChange, onComplete }) {
       <Divider />
       <Spacer y={4} />
 
-      <Row>
-        <Text>Date settings</Text>
-      </Row>
+      <div className="text-sm text-gray-500">Date settings</div>
       <Spacer y={1} />
-      <div className="grid grid-cols-12 gap-2 justify-between">
-        <div className="col-span-12 lg:col-span-6">
-          <Row className={"pl-0 ml-0 gap-2"} align="center">
-            <Button
-              endContent={<LuCalendarDays />}
-              onClick={() => _onViewRange(true)}
-              variant="ghost"
-              className="chart-settings-dates"
-            >
-              Date filter
-            </Button>
-            {(chart.startDate || chart.endDate) && (
-              <Tooltip content="Remove date filtering">
-                <Button
-                  variant="light"
-                  isIconOnly
-                  color="danger"
-                  onPress={() => _onRemoveDateFiltering()}
-                  size="sm"
-                >
-                  <LuCircleX />
-                </Button>
-              </Tooltip>
-            )}
-            {chart.startDate && chart.endDate && (
-              <Tooltip content="Date formatting">
-                <Button
-                  variant="light"
-                  isIconOnly
-                  onPress={() => setDateFormattingModal(true)}
-                  size="sm"
-                >
-                  <LuSettings />
-                </Button>
-              </Tooltip>
-            )}
-          </Row>
-          <Spacer y={1} />
-          <Row className={"gap-1"} align="center">
-            {chart.startDate && (
-              <Chip variant="faded" color="secondary" size="sm" onClick={() => setDateRangeModal(true)}>
-                <Text className={"text-foreground"}>{labelStartDate}</Text>
-              </Chip>
-            )}
-            {chart.startDate && (<span>-</span>)}
-            {chart.endDate && (
-              <Chip variant="faded" color="secondary" size="sm" onClick={() => setDateRangeModal(true)}>
-                <Text className="text-foreground">
-                  {labelEndDate}
-                </Text>
-              </Chip>
-            )}
-          </Row>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row items-center gap-2 flex-wrap">
+          <div>
+            <DateRangeFilter
+              startDate={chart.startDate}
+              endDate={chart.endDate}
+              onChange={_onChangeDateRangeNew}
+            />
+          </div>
+          {(chart.startDate || chart.endDate) && (
+            <Tooltip content="Remove date filtering">
+              <Button
+                variant="light"
+                isIconOnly
+                color="danger"
+                onPress={() => _onRemoveDateFiltering()}
+                size="sm"
+              >
+                <LuCircleX />
+              </Button>
+            </Tooltip>
+          )}
+          {chart.startDate && chart.endDate && (
+            <Tooltip content="Date formatting">
+              <Button
+                variant="light"
+                isIconOnly
+                onPress={() => setDateFormattingModal(true)}
+                size="sm"
+              >
+                <LuSettings />
+              </Button>
+            </Tooltip>
+          )}
         </div>
-        <div className="col-span-12 lg:col-span-6">
+        <div className="flex flex-col gap-1">
           <div className="flex flex-row items-center gap-2">
             <Checkbox
               isSelected={chart.currentEndDate}
@@ -342,7 +284,6 @@ function ChartSettings({ chart, onChange, onComplete }) {
           <Select
             selectionMode="single"
             placeholder="Select a time interval"
-            label="Time interval"
             size="sm"
             selectedKeys={[chart.timeInterval]}
             onSelectionChange={(keys) => onChange({ timeInterval: keys.currentKey })}
@@ -595,82 +536,23 @@ function ChartSettings({ chart, onChange, onComplete }) {
         )}
       </div>
 
-      <Modal
-        isOpen={dateRangeModal}
-        onClose={() => setDateRangeModal(false)}
-        size="2xl"
-      >
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">Set a custom date range for your chart</Text>
-          </ModalHeader>
-          <ModalBody>
-            <div>
-              {chart.currentEndDate && (
-                <>
-                  <Text>
-                    {"The date range is set to auto-update to the current date. If you want to set an exact custom date range, disable the auto-update option."}
-                  </Text>
-                  <Spacer y={4} />
-                </>
-              )}
-              <div>
-                <DateRangePicker
-                  locale={enGB}
-                  direction="horizontal"
-                  rangeColors={[secondary, primary]}
-                  ranges={[
-                    dateRange.startDate && dateRange.endDate ? {
-                      startDate: new Date(dateRange.startDate),
-                      endDate: new Date(dateRange.endDate),
-                      key: "selection",
-                    } : initSelectionRange
-                  ]}
-                  onChange={_onChangeDateRange}
-                  staticRanges={defaultStaticRanges}
-                  inputRanges={defaultInputRanges}
-                />
-              </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setDateRangeModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              endContent={<LuCheck />}
-              onPress={_onComplete}
-              color="primary"
-            >
-              Apply date filter
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
       <Modal isOpen={dateFormattingModal} onClose={() => setDateFormattingModal(false)} size="xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h3">Set a custom format for your dates</Text>
+            Set a custom format for your dates
           </ModalHeader>
           <ModalBody>
-            <Row>
-              <Text>
-                {"Chartbrew will use this format when injecting the dates as variables in your queries. The variables are"}
-                {" "}
-                <code>{"{{start_date}}"}</code>
-                {" "}
-                {"and"}
-                {" "}
-                <code>{"{{end_date}}"}</code>
-                {"."}
-              </Text>
-            </Row>
-            <Spacer y={4} />
-            <Row>
+            <div className="text-sm">
+              {"Chartbrew will use this format when injecting the dates as variables in your queries. The variables are"}
+              {" "}
+              <Code size="sm">{"{{start_date}}"}</Code>
+              {" "}
+              {"and"}
+              {" "}
+              <Code size="sm">{"{{end_date}}"}</Code>
+              {"."}
+            </div>
+            <div>
               <Input
                 label="Enter a date format"
                 initialValue={chart.dateVarsFormat}
@@ -678,60 +560,54 @@ function ChartSettings({ chart, onChange, onComplete }) {
                 onChange={(e) => setDatesFormat(e.target.value)}
                 variant="bordered"
                 fullWidth
+                size="sm"
               />
-            </Row>
-            <Spacer y={1} />
-            <Row wrap="wrap" className={"gap-1"}>
+            </div>
+            <div className="flex flex-row flex-wrap gap-1">
               <Button
                 color="primary"
                 size="sm"
                 onPress={() => setDatesFormat("YYYY-MM-DD")}
-                variant="bordered"
+                variant="flat"
               >
                 {"YYYY-MM-DD"}
               </Button>
-              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="sm"
                 onPress={() => setDatesFormat("YYYY-MM-DD HH:mm:ss")}
-                variant="bordered"
+                variant="flat"
               >
                 {"YYYY-MM-DD HH:mm:ss"}
               </Button>
-              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="sm"
                 onPress={() => setDatesFormat("X")}
-                variant="bordered"
+                variant="flat"
               >
                 {"Timestamp (in seconds)"}
               </Button>
-              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="sm"
                 onPress={() => setDatesFormat("x")}
-                variant="bordered"
+                variant="flat"
               >
                 {"Timestamp (in ms)"}
               </Button>
-            </Row>
-            <Spacer y={1} />
-            <Row>
-              <Text small>
-                {"See "}
-                <a
-                  href="https://momentjs.com/docs/#/displaying/format/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {"moment.js documentation"}
-                </a>
-                {" for how to format dates."}
-              </Text>
-            </Row>
+            </div>
+            <div className="text-sm">
+              {"See "}
+              <a
+                href="https://momentjs.com/docs/#/displaying/format/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {"moment.js documentation"}
+              </a>
+              {" for how to format dates."}
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button
