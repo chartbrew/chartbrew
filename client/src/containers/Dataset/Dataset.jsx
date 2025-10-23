@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import {
   Button, Link, Spacer, Input, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
   Breadcrumbs, BreadcrumbItem,
+  Checkbox,
 } from "@heroui/react";
 import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -34,6 +35,7 @@ function Dataset() {
   const [projectSearch, setProjectSearch] = useState("");
   const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
   const [fromChart, setFromChart] = useState("");
+  const [shouldTagProjects, setShouldTagProjects] = useState(true);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -216,15 +218,20 @@ function Dataset() {
 
   const _onCompleteDataset = () => {
     setCompleteDatasetLoading(true);
-
-    dispatch(updateDataset({
+    const datasetData = {
       team_id: params.teamId,
       dataset_id: dataset.id,
       data: {
         draft: false,
         legend,
       },
-    }));
+    };
+
+    if (shouldTagProjects && completeProjects.length > 0) {
+      datasetData.data.project_ids = completeProjects;
+    }
+
+    dispatch(updateDataset(datasetData));
 
     let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
     let cdcData = { ...dataset, ...ghostCdc, legend };
@@ -475,7 +482,7 @@ function Dataset() {
                     isClearable
                   />
                 )}
-                <div className="flex flex-row flex-wrap gap-2">
+                <div className="flex flex-row flex-wrap gap-1">
                   {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1 && !p.ghost).map((p) => (
                     <Chip
                       key={p.id}
@@ -493,9 +500,19 @@ function Dataset() {
             )}
           </ModalBody>
           <ModalFooter>
+            {completeProjects.length > 0 && (
+              <Checkbox
+                isSelected={shouldTagProjects}
+                onValueChange={(selected) => setShouldTagProjects(selected)}
+                size="sm"
+              >
+                Tag dataset to projects
+              </Checkbox>
+            )}
             <Button
               variant="bordered"
               onPress={() => setCompleteModal(false)}
+              size="sm"
             >
               Close
             </Button>
@@ -504,6 +521,7 @@ function Dataset() {
                 color="primary"
                 onPress={_onCompleteDataset}
                 isLoading={completeDatasetLoading}
+                size="sm"
               >
                 {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
               </Button>
