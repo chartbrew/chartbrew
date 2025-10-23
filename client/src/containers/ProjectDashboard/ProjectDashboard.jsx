@@ -944,7 +944,7 @@ function ProjectDashboard() {
                 <div className="flex flex-row items-center gap-1">
                   {projectMembers?.length > 0 && (
                     <>
-                      <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
+                      <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3 pl-1">
                         <Popover>
                           <PopoverTrigger>
                             <div className="cursor-pointer">
@@ -962,17 +962,17 @@ function ProjectDashboard() {
                           <PopoverContent className="pt-4">
                             {_canAccess("teamAdmin") && (
                               <div className="w-full">
-                                <Button
-                                  endContent={<LuUsers />}
-                                  color="primary"
-                                  size="sm"
-                                  as={Link}
-                                  to={`/${params.teamId}/team/members`}
-                                  fullWidth
-                                  className="hover:text-foreground"
-                                >
-                                  Edit access
-                                </Button>
+                                <Link to={`/${params.teamId}/team/members`}>
+                                  <Button
+                                    endContent={<LuUsers />}
+                                    color="primary"
+                                    size="sm"
+                                    fullWidth
+                                    className="pointer-events-none"
+                                  >
+                                    Edit access
+                                  </Button>
+                                </Link>
                                 <Spacer y={2} />
                                 <Divider />
                                 <Spacer y={2} />
