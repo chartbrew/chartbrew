@@ -1060,6 +1060,7 @@ function ProjectDashboard() {
                         onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
+                        className="!rounded-tl-lg !rounded-bl-lg"
                       >
                         Refresh charts
                       </Button>
@@ -1070,6 +1071,7 @@ function ProjectDashboard() {
                             isIconOnly
                             onPress={() => setScheduleVisible(true)}
                             size="sm"
+                            className="!rounded-tr-lg !rounded-br-lg"
                           >
                             <LuCalendarClock
                               className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
