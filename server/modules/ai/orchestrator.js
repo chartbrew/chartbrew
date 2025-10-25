@@ -306,6 +306,13 @@ async function runQuery(payload) {
 async function summarize(payload) {
   const { question, result } = payload;
 
+  // If no result provided, return a generic message
+  if (!result) {
+    return {
+      text: "Query executed successfully. Use run_query to get specific results for summarization.",
+    };
+  }
+
   if (!openaiClient) {
     return {
       text: `Found ${result.rowCount} results`,
@@ -431,6 +438,16 @@ async function createChart(payload) {
     throw new Error("project_id is required to create a chart");
   }
 
+  // Provide default chart spec if not provided
+  const defaultSpec = {
+    type: "line",
+    title: "AI Generated Chart",
+    timeInterval: "month",
+    options: {}
+  };
+
+  const chartSpec = spec || defaultSpec;
+
   try {
     // Get the project to find the next dashboard order
     const existingCharts = await db.Chart.findAll({
@@ -447,17 +464,17 @@ async function createChart(payload) {
     // Create the chart
     const chart = await db.Chart.create({
       project_id,
-      name: spec.title || "AI Generated Chart",
-      type: spec.type || "line",
-      subType: spec.subType,
+      name: chartSpec.title || "AI Generated Chart",
+      type: chartSpec.type || "line",
+      subType: chartSpec.subType,
       draft: false,
       dashboardOrder: nextOrder,
       chartSize: 2, // default size
       displayLegend: true,
       includeZeros: true,
-      timeInterval: spec.timeInterval || "day",
-      stacked: spec.options?.stacked || false,
-      horizontal: spec.options?.horizontal || false,
+      timeInterval: chartSpec.timeInterval || "day",
+      stacked: chartSpec.options?.stacked || false,
+      horizontal: chartSpec.options?.horizontal || false,
     });
 
     // Get the dataset to link it to the chart
@@ -476,9 +493,9 @@ async function createChart(payload) {
     await db.ChartDatasetConfig.create({
       chart_id: chart.id,
       dataset_id,
-      legend: spec.title || dataset.legend,
+      legend: chartSpec.title || dataset.legend,
       order: 1,
-      datasetColor: spec.options?.color || "#1f77b4",
+      datasetColor: chartSpec.options?.color || "#1f77b4",
     });
 
     return {
@@ -596,9 +613,9 @@ async function availableTools() {
         type: "object",
         properties: {
           question: { type: "string" },
-          result: { type: "object" } // { rows, columns, rowCount }
+          result: { type: "object" } // { rows, columns, rowCount } - optional
         },
-        required: ["question", "result"]
+        required: ["question"]
       }
       // returns: { text: "23 new users today", notes?: string }
     },
@@ -642,9 +659,9 @@ async function availableTools() {
         properties: {
           project_id: { type: "string", description: "The project/dashboard ID where the chart will be placed" },
           dataset_id: { type: "string" },
-          spec: { type: "object", description: "Chart specification from suggest_chart including type, title, options" }
+          spec: { type: "object", description: "Chart specification from suggest_chart including type, title, options (optional - defaults to line chart)" }
         },
-        required: ["project_id", "dataset_id", "spec"]
+        required: ["project_id", "dataset_id"]
       }
       // returns: { chart_id, name, type, project_id }
     },
