@@ -711,10 +711,23 @@ async function callTool(name, payload) {
   }
 }
 
-function buildSystemPrompt(semanticLayer) {
+function buildSystemPrompt(semanticLayer, conversation = null) {
   const { connections, projects, chartCatalog } = semanticLayer;
 
-  return `You are an AI assistant for Chartbrew, a data visualization platform. Your role is to help users query their data and create charts.
+  const isNewConversation = !conversation || conversation.message_count === 0;
+
+  const conversationContext = isNewConversation
+    ? `\n## New Conversation
+This is the start of a new conversation. Introduce yourself and be helpful.
+
+IMPORTANT: For your FIRST response in this new conversation, include a conversation title at the very beginning in this exact format:
+[TITLE: Your concise title here (max 6 words)]
+
+The title should be actionable and descriptive based on the user's question.`
+    : `\n## Current Conversation
+This is a continuing conversation. Be aware of previous interactions and maintain context.`;
+
+  return `You are an AI assistant for Chartbrew, a data visualization platform. Your role is to help users query their data and create charts.${conversationContext}
 
 ## Available Connections
 ${connections.map((c) => `- ${c.name} (${c.type}${c.subType ? `/${c.subType}` : ""}) [ID: ${c.id}]`).join("\n")}
@@ -761,6 +774,7 @@ ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `-
    - Explain your reasoning for chart type suggestions
    - Ask before making permanent changes (creating datasets/charts)
    - Use clear, non-technical language when summarizing data
+   - In continuing conversations, reference previous work and build upon it
 
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
@@ -857,13 +871,13 @@ async function buildSemanticLayer(teamId) {
   return semanticLayer;
 }
 
-async function orchestrate(teamId, question, conversationHistory = []) {
+async function orchestrate(teamId, question, conversationHistory = [], conversation = null) {
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
 
   const semanticLayer = await buildSemanticLayer(teamId);
-  const systemPrompt = buildSystemPrompt(semanticLayer);
+  const systemPrompt = buildSystemPrompt(semanticLayer, conversation);
 
   // Prepare messages
   const messages = [
