@@ -16,6 +16,8 @@ const OpenAI = require("openai");
 const db = require("../../models/models");
 const { generateSqlQuery } = require("./generateSqlQuery");
 const ConnectionController = require("../../controllers/ConnectionController");
+const socketManager = require("../socketManager");
+const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -876,6 +878,11 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
 
+  // Emit initial processing event
+  if (conversation?.id) {
+    emitProgressEvent(socketManager, conversation.id, "PROCESSING_START", { question });
+  }
+
   const semanticLayer = await buildSemanticLayer(teamId);
   const systemPrompt = buildSystemPrompt(semanticLayer, conversation);
 
@@ -920,6 +927,15 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
     updatedMessages.push(assistantMessage);
 
     // Execute all tool calls in parallel
+    // Emit progress for tool execution
+    if (conversation?.id && assistantMessage.tool_calls.length > 0) {
+      const toolNames = assistantMessage.tool_calls.map((tc) => tc.function.name);
+      emitProgressEvent(socketManager, conversation.id, "EXECUTION_START", {
+        tools: toolNames,
+        message: `Executing ${toolNames.length} tool${toolNames.length > 1 ? "s" : ""}: ${toolNames.join(", ")}`
+      });
+    }
+
     // eslint-disable-next-line no-await-in-loop
     const toolResults = await Promise.all(
       assistantMessage.tool_calls.map(async (toolCall) => {
@@ -1016,6 +1032,27 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
   // Add final assistant message
   if (assistantMessage.content) {
     updatedMessages.push(assistantMessage);
+
+    // Parse response for progress events and emit them
+    if (conversation?.id) {
+      const { events, cleanedResponse } = parseProgressEvents(assistantMessage.content);
+
+      // Emit any parsed progress events
+      events.forEach((event) => {
+        socketManager.emitProgress(conversation.id, event.type, {
+          message: event.message,
+          parsed: true
+        });
+      });
+
+      // Use cleaned response
+      assistantMessage.content = cleanedResponse;
+    }
+  }
+
+  // Emit completion event
+  if (conversation?.id) {
+    emitProgressEvent(socketManager, conversation.id, "PROCESSING_COMPLETE");
   }
 
   return {

@@ -1,5 +1,6 @@
 const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
 const db = require("../models/models");
+const socketManager = require("../modules/socketManager");
 
 async function getOrchestration(teamId, question, conversationHistory, aiConversationId, userId) {
   let conversation;
@@ -20,6 +21,11 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
       user_id: userId,
       title: "New Conversation", // Will be updated by orchestrator
       status: "active",
+    });
+
+    // Emit conversation ID to user's room immediately so they can join before orchestration
+    socketManager.emitToUser(userId, "conversation-created", {
+      conversationId: conversation.id
     });
   }
 
@@ -77,6 +83,15 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
       status: "error",
       error_message: error.message,
     });
+
+    // Emit error event via socket
+    if (conversation?.id) {
+      socketManager.emitProgress(conversation.id, "error", {
+        message: "An error occurred during AI orchestration",
+        error: error.message
+      });
+    }
+
     throw error;
   }
 }

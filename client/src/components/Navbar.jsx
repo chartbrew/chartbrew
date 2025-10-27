@@ -9,6 +9,7 @@ import {
 import {
   LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
+  LuBrainCircuit,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
@@ -24,6 +25,7 @@ import { selectTeam, selectTeams } from "../slices/team";
 import { useTheme } from "../modules/ThemeContext";
 import cbFullLogoLight from "../assets/cb_logo_light.svg";
 import cbFullLogoDark from "../assets/cb_logo_dark.svg";
+import AiModal from "../containers/Ai/AiModal";
 
 /*
   The navbar component used throughout the app
@@ -33,6 +35,7 @@ function NavbarContainer() {
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
@@ -184,6 +187,17 @@ function NavbarContainer() {
               </span>
               <div className={"hidden sm:block text-sm"}>Updates</div>
             </div>
+          </NavbarItem>
+          <NavbarItem>
+            <Button
+              variant="light"
+              onPress={() => setShowAiModal(true)}
+              startContent={<LuBrainCircuit size={18} className="text-primary-500" />}
+              disableRipple
+              className="p-0 bg-transparent data-[hover=true]:bg-transparent"
+            >
+              Ask Chartbrew
+            </Button>
           </NavbarItem>
           <Dropdown aria-label="Select a help option">
             <NavbarItem>
@@ -357,6 +371,8 @@ function NavbarContainer() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <AiModal isOpen={showAiModal} onClose={() => setShowAiModal(false)} />
     </>
   );
 }
