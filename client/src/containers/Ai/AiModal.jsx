@@ -544,7 +544,7 @@ function AiModal({ isOpen, onClose }) {
       isOpen={isOpen}
       onClose={onClose}
       size={conversation ? "5xl" : "lg"}
-      scrollBehavior="inside"
+      scrollBehavior="outside"
     >
       <ModalContent>
         {!conversation && (
@@ -609,10 +609,10 @@ function AiModal({ isOpen, onClose }) {
 
         {conversation && (
           <ModalBody className="p-0">
-            <div className="flex flex-row h-[90vh]">
-              <div className="flex-none w-60 overflow-y-auto">
-                <div className="flex flex-col gap-2 relative h-full bg-content2">
-                  <div className="w-full bg-content1 px-4 pt-4 border-b border-r border-divider">
+            <div className="flex flex-row">
+              <div className="flex-none w-60">
+                <div className="flex flex-col relative h-full bg-content2 rounded-tl-2xl rounded-bl-2xl">
+                  <div className="w-full bg-content1 px-4 pt-4 border-b border-r border-divider rounded-tl-2xl">
                     <Button
                       color="primary"
                       startContent={<LuPlus size={18} />}
@@ -626,8 +626,7 @@ function AiModal({ isOpen, onClose }) {
                     </Button>
                     <Spacer y={4} />
                   </div>
-                  <Spacer y={2} />
-                  <div className="flex flex-col gap-2 px-2">
+                  <div className="flex flex-col h-full gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
                       <Link
                         onPress={() => _onSelectConversation(c.id)}
@@ -646,12 +645,12 @@ function AiModal({ isOpen, onClose }) {
                     ))}
                   </div>
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider">
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-r border-t border-divider bg-content2 rounded-bl-2xl">
                     <div className="text-xs text-foreground-500 text-center">End of conversations</div>
-                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="relative flex-1 h-full">
+              <div className="relative flex-1 h-full rounded-lg">
                 <div className="py-4 border-b border-divider">
                   <div className="flex flex-row gap-2 pl-4">
                     <Avatar
@@ -664,7 +663,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   </div>
                 </div>
-                <div className="h-[calc(100vh-250px)] overflow-y-auto py-4">
+                <div className="h-[calc(100vh-250px)] overflow-y-auto py-4 pb-20">
                   {(conversation?.full_history?.length > 0 || localMessages.length > 0) ? (
                     <>
                       {(() => {
@@ -707,7 +706,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   )}
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10 rounded-b-2xl">
                   <form onSubmit={_onAskAi}>
                     <div className="flex flex-row gap-2">
                       <Input
