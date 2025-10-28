@@ -18,6 +18,7 @@ const { generateSqlQuery } = require("./generateSqlQuery");
 const ConnectionController = require("../../controllers/ConnectionController");
 const socketManager = require("../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
+const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -389,22 +390,29 @@ Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "optio
 
 async function createDataset(payload) {
   const {
-    project_id, connection_id, name, query, variables = [], team_id
+    project_id, connection_id, name, query, variables = [], team_id,
+    xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
+    conditions = [], configuration = {}, transform = null
   } = payload;
-  // dialect could be stored for reference in the future
 
   if (!team_id) {
     throw new Error("team_id is required to create a dataset");
   }
 
   try {
-    // Create the dataset
+    // Create the dataset with data mapping fields
     const dataset = await db.Dataset.create({
       team_id,
       project_ids: project_id ? [project_id] : [],
       connection_id,
       legend: name || "AI Generated Dataset",
       draft: false,
+      xAxis,
+      yAxis,
+      yAxisOperation,
+      dateField,
+      dateFormat,
+      conditions,
     });
 
     // Create the data request linked to this dataset
@@ -412,9 +420,10 @@ async function createDataset(payload) {
       dataset_id: dataset.id,
       connection_id,
       query,
+      conditions: conditions || [],
+      configuration: configuration || {},
       variables: variables || [],
-      method: "GET",
-      useGlobalHeaders: true,
+      transform: transform || null,
     });
 
     // Set as main data request
@@ -434,7 +443,12 @@ async function createDataset(payload) {
 }
 
 async function createChart(payload) {
-  const { project_id, dataset_id, spec } = payload;
+  const {
+    project_id, dataset_id, spec,
+    name, legend, type, subType, chartSize, displayLegend, pointRadius,
+    dataLabels, includeZeros, timeInterval, stacked, horizontal,
+    showGrowth, invertGrowth, mode, maxValue, minValue, ranges, layout
+  } = payload;
 
   if (!project_id) {
     throw new Error("project_id is required to create a chart");
@@ -443,8 +457,18 @@ async function createChart(payload) {
   // Provide default chart spec if not provided
   const defaultSpec = {
     type: "line",
-    title: "AI Generated Chart",
-    timeInterval: "month",
+    title: name || "AI Generated Chart",
+    timeInterval: timeInterval || "day",
+    chartSize: chartSize || 2,
+    displayLegend: displayLegend !== undefined ? displayLegend : true,
+    pointRadius: pointRadius || 0,
+    dataLabels: dataLabels || false,
+    includeZeros: includeZeros !== undefined ? includeZeros : true,
+    stacked: stacked || false,
+    horizontal: horizontal || false,
+    showGrowth: showGrowth || false,
+    invertGrowth: invertGrowth || false,
+    mode: mode || "chart",
     options: {}
   };
 
@@ -466,17 +490,36 @@ async function createChart(payload) {
     // Create the chart
     const chart = await db.Chart.create({
       project_id,
-      name: chartSpec.title || "AI Generated Chart",
-      type: chartSpec.type || "line",
-      subType: chartSpec.subType,
+      name: chartSpec.title || name || "AI Generated Chart",
+      type: chartSpec.type || type || "line",
+      subType: chartSpec.subType || subType,
       draft: false,
       dashboardOrder: nextOrder,
-      chartSize: 2, // default size
-      displayLegend: true,
-      includeZeros: true,
-      timeInterval: chartSpec.timeInterval || "day",
-      stacked: chartSpec.options?.stacked || false,
-      horizontal: chartSpec.options?.horizontal || false,
+      chartSize: chartSpec.chartSize || chartSize || 2,
+      // eslint-disable-next-line no-nested-ternary
+      displayLegend: chartSpec.displayLegend !== undefined
+        ? chartSpec.displayLegend
+        : displayLegend !== undefined
+          ? displayLegend
+          : true,
+      pointRadius: chartSpec.pointRadius || pointRadius || 0,
+      dataLabels: chartSpec.dataLabels || dataLabels || false,
+      // eslint-disable-next-line no-nested-ternary
+      includeZeros: chartSpec.includeZeros !== undefined
+        ? chartSpec.includeZeros
+        : includeZeros !== undefined
+          ? includeZeros
+          : true,
+      timeInterval: chartSpec.timeInterval || timeInterval || "day",
+      stacked: chartSpec.stacked || stacked || chartSpec.options?.stacked || false,
+      horizontal: chartSpec.horizontal || horizontal || chartSpec.options?.horizontal || false,
+      showGrowth: chartSpec.showGrowth || showGrowth || false,
+      invertGrowth: chartSpec.invertGrowth || invertGrowth || false,
+      mode: chartSpec.mode || mode || "chart",
+      maxValue: chartSpec.maxValue || maxValue,
+      minValue: chartSpec.minValue || minValue,
+      ranges: chartSpec.ranges || ranges,
+      layout: chartSpec.layout || layout,
     });
 
     // Get the dataset to link it to the chart
@@ -485,19 +528,24 @@ async function createChart(payload) {
       throw new Error("Dataset not found");
     }
 
-    // Update dataset to link to this chart
-    await db.Dataset.update(
-      { chart_id: chart.id },
-      { where: { id: dataset_id } }
-    );
-
     // Create ChartDatasetConfig to link chart and dataset
     await db.ChartDatasetConfig.create({
       chart_id: chart.id,
       dataset_id,
-      legend: chartSpec.title || dataset.legend,
+      formula: chartSpec.formula,
+      datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
+      fillColor: chartSpec.fillColor,
+      fill: chartSpec.fill || false,
+      multiFill: chartSpec.multiFill || false,
+      legend: legend || chartSpec.title || dataset.legend,
+      pointRadius: chartSpec.pointRadius || pointRadius || 0,
+      excludedFields: chartSpec.excludedFields || [],
+      sort: chartSpec.sort,
+      columnsOrder: chartSpec.columnsOrder,
       order: 1,
-      datasetColor: chartSpec.options?.color || "#1f77b4",
+      maxRecords: chartSpec.maxRecords,
+      goal: chartSpec.goal,
+      configuration: chartSpec.configuration || {},
     });
 
     return {
@@ -647,9 +695,17 @@ async function availableTools() {
           name: { type: "string" },
           dialect: { type: "string" },
           query: { type: "string" },
-          variables: { type: "array", items: { type: "string" }, default: [] }
+          variables: { type: "array", items: { type: "string" }, default: [] },
+          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results, e.g. 'root[].month_start')" },
+          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results, e.g. 'root[].count')" },
+          yAxisOperation: { type: "string", enum: ["none", "sum", "avg", "min", "max", "count"], default: "none" },
+          dateField: { type: "string", description: "Date field for filtering" },
+          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
+          configuration: { type: "object", description: "Dialect-specific settings (MongoDB/SQL)" },
+          transform: { type: "object", description: "Data transformation rules" }
         },
-        required: ["connection_id", "name", "dialect", "query"]
+        required: ["connection_id", "name", "dialect", "query", "xAxis", "yAxis"]
       }
       // returns: { dataset_id, data_request_id, name }
     },
@@ -661,7 +717,38 @@ async function availableTools() {
         properties: {
           project_id: { type: "string", description: "The project/dashboard ID where the chart will be placed" },
           dataset_id: { type: "string" },
-          spec: { type: "object", description: "Chart specification from suggest_chart including type, title, options (optional - defaults to line chart)" }
+          name: { type: "string", description: "Chart name/title" },
+          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
+          chartSize: { type: "integer", enum: [1, 2, 3, 4], description: "Chart size: 1(small), 2(medium), 3(large), 4(full-width)" },
+          displayLegend: { type: "boolean", description: "Show chart legend" },
+          pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
+          dataLabels: { type: "boolean", description: "Show values on data points" },
+          includeZeros: { type: "boolean", description: "Include zero values" },
+          timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
+          stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
+          horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          showGrowth: { type: "boolean", description: "Show percentage growth" },
+          invertGrowth: { type: "boolean", description: "Invert growth calculation" },
+          mode: { type: "string", enum: ["chart", "kpi"] },
+          maxValue: { type: "integer", description: "Cap maximum value" },
+          minValue: { type: "integer", description: "Cap minimum value" },
+          ranges: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                min: { type: "number" },
+                max: { type: "number" },
+                label: { type: "string" },
+                color: { type: "string" }
+              }
+            },
+            description: "Gauge ranges [{min, max, label, color}]"
+          },
+          layout: { type: "object", description: "Grid layout {lg: [x,y,w,h], ...}" },
+          spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
         required: ["project_id", "dataset_id"]
       }
@@ -750,6 +837,8 @@ ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `-
 3. **Datasets**: Process and transform data from DataRequests for visualization
 4. **Charts**: Visual representations of Datasets, placed in Projects (dashboards)
 5. **ChartDatasetConfigs**: Link Charts to Datasets with specific configurations
+
+${ENTITY_CREATION_RULES}
 
 ## Your Capabilities
 - List and identify appropriate connections based on user questions
