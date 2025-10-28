@@ -27,18 +27,16 @@ class SocketManager {
     });
 
     this.setupConnectionHandling();
-    console.log("Socket.IO initialized");
   }
 
   setupConnectionHandling() {
     this.io.on("connection", (socket) => {
-      console.log(`Socket connected: ${socket.id}`);
-
       // Authentication middleware
       socket.on("authenticate", (data) => {
         const { userId, teamId } = data;
         if (userId) {
           this.activeConnections.set(userId, socket);
+          // eslint-disable-next-line no-param-reassign
           socket.userId = userId;
 
           // Join team room for team-wide broadcasts
@@ -52,7 +50,6 @@ class SocketManager {
           this.addToRoom(`user:${userId}`, socket.id);
 
           socket.emit("authenticated", { success: true });
-          console.log(`User ${userId} authenticated on socket ${socket.id}`);
         }
       });
 
@@ -62,7 +59,6 @@ class SocketManager {
         if (conversationId && socket.userId) {
           socket.join(`conversation:${conversationId}`);
           this.addToRoom(`conversation:${conversationId}`, socket.id);
-          console.log(`User ${socket.userId} joined conversation ${conversationId}`);
         }
       });
 
@@ -72,16 +68,13 @@ class SocketManager {
         if (conversationId) {
           socket.leave(`conversation:${conversationId}`);
           this.removeFromRoom(`conversation:${conversationId}`, socket.id);
-          console.log(`User ${socket.userId} left conversation ${conversationId}`);
         }
       });
 
       // Handle disconnection
       socket.on("disconnect", () => {
-        console.log(`Socket disconnected: ${socket.id}`);
-
         // Clean up from rooms
-        this.roomConnections.forEach((sockets, room) => {
+        this.roomConnections.forEach((sockets) => {
           if (sockets.has(socket.id)) {
             sockets.delete(socket.id);
           }

@@ -687,29 +687,33 @@ async function availableTools() {
 }
 
 async function callTool(name, payload) {
-  switch (name) {
-    case "list_connections":
-      return listConnections(payload);
-    case "get_schema":
-      return getSchema(payload);
-    case "generate_query":
-      return generateQuery(payload);
-    case "validate_query":
-      return validateQuery(payload);
-    case "run_query":
-      return runQuery(payload);
-    case "summarize":
-      return summarize(payload);
-    case "suggest_chart":
-      return suggestChart(payload);
-    case "create_dataset":
-      return createDataset(payload);
-    case "create_chart":
-      return createChart(payload);
-    case "disambiguate":
-      return disambiguate(payload);
-    default:
-      throw new Error(`Tool ${name} not found`);
+  try {
+    switch (name) {
+      case "list_connections":
+        return listConnections(payload);
+      case "get_schema":
+        return getSchema(payload);
+      case "generate_query":
+        return generateQuery(payload);
+      case "validate_query":
+        return validateQuery(payload);
+      case "run_query":
+        return runQuery(payload);
+      case "summarize":
+        return summarize(payload);
+      case "suggest_chart":
+        return suggestChart(payload);
+      case "create_dataset":
+        return createDataset(payload);
+      case "create_chart":
+        return createChart(payload);
+      case "disambiguate":
+        return disambiguate(payload);
+      default:
+        throw new Error(`Tool ${name} not found`);
+    }
+  } catch (error) {
+    throw new Error(`Tool ${name} execution failed: ${error.message}`);
   }
 }
 
