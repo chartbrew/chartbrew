@@ -41,39 +41,27 @@ module.exports = (sequelize, DataTypes) => {
           return this.getDataValue("project_ids");
         }
       },
-    },
-    chart_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: null,
-      reference: {
-        model: "Chart",
-        key: "id",
-        onDelete: "SET NULL",
-      },
-    },
-    connection_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      reference: {
-        model: "Connection",
-        key: "id",
-        onDelete: "cascade",
-      },
+      description: "Array of project IDs where members can access the dataset"
     },
     draft: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+      description: "Whether the dataset is a draft and should be hidden from dashboard viewers"
     },
-    query: {
-      type: DataTypes.TEXT,
-    },
+    /*
+    ** Traversal syntax for both x and y axes
+    ** root[].field when root is an array
+    ** root.field when root is an object
+    ** root.field[].field when root is an object and the field is an array
+    */
     xAxis: {
       type: DataTypes.STRING,
+      description: "X axis or metric field using traversal syntax - root[].field"
     },
     xAxisOperation: {
       type: DataTypes.STRING,
+      description: "Not in use"
     },
     yAxis: {
       type: DataTypes.STRING,
@@ -81,16 +69,29 @@ module.exports = (sequelize, DataTypes) => {
     yAxisOperation: {
       type: DataTypes.STRING,
       defaultValue: "none",
+      description: "Operation to perform on the y-axis - none, sum, avg, min, max, count"
     },
     dateField: {
       type: DataTypes.STRING,
+      description: "Date field using traversal syntax. Specifies which field should be used for date filtering."
     },
     dateFormat: {
       type: DataTypes.STRING,
+      description: "Date format to use for date filtering. e.g YYYY-MM-DD"
     },
     legend: {
       type: DataTypes.STRING,
+      description: "Legend label (name) of the dataset"
     },
+    /*
+    ** Conditions to apply to the dataset - used for filtering
+    ** Each condition is an object with the following properties:
+    ** id: string
+    ** field: string - using traversal syntax - root[].field
+    ** operator: string
+    ** value: string
+    ** displayValues: boolean - whether to display the values in the dropdown UI
+    */
     conditions: {
       type: DataTypes.TEXT("long"),
       set(val) {
@@ -102,10 +103,12 @@ module.exports = (sequelize, DataTypes) => {
         } catch (e) {
           return this.getDataValue("conditions");
         }
-      }
+      },
+      description: "Conditions to apply to the dataset - used for filtering"
     },
     formula: {
       type: DataTypes.TEXT,
+      description: "[Legacy] Formula to use for the dataset"
     },
     fieldsSchema: {
       type: DataTypes.TEXT("long"),
@@ -123,6 +126,70 @@ module.exports = (sequelize, DataTypes) => {
       set(val) {
         return this.setDataValue("fieldsSchema", encrypt(JSON.stringify(val)));
       },
+      description: "Schema of the fields in the dataset key(field name) => value(type)"
+    },
+    /*
+    ** Join settings of the dataset - used for tables
+    ** Specifies how to join the dataset to the main source data request
+    ** joins: array of objects with the following properties:
+    ** dr_id: integer - DataRequest ID
+    ** join_id: integer - Join ID
+    ** dr_field: string - Field in the dataset to join on
+    ** join_field: string - Field in the main source data request to join on
+    */
+    joinSettings: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("joinSettings", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("joinSettings"));
+        } catch (e) {
+          return this.getDataValue("joinSettings");
+        }
+      },
+      description: "Specifies how to join the dataset to the main source data request"
+    },
+    main_dr_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      reference: {
+        model: "DataRequest",
+        key: "id",
+        onDelete: "cascade",
+      },
+      description: "The main data request ID of the dataset"
+    },
+    // ------------------------------------
+
+    /*
+    ** LEGACY FIELDS
+    */
+    chart_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      reference: {
+        model: "Chart",
+        key: "id",
+        onDelete: "SET NULL",
+      },
+      description: "[Legacy] The chart ID where the dataset is used"
+    },
+    connection_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      reference: {
+        model: "Connection",
+        key: "id",
+        onDelete: "cascade",
+      },
+      description: "[Legacy] The connection ID where the dataset is used"
+    },
+    query: {
+      type: DataTypes.TEXT,
+      description: "[Legacy] The query used to fetch the dataset"
     },
     excludedFields: {
       type: DataTypes.TEXT,
@@ -136,10 +203,12 @@ module.exports = (sequelize, DataTypes) => {
       set(val) {
         return this.setDataValue("excludedFields", JSON.stringify(val));
       },
+      description: "[Legacy] Fields to exclude from the dataset - used for tables"
     },
     averageByTotal: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      description: "[Legacy] Whether to average the total by the field - not used currently"
     },
     configuration: {
       type: DataTypes.TEXT,
@@ -152,35 +221,9 @@ module.exports = (sequelize, DataTypes) => {
         } catch (e) {
           return this.getDataValue("configuration");
         }
-      }
-    },
-    joinSettings: {
-      type: DataTypes.TEXT,
-      set(val) {
-        return this.setDataValue("joinSettings", JSON.stringify(val));
       },
-      get() {
-        try {
-          return JSON.parse(this.getDataValue("joinSettings"));
-        } catch (e) {
-          return this.getDataValue("joinSettings");
-        }
-      }
+      description: "[Legacy] Configuration of the dataset - used for tables"
     },
-    main_dr_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      reference: {
-        model: "DataRequest",
-        key: "id",
-        onDelete: "cascade",
-      },
-    },
-    // ------------------------------------
-
-    /*
-    ** LEGACY FIELDS
-    */
     datasetColor: {
       type: DataTypes.TEXT,
     },
