@@ -63,3 +63,23 @@ export async function orchestrateAi(teamId, userId, question, conversationHistor
 
   return response.json();
 }
+
+export async function deleteAiConversation(conversationId, teamId) {
+  const token = getAuthToken();
+  const url = `${API_HOST}/ai/conversations/${conversationId}?teamId=${teamId}`;
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`,
+  });
+
+  const response = await fetch(url, {
+    headers,
+    method: "DELETE"
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete conversation");
+  }
+
+  return response.json();
+}

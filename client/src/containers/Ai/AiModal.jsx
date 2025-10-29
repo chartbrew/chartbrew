@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Link, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader } from "react-icons/lu"
+import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip } from "@heroui/react"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins } from "react-icons/lu"
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-import { getAiConversation, getAiConversations, orchestrateAi } from "../../api/ai";
+import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { API_HOST } from "../../config/settings";
@@ -17,6 +17,13 @@ function formatDate(date) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatTokens(tokens) {
+  if (!tokens || tokens === 0) return "0";
+  if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`;
+  if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
+  return tokens.toString();
 }
 
 function AiModal({ isOpen, onClose }) {
@@ -77,7 +84,7 @@ function AiModal({ isOpen, onClose }) {
 
   // Join conversation room when conversation changes
   useEffect(() => {
-    if (socket && conversation) {
+    if (socket && conversation && conversation.id) {
       socket.emit("join-conversation", { conversationId: conversation.id });
 
       // Listen for progress events
@@ -151,6 +158,11 @@ function AiModal({ isOpen, onClose }) {
           tempConversation.id // Use the ID if we already have it from socket
         );
 
+        // Validate response structure
+        if (!response || !response.orchestration || !response.orchestration.message) {
+          throw new Error("Invalid response from AI");
+        }
+
         // Add AI response to local messages
         const aiMessage = {
           role: "assistant",
@@ -167,10 +179,12 @@ function AiModal({ isOpen, onClose }) {
           );
           if (newConversation) {
             // Update conversation metadata but keep full_history empty since we're using localMessages
-            setConversation({
+            setConversation(prev => ({
               ...newConversation,
-              full_history: []
-            });
+              full_history: [],
+              id: prev?.id || newConversation.id, // Preserve socket-updated ID
+              isTemporary: false
+            }));
           }
         }
       } else {
@@ -191,6 +205,11 @@ function AiModal({ isOpen, onClose }) {
           conversationHistory,
           conversation.id
         );
+
+        // Validate response structure
+        if (!response || !response.orchestration || !response.orchestration.message) {
+          throw new Error("Invalid response from AI");
+        }
 
         // Add AI response to local messages
         const aiMessage = {
@@ -235,6 +254,26 @@ function AiModal({ isOpen, onClose }) {
       } else {
         toast.error("Failed to fetch conversation");
       }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const _onDeleteConversation = async (conversationId) => {
+    try {
+      await deleteAiConversation(conversationId, team.id);
+      toast.success("Conversation deleted");
+      
+      // If we deleted the current conversation, go back to welcome screen
+      if (conversation?.id === conversationId) {
+        setConversation(null);
+        setLocalMessages([]);
+        setProgressEvents([]);
+        setIsActiveSession(false);
+      }
+      
+      // Reload conversations list
+      await loadConversations();
     } catch (error) {
       toast.error(error.message);
     }
@@ -315,7 +354,7 @@ function AiModal({ isOpen, onClose }) {
       return (
         <div key={index} className="flex justify-center mb-4 px-4">
           <div className="w-full max-w-[90%]">
-            <div className="bg-content2 border border-divider px-4 py-3 rounded-lg">
+            <div className="px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
                 <Avatar
                   icon={<LuBrainCircuit size={16} className="text-background" />}
@@ -326,7 +365,7 @@ function AiModal({ isOpen, onClose }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {parsed.tools.map((tool, idx) => (
-                  <Popover key={idx} placement="bottom" className="max-w-md">
+                  <Popover key={idx} placement="bottom" className="max-w-md" aria-label="Tool call arguments">
                     <PopoverTrigger>
                       <Chip
                         variant="flat"
@@ -366,7 +405,7 @@ function AiModal({ isOpen, onClose }) {
                   Result: {parsed.name}
                 </Chip>
               </div>
-              <Popover placement="bottom">
+              <Popover placement="bottom" aria-label="Tool result">
                 <PopoverTrigger>
                   <Button size="sm" variant="flat" endContent={<LuChevronDown size={14} />}>
                     View result
@@ -395,7 +434,7 @@ function AiModal({ isOpen, onClose }) {
             <div className={`px-6 py-4 rounded-lg ${
               isError 
                 ? "bg-danger-50 border border-danger-200" 
-                : "bg-content2 border border-divider"
+                : ""
             }`}>
               <div className="flex items-start gap-3">
                 <Avatar
@@ -454,7 +493,7 @@ function AiModal({ isOpen, onClose }) {
     return (
       <div key={`group-${groupIndex}`} className="flex justify-center mb-4 px-4">
         <div className="w-full max-w-[90%]">
-          <div className="bg-content2 border border-divider px-6 py-4 rounded-lg">
+          <div className="px-6 py-4">
             <div className="flex items-start gap-3">
               <Avatar
                 icon={<LuBrainCircuit size={16} className="text-background" />}
@@ -467,7 +506,7 @@ function AiModal({ isOpen, onClose }) {
                     <div className="text-xs font-medium text-foreground-500 mb-2">Operations performed:</div>
                     <div className="space-y-1">
                       {operations.map((op, idx) => (
-                        <Popover key={idx} placement="bottom">
+                        <Popover key={idx} placement="bottom" aria-label="Tool call arguments">
                           <PopoverTrigger>
                             <div className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1">
                               <span>•</span>
@@ -583,21 +622,41 @@ function AiModal({ isOpen, onClose }) {
                 classNames={{ title: "text-sm font-medium" }}
               >
                 <div className="flex flex-col gap-2">
-                  {conversations.map((conversation) => (
-                    <Link
-                      onPress={() => _onSelectConversation(conversation.id)}
-                      className="flex flex-row gap-2 cursor-pointer"
-                      key={conversation.id}
+                  {conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
+                      onClick={() => _onSelectConversation(conv.id)}
                     >
-                      <div><LuMessageSquare /></div>
-                      <div className="flex flex-col gap-1">
-                        <div className="text-sm text-foreground">{conversation.title}</div>
-                        <div className="flex flex-row items-center gap-1">
-                          <div><LuClock size={12} /></div>
-                          <div className="text-xs text-foreground-500">{formatDate(conversation.createdAt)}</div>
+                      <div className="pt-1"><LuMessageSquare size={16} /></div>
+                      <div className="flex flex-col gap-1 flex-1">
+                        <div className="text-sm text-foreground font-medium">{conv.title}</div>
+                        <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
+                          <div className="flex items-center gap-1">
+                            <LuClock size={12} />
+                            <span>{formatDate(conv.createdAt)}</span>
+                          </div>
+                          {conv.total_tokens > 0 && (
+                            <div className="flex items-center gap-1">
+                              <LuCoins size={12} />
+                              <span>{formatTokens(conv.total_tokens)} tokens</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </Link>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Tooltip content="Delete conversation">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            onPress={() => _onDeleteConversation(conv.id)}
+                          >
+                            <LuTrash2 size={16} />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </AccordionItem>
@@ -628,20 +687,41 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                   <div className="flex flex-col h-full gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
-                      <Link
-                        onPress={() => _onSelectConversation(c.id)}
-                        className={`flex flex-row gap-2 cursor-pointer px-2 py-2 rounded-lg ${c.id === conversation.id ? "bg-background shadow-sm" : ""}`}
+                      <div
                         key={c.id}
+                        className={`flex flex-row gap-2 cursor-pointer px-2 py-2 rounded-lg transition-colors group relative ${c.id === conversation.id ? "bg-background shadow-sm" : "hover:bg-background/50"}`}
+                        onClick={() => _onSelectConversation(c.id)}
                       >
-                        <div><LuMessageSquare /></div>
-                        <div className="flex flex-col gap-1">
-                          <div className="text-sm text-foreground">{c.title}</div>
-                          <div className="flex flex-row items-center gap-1">
-                            <div><LuClock size={12} /></div>
-                            <div className="text-xs text-foreground-500">{formatDate(c.createdAt)}</div>
+                        <div className="pt-1"><LuMessageSquare size={14} /></div>
+                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                          <div className="text-sm text-foreground truncate pr-6">{c.title}</div>
+                          <div className="flex flex-col gap-1">
+                            <div className="text-xs text-foreground-500 flex items-center gap-1">
+                              <LuClock size={10} />
+                              <span className="truncate">{formatDate(c.createdAt)}</span>
+                            </div>
+                            {c.total_tokens > 0 && (
+                              <div className="text-xs text-foreground-500 flex items-center gap-1">
+                                <LuCoins size={10} />
+                                <span>{formatTokens(c.total_tokens)}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </Link>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Tooltip content="Delete">
+                            <Button
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              color="danger"
+                              onPress={() => _onDeleteConversation(c.id)}
+                            >
+                              <LuTrash2 size={14} />
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      </div>
                     ))}
                   </div>
 
@@ -652,14 +732,46 @@ function AiModal({ isOpen, onClose }) {
               </div>
               <div className="relative flex-1 h-full rounded-lg">
                 <div className="py-4 border-b border-divider">
-                  <div className="flex flex-row gap-2 pl-4">
+                  <div className="flex flex-row gap-3 pl-4 pr-4 items-start">
                     <Avatar
                       icon={<LuBrainCircuit size={24} className="text-background" />}
                       color="primary"
                     />
-                    <div className="flex flex-col gap-1">
-                      <div className="text-md text-foreground">{conversation.title}</div>
-                      <div className="text-xs text-foreground-500">{formatDate(conversation.createdAt)}</div>
+                    <div className="flex flex-col gap-1 flex-1">
+                      <div className="flex flex-row items-center gap-2">
+                        <div className="text-md text-foreground font-medium">{conversation.title}</div>
+                        <Tooltip content="Delete conversation">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            onPress={() => _onDeleteConversation(conversation.id)}
+                          >
+                            <LuTrash2 size={16} />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                      <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
+                        <div className="flex items-center gap-1">
+                          <LuClock size={12} />
+                          <span>{formatDate(conversation.createdAt)}</span>
+                        </div>
+                        {conversation.message_count > 0 && (
+                          <div className="flex items-center gap-1">
+                            <LuMessageSquare size={12} />
+                            <span>{conversation.message_count} {conversation.message_count === 1 ? "message" : "messages"}</span>
+                          </div>
+                        )}
+                        {conversation.total_tokens > 0 && (
+                          <Tooltip content={`${conversation.total_tokens.toLocaleString()} tokens used`}>
+                            <div className="flex items-center gap-1 cursor-help">
+                              <LuCoins size={12} />
+                              <span>{formatTokens(conversation.total_tokens)}</span>
+                            </div>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -684,7 +796,7 @@ function AiModal({ isOpen, onClose }) {
                       {isLoading && progressEvents.length === 0 && (
                         <div className="flex justify-center mb-4 px-4">
                           <div className="w-full max-w-[90%]">
-                            <div className="bg-content2 border border-divider px-4 py-3 rounded-lg">
+                            <div className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <Avatar
                                   icon={<LuBrainCircuit size={16} className="text-background" />}

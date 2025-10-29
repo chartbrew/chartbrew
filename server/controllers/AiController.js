@@ -1,3 +1,5 @@
+const { fn, col } = require("sequelize");
+
 const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
 const db = require("../models/models");
 const socketManager = require("../modules/socketManager");
@@ -32,7 +34,31 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
   // Load conversation history from database if not provided
   let fullHistory = conversationHistory;
   if (!conversationHistory || conversationHistory.length === 0) {
-    fullHistory = conversation.full_history || [];
+    // Rebuild history from AiMessage table
+    const messages = await db.AiMessage.findAll({
+      where: { conversation_id: conversation.id },
+      order: [["sequence", "ASC"]],
+    });
+
+    fullHistory = messages.map((msg) => {
+      const messageObj = {
+        role: msg.role,
+        content: msg.content,
+      };
+
+      // Add tool-specific fields
+      if (msg.tool_calls) {
+        messageObj.tool_calls = msg.tool_calls;
+      }
+      if (msg.tool_name) {
+        messageObj.name = msg.tool_name;
+      }
+      if (msg.tool_call_id) {
+        messageObj.tool_call_id = msg.tool_call_id;
+      }
+
+      return messageObj;
+    });
   }
 
   try {
@@ -52,15 +78,57 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
       }
     }
 
-    // Update conversation with new history and metadata
+    // Get the starting sequence number (0 for new conversations, or continue from existing)
+    const existingMessageCount = await db.AiMessage.count({
+      where: { conversation_id: conversation.id }
+    });
+
+    // Save new messages to AiMessage table
+    const newMessages = orchestration.conversationHistory.slice(existingMessageCount);
+    const messagePromises = newMessages.map((msg, index) => {
+      const messageData = {
+        conversation_id: conversation.id,
+        role: msg.role,
+        content: msg.content,
+        sequence: existingMessageCount + index,
+      };
+
+      // Handle tool calls for assistant messages
+      if (msg.tool_calls) {
+        messageData.tool_calls = msg.tool_calls;
+      }
+
+      // Handle tool result messages
+      if (msg.role === "tool") {
+        messageData.tool_name = msg.name;
+        messageData.tool_call_id = msg.tool_call_id;
+        // Store preview of tool result (first 500 chars)
+        const resultStr = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+        messageData.tool_result_preview = resultStr.substring(0, 500);
+      }
+
+      return db.AiMessage.create(messageData);
+    });
+
+    await Promise.all(messagePromises);
+
+    // Save usage records to AiUsage table
+    const usagePromises = (orchestration.usageRecords || []).map((usage) => db.AiUsage.create({
+      conversation_id: conversation.id,
+      team_id: teamId,
+      model: usage.model,
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      elapsed_ms: usage.elapsed_ms,
+      cost_micros: 0, // TODO: Calculate cost based on model pricing
+    }));
+
+    await Promise.all(usagePromises);
+
+    // Update conversation metadata
     const updateData = {
-      full_history: orchestration.conversationHistory,
       message_count: orchestration.conversationHistory.filter((msg) => msg.role === "user").length,
-      tool_calls_count: orchestration.iterations || 0,
-      total_tokens: (orchestration.usage?.total_tokens || 0) + (conversation.total_tokens || 0),
-      prompt_tokens: (orchestration.usage?.prompt_tokens || 0) + (conversation.prompt_tokens || 0),
-      completion_tokens: (orchestration.usage?.completion_tokens || 0)
-        + (conversation.completion_tokens || 0),
       status: "active",
       error_message: null,
     };
@@ -110,10 +178,43 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
     order: [["updatedAt", "DESC"]],
     limit,
     offset,
-    attributes: ["id", "title", "status", "message_count", "tool_calls_count", "total_tokens", "createdAt", "updatedAt"],
+    attributes: ["id", "title", "status", "message_count", "createdAt", "updatedAt"],
+    include: [
+      {
+        model: db.AiUsage,
+        attributes: [],
+      }
+    ],
   });
 
-  return conversations;
+  // Compute token totals from AiUsage for each conversation
+  const conversationsWithUsage = await Promise.all(conversations.map(async (conv) => {
+    const usageStats = await db.AiUsage.findAll({
+      where: { conversation_id: conv.id },
+      attributes: [
+        [fn("SUM", col("total_tokens")), "total_tokens"],
+        [fn("SUM", col("prompt_tokens")), "prompt_tokens"],
+        [fn("SUM", col("completion_tokens")), "completion_tokens"],
+      ],
+      raw: true,
+    });
+
+    const stats = usageStats[0] || {};
+
+    return {
+      id: conv.id,
+      title: conv.title,
+      status: conv.status,
+      message_count: conv.message_count,
+      total_tokens: parseInt(stats.total_tokens, 10) || 0,
+      prompt_tokens: parseInt(stats.prompt_tokens, 10) || 0,
+      completion_tokens: parseInt(stats.completion_tokens, 10) || 0,
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+    };
+  }));
+
+  return conversationsWithUsage;
 }
 
 async function getConversation(conversationId, teamId) {
@@ -128,7 +229,54 @@ async function getConversation(conversationId, teamId) {
     throw new Error("Conversation not found");
   }
 
-  return conversation;
+  // Load messages from AiMessage table
+  const messages = await db.AiMessage.findAll({
+    where: { conversation_id: conversationId },
+    order: [["sequence", "ASC"]],
+  });
+
+  // Rebuild full_history for backward compatibility with client
+  const fullHistory = messages.map((msg) => {
+    const messageObj = {
+      role: msg.role,
+      content: msg.content,
+    };
+
+    // Add tool-specific fields
+    if (msg.tool_calls) {
+      messageObj.tool_calls = msg.tool_calls;
+    }
+    if (msg.tool_name) {
+      messageObj.name = msg.tool_name;
+    }
+    if (msg.tool_call_id) {
+      messageObj.tool_call_id = msg.tool_call_id;
+    }
+
+    return messageObj;
+  });
+
+  // Compute token usage stats
+  const usageStats = await db.AiUsage.findAll({
+    where: { conversation_id: conversationId },
+    attributes: [
+      [fn("SUM", col("total_tokens")), "total_tokens"],
+      [fn("SUM", col("prompt_tokens")), "prompt_tokens"],
+      [fn("SUM", col("completion_tokens")), "completion_tokens"],
+    ],
+    raw: true,
+  });
+
+  const stats = usageStats[0] || {};
+
+  // Return conversation with messages and usage stats
+  return {
+    ...conversation.toJSON(),
+    full_history: fullHistory,
+    total_tokens: parseInt(stats.total_tokens, 10) || 0,
+    prompt_tokens: parseInt(stats.prompt_tokens, 10) || 0,
+    completion_tokens: parseInt(stats.completion_tokens, 10) || 0,
+  };
 }
 
 async function deleteConversation(conversationId, teamId) {
@@ -143,7 +291,19 @@ async function deleteConversation(conversationId, teamId) {
     throw new Error("Conversation not found");
   }
 
+  // Delete messages (AiMessage cascade delete will handle this)
+  await db.AiMessage.destroy({
+    where: { conversation_id: conversationId }
+  });
+
+  // NOTE: We intentionally DO NOT delete AiUsage records
+  // They are kept for billing/audit purposes even after conversation deletion
+  // The team_id field in AiUsage allows us to track usage history
+  // AiUsage.conversation_id will be set to NULL automatically (onDelete: "set null")
+
+  // Delete the conversation itself
   await conversation.destroy();
+
   return { success: true };
 }
 

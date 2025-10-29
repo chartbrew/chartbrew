@@ -95,6 +95,62 @@ module.exports = (app) => {
     }
   });
 
+  // Get team usage statistics (for billing/analytics)
+  app.get("/ai/usage/:teamId", async (req, res) => {
+    const { teamId } = req.params;
+    const { startDate, endDate, groupBy = "day" } = req.query;
+
+    if (!teamId) {
+      return res.status(400).json({ error: "teamId is required" });
+    }
+
+    try {
+      const db = require("../models/models");
+      const whereClause = { team_id: parseInt(teamId, 10) };
+
+      // Add date filtering if provided
+      if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) whereClause.createdAt[db.Sequelize.Op.gte] = new Date(startDate);
+        if (endDate) whereClause.createdAt[db.Sequelize.Op.lte] = new Date(endDate);
+      }
+
+      // Get total usage
+      const totalUsage = await db.AiUsage.findAll({
+        where: whereClause,
+        attributes: [
+          [db.Sequelize.fn("SUM", db.Sequelize.col("total_tokens")), "total_tokens"],
+          [db.Sequelize.fn("SUM", db.Sequelize.col("prompt_tokens")), "prompt_tokens"],
+          [db.Sequelize.fn("SUM", db.Sequelize.col("completion_tokens")), "completion_tokens"],
+          [db.Sequelize.fn("SUM", db.Sequelize.col("cost_micros")), "total_cost_micros"],
+          [db.Sequelize.fn("COUNT", db.Sequelize.col("id")), "api_calls"],
+        ],
+        raw: true,
+      });
+
+      // Get usage by model
+      const usageByModel = await db.AiUsage.findAll({
+        where: whereClause,
+        attributes: [
+          "model",
+          [db.Sequelize.fn("SUM", db.Sequelize.col("total_tokens")), "total_tokens"],
+          [db.Sequelize.fn("COUNT", db.Sequelize.col("id")), "api_calls"],
+        ],
+        group: ["model"],
+        raw: true,
+      });
+
+      return res.json({
+        usage: {
+          total: totalUsage[0] || {},
+          byModel: usageByModel,
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
   return (req, res, next) => {
     next();
   };

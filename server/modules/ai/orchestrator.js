@@ -997,13 +997,29 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
     }
   }));
 
+  // Track all usage records (one per API call)
+  const usageRecords = [];
+
   // Initial API call
+  const startTime1 = Date.now();
   let response = await openaiClient.chat.completions.create({
     model: openAiModel || "gpt-4o-mini",
     messages,
     tools,
     tool_choice: "auto",
   });
+  const elapsedMs1 = Date.now() - startTime1;
+
+  // Record first usage
+  if (response.usage) {
+    usageRecords.push({
+      model: openAiModel || "gpt-4o-mini",
+      prompt_tokens: response.usage.prompt_tokens || 0,
+      completion_tokens: response.usage.completion_tokens || 0,
+      total_tokens: response.usage.total_tokens || 0,
+      elapsed_ms: elapsedMs1,
+    });
+  }
 
   const updatedMessages = [...messages];
   let assistantMessage = response.choices[0].message;
@@ -1111,6 +1127,7 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
     }
 
     // Get next response from AI
+    const startTime = Date.now();
     // eslint-disable-next-line no-await-in-loop
     response = await openaiClient.chat.completions.create({
       model: openAiModel || "gpt-4o-mini",
@@ -1118,6 +1135,18 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
       tools,
       tool_choice: "auto",
     });
+    const elapsedMs = Date.now() - startTime;
+
+    // Record usage for this API call
+    if (response.usage) {
+      usageRecords.push({
+        model: openAiModel || "gpt-4o-mini",
+        prompt_tokens: response.usage.prompt_tokens || 0,
+        completion_tokens: response.usage.completion_tokens || 0,
+        total_tokens: response.usage.total_tokens || 0,
+        elapsed_ms: elapsedMs,
+      });
+    }
 
     assistantMessage = response.choices[0].message;
   }
@@ -1151,7 +1180,8 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
   return {
     message: assistantMessage.content,
     conversationHistory: updatedMessages,
-    usage: response.usage,
+    usage: response.usage, // Last API call usage (backward compatibility)
+    usageRecords, // All usage records for saving to AiUsage table
     iterations,
   };
 }

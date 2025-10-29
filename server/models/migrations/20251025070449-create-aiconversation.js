@@ -38,27 +38,7 @@ module.exports = {
         type: Sequelize.TEXT("long"),
         comment: "Condensed version for resuming conversations",
       },
-      full_history: {
-        type: Sequelize.TEXT("long"),
-        comment: "Full conversation history",
-      },
-      total_tokens: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      prompt_tokens: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      completion_tokens: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
       message_count: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      tool_calls_count: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },

@@ -1,5 +1,3 @@
-const zlib = require("zlib");
-
 module.exports = (sequelize, DataTypes) => {
   const AiConversation = sequelize.define("AiConversation", {
     id: {
@@ -34,55 +32,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM("active", "completed", "error", "cancelled"),
       defaultValue: "active",
     },
-    // Condensed conversation history (token-efficient)
+    // Condensed conversation history (token-efficient, rebuildable from AiMessage)
     conversation_summary: {
       type: DataTypes.TEXT("long"),
-      comment: "Condensed version for resuming conversations"
+      comment: "Cached condensed version for resuming conversations efficiently"
     },
-    // Full history for detailed review (compressed)
-    full_history: {
-      type: DataTypes.TEXT("long"),
-      set(val) {
-        // Compress full conversation data
-        const compressed = zlib.gzipSync(
-          Buffer.from(JSON.stringify(val))
-        ).toString("base64");
-        return this.setDataValue("full_history", compressed);
-      },
-      get() {
-        try {
-          const compressed = this.getDataValue("full_history");
-          return JSON.parse(
-            zlib.gunzipSync(
-              Buffer.from(compressed, "base64")
-            ).toString()
-          );
-        } catch (e) {
-          return null;
-        }
-      }
-    },
-    // Token usage tracking
-    total_tokens: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    prompt_tokens: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    completion_tokens: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    // Conversation metadata
+    // Conversation metadata (cached counts)
     message_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-    },
-    tool_calls_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      comment: "Cached count of user messages"
     },
     // Final results summary
     final_result: {
@@ -101,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     freezeTableName: true,
     indexes: [
-      { fields: ["team_id", "user_id"] },
+      { fields: ["team_id", "user_id", "updatedAt"] },
       { fields: ["status", "updatedAt"] }
     ]
   });
@@ -109,6 +68,8 @@ module.exports = (sequelize, DataTypes) => {
   AiConversation.associate = (models) => {
     models.AiConversation.belongsTo(models.User, { foreignKey: "user_id" });
     models.AiConversation.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.AiConversation.hasMany(models.AiMessage, { foreignKey: "conversation_id" });
+    models.AiConversation.hasMany(models.AiUsage, { foreignKey: "conversation_id" });
   };
 
   return AiConversation;
