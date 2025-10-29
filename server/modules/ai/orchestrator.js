@@ -813,8 +813,7 @@ function buildSystemPrompt(semanticLayer, conversation = null) {
     ? `\n## New Conversation
 This is the start of a new conversation. Introduce yourself and be helpful.
 
-IMPORTANT: For your FIRST response in this new conversation, include a conversation title at the very beginning in this exact format:
-[TITLE: Your concise title here (max 6 words)]
+IMPORTANT: For your FIRST response in this new conversation, start with a markdown header (like # Title) that describes the conversation. This will be used as the conversation title.
 
 The title should be actionable and descriptive based on the user's question.`
     : `\n## Current Conversation
@@ -870,6 +869,15 @@ ${ENTITY_CREATION_RULES}
    - Ask before making permanent changes (creating datasets/charts)
    - Use clear, non-technical language when summarizing data
    - In continuing conversations, reference previous work and build upon it
+
+## Response Formatting
+Format all responses using markdown to improve readability:
+- Use **bold** for important numbers, key findings, and emphasis
+- Use \`code blocks\` for SQL queries, table names, column names, and technical terms
+- Use bullet points and numbered lists for structured information
+- Use headers (##, ###) to organize longer responses
+- Highlight key metrics and results prominently
+- Use tables when comparing multiple values or showing structured data
 
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)

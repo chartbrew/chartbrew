@@ -5,6 +5,7 @@ const {
   getConversation,
   deleteConversation
 } = require("../controllers/AiController");
+const db = require("../models/models");
 
 module.exports = (app) => {
   // Main orchestration endpoint - handles conversation creation/loading automatically
@@ -98,14 +99,13 @@ module.exports = (app) => {
   // Get team usage statistics (for billing/analytics)
   app.get("/ai/usage/:teamId", async (req, res) => {
     const { teamId } = req.params;
-    const { startDate, endDate, groupBy = "day" } = req.query;
+    const { startDate, endDate } = req.query;
 
     if (!teamId) {
       return res.status(400).json({ error: "teamId is required" });
     }
 
     try {
-      const db = require("../models/models");
       const whereClause = { team_id: parseInt(teamId, 10) };
 
       // Add date filtering if provided

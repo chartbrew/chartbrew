@@ -5,6 +5,7 @@ import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevr
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import ReactMarkdown from "react-markdown";
 
 import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
@@ -186,9 +187,10 @@ function AiModal({ isOpen, onClose }) {
                 id: newConversation.id,
                 isTemporary: false
               });
-              
-              // Clear localMessages since they're now in full_history
+
+              // Clear localMessages and progress events since they're now in full_history
               setLocalMessages([]);
+              setProgressEvents([]);
             }
           }
         }
@@ -230,7 +232,7 @@ function AiModal({ isOpen, onClose }) {
         content: `Sorry, I encountered an error: ${error.message}`,
         isError: true
       };
-      
+
       if (conversation) {
         setLocalMessages(prev => [...prev, errorMessage]);
       } else {
@@ -238,6 +240,9 @@ function AiModal({ isOpen, onClose }) {
         setConversation(null);
         setLocalMessages([]);
       }
+
+      // Clear progress events on error
+      setProgressEvents([]);
     }
 
     setIsLoading(false);
@@ -446,9 +451,11 @@ function AiModal({ isOpen, onClose }) {
                   color={isError ? "danger" : "primary"}
                 />
                 <div className="flex-1">
-                  <div className={`text-sm whitespace-pre-wrap ${
+                  <div className={`text-sm prose prose-sm max-w-none ${
                     isError ? "text-danger" : "text-foreground"
-                  }`}>{parsed.content}</div>
+                  }`}>
+                    <ReactMarkdown>{parsed.content}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </div>
@@ -535,8 +542,8 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 )}
                 {finalMessage && (
-                  <div className="text-sm whitespace-pre-wrap text-foreground">
-                    {finalMessage.content}
+                  <div className="text-sm prose prose-sm max-w-none text-foreground">
+                    <ReactMarkdown>{finalMessage.content}</ReactMarkdown>
                   </div>
                 )}
               </div>
@@ -553,10 +560,15 @@ function AiModal({ isOpen, onClose }) {
     return (
       <div className="flex justify-center mb-4 px-4">
         <div className="w-full max-w-[90%]">
-          <div className="bg-primary-50 border border-primary-200 px-4 py-3 rounded-lg">
+          <div className="px-4 py-3">
             <div className="flex items-center gap-2 mb-2">
-              <LuLoader size={16} className="animate-spin text-primary" />
-              <span className="text-sm font-medium text-primary">AI is working...</span>
+              <Avatar
+                icon={<LuBrainCircuit size={16} className="text-background" />}
+                size="sm"
+                color="primary"
+              />
+              <LuLoader size={16} className="animate-spin" />
+              <span className="text-sm">Working...</span>
             </div>
             <div className="space-y-1">
               {progressEvents.map((event) => (
@@ -805,6 +817,18 @@ function AiModal({ isOpen, onClose }) {
                           </div>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
+                    </>
+                  ) : progressEvents.length > 0 ? (
+                    <>
+                      {localMessages.length > 0 && (
+                        <div className="flex justify-end mb-4 px-4">
+                          <div className="max-w-[70%] bg-primary text-primary-foreground px-4 py-3 rounded-lg">
+                            <div className="text-sm whitespace-pre-wrap">{localMessages[0].content}</div>
+                          </div>
+                        </div>
+                      )}
+                      {_renderProgressEvents()}
                       <div ref={messagesEndRef} />
                     </>
                   ) : isLoading ? (

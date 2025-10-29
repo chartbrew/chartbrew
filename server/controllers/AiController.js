@@ -69,12 +69,12 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
     let extractedTitle = null;
 
     if (!conversation || conversation.message_count === 0) {
-      // Try to extract title from the first response
-      const titleMatch = orchestration.message?.match(/^\[TITLE:\s*([^\]]+)\]/m);
+      // Try to extract title from the first markdown header in the response
+      const titleMatch = orchestration.message?.match(/^#{1,6}\s+(.+)$/m);
       if (titleMatch) {
         extractedTitle = titleMatch[1].trim();
-        // Remove the title line from the response
-        finalMessage = orchestration.message.replace(/^\[TITLE:\s*[^\]]+\]\s*/, "").trim();
+        // Remove the title line from the response (including newline)
+        finalMessage = orchestration.message.replace(/^#{1,6}\s+.+\n?/, "").trim();
       }
     }
 
@@ -299,7 +299,11 @@ async function deleteConversation(conversationId, teamId) {
   // NOTE: We intentionally DO NOT delete AiUsage records
   // They are kept for billing/audit purposes even after conversation deletion
   // The team_id field in AiUsage allows us to track usage history
-  // AiUsage.conversation_id will be set to NULL automatically (onDelete: "set null")
+  // Set conversation_id to NULL in AiUsage records to avoid foreign key constraint
+  await db.AiUsage.update(
+    { conversation_id: null },
+    { where: { conversation_id: conversationId } }
+  );
 
   // Delete the conversation itself
   await conversation.destroy();
