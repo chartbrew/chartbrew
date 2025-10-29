@@ -34,7 +34,6 @@ function AiModal({ isOpen, onClose }) {
   const [socket, setSocket] = useState(null);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
-  const [isActiveSession, setIsActiveSession] = useState(false);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -132,8 +131,6 @@ function AiModal({ isOpen, onClose }) {
     try {
       // If no conversation exists, create it immediately and switch to conversation view
       if (!conversation || conversation.isTemporary) {
-        setIsActiveSession(true); // Mark as active session
-        
         // Add user message to local messages immediately
         setLocalMessages([userMessage]);
         
@@ -178,25 +175,27 @@ function AiModal({ isOpen, onClose }) {
             c => c.id === response.orchestration.aiConversationId
           );
           if (newConversation) {
-            // Update conversation metadata but keep full_history empty since we're using localMessages
-            setConversation(prev => ({
-              ...newConversation,
-              full_history: [],
-              id: prev?.id || newConversation.id, // Preserve socket-updated ID
-              isTemporary: false
-            }));
+            // Fetch the full conversation with history from database
+            // This is important for follow-up messages to have complete context
+            const fullConversation = await getAiConversation(newConversation.id, team.id, user.id);
+            
+            if (fullConversation?.conversation) {
+              // Update conversation with complete data including full_history
+              setConversation({
+                ...fullConversation.conversation,
+                id: newConversation.id,
+                isTemporary: false
+              });
+              
+              // Clear localMessages since they're now in full_history
+              setLocalMessages([]);
+            }
           }
         }
       } else {
-        // Mark as active session when sending messages in existing conversation
-        setIsActiveSession(true);
-        
-        // Existing conversation - add message to local state
-        setLocalMessages(prev => [...prev, userMessage]);
-
-        // Prepare conversation history
-        const allMessages = conversation?.full_history || [];
-        const conversationHistory = [...allMessages, ...localMessages];
+        // Existing conversation - get complete history from database
+        const latestConversation = await getAiConversation(conversation.id, team.id, user.id);
+        const conversationHistory = latestConversation?.conversation?.full_history || [];
 
         const response = await orchestrateAi(
           team.id,
@@ -211,12 +210,14 @@ function AiModal({ isOpen, onClose }) {
           throw new Error("Invalid response from AI");
         }
 
-        // Add AI response to local messages
-        const aiMessage = {
-          role: "assistant",
-          content: response.orchestration.message
-        };
-        setLocalMessages(prev => [...prev, aiMessage]);
+        // Refresh conversation with updated history from database
+        const updatedConversation = await getAiConversation(conversation.id, team.id, user.id);
+        if (updatedConversation?.conversation) {
+          setConversation(updatedConversation.conversation);
+        }
+        
+        // Refresh conversations list
+        await loadConversations();
       }
 
       // Clear progress events
@@ -236,7 +237,6 @@ function AiModal({ isOpen, onClose }) {
         // If conversation creation failed, go back to welcome screen
         setConversation(null);
         setLocalMessages([]);
-        setIsActiveSession(false);
       }
     }
 
@@ -244,9 +244,11 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onSelectConversation = async (conversationId) => {
+    // Reset state for clean viewing
     setLocalMessages([]);
     setProgressEvents([]);
-    setIsActiveSession(false); // Viewing historical conversation
+    setIsLoading(true);
+    
     try {
       const response = await getAiConversation(conversationId, team.id, user.id);
       if (response?.conversation) {
@@ -256,6 +258,8 @@ function AiModal({ isOpen, onClose }) {
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -269,7 +273,6 @@ function AiModal({ isOpen, onClose }) {
         setConversation(null);
         setLocalMessages([]);
         setProgressEvents([]);
-        setIsActiveSession(false);
       }
       
       // Reload conversations list
@@ -677,7 +680,8 @@ function AiModal({ isOpen, onClose }) {
                       startContent={<LuPlus size={18} />}
                       onPress={() => {
                         setConversation(null);
-                        setIsActiveSession(false);
+                        setLocalMessages([]);
+                        setProgressEvents([]);
                       }}
                       fullWidth
                     >
@@ -776,21 +780,12 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 </div>
                 <div className="h-[calc(100vh-250px)] overflow-y-auto py-4 pb-20">
-                  {(conversation?.full_history?.length > 0 || localMessages.length > 0) ? (
+                  {conversation?.full_history?.length > 0 ? (
                     <>
                       {(() => {
-                        // Show grouped view only for historical conversations (not active sessions)
-                        if (!isActiveSession && conversation?.full_history?.length > 0 && localMessages.length === 0) {
-                          const groups = _groupMessages(conversation.full_history);
-                          return groups.map((group, index) => _renderGroupedMessages(group, index));
-                        }
-                        // Otherwise show live messages for active sessions
-                        return (
-                          <>
-                            {conversation?.full_history?.map((message, index) => _renderMessage(message, index))}
-                            {localMessages.map((message, index) => _renderMessage(message, `local-${index}`))}
-                          </>
-                        );
+                        // Show grouped view for all conversations
+                        const groups = _groupMessages(conversation.full_history);
+                        return groups.map((group, index) => _renderGroupedMessages(group, index));
                       })()}
                       {_renderProgressEvents()}
                       {isLoading && progressEvents.length === 0 && (
@@ -812,6 +807,13 @@ function AiModal({ isOpen, onClose }) {
                       )}
                       <div ref={messagesEndRef} />
                     </>
+                  ) : isLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="flex items-center gap-2">
+                        <LuLoader size={24} className="animate-spin text-primary" />
+                        <span className="text-sm text-foreground-500">Loading conversation...</span>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-foreground-500 text-sm">No messages yet</div>

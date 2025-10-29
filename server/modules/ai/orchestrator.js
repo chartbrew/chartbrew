@@ -457,18 +457,18 @@ async function createChart(payload) {
   // Provide default chart spec if not provided
   const defaultSpec = {
     type: "line",
-    title: name || "AI Generated Chart",
-    timeInterval: timeInterval || "day",
-    chartSize: chartSize || 2,
-    displayLegend: displayLegend !== undefined ? displayLegend : true,
-    pointRadius: pointRadius || 0,
-    dataLabels: dataLabels || false,
-    includeZeros: includeZeros !== undefined ? includeZeros : true,
-    stacked: stacked || false,
-    horizontal: horizontal || false,
-    showGrowth: showGrowth || false,
-    invertGrowth: invertGrowth || false,
-    mode: mode || "chart",
+    title: "AI Generated Chart",
+    timeInterval: "day",
+    chartSize: 2,
+    displayLegend: true,
+    pointRadius: 0,
+    dataLabels: false,
+    includeZeros: true,
+    stacked: false,
+    horizontal: false,
+    showGrowth: false,
+    invertGrowth: false,
+    mode: "chart",
     options: {}
   };
 
@@ -491,35 +491,35 @@ async function createChart(payload) {
     const chart = await db.Chart.create({
       project_id,
       name: chartSpec.title || name || "AI Generated Chart",
-      type: chartSpec.type || type || "line",
-      subType: chartSpec.subType || subType,
+      type: type || chartSpec.type,
+      subType: subType || chartSpec.subType,
       draft: false,
       dashboardOrder: nextOrder,
-      chartSize: chartSpec.chartSize || chartSize || 2,
+      chartSize: chartSize || chartSpec.chartSize || 2,
       // eslint-disable-next-line no-nested-ternary
-      displayLegend: chartSpec.displayLegend !== undefined
-        ? chartSpec.displayLegend
-        : displayLegend !== undefined
-          ? displayLegend
+      displayLegend: displayLegend !== undefined
+        ? displayLegend
+        : chartSpec.displayLegend !== undefined
+          ? chartSpec.displayLegend
           : true,
-      pointRadius: chartSpec.pointRadius || pointRadius || 0,
-      dataLabels: chartSpec.dataLabels || dataLabels || false,
+      pointRadius: pointRadius || chartSpec.pointRadius || 0,
+      dataLabels: dataLabels || chartSpec.dataLabels || false,
       // eslint-disable-next-line no-nested-ternary
-      includeZeros: chartSpec.includeZeros !== undefined
-        ? chartSpec.includeZeros
-        : includeZeros !== undefined
-          ? includeZeros
+      includeZeros: includeZeros !== undefined
+        ? includeZeros
+        : chartSpec.includeZeros !== undefined
+          ? chartSpec.includeZeros
           : true,
-      timeInterval: chartSpec.timeInterval || timeInterval || "day",
-      stacked: chartSpec.stacked || stacked || chartSpec.options?.stacked || false,
-      horizontal: chartSpec.horizontal || horizontal || chartSpec.options?.horizontal || false,
-      showGrowth: chartSpec.showGrowth || showGrowth || false,
-      invertGrowth: chartSpec.invertGrowth || invertGrowth || false,
-      mode: chartSpec.mode || mode || "chart",
-      maxValue: chartSpec.maxValue || maxValue,
-      minValue: chartSpec.minValue || minValue,
-      ranges: chartSpec.ranges || ranges,
-      layout: chartSpec.layout || layout,
+      timeInterval: timeInterval || chartSpec.timeInterval || "day",
+      stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked ?? false,
+      horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false,
+      showGrowth: showGrowth || chartSpec.showGrowth || false,
+      invertGrowth: invertGrowth || chartSpec.invertGrowth || false,
+      mode: mode || chartSpec.mode || "chart",
+      maxValue: maxValue || chartSpec.maxValue,
+      minValue: minValue || chartSpec.minValue,
+      ranges: ranges || chartSpec.ranges,
+      layout: layout || chartSpec.layout,
     });
 
     // Get the dataset to link it to the chart
@@ -538,7 +538,7 @@ async function createChart(payload) {
       fill: chartSpec.fill || false,
       multiFill: chartSpec.multiFill || false,
       legend: legend || chartSpec.title || dataset.legend,
-      pointRadius: chartSpec.pointRadius || pointRadius || 0,
+      pointRadius: pointRadius || chartSpec.pointRadius || 0,
       excludedFields: chartSpec.excludedFields || [],
       sort: chartSpec.sort,
       columnsOrder: chartSpec.columnsOrder,
