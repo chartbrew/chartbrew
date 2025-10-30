@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
 
-import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation } from "../../api/ai";
+import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { API_HOST } from "../../config/settings";
@@ -35,6 +35,7 @@ function AiModal({ isOpen, onClose }) {
   const [socket, setSocket] = useState(null);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
+  const [teamUsage, setTeamUsage] = useState(null);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -110,6 +111,17 @@ function AiModal({ isOpen, onClose }) {
     try {
       const data = await getAiConversations(team.id, user.id);
       setConversations(data.conversations);
+      // load usage in the background
+      loadTeamUsage();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const loadTeamUsage = async () => {
+    try {
+      const data = await getAiUsage(team.id);
+      setTeamUsage(data);
     } catch (error) {
       toast.error(error.message);
     }
@@ -597,7 +609,7 @@ function AiModal({ isOpen, onClose }) {
       classNames={{ wrapper: conversation ? "sm:mt-4" : "" }}
       isOpen={isOpen}
       onClose={onClose}
-      size={conversation ? "5xl" : "lg"}
+      size={conversation ? "6xl" : "lg"}
       scrollBehavior="outside"
     >
       <ModalContent>
@@ -636,7 +648,7 @@ function AiModal({ isOpen, onClose }) {
                 title={`Previous Conversations (${conversations.length})`}
                 classNames={{ title: "text-sm font-medium" }}
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
                   {conversations.map((conv) => (
                     <div
                       key={conv.id}
@@ -701,7 +713,7 @@ function AiModal({ isOpen, onClose }) {
                     </Button>
                     <Spacer y={4} />
                   </div>
-                  <div className="flex flex-col h-full gap-2 px-2 overflow-y-auto border-r border-divider py-4">
+                  <div className="flex flex-col max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
                       <div
                         key={c.id}
@@ -742,7 +754,18 @@ function AiModal({ isOpen, onClose }) {
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-4 border-r border-t border-divider bg-content2 rounded-bl-2xl">
-                    <div className="text-xs text-foreground-500 text-center">End of conversations</div>
+                    <Tooltip
+                      content={<div className="flex flex-col gap-1">
+                        <div className="text-xs text-foreground-500">Total tokens used: {formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                        <div className="text-xs text-foreground-500">Total API calls: {teamUsage?.total?.api_calls || 0}</div>
+                        <div className="text-xs text-foreground-500">Total models used: {teamUsage?.byModel?.length || 0}</div>
+                      </div>}
+                    >
+                      <div className="flex flex-row items-center justify-center gap-2 cursor-help">
+                        <div><LuCoins size={14} /></div>
+                        <div className="text-sm text-foreground-500">{formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                      </div>
+                    </Tooltip>
                   </div>
                 </div>
               </div>
@@ -791,7 +814,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   </div>
                 </div>
-                <div className="h-[calc(100vh-250px)] overflow-y-auto py-4 pb-20">
+                <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-20">
                   {conversation?.full_history?.length > 0 ? (
                     <>
                       {(() => {

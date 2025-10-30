@@ -83,3 +83,26 @@ export async function deleteAiConversation(conversationId, teamId) {
 
   return response.json();
 }
+
+export async function getAiUsage(teamId, startDate, endDate) {
+  const token = getAuthToken();
+  let url = new URL(`${API_HOST}/ai/usage/${teamId}`);
+  if (startDate) {
+    url.searchParams.set("startDate", startDate);
+  }
+  if (endDate) {
+    url.searchParams.set("endDate", endDate);
+  }
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`,
+  });
+
+  const response = await fetch(url.toString(), { headers, method: "GET" });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to fetch AI usage");
+  }
+
+  return response.json();
+}

@@ -1,4 +1,4 @@
-const { fn, col } = require("sequelize");
+const { fn, col, Op } = require("sequelize");
 
 const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
 const db = require("../models/models");
@@ -311,10 +311,72 @@ async function deleteConversation(conversationId, teamId) {
   return { success: true };
 }
 
+async function getAiUsage(teamId, startDate, endDate) {
+  try {
+    const whereClause = { team_id: parseInt(teamId, 10) };
+
+    // Add date filtering if provided
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+    }
+
+    // Get total usage
+    const totalUsage = await db.AiUsage.findAll({
+      where: whereClause,
+      attributes: [
+        [fn("SUM", col("total_tokens")), "total_tokens"],
+        [fn("SUM", col("prompt_tokens")), "prompt_tokens"],
+        [fn("SUM", col("completion_tokens")), "completion_tokens"],
+        [fn("SUM", col("cost_micros")), "total_cost_micros"],
+        [fn("COUNT", col("id")), "api_calls"],
+      ],
+      raw: true,
+    });
+
+    const formattedTotalUsage = {
+      total_tokens: parseInt(totalUsage[0]?.total_tokens, 10) || 0,
+      prompt_tokens: parseInt(totalUsage[0]?.prompt_tokens, 10) || 0,
+      completion_tokens: parseInt(totalUsage[0]?.completion_tokens, 10) || 0,
+      total_cost_micros: parseInt(totalUsage[0]?.total_cost_micros, 10) || 0,
+      api_calls: parseInt(totalUsage[0]?.api_calls, 10) || 0,
+    };
+
+    // Get usage by model
+    const usageByModel = await db.AiUsage.findAll({
+      where: whereClause,
+      attributes: [
+        "model",
+        [fn("SUM", col("total_tokens")), "total_tokens"],
+        [fn("COUNT", col("id")), "api_calls"],
+      ],
+      group: ["model"],
+      raw: true,
+    });
+
+    const formattedUsageByModel = usageByModel.map((model) => {
+      return {
+        model: model.model,
+        total_tokens: parseInt(model.total_tokens, 10) || 0,
+        api_calls: parseInt(model.api_calls, 10) || 0,
+      };
+    });
+
+    return {
+      total: formattedTotalUsage,
+      byModel: formattedUsageByModel,
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
 module.exports = {
   getOrchestration,
   getAvailableTools,
   getConversations,
   getConversation,
   deleteConversation,
+  getAiUsage,
 };
