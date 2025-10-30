@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins } from "react-icons/lu"
+import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis } from "react-icons/lu"
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -321,9 +321,20 @@ function AiModal({ isOpen, onClose }) {
     }
 
     // Regular message
+    let content = message.content;
+    // Remove title if it starts with "# "
+    if (content && content.startsWith("# ")) {
+      const lines = content.split("\n");
+      if (lines.length > 1) {
+        content = lines.slice(1).join("\n").trim();
+      } else {
+        content = "";
+      }
+    }
+
     return {
       type: "message",
-      content: message.content
+      content: content
     };
   };
 
@@ -491,7 +502,7 @@ function AiModal({ isOpen, onClose }) {
 
     group.messages.forEach((message) => {
       const parsed = _parseMessage(message);
-      
+
       if (parsed.type === "tool_call") {
         parsed.tools.forEach((tool) => {
           operations.push({
@@ -507,7 +518,10 @@ function AiModal({ isOpen, onClose }) {
           data: parsed.content
         });
       } else if (parsed.type === "message") {
-        finalMessage = message;
+        finalMessage = {
+          ...message,
+          content: parsed.content // Use the parsed content with title removed
+        };
       }
     });
 
@@ -672,16 +686,18 @@ function AiModal({ isOpen, onClose }) {
                         </div>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Tooltip content="Delete conversation">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => _onDeleteConversation(conv.id)}
-                          >
-                            <LuTrash2 size={16} />
-                          </Button>
-                        </Tooltip>
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Button isIconOnly size="sm" variant="light">
+                              <LuEllipsis size={16} />
+                            </Button>
+                          </DropdownTrigger>
+                          <DropdownMenu>
+                            <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} startContent={<LuTrash2 size={16} />}>
+                              Delete conversation
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
                       </div>
                     </div>
                   ))}
@@ -737,17 +753,18 @@ function AiModal({ isOpen, onClose }) {
                           </div>
                         </div>
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Tooltip content="Delete">
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              color="danger"
-                              onPress={() => _onDeleteConversation(c.id)}
-                            >
-                              <LuTrash2 size={14} />
-                            </Button>
-                          </Tooltip>
+                          <Dropdown>
+                            <DropdownTrigger>
+                              <Button isIconOnly size="sm" variant="light">
+                                <LuEllipsis size={16} />
+                              </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu>
+                              <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(c.id)} startContent={<LuTrash2 size={16} />}>
+                                Delete conversation
+                              </DropdownItem>
+                            </DropdownMenu>
+                          </Dropdown>
                         </div>
                       </div>
                     ))}
@@ -779,17 +796,18 @@ function AiModal({ isOpen, onClose }) {
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="flex flex-row items-center gap-2">
                         <div className="text-md text-foreground font-medium">{conversation.title}</div>
-                        <Tooltip content="Delete conversation">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => _onDeleteConversation(conversation.id)}
-                          >
-                            <LuTrash2 size={16} />
-                          </Button>
-                        </Tooltip>
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Button isIconOnly size="sm" variant="light">
+                              <LuEllipsis size={16} />
+                            </Button>
+                          </DropdownTrigger>
+                          <DropdownMenu>
+                            <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} startContent={<LuTrash2 size={16} />}>
+                              Delete conversation
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
                       </div>
                       <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
                         <div className="flex items-center gap-1">
