@@ -40,6 +40,7 @@ function AiModal({ isOpen, onClose }) {
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
   const [createdCharts, setCreatedCharts] = useState([]);
+  const [selectedContext, setSelectedContext] = useState(null);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -204,17 +205,24 @@ function AiModal({ isOpen, onClose }) {
 
   const _onAskAi = async (e) => {
     e.preventDefault();
-    if (!question.trim() || isLoading) return;
+    // Allow submission if there's either a question or a selected context
+    if ((!question.trim() && !selectedContext) || isLoading) return;
+
+    // Combine context and question
+    const finalQuestion = selectedContext 
+      ? (question.trim() ? `${selectedContext.label}. ${question.trim()}` : selectedContext.label)
+      : question.trim();
 
     const userMessage = {
       role: "user",
-      content: question.trim()
+      content: finalQuestion
     };
 
     setIsLoading(true);
     setProgressEvents([]);
-    const currentQuestion = question.trim();
+    const currentQuestion = finalQuestion;
     setQuestion("");
+    setSelectedContext(null);
 
     try {
       // If no conversation exists, create it immediately and switch to conversation view
@@ -341,6 +349,7 @@ function AiModal({ isOpen, onClose }) {
     setProgressEvents([]);
     setCreatedCharts([]);
     fetchedChartsRef.current.clear();
+    setSelectedContext(null);
     setIsLoading(true);
     
     try {
@@ -361,7 +370,7 @@ function AiModal({ isOpen, onClose }) {
     try {
       await deleteAiConversation(conversationId, team.id);
       toast.success("Conversation deleted");
-      
+
       // If we deleted the current conversation, go back to welcome screen
       if (conversation?.id === conversationId) {
         setConversation(null);
@@ -370,12 +379,125 @@ function AiModal({ isOpen, onClose }) {
         setCreatedCharts([]);
         fetchedChartsRef.current.clear();
       }
-      
+
       // Reload conversations list
       await loadConversations();
     } catch (error) {
       toast.error(error.message);
     }
+  };
+
+  const _onSuggestionClick = async (suggestion) => {
+    if (isLoading) return;
+
+    // Check if this is a quick reply (set as context)
+    if (suggestion.action === "reply") {
+      // Set the suggestion as context
+      setSelectedContext(suggestion);
+      // Focus the input so user can add more text
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      return;
+    }
+
+    setIsLoading(true);
+    setProgressEvents([]);
+
+    try {
+      // For non-reply actions, create a synthetic user message with action details
+      const syntheticQuestion = `Please execute this action: ${JSON.stringify({
+        action: suggestion.action,
+        params: suggestion.params || {},
+        label: suggestion.label
+      })}`;
+
+      // Add user message to local messages
+      const userMessage = {
+        role: "user",
+        content: syntheticQuestion
+      };
+      setLocalMessages([userMessage]);
+
+      // Create a temporary conversation if needed
+      let currentConversationId = conversation?.id;
+      if (!conversation || conversation.isTemporary) {
+        const tempConversation = {
+          id: conversation?.id || null,
+          title: "Quick Action",
+          full_history: [],
+          createdAt: new Date().toISOString(),
+          message_count: 1,
+          isTemporary: true
+        };
+        setConversation(tempConversation);
+        currentConversationId = tempConversation.id;
+      }
+
+      // Call orchestrate with the suggestion action
+      const response = await orchestrateAi(
+        team.id,
+        user.id,
+        syntheticQuestion,
+        conversation?.full_history || [],
+        currentConversationId
+      );
+
+      // Validate response structure
+      if (!response || !response.orchestration || !response.orchestration.message) {
+        throw new Error("Invalid response from AI");
+      }
+
+      // Add AI response to local messages
+      const aiMessage = {
+        role: "assistant",
+        content: response.orchestration.message
+      };
+      setLocalMessages(prev => [...prev, aiMessage]);
+
+      // Update conversation data in background
+      if (response.orchestration?.aiConversationId) {
+        await loadConversations();
+        const updatedConversations = await getAiConversations(team.id, user.id);
+        const newConversation = updatedConversations.conversations.find(
+          c => c.id === response.orchestration.aiConversationId
+        );
+        if (newConversation) {
+          const fullConversation = await getAiConversation(newConversation.id, team.id, user.id);
+          if (fullConversation?.conversation) {
+            setConversation({
+              ...fullConversation.conversation,
+              id: newConversation.id,
+              isTemporary: false
+            });
+            setLocalMessages([]);
+            setProgressEvents([]);
+          }
+        }
+      }
+
+      // Clear progress events
+      setProgressEvents([]);
+
+    } catch (error) {
+      toast.error(error.message);
+      const errorMessage = {
+        role: "assistant",
+        content: `Sorry, I encountered an error executing that action: ${error.message}`,
+        isError: true
+      };
+
+      if (conversation) {
+        setLocalMessages(prev => [...prev, errorMessage]);
+      } else {
+        setConversation(null);
+        setLocalMessages([]);
+      }
+
+      setProgressEvents([]);
+    }
+
+    setIsLoading(false);
   };
 
   const _parseMessage = (message) => {
@@ -413,6 +535,37 @@ function AiModal({ isOpen, onClose }) {
         name: message.name,
         content: content
       };
+    }
+
+    // Check for cb-actions suggestions block
+    if (message.role === "assistant" && message.content) {
+      const cbActionsMatch = message.content.match(/```cb-actions\s*\n([\s\S]*?)\n```/);
+      if (cbActionsMatch) {
+        try {
+          const suggestionsData = JSON.parse(cbActionsMatch[1]);
+          if (suggestionsData.version === 1 && Array.isArray(suggestionsData.suggestions)) {
+            // Remove the cb-actions block from content
+            let content = message.content.replace(/```cb-actions\s*\n[\s\S]*?\n```/, "").trim();
+            // Remove title if it starts with "# "
+            if (content && content.startsWith("# ")) {
+              const lines = content.split("\n");
+              if (lines.length > 1) {
+                content = lines.slice(1).join("\n").trim();
+              } else {
+                content = "";
+              }
+            }
+
+            return {
+              type: "message_with_suggestions",
+              content: content,
+              suggestions: suggestionsData.suggestions
+            };
+          }
+        } catch (e) {
+          // Invalid JSON, treat as regular message
+        }
+      }
     }
 
     // Regular message
@@ -611,6 +764,56 @@ function AiModal({ isOpen, onClose }) {
       );
     }
 
+    // Assistant messages with suggestions - centered, taking most space
+    if (message.role === "assistant" && parsed.type === "message_with_suggestions") {
+      const isError = message.isError;
+      return (
+        <div key={index} className="flex justify-center mb-4 px-4">
+          <div className="w-full max-w-[90%]">
+            <div className={`px-6 py-4 rounded-lg ${
+              isError
+                ? "bg-danger-50 border border-danger-200"
+                : ""
+            }`}>
+              <div className="flex items-start gap-3">
+                <Avatar
+                  icon={<LuBrainCircuit size={16} className="text-background" />}
+                  size="sm"
+                  color={isError ? "danger" : "primary"}
+                />
+                <div className="flex-1">
+                  {parsed.content && (
+                    <div className={`text-sm prose prose-sm max-w-none mb-4 ${
+                      isError ? "text-danger" : "text-foreground"
+                    }`}>
+                      <ReactMarkdown>{parsed.content}</ReactMarkdown>
+                    </div>
+                  )}
+                  {parsed.suggestions && parsed.suggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {parsed.suggestions.map((suggestion) => (
+                        <Chip
+                          key={suggestion.id}
+                          variant="flat"
+                          color="secondary"
+                          size="sm"
+                          className='cursor-pointer hover:bg-secondary-200 transition-colors'
+                          onClick={() => _onSuggestionClick(suggestion)}
+                          isDisabled={isLoading}
+                        >
+                          {suggestion.label}
+                        </Chip>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Assistant messages - centered, taking most space
     if (message.role === "assistant" && parsed.type === "message") {
       const isError = message.isError;
@@ -659,6 +862,7 @@ function AiModal({ isOpen, onClose }) {
     // Group assistant messages - collect all operations and final message
     const operations = [];
     let finalMessage = null;
+    let suggestions = null;
 
     group.messages.forEach((message) => {
       const parsed = _parseMessage(message);
@@ -677,6 +881,12 @@ function AiModal({ isOpen, onClose }) {
           name: parsed.name,
           data: parsed.content
         });
+      } else if (parsed.type === "message_with_suggestions") {
+        finalMessage = {
+          ...message,
+          content: parsed.content // Use the parsed content with title removed
+        };
+        suggestions = parsed.suggestions;
       } else if (parsed.type === "message") {
         finalMessage = {
           ...message,
@@ -728,8 +938,25 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 )}
                 {finalMessage && (
-                  <div className="text-sm prose prose-sm max-w-none text-foreground">
+                  <div className={`text-sm prose prose-sm max-w-none text-foreground ${suggestions ? "mb-4" : ""}`}>
                     <ReactMarkdown>{finalMessage.content}</ReactMarkdown>
+                  </div>
+                )}
+                {suggestions && suggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {suggestions.map((suggestion) => (
+                      <Chip
+                        key={suggestion.id}
+                        variant="flat"
+                        color="secondary"
+                        size="sm"
+                        className='cursor-pointer hover:bg-secondary-200 transition-colors'
+                        onClick={() => _onSuggestionClick(suggestion)}
+                        isDisabled={isLoading}
+                      >
+                        {suggestion.label}
+                      </Chip>
+                    ))}
                   </div>
                 )}
               </div>
@@ -802,13 +1029,26 @@ function AiModal({ isOpen, onClose }) {
             </div>
             <Spacer y={2} />
             <form onSubmit={_onAskAi} id="ai-form">
+              {selectedContext && (
+                <div className="mb-2 flex items-center gap-2 justify-center">
+                  <Chip
+                    color="primary"
+                    variant="flat"
+                    size="sm"
+                    onClose={() => setSelectedContext(null)}
+                  >
+                    {selectedContext.label}
+                  </Chip>
+                  <span className="text-xs text-foreground-500">+ add more details (optional)</span>
+                </div>
+              )}
               <Input
                 placeholder="Ask me a question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 variant="bordered"
                 endContent={
-                  <Button type="submit" isIconOnly isDisabled={!question} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
+                  <Button type="submit" isIconOnly isDisabled={(!question && !selectedContext)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
                     <LuArrowRight size={18} />
                   </Button>
                 }
@@ -884,6 +1124,7 @@ function AiModal({ isOpen, onClose }) {
                         setProgressEvents([]);
                         setCreatedCharts({});
                         fetchedChartsRef.current.clear();
+                        setSelectedContext(null);
                       }}
                       fullWidth
                     >
@@ -1048,7 +1289,20 @@ function AiModal({ isOpen, onClose }) {
                   )}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10 rounded-b-2xl">
-                  <form onSubmit={_onAskAi}>
+                  <form onSubmit={_onAskAi} id="ai-conversation-form">
+                    {selectedContext && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <Chip
+                          color="primary"
+                          variant="flat"
+                          size="sm"
+                          onClose={() => setSelectedContext(null)}
+                        >
+                          {selectedContext.label}
+                        </Chip>
+                        <span className="text-xs text-foreground-500">+ add more details (optional)</span>
+                      </div>
+                    )}
                     <div className="flex flex-row gap-2">
                       <Input
                         ref={inputRef}
@@ -1062,7 +1316,7 @@ function AiModal({ isOpen, onClose }) {
                         type="submit"
                         isIconOnly
                         color="primary"
-                        isDisabled={!question.trim() || isLoading}
+                        isDisabled={(!question.trim() && !selectedContext) || isLoading}
                       >
                         <LuArrowRight />
                       </Button>

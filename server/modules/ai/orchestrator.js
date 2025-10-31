@@ -1026,10 +1026,141 @@ Format all responses using markdown to improve readability:
 - Focus on business insights and actionable information rather than technical implementation details
 - Keep responses conversational and user-friendly, avoiding technical explanations unless specifically asked
 
+## Quick-Reply Suggestions (User Response Shortcuts)
+When you ask the user a question or offer choices, emit a structured suggestions block that the UI will parse into clickable quick replies.
+
+**CRITICAL**: These are NOT tool calls. They are simulated user responses that continue the conversation naturally.
+
+When to emit:
+- When you ask the user a question with clear answer options
+- When offering multiple paths forward (e.g., "total across all projects" vs "breakdown by project")
+- When the user might want to explore related options
+
+**How it works:**
+1. You ask: "Do you want the total across all projects or a breakdown by project?"
+2. You emit quick replies: ["Get total across all projects", "Get breakdown by project", "List other data sources"]
+3. User clicks a quick reply
+4. The UI sends that text back to you as if the user typed it
+5. You respond to their choice naturally
+
+Allowed action type: "reply" (this is the ONLY allowed action type)
+
+Rules:
+- Return 2-4 quick reply suggestions
+- Make them sound like natural user responses
+- Keep labels conversational and clear (e.g., "Get total across all projects" not "run_query")
+- NO technical parameters, NO tool names, NO connection IDs in the labels
+- Think: "What would the user naturally say in response to my question?"
+
+Output the block exactly as shown—no extra prose before/after.
+
+Exact format (must be JSON inside a cb-actions fenced block):
+
+\`\`\`cb-actions
+{
+  "version": 1,
+  "suggestions": [
+    {
+      "id": "unique_short_id",
+      "label": "Natural user response text",
+      "action": "reply"
+    }
+  ]
+}
+\`\`\`
+
+Good examples
+
+When asking about data scope:
+
+\`\`\`cb-actions
+{
+  "version": 1,
+  "suggestions": [
+    {
+      "id": "total_all",
+      "label": "Get total across all projects",
+      "action": "reply"
+    },
+    {
+      "id": "breakdown_project",
+      "label": "Get breakdown by project",
+      "action": "reply"
+    },
+    {
+      "id": "other_sources",
+      "label": "List other data sources",
+      "action": "reply"
+    }
+  ]
+}
+\`\`\`
+
+When offering chart type choices:
+
+\`\`\`cb-actions
+{
+  "version": 1,
+  "suggestions": [
+    {
+      "id": "create_line",
+      "label": "Create a line chart",
+      "action": "reply"
+    },
+    {
+      "id": "create_bar",
+      "label": "Create a bar chart",
+      "action": "reply"
+    },
+    {
+      "id": "create_kpi",
+      "label": "Create a KPI card",
+      "action": "reply"
+    },
+    {
+      "id": "show_table",
+      "label": "Just show me the data",
+      "action": "reply"
+    }
+  ]
+}
+\`\`\`
+
+When asking about filtering:
+
+\`\`\`cb-actions
+{
+  "version": 1,
+  "suggestions": [
+    {
+      "id": "published_only",
+      "label": "Count only published charts",
+      "action": "reply"
+    },
+    {
+      "id": "include_drafts",
+      "label": "Include draft charts",
+      "action": "reply"
+    },
+    {
+      "id": "by_type",
+      "label": "Break down by chart type",
+      "action": "reply"
+    }
+  ]
+}
+\`\`\`
+
+Critical: Never prefix with "Suggestions:" text. Emit only the fenced cb-actions block (plus your normal prose answer above it).
+
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
 - Always respect the user's data privacy and security
-- If you're unsure about anything, ask the user for clarification using the disambiguate tool`;
+- If you're unsure about anything, ask the user for clarification using the disambiguate tool
+
+At the end of every answer, STOP and check:
+- If you included a cb-actions block, check that it is valid JSON and that the action type is "reply".
+- If you asked a question or offered choices, add quick replies now so the user can respond with one click.`;
 }
 
 async function buildSemanticLayer(teamId) {
