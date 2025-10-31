@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis } from "react-icons/lu"
-import { useSelector } from "react-redux";
+import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress } from "@heroui/react"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench } from "react-icons/lu"
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
@@ -10,7 +10,10 @@ import ReactMarkdown from "react-markdown";
 import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
+import { getChart } from "../../slices/chart";
 import { API_HOST } from "../../config/settings";
+import Chart from "../Chart/Chart";
+import { Link } from "react-router";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -36,16 +39,88 @@ function AiModal({ isOpen, onClose }) {
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
+  const [createdCharts, setCreatedCharts] = useState([]);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const dispatch = useDispatch();
+  const fetchedChartsRef = useRef(new Set());
+
+  // Function to fetch chart data when a chart is created
+  const fetchChartData = async (chartId, projectId) => {
+    try {
+      const result = await dispatch(getChart({
+        project_id: projectId,
+        chart_id: chartId
+      }));
+
+      if (result?.payload) {
+        setCreatedCharts(prevCharts => {
+          // Check if chart already exists
+          const existingIndex = prevCharts.findIndex(c => c.id === result.payload.id);
+          if (existingIndex >= 0) {
+            // Update existing chart
+            const updatedCharts = [...prevCharts];
+            updatedCharts[existingIndex] = result.payload;
+            return updatedCharts;
+          } else {
+            // Add new chart
+            return [...prevCharts, result.payload];
+          }
+        });
+        return result.payload;
+      }
+    } catch (error) {
+      console.error("Failed to fetch chart data:", error);
+      toast.error("Failed to load chart data");
+    }
+    return null;
+  };
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages, progressEvents]);
+
+  // Fetch chart data for newly created charts
+  useEffect(() => {
+    const fetchNewCharts = async () => {
+      const allMessages = [
+        ...(conversation?.full_history || []),
+        ...localMessages
+      ];
+
+      const chartCreationMessages = allMessages
+        .filter(msg => msg.role === "tool")
+        .map(msg => {
+          try {
+            const content = JSON.parse(msg.content);
+            if (msg.name === "create_chart" && content.chart_id && !fetchedChartsRef.current.has(content.chart_id)) {
+              return {
+                chartId: content.chart_id,
+                projectId: content.project_id
+              };
+            }
+          } catch (e) {
+            // Ignore parsing errors
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      // Fetch charts that haven't been loaded yet
+      for (const { chartId, projectId } of chartCreationMessages) {
+        if (!fetchedChartsRef.current.has(chartId)) {
+          fetchedChartsRef.current.add(chartId);
+          await fetchChartData(chartId, projectId);
+        }
+      }
+    };
+
+    fetchNewCharts();
+  }, [conversation?.full_history, localMessages]);
 
   // Initialize Socket.IO connection
   useEffect(() => {
@@ -264,6 +339,8 @@ function AiModal({ isOpen, onClose }) {
     // Reset state for clean viewing
     setLocalMessages([]);
     setProgressEvents([]);
+    setCreatedCharts([]);
+    fetchedChartsRef.current.clear();
     setIsLoading(true);
     
     try {
@@ -290,6 +367,8 @@ function AiModal({ isOpen, onClose }) {
         setConversation(null);
         setLocalMessages([]);
         setProgressEvents([]);
+        setCreatedCharts([]);
+        fetchedChartsRef.current.clear();
       }
       
       // Reload conversations list
@@ -313,10 +392,26 @@ function AiModal({ isOpen, onClose }) {
 
     // Check if message is a tool result
     if (message.role === "tool") {
+      const content = JSON.parse(message.content);
+
+      // Check if this is a chart creation result
+      if (message.name === "create_chart" && content.chart_id) {
+        return {
+          type: "chart_created",
+          chartId: content.chart_id,
+          chartName: content.name,
+          chartType: content.type,
+          projectId: content.project_id,
+          dashboardUrl: content.dashboard_url,
+          chartUrl: content.chart_url,
+          content: content
+        };
+      }
+
       return {
         type: "tool_result",
         name: message.name,
-        content: JSON.parse(message.content)
+        content: content
       };
     }
 
@@ -343,15 +438,17 @@ function AiModal({ isOpen, onClose }) {
     let currentGroup = null;
 
     messages.forEach((message) => {
-      if (message.role === "user") {
-        // User messages are always separate
+      const parsed = _parseMessage(message);
+
+      if (message.role === "user" || parsed.type === "chart_created") {
+        // User messages and chart creation messages are always separate
         groups.push({
-          type: "user",
+          type: parsed.type === "chart_created" ? "chart_created" : "user",
           messages: [message]
         });
         currentGroup = null;
       } else if (message.role === "assistant" || message.role === "tool") {
-        // Group consecutive assistant and tool messages
+        // Group consecutive assistant and tool messages (except chart creation)
         if (!currentGroup || currentGroup.type !== "assistant") {
           currentGroup = {
             type: "assistant",
@@ -456,6 +553,64 @@ function AiModal({ isOpen, onClose }) {
       );
     }
 
+    // Chart created messages - render the actual chart
+    if (parsed.type === "chart_created") {
+      const chartData = createdCharts.find((c) => c.id === parsed.chartId);
+
+      return (
+        <div key={index} className="flex justify-center mb-4 px-4">
+          <div className="w-full max-w-[90%]">
+            <div className="px-6 py-4 rounded-lg border border-success-200">
+              <div className="flex items-start gap-3">
+                <Avatar
+                  icon={<LuBrainCircuit size={16} className="text-background" />}
+                  size="sm"
+                  color="success"
+                />
+                <div className="w-full">
+                  {chartData ? (
+                    <div className="overflow-hidden h-[300px]">
+                      <Chart
+                        chart={chartData}
+                        isPublic={false}
+                        showExport={false}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-success-200 rounded-lg p-8">
+                      <CircularProgress aria-label="Loading chart" />
+                      <div className="text-sm mt-2">Loading chart...</div>
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-3">
+                    <Link to={`/${team.id}/${parsed.projectId}/dashboard`}>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        className="pointer-events-none"
+                      >
+                        View on Dashboard
+                      </Button>
+                    </Link>
+                    <Link to={`/${team.id}/${parsed.projectId}/chart/${parsed.chartId}/edit`}>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        className="pointer-events-none"
+                      >
+                        Edit Chart
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Assistant messages - centered, taking most space
     if (message.role === "assistant" && parsed.type === "message") {
       const isError = message.isError;
@@ -463,8 +618,8 @@ function AiModal({ isOpen, onClose }) {
         <div key={index} className="flex justify-center mb-4 px-4">
           <div className="w-full max-w-[90%]">
             <div className={`px-6 py-4 rounded-lg ${
-              isError 
-                ? "bg-danger-50 border border-danger-200" 
+              isError
+                ? "bg-danger-50 border border-danger-200"
                 : ""
             }`}>
               <div className="flex items-start gap-3">
@@ -494,6 +649,11 @@ function AiModal({ isOpen, onClose }) {
     if (group.type === "user") {
       // Render user message
       return _renderMessage(group.messages[0], `group-${groupIndex}-user`);
+    }
+
+    if (group.type === "chart_created") {
+      // Render chart creation message
+      return _renderMessage(group.messages[0], `group-${groupIndex}-chart`);
     }
 
     // Group assistant messages - collect all operations and final message
@@ -544,8 +704,8 @@ function AiModal({ isOpen, onClose }) {
                       {operations.map((op, idx) => (
                         <Popover key={idx} placement="bottom" aria-label="Tool call arguments">
                           <PopoverTrigger>
-                            <div className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1">
-                              <span>•</span>
+                            <div className="text-xs text-gray-500 cursor-pointer hover:underline flex items-center gap-1">
+                              <span><LuWrench size={12} /></span>
                               <span className="font-medium">
                                 {op.type === "call" ? "Called" : "Got result from"}: {op.name}
                               </span>
@@ -722,6 +882,8 @@ function AiModal({ isOpen, onClose }) {
                         setConversation(null);
                         setLocalMessages([]);
                         setProgressEvents([]);
+                        setCreatedCharts({});
+                        fetchedChartsRef.current.clear();
                       }}
                       fullWidth
                     >
@@ -729,7 +891,7 @@ function AiModal({ isOpen, onClose }) {
                     </Button>
                     <Spacer y={4} />
                   </div>
-                  <div className="flex flex-col max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
+                  <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
                       <div
                         key={c.id}

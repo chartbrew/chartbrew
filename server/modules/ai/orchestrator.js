@@ -16,6 +16,7 @@ const OpenAI = require("openai");
 const db = require("../../models/models");
 const { generateSqlQuery } = require("./generateSqlQuery");
 const ConnectionController = require("../../controllers/ConnectionController");
+const ChartController = require("../../controllers/ChartController");
 const socketManager = require("../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
@@ -30,7 +31,124 @@ if (openAiKey) {
   });
 }
 
+const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+
 const connectionController = new ConnectionController();
+
+// Layout breakpoints and columns (exact match from layoutBreakpoints.js)
+const layoutBreakpoints = {
+  cols: {
+    xxxl: 16, xxl: 16, xl: 14, lg: 12, md: 10, sm: 8, xs: 6, xxs: 4
+  },
+  rowHeight: 150,
+  margin: [12, 12]
+};
+
+// Safe default layout for all breakpoints to prevent dashboard breakage
+const DEFAULT_CHART_LAYOUT = {
+  xxxl: [0, 0, 8, 3], // Half width on xxxl screens
+  xxl: [0, 0, 8, 3], // Half width on xxl screens
+  xl: [0, 0, 7, 3], // Half width on xl screens
+  lg: [0, 0, 6, 3], // Half width on large screens
+  md: [0, 0, 5, 3], // Half width on medium screens
+  sm: [0, 0, 4, 3], // Half width on small screens
+  xs: [0, 0, 3, 3], // Half width on extra small screens
+  xxs: [0, 0, 2, 3] // Half width on extra extra small screens
+};
+
+// Ensure layout has all required breakpoints to prevent dashboard breakage
+function ensureCompleteLayout(layout) {
+  if (!layout || typeof layout !== "object") {
+    return { ...DEFAULT_CHART_LAYOUT };
+  }
+
+  // Start with default and override with provided values
+  const completeLayout = { ...DEFAULT_CHART_LAYOUT };
+
+  // Ensure each breakpoint is properly defined
+  Object.keys(DEFAULT_CHART_LAYOUT).forEach((bp) => {
+    if (layout[bp] && Array.isArray(layout[bp]) && layout[bp].length === 4) {
+      completeLayout[bp] = [...layout[bp]];
+    }
+  });
+
+  return completeLayout;
+}
+
+// Calculate default layout position for a new chart
+function calculateChartLayout(existingCharts = [], chartSize = 2) {
+  // Get existing layouts for the 'lg' breakpoint
+  const existingLayouts = existingCharts
+    .map((chart) => chart.layout?.lg)
+    .filter((layout) => layout) || [];
+
+  const bpCols = layoutBreakpoints.cols.lg;
+
+  // Determine width based on chartSize (1=small, 2=medium, 3=large, 4=full)
+  let width;
+  switch (chartSize) {
+    case 1: width = Math.max(4, Math.floor(bpCols / 4)); break; // small (at least 4 cols)
+    case 2: width = Math.max(6, Math.floor(bpCols / 3)); break; // medium (at least 6 cols)
+    case 3: width = Math.max(8, Math.floor(bpCols / 2)); break; // large (at least 8 cols)
+    case 4: width = bpCols; break; // full width
+    default: width = Math.max(6, Math.floor(bpCols / 3)); // default medium
+  }
+
+  const height = 3; // Standard height for most charts
+
+  // Find the next available position
+  let x = 0;
+  let y = 0;
+
+  // Simple placement algorithm: scan from top-left, find first available spot
+  const maxY = existingLayouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0);
+
+  for (let scanY = 0; scanY <= maxY + height; scanY++) {
+    for (let scanX = 0; scanX <= bpCols - width; scanX++) {
+      const candidate = {
+        x: scanX, y: scanY, w: width, h: height
+      };
+
+      // Check if this position conflicts with any existing chart
+      const hasCollision = existingLayouts.some((existing) => {
+        const ex2 = existing.x + existing.w;
+        const ey2 = existing.y + existing.h;
+        const cx2 = candidate.x + candidate.w;
+        const cy2 = candidate.y + candidate.h;
+        return !(ex2 <= candidate.x
+          || cx2 <= existing.x
+          || ey2 <= candidate.y
+          || cy2 <= existing.y
+        );
+      });
+
+      if (!hasCollision) {
+        x = scanX;
+        y = scanY;
+        break;
+      }
+    }
+    if (x !== undefined) break;
+  }
+
+  // Fallback: place at bottom
+  if (x === undefined) {
+    x = 0;
+    y = maxY;
+  }
+
+  // Return layout object for all breakpoints - ensure all are defined to prevent dashboard breakage
+  return {
+    xxxl: [x, y, Math.min(width, layoutBreakpoints.cols.xxxl), height],
+    xxl: [x, y, Math.min(width, layoutBreakpoints.cols.xxl), height],
+    xl: [x, y, Math.min(width, layoutBreakpoints.cols.xl), height],
+    lg: [x, y, Math.min(width, layoutBreakpoints.cols.lg), height],
+    md: [x, y, Math.min(width, layoutBreakpoints.cols.md), height],
+    sm: [0, y, Math.min(width, layoutBreakpoints.cols.sm), height],
+    xs: [0, y, layoutBreakpoints.cols.xs, height],
+    xxs: [0, y, layoutBreakpoints.cols.xxs, height]
+  };
+}
 
 async function listConnections(payload) {
   const { project_id } = payload; // scope could be used for filtering in the future
@@ -436,6 +554,7 @@ async function createDataset(payload) {
       dataset_id: dataset.id,
       data_request_id: dataRequest.id,
       name: dataset.legend,
+      dataset_url: `${clientUrl}/${team_id}/dataset/${dataset.id}`,
     };
   } catch (error) {
     throw new Error(`Dataset creation failed: ${error.message}`);
@@ -444,14 +563,18 @@ async function createDataset(payload) {
 
 async function createChart(payload) {
   const {
-    project_id, dataset_id, spec,
-    name, legend, type, subType, chartSize, displayLegend, pointRadius,
+    project_id, dataset_id, spec, team_id,
+    name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
-    showGrowth, invertGrowth, mode, maxValue, minValue, ranges, layout
+    showGrowth, invertGrowth, mode, maxValue, minValue, ranges
   } = payload;
 
   if (!project_id) {
     throw new Error("project_id is required to create a chart");
+  }
+
+  if (!name) {
+    throw new Error("name is required to create a chart");
   }
 
   // Provide default chart spec if not provided
@@ -475,27 +598,33 @@ async function createChart(payload) {
   const chartSpec = spec || defaultSpec;
 
   try {
-    // Get the project to find the next dashboard order
+    // Get existing charts for dashboard order and layout calculation
     const existingCharts = await db.Chart.findAll({
       where: { project_id },
-      attributes: ["dashboardOrder"],
+      attributes: ["dashboardOrder", "layout"],
       order: [["dashboardOrder", "DESC"]],
-      limit: 1,
     });
 
     const nextOrder = existingCharts.length > 0
       ? (existingCharts[0].dashboardOrder || 0) + 1
       : 0;
 
+    // Calculate layout automatically
+    const calculatedLayout = calculateChartLayout(existingCharts, chartSpec.chartSize || 2);
+
+    // Ensure the final layout has all required breakpoints to prevent dashboard breakage
+    const finalLayout = ensureCompleteLayout(chartSpec.layout || calculatedLayout);
+
     // Create the chart
     const chart = await db.Chart.create({
       project_id,
-      name: chartSpec.title || name || "AI Generated Chart",
+      name: name || chartSpec.title || "AI Generated Chart",
       type: type || chartSpec.type,
       subType: subType || chartSpec.subType,
       draft: false,
       dashboardOrder: nextOrder,
-      chartSize: chartSize || chartSpec.chartSize || 2,
+      // chartSize is deprecated but keeping for backward compatibility
+      chartSize: chartSpec.chartSize || 2,
       // eslint-disable-next-line no-nested-ternary
       displayLegend: displayLegend !== undefined
         ? displayLegend
@@ -519,7 +648,7 @@ async function createChart(payload) {
       maxValue: maxValue || chartSpec.maxValue,
       minValue: minValue || chartSpec.minValue,
       ranges: ranges || chartSpec.ranges,
-      layout: layout || chartSpec.layout,
+      layout: finalLayout,
     });
 
     // Get the dataset to link it to the chart
@@ -548,11 +677,21 @@ async function createChart(payload) {
       configuration: chartSpec.configuration || {},
     });
 
+    // run the chart update in the background
+    try {
+      const chartController = new ChartController();
+      chartController.updateChartData(chart.id, null, {});
+    } catch {
+      //
+    }
+
     return {
       chart_id: chart.id,
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
+      dashboard_url: `${clientUrl}/${team_id}/${project_id}/dashboard`,
+      chart_url: `${clientUrl}/${team_id}/${project_id}/chart/${chart.id}/edit`,
     };
   } catch (error) {
     throw new Error(`Chart creation failed: ${error.message}`);
@@ -707,7 +846,7 @@ async function availableTools() {
         },
         required: ["connection_id", "name", "dialect", "query", "xAxis", "yAxis"]
       }
-      // returns: { dataset_id, data_request_id, name }
+      // returns: { dataset_id, data_request_id, name, dataset_url }
     },
     {
       name: "create_chart",
@@ -721,7 +860,6 @@ async function availableTools() {
           legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
           type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
-          chartSize: { type: "integer", enum: [1, 2, 3, 4], description: "Chart size: 1(small), 2(medium), 3(large), 4(full-width)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
           dataLabels: { type: "boolean", description: "Show values on data points" },
@@ -747,12 +885,11 @@ async function availableTools() {
             },
             description: "Gauge ranges [{min, max, label, color}]"
           },
-          layout: { type: "object", description: "Grid layout {lg: [x,y,w,h], ...}" },
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
-        required: ["project_id", "dataset_id"]
+        required: ["project_id", "dataset_id", "name"]
       }
-      // returns: { chart_id, name, type, project_id }
+      // returns: { chart_id, name, type, project_id, dashboard_url, chart_url }
     },
     {
       name: "disambiguate",
@@ -846,6 +983,7 @@ ${ENTITY_CREATION_RULES}
 - Execute queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
+- Only suggest actions that correspond to these tools - no exports, sharing features, or other unimplemented functionality
 
 ## Workflow Guidelines
 1. When a user asks a data question:
@@ -862,23 +1000,31 @@ ${ENTITY_CREATION_RULES}
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
    - Only ask user for confirmation if absolutely necessary - take initiative as much as possible
    - Create the dataset first, then the chart
+   - When creating charts, provide a descriptive name that reflects the data being visualized (e.g., "Monthly Sales Trends" instead of "AI Generated Chart")
+   - When creating resources, integrate clickable markdown links naturally into your response sentences instead of listing them separately (e.g., "I've created your chart! You can [view it here](chart_url) or [see it on your dashboard](dashboard_url)" - NOT "Chart URL: url, Dashboard URL: url")
+   - Keep responses conversational and focused on insights/results rather than listing technical metadata like IDs and connection details
+   - Avoid dumping raw data tables or full datasets in responses - summarize key insights conversationally instead
+   - When answering data questions, give the direct answer first, then optionally show the query used - skip technical details like execution time, connection info, and alternative queries unless asked
 
 3. Best practices:
    - Always confirm connection choice if multiple databases contain similar data
    - Ask before making permanent changes (updating datasets/charts)
    - Take initiative when creating datasets/charts - ask confirmation only if absolutely necessary
+   - Only suggest actions and features that are actually available through your tools - avoid promising features that don't exist in Chartbrew
    - Use clear, non-technical language when summarizing data
    - In continuing conversations, reference previous work and build upon it
 
 ## Response Formatting
 Format all responses using markdown to improve readability:
 - Use **bold** for important numbers, key findings, and emphasis
-- Use \`code blocks\` for SQL queries, table names, column names, and technical terms
+- Use \`code blocks\` only for SQL queries when relevant - avoid technical jargon otherwise
 - Don't overdo bullet points and numbered lists - use them sparingly
 - Use headers (###) to organize content - Result, notes, next steps, etc
 - Highlight key metrics and results prominently
-- Use tables when comparing multiple values or showing structured data
-- Be terse and to the point - don't be verbose
+- Use tables sparingly and only when necessary for clarity - avoid dumping raw query results
+- Be terse and to the point - avoid verbose metadata dumps (IDs, URLs, connection details, database names, table names, query execution times)
+- Focus on business insights and actionable information rather than technical implementation details
+- Keep responses conversational and user-friendly, avoiding technical explanations unless specifically asked
 
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
@@ -1061,7 +1207,7 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
         const toolArgs = JSON.parse(toolCall.function.arguments);
 
         // Inject team_id into tools that need it
-        if (toolName === "create_dataset" || toolName === "run_query") {
+        if (toolName === "create_dataset" || toolName === "run_query" || toolName === "create_chart") {
           toolArgs.team_id = teamId;
         }
 
