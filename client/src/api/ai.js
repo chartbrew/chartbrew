@@ -33,7 +33,7 @@ export async function getAiConversation(conversationId, teamId, userId) {
   return response.json();
 }
 
-export async function orchestrateAi(teamId, userId, question, conversationHistory = [], aiConversationId) {
+export async function orchestrateAi(teamId, userId, question, conversationHistory = [], aiConversationId, context = null) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/orchestrate`;
   const headers = new Headers({
@@ -47,7 +47,8 @@ export async function orchestrateAi(teamId, userId, question, conversationHistor
     userId,
     question,
     conversationHistory,
-    aiConversationId
+    aiConversationId,
+    context
   };
 
   const response = await fetch(url, {

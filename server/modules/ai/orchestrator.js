@@ -989,9 +989,9 @@ ${ENTITY_CREATION_RULES}
 1. When a user asks a data question:
    - Identify which connection to use (ask if ambiguous)
    - Get the schema for that connection
-   - Generate an appropriate query
-   - Validate the query
-   - Run the query
+   - Generate an appropriate query (ONLY AFTER THE SCHEMA IS RETRIEVED!)
+   - Validate the query (MAKE SURE THE TABLE NAMES ETC ARE CORRECT!)
+   - Run the query (NEVER RUN QUERIES BEFORE THE SCHEMA IS RETRIEVED AND QUERY VALIDATED!)
    - Summarize the results
    - Offer to create a chart
 
@@ -1252,7 +1252,9 @@ async function buildSemanticLayer(teamId) {
   return semanticLayer;
 }
 
-async function orchestrate(teamId, question, conversationHistory = [], conversation = null) {
+async function orchestrate(
+  teamId, question, conversationHistory = [], conversation = null, context = null
+) {
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
@@ -1268,9 +1270,23 @@ async function orchestrate(teamId, question, conversationHistory = [], conversat
   // Prepare messages
   const messages = [
     { role: "system", content: systemPrompt },
-    ...conversationHistory,
-    { role: "user", content: question }
+    ...conversationHistory
   ];
+
+  // Inject context as separate assistant message if provided
+  if (context && Array.isArray(context) && context.length > 0) {
+    const contextInfo = context.map((entity) => `${entity.label}`).join("\n");
+    messages.push({
+      role: "assistant",
+      content: `CONTEXT:\n${contextInfo}`
+    });
+  }
+
+  // Add user message
+  messages.push({
+    role: "user",
+    content: question
+  });
 
   // Get available tools in OpenAI format
   const toolDefinitions = await availableTools();

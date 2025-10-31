@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench } from "react-icons/lu"
+import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress, Listbox, ListboxItem } from "@heroui/react"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuDatabase } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -14,6 +14,9 @@ import { getChart } from "../../slices/chart";
 import { API_HOST } from "../../config/settings";
 import Chart from "../Chart/Chart";
 import { Link } from "react-router";
+import { selectProjects } from "../../slices/project";
+import { selectConnections } from "../../slices/connection";
+import { selectDatasetsNoDrafts } from "../../slices/dataset";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -40,7 +43,11 @@ function AiModal({ isOpen, onClose }) {
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
   const [createdCharts, setCreatedCharts] = useState([]);
-  const [selectedContext, setSelectedContext] = useState(null);
+  const [selectedContext, setSelectedContext] = useState({
+    multiSelect: [], // entities selected via "@" button (multiple allowed)
+    singleSelect: null // entity selected via quick reply (only one at a time)
+  });
+  const [contextSearch, setContextSearch] = useState("");
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -48,6 +55,42 @@ function AiModal({ isOpen, onClose }) {
   const inputRef = useRef(null);
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
+  const projects = useSelector(selectProjects);
+  const connections = useSelector(selectConnections);
+  const datasets = useSelector(selectDatasetsNoDrafts);
+  const contextEntities = [
+    ...projects.map((p) => ({ ...p, entity_type: "project" })),
+    ...connections.map((c) => ({ ...c, entity_type: "connection" })),
+    ...datasets.map((d) => ({ ...d, entity_type: "dataset" })),
+  ];
+
+  // Filter context entities based on search
+  const filteredContextEntities = contextEntities.filter((entity) => {
+    if (!contextSearch.trim()) return true;
+
+    const searchLower = contextSearch.toLowerCase();
+    const name = entity.name?.toLowerCase() || "";
+    const type = entity.type?.toLowerCase() || "";
+    const legend = entity.legend?.toLowerCase() || "";
+
+    return name.includes(searchLower) ||
+           type.includes(searchLower) ||
+           legend.includes(searchLower);
+  });
+
+  // Helper to get display label for context entity
+  const getContextLabel = (entity) => {
+    switch (entity.entity_type) {
+      case "project":
+        return `Project: ${entity.name}`;
+      case "connection":
+        return `Connection: ${entity.name} (${entity.type})`;
+      case "dataset":
+        return `Dataset: ${entity.legend || entity.name}`;
+      default:
+        return entity.name;
+    }
+  };
 
   // Function to fetch chart data when a chart is created
   const fetchChartData = async (chartId, projectId) => {
@@ -206,23 +249,33 @@ function AiModal({ isOpen, onClose }) {
   const _onAskAi = async (e) => {
     e.preventDefault();
     // Allow submission if there's either a question or a selected context
-    if ((!question.trim() && !selectedContext) || isLoading) return;
-
-    // Combine context and question
-    const finalQuestion = selectedContext 
-      ? (question.trim() ? `${selectedContext.label}. ${question.trim()}` : selectedContext.label)
-      : question.trim();
+    const hasContent = question.trim() || selectedContext.multiSelect.length > 0 || selectedContext.singleSelect;
+    if (!hasContent || isLoading) return;
 
     const userMessage = {
       role: "user",
-      content: finalQuestion
+      content: question.trim()
     };
+
+    // Prepare context object
+    let context = null;
+    if (selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) {
+      const allContexts = [...selectedContext.multiSelect];
+      if (selectedContext.singleSelect) {
+        allContexts.push(selectedContext.singleSelect);
+      }
+      context = allContexts;
+    }
 
     setIsLoading(true);
     setProgressEvents([]);
-    const currentQuestion = finalQuestion;
+    const currentQuestion = question.trim();
     setQuestion("");
-    setSelectedContext(null);
+    setSelectedContext({
+      multiSelect: [],
+      singleSelect: null
+    });
+    setContextSearch("");
 
     try {
       // If no conversation exists, create it immediately and switch to conversation view
@@ -248,7 +301,8 @@ function AiModal({ isOpen, onClose }) {
           user.id,
           currentQuestion,
           [],
-          tempConversation.id // Use the ID if we already have it from socket
+          tempConversation.id, // Use the ID if we already have it from socket
+          context
         );
 
         // Validate response structure
@@ -299,7 +353,8 @@ function AiModal({ isOpen, onClose }) {
           user.id,
           currentQuestion,
           conversationHistory,
-          conversation.id
+          conversation.id,
+          context
         );
 
         // Validate response structure
@@ -349,7 +404,11 @@ function AiModal({ isOpen, onClose }) {
     setProgressEvents([]);
     setCreatedCharts([]);
     fetchedChartsRef.current.clear();
-    setSelectedContext(null);
+    setSelectedContext({
+      multiSelect: [],
+      singleSelect: null
+    });
+    setContextSearch("");
     setIsLoading(true);
     
     try {
@@ -392,8 +451,11 @@ function AiModal({ isOpen, onClose }) {
 
     // Check if this is a quick reply (set as context)
     if (suggestion.action === "reply") {
-      // Set the suggestion as context
-      setSelectedContext(suggestion);
+      // Set the suggestion as single-select context (toggle behavior)
+      setSelectedContext(prev => ({
+        ...prev,
+        singleSelect: prev.singleSelect?.id === suggestion.id ? null : suggestion
+      }));
       // Focus the input so user can add more text
       if (inputRef.current) {
         inputRef.current.focus();
@@ -440,7 +502,8 @@ function AiModal({ isOpen, onClose }) {
         user.id,
         syntheticQuestion,
         conversation?.full_history || [],
-        currentConversationId
+        currentConversationId,
+        null // no context for suggestion actions
       );
 
       // Validate response structure
@@ -1029,32 +1092,133 @@ function AiModal({ isOpen, onClose }) {
             </div>
             <Spacer y={2} />
             <form onSubmit={_onAskAi} id="ai-form">
-              {selectedContext && (
-                <div className="mb-2 flex items-center gap-2 justify-center">
-                  <Chip
-                    color="primary"
-                    variant="flat"
-                    size="sm"
-                    onClose={() => setSelectedContext(null)}
-                  >
-                    {selectedContext.label}
-                  </Chip>
-                  <span className="text-xs text-foreground-500">+ add more details (optional)</span>
-                </div>
-              )}
               <Input
                 placeholder="Ask me a question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 variant="bordered"
                 endContent={
-                  <Button type="submit" isIconOnly isDisabled={(!question && !selectedContext)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
+                  <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
                     <LuArrowRight size={18} />
                   </Button>
                 }
               />
             </form>
-            <div className="text-xs text-foreground-500 text-center">Our AI can give you insights, answer questions, and generate charts for you.</div>
+            <div className="flex flex-row items-center gap-1 flex-wrap">
+              <Popover placement="bottom">
+                <PopoverTrigger>
+                  <Button
+                    variant="light"
+                    size="sm"
+                    startContent={selectedContext.multiSelect.length > 0 ? null : <LuAtSign size={16} />}
+                    isDisabled={isLoading}
+                    isIconOnly={selectedContext.multiSelect.length > 0}
+                  >
+                    {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context (optional)"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="p-2 w-full">
+                    <div className="text-xs text-foreground-500 mb-2">Search and select context</div>
+                    <Input
+                      placeholder="Search projects, connections, datasets..."
+                      value={contextSearch}
+                      onChange={(e) => setContextSearch(e.target.value)}
+                      variant="bordered"
+                      size="sm"
+                      className="mb-2"
+                    />
+                    <div className="max-h-64 overflow-y-auto w-full">
+                      <Listbox emptyContent="No entities found" className="w-full">
+                        {filteredContextEntities.map((entity) => {
+                          const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                          return (
+                            <ListboxItem
+                              key={`${entity.entity_type}-${entity.id}`}
+                              textValue={getContextLabel(entity)}
+                              startContent={
+                                entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
+                                entity.entity_type === "connection" ? <LuPlug size={16} /> :
+                                entity.entity_type === "dataset" ? <LuDatabase size={16} /> : null
+                              }
+                              endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
+                              className={isSelected ? "bg-primary-50" : ""}
+                              onPress={() => {
+                              setSelectedContext(prev => {
+                                const newEntity = {
+                                  ...entity,
+                                  label: getContextLabel(entity)
+                                };
+                                const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                if (isAlreadySelected) {
+                                  // Remove if already selected (toggle behavior for multi-select)
+                                  return {
+                                    ...prev,
+                                    multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                  };
+                                } else {
+                                  // Add if not selected
+                                  return {
+                                    ...prev,
+                                    multiSelect: [...prev.multiSelect, newEntity]
+                                  };
+                                }
+                              });
+                              setContextSearch("");
+                            }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-sm">{entity.name || entity.legend}</span>
+                              <span className="text-xs text-foreground-500">
+                                {entity.entity_type === "project" ? "Project" :
+                                 entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                 "Dataset"}
+                              </span>
+                            </div>
+                          </ListboxItem>
+                        )})}
+                      </Listbox>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                <>
+                  {selectedContext.multiSelect.map((entity) => (
+                    <Chip
+                      key={`${entity.entity_type}-${entity.id}`}
+                      color="primary"
+                      variant="flat"
+                      size="sm"
+                      onClose={() => {
+                        setSelectedContext(prev => ({
+                          ...prev,
+                          multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                        }));
+                      }}
+                    >
+                      {entity.label}
+                    </Chip>
+                  ))}
+                  {selectedContext.singleSelect && (
+                    <Chip
+                      color="secondary"
+                      variant="flat"
+                      size="sm"
+                      onClose={() => {
+                        setSelectedContext(prev => ({
+                          ...prev,
+                          singleSelect: null
+                        }));
+                      }}
+                    >
+                      {selectedContext.singleSelect.label}
+                    </Chip>
+                  )}
+                </>
+              )}
+            </div>
             <Divider />
             <Accordion variant="light">
               <AccordionItem
@@ -1124,7 +1288,11 @@ function AiModal({ isOpen, onClose }) {
                         setProgressEvents([]);
                         setCreatedCharts({});
                         fetchedChartsRef.current.clear();
-                        setSelectedContext(null);
+                        setSelectedContext({
+                          multiSelect: [],
+                          singleSelect: null
+                        });
+                        setContextSearch("");
                       }}
                       fullWidth
                     >
@@ -1290,16 +1458,39 @@ function AiModal({ isOpen, onClose }) {
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10 rounded-b-2xl">
                   <form onSubmit={_onAskAi} id="ai-conversation-form">
-                    {selectedContext && (
-                      <div className="mb-2 flex items-center gap-2">
-                        <Chip
-                          color="primary"
-                          variant="flat"
-                          size="sm"
-                          onClose={() => setSelectedContext(null)}
-                        >
-                          {selectedContext.label}
-                        </Chip>
+                    {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        {selectedContext.multiSelect.map((entity) => (
+                          <Chip
+                            key={`${entity.entity_type}-${entity.id}`}
+                            color="primary"
+                            variant="flat"
+                            size="sm"
+                            onClose={() => {
+                              setSelectedContext(prev => ({
+                                ...prev,
+                                multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                              }));
+                            }}
+                          >
+                            {entity.label}
+                          </Chip>
+                        ))}
+                        {selectedContext.singleSelect && (
+                          <Chip
+                            color="secondary"
+                            variant="flat"
+                            size="sm"
+                            onClose={() => {
+                              setSelectedContext(prev => ({
+                                ...prev,
+                                singleSelect: null
+                              }));
+                            }}
+                          >
+                            {selectedContext.singleSelect.label}
+                          </Chip>
+                        )}
                         <span className="text-xs text-foreground-500">+ add more details (optional)</span>
                       </div>
                     )}
@@ -1316,7 +1507,7 @@ function AiModal({ isOpen, onClose }) {
                         type="submit"
                         isIconOnly
                         color="primary"
-                        isDisabled={(!question.trim() && !selectedContext) || isLoading}
+                        isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect) || isLoading}
                       >
                         <LuArrowRight />
                       </Button>

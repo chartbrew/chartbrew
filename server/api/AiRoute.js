@@ -15,7 +15,8 @@ module.exports = (app) => {
       conversationHistory = [],
       aiConversationId,
       teamId,
-      userId
+      userId,
+      context
     } = req.body;
 
     if (!teamId || !userId) {
@@ -24,7 +25,7 @@ module.exports = (app) => {
 
     try {
       const orchestration = await getOrchestration(
-        teamId, question, conversationHistory, aiConversationId, userId
+        teamId, question, conversationHistory, aiConversationId, userId, context
       );
       return res.json({ orchestration });
     } catch (error) {

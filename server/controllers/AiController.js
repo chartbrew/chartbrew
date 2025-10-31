@@ -4,7 +4,7 @@ const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
 const db = require("../models/models");
 const socketManager = require("../modules/socketManager");
 
-async function getOrchestration(teamId, question, conversationHistory, aiConversationId, userId) {
+async function getOrchestration(teamId, question, conversationHistory, aiConversationId, userId, context = null) {
   let conversation;
 
   // Load existing conversation or create new one
@@ -62,7 +62,7 @@ async function getOrchestration(teamId, question, conversationHistory, aiConvers
   }
 
   try {
-    const orchestration = await orchestrate(teamId, question, fullHistory, conversation);
+    const orchestration = await orchestrate(teamId, question, fullHistory, conversation, context);
 
     // Extract title from AI response for new conversations
     let finalMessage = orchestration.message;
