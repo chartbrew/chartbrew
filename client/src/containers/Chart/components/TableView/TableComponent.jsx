@@ -63,16 +63,33 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
     baseContent = `${value}`;
   } else if (typeof value === "string") {
     if (isUrl(value)) {
-      baseContent = (
-        <LinkNext
-          href={value}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-        >
-          {value}
-        </LinkNext>
-      );
+      // Check if column format is button - if so, render as button instead of link
+      const columnConfig = columnsFormatting?.[columnKey];
+      if (columnConfig?.display?.format === "button") {
+        const buttonSettings = columnConfig.display.button || { color: "primary", variant: "solid" };
+        baseContent = (
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+            <Button
+              size="sm"
+              color={buttonSettings.color || "primary"}
+              variant={buttonSettings.variant || "solid"}
+            >
+              {buttonSettings.text || "View"}
+            </Button>
+          </a>
+        );
+      } else {
+        baseContent = (
+          <LinkNext
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline"
+          >
+            {value}
+          </LinkNext>
+        );
+      }
     } else if (isLongText(value)) {
       baseContent = (
         <div className="flex flex-row items-center gap-1">

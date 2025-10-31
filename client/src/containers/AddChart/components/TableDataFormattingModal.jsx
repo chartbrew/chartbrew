@@ -75,6 +75,9 @@ const displayFormats = [{
 }, {
   value: "progress",
   text: "Progress bar",
+}, {
+  value: "button",
+  text: "Button (URL)",
 }];
 
 function TableDataFormattingModal(props) {
@@ -92,6 +95,11 @@ function TableDataFormattingModal(props) {
   const [displayFormat, setDisplayFormat] = useState("default");
   const [rules, setRules] = useState([]);
   const [progress, setProgress] = useState(null);
+  const [buttonSettings, setButtonSettings] = useState({
+    color: "primary",
+    variant: "flat",
+    text: "View",
+  });
 
   useEffect(() => {
     if (config) {
@@ -131,6 +139,14 @@ function TableDataFormattingModal(props) {
       if (config.display?.progress) {
         setProgress(config.display.progress);
       }
+
+      if (config.display?.button) {
+        setButtonSettings({
+          color: config.display.button.color,
+          variant: config.display.button.variant,
+          text: config.display.button.text,
+        });
+      }
     } else {
       setDataType("none");
       setFormatValue("");
@@ -141,6 +157,11 @@ function TableDataFormattingModal(props) {
       setSymbol("");
       setDisplayFormat("default");
       setRules([]);
+      setButtonSettings({
+        color: "primary",
+        variant: "flat",
+        text: "View",
+      });
     }
   }, [config]);
 
@@ -167,8 +188,13 @@ function TableDataFormattingModal(props) {
     if (displayFormat) newConfig.display = { ...(newConfig.display || {}), format: displayFormat };
     if (rules) newConfig.display = { ...(newConfig.display || {}), rules };
     if (progress) newConfig.display = { ...(newConfig.display || {}), progress };
+    if (buttonSettings.color && buttonSettings.variant && buttonSettings.text) newConfig.display = { ...(newConfig.display || {}), button: { color: buttonSettings.color, variant: buttonSettings.variant, text: buttonSettings.text } };
 
     onUpdate(newConfig);
+  };
+
+  const _onChangeButtonSettings = (data) => {
+    setButtonSettings({ ...buttonSettings, ...data });
   };
 
   return (
@@ -394,6 +420,125 @@ function TableDataFormattingModal(props) {
                   placeholder="Max value"
                   value={progress?.max}
                   onChange={(e) => setProgress({ ...progress, max: e.target.value })}
+                  variant="bordered"
+                  size="sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {displayFormat === "button" && (
+            <div className="flex flex-col items-start gap-1">
+              <div className="text-sm text-gray-500">
+                Button color:
+              </div>
+              <div className="flex flex-row items-center gap-1">
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="primary"
+                  onClick={() => _onChangeButtonSettings({ color: "primary", variant: "solid" })}
+                  className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="primary"
+                  onClick={() => _onChangeButtonSettings({ color: "primary", variant: "flat" })}
+                  className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "flat" ? " outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="secondary"
+                  onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "solid" })}
+                  className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="secondary"
+                  onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "bordered" })}
+                  className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "bordered" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="success"
+                  onClick={() => _onChangeButtonSettings({ color: "success", variant: "light" })}
+                  className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "light" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="success"
+                  onClick={() => _onChangeButtonSettings({ color: "success", variant: "flat" })}
+                  className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="default"
+                  onClick={() => _onChangeButtonSettings({ color: "default", variant: "solid" })}
+                  className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="default"
+                  onClick={() => _onChangeButtonSettings({ color: "default", variant: "flat" })}
+                  className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="warning"
+                  onClick={() => _onChangeButtonSettings({ color: "warning", variant: "solid" })}
+                  className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="warning"
+                  onClick={() => _onChangeButtonSettings({ color: "warning", variant: "flat" })}
+                  className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  color="danger"
+                  onClick={() => _onChangeButtonSettings({ color: "danger", variant: "solid" })}
+                  className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color="danger"
+                  onClick={() => _onChangeButtonSettings({ color: "danger", variant: "flat" })}
+                  className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
+                  content=" "
+                />
+              </div>
+              <Spacer y={1} />
+              <div className="text-sm text-gray-500">
+                Button text:
+              </div>
+              <div className="flex flex-row items-center gap-1">
+                <Input
+                  placeholder="Enter the button text here"
+                  value={buttonSettings.text}
+                  onChange={(e) => _onChangeButtonSettings({ text: e.target.value })}
                   variant="bordered"
                   size="sm"
                 />
