@@ -20,6 +20,7 @@ const ChartController = require("../../controllers/ChartController");
 const socketManager = require("../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
+const { chartColors } = require("../../charts/colors");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -1206,7 +1207,7 @@ async function buildSemanticLayer(teamId) {
       description: "A line chart can be used to show trends over time, can be used as an area chart by setting the fillColor",
     },
     "bar": {
-      description: "A bar chart can be used to compare values across categories, can be used as a stacked bar chart by setting the stacked property to true",
+      description: "A bar chart can be used to compare values across categories, can be used as a stacked bar chart by setting the stacked property to true. Use fillColor for bar charts to make them more visually appealing.",
     },
     "pie": {
       description: "A pie chart can be used to show the proportion of each category in a total",
@@ -1238,7 +1239,8 @@ async function buildSemanticLayer(teamId) {
       ranges: [{
         min: 0, max: 100, label: "Total", color: "#000000"
       }],
-    }
+    },
+    chartColors,
   }];
 
   const semanticLayer = {

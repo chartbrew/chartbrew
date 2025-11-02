@@ -13,10 +13,10 @@ import { selectUser } from "../../slices/user";
 import { getChart } from "../../slices/chart";
 import { API_HOST } from "../../config/settings";
 import Chart from "../Chart/Chart";
-import { Link } from "react-router";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
+import { useParams } from "react-router";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -49,6 +49,7 @@ function AiModal({ isOpen, onClose }) {
   });
   const [contextSearch, setContextSearch] = useState("");
 
+  const params = useParams();
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const messagesEndRef = useRef(null);
@@ -199,6 +200,18 @@ function AiModal({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       loadConversations();
+      // check the route params and add project and chart id to the context
+      const projectId = parseInt(params?.projectId, 10);
+      const chartId = parseInt(params?.chartId, 10);
+      if (projectId && selectedContext?.multiSelect?.find(e => e.id === projectId) === undefined) {
+        const project = projects.find(p => p.id === projectId);
+        const projectLabel = `Project: ${project?.name}`;
+        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: projectId, entity_type: "project", label: projectLabel }] }));
+      }
+      if (chartId && selectedContext?.multiSelect?.find(e => e.id === chartId) === undefined) {
+        const chartLabel = `Chart ID: ${chartId}`;
+        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: chartId, entity_type: "chart", label: chartLabel }] }));
+      }
     }
   }, [isOpen]);
 
@@ -799,7 +812,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   )}
                   <div className="flex gap-2 mt-3">
-                    <Link to={`/${team.id}/${parsed.projectId}/dashboard`}>
+                    <a href={`/${team.id}/${parsed.projectId}/dashboard`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
                         variant="flat"
@@ -808,8 +821,8 @@ function AiModal({ isOpen, onClose }) {
                       >
                         View on Dashboard
                       </Button>
-                    </Link>
-                    <Link to={`/${team.id}/${parsed.projectId}/chart/${parsed.chartId}/edit`}>
+                    </a>
+                    <a href={`/${team.id}/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
                         variant="flat"
@@ -817,7 +830,7 @@ function AiModal({ isOpen, onClose }) {
                       >
                         Edit Chart
                       </Button>
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -1119,7 +1132,9 @@ function AiModal({ isOpen, onClose }) {
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="p-2 w-full">
-                    <div className="text-xs text-foreground-500 mb-2">Search and select context</div>
+                    <div className="text-xs text-foreground-500 mb-2">
+                      Context helps our AI to understand your intentions better.
+                    </div>
                     <Input
                       placeholder="Search projects, connections, datasets..."
                       value={contextSearch}
@@ -1278,7 +1293,7 @@ function AiModal({ isOpen, onClose }) {
             <div className="flex flex-row">
               <div className="flex-none w-60">
                 <div className="flex flex-col relative h-full bg-content2 rounded-tl-2xl rounded-bl-2xl">
-                  <div className="w-full bg-content1 px-4 pt-4 border-b border-r border-divider rounded-tl-2xl">
+                  <div className="w-full px-4 pt-4 border-r border-divider rounded-tl-2xl">
                     <Button
                       color="primary"
                       startContent={<LuPlus size={18} />}
@@ -1299,6 +1314,7 @@ function AiModal({ isOpen, onClose }) {
                       New Conversation
                     </Button>
                     <Spacer y={4} />
+                    <Divider />
                   </div>
                   <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
@@ -1459,7 +1475,7 @@ function AiModal({ isOpen, onClose }) {
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10 rounded-b-2xl">
                   <form onSubmit={_onAskAi} id="ai-conversation-form">
                     {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         {selectedContext.multiSelect.map((entity) => (
                           <Chip
                             key={`${entity.entity_type}-${entity.id}`}
@@ -1494,7 +1510,85 @@ function AiModal({ isOpen, onClose }) {
                         <span className="text-xs text-foreground-500">+ add more details (optional)</span>
                       </div>
                     )}
-                    <div className="flex flex-row gap-2">
+                    <div className="flex flex-row gap-2 items-center">
+                      <Popover placement="top-start">
+                        <PopoverTrigger>
+                          <Button
+                            variant="light"
+                            isDisabled={isLoading}
+                            isIconOnly
+                          >
+                            <LuAtSign size={18} />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                          <div className="p-2 w-full">
+                            <div className="text-xs text-foreground-500 mb-2">
+                              Context helps our AI to understand your intentions better.
+                            </div>
+                            <Input
+                              placeholder="Search projects, connections, datasets..."
+                              value={contextSearch}
+                              onChange={(e) => setContextSearch(e.target.value)}
+                              variant="bordered"
+                              size="sm"
+                              className="mb-2"
+                            />
+                            <div className="max-h-64 overflow-y-auto w-full">
+                              <Listbox emptyContent="No entities found" className="w-full">
+                                {filteredContextEntities.map((entity) => {
+                                  const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                  return (
+                                    <ListboxItem
+                                      key={`${entity.entity_type}-${entity.id}`}
+                                      textValue={getContextLabel(entity)}
+                                      startContent={
+                                        entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
+                                          entity.entity_type === "connection" ? <LuPlug size={16} /> :
+                                            entity.entity_type === "dataset" ? <LuDatabase size={16} /> : null
+                                      }
+                                      endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
+                                      className={isSelected ? "bg-primary-50" : ""}
+                                      onPress={() => {
+                                        setSelectedContext(prev => {
+                                          const newEntity = {
+                                            ...entity,
+                                            label: getContextLabel(entity)
+                                          };
+                                          const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                          if (isAlreadySelected) {
+                                            // Remove if already selected (toggle behavior for multi-select)
+                                            return {
+                                              ...prev,
+                                              multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                            };
+                                          } else {
+                                            // Add if not selected
+                                            return {
+                                              ...prev,
+                                              multiSelect: [...prev.multiSelect, newEntity]
+                                            };
+                                          }
+                                        });
+                                        setContextSearch("");
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="text-sm">{entity.name || entity.legend}</span>
+                                        <span className="text-xs text-foreground-500">
+                                          {entity.entity_type === "project" ? "Project" :
+                                            entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                              "Dataset"}
+                                        </span>
+                                      </div>
+                                    </ListboxItem>
+                                  )
+                                })}
+                              </Listbox>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <Input
                         ref={inputRef}
                         placeholder="Ask me anything about your data..."

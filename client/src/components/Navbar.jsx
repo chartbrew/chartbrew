@@ -190,13 +190,13 @@ function NavbarContainer() {
           </NavbarItem>
           <NavbarItem>
             <Button
-              variant="light"
+              variant="solid"
               onPress={() => setShowAiModal(true)}
-              startContent={<LuBrainCircuit size={18} className="text-primary-500" />}
-              disableRipple
-              className="p-0 bg-transparent data-[hover=true]:bg-transparent"
+              startContent={<LuBrainCircuit size={18} />}
+              color="primary"
+              size="sm"
             >
-              Ask Chartbrew
+              Ask Chartbrew AI
             </Button>
           </NavbarItem>
           <Dropdown aria-label="Select a help option">
