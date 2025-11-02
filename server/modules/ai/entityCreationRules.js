@@ -20,13 +20,20 @@ const ENTITY_CREATION_RULES = `## Entity Creation Rules
 - dateFormat: string - optional date format (e.g. YYYY-MM-DD)
 - conditions: array - optional filtering conditions
 
+**Supported Connection Types and Subtypes:**
+- MySQL: mysql, rdsMysql
+- PostgreSQL: postgres, timescaledb, supabasedb, rdsPostgres
+- MongoDB: mongodb
+
 **DataRequest:**
 - Required: dataset_id, connection_id, query
-- query: string - SQL/database query
+- query: string - SQL query for database connections (MySQL, PostgreSQL, MongoDB)
 - conditions: array - database filtering conditions (optional)
-- configuration: object - dialect-specific settings (MongoDB/SQL) (optional)
+- configuration: object - dialect-specific settings (optional)
 - variables: array - parameterized query variables (default: [])
 - transform: object - data transformation rules (optional)
+
+Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. API connections will be available in future updates.
 
 **Chart:**
 - Required: project_id, dataset_id
@@ -73,6 +80,22 @@ const ENTITY_CREATION_RULES = `## Entity Creation Rules
 3. Create Chart (project_id, name, type, draft=false)
 4. Create ChartDatasetConfig (chart_id, dataset_id, legend)`;
 
+// Supported connection types and their subtypes
+const SUPPORTED_CONNECTIONS = {
+  mysql: {
+    subtypes: ["mysql", "rdsMysql"],
+    description: "MySQL database connections including Amazon RDS MySQL"
+  },
+  postgres: {
+    subtypes: ["postgres", "timescaledb", "supabasedb", "rdsPostgres"],
+    description: "PostgreSQL database connections including TimescaleDB, Supabase, and Amazon RDS PostgreSQL"
+  },
+  mongodb: {
+    subtypes: ["mongodb"],
+    description: "MongoDB NoSQL database connections"
+  }
+};
+
 // Field definitions for reference and validation
 const FIELD_SPECS = {
   Dataset: {
@@ -97,7 +120,7 @@ const FIELD_SPECS = {
       variables: [],
       transform: null
     },
-    description: "Define how to fetch data from database connections"
+    description: "Define how to fetch data from supported database connections (MySQL, PostgreSQL, MongoDB)"
   },
 
   Chart: {
@@ -187,6 +210,23 @@ function getRecommendedDefaults(entityType) {
 }
 
 /**
+ * Check if a connection type and subtype is supported
+ * @param {string} type - Connection type (e.g., "mysql", "postgres", "mongodb")
+ * @param {string} subType - Connection subtype (optional)
+ * @returns {boolean} Whether the connection type is supported
+ */
+function isConnectionSupported(type, subType) {
+  const connectionType = SUPPORTED_CONNECTIONS[type];
+  if (!connectionType) return false;
+
+  if (subType) {
+    return connectionType.subtypes.includes(subType);
+  }
+
+  return true;
+}
+
+/**
  * Validate entity payload (for future use in API validation)
  * @param {string} entityType - Entity type name
  * @param {Object} payload - Entity data to validate
@@ -219,9 +259,11 @@ module.exports = {
   ENTITY_CREATION_RULES,
   FIELD_SPECS,
   DEFAULTS,
+  SUPPORTED_CONNECTIONS,
   // Helper functions
   getCreationRules,
   getRequiredFields,
   getRecommendedDefaults,
+  isConnectionSupported,
   validateEntityPayload
 };

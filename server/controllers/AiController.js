@@ -4,7 +4,14 @@ const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
 const db = require("../models/models");
 const socketManager = require("../modules/socketManager");
 
-async function getOrchestration(teamId, question, conversationHistory, aiConversationId, userId, context = null) {
+async function getOrchestration(
+  teamId,
+  question,
+  conversationHistory,
+  aiConversationId,
+  userId,
+  context = null,
+) {
   let conversation;
 
   // Load existing conversation or create new one

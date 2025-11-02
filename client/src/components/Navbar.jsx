@@ -72,6 +72,26 @@ function NavbarContainer() {
     }
   }, [teams]);
 
+  // Keyboard shortcut for AI modal (Cmd+K on Mac, Ctrl+K on Windows)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        // Prevent default browser behavior (usually search)
+        event.preventDefault();
+        setShowAiModal((prev) => !prev);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const _canAccess = (role, teamData) => {
     if (teamData) {
       return canAccess(role, user.id, teamData.TeamRoles);

@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
+import { useParams } from "react-router";
 
 import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
@@ -16,7 +17,7 @@ import Chart from "../Chart/Chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
-import { useParams } from "react-router";
+import isMac from "../../modules/isMac";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -137,15 +138,16 @@ function AiModal({ isOpen, onClose }) {
         ...localMessages
       ];
 
-      const chartCreationMessages = allMessages
+      const chartMessages = allMessages
         .filter(msg => msg.role === "tool")
         .map(msg => {
           try {
             const content = JSON.parse(msg.content);
-            if (msg.name === "create_chart" && content.chart_id && !fetchedChartsRef.current.has(content.chart_id)) {
+            if ((msg.name === "create_chart" || msg.name === "update_chart") && content.chart_id) {
               return {
                 chartId: content.chart_id,
-                projectId: content.project_id
+                projectId: content.project_id,
+                isUpdate: msg.name === "update_chart"
               };
             }
           } catch (e) {
@@ -155,10 +157,17 @@ function AiModal({ isOpen, onClose }) {
         })
         .filter(Boolean);
 
-      // Fetch charts that haven't been loaded yet
-      for (const { chartId, projectId } of chartCreationMessages) {
+      // Fetch charts that haven't been loaded yet (for both create and update)
+      for (const { chartId, projectId } of chartMessages) {
         if (!fetchedChartsRef.current.has(chartId)) {
           fetchedChartsRef.current.add(chartId);
+          await fetchChartData(chartId, projectId);
+        }
+      }
+
+      // Refresh charts that were updated
+      for (const { chartId, projectId, isUpdate } of chartMessages) {
+        if (isUpdate && fetchedChartsRef.current.has(chartId)) {
           await fetchChartData(chartId, projectId);
         }
       }
@@ -203,6 +212,9 @@ function AiModal({ isOpen, onClose }) {
       // check the route params and add project and chart id to the context
       const projectId = parseInt(params?.projectId, 10);
       const chartId = parseInt(params?.chartId, 10);
+      const connectionId = parseInt(params?.connectionId, 10);
+      const datasetId = parseInt(params?.datasetId, 10);
+
       if (projectId && selectedContext?.multiSelect?.find(e => e.id === projectId) === undefined) {
         const project = projects.find(p => p.id === projectId);
         const projectLabel = `Project: ${project?.name}`;
@@ -211,6 +223,16 @@ function AiModal({ isOpen, onClose }) {
       if (chartId && selectedContext?.multiSelect?.find(e => e.id === chartId) === undefined) {
         const chartLabel = `Chart ID: ${chartId}`;
         setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: chartId, entity_type: "chart", label: chartLabel }] }));
+      }
+      if (connectionId && selectedContext?.multiSelect?.find(e => e.id === connectionId) === undefined) {
+        const connection = connections.find(c => c.id === connectionId);
+        const connectionLabel = `Connection: ${connection?.name} (${connection?.type})`;
+        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: connectionId, entity_type: "connection", label: connectionLabel }] }));
+      }
+      if (datasetId && selectedContext?.multiSelect?.find(e => e.id === datasetId) === undefined) {
+        const dataset = datasets.find(d => d.id === datasetId);
+        const datasetLabel = `Dataset: ${dataset?.legend || dataset?.name}`;
+        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
       }
     }
   }, [isOpen]);
@@ -270,19 +292,20 @@ function AiModal({ isOpen, onClose }) {
       content: question.trim()
     };
 
-    // Prepare context object
+    // Prepare context object (only multiSelect goes to context)
     let context = null;
-    if (selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) {
-      const allContexts = [...selectedContext.multiSelect];
-      if (selectedContext.singleSelect) {
-        allContexts.push(selectedContext.singleSelect);
-      }
-      context = allContexts;
+    if (selectedContext.multiSelect.length > 0) {
+      context = selectedContext.multiSelect;
     }
 
     setIsLoading(true);
     setProgressEvents([]);
-    const currentQuestion = question.trim();
+    let currentQuestion = question.trim();
+
+    // Append singleSelect to the question text
+    if (selectedContext.singleSelect) {
+      currentQuestion += (currentQuestion ? "\n\n" : "") + selectedContext.singleSelect.label;
+    }
     setQuestion("");
     setSelectedContext({
       multiSelect: [],
@@ -592,10 +615,10 @@ function AiModal({ isOpen, onClose }) {
     if (message.role === "tool") {
       const content = JSON.parse(message.content);
 
-      // Check if this is a chart creation result
-      if (message.name === "create_chart" && content.chart_id) {
+      // Check if this is a chart creation or update result
+      if ((message.name === "create_chart" || message.name === "update_chart") && content.chart_id) {
         return {
-          type: "chart_created",
+          type: message.name === "create_chart" ? "chart_created" : "chart_updated",
           chartId: content.chart_id,
           chartName: content.name,
           chartType: content.type,
@@ -615,32 +638,55 @@ function AiModal({ isOpen, onClose }) {
 
     // Check for cb-actions suggestions block
     if (message.role === "assistant" && message.content) {
-      const cbActionsMatch = message.content.match(/```cb-actions\s*\n([\s\S]*?)\n```/);
+      // Try multiple patterns to handle cases where AI forgets proper formatting
+      let cbActionsMatch = null;
+      let suggestionsData = null;
+
+      // First try the proper fenced code block format
+      cbActionsMatch = message.content.match(/```cb-actions\s*\n([\s\S]*?)\n```/);
       if (cbActionsMatch) {
         try {
-          const suggestionsData = JSON.parse(cbActionsMatch[1]);
-          if (suggestionsData.version === 1 && Array.isArray(suggestionsData.suggestions)) {
-            // Remove the cb-actions block from content
-            let content = message.content.replace(/```cb-actions\s*\n[\s\S]*?\n```/, "").trim();
-            // Remove title if it starts with "# "
-            if (content && content.startsWith("# ")) {
-              const lines = content.split("\n");
-              if (lines.length > 1) {
-                content = lines.slice(1).join("\n").trim();
-              } else {
-                content = "";
-              }
-            }
-
-            return {
-              type: "message_with_suggestions",
-              content: content,
-              suggestions: suggestionsData.suggestions
-            };
-          }
+          suggestionsData = JSON.parse(cbActionsMatch[1]);
         } catch (e) {
-          // Invalid JSON, treat as regular message
+          // Try parsing without the code block wrapper
         }
+      }
+
+      // If that didn't work, try parsing cb-actions directly (fallback for when AI forgets backticks)
+      if (!suggestionsData) {
+        const directMatch = message.content.match(/cb-actions\s*(\{[\s\S]*?\})/);
+        if (directMatch) {
+          try {
+            suggestionsData = JSON.parse(directMatch[1]);
+          } catch (e) {
+            // Invalid JSON, continue to next fallback
+          }
+        }
+      }
+
+      // If we successfully parsed suggestions data, process it
+      if (suggestionsData && suggestionsData.version === 1 && Array.isArray(suggestionsData.suggestions)) {
+        // Remove the cb-actions block from content (try both formats)
+        let content = message.content
+          .replace(/```cb-actions\s*\n[\s\S]*?\n```/, "")
+          .replace(/cb-actions\s*\{[\s\S]*?\}/, "")
+          .trim();
+
+        // Remove title if it starts with "# "
+        if (content && content.startsWith("# ")) {
+          const lines = content.split("\n");
+          if (lines.length > 1) {
+            content = lines.slice(1).join("\n").trim();
+          } else {
+            content = "";
+          }
+        }
+
+        return {
+          type: "message_with_suggestions",
+          content: content,
+          suggestions: suggestionsData.suggestions
+        };
       }
     }
 
@@ -669,10 +715,10 @@ function AiModal({ isOpen, onClose }) {
     messages.forEach((message) => {
       const parsed = _parseMessage(message);
 
-      if (message.role === "user" || parsed.type === "chart_created") {
-        // User messages and chart creation messages are always separate
+      if (message.role === "user" || parsed.type === "chart_created" || parsed.type === "chart_updated") {
+        // User messages and chart creation/update messages are always separate
         groups.push({
-          type: parsed.type === "chart_created" ? "chart_created" : "user",
+          type: parsed.type === "chart_created" ? "chart_created" : parsed.type === "chart_updated" ? "chart_updated" : "user",
           messages: [message]
         });
         currentGroup = null;
@@ -782,21 +828,35 @@ function AiModal({ isOpen, onClose }) {
       );
     }
 
-    // Chart created messages - render the actual chart
-    if (parsed.type === "chart_created") {
+    // Chart created/updated messages - render the actual chart
+    if (parsed.type === "chart_created" || parsed.type === "chart_updated") {
       const chartData = createdCharts.find((c) => c.id === parsed.chartId);
 
       return (
         <div key={index} className="flex justify-center mb-4 px-4">
           <div className="w-full max-w-[90%]">
-            <div className="px-6 py-4 rounded-lg border border-success-200">
+            <div className={`px-6 py-4 rounded-lg border ${
+              parsed.type === "chart_created" ? "border-success-200" : "border-warning-200"
+            }`}>
               <div className="flex items-start gap-3">
                 <Avatar
                   icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color="success"
+                  color={parsed.type === "chart_created" ? "success" : "warning"}
                 />
                 <div className="w-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium">
+                      {parsed.type === "chart_created" ? "Chart Created" : "Chart Updated"}
+                    </span>
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color={parsed.type === "chart_created" ? "success" : "warning"}
+                    >
+                      {parsed.chartName}
+                    </Chip>
+                  </div>
                   {chartData ? (
                     <div className="overflow-hidden h-[300px]">
                       <Chart
@@ -806,7 +866,9 @@ function AiModal({ isOpen, onClose }) {
                       />
                     </div>
                   ) : (
-                    <div className="border border-success-200 rounded-lg p-8">
+                    <div className={`border ${
+                      parsed.type === "chart_created" ? "border-success-200" : "border-warning-200"
+                    } rounded-lg p-8`}>
                       <CircularProgress aria-label="Loading chart" />
                       <div className="text-sm mt-2">Loading chart...</div>
                     </div>
@@ -930,8 +992,8 @@ function AiModal({ isOpen, onClose }) {
       return _renderMessage(group.messages[0], `group-${groupIndex}-user`);
     }
 
-    if (group.type === "chart_created") {
-      // Render chart creation message
+    if (group.type === "chart_created" || group.type === "chart_updated") {
+      // Render chart creation/update message
       return _renderMessage(group.messages[0], `group-${groupIndex}-chart`);
     }
 
@@ -1099,8 +1161,14 @@ function AiModal({ isOpen, onClose }) {
                 color="primary"
               />
               <div className="flex flex-col items-center justify-center">
-                <div className="font-tw font-medium text-lg">Chartbrew AI Assistant</div>
+                <div className="flex flex-row items-center gap-2">
+                  <div className="font-tw font-medium text-lg">Chartbrew AI Assistant</div>
+                  <Chip color="primary" variant="flat" size="sm">
+                    Beta
+                  </Chip>
+                </div>
                 <div className="text-sm text-foreground-500">Ask me anything about your data</div>
+                <Kbd keys={isMac() ? ["command"] : ["ctrl"]} className="mt-2">K</Kbd>
               </div>
             </div>
             <Spacer y={2} />
@@ -1419,7 +1487,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   </div>
                 </div>
-                <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-20">
+                <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-24">
                   {conversation?.full_history?.length > 0 ? (
                     <>
                       {(() => {
