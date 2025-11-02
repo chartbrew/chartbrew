@@ -1,6 +1,6 @@
 const { fn, col, Op } = require("sequelize");
 
-const { orchestrate, availableTools } = require("../modules/ai/orchestrator");
+const { orchestrate, availableTools } = require("../modules/ai/orchestrator/orchestrator");
 const db = require("../models/models");
 const socketManager = require("../modules/socketManager");
 

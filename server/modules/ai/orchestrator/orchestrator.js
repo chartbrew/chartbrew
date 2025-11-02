@@ -13,14 +13,14 @@
  */
 
 const OpenAI = require("openai");
-const db = require("../../models/models");
-const { generateSqlQuery } = require("./generateSqlQuery");
-const ConnectionController = require("../../controllers/ConnectionController");
-const ChartController = require("../../controllers/ChartController");
-const socketManager = require("../socketManager");
+const db = require("../../../models/models");
+const { generateSqlQuery } = require("../generateSqlQuery");
+const ConnectionController = require("../../../controllers/ConnectionController");
+const ChartController = require("../../../controllers/ChartController");
+const socketManager = require("../../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
-const { chartColors } = require("../../charts/colors");
+const { chartColors } = require("../../../charts/colors");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
