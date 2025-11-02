@@ -22,6 +22,7 @@ import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
+import { selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
 import { useTheme } from "../modules/ThemeContext";
 import cbFullLogoLight from "../assets/cb_logo_light.svg";
 import cbFullLogoDark from "../assets/cb_logo_dark.svg";
@@ -35,12 +36,12 @@ function NavbarContainer() {
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false);
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
   const project = useSelector((state) => state.project.active);
   const user = useSelector(selectUser);
+  const aiModalOpen = useSelector(selectAiModalOpen);
 
   const { theme, setTheme, isDark } = useTheme();
   const params = useParams();
@@ -79,7 +80,7 @@ function NavbarContainer() {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
         // Prevent default browser behavior (usually search)
         event.preventDefault();
-        setShowAiModal((prev) => !prev);
+        dispatch(toggleAiModal());
       }
     };
 
@@ -90,7 +91,7 @@ function NavbarContainer() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [dispatch]);
 
   const _canAccess = (role, teamData) => {
     if (teamData) {
@@ -211,7 +212,7 @@ function NavbarContainer() {
           <NavbarItem>
             <Button
               variant="solid"
-              onPress={() => setShowAiModal(true)}
+              onPress={() => dispatch(toggleAiModal())}
               startContent={<LuBrainCircuit size={18} />}
               color="primary"
               size="sm"
@@ -392,7 +393,7 @@ function NavbarContainer() {
         </ModalContent>
       </Modal>
 
-      <AiModal isOpen={showAiModal} onClose={() => setShowAiModal(false)} />
+      <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
     </>
   );
 }
