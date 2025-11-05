@@ -11,6 +11,7 @@ import Text from "../../../../components/Text";
 function TableContainer(props) {
   const {
     tabularData, embedded = false, datasets,
+    defaultRowsPerPage = 10,
   } = props;
 
   const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
@@ -75,20 +76,18 @@ function TableContainer(props) {
           data={tabularData[dataKey].data}
           embedded={embedded}
           dataset={activeDataset}
+          defaultRowsPerPage={defaultRowsPerPage}
         />
       )}
     </div>
   );
 }
 
-TableContainer.defaultProps = {
-  embedded: false,
-};
-
 TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
   datasets: PropTypes.array.isRequired,
   embedded: PropTypes.bool,
+  defaultRowsPerPage: PropTypes.number,
 };
 
 export default TableContainer;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
@@ -156,7 +156,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
 };
 
 function TableComponent({
-  columns, data, embedded, dataset,
+  columns, data, embedded, dataset, defaultRowsPerPage = 10,
 }) {
   const columnsFormatting = dataset?.configuration?.columnsFormatting;
   
@@ -173,10 +173,14 @@ function TableComponent({
   } = useTable({
     columns,
     data,
-    initialState: { pageIndex: 0 }
+    initialState: { pageIndex: 0, pageSize: defaultRowsPerPage }
   },
   useSortBy,
   usePagination);
+
+  useEffect(() => {
+    setPageSize(defaultRowsPerPage);
+  }, [defaultRowsPerPage]);
 
   return (
     <div style={styles.mainBody(embedded)}>
@@ -371,6 +375,7 @@ TableComponent.propTypes = {
   data: PropTypes.array.isRequired,
   embedded: PropTypes.bool,
   dataset: PropTypes.object.isRequired,
+  defaultRowsPerPage: PropTypes.number,
 };
 
 export default TableComponent;

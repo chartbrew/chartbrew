@@ -208,6 +208,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    defaultRowsPerPage: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
+    },
   }, {
     freezeTableName: true,
   });

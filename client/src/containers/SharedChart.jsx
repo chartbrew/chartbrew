@@ -420,6 +420,7 @@ function SharedChart() {
               tabularData={chart.chartData}
               embedded
               datasets={chart.ChartDatasetConfigs}
+              defaultRowsPerPage={chart.defaultRowsPerPage}
             />
           )}
           {(chart.type === "kpi" || chart.type === "avg") && (

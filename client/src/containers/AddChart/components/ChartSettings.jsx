@@ -63,6 +63,26 @@ const timeIntervalOptions = [{
   value: "year",
 }];
 
+const tableRowOptions = [{
+  text: "5 rows per page",
+  value: "5",
+},{
+  text: "10 rows per page",
+  value: "10",
+}, {
+  text: "20 rows per page",
+  value: "20",
+}, {
+  text: "30 rows per page",
+  value: "30",
+}, {
+  text: "40 rows per page",
+  value: "40",
+}, {
+  text: "50 rows per page",
+  value: "50",
+}];
+
 function ChartSettings({ chart, onChange }) {
   const [initSelectionRange] = useState({
     startDate: moment().startOf("month").toDate(),
@@ -405,80 +425,103 @@ function ChartSettings({ chart, onChange }) {
       <Spacer y={4} />
 
       <div className="flex flex-col gap-2">
-        <div className="flex flex-row items-center gap-2">
-          <Input
-            label="Max Y Axis value"
-            placeholder="Enter a number"
-            type="number"
-            value={max}
-            onChange={(e) => setMax(e.target.value)}
-            variant="bordered"
-            fullWidth
-          />
-          <div className="flex flex-row gap-1">
-            {max && (
-              <>
-                <Button
-                  disabled={!max || (max === chart.maxValue)}
-                  onPress={() => onChange({ maxValue: max })}
-                  color="success"
-                  variant="flat"
-                  size="sm"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="flat"
-                  color="danger"
-                  onPress={() => {
-                    onChange({ maxValue: null });
-                    setMax("");
-                  }}
-                  size="sm"
-                >
-                  Clear
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-row items-center gap-2">
-          <Input
-            label="Min Y Axis value"
-            placeholder="Enter a number"
-            type="number"
-            value={min}
-            onChange={(e) => setMin(e.target.value)}
-            variant="bordered"
-            fullWidth
-          />
-          <div className="flex flex-row gap-1">
-            {min && (
-              <>
-                <Button
-                  disabled={!min || (min === chart.minValue)}
-                  onPress={() => onChange({ minValue: min })}
-                  color="success"
-                  variant="flat"
-                  size="sm"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="flat"
-                  color="danger"
-                  onPress={() => {
-                    onChange({ minValue: null });
-                    setMin("");
-                  }}
-                  size="sm"
-                >
-                  Clear
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
+        {chart.type !== "table" && (
+          <>
+            <div className="flex flex-row items-center gap-2">
+              <Input
+                label="Max Y Axis value"
+                placeholder="Enter a number"
+                type="number"
+                value={max}
+                onChange={(e) => setMax(e.target.value)}
+                variant="bordered"
+                fullWidth
+              />
+              <div className="flex flex-row gap-1">
+                {max && (
+                  <>
+                    <Button
+                      disabled={!max || (max === chart.maxValue)}
+                      onPress={() => onChange({ maxValue: max })}
+                      color="success"
+                      variant="flat"
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="flat"
+                      color="danger"
+                      onPress={() => {
+                        onChange({ maxValue: null });
+                        setMax("");
+                      }}
+                      size="sm"
+                    >
+                      Clear
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-row items-center gap-2">
+              <Input
+                label="Min Y Axis value"
+                placeholder="Enter a number"
+                type="number"
+                value={min}
+                onChange={(e) => setMin(e.target.value)}
+                variant="bordered"
+                fullWidth
+              />
+              <div className="flex flex-row gap-1">
+                {min && (
+                  <>
+                    <Button
+                      disabled={!min || (min === chart.minValue)}
+                      onPress={() => onChange({ minValue: min })}
+                      color="success"
+                      variant="flat"
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="flat"
+                      color="danger"
+                      onPress={() => {
+                        onChange({ minValue: null });
+                        setMin("");
+                      }}
+                      size="sm"
+                    >
+                      Clear
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {chart.type === "table" && (
+          <>
+            <Select
+              label="Default rows per page"
+              selectionMode="single"
+              placeholder="Default rows per page"
+              variant="bordered"
+              selectedKeys={[`${chart.defaultRowsPerPage}`]}
+              onSelectionChange={(keys) => onChange({ defaultRowsPerPage: parseInt(keys.currentKey, 10) })}
+            >
+              {tableRowOptions.map((option) => (
+                <SelectItem key={option.value} textValue={option.text}>
+                  {option.text}
+                </SelectItem>
+              ))}
+            </Select>
+          </>
+        )}
       </div>
 
       <Spacer y={4} />

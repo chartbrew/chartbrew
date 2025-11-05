@@ -377,6 +377,7 @@ function ChartPreview(props) {
                       datasets={chart.ChartDatasetConfigs}
                       height={400}
                       editMode
+                      defaultRowsPerPage={chart.defaultRowsPerPage}
                     />
                   </div>
                 )}

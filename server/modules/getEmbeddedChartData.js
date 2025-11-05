@@ -27,4 +27,5 @@ module.exports = (chart, team = {}) => ({
   startDate: chart.startDate,
   endDate: chart.endDate,
   isLogarithmic: chart.isLogarithmic,
+  defaultRowsPerPage: chart.defaultRowsPerPage,
 });

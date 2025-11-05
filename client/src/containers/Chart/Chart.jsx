@@ -923,6 +923,7 @@ function Chart(props) {
                       <TableContainer
                         tabularData={chart.chartData}
                         datasets={chart.ChartDatasetConfigs}
+                        defaultRowsPerPage={chart.defaultRowsPerPage}
                       />
                     </div>
                   )}

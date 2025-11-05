@@ -137,7 +137,7 @@ function TableConfiguration(props) {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <Accordion fullWidth variant="bordered" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
         <AccordionItem key="table-columns-options" subtitle="Table columns options" className="text-default" indicator={<LuSettings />}>
           <div>

@@ -140,7 +140,7 @@ function AddChart() {
   const _onChangeGlobalSettings = ({
     pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
     fixedStartDate, maxValue, minValue, xLabelTicks, stacked, horizontal, dataLabels,
-    dateVarsFormat, isLogarithmic, dashedLastPoint,
+    dateVarsFormat, isLogarithmic, dashedLastPoint, defaultRowsPerPage,
   }) => {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
@@ -162,6 +162,7 @@ function AddChart() {
       dateVarsFormat: dateVarsFormat !== "undefined" ? dateVarsFormat : newChart.dateVarsFormat,
       isLogarithmic: typeof isLogarithmic !== "undefined" ? isLogarithmic : newChart.isLogarithmic,
       dashedLastPoint: typeof dashedLastPoint !== "undefined" ? dashedLastPoint : newChart.dashedLastPoint,
+      defaultRowsPerPage: typeof defaultRowsPerPage !== "undefined" ? defaultRowsPerPage : newChart.defaultRowsPerPage,
     };
 
     let skipParsing = false;
