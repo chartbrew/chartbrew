@@ -258,9 +258,12 @@ function ProjectSettings(props) {
             <Text size="h3">Are you sure you want to remove this project?</Text>
           </ModalHeader>
           <ModalBody>
-            <Text>
-              {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
-            </Text>
+            <div>
+              {"This action will be PERMANENT. All the charts this project will be deleted as well."}
+            </div>
+            <div>
+              {"The connections and datasets used in these charts will not be deleted."}
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button

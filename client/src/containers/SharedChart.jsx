@@ -3,11 +3,15 @@ import {
   Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
 import { useSearchParams } from "react-router";
-import { LuListFilter } from "react-icons/lu";
+import { LuEllipsis, LuFileDown, LuListFilter } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";
 
@@ -28,6 +32,8 @@ import Text from "../components/Text";
 import KpiMode from "./Chart/components/KpiMode";
 import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
+import toast from "react-hot-toast";
+import { canExportChart, exportChartToExcel } from "../modules/exportChart";
 
 const pageHeight = window.innerHeight;
 
@@ -43,6 +49,7 @@ function SharedChart() {
   const [redraw, setRedraw] = useState(true);
   const [isSnapshot, setIsSnapshot] = useState(false);
   const [showChart, setShowChart] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -216,6 +223,28 @@ function SharedChart() {
     return filterCount > 0;
   };
 
+  const _onPublicExport = (chart) => {
+    setExportLoading(true);
+
+    try {
+      // Check if chart can be exported
+      if (!canExportChart(chart)) {
+        toast.error("This chart cannot be exported - no data available");
+        setExportLoading(false);
+        return;
+      }
+
+      // Use client-side export with the already filtered data
+      exportChartToExcel(chart);
+      toast.success("Chart exported successfully");
+      setExportLoading(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(error.message || "Failed to export chart");
+      setExportLoading(false);
+    }
+  };
+
   if ((loading || !chart || !showChart) && !error) {
     return (
       <>
@@ -273,7 +302,7 @@ function SharedChart() {
         </style>
       </Helmet>
       <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
-        <Row justify="space-between">
+        <div className="flex flex-row items-center justify-between">
           <div>
             <Text b>{chart.name}</Text>
             <div className="flex flex-row items-center">
@@ -326,7 +355,26 @@ function SharedChart() {
               )}
             </div>
           )}
-        </Row>
+
+          {chart?.allowReportExport && (
+            <Dropdown aria-label="Select an export option">
+              <DropdownTrigger>
+                <Link className="text-gray-500 cursor-pointer">
+                  <LuEllipsis className="text-default-500" />
+                </Link>
+              </DropdownTrigger>
+              <DropdownMenu>
+                <DropdownItem
+                  startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                  onClick={() => _onPublicExport(chart)}
+                  textValue="Export to Excel"
+                >
+                  Export to Excel
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          )}
+        </div>
       </div>
       <Spacer y={1} />
       {chart && (

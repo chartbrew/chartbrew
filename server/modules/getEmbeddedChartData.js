@@ -10,6 +10,8 @@ module.exports = (chart, team = {}) => ({
   chartSize: chart.chartSize,
   project_id: chart.project_id,
   showBranding: team?.showBranding || true,
+  allowReportExport: team?.allowReportExport || false,
+  allowReportRefresh: team?.allowReportRefresh || false,
   showGrowth: chart.showGrowth,
   timeInterval: chart.timeInterval,
   autoUpdate: chart.autoUpdate,

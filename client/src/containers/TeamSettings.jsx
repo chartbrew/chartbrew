@@ -78,6 +78,24 @@ function TeamSettings(props) {
     }
   };
 
+  const _onToggleReportExport = async (selected) => {
+    const response = await dispatch(updateTeam({ team_id: team.id, data: { allowReportExport: selected } }));
+    if (response?.error) {
+      toast.error("Error updating report export settings");
+    } else {
+      toast.success("Report export settings updated");
+    }
+  };
+
+  const _onToggleReportRefresh = async (selected) => {
+    const response = await dispatch(updateTeam({ team_id: team.id, data: { allowReportRefresh: selected } }));
+    if (response?.error) {
+      toast.error("Error updating report refresh settings");
+    } else {
+      toast.success("Report refresh settings updated");
+    }
+  };
+
   const _teamsOwned = () => {
     // go through all the teams and get all the teams that the user is a teamOwner of
     const teamsOwned = teams.filter((t) => t.TeamRoles.some((tr) => tr.user_id === user.id && tr.role === "teamOwner"));
@@ -144,16 +162,49 @@ function TeamSettings(props) {
         <Spacer y={4} />
         <Divider />
         <Spacer y={4} />
-        <div className="flex flex-row items-center gap-2">
-          <Switch
-            isSelected={team.showBranding}
-            onValueChange={(selected) => _onToggleBranding(selected)}
-          >
-            Show Chartbrew branding
-          </Switch>
-          <Tooltip content="Chartbrew branding is shown in the footer of the dashboard reports">
-            <div><LuInfo size={18} className="text-foreground" /></div>
-          </Tooltip>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-row items-center gap-2">
+            <Switch
+              isSelected={team.allowReportExport}
+              onValueChange={(selected) => _onToggleReportExport(selected)}
+              size="sm"
+            >
+              Allow public exports
+            </Switch>
+            <Tooltip content="Allow users to export embedded charts and reports to excel">
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip>
+          </div>
+
+          <div className="flex flex-row items-center gap-2">
+            <Switch
+              isSelected={team.allowReportRefresh}
+              onValueChange={(selected) => _onToggleReportRefresh(selected)}
+              size="sm"
+            >
+              Allow report refresh
+            </Switch>
+            <Tooltip
+              content="Allow report viewers to refresh data - these refreshes will query your data sources. This can greatly increase your read usage."
+              className="max-w-sm"
+            >
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip>
+          </div>
+
+          <div className="flex flex-row items-center gap-2">
+            <Switch
+              isSelected={team.showBranding}
+              onValueChange={(selected) => _onToggleBranding(selected)}
+              size="sm"
+            >
+              Show Chartbrew branding
+            </Switch>
+            <Tooltip content="Chartbrew branding is shown in the footer of the dashboard reports">
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip>
+          </div>
         </div>
 
         {canAccess("teamOwner", user.id, team.TeamRoles) && (

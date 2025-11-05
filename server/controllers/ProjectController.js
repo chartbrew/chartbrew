@@ -44,7 +44,7 @@ class ProjectController {
         },
         {
           model: db.Team,
-          attributes: ["showBranding"],
+          attributes: ["showBranding", "allowReportExport", "allowReportRefresh"],
         }, {
           model: db.DashboardFilter,
         }, {
