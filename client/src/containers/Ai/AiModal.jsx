@@ -1184,6 +1184,28 @@ function AiModal({ isOpen, onClose }) {
                   </Button>
                 }
               />
+              <div className="flex flex-row items-center gap-1 flex-wrap mt-2">
+                <Chip
+                  variant="flat"
+                  size="sm"
+                  onClick={() => {
+                    setQuestion("What can you do?");
+                  }}
+                  className="cursor-pointer"
+                >
+                  What can you do?
+                </Chip>
+                <Chip
+                  variant="flat"
+                  size="sm"
+                  onClick={() => {
+                    setQuestion("How many users I have in my database?");
+                  }}
+                  className="cursor-pointer"
+                >
+                  How many users I have in my database?
+                </Chip>
+              </div>
             </form>
             <div className="flex flex-row items-center gap-1 flex-wrap">
               <Popover placement="bottom">
@@ -1309,7 +1331,7 @@ function AiModal({ isOpen, onClose }) {
                 title={`Previous Conversations (${conversations.length})`}
                 classNames={{ title: "text-sm font-medium" }}
               >
-                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+                <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto">
                   {conversations.map((conv) => (
                     <div
                       key={conv.id}
