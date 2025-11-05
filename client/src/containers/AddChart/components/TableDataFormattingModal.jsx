@@ -78,6 +78,9 @@ const displayFormats = [{
 }, {
   value: "button",
   text: "Button (URL)",
+}, {
+  value: "image",
+  text: "Image",
 }];
 
 function TableDataFormattingModal(props) {
@@ -99,6 +102,10 @@ function TableDataFormattingModal(props) {
     color: "primary",
     variant: "flat",
     text: "View",
+  });
+  const [imageSettings, setImageSettings] = useState({
+    size: 100,
+    variant: "inline"
   });
 
   useEffect(() => {
@@ -147,6 +154,13 @@ function TableDataFormattingModal(props) {
           text: config.display.button.text,
         });
       }
+
+      if (config.display?.image) {
+        setImageSettings({
+          size: config.display.image.size,
+          variant: config.display.image.variant,
+        });
+      }
     } else {
       setDataType("none");
       setFormatValue("");
@@ -161,6 +175,10 @@ function TableDataFormattingModal(props) {
         color: "primary",
         variant: "flat",
         text: "View",
+      });
+      setImageSettings({
+        size: 100,
+        variant: "inline"
       });
     }
   }, [config]);
@@ -189,6 +207,7 @@ function TableDataFormattingModal(props) {
     if (rules) newConfig.display = { ...(newConfig.display || {}), rules };
     if (progress) newConfig.display = { ...(newConfig.display || {}), progress };
     if (buttonSettings.color && buttonSettings.variant && buttonSettings.text) newConfig.display = { ...(newConfig.display || {}), button: { color: buttonSettings.color, variant: buttonSettings.variant, text: buttonSettings.text } };
+    if (imageSettings.size) newConfig.display = { ...(newConfig.display || {}), image: { size: imageSettings.size, variant: imageSettings.variant } };
 
     onUpdate(newConfig);
   };
@@ -543,6 +562,56 @@ function TableDataFormattingModal(props) {
                   size="sm"
                 />
               </div>
+            </div>
+          )}
+
+          {displayFormat === "image" && (
+            <div className="flex flex-col items-start gap-1">
+              <div className="text-sm text-gray-500">
+                Image size (width in pixels)
+              </div>
+              <div className="flex flex-row items-center gap-1">
+                <Input
+                  type="number"
+                  placeholder="Enter the image size here"
+                  value={imageSettings.size}
+                  onChange={(e) => setImageSettings({ ...imageSettings, size: e.target.value })}
+                  variant="bordered"
+                  size="sm"
+                />
+                <div className="text-sm text-gray-500">px</div>
+              </div>
+
+              <Spacer y={1} />
+              <div className="text-sm text-gray-500">
+                Image variant
+              </div>
+              <Select
+                variant="bordered"
+                selectedKeys={[imageSettings.variant]}
+                onSelectionChange={(keys) => setImageSettings({ ...imageSettings, variant: keys.currentKey })}
+                selectionMode="single"
+                aria-label="Select a image variant"
+                disallowEmptySelection
+                className="max-w-sm"
+              >
+                <SelectItem
+                  key="inline"
+                  textValue="Inline"
+                  description="The image will be displayed directly in the cell"
+                  classNames={{ description: "text-wrap" }}
+                >
+                  Inline
+                </SelectItem>
+                <SelectItem
+                  key="popup"
+                  textValue="Popup"
+                  description="The cell will display a button that opens the image in a popup"
+                  classNames={{ description: "text-wrap" }}
+                >
+                  Popup
+                </SelectItem>
+              </Select>
             </div>
           )}
         </ModalBody>

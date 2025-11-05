@@ -11,6 +11,7 @@ import {
   DropdownItem,
   Progress,
   Tooltip,
+  Image,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
 
@@ -136,6 +137,39 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
         <Chip size="sm" radius="sm" variant="flat" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
           {baseContent}
         </Chip>
+      );
+    }
+  }
+
+  if (columnConfig?.display?.format === "image" && value) {
+    if (columnConfig.display?.image?.variant === "inline") {
+      return (
+        <div style={{ width: `${columnConfig.display?.image?.size}px` }}>
+          <Image
+            src={value}
+            alt="Image"
+            width={columnConfig.display?.image?.size}
+            height="auto"
+            className="object-contain"
+          />
+        </div>
+      );
+    } else if (columnConfig.display?.image?.variant === "popup") {
+      return (
+        <Popover>
+          <PopoverTrigger>
+            <Button variant="flat" size="sm">
+              <Image src={value} alt="Image" width={columnConfig.display?.image?.size} height="auto" className="object-contain" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <Image
+              src={value}
+              alt="Image"
+              className="object-contain max-w-lg"
+            />
+          </PopoverContent>
+        </Popover>
       );
     }
   }
