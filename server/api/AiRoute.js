@@ -35,6 +35,14 @@ const checkAccess = async (req, res, next) => {
   next();
 };
 
+const isOpenAiApiKeySet = () => {
+  if (process.env.NODE_ENV === "production") {
+    return process.env.OPENAI_API_KEY;
+  } else {
+    return process.env.OPENAI_API_KEY_DEV;
+  }
+};
+
 module.exports = (app) => {
   // Main orchestration endpoint - handles conversation creation/loading automatically
   app.post("/ai/orchestrate", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
@@ -48,6 +56,10 @@ module.exports = (app) => {
 
     if (!teamId || !req.user.id) {
       return res.status(400).json({ error: "teamId and user ID are required" });
+    }
+
+    if (!isOpenAiApiKeySet()) {
+      return res.status(400).json({ error: "OpenAI API key is not set. Check your environment variables." });
     }
 
     try {
@@ -108,7 +120,7 @@ module.exports = (app) => {
   });
 
   // Delete a conversation
-  app.delete("/ai/conversations/:conversationId", apiLimiter(10), checkAccess, async (req, res) => {
+  app.delete("/ai/conversations/:conversationId", apiLimiter(10), verifyToken, checkAccess, async (req, res) => {
     const { conversationId } = req.params;
     const { teamId } = req.query;
 
