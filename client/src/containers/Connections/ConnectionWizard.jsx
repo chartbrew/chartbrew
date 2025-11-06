@@ -493,7 +493,7 @@ function ConnectionWizard() {
                 Create dataset
               </Button>
             </div>
-            {_canAccess("teamAdmin", team) && (
+            {_canAccess("teamAdmin", team?.TeamRoles) && (
               <>
                 <div className="flex flex-row gap-2 py-2">
                   <Divider />
@@ -505,7 +505,7 @@ function ConnectionWizard() {
                   onPress={() => _onAskAi()}
                   startContent={<LuBrainCircuit />}
                 >
-                  Ask AI about your data
+                  Create with Chartbrew AI
                 </Button>
               </>
             )}
