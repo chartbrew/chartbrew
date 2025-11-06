@@ -21,6 +21,7 @@ const socketManager = require("../../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
 const { chartColors } = require("../../../charts/colors");
+const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -1724,6 +1725,45 @@ async function orchestrate(
   }
 
   const semanticLayer = await buildSemanticLayer(teamId);
+
+  // Check if this is a capability question
+  if (isCapabilityQuestion(question)) {
+    // Generate capability response without AI calls
+    const capabilityResponse = generateCapabilityResponse(semanticLayer);
+
+    // Prepare messages for database recording
+    const messages = [
+      { role: "system", content: "System prompt for capability response" }, // Simplified for recording
+      ...conversationHistory,
+      { role: "user", content: question },
+      { role: "assistant", content: capabilityResponse }
+    ];
+
+    // Emit completion event
+    if (conversation?.id) {
+      emitProgressEvent(socketManager, conversation.id, "PROCESSING_COMPLETE");
+    }
+
+    // Return with 0 token usage
+    return {
+      message: capabilityResponse,
+      conversationHistory: messages,
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0
+      },
+      usageRecords: [{
+        model: openAiModel || "gpt-5-nano",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+        elapsed_ms: 0,
+      }],
+      iterations: 0,
+    };
+  }
+
   const systemPrompt = buildSystemPrompt(semanticLayer, conversation);
 
   // Prepare messages
