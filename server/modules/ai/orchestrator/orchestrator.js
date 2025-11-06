@@ -48,10 +48,10 @@ const layoutBreakpoints = {
 
 // Safe default layout for all breakpoints to prevent dashboard breakage
 const DEFAULT_CHART_LAYOUT = {
-  xxxl: [0, 0, 8, 3], // Half width on xxxl screens
-  xxl: [0, 0, 8, 3], // Half width on xxl screens
-  xl: [0, 0, 7, 3], // Half width on xl screens
-  lg: [0, 0, 6, 3], // Half width on large screens
+  xxxl: [0, 0, 8, 2], // Half width on xxxl screens
+  xxl: [0, 0, 8, 2], // Half width on xxl screens
+  xl: [0, 0, 7, 2], // Half width on xl screens
+  lg: [0, 0, 6, 2], // Half width on large screens
   md: [0, 0, 5, 3], // Half width on medium screens
   sm: [0, 0, 4, 3], // Half width on small screens
   xs: [0, 0, 3, 3], // Half width on extra small screens
@@ -96,7 +96,7 @@ function calculateChartLayout(existingCharts = [], chartSize = 2) {
     default: width = Math.max(6, Math.floor(bpCols / 3)); // default medium
   }
 
-  const height = 3; // Standard height for most charts
+  const height = 2; // Standard height for most charts
 
   // Find the next available position
   let x = 0;
