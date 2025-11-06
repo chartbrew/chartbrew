@@ -22,6 +22,7 @@ const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
 const { chartColors } = require("../../../charts/colors");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
+const { calculateChartLayout, ensureCompleteLayout } = require("./chartLayoutEngine");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -36,121 +37,6 @@ if (openAiKey) {
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
 const connectionController = new ConnectionController();
-
-// Layout breakpoints and columns (exact match from layoutBreakpoints.js)
-const layoutBreakpoints = {
-  cols: {
-    xxxl: 16, xxl: 16, xl: 14, lg: 12, md: 10, sm: 8, xs: 6, xxs: 4
-  },
-  rowHeight: 150,
-  margin: [12, 12]
-};
-
-// Safe default layout for all breakpoints to prevent dashboard breakage
-const DEFAULT_CHART_LAYOUT = {
-  xxxl: [0, 0, 8, 2], // Half width on xxxl screens
-  xxl: [0, 0, 8, 2], // Half width on xxl screens
-  xl: [0, 0, 7, 2], // Half width on xl screens
-  lg: [0, 0, 6, 2], // Half width on large screens
-  md: [0, 0, 5, 3], // Half width on medium screens
-  sm: [0, 0, 4, 3], // Half width on small screens
-  xs: [0, 0, 3, 3], // Half width on extra small screens
-  xxs: [0, 0, 2, 3] // Half width on extra extra small screens
-};
-
-// Ensure layout has all required breakpoints to prevent dashboard breakage
-function ensureCompleteLayout(layout) {
-  if (!layout || typeof layout !== "object") {
-    return { ...DEFAULT_CHART_LAYOUT };
-  }
-
-  // Start with default and override with provided values
-  const completeLayout = { ...DEFAULT_CHART_LAYOUT };
-
-  // Ensure each breakpoint is properly defined
-  Object.keys(DEFAULT_CHART_LAYOUT).forEach((bp) => {
-    if (layout[bp] && Array.isArray(layout[bp]) && layout[bp].length === 4) {
-      completeLayout[bp] = [...layout[bp]];
-    }
-  });
-
-  return completeLayout;
-}
-
-// Calculate default layout position for a new chart
-function calculateChartLayout(existingCharts = [], chartSize = 2) {
-  // Get existing layouts for the 'lg' breakpoint
-  const existingLayouts = existingCharts
-    .map((chart) => chart.layout?.lg)
-    .filter((layout) => layout) || [];
-
-  const bpCols = layoutBreakpoints.cols.lg;
-
-  // Determine width based on chartSize (1=small, 2=medium, 3=large, 4=full)
-  let width;
-  switch (chartSize) {
-    case 1: width = Math.max(4, Math.floor(bpCols / 4)); break; // small (at least 4 cols)
-    case 2: width = Math.max(6, Math.floor(bpCols / 3)); break; // medium (at least 6 cols)
-    case 3: width = Math.max(8, Math.floor(bpCols / 2)); break; // large (at least 8 cols)
-    case 4: width = bpCols; break; // full width
-    default: width = Math.max(6, Math.floor(bpCols / 3)); // default medium
-  }
-
-  const height = 2; // Standard height for most charts
-
-  // Find the next available position
-  let x = 0;
-  let y = 0;
-
-  // Simple placement algorithm: scan from top-left, find first available spot
-  const maxY = existingLayouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0);
-
-  for (let scanY = 0; scanY <= maxY + height; scanY++) {
-    for (let scanX = 0; scanX <= bpCols - width; scanX++) {
-      const candidate = {
-        x: scanX, y: scanY, w: width, h: height
-      };
-
-      // Check if this position conflicts with any existing chart
-      const hasCollision = existingLayouts.some((existing) => {
-        const ex2 = existing.x + existing.w;
-        const ey2 = existing.y + existing.h;
-        const cx2 = candidate.x + candidate.w;
-        const cy2 = candidate.y + candidate.h;
-        return !(ex2 <= candidate.x
-          || cx2 <= existing.x
-          || ey2 <= candidate.y
-          || cy2 <= existing.y
-        );
-      });
-
-      if (!hasCollision) {
-        x = scanX;
-        y = scanY;
-        break;
-      }
-    }
-    if (x !== undefined) break;
-  }
-
-  // Fallback: place at bottom
-  if (x === undefined) {
-    x = 0;
-    y = maxY;
-  }
-
-  // Return layout object for all breakpoints - ensure all are defined to prevent dashboard breakage
-  return {
-    xxxl: [x, y, Math.min(width, layoutBreakpoints.cols.xxxl), height],
-    xxl: [x, y, Math.min(width, layoutBreakpoints.cols.xxl), height],
-    xl: [x, y, Math.min(width, layoutBreakpoints.cols.xl), height],
-    lg: [x, y, Math.min(width, layoutBreakpoints.cols.lg), height],
-    md: [x, y, Math.min(width, layoutBreakpoints.cols.md), height],
-    sm: [0, y, Math.min(width, layoutBreakpoints.cols.sm), height],
-    xs: [0, y, layoutBreakpoints.cols.xs, height],
-    xxs: [0, y, layoutBreakpoints.cols.xxs, height]
-  };
-}
 
 async function listConnections(payload) {
   const { project_id } = payload; // scope could be used for filtering in the future

@@ -1229,6 +1229,7 @@ function AiModal({ isOpen, onClose }) {
                       variant="bordered"
                       size="sm"
                       className="mb-2"
+                      autoFocus
                     />
                     <div className="max-h-64 overflow-y-auto w-full">
                       <Listbox emptyContent="No entities found" className="w-full">
@@ -1620,6 +1621,7 @@ function AiModal({ isOpen, onClose }) {
                               variant="bordered"
                               size="sm"
                               className="mb-2"
+                              autoFocus
                             />
                             <div className="max-h-64 overflow-y-auto w-full">
                               <Listbox emptyContent="No entities found" className="w-full">
