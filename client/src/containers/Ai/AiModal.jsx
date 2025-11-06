@@ -263,7 +263,7 @@ function AiModal({ isOpen, onClose }) {
 
   const loadConversations = async () => {
     try {
-      const data = await getAiConversations(team.id, user.id);
+      const data = await getAiConversations(team.id);
       setConversations(data.conversations);
       // load usage in the background
       loadTeamUsage();
@@ -334,7 +334,6 @@ function AiModal({ isOpen, onClose }) {
         // Make the API call - backend creates conversation immediately
         const response = await orchestrateAi(
           team.id,
-          user.id,
           currentQuestion,
           [],
           tempConversation.id, // Use the ID if we already have it from socket
@@ -356,14 +355,14 @@ function AiModal({ isOpen, onClose }) {
         // Update with real conversation data in the background
         if (response.orchestration?.aiConversationId) {
           await loadConversations();
-          const updatedConversations = await getAiConversations(team.id, user.id);
+          const updatedConversations = await getAiConversations(team.id);
           const newConversation = updatedConversations.conversations.find(
             c => c.id === response.orchestration.aiConversationId
           );
           if (newConversation) {
             // Fetch the full conversation with history from database
             // This is important for follow-up messages to have complete context
-            const fullConversation = await getAiConversation(newConversation.id, team.id, user.id);
+            const fullConversation = await getAiConversation(newConversation.id, team.id);
             
             if (fullConversation?.conversation) {
               // Update conversation with complete data including full_history
@@ -381,12 +380,11 @@ function AiModal({ isOpen, onClose }) {
         }
       } else {
         // Existing conversation - get complete history from database
-        const latestConversation = await getAiConversation(conversation.id, team.id, user.id);
+        const latestConversation = await getAiConversation(conversation.id, team.id);
         const conversationHistory = latestConversation?.conversation?.full_history || [];
 
         const response = await orchestrateAi(
           team.id,
-          user.id,
           currentQuestion,
           conversationHistory,
           conversation.id,
@@ -399,7 +397,7 @@ function AiModal({ isOpen, onClose }) {
         }
 
         // Refresh conversation with updated history from database
-        const updatedConversation = await getAiConversation(conversation.id, team.id, user.id);
+        const updatedConversation = await getAiConversation(conversation.id, team.id);
         if (updatedConversation?.conversation) {
           setConversation(updatedConversation.conversation);
         }
@@ -448,7 +446,7 @@ function AiModal({ isOpen, onClose }) {
     setIsLoading(true);
     
     try {
-      const response = await getAiConversation(conversationId, team.id, user.id);
+      const response = await getAiConversation(conversationId, team.id);
       if (response?.conversation) {
         setConversation(response.conversation);
       } else {
@@ -535,7 +533,6 @@ function AiModal({ isOpen, onClose }) {
       // Call orchestrate with the suggestion action
       const response = await orchestrateAi(
         team.id,
-        user.id,
         syntheticQuestion,
         conversation?.full_history || [],
         currentConversationId,
@@ -557,12 +554,12 @@ function AiModal({ isOpen, onClose }) {
       // Update conversation data in background
       if (response.orchestration?.aiConversationId) {
         await loadConversations();
-        const updatedConversations = await getAiConversations(team.id, user.id);
+        const updatedConversations = await getAiConversations(team.id);
         const newConversation = updatedConversations.conversations.find(
           c => c.id === response.orchestration.aiConversationId
         );
         if (newConversation) {
-          const fullConversation = await getAiConversation(newConversation.id, team.id, user.id);
+          const fullConversation = await getAiConversation(newConversation.id, team.id);
           if (fullConversation?.conversation) {
             setConversation({
               ...fullConversation.conversation,

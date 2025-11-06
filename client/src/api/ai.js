@@ -1,9 +1,9 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
-export async function getAiConversations(teamId, userId) {
+export async function getAiConversations(teamId) {
   const token = getAuthToken();
-  const url = `${API_HOST}/ai/conversations?teamId=${teamId}&userId=${userId}`;
+  const url = `${API_HOST}/ai/conversations?teamId=${teamId}`;
   const headers = new Headers({
     "Accept": "application/json",
     "Authorization": `Bearer ${token}`,
@@ -16,9 +16,9 @@ export async function getAiConversations(teamId, userId) {
   return response.json();
 }
 
-export async function getAiConversation(conversationId, teamId, userId) {
+export async function getAiConversation(conversationId, teamId) {
   const token = getAuthToken();
-  const url = `${API_HOST}/ai/conversations/${conversationId}?teamId=${teamId}&userId=${userId}`;
+  const url = `${API_HOST}/ai/conversations/${conversationId}?teamId=${teamId}`;
   const headers = new Headers({
     "Accept": "application/json",
     "Authorization": `Bearer ${token}`,
@@ -33,7 +33,7 @@ export async function getAiConversation(conversationId, teamId, userId) {
   return response.json();
 }
 
-export async function orchestrateAi(teamId, userId, question, conversationHistory = [], aiConversationId, context = null) {
+export async function orchestrateAi(teamId, question, conversationHistory = [], aiConversationId, context = null) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/orchestrate`;
   const headers = new Headers({
@@ -44,7 +44,6 @@ export async function orchestrateAi(teamId, userId, question, conversationHistor
 
   const body = {
     teamId,
-    userId,
     question,
     conversationHistory,
     aiConversationId,

@@ -209,17 +209,19 @@ function NavbarContainer() {
               <div className={"hidden sm:block text-sm"}>Updates</div>
             </div>
           </NavbarItem>
-          <NavbarItem>
-            <Button
-              variant="solid"
-              onPress={() => dispatch(toggleAiModal())}
-              startContent={<LuBrainCircuit size={18} />}
-              color="primary"
-              size="sm"
-            >
-              Ask Chartbrew AI
-            </Button>
-          </NavbarItem>
+          {_canAccess("teamAdmin", team) && (
+            <NavbarItem>
+              <Button
+                variant="solid"
+                onPress={() => dispatch(toggleAiModal())}
+                startContent={<LuBrainCircuit size={18} />}
+                color="primary"
+                size="sm"
+              >
+                Ask Chartbrew AI
+              </Button>
+            </NavbarItem>
+          )}
           <Dropdown aria-label="Select a help option">
             <NavbarItem>
               <DropdownTrigger>
@@ -393,7 +395,9 @@ function NavbarContainer() {
         </ModalContent>
       </Modal>
 
-      <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+      {_canAccess("teamAdmin", team) && (
+        <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+      )}
     </>
   );
 }

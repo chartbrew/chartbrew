@@ -493,18 +493,22 @@ function ConnectionWizard() {
                 Create dataset
               </Button>
             </div>
-            <div className="flex flex-row gap-2 py-2">
-              <Divider />
-            </div>
-            <Button
-              color="primary"
-              variant="flat"
-              fullWidth
-              onPress={() => _onAskAi()}
-              startContent={<LuBrainCircuit />}
-            >
-              Ask AI about your data
-            </Button>
+            {_canAccess("teamAdmin", team) && (
+              <>
+                <div className="flex flex-row gap-2 py-2">
+                  <Divider />
+                </div>
+                <Button
+                  color="primary"
+                  variant="flat"
+                  fullWidth
+                  onPress={() => _onAskAi()}
+                  startContent={<LuBrainCircuit />}
+                >
+                  Ask AI about your data
+                </Button>
+              </>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>
