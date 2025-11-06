@@ -209,19 +209,6 @@ function NavbarContainer() {
               <div className={"hidden sm:block text-sm"}>Updates</div>
             </div>
           </NavbarItem>
-          {_canAccess("teamAdmin", team) && (
-            <NavbarItem>
-              <Button
-                variant="solid"
-                onPress={() => dispatch(toggleAiModal())}
-                startContent={<LuBrainCircuit size={18} />}
-                color="primary"
-                size="sm"
-              >
-                Ask Chartbrew AI
-              </Button>
-            </NavbarItem>
-          )}
           <Dropdown aria-label="Select a help option">
             <NavbarItem>
               <DropdownTrigger>
@@ -260,6 +247,20 @@ function NavbarContainer() {
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
+          
+          {_canAccess("teamAdmin", team) && (
+            <NavbarItem>
+              <Button
+                variant="solid"
+                onPress={() => dispatch(toggleAiModal())}
+                startContent={<LuBrainCircuit size={18} />}
+                color="primary"
+                size="sm"
+              >
+                Ask Chartbrew AI
+              </Button>
+            </NavbarItem>
+          )}
 
           <Dropdown aria-label="Select a user option">
             <NavbarItem>
