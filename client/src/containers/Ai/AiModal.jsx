@@ -49,6 +49,8 @@ function AiModal({ isOpen, onClose }) {
     singleSelect: null // entity selected via quick reply (only one at a time)
   });
   const [contextSearch, setContextSearch] = useState("");
+  const [isContextPopoverOpen, setIsContextPopoverOpen] = useState(false);
+  const [isSecondContextPopoverOpen, setIsSecondContextPopoverOpen] = useState(false);
 
   const params = useParams();
   const team = useSelector(selectTeam);
@@ -1145,7 +1147,7 @@ function AiModal({ isOpen, onClose }) {
       classNames={{ wrapper: conversation ? "sm:mt-4" : "" }}
       isOpen={isOpen}
       onClose={onClose}
-      size={conversation ? "6xl" : "lg"}
+      size={conversation ? "6xl" : "xl"}
       scrollBehavior="outside"
     >
       <ModalContent>
@@ -1159,13 +1161,15 @@ function AiModal({ isOpen, onClose }) {
               />
               <div className="flex flex-col items-center justify-center">
                 <div className="flex flex-row items-center gap-2">
-                  <div className="font-tw font-medium text-lg">Chartbrew AI Assistant</div>
-                  <Chip color="primary" variant="flat" size="sm">
+                  <div className="font-tw font-medium text-lg">Chartbrew AI</div>
+                  <Chip color="primary" variant="flat" size="sm" radius="sm" className="shadow-sm">
                     Beta
                   </Chip>
                 </div>
                 <div className="text-sm text-foreground-500">Ask me anything about your data</div>
-                <Kbd keys={isMac() ? ["command"] : ["ctrl"]} className="mt-2">K</Kbd>
+                <div className="flex flex-row items-center gap-1 mt-2">
+                  <Kbd keys={isMac() ? ["command"] : ["ctrl"]}>K</Kbd>
+                </div>
               </div>
             </div>
             <Spacer y={2} />
@@ -1173,7 +1177,14 @@ function AiModal({ isOpen, onClose }) {
               <Input
                 placeholder="Ask me a question"
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setQuestion(value);
+                  // Open context popover when "@" is typed
+                  if (value.endsWith("@") && !isContextPopoverOpen) {
+                    setIsContextPopoverOpen(true);
+                  }
+                }}
                 variant="bordered"
                 endContent={
                   <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
@@ -1205,7 +1216,7 @@ function AiModal({ isOpen, onClose }) {
               </div>
             </form>
             <div className="flex flex-row items-center gap-1 flex-wrap">
-              <Popover placement="bottom">
+              <Popover placement="bottom" isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
                 <PopoverTrigger>
                   <Button
                     variant="light"
@@ -1214,7 +1225,7 @@ function AiModal({ isOpen, onClose }) {
                     isDisabled={isLoading}
                     isIconOnly={selectedContext.multiSelect.length > 0}
                   >
-                    {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context (optional)"}
+                    {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
@@ -1595,11 +1606,11 @@ function AiModal({ isOpen, onClose }) {
                             {selectedContext.singleSelect.label}
                           </Chip>
                         )}
-                        <span className="text-xs text-foreground-500">+ add more details (optional)</span>
+                        <span className="text-xs text-foreground-500">+ add more details</span>
                       </div>
                     )}
                     <div className="flex flex-row gap-2 items-center">
-                      <Popover placement="top-start">
+                      <Popover placement="top-start" isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
                         <PopoverTrigger>
                           <Button
                             variant="light"
@@ -1682,7 +1693,14 @@ function AiModal({ isOpen, onClose }) {
                         ref={inputRef}
                         placeholder="Ask me anything about your data..."
                         value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setQuestion(value);
+                          // Open context popover when "@" is typed
+                          if (value.endsWith("@") && !isSecondContextPopoverOpen) {
+                            setIsSecondContextPopoverOpen(true);
+                          }
+                        }}
                         disabled={isLoading}
                         endContent={<Kbd keys={["enter"]} />}
                       />

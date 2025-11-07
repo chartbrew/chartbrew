@@ -37,36 +37,24 @@ function generateCapabilityResponse(semanticLayer) {
   const supportedConnections = connections.filter((c) => ["mysql", "postgres", "mongodb"].includes(c.type));
   const hasConnections = supportedConnections.length > 0;
 
-  let response = `# Welcome to Chartbrew AI Assistant
+  let response = `# What can Chartbrew AI do?
 
-I'm your intelligent assistant for Chartbrew, designed to help you explore and visualize your data. Here's what I can do for you:
+I help you query your data and create charts. Here's what I can do:
 
-## 🔍 **Data Exploration**
-- Query your database connections to answer questions about your data
-- Retrieve and analyze data from supported database types
-- Generate insights and summaries from your datasets
+⚙️ **Query your data** - Ask questions and I'll retrieve answers from your databases
 
-## 📊 **Chart Creation**
-- Create beautiful charts and visualizations from your data
-- Suggest the best chart types for your data (line, bar, pie, KPI, etc.)
-- Automatically place charts on your dashboards
+📊 **Create charts** - Turn data into visualizations (line, bar, pie, KPI, etc.)
 
-## 🗄️ **Database Support**
-Currently I work with these database types:
-- **MySQL** (including Amazon RDS MySQL)
-- **PostgreSQL** (including TimescaleDB, Supabase, and Amazon RDS)
-- **MongoDB** (standard MongoDB)
+🔄 **Auto-place charts** - I'll add them to your dashboard automatically
 
-*API connections and other data sources will be available in future updates.*
+**Supported databases:** MySQL, PostgreSQL, MongoDB, Amazon RDS, TimescaleDB, Supabase
 
-## 💡 **What You Can Ask**
-- "Show me sales data for the last month"
-- "Create a chart of user growth over time"
+**Example questions:**
+- "Show me sales for the last month"
+- "Create a chart of user growth"
 - "How many active users do we have?"
-- "Compare revenue by product category"
-- "Generate a KPI showing total orders today"
 
-## 🚀 **Getting Started**`;
+**Getting started**`;
 
   if (hasConnections) {
     response += `
@@ -79,10 +67,33 @@ To get started, you'll need to connect a database first. Go to your connections 
 
   response += `
 
-## 📈 **Available Projects**
-${projects.map((p) => `- ${p.name} (${p.Charts?.length || 0} charts)`).join("\n")}
+**Your projects:** ${projects.map((p) => `${p.name} (${p.Charts?.length || 0} charts)`).join(", ")}
 
-Just ask me anything about your data - I'm here to help you discover insights and create stunning visualizations!`;
+Ask me anything about your data and I'll help you visualize it!
+
+\`\`\`cb-actions
+{
+  "version": 1,
+  "suggestions": [
+    {
+      "id": "suggest_data_question",
+      "label": "Give me a useful insight from my database",
+      "action": "reply"
+    },
+    {
+      "id": "suggest_chart_question",
+      "label": "Create an interesting chart",
+      "action": "reply"
+    },
+    {
+      "id": "suggest_kpi",
+      "label": "Create a KPI chart",
+      "action": "reply"
+    }
+  ]
+}
+\`\`\`
+`;
 
   return response;
 }
