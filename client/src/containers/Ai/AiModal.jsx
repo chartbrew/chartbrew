@@ -828,7 +828,7 @@ function AiModal({ isOpen, onClose }) {
     }
 
     // Chart created/updated messages - render the actual chart
-    if (parsed.type === "chart_created" || parsed.type === "chart_updated") {
+    if ((parsed.type === "chart_created" || parsed.type === "chart_updated") && createdCharts?.length > 0) {
       const chartData = createdCharts.find((c) => c.id === parsed.chartId);
 
       return (
@@ -1400,7 +1400,7 @@ function AiModal({ isOpen, onClose }) {
                         setConversation(null);
                         setLocalMessages([]);
                         setProgressEvents([]);
-                        setCreatedCharts({});
+                        setCreatedCharts([]);
                         fetchedChartsRef.current.clear();
                         setSelectedContext({
                           multiSelect: [],

@@ -171,9 +171,14 @@ function NavbarContainer() {
             </Link>
           )}
           {!params.teamId && (
-            <Link to="/">
-              <img src={isDark ? cbFullLogoDark : cbFullLogoLight} alt="Chartbrew Logo" width={120}  />
-            </Link>
+            <>
+              <Link to="/" className="hidden sm:block">
+                <img src={isDark ? cbFullLogoDark : cbFullLogoLight} alt="Chartbrew Logo" width={120}  />
+              </Link>
+              <Link to="/" className="block sm:hidden">
+                <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30} />
+              </Link>
+            </>
           )}
           <Spacer x={4} />
           <Row align="center" className={"gap-1 hidden sm:flex"}>
@@ -256,6 +261,7 @@ function NavbarContainer() {
                 startContent={<LuBrainCircuit size={18} />}
                 color="primary"
                 size="sm"
+                className="from-primary-600 to-secondary-700 bg-gradient-to-r hover:bg-gradient-to-br transition-all duration-300 shadow-md"
               >
                 Ask Chartbrew AI
               </Button>
