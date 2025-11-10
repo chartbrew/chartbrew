@@ -34,32 +34,50 @@ class SocketManager {
       // Authentication middleware
       socket.on("authenticate", (data) => {
         const { userId, teamId } = data;
-        if (userId) {
-          this.activeConnections.set(userId, socket);
-          // eslint-disable-next-line no-param-reassign
-          socket.userId = userId;
-
-          // Join team room for team-wide broadcasts
-          if (teamId) {
-            socket.join(`team:${teamId}`);
-            this.addToRoom(`team:${teamId}`, socket.id);
-          }
-
-          // Join user room for private messages
-          socket.join(`user:${userId}`);
-          this.addToRoom(`user:${userId}`, socket.id);
-
-          socket.emit("authenticated", { success: true });
+        if (!userId) {
+          socket.emit("authenticated", { success: false, error: "User ID required" });
+          return;
         }
+
+        // Remove old connection for this user if exists
+        const existingSocket = this.activeConnections.get(userId);
+        if (existingSocket && existingSocket.id !== socket.id) {
+          existingSocket.disconnect(true);
+        }
+
+        this.activeConnections.set(userId, socket);
+        // eslint-disable-next-line no-param-reassign
+        socket.userId = userId;
+        // eslint-disable-next-line no-param-reassign
+        socket.teamId = teamId;
+
+        // Join team room for team-wide broadcasts
+        if (teamId) {
+          socket.join(`team:${teamId}`);
+          this.addToRoom(`team:${teamId}`, socket.id);
+        }
+
+        // Join user room for private messages
+        socket.join(`user:${userId}`);
+        this.addToRoom(`user:${userId}`, socket.id);
+
+        socket.emit("authenticated", { success: true });
       });
 
       // Handle conversation room joining
       socket.on("join-conversation", (data) => {
         const { conversationId } = data;
-        if (conversationId && socket.userId) {
-          socket.join(`conversation:${conversationId}`);
-          this.addToRoom(`conversation:${conversationId}`, socket.id);
+        if (!conversationId) {
+          return;
         }
+
+        if (!socket.userId) {
+          // Not authenticated yet, queue this for after authentication
+          return;
+        }
+
+        socket.join(`conversation:${conversationId}`);
+        this.addToRoom(`conversation:${conversationId}`, socket.id);
       });
 
       // Handle conversation room leaving
@@ -107,6 +125,7 @@ class SocketManager {
 
   // Emit progress events for AI orchestration
   emitProgress(conversationId, event, data = {}) {
+    if (!this.io) return; // Skip if not initialized
     const room = `conversation:${conversationId}`;
     this.io.to(room).emit("ai-progress", {
       event,
@@ -117,12 +136,14 @@ class SocketManager {
 
   // Emit to specific user
   emitToUser(userId, event, data = {}) {
+    if (!this.io) return; // Skip if not initialized
     const room = `user:${userId}`;
     this.io.to(room).emit(event, data);
   }
 
   // Emit to team
   emitToTeam(teamId, event, data = {}) {
+    if (!this.io) return; // Skip if not initialized
     const room = `team:${teamId}`;
     this.io.to(room).emit(event, data);
   }

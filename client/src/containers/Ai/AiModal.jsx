@@ -4,7 +4,6 @@ import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordio
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuDatabase } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useParams } from "react-router";
@@ -13,12 +12,12 @@ import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversat
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { getChart } from "../../slices/chart";
-import { API_HOST } from "../../config/settings";
 import Chart from "../Chart/Chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import isMac from "../../modules/isMac";
+import socketClient from "../../modules/socketClient";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -72,8 +71,7 @@ function AiModal({ isOpen, onClose }) {
   const [conversations, setConversations] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const socketRef = useRef(null);
-  const initOnceRef = useRef(false);
+  const [isSocketReady, setIsSocketReady] = useState(false);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
@@ -214,62 +212,42 @@ function AiModal({ isOpen, onClose }) {
 
   // Initialize Socket.IO connection
   useEffect(() => {
-    if (!isOpen) return;
-    if (initOnceRef.current && socketRef.current) return;
+    if (!isOpen || !user?.id || !team?.id) return;
 
-    const s = io(API_HOST, {
-      withCredentials: true,
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 5000,
-      timeout: 8000,
-      autoConnect: true,
-    });
+    let isMounted = true;
 
-    const onConnect = () => {
-      // Authenticate after connect (server expects this event)
-      s.emit("authenticate", { userId: user.id, teamId: team.id });
-    };
-    const onAuthenticated = () => {
-      // Socket is now authenticated and ready
-      // optional: console.debug("socket authenticated", s.id);
-    };
-    const onConnectError = () => {
-      // optional: console.warn("socket connect_error");
-    };
-    const onError = () => {
-      // optional: console.warn("socket error");
-    };
-    const onConversationCreated = (data) => {
-      s.emit("join-conversation", { conversationId: data.conversationId });
-      setConversation(prev => prev ? { ...prev, id: data.conversationId, isTemporary: false } : null);
-    };
-
-    s.on("connect", onConnect);
-    s.on("authenticated", onAuthenticated);
-    s.on("connect_error", onConnectError);
-    s.on("error", onError);
-    s.on("conversation-created", onConversationCreated);
-
-    socketRef.current = s;
-    initOnceRef.current = true;
-
-    return () => {
-      // Clean up listeners and keep a clean disconnect when the modal closes
-      if (socketRef.current) {
-        socketRef.current.off("connect", onConnect);
-        socketRef.current.off("authenticated", onAuthenticated);
-        socketRef.current.off("connect_error", onConnectError);
-        socketRef.current.off("error", onError);
-        socketRef.current.off("conversation-created", onConversationCreated);
-        socketRef.current.disconnect();
-        socketRef.current = null;
-        initOnceRef.current = false;
+    const initSocket = async () => {
+      try {
+        await socketClient.connect(user.id, team.id);
+        if (isMounted) {
+          setIsSocketReady(true);
+        }
+      } catch (error) {
+        console.error("Socket connection failed:", error);
+        if (isMounted) {
+          toast.error("Failed to establish real-time connection");
+        }
       }
     };
-  }, [isOpen, user.id, team.id]);
+
+    // Set up conversation-created listener
+    const handleConversationCreated = (data) => {
+      if (data?.conversationId) {
+        socketClient.joinConversation(data.conversationId);
+        setConversation(prev => prev ? { ...prev, id: data.conversationId, isTemporary: false } : null);
+      }
+    };
+
+    socketClient.on("conversation-created", handleConversationCreated);
+    initSocket();
+
+    return () => {
+      isMounted = false;
+      socketClient.off("conversation-created", handleConversationCreated);
+      // Note: We don't disconnect the socket here - it's a singleton that stays connected
+      // This allows seamless reconnection when modal reopens
+    };
+  }, [isOpen, user?.id, team?.id]);
 
   // Load conversations when modal opens
   useEffect(() => {
@@ -305,28 +283,28 @@ function AiModal({ isOpen, onClose }) {
 
   // Join conversation room when conversation changes
   useEffect(() => {
-    const s = socketRef.current;
-    if (s && conversation && conversation.id) {
-      s.emit("join-conversation", { conversationId: conversation.id });
+    if (!isSocketReady || !conversation?.id) return;
 
-      // Listen for progress events
-      const handleProgress = (data) => {
-        setProgressEvents(prev => [...prev, {
-          id: Date.now() + Math.random(),
-          type: data.event,
-          message: data.data.message,
-          timestamp: new Date(data.timestamp)
-        }]);
-      };
+    // Join the conversation room
+    socketClient.joinConversation(conversation.id);
 
-      s.on("ai-progress", handleProgress);
+    // Listen for progress events
+    const handleProgress = (data) => {
+      setProgressEvents(prev => [...prev, {
+        id: Date.now() + Math.random(),
+        type: data.event,
+        message: data.data?.message || "Processing...",
+        timestamp: new Date(data.timestamp)
+      }]);
+    };
 
-      return () => {
-        s.off("ai-progress", handleProgress);
-        s.emit("leave-conversation", { conversationId: conversation.id });
-      };
-    }
-  }, [conversation]);
+    socketClient.on("ai-progress", handleProgress);
+
+    return () => {
+      socketClient.off("ai-progress", handleProgress);
+      socketClient.leaveConversation(conversation.id);
+    };
+  }, [isSocketReady, conversation?.id]);
 
   const loadConversations = async () => {
     try {
