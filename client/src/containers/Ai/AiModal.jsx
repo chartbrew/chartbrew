@@ -72,7 +72,8 @@ function AiModal({ isOpen, onClose }) {
   const [conversations, setConversations] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
+  const initOnceRef = useRef(false);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
@@ -214,29 +215,59 @@ function AiModal({ isOpen, onClose }) {
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!isOpen) return;
+    if (initOnceRef.current && socketRef.current) return;
 
-    const socketConnection = io(API_HOST);
-    
-    socketConnection.on("connect", () => {
-      socketConnection.emit("authenticate", { userId: user.id, teamId: team.id });
+    const s = io(API_HOST, {
+      withCredentials: true,
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 5000,
+      timeout: 8000,
+      autoConnect: true,
     });
 
-    socketConnection.on("authenticated", () => {
-    });
-
-    // Listen for conversation creation event
-    socketConnection.on("conversation-created", (data) => {
-      // Join the conversation room immediately
-      socketConnection.emit("join-conversation", { conversationId: data.conversationId });
-      // Update conversation with real ID
+    const onConnect = () => {
+      // Authenticate after connect (server expects this event)
+      s.emit("authenticate", { userId: user.id, teamId: team.id });
+    };
+    const onAuthenticated = () => {
+      // Socket is now authenticated and ready
+      // optional: console.debug("socket authenticated", s.id);
+    };
+    const onConnectError = () => {
+      // optional: console.warn("socket connect_error");
+    };
+    const onError = () => {
+      // optional: console.warn("socket error");
+    };
+    const onConversationCreated = (data) => {
+      s.emit("join-conversation", { conversationId: data.conversationId });
       setConversation(prev => prev ? { ...prev, id: data.conversationId, isTemporary: false } : null);
-    });
+    };
 
-    setSocket(socketConnection);
+    s.on("connect", onConnect);
+    s.on("authenticated", onAuthenticated);
+    s.on("connect_error", onConnectError);
+    s.on("error", onError);
+    s.on("conversation-created", onConversationCreated);
+
+    socketRef.current = s;
+    initOnceRef.current = true;
 
     return () => {
-      socketConnection.disconnect();
-      setSocket(null);
+      // Clean up listeners and keep a clean disconnect when the modal closes
+      if (socketRef.current) {
+        socketRef.current.off("connect", onConnect);
+        socketRef.current.off("authenticated", onAuthenticated);
+        socketRef.current.off("connect_error", onConnectError);
+        socketRef.current.off("error", onError);
+        socketRef.current.off("conversation-created", onConversationCreated);
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        initOnceRef.current = false;
+      }
     };
   }, [isOpen, user.id, team.id]);
 
@@ -274,8 +305,9 @@ function AiModal({ isOpen, onClose }) {
 
   // Join conversation room when conversation changes
   useEffect(() => {
-    if (socket && conversation && conversation.id) {
-      socket.emit("join-conversation", { conversationId: conversation.id });
+    const s = socketRef.current;
+    if (s && conversation && conversation.id) {
+      s.emit("join-conversation", { conversationId: conversation.id });
 
       // Listen for progress events
       const handleProgress = (data) => {
@@ -287,14 +319,14 @@ function AiModal({ isOpen, onClose }) {
         }]);
       };
 
-      socket.on("ai-progress", handleProgress);
+      s.on("ai-progress", handleProgress);
 
       return () => {
-        socket.off("ai-progress", handleProgress);
-        socket.emit("leave-conversation", { conversationId: conversation.id });
+        s.off("ai-progress", handleProgress);
+        s.emit("leave-conversation", { conversationId: conversation.id });
       };
     }
-  }, [socket, conversation]);
+  }, [conversation]);
 
   const loadConversations = async () => {
     try {
