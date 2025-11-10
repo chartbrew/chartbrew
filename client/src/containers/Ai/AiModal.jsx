@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useParams } from "react-router";
 
 import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
@@ -33,6 +34,38 @@ function formatTokens(tokens) {
   if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
   return tokens.toString();
 }
+
+const components = {
+  // code: ({ children }) => {
+  //   const formattedText = String(children).replace(/^`|`$/g, ""); // Remove backticks
+
+  //   return (
+  //     <Code>
+  //       {formattedText}
+  //     </Code>
+  //   );
+  // },
+  code: ({ children, className }) => {
+    const formattedText = String(children).replace(/^`|`$/g, ""); // Strip backticks
+
+    return className ? (
+      // Block code (if it has a class, meaning it's a code block)
+      <pre className="bg-content2 text-foreground p-2 rounded-md overflow-auto">
+        <code className={className}>{formattedText}</code>
+      </pre>
+    ) : (
+      // Inline code (if no class)
+      <span className="bg-content2 text-foreground px-1 rounded-sm">{formattedText}</span>
+    );
+  },
+  li: ({ children, className }) => {
+    // If this is a task list item, remove the bullet point and reduce padding
+    if (className?.includes("task-list-item")) {
+      return <li className={`${className} list-none -ml-6`}>{children}</li>;
+    }
+    return <li className={className}>{children}</li>;
+  }
+};
 
 function AiModal({ isOpen, onClose }) {
   const [question, setQuestion] = useState("");
@@ -920,10 +953,12 @@ function AiModal({ isOpen, onClose }) {
                 />
                 <div className="flex-1">
                   {parsed.content && (
-                    <div className={`text-sm prose prose-sm max-w-none mb-4 ${
+                    <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
                       isError ? "text-danger" : "text-foreground"
                     }`}>
-                      <ReactMarkdown>{parsed.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                        {parsed.content}
+                      </ReactMarkdown>
                     </div>
                   )}
                   {parsed.suggestions && parsed.suggestions.length > 0 && (
@@ -969,10 +1004,15 @@ function AiModal({ isOpen, onClose }) {
                   color={isError ? "danger" : "primary"}
                 />
                 <div className="flex-1">
-                  <div className={`text-sm prose prose-sm max-w-none ${
+                  <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
                     isError ? "text-danger" : "text-foreground"
                   }`}>
-                    <ReactMarkdown>{parsed.content}</ReactMarkdown>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={components}
+                    >
+                      {parsed.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               </div>
@@ -1075,8 +1115,10 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 )}
                 {finalMessage && (
-                  <div className={`text-sm prose prose-sm max-w-none text-foreground ${suggestions ? "mb-4" : ""}`}>
-                    <ReactMarkdown>{finalMessage.content}</ReactMarkdown>
+                  <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                      {finalMessage.content}
+                    </ReactMarkdown>
                   </div>
                 )}
                 {suggestions && suggestions.length > 0 && (
