@@ -94,9 +94,9 @@ db.migrate()
       // continue
     }
 
-    const server = app.listen(port, app.settings.api, () => {
+    const server = app.listen(port, app.settings.api, async () => {
       // Initialize Socket.IO
-      socketManager.initialize(server);
+      await socketManager.initialize(server);
 
       // Check if this is the main cluster and run the cron jobs if it is
       const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;

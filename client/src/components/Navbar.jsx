@@ -259,9 +259,8 @@ function NavbarContainer() {
                 variant="solid"
                 onPress={() => dispatch(toggleAiModal())}
                 startContent={<LuBrainCircuit size={18} />}
-                color="primary"
                 size="sm"
-                className="from-primary-600 to-secondary-700 bg-gradient-to-r hover:bg-gradient-to-br transition-all duration-300 shadow-md"
+                className="from-primary-300 via-violet-200 to-secondary-300 dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500 bg-gradient-to-tr hover:bg-gradient-to-br transition-all duration-300 shadow-md"
               >
                 Ask Chartbrew AI
               </Button>

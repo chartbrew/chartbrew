@@ -18,9 +18,11 @@ class SocketManager {
     this.io = null;
     this.activeConnections = new Map(); // userId -> socket
     this.roomConnections = new Map(); // room -> Set of socket IDs
+    this.pubClient = null;
+    this.subClient = null;
   }
 
-  initialize(server) {
+  async initialize(server) {
     this.io = new Server(server, {
       cors: {
         origin: process.env.NODE_ENV === "production"
@@ -29,31 +31,100 @@ class SocketManager {
         methods: ["GET", "POST"],
         credentials: true
       },
-      transports: ["websocket", "polling"]
+      transports: ["websocket", "polling"],
+      // Add connection state recovery for better resilience
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+        skipMiddlewares: true,
+      },
+      path: "/socket.io"
     });
 
     // Try to set up Redis adapter for cross-process communication
+    await this.setupRedisAdapter();
+
+    this.setupConnectionHandling();
+  }
+
+  async setupRedisAdapter() {
     try {
       const redisConfig = getRedisOptions();
 
       // Check if Redis is configured (host is set)
-      if (redisConfig.host) {
-        // Create Redis clients for pub/sub
-        const pubClient = new Redis(redisConfig);
-        const subClient = pubClient.duplicate();
-
-        // Use Redis adapter for cross-process communication
-        this.io.adapter(createAdapter(pubClient, subClient));
-
-        console.log("Socket.IO Redis adapter enabled for cross-process communication"); // eslint-disable-line
-      } else {
+      if (!redisConfig.host) {
         console.log("Redis not configured, using in-memory adapter"); // eslint-disable-line
+        return;
       }
+
+      // Create Redis clients for pub/sub with proper error handling
+      this.pubClient = new Redis({
+        ...redisConfig,
+        lazyConnect: true, // Don't connect immediately, we'll connect explicitly
+        maxRetriesPerRequest: null, // Required for adapter
+        enableReadyCheck: true,
+        retryStrategy(times) {
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+      });
+
+      this.subClient = this.pubClient.duplicate();
+
+      // Set up error handlers before connecting
+      this.pubClient.on("error", (err) => {
+        console.error("Socket.IO Redis Pub Client Error:", err.message); // eslint-disable-line
+      });
+
+      this.subClient.on("error", (err) => {
+        console.error("Socket.IO Redis Sub Client Error:", err.message); // eslint-disable-line
+      });
+
+      // Set up reconnection handlers
+      this.pubClient.on("reconnecting", () => {
+        console.log("Socket.IO Redis Pub Client reconnecting..."); // eslint-disable-line
+      });
+
+      this.subClient.on("reconnecting", () => {
+        console.log("Socket.IO Redis Sub Client reconnecting..."); // eslint-disable-line
+      });
+
+      // Set up ready handlers
+      this.pubClient.on("ready", () => {
+        console.log("Socket.IO Redis Pub Client ready"); // eslint-disable-line
+      });
+
+      this.subClient.on("ready", () => {
+        console.log("Socket.IO Redis Sub Client ready"); // eslint-disable-line
+      });
+
+      // Connect both clients and wait for them to be ready
+      await Promise.all([
+        this.pubClient.connect(),
+        this.subClient.connect()
+      ]);
+
+      // Use Redis adapter for cross-process communication with recommended options
+      this.io.adapter(createAdapter(this.pubClient, this.subClient, {
+        key: "socket.io",
+        publishOnSpecificResponseChannel: true, // More efficient for multi-server setups
+      }));
+
+      console.log("✓ Socket.IO Redis adapter enabled for cross-process communication"); // eslint-disable-line
     } catch (error) {
       console.warn("Failed to set up Redis adapter, using in-memory adapter:", error.message); // eslint-disable-line
-    }
 
-    this.setupConnectionHandling();
+      // Clean up clients if setup failed
+      if (this.pubClient) {
+        this.pubClient.disconnect();
+        this.pubClient = null;
+      }
+      if (this.subClient) {
+        this.subClient.disconnect();
+        this.subClient = null;
+      }
+    }
   }
 
   setupConnectionHandling() {
