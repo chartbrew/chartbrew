@@ -1,10 +1,15 @@
 const { Server } = require("socket.io");
+const { createAdapter } = require("@socket.io/cluster-adapter");
+const { setupWorker } = require("@socket.io/sticky");
 
 /**
  * Socket.IO Manager for Chartbrew
  *
  * Handles real-time communication for AI orchestrations and other features.
  * Provides room-based isolation for teams/users and progress tracking.
+ *
+ * Automatically detects PM2 cluster mode and enables sticky sessions and cluster adapter
+ * for proper scaling across multiple workers when needed.
  */
 
 class SocketManager {
@@ -25,6 +30,17 @@ class SocketManager {
       },
       transports: ["websocket", "polling"]
     });
+
+    // Check if running in PM2 cluster mode (NODE_APP_INSTANCE is set by PM2)
+    const isClusterMode = process.env.NODE_APP_INSTANCE !== undefined;
+
+    if (isClusterMode) {
+      // Enable cluster adapter for PM2 compatibility
+      this.io.adapter(createAdapter());
+
+      // Set up sticky sessions for PM2 cluster
+      setupWorker(this.io);
+    }
 
     this.setupConnectionHandling();
   }
