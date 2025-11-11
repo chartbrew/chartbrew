@@ -51,6 +51,7 @@
     "googleapis": "^160.0.0",
     "helmet": "^7.1.0",
     "hot-formula-parser": "^4.0.0",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.20",
     "luxon": "^3.4.4",
