@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
-const { createAdapter } = require("@socket.io/cluster-adapter");
-const { setupWorker } = require("@socket.io/sticky");
+const { createAdapter } = require("@socket.io/redis-adapter");
+const Redis = require("ioredis");
+const { getRedisOptions } = require("../redisConnection");
 
 /**
  * Socket.IO Manager for Chartbrew
@@ -8,8 +9,8 @@ const { setupWorker } = require("@socket.io/sticky");
  * Handles real-time communication for AI orchestrations and other features.
  * Provides room-based isolation for teams/users and progress tracking.
  *
- * Automatically detects PM2 cluster mode and enables sticky sessions and cluster adapter
- * for proper scaling across multiple workers when needed.
+ * Uses Redis adapter for cross-process communication when Redis is available,
+ * enabling proper scaling across multiple workers or nodes.
  */
 
 class SocketManager {
@@ -31,15 +32,25 @@ class SocketManager {
       transports: ["websocket", "polling"]
     });
 
-    // Check if running in PM2 cluster mode (NODE_APP_INSTANCE is set by PM2)
-    const isClusterMode = process.env.NODE_APP_INSTANCE !== undefined;
+    // Try to set up Redis adapter for cross-process communication
+    try {
+      const redisConfig = getRedisOptions();
 
-    if (isClusterMode) {
-      // Enable cluster adapter for PM2 compatibility
-      this.io.adapter(createAdapter());
+      // Check if Redis is configured (host is set)
+      if (redisConfig.host) {
+        // Create Redis clients for pub/sub
+        const pubClient = new Redis(redisConfig);
+        const subClient = pubClient.duplicate();
 
-      // Set up sticky sessions for PM2 cluster
-      setupWorker(this.io);
+        // Use Redis adapter for cross-process communication
+        this.io.adapter(createAdapter(pubClient, subClient));
+
+        console.log("Socket.IO Redis adapter enabled for cross-process communication"); // eslint-disable-line
+      } else {
+        console.log("Redis not configured, using in-memory adapter"); // eslint-disable-line
+      }
+    } catch (error) {
+      console.warn("Failed to set up Redis adapter, using in-memory adapter:", error.message); // eslint-disable-line
     }
 
     this.setupConnectionHandling();
