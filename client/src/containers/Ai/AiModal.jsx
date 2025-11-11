@@ -35,27 +35,9 @@ function formatTokens(tokens) {
 }
 
 const components = {
-  // code: ({ children }) => {
-  //   const formattedText = String(children).replace(/^`|`$/g, ""); // Remove backticks
-
-  //   return (
-  //     <Code>
-  //       {formattedText}
-  //     </Code>
-  //   );
-  // },
-  code: ({ children, className }) => {
+  code: ({ children }) => {
     const formattedText = String(children).replace(/^`|`$/g, ""); // Strip backticks
-
-    return className ? (
-      // Block code (if it has a class, meaning it's a code block)
-      <pre className="bg-content2 text-foreground p-2 rounded-md overflow-auto">
-        <code className={className}>{formattedText}</code>
-      </pre>
-    ) : (
-      // Inline code (if no class)
-      <span className="bg-content2 text-foreground px-1 rounded-sm">{formattedText}</span>
-    );
+    return formattedText;
   },
   li: ({ children, className }) => {
     // If this is a task list item, remove the bullet point and reduce padding
@@ -1014,7 +996,7 @@ function AiModal({ isOpen, onClose }) {
                   color={isError ? "danger" : "primary"}
                 />
                 <div className="flex-1">
-                  <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
+                  <div className={`text-sm prose prose-xs md:prose-lg dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
                     isError ? "text-danger" : "text-foreground"
                   }`}>
                     <ReactMarkdown
@@ -1435,7 +1417,10 @@ function AiModal({ isOpen, onClose }) {
               </AccordionItem>
             </Accordion>
 
-            <Spacer y={4} />
+            <Divider />
+            <div className="text-xs text-foreground-500 mb-2">
+              <span className="font-medium">Note:</span> We are still in beta. Some features may not work as expected. Please let us know if you encounter any issues or have any feedback at <a href="mailto:support@chartbrew.com" className="text-primary-500 hover:text-primary-600">support@chartbrew.com</a>
+            </div>
           </ModalBody>
         )}
 
