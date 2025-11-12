@@ -421,9 +421,26 @@ class ConnectionController {
       return acc;
     }, {});
 
+    // Format schema for postgres and mysql to be more terse
+    let formattedSchema = {};
+    if (schema) {
+      try {
+        const schemaObj = schema;
+        if (schemaObj) {
+          formattedSchema = {};
+          Object.keys(schemaObj).forEach((tableName) => {
+            formattedSchema[tableName] = Object.keys(schemaObj[tableName]);
+          });
+        }
+      } catch (e) {
+        // Fallback to original schema if parsing fails
+        formattedSchema = schema;
+      }
+    }
+
     return {
       tables,
-      description: schema,
+      description: formattedSchema,
     };
   }
 

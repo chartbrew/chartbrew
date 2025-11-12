@@ -25,9 +25,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     formula: {
       type: DataTypes.TEXT,
+      description: "The formula (e.g {val / 100}) used transform the data points values. Can be used to pre-(a)pend, strings to numbers too £{val}"
     },
     datasetColor: {
       type: DataTypes.TEXT,
+      description: "The color of the dataset"
     },
     fillColor: {
       type: DataTypes.TEXT,
@@ -44,18 +46,22 @@ module.exports = (sequelize, DataTypes) => {
         } catch (e) {
           return this.getDataValue("fillColor");
         }
-      }
+      },
+      description: "The color of the dataset fill"
     },
     fill: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      description: "Whether to fill the dataset"
     },
     multiFill: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      description: "Useful for the UI to prompt the user to select multiple colors for the dataset"
     },
     legend: {
       type: DataTypes.STRING,
+      description: "The legend label (name) of the dataset"
     },
     pointRadius: {
       type: DataTypes.INTEGER,
@@ -72,9 +78,11 @@ module.exports = (sequelize, DataTypes) => {
       set(val) {
         return this.setDataValue("excludedFields", JSON.stringify(val));
       },
+      description: "The fields to exclude from the dataset - used for tables"
     },
     sort: {
       type: DataTypes.STRING,
+      description: "The sort order of the dataset - asc or desc"
     },
     columnsOrder: {
       type: DataTypes.TEXT,
@@ -87,17 +95,21 @@ module.exports = (sequelize, DataTypes) => {
       },
       set(val) {
         return this.setDataValue("columnsOrder", JSON.stringify(val));
-      }
+      },
+      description: "The order of the columns in the dataset - used for tables"
     },
     order: {
       type: DataTypes.FLOAT,
       defaultValue: 1,
+      description: "The order of the dataset in the chart"
     },
     maxRecords: {
       type: DataTypes.INTEGER,
+      description: "The maximum number of records to display in the dataset"
     },
     goal: {
       type: DataTypes.INTEGER,
+      description: "The goal of the dataset - used to display a progress bar for KPIs"
     },
     configuration: {
       type: DataTypes.TEXT,
@@ -110,7 +122,18 @@ module.exports = (sequelize, DataTypes) => {
         } catch (e) {
           return this.getDataValue("configuration");
         }
+      },
+      /*
+      {
+        variables: [
+          {
+            name: "string",  // Variable name from DataRequest VariableBinding
+            value: "any"     // Override value (string, number, etc.)
+          }
+        ]
       }
+      */
+      description: "Additional configuration options for the dataset. Currently used to give values to variables."
     },
   }, {
     freezeTableName: true,

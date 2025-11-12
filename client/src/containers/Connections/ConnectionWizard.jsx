@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuBrainCircuit, LuChartArea, LuCircleArrowLeft, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react";
+import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -24,6 +24,7 @@ import ClickHouseConnectionForm from "./ClickHouse/ClickHouseConnectionForm";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection, selectConnections } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { generateInviteUrl, selectTeam } from "../../slices/team";
+import { showAiModal } from "../../slices/ui";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 
@@ -134,22 +135,27 @@ function ConnectionWizard() {
         team_id: params.teamId,
         connection: { ...data, team_id: params.teamId }
       }))
-      .then((newConnection) => {
-        if (newConnection.error) {
+      .then(async (createdConnection) => {
+        if (createdConnection.error) {
           return false;
         }
 
         if (files) {
-          dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: newConnection.payload.id, files }));
+          dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: createdConnection.payload.id, files }));
         }
 
         if (data.type === "googleAnalytics") {
-          navigate(`/${params.teamId}/connection/${newConnection.payload.id}`);
+          navigate(`/${params.teamId}/connection/${createdConnection.payload.id}`);
           return true;
         }
 
         setCompletionModal(true);
         setSelectedType("");
+
+        navigate(`/${params.teamId}/connection/${createdConnection.payload.id}`);
+        const resp = await dispatch(getConnection({ team_id: params.teamId, connection_id: createdConnection.payload.id }));
+        setConnectionToEdit(resp.payload);
+
         return true;
       })
       .catch(() => {
@@ -167,6 +173,13 @@ function ConnectionWizard() {
 
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.id, teamRoles);
+  };
+
+  const _onAskAi = async () => {
+    setCompletionModal(false);
+    setTimeout(() => {
+      dispatch(showAiModal())
+    }, 100);
   };
 
   if (!_canAccess("teamAdmin", team.TeamRoles)) {
@@ -459,25 +472,43 @@ function ConnectionWizard() {
               <div>Create your first dataset to start visualizing your data</div>
             )}
           </ModalBody>
-          <ModalFooter>
-            {connections.length > 1 && (
+          <ModalFooter className="flex flex-col gap-2">
+            <div className="flex flex-row gap-2">
+              {connections.length > 1 && (
+                <Button
+                  variant="flat"
+                  fullWidth
+                  onPress={() => navigate("/")}
+                  startContent={<LuLayoutDashboard />}
+                >
+                  Return to dashboard
+                </Button>
+              )}
               <Button
-                variant="bordered"
+                color="primary"
                 fullWidth
-                onClick={() => navigate("/")}
-                startContent={<LuLayoutDashboard />}
+                onPress={() => navigate(`/${params.teamId}/dataset/new`)}
+                startContent={<LuChartArea />}
               >
-                Return to dashboard
+                Create dataset
               </Button>
+            </div>
+            {_canAccess("teamAdmin", team?.TeamRoles) && (
+              <>
+                <div className="flex flex-row gap-2 py-2">
+                  <Divider />
+                </div>
+                <Button
+                  color="primary"
+                  variant="flat"
+                  fullWidth
+                  onPress={() => _onAskAi()}
+                  startContent={<LuBrainCircuit />}
+                >
+                  Create with Chartbrew AI
+                </Button>
+              </>
             )}
-            <Button
-              color="primary"
-              fullWidth
-              onClick={() => navigate(`/${params.teamId}/dataset/new`)}
-              startContent={<LuChartArea />}
-            >
-              Create dataset
-            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

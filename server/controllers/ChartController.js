@@ -357,7 +357,7 @@ class ChartController {
                 noSource: false,
                 getCache,
                 filters,
-                timezone: project.timezone,
+                timezone: project?.timezone,
                 variables: cdcVariables,
               })
             );

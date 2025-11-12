@@ -1,7 +1,7 @@
 export const createTooltipElement = () => {
   const tooltipEl = document.createElement("div");
   tooltipEl.id = "chartjs-tooltip";
-  tooltipEl.className = "absolute pointer-events-none opacity-0 min-w-[120px] bg-white dark:bg-gray-800 rounded-lg shadow-md px-1 transition-all duration-150 ease-out";
+  tooltipEl.className = "absolute pointer-events-none opacity-0 min-w-[120px] bg-white dark:bg-gray-800 rounded-lg shadow-md px-1 transition-all duration-150 ease-out z-[9999]";
   document.body.appendChild(tooltipEl);
   return tooltipEl;
 };
@@ -12,7 +12,7 @@ export const formatTotal = (value) => {
 };
 
 export const generateTooltipContent = (titleLines, bodyLines, labelColors, isCategoryChart) => {
-  let innerHtml = "<div class=\"py-1 px-1\">";
+  let innerHtml = "<div class=\"py-1 px-1 z-50\">";
   
   // Add title (label)
   titleLines.forEach(title => {

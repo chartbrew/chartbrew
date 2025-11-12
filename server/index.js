@@ -28,6 +28,7 @@ const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
+const socketManager = require("./modules/socketManager");
 
 // check if the encryption keys are valid 32-byte hex strings
 checkEncryptionKeys();
@@ -93,7 +94,10 @@ db.migrate()
       // continue
     }
 
-    app.listen(port, app.settings.api, () => {
+    const server = app.listen(port, app.settings.api, async () => {
+      // Initialize Socket.IO
+      await socketManager.initialize(server);
+
       // Check if this is the main cluster and run the cron jobs if it is
       const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;
       if (isMainCluster || !process.env.NODE_APP_INSTANCE) {

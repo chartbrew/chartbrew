@@ -9,6 +9,7 @@ import {
 import {
   LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
+  LuBrainCircuit,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
@@ -21,9 +22,11 @@ import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
+import { selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
 import { useTheme } from "../modules/ThemeContext";
 import cbFullLogoLight from "../assets/cb_logo_light.svg";
 import cbFullLogoDark from "../assets/cb_logo_dark.svg";
+import AiModal from "../containers/Ai/AiModal";
 
 /*
   The navbar component used throughout the app
@@ -38,6 +41,7 @@ function NavbarContainer() {
   const teams = useSelector(selectTeams);
   const project = useSelector((state) => state.project.active);
   const user = useSelector(selectUser);
+  const aiModalOpen = useSelector(selectAiModalOpen);
 
   const { theme, setTheme, isDark } = useTheme();
   const params = useParams();
@@ -68,6 +72,26 @@ function NavbarContainer() {
       });
     }
   }, [teams]);
+
+  // Keyboard shortcut for AI modal (Cmd+K on Mac, Ctrl+K on Windows)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        // Prevent default browser behavior (usually search)
+        event.preventDefault();
+        dispatch(toggleAiModal());
+      }
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dispatch]);
 
   const _canAccess = (role, teamData) => {
     if (teamData) {
@@ -147,9 +171,14 @@ function NavbarContainer() {
             </Link>
           )}
           {!params.teamId && (
-            <Link to="/">
-              <img src={isDark ? cbFullLogoDark : cbFullLogoLight} alt="Chartbrew Logo" width={120}  />
-            </Link>
+            <>
+              <Link to="/" className="hidden sm:block">
+                <img src={isDark ? cbFullLogoDark : cbFullLogoLight} alt="Chartbrew Logo" width={120}  />
+              </Link>
+              <Link to="/" className="block sm:hidden">
+                <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30} />
+              </Link>
+            </>
           )}
           <Spacer x={4} />
           <Row align="center" className={"gap-1 hidden sm:flex"}>
@@ -223,6 +252,20 @@ function NavbarContainer() {
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
+          
+          {_canAccess("teamAdmin", team) && (
+            <NavbarItem>
+              <Button
+                variant="solid"
+                onPress={() => dispatch(toggleAiModal())}
+                startContent={<LuBrainCircuit size={18} />}
+                size="sm"
+                className="from-primary-300 via-violet-200 to-secondary-300 dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500 bg-gradient-to-tr hover:bg-gradient-to-br transition-all duration-300 shadow-md"
+              >
+                Ask Chartbrew AI
+              </Button>
+            </NavbarItem>
+          )}
 
           <Dropdown aria-label="Select a user option">
             <NavbarItem>
@@ -357,6 +400,10 @@ function NavbarContainer() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {_canAccess("teamAdmin", team) && (
+        <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+      )}
     </>
   );
 }

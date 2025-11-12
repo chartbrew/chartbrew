@@ -12,6 +12,7 @@ import tutorial from "./tutorial";
 import template from "../slices/template";
 import alert from "../slices/alert";
 import integration from "../slices/integration";
+import ui from "../slices/ui";
 
 const AppReducer = {
   user,
@@ -27,6 +28,7 @@ const AppReducer = {
   template,
   alert,
   integration,
+  ui,
 };
 
 export default AppReducer;
