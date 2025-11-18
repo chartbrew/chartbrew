@@ -6,6 +6,7 @@ const { v4: uuid } = require("uuid");
 const jwt = require("jsonwebtoken");
 
 const externalDbConnection = require("../modules/externalDbConnection");
+const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
 
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
@@ -1086,6 +1087,111 @@ class ChartController {
     }
 
     return snapChart(chart.snapshotToken);
+  }
+
+  /**
+   * Create a chart with all its chart dataset configs in one go
+   * @param {Object} data - Chart data with chartDatasetConfigs array
+   * @param {Array} data.chartDatasetConfigs - Array of chart dataset config objects to create
+   * @returns {Promise<Object>} Created chart with all chart dataset configs
+   */
+  async createWithChartDatasetConfigs(data, user) {
+    const {
+      chartDatasetConfigs = [],
+      ...chartData
+    } = data;
+
+    // Filter out legacy fields and auto-populated fields
+    const legacyFields = ["dashboardOrder", "chartSize"];
+    const autoPopulatedFields = ["chartData", "chartDataUpdated"];
+
+    const cleanChartData = {};
+    const allowedFields = [
+      "project_id", "name", "type", "subType", "public", "shareable",
+      "displayLegend", "pointRadius", "dataLabels", "startDate", "endDate",
+      "dateVarsFormat", "includeZeros", "currentEndDate", "fixedStartDate",
+      "timeInterval", "autoUpdate", "draft", "mode", "maxValue", "minValue",
+      "disabledExport", "onReport", "xLabelTicks", "stacked", "horizontal",
+      "showGrowth", "invertGrowth", "layout", "snapshotToken", "isLogarithmic",
+      "content", "ranges", "dashedLastPoint", "defaultRowsPerPage"
+    ];
+
+    allowedFields.forEach((field) => {
+      if (chartData[field] !== undefined
+        && !legacyFields.includes(field)
+        && !autoPopulatedFields.includes(field)
+      ) {
+        cleanChartData[field] = chartData[field];
+      }
+    });
+
+    // Auto-calculate layout if not provided
+    let finalLayout = cleanChartData.layout;
+    if (!finalLayout && cleanChartData.project_id) {
+      // Get existing charts for layout calculation
+      const existingCharts = await db.Chart.findAll({
+        where: { project_id: cleanChartData.project_id },
+        attributes: ["layout"],
+      });
+
+      // Calculate layout automatically
+      const calculatedLayout = calculateChartLayout(existingCharts);
+      finalLayout = ensureCompleteLayout(calculatedLayout);
+    } else if (finalLayout) {
+      finalLayout = ensureCompleteLayout(finalLayout);
+    } else {
+      finalLayout = { ...DEFAULT_CHART_LAYOUT };
+    }
+
+    // Create the chart first
+    const chart = await db.Chart.create({
+      ...cleanChartData,
+      layout: finalLayout,
+      chartDataUpdated: moment()
+    });
+
+    // Delete chart cache if user is provided
+    if (user) {
+      this.chartCache.remove(user.id, chart.id);
+    }
+
+    // Create all chart dataset configs
+    if (chartDatasetConfigs && chartDatasetConfigs.length > 0) {
+      // Fetch datasets to get their legend for default values
+      const datasetIds = chartDatasetConfigs.map((cdc) => cdc.dataset_id).filter(Boolean);
+      const datasets = await db.Dataset.findAll({
+        where: { id: datasetIds }
+      });
+      const datasetMap = {};
+      datasets.forEach((ds) => {
+        datasetMap[ds.id] = ds;
+      });
+
+      await Promise.all(
+        chartDatasetConfigs.map((cdcData) => {
+          const { chart_id, ...cdcRest } = cdcData;
+          const dataset = datasetMap[cdcData.dataset_id];
+
+          const cdcToCreate = {
+            ...cdcRest,
+            chart_id: chart.id,
+            legend: cdcData.legend || dataset?.legend || null
+          };
+
+          return db.ChartDatasetConfig.create(cdcToCreate);
+        })
+      );
+    }
+
+    // Run the chart update in the background to populate chartData
+    try {
+      this.updateChartData(chart.id, user, {});
+    } catch {
+      // Ignore background update errors
+    }
+
+    // Return the full chart with all chart dataset configs
+    return this.findById(chart.id);
   }
 }
 

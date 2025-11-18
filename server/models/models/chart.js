@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     type: {
       type: DataTypes.STRING,
-      description: "The type of chart",
+      description: "The type of chart: line, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
     },
     subType: {
       type: DataTypes.STRING,
@@ -54,16 +54,6 @@ module.exports = (sequelize, DataTypes) => {
     chartDataUpdated: {
       type: DataTypes.DATE,
       description: "When was chartData last updated"
-    },
-    chartSize: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 2,
-      description: "This field is deprecated in favor of layout"
-    },
-    dashboardOrder: {
-      type: DataTypes.INTEGER,
-      description: "This field is deprecated in favor of layout"
     },
     displayLegend: {
       type: DataTypes.BOOLEAN,
@@ -135,7 +125,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "chart",
-      description: "chart or kpi"
+      description: "chart or kpichart"
     },
     maxValue: {
       type: DataTypes.INTEGER,
@@ -246,6 +236,20 @@ module.exports = (sequelize, DataTypes) => {
     defaultRowsPerPage: {
       type: DataTypes.INTEGER,
       defaultValue: 10,
+    },
+    /*
+    ** LEGACY FIELDS
+    ** These fields are no longer used and will be removed in a future release
+    */
+    dashboardOrder: {
+      type: DataTypes.INTEGER,
+      description: "This field is deprecated in favor of layout"
+    },
+    chartSize: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 2,
+      description: "This field is deprecated in favor of layout"
     },
   }, {
     freezeTableName: true,

@@ -178,6 +178,25 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to quickly create a chart with all its chart dataset configs in one go
+  */
+  app.post("/project/:project_id/chart/quick-create", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    // Ensure project_id matches the route parameter
+    req.body.project_id = req.params.project_id;
+    return chartController.createWithChartDatasetConfigs(req.body, req.user)
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error.message && error.message.indexOf("406") > -1) {
+          return res.status(406).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to update a chart
   */
   app.put("/project/:project_id/chart/:id", verifyToken, checkPermissions("updateOwn"), (req, res) => {

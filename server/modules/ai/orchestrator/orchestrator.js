@@ -22,7 +22,7 @@ const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
 const { chartColors } = require("../../../charts/colors");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
-const { calculateChartLayout, ensureCompleteLayout } = require("./chartLayoutEngine");
+const { calculateChartLayout, ensureCompleteLayout } = require("../../chartLayoutEngine");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -1113,7 +1113,7 @@ async function availableTools() {
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
-          mode: { type: "string", enum: ["chart", "kpi"] },
+          mode: { type: "string", enum: ["chart", "kpichart"] },
           maxValue: { type: "integer", description: "Cap maximum value" },
           minValue: { type: "integer", description: "Cap minimum value" },
           ranges: {
@@ -1183,7 +1183,7 @@ async function availableTools() {
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
-          mode: { type: "string", enum: ["chart", "kpi"], description: "Chart mode" },
+          mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
           maxValue: { type: "integer", description: "Cap maximum value" },
           minValue: { type: "integer", description: "Cap minimum value" },
           ranges: {

@@ -52,7 +52,7 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - horizontal: boolean - horizontal bars (bar only) (default: false)
 - showGrowth: boolean - percentage growth (default: false)
 - invertGrowth: boolean - invert growth calc (default: false)
-- mode: string - "chart" or "kpi" (default: "chart")
+- mode: string - "chart" or "kpichart" (default: "chart")
 - maxValue: integer - cap max value (optional)
 - minValue: integer - cap min value (optional)
 - ranges: array - gauge ranges [{min, max, label, color}] (optional)
