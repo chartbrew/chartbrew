@@ -220,8 +220,8 @@ function AiModal({ isOpen, onClose }) {
       }
     };
 
-    socketClient.on("conversation-created", handleConversationCreated);
     initSocket();
+    socketClient.on("conversation-created", handleConversationCreated);
 
     return () => {
       isMounted = false;
