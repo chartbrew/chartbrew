@@ -117,6 +117,34 @@ module.exports = (app) => {
   // ----------------------------------------------------
 
   /*
+  ** Route to quickly create a dataset with all its data requests in one go
+  */
+  app.post(`${root}/quick-create`, verifyToken, checkPermissions("createAny"), (req, res) => {
+    if (req.user.projects) {
+      req.body.project_ids = req.user.projects;
+    }
+
+    // Ensure team_id matches the route parameter
+    req.body.team_id = req.params.team_id;
+    req.body.xAxis = req.body.xAxis || req.body.dimension;
+    req.body.yAxis = req.body.yAxis || req.body.metric;
+    req.body.yAxisOperation = req.body.yAxisOperation || req.body.metricOperation;
+
+    return datasetController.createWithDataRequests(req.body)
+      .then((dataset) => {
+        return res.status(200).send(dataset);
+      })
+      .catch((err) => {
+        if (err && err.message && err.message === "401") {
+          return res.status(401).send(err);
+        }
+
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
+
+  /*
   ** Route to duplicate a dataset
   */
   app.post(`${root}/:dataset_id/duplicate`, verifyToken, checkPermissions("createAny"), (req, res) => {

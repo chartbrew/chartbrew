@@ -54,10 +54,12 @@ module.exports = (sequelize, DataTypes) => {
     ** root[].field when root is an array
     ** root.field when root is an object
     ** root.field[].field when root is an object and the field is an array
+    ** xAxis also known as the "dimension" field
+    ** yAxis also known as the "metric" field
     */
     xAxis: {
       type: DataTypes.STRING,
-      description: "X axis or metric field using traversal syntax - root[].field"
+      description: "X axis or metric field using traversal syntax - root[].field",
     },
     xAxisOperation: {
       type: DataTypes.STRING,
@@ -65,6 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     yAxis: {
       type: DataTypes.STRING,
+      description: "Y axis or metric field using traversal syntax - root[].field",
     },
     yAxisOperation: {
       type: DataTypes.STRING,
@@ -312,6 +315,7 @@ module.exports = (sequelize, DataTypes) => {
     goal: {
       type: DataTypes.INTEGER,
     },
+    // End of LEGACY FIELDS
   }, {
     freezeTableName: true,
   });

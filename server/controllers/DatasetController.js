@@ -552,6 +552,146 @@ class DatasetController {
     await db.VariableBinding.update(data, { where: { id: variable_id, entity_id: id, entity_type: "Dataset" } });
     return this.findById(id);
   }
+
+  /**
+   * Create a dataset with all its data requests in one go
+   * @param {Object} data - Dataset data with dataRequests array
+   * @param {Array} data.dataRequests - Array of data request objects to create
+   * @param {number|string} data.main_dr_index - Optional index of main data request (defaults to 0)
+   * @returns {Promise<Object>} Created dataset with all data requests
+   */
+  async createWithDataRequests(data) {
+    const {
+      dataRequests = [],
+      main_dr_index = 0,
+      joinSettings,
+      variableBindings: datasetVariableBindings = [],
+      ...datasetData
+    } = data;
+
+    // Helper function to extract variable name from {{variableName}} format
+    const extractVariableName = (name) => {
+      if (typeof name !== "string") return name;
+      // Remove {{ }} wrapper if present
+      const match = name.match(/^\{\{([^}]+)\}\}$/);
+      return match ? match[1].trim() : name.trim();
+    };
+
+    // Filter out legacy fields from dataset data
+    const legacyFields = [
+      "chart_id", "connection_id", "query", "excludedFields", "averageByTotal",
+      "configuration", "datasetColor", "fillColor", "fill", "multiFill",
+      "pointRadius", "patterns", "groups", "groupBy", "sort", "columnsOrder",
+      "order", "maxRecords", "goal"
+    ];
+
+    const cleanDatasetData = {};
+    const allowedFields = [
+      "team_id", "project_ids", "draft", "xAxis", "xAxisOperation", "yAxis",
+      "yAxisOperation", "dateField", "dateFormat", "legend", "conditions",
+      "fieldsSchema"
+    ];
+
+    allowedFields.forEach((field) => {
+      if (datasetData[field] !== undefined && !legacyFields.includes(field)) {
+        cleanDatasetData[field] = datasetData[field];
+      }
+    });
+
+    // Create the dataset first (without joinSettings - will be set after data requests are created)
+    const dataset = await db.Dataset.create(cleanDatasetData);
+
+    // Create all data requests with their variable bindings
+    const createdDataRequests = await Promise.all(
+      dataRequests.map(async (drData) => {
+        const { variableBindings: drVariableBindings = [], ...drToCreateData } = drData;
+        const drToCreate = {
+          ...drToCreateData,
+          dataset_id: dataset.id
+        };
+        const createdDr = await db.DataRequest.create(drToCreate);
+
+        // Create variable bindings for this data request
+        if (drVariableBindings && drVariableBindings.length > 0) {
+          await Promise.all(
+            drVariableBindings.map((vb) => {
+              const { entity_type, entity_id, ...vbRest } = vb;
+              const vbData = {
+                ...vbRest,
+                entity_type: "DataRequest",
+                entity_id: createdDr.id.toString(),
+                name: extractVariableName(vb.name || vb.variableName || "")
+              };
+              return db.VariableBinding.create(vbData);
+            })
+          );
+        }
+
+        return createdDr;
+      })
+    );
+
+    // Create variable bindings for the dataset
+    if (datasetVariableBindings && datasetVariableBindings.length > 0) {
+      await Promise.all(
+        datasetVariableBindings.map((vb) => {
+          const { entity_type, entity_id, ...vbRest } = vb;
+          const vbData = {
+            ...vbRest,
+            entity_type: "Dataset",
+            entity_id: dataset.id.toString(),
+            name: extractVariableName(vb.name || vb.variableName || "")
+          };
+          return db.VariableBinding.create(vbData);
+        })
+      );
+    }
+
+    // Determine main_dr_id
+    let mainDrId = null;
+    if (createdDataRequests.length > 0) {
+      if (typeof main_dr_index === "number" && createdDataRequests[main_dr_index]) {
+        mainDrId = createdDataRequests[main_dr_index].id;
+      } else if (typeof main_dr_index === "string") {
+        // Try to find by some identifier if provided as string
+        const found = createdDataRequests.find((dr) => dr.id.toString() === main_dr_index);
+        if (found) {
+          mainDrId = found.id;
+        } else {
+          mainDrId = createdDataRequests[0].id;
+        }
+      } else {
+        mainDrId = createdDataRequests[0].id;
+      }
+    }
+
+    // Update joinSettings if provided - map any indices to actual data request IDs
+    const updateData = { main_dr_id: mainDrId };
+    if (joinSettings && joinSettings.joins) {
+      const updatedJoinSettings = {
+        ...joinSettings,
+        joins: joinSettings.joins.map((join) => {
+          const updatedJoin = { ...join };
+
+          // If join references use indices (0-based), map them to actual IDs
+          if (typeof join.dr_id === "number" && join.dr_id >= 0 && join.dr_id < createdDataRequests.length) {
+            updatedJoin.dr_id = createdDataRequests[join.dr_id].id;
+          }
+          if (typeof join.join_id === "number" && join.join_id >= 0 && join.join_id < createdDataRequests.length) {
+            updatedJoin.join_id = createdDataRequests[join.join_id].id;
+          }
+
+          return updatedJoin;
+        })
+      };
+      updateData.joinSettings = updatedJoinSettings;
+    }
+
+    await dataset.update(updateData);
+
+    // Return the full dataset with all data requests
+    return this.findById(dataset.id);
+  }
 }
 
 module.exports = DatasetController;
