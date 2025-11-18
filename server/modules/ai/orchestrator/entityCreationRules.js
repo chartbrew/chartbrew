@@ -37,6 +37,8 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 
 **Chart:**
 - Required: project_id, dataset_id
+- **CRITICAL: Use the EXACT project specified by the user. Never create charts in other projects for validation or testing.**
+- **CRITICAL: Create the chart exactly once. Do not create test/validation charts first.**
 - Set draft=false, dashboardOrder=max+1
 - name: string - chart name/title (optional)
 - legend: string - short legend for data points (separate from chart name, max 20-30 chars)
@@ -56,7 +58,7 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - maxValue: integer - cap max value (optional)
 - minValue: integer - cap min value (optional)
 - ranges: array - gauge ranges [{min, max, label, color}] (optional)
-- layout: object - grid layout {lg: [x,y,w,h], ...} (optional)
+- layout: object - grid layout {lg: [x,y,w,h], ...} (only required if the user specifies a layout, auto-calculated if not provided)
 
 **ChartDatasetConfig:**
 - Required: chart_id, dataset_id
@@ -75,10 +77,16 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - configuration: object - dataset settings (default: {})
 
 **Sequence:**
-1. Create Dataset (connection_id, legend, draft=false)
-2. Create DataRequest (dataset_id, connection_id, query)
-3. Create Chart (project_id, name, type, draft=false)
-4. Create ChartDatasetConfig (chart_id, dataset_id, legend)`;
+1. Create Dataset with DataRequest using quick-create (team_id, connection_id, legend, query, xAxis, yAxis, draft=false, dataRequests array)
+2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array)
+
+**CRITICAL RULES:**
+- Use the EXACT project specified by the user or context. Never create charts in different projects.
+- Create entities exactly once. Do not create test/validation versions first.
+- Respect user instructions precisely - if they specify a project, use that exact project.
+- No trial runs, no validation charts, no test datasets - create the final entity directly.
+
+Note: Both Dataset and Chart creation now use quick-create functions that handle all related entities in a single call. Layout for charts is automatically calculated if not provided.`;
 
 // Supported connection types and their subtypes
 const SUPPORTED_CONNECTIONS = {

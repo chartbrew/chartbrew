@@ -17,12 +17,12 @@ const db = require("../../../models/models");
 const { generateSqlQuery } = require("../generateSqlQuery");
 const ConnectionController = require("../../../controllers/ConnectionController");
 const ChartController = require("../../../controllers/ChartController");
+const DatasetController = require("../../../controllers/DatasetController");
 const socketManager = require("../../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
 const { chartColors } = require("../../../charts/colors");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
-const { calculateChartLayout, ensureCompleteLayout } = require("../../chartLayoutEngine");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -37,6 +37,8 @@ if (openAiKey) {
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
 const connectionController = new ConnectionController();
+const datasetController = new DatasetController();
+const chartController = new ChartController();
 
 async function listConnections(payload) {
   const { project_id } = payload; // scope could be used for filtering in the future
@@ -407,7 +409,8 @@ async function createDataset(payload) {
   const {
     project_id, connection_id, name, team_id,
     xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
-    query, conditions = [], configuration = {}, variables = [], transform = null
+    query, conditions = [], configuration = {}, variables = [], transform = null,
+    variableBindings = []
   } = payload;
 
   if (!team_id) {
@@ -415,41 +418,38 @@ async function createDataset(payload) {
   }
 
   try {
-    // Create the dataset with data mapping fields
-    const dataset = await db.Dataset.create({
+    // Use the quick-create function to create dataset with data request in one go
+    const dataset = await datasetController.createWithDataRequests({
       team_id,
       project_ids: project_id ? [project_id] : [],
-      connection_id,
-      legend: name || "AI Generated Dataset",
       draft: false,
+      legend: name || "AI Generated Dataset",
       xAxis,
       yAxis,
       yAxisOperation,
       dateField,
       dateFormat,
       conditions,
+      variableBindings,
+      dataRequests: [{
+        connection_id,
+        query,
+        conditions: conditions || [],
+        configuration: configuration || {},
+        variables: variables || [],
+        transform: transform || null
+      }],
+      main_dr_index: 0
     });
 
-    // Create the data request linked to this dataset
-    const dataRequest = await db.DataRequest.create({
-      dataset_id: dataset.id,
-      connection_id,
-      query,
-      conditions: conditions || [],
-      configuration: configuration || {},
-      variables: variables || [],
-      transform: transform || null,
-    });
-
-    // Set as main data request
-    await db.Dataset.update(
-      { main_dr_id: dataRequest.id },
-      { where: { id: dataset.id } }
-    );
+    // Extract data request ID from the returned dataset
+    const dataRequestId = dataset.DataRequests && dataset.DataRequests.length > 0
+      ? dataset.DataRequests[0].id
+      : dataset.main_dr_id;
 
     return {
       dataset_id: dataset.id,
-      data_request_id: dataRequest.id,
+      data_request_id: dataRequestId,
       name: dataset.legend,
       dataset_url: `${clientUrl}/${team_id}/dataset/${dataset.id}`,
     };
@@ -495,33 +495,20 @@ async function createChart(payload) {
   const chartSpec = spec || defaultSpec;
 
   try {
-    // Get existing charts for dashboard order and layout calculation
-    const existingCharts = await db.Chart.findAll({
-      where: { project_id },
-      attributes: ["dashboardOrder", "layout"],
-      order: [["dashboardOrder", "DESC"]],
-    });
+    // Get the dataset to get its legend for default values
+    const dataset = await db.Dataset.findByPk(dataset_id);
+    if (!dataset) {
+      throw new Error("Dataset not found");
+    }
 
-    const nextOrder = existingCharts.length > 0
-      ? (existingCharts[0].dashboardOrder || 0) + 1
-      : 0;
-
-    // Calculate layout automatically
-    const calculatedLayout = calculateChartLayout(existingCharts, chartSpec.chartSize || 2);
-
-    // Ensure the final layout has all required breakpoints to prevent dashboard breakage
-    const finalLayout = ensureCompleteLayout(chartSpec.layout || calculatedLayout);
-
-    // Create the chart
-    const chart = await db.Chart.create({
+    // Use the quick-create function to create chart with chart dataset config in one go
+    // Layout will be auto-calculated by the controller
+    const chart = await chartController.createWithChartDatasetConfigs({
       project_id,
       name: name || chartSpec.title || "AI Generated Chart",
       type: type || chartSpec.type,
       subType: subType || chartSpec.subType,
       draft: false,
-      dashboardOrder: nextOrder,
-      // chartSize is deprecated but keeping for backward compatibility
-      chartSize: chartSpec.chartSize || 2,
       // eslint-disable-next-line no-nested-ternary
       displayLegend: displayLegend !== undefined
         ? displayLegend
@@ -545,42 +532,25 @@ async function createChart(payload) {
       maxValue: maxValue || chartSpec.maxValue,
       minValue: minValue || chartSpec.minValue,
       ranges: ranges || chartSpec.ranges,
-      layout: finalLayout,
-    });
-
-    // Get the dataset to link it to the chart
-    const dataset = await db.Dataset.findByPk(dataset_id);
-    if (!dataset) {
-      throw new Error("Dataset not found");
-    }
-
-    // Create ChartDatasetConfig to link chart and dataset
-    await db.ChartDatasetConfig.create({
-      chart_id: chart.id,
-      dataset_id,
-      formula: chartSpec.formula,
-      datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
-      fillColor: chartSpec.fillColor,
-      fill: chartSpec.fill || false,
-      multiFill: chartSpec.multiFill || false,
-      legend: legend || chartSpec.title || dataset.legend,
-      pointRadius: pointRadius || chartSpec.pointRadius || 0,
-      excludedFields: chartSpec.excludedFields || [],
-      sort: chartSpec.sort,
-      columnsOrder: chartSpec.columnsOrder,
-      order: 1,
-      maxRecords: chartSpec.maxRecords,
-      goal: chartSpec.goal,
-      configuration: chartSpec.configuration || {},
-    });
-
-    // run the chart update in the background
-    try {
-      const chartController = new ChartController();
-      chartController.updateChartData(chart.id, null, {});
-    } catch {
-      //
-    }
+      layout: chartSpec.layout, // Will be auto-calculated if not provided
+      chartDatasetConfigs: [{
+        dataset_id,
+        formula: chartSpec.formula,
+        datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
+        fillColor: chartSpec.fillColor,
+        fill: chartSpec.fill || false,
+        multiFill: chartSpec.multiFill || false,
+        legend: legend || chartSpec.title || dataset.legend,
+        pointRadius: pointRadius || chartSpec.pointRadius || 0,
+        excludedFields: chartSpec.excludedFields || [],
+        sort: chartSpec.sort,
+        columnsOrder: chartSpec.columnsOrder,
+        order: 1,
+        maxRecords: chartSpec.maxRecords,
+        goal: chartSpec.goal,
+        configuration: chartSpec.configuration || {}
+      }]
+    }, null); // No user for AI-created charts
 
     return {
       chart_id: chart.id,
@@ -1094,11 +1064,11 @@ async function availableTools() {
     },
     {
       name: "create_chart",
-      description: "Create a chart and place it on a project/dashboard, bound to a dataset.",
+      description: "Create a chart and place it on a project/dashboard, bound to a dataset. CRITICAL: Use the EXACT project_id specified by the user. Create the chart exactly once - do not create test/validation charts in other projects.",
       parameters: {
         type: "object",
         properties: {
-          project_id: { type: "string", description: "The project/dashboard ID where the chart will be placed" },
+          project_id: { type: "string", description: "The EXACT project/dashboard ID specified by the user where the chart will be placed. Use this exact ID - never create charts in other projects for testing or validation." },
           dataset_id: { type: "string" },
           name: { type: "string", description: "Chart name/title" },
           legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
@@ -1339,6 +1309,9 @@ ${ENTITY_CREATION_RULES}
      * Summarize the results and offer to create a chart
 
 2. When creating charts:
+   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once, in the exact project specified by the user.
+   - **CRITICAL: Always use the exact project provided by the user or context.** Never create charts in different projects for testing or validation purposes.
+   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate" - create the final chart directly in the user's specified project.
    - Suggest the most appropriate chart type based on the data
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
    - Only ask user for confirmation if absolutely necessary - take initiative as much as possible
@@ -1350,6 +1323,8 @@ ${ENTITY_CREATION_RULES}
    - When answering data questions, give the direct answer first, then optionally show the query used - skip technical details like execution time, connection info, and alternative queries unless asked
 
 3. Best practices:
+   - **CRITICAL: Respect user instructions exactly.** If the user specifies a project_id, use that exact project_id. Never create charts in other projects for any reason.
+   - **CRITICAL: No validation or test runs.** When creating charts or datasets, create them directly in the user's specified project. Do not create test/validation versions first.
    - Always confirm connection choice if multiple databases contain similar data
    - Ask before making permanent changes (updating datasets/charts)
    - Take initiative when creating datasets/charts - ask confirmation only if absolutely necessary
@@ -1502,6 +1477,7 @@ Critical: Never prefix with "Suggestions:" text. Emit only the fenced cb-actions
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
 - Always respect the user's data privacy and security
+- **CRITICAL: When creating charts or datasets, use the EXACT project_id specified by the user. Never create validation/test versions in other projects. Create entities exactly once, directly in the user's specified project.**
 - If you're unsure about anything, ask the user for clarification using the disambiguate tool
 - **FORMATTING REMINDER**: When using cb-actions, ALWAYS use the exact fenced code block format with three backticks. Never output cb-actions without the proper markdown code fence markers.
 
