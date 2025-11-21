@@ -329,13 +329,13 @@ module.exports = (app) => {
   ** Route to filter the charts from the dashboard
   */
   app.post("/project/:project_id/chart/:id/filter", apiLimiter(50), (req, res) => {
-    if (!req.body.filters) return res.status(400).send("No filters selected");
+    if (!req.body?.filters) return res.status(400).send("No filters selected");
     let noSource = req.query.no_source === "true";
     let skipParsing = req.query.skip_parsing === "true";
     let getCache = true;
 
     // if it's a date range filter, we need to query the source and disable the cache
-    if (req.body.filters.length === 1 && req.body.filters.find((f) => f.type === "date")) {
+    if (req.body?.filters && req.body.filters.length === 1 && req.body.filters.find((f) => f.type === "date")) {
       noSource = false;
       skipParsing = false;
       getCache = false;
@@ -348,9 +348,9 @@ module.exports = (app) => {
       {
         noSource,
         skipParsing,
-        filters: req.body.filters,
+        filters: req.body?.filters,
         getCache,
-        variables: req.body.variables,
+        variables: req.body?.variables,
       },
     )
       .then(async (chart) => {
