@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
@@ -9,15 +9,10 @@ import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
-import { useParams } from "react-router";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 
-function ApiKeys(props) {
-  const { teamId } = props;
-
+function ApiKeys() {
   const [apiKeys, setApiKeys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newKey, setNewKey] = useState("");
@@ -28,18 +23,21 @@ function ApiKeys(props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const dispatch = useDispatch();
-  const params = useParams();
+  const initRef = useRef(false);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    _fetchApiKeys();
-  }, []);
+    if (team?.id && !initRef.current) {
+      initRef.current = true;
+      _fetchApiKeys();
+    }
+  }, [team]);
 
   const _fetchApiKeys = () => {
     setLoading(true);
-    dispatch(getApiKeys({ team_id: params.teamId }))
+    dispatch(getApiKeys({ team_id: team.id }))
       .then((keys) => {
         if (keys?.error) {
           setLoading(false);
@@ -57,7 +55,7 @@ function ApiKeys(props) {
 
   const _onCreateKey = () => {
     setCreateLoading(true);
-    dispatch(createApiKey({ team_id: teamId, keyName: newKey }))
+    dispatch(createApiKey({ team_id: team.id, keyName: newKey }))
       .then((createdKey) => {
         setCreateLoading(false);
         setCreateMode(false);
@@ -77,7 +75,7 @@ function ApiKeys(props) {
 
   const _onRemoveKey = () => {
     setCreateLoading(true);
-    dispatch(deleteApiKey({ team_id: teamId, keyId: confirmDelete }))
+    dispatch(deleteApiKey({ team_id: team.id, keyId: confirmDelete }))
       .then(() => {
         setConfirmDelete(false);
         setCreateLoading(false);
@@ -104,17 +102,16 @@ function ApiKeys(props) {
   }
 
   return (
-    <div>
-      <Row>
-        <Text size="h4">Developer settings</Text>
-      </Row>
+    <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+      <div className="text-lg font-semibold font-tw">Developer settings</div>
+      <div className="text-sm text-gray-500">Manage your API keys and create new ones.</div>
       <Spacer y={4} />
       {loading && (
-        <Row justify="center">
+        <div className="flex justify-center">
           <CircularProgress aria-label="Loading keys">Loading keys...</CircularProgress>
-        </Row>
+        </div>
       )}
-      <Row>
+      <div>
         <Button
           onPress={_onCreateRequested}
           endContent={<LuPlus />}
@@ -122,10 +119,10 @@ function ApiKeys(props) {
         >
           Create a new API Key
         </Button>
-      </Row>
+      </div>
       <Spacer y={2} />
 
-      <Table shadow={"none"} aria-label="API keys">
+      <Table shadow={"none"} aria-label="API keys" isStriped>
         <TableHeader>
           <TableColumn key="token">API Tokens list</TableColumn>
           <TableColumn key="created" hideHeader align="flex-end">Date created</TableColumn>
@@ -156,6 +153,7 @@ function ApiKeys(props) {
                   variant="light"
                   color="danger"
                   onPress={() => _onRemoveConfirmation(key)}
+                  size="sm"
                 >
                   <LuTrash />
                 </Button>
@@ -168,25 +166,21 @@ function ApiKeys(props) {
       <Modal isOpen={!!createdKey.id} onClose={() => setCreatedKey({})} size="xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Your new API Key</Text>
+            <div className="text-lg font-semibold font-tw">Your new API Key</div>
           </ModalHeader>
           <ModalBody>
-            <Row>
-              <Text color="success">{"Congrats! your new API key has been created."}</Text>
-            </Row>
-            <Row>
-              <Text>{"This is the only time we show you the code, so please copy it before closing this window."}</Text>
-            </Row>
+            <div className="text-success">{"Congrats! your new API key has been created."}</div>
+            <div className="text-gray-500">{"This is the only time we show you the code, so please copy it before closing this window."}</div>
             <Spacer y={1} />
-            <Row>
+            <div>
               <Input
                 label="Your new API Key"
                 value={createdKey.token}
                 variant="bordered"
                 fullWidth
               />
-            </Row>
-            <Row>
+            </div>
+            <div>
               <Button
                 startContent={tokenCopied ? <LuClipboardCheck /> : <LuClipboard />}
                 color={tokenCopied ? "success" : "primary"}
@@ -195,7 +189,7 @@ function ApiKeys(props) {
               >
                 {tokenCopied ? "Copied!" : "Copy to clipboard"}
               </Button>
-            </Row>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button
@@ -211,14 +205,12 @@ function ApiKeys(props) {
       <Modal isOpen={createMode} onClose={() => setCreateMode(false)} size="xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Create a new API Key</Text>
+            <div className="text-lg font-semibold font-tw">Create a new API Key</div>
           </ModalHeader>
           <ModalBody>
-            <Row>
-              <Text>{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</Text>
-            </Row>
+            <div className="text-gray-500">{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</div>
             <Spacer y={1} />
-            <Row>
+            <div>
               <Input
                 label="Enter a name to remember it later"
                 value={newKey}
@@ -227,7 +219,7 @@ function ApiKeys(props) {
                 variant="bordered"
                 fullWidth
               />
-            </Row>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button
@@ -251,10 +243,10 @@ function ApiKeys(props) {
       <Modal backdrop="blur" isOpen={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Are you sure you want to delete the key?</Text>
+            <div className="text-lg font-semibold font-tw">Are you sure you want to delete the key?</div>
           </ModalHeader>
           <ModalBody>
-            <Text>{"This key will lose access to Chartbrew. This action cannot be undone."}</Text>
+            <div className="text-gray-500">{"This key will lose access to Chartbrew. This action cannot be undone."}</div>
           </ModalBody>
           <ModalFooter>
             <Button

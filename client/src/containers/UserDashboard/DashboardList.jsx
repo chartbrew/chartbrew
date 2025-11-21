@@ -2,7 +2,9 @@ import {
   Button, Card, CardHeader, Dropdown, DropdownTrigger, Input, Spacer,
   DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
   Avatar, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip,
+  Tabs,
+  Tab
 } from "@heroui/react";
 import React, { useEffect, useState } from "react";
 import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPin, LuPinOff, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
@@ -95,7 +97,7 @@ function DashboardList() {
   };
 
   const directToProject = (projectId) => {
-    navigate(`/${team.id}/${projectId}/dashboard`);
+    navigate(`/dashboard/${projectId}`);
   };
 
   const _onEditProject = (project) => {
@@ -165,6 +167,16 @@ function DashboardList() {
         onClose={() => setAddProject(false)}
       />
       <div className="flex flex-row justify-between items-center">
+        <div className="flex flex-row items-center">
+          <div className="flex flex-col gap-1">
+            <div className="text-2xl font-semibold font-tw">
+              Dashboards
+            </div>
+            <div className="text-sm text-foreground-500">
+              {"Create and manage your dashboards"}
+            </div>
+          </div>
+        </div>
         <div className="flex flex-row items-center gap-2">
           {_canAccess("teamAdmin", team.TeamRoles) && (
             <div>
@@ -179,34 +191,23 @@ function DashboardList() {
               </Button>
             </div>
           )}
-          <Input
-            type="text"
-            placeholder="Search dashboards"
-            variant="bordered"
-            endContent={<LuSearch />}
-            onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
-            className="max-w-[300px]"
-            labelPlacement="outside"
-          />
         </div>
-        <div className="flex flex-row">
-          <Button
-            variant="light"
-            isIconOnly
-            color={viewMode === "grid" ? "primary" : "default"}
-            onPress={() => _changeViewMode("grid")}
-          >
-            <LuLayoutGrid />
-          </Button>
-          <Button
-            variant="light"
-            isIconOnly
-            color={viewMode === "table" ? "primary" : "default"}
-            onPress={() => _changeViewMode("table")}
-          >
-            <LuTable />
-          </Button>
-        </div>
+      </div>
+      <Spacer y={2} />
+      <div className="flex flex-row items-center gap-2">
+        <Input
+          type="text"
+          placeholder="Search dashboards"
+          variant="bordered"
+          endContent={<LuSearch />}
+          onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+          className="max-w-md"
+          labelPlacement="outside"
+        />
+        <Tabs onSelectionChange={(key) => _changeViewMode(key)}>
+          <Tab key="grid" title={<LuLayoutGrid />} />
+          <Tab key="table" title={<LuTable />} />
+        </Tabs>
       </div>
       <Spacer y={4} />
       {projects && viewMode === "grid" && (
@@ -216,16 +217,16 @@ function DashboardList() {
               key={project.id}
               isPressable
               shadow="none"
-              className="border-1 border-solid border-content3"
+              className="border-1 border-solid border-divider"
               radius="sm"
               onPress={() => directToProject(project.id)}
             >
               <CardHeader className="flex flex-row justify-between items-center">
                 <div className="flex flex-row items-center gap-2">
                   {pinnedDashboards.find((p) => p.project_id === project.id) && (
-                    <LuPin className="text-foreground-500" size={18} />
+                    <LuPin className="text-secondary" size={18} />
                   )}
-                  <Link to={`/${team.id}/${project.id}/dashboard`} className="cursor-pointer !text-foreground hover:underline">
+                  <Link to={`/dashboard/${project.id}`} className="cursor-pointer text-foreground! hover:underline">
                     <span className="text-sm font-medium">{project.name}</span>
                   </Link>
                 </div>

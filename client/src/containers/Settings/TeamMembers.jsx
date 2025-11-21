@@ -9,7 +9,6 @@ import {
 } from "@heroui/react";
 import _ from "lodash";
 import toast from "react-hot-toast";
-import { useParams } from "react-router";
 import { LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX, LuKeyRound, LuIdCard, LuCircleCheck } from "react-icons/lu";
 
 import {
@@ -19,10 +18,6 @@ import {
 } from "../../slices/team";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
-import Container from "../../components/Container";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
-import Segment from "../../components/Segment";
 import { selectProjects } from "../../slices/project";
 import { selectUser } from "../../slices/user";
 
@@ -48,12 +43,7 @@ function TeamMembers(props) {
   const user = useSelector(selectUser);
   const teams = useSelector(selectTeams);
 
-  const params = useParams();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    _getTeam();
-  }, []);
 
   useEffect(() => {
     if (projects && projects.length > 0 && team && team.TeamRoles) {
@@ -68,9 +58,9 @@ function TeamMembers(props) {
   }, [projects, team]);
 
   const _getTeam = () => {
-    dispatch(getTeam(params.teamId))
+    dispatch(getTeam(team.id))
       .then(() => {
-        dispatch(getTeamMembers({ team_id: params.teamId }));
+        dispatch(getTeamMembers({ team_id: team.id }));
         setLoading(false);
       })
       .catch(() => {
@@ -196,26 +186,25 @@ function TeamMembers(props) {
 
   if (!team) {
     return (
-      <Container size="sm" justify="center">
+      <div>
         <CircularProgress size="lg" aria-label="Loading team" />
-      </Container>
+      </div>
     );
   }
 
   return (
     <div style={style}>
       {_canAccess("teamAdmin") && (
-        <Segment className={"bg-content1"}>
+        <div className="bg-content1 p-4 rounded-lg border border-divider">
           <InviteMembersForm />
-        </Segment>
+        </div>
       )}
 
       <Spacer y={4} />
 
-      <Segment className={"bg-content1"}>
-        <Row>
-          <Text size="h4">{"Team members"}</Text>
-        </Row>
+      <div className="bg-content1 p-4 rounded-lg border border-divider">
+        <div className="text-lg font-semibold font-tw">{"Team members"}</div>
+        <div className="text-sm text-gray-500">{"Manage your team members and their roles"}</div>
         <Spacer y={2} />
 
         {_canAccess("teamAdmin") && (
@@ -240,8 +229,8 @@ function TeamMembers(props) {
                 return (
                   <TableRow key={member.id}>
                     <TableCell key="member" className="flex flex-col">
-                      <Text b>{member.name}</Text>
-                      <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
+                      <div className="font-bold">{member.name}</div>
+                      <div className="text-sm text-gray-500">{member.email}</div>
                     </TableCell>
                     <TableCell key="role">
                       {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm" startContent={<LuStar size={14} />}>Team Owner</Chip>}
@@ -320,7 +309,7 @@ function TeamMembers(props) {
                                           description={"Full access, but can't delete the team"}
                                           className="max-w-[400px]"
                                         >
-                                          <Text>Team Admin</Text>
+                                          Team Admin
                                         </DropdownItem>
                                       )}
                                     {user.id !== member.id
@@ -332,7 +321,7 @@ function TeamMembers(props) {
                                           description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
                                           className="max-w-[400px]"
                                         >
-                                          <Text>Client admin</Text>
+                                          Client admin
                                         </DropdownItem>
                                       )}
                                     {user.id !== member.id
@@ -344,7 +333,7 @@ function TeamMembers(props) {
                                           description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
                                           className="max-w-[400px]"
                                         >
-                                          <Text>Client editor</Text>
+                                          Client editor
                                         </DropdownItem>
                                       )}
                                     {user.id !== member.id
@@ -356,7 +345,7 @@ function TeamMembers(props) {
                                           description={"Can view charts in assigned projects, but cannot edit or remove anything."}
                                           className="max-w-[400px]"
                                         >
-                                          <Text>Client viewer</Text>
+                                          Client viewer
                                         </DropdownItem>
                                       )}
                                   </DropdownMenu>
@@ -388,13 +377,13 @@ function TeamMembers(props) {
             </TableBody>
           </Table>
         )}
-      </Segment>
+      </div>
 
       {/* Remove user modal */}
       <Modal isOpen={!!deleteMember} backdrop="blur" onClose={() => setDeleteMember(false)}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Are you sure you want to remove the user from the team?</Text>
+            Are you sure you want to remove the user from the team?
           </ModalHeader>
           <ModalBody>
             <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
@@ -422,24 +411,19 @@ function TeamMembers(props) {
       <Modal isOpen={projectModal} onClose={() => setProjectModal(false)} size="4xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Assign project access</Text>
+            Assign project access
           </ModalHeader>
           <ModalBody>
             {changedMember && projectAccess[changedMember.id] && (
               <>
-                <Row>
-                  <Text>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</Text>
-                </Row>
-                <Row wrap="wrap" align={"center"}>
-                  <Text>{"You are currently giving"}</Text>
-                  <Spacer x={1} />
+                <div>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <div>{"You are currently giving"}</div>
                   <Code>{`${projectAccess[changedMember.id].role}`}</Code>
-                  <Spacer x={1} />
-                  <Text>{`access to ${changedMember.name}`}</Text>
-                  <Spacer x={1} />
-                  <Text>{"for the following projects:"}</Text>
-                </Row>
-                <Spacer y={0.5} />
+                  <div>{`access to ${changedMember.name}`}</div>
+                  <div>{"for the following projects:"}</div>
+                </div>
+                <Spacer y={1} />
 
                 <div className="grid grid-cols-12 gap-1">
                   {projects && projects.filter((p) => !p.ghost).map((project) => (
@@ -460,25 +444,22 @@ function TeamMembers(props) {
                 <Divider />
                 <Spacer y={1} />
 
-                <Row align="center">
-                  <Text size={"lg"} b>
-                    {"Data export permissions "}
-                  </Text>
-                  <Spacer x={0.5} />
+                <div className="flex flex-row items-center gap-1">
+                  <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>
                   <Tooltip
                     content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
                   >
                     <div><LuInfo /></div>
                   </Tooltip>
-                </Row>
-                <Row>
+                </div>
+                <div>
                   <Checkbox
                     isSelected={changedRole.canExport}
                     onChange={_onChangeExport}
                   >
                     Allow data export
                   </Checkbox>
-                </Row>
+                </div>
               </>
             )}
           </ModalBody>

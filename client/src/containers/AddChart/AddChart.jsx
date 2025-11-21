@@ -5,7 +5,6 @@ import {
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
-import { useWindowSize } from "react-use";
 import { LuCheck, LuPencilLine } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router";
 
@@ -41,8 +40,6 @@ function AddChart() {
   const [loading, setLoading] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [useCache, setUseCache] = useState(true);
-
-  const { height } = useWindowSize();
 
   const charts = useSelector(selectCharts);
   const templates = useSelector(selectTemplates);
@@ -341,7 +338,7 @@ function AddChart() {
   }
 
   return (
-    <div style={styles.container(height)} className="md:pl-4 md:pr-4">
+    <div className="flex flex-col">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row align="center" wrap="wrap" justify="space-between">
@@ -411,7 +408,7 @@ function AddChart() {
             </Row>
           </Row>
           <Spacer y={2} />
-          <Row className="chart-type-tut bg-content1 rounded-lg">
+          <Row className="chart-type-tut bg-content1 rounded-lg border-1 border-solid border-content3">
             <ChartPreview
               chart={newChart}
               onChange={_onChangeChart}
@@ -425,7 +422,7 @@ function AddChart() {
             />
           </Row>
           <Spacer y={4} />
-          <Row>
+          <Row className="bg-content1 rounded-lg border-1 border-solid border-content3">
             {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings
                 chart={newChart}
@@ -437,7 +434,7 @@ function AddChart() {
         </div>
 
         <div className="col-span-12 md:col-span-5 add-dataset-tut">
-          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
+          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full border-1 border-solid border-content3"}>
             <ChartDatasets chartId={newChart.id} />
           </div>
         </div>
@@ -445,38 +442,5 @@ function AddChart() {
     </div>
   );
 }
-
-const styles = {
-  container: (height) => ({
-    flex: 1,
-    paddingTop: 20,
-    paddingBottom: 20,
-    minHeight: height,
-  }),
-  mainContent: {
-    paddingLeft: 20,
-    paddingRight: 20,
-  },
-  mainSegment: {
-    minHeight: 600,
-  },
-  topBuffer: {
-    marginTop: 20,
-  },
-  addDataset: {
-    marginTop: 10,
-  },
-  datasetButtons: {
-    marginBottom: 10,
-    marginRight: 3,
-  },
-  editTitle: {
-    cursor: "pointer",
-  },
-  tutorialBtn: {
-    boxShadow: "none",
-    marginTop: -10,
-  },
-};
 
 export default AddChart;

@@ -602,7 +602,6 @@ function SharingSettings(props) {
       classNames={{
         base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
       }}
-      style={{ marginTop: onReport ? "" : "54px" }}
       hideCloseButton={!onReport}
     >
       <DrawerContent>

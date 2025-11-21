@@ -938,9 +938,9 @@ function ProjectDashboard() {
         && (
           <div ref={dashboardParentRef}>
             <div
-              className={"bg-content1 w-full border-b-1 border-solid border-content3 p-2 box-shadow-none radius-0"}
+              className={"w-full box-shadow-none radius-0"}
             >
-              <div className="flex flex-row justify-between gap-1 w-full">
+              <div className="flex flex-row justify-between w-full py-1">
                 <div className="flex flex-row items-center gap-1">
                   {projectMembers?.length > 0 && (
                     <>
@@ -962,7 +962,7 @@ function ProjectDashboard() {
                           <PopoverContent className="pt-4">
                             {_canAccess("teamAdmin") && (
                               <div className="w-full">
-                                <Link to={`/${params.teamId}/team/members`}>
+                                <Link to={"/settings/members"}>
                                   <Button
                                     endContent={<LuUsers />}
                                     color="primary"
@@ -1006,7 +1006,8 @@ function ProjectDashboard() {
                   )}
                   <Tooltip content="Add dashboard filters" placement="bottom">
                     <Button
-                      variant="ghost"
+                      variant="bordered"
+                      className="bg-background"
                       isIconOnly
                       isLoading={filterLoading}
                       onPress={_onShowFilters}
@@ -1029,9 +1030,10 @@ function ProjectDashboard() {
                     <Dropdown aria-label="Add widget">
                       <DropdownTrigger>
                         <Button
-                          variant="ghost"
+                          variant="bordered"
+                          className="bg-background"
                           size="sm"
-                          onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                          onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
                           startContent={<LuGrid2X2Plus size={18} />}
                         >
                           {"Add widget"}
@@ -1041,7 +1043,7 @@ function ProjectDashboard() {
                         <DropdownItem
                           startContent={<LuChartPie />}
                           onPress={() => {
-                            navigate(`/${params.teamId}/${params.projectId}/chart`);
+                            navigate(`/dashboard/${params.projectId}/chart`);
                           }}
                         >
                           Add chart
@@ -1056,22 +1058,22 @@ function ProjectDashboard() {
                     </Dropdown>
                     <ButtonGroup className="hidden sm:flex">
                       <Button
-                        variant="ghost"
+                        variant="bordered"
                         onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
-                        className="rounded-tl-lg! rounded-bl-lg!"
+                        className="rounded-tl-lg! rounded-bl-lg! bg-background"
                       >
                         Refresh charts
                       </Button>
                       {_canAccess("projectEditor") && (
                         <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
                           <Button
-                            variant="ghost"
+                            variant="bordered"
                             isIconOnly
                             onPress={() => setScheduleVisible(true)}
                             size="sm"
-                            className="rounded-tr-lg! rounded-br-lg!"
+                            className="rounded-tr-lg! rounded-br-lg! bg-background"
                           >
                             <LuCalendarClock
                               className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
@@ -1083,12 +1085,12 @@ function ProjectDashboard() {
                     </ButtonGroup>
                     <Tooltip content="Refresh all charts" placement="bottom-end">
                       <Button
-                        variant="ghost"
+                        variant="bordered"
                         isIconOnly
                         onPress={() => _onRefreshData()}
                         isLoading={refreshLoading}
                         size="sm"
-                        className="flex sm:hidden"
+                        className="flex sm:hidden bg-background"
                       >
                         <LuRefreshCw />
                       </Button>
@@ -1111,7 +1113,8 @@ function ProjectDashboard() {
                             }))}
                           >
                             <Button
-                              variant="ghost"
+                              variant="bordered"
+                              className="bg-background"
                               isIconOnly
                               size="sm"
                               onPress={() => dispatch(completeTutorial({
@@ -1127,7 +1130,8 @@ function ProjectDashboard() {
                       {user?.tutorials?.projectSettings && (
                         <DropdownTrigger>
                           <Button
-                            variant="ghost"
+                            variant="bordered"
+                            className="bg-background"
                             isIconOnly
                             size="sm"
                           >
@@ -1208,7 +1212,7 @@ function ProjectDashboard() {
           </div>
         )}
       <div
-        className={`bg-content2 w-full relative p-0 md:p-2 pt-2 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
+        className={`bg-content2 w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
         style={{
           ...(editingLayout && previewSize?.breakpoint && {
             width: previewSize.size,
@@ -1254,7 +1258,7 @@ function ProjectDashboard() {
                       endContent={<LuChartPie size={22} />}
                       size="lg"
                       color="primary"
-                      onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+                      onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
                     >
                       Create a chart
                     </Button>
@@ -1282,6 +1286,12 @@ function ProjectDashboard() {
             )}
             isDraggable={editingLayout}
             isResizable={editingLayout}
+            style={{
+              marginLeft: -11,
+              paddingLeft: -1,
+              marginRight: -11,
+              paddingRight: -1,
+            }}
           >
             {charts.map((chart, index) => (
               <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>

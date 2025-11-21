@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from "react";
 import {
   Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Alert,
 } from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
 import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react-icons/lu";
 
 import {
   updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser, get2faAppCode, verify2faApp, get2faMethods, remove2faMethod
-} from "../slices/user";
-import Container from "./Container";
-import Row from "./Row";
-import Text from "./Text";
-import Callout from "./Callout";
-import { useTheme } from "../modules/ThemeContext";
+} from "../../slices/user";
+import { useTheme } from "../../modules/ThemeContext";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 
 /*
-  Component for editting/deleting user account
+  User Profile Settings main screen
 */
-function EditUserForm() {
+function ManageUser() {
   const [user, setUser] = useState({ name: "" });
   const [userEmail, setUserEmail] = useState("");
   const [submitError, setSubmitError] = useState(false);
@@ -207,136 +204,126 @@ function EditUserForm() {
 
   if (!user.name) {
     return (
-      <Container>
+      <div>
         <CircularProgress aria-label="Loading" size="lg" />
-      </Container>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 md:px-10 flex flex-col gap-1">
-      <Row>
-        <Text size="h3">Profile settings</Text>
-      </Row>
-      <Spacer y={1} />
-      <Row>
-        <Input
-          label="Name"
-          name="name"
-          value={user.name || ""}
-          type="text"
-          placeholder="Enter your name"
-          onChange={(e) => setUser({ ...user, name: e.target.value })}
-          variant="bordered"
-          fullWidth
-        />
-      </Row>
-      <Spacer y={0.5} />
+    <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+      <div className="flex flex-col gap-1">
+        <div className="text-lg font-semibold font-tw">
+          Profile settings
+        </div>
+        <div className="text-sm text-gray-500">
+          Manage your profile settings
+        </div>
+      </div>
+      <Spacer y={4} />
+      <Input
+        label="Name"
+        name="name"
+        value={user.name || ""}
+        type="text"
+        placeholder="Enter your name"
+        onChange={(e) => setUser({ ...user, name: e.target.value })}
+        variant="bordered"
+        fullWidth
+        className="max-w-md"
+      />
+      <Spacer y={2} />
       {submitError && (
         <>
-          <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
-              <Row>
-                <Text h5>{"There was an error updating your account"}</Text>
-              </Row>
-              <Row>
-                <Text>Please try saving again.</Text>
-              </Row>
-            </Container>
-          </Row>
-          <Spacer y={0.5} />
+          <Alert
+            color="danger"
+            title="There was an error updating your account"
+            description="Please try saving again."
+          />
+          <Spacer y={2} />
         </>
       )}
-      <Row>
+      <div>
         <Button
           disabled={!user.name}
           color={success ? "success" : "primary"}
-          onClick={_onUpdateUser}
+          onPress={_onUpdateUser}
           variant={success ? "flat" : "solid"}
           isLoading={loading}
+          size="sm"
         >
           {success ? "Saved" : "Save" }
         </Button>
-      </Row>
+      </div>
 
       <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
 
-      <Row>
-        <Text size="h3">Email settings</Text>
-      </Row>
-      <Spacer y={1} />
 
-      <Row>
-        <Input
-          label="Your email"
-          name="email"
-          value={userEmail || ""}
-          onChange={(e) => setUserEmail(e.target.value)}
-          type="text"
-          placeholder="Enter your email"
-          variant="bordered"
-          fullWidth
-        />
-      </Row>
+      <Input
+        label="Your email"
+        name="email"
+        value={userEmail || ""}
+        onChange={(e) => setUserEmail(e.target.value)}
+        type="text"
+        placeholder="Enter your email"
+        variant="bordered"
+        fullWidth
+        className="max-w-md"
+      />
       {userEmail !== userProp.email && (
         <>
-          <Spacer y={0.5} />
-          <Row>
-            <Text>{"We will send you an email to confirm your new email address."}</Text>
-          </Row>
+          <Spacer y={2} />
+          <div>{"We will send you an email to confirm your new email address."}</div>
         </>
       )}
-      <Spacer y={0.5} />
-      <Row>
+      <Spacer y={2} />
+      <div>
         <Button
           isDisabled={!userEmail || userEmail === userProp.email}
           color={successEmail ? "success" : "primary"}
-          onClick={_onUpdateEmail}
+          onPress={_onUpdateEmail}
           variant={successEmail ? "flat" : "solid"}
           isLoading={loading}
+          size="sm"
         >
           {successEmail ? "We sent you an email" : "Update email" }
         </Button>
-      </Row>
+      </div>
 
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
 
-      <Row>
-        <Text size="h3">Two-factor authentication</Text>
-      </Row>
+      <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
       <Spacer y={1} />
 
       {!qrCode && authMethods?.length === 0 && (
-        <Row>
+        <div>
           <Button
             color="primary"
-            variant="bordered"
-            onClick={() => _onSetup2FA()}
+            onPress={() => _onSetup2FA()}
             endContent={<LuShieldCheck />}
           >
             {"Enable 2FA"}
           </Button>
-        </Row>
+        </div>
       )}
 
       {qrCode && (
         <div className="flex flex-col gap-2">
-          <Text>{"1. Have an authenticator app for mobile or browser ready"}</Text>
-          <Text>{"2. Scan the QR code with the authenticator app"}</Text>
+          <div>{"1. Have an authenticator app for mobile or browser ready"}</div>
+          <div>{"2. Scan the QR code with the authenticator app"}</div>
           <img src={qrCode} alt="QR code" width={200} />
-          <Text>{"3. Enter the code from the authenticator app below"}</Text>
+          <div>{"3. Enter the code from the authenticator app below"}</div>
           <Input
             label="Code"
             placeholder="Enter the code here"
             variant="bordered"
             fullWidth
             onChange={(e) => setAppToken(e.target.value)}
+            className="max-w-md"
           />
-          <Text>{"4. Enter your account password to confirm"}</Text>
+          <div>{"4. Enter your account password to confirm"}</div>
           <Input
             label="Password"
             placeholder="Enter your password"
@@ -344,13 +331,13 @@ function EditUserForm() {
             fullWidth
             type="password"
             onChange={(e) => setPassword(e.target.value)}
+            className="max-w-md"
           />
 
-          <Spacer y={1} />
           <div>
             <Button
               color="primary"
-              onClick={() => _onVerify2FA()}
+              onPress={() => _onVerify2FA()}
               isDisabled={!appToken || !password}
               isLoading={loading2fa}
             >
@@ -362,7 +349,7 @@ function EditUserForm() {
 
       {backupCodes && (
         <>
-          <Text>{"Save these backup codes in a safe place as we only show them once. You can use them to access your account if you lose access to your authenticator app."}</Text>
+          <div>{"Save these backup codes in a safe place as we only show them once. You can use them to access your account if you lose access to your authenticator app."}</div>
           <Spacer y={1} />
           <div className="flex flex-row flex-wrap gap-1">
             {backupCodes?.map((code) => (
@@ -372,13 +359,15 @@ function EditUserForm() {
             ))}
           </div>
           <Spacer y={1} />
-          <Button
-            variant="bordered"
-            endContent={codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
-            onClick={_onCopyCodes}
-          >
-            {codesCopied ? "Copied" : "Copy codes"}
-          </Button>
+          <div>
+            <Button
+              variant="bordered"
+              endContent={codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
+              onPress={_onCopyCodes}
+            >
+              {codesCopied ? "Copied" : "Copy codes"}
+            </Button>
+          </div>
           <Spacer y={1} />
         </>
       )}
@@ -420,41 +409,30 @@ function EditUserForm() {
       <Divider />
       <Spacer y={4} />
 
-      <Row>
-        <Text size="h3">Danger zone</Text>
-      </Row>
+      <div className="text-lg font-semibold font-tw">Danger zone</div>
       <Spacer y={1} />
 
-      <Row>
+      <div>
         <Button
           iconRight={<LuTrash />}
           color="danger"
           onPress={() => setOpenDeleteModal(true)}
-          bordered
-          auto
         >
           Delete account
         </Button>
-      </Row>
+      </div>
+
+      <Spacer y={4} />
 
       <Modal backdrop="blur" isOpen={openDeleteModal} size="xl" onClose={() => setOpenDeleteModal(false)}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h3">Delete Account</Text>
+            <div className="text-lg font-semibold font-tw">Delete Account</div>
           </ModalHeader>
           <ModalBody>
-            <Row>
-              <Text>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</Text>
-            </Row>
-            <Spacer y={0.5} />
-            <Row>
-              <Text>{"We cannot reverse this action as all the content is deleted immediately."}</Text>
-            </Row>
-            <Spacer y={0.5} />
-            <div className="font-bold">
-              {"We recommend you to transfer the ownership of your team to another user before deleting your account."}
-            </div>
-            <Spacer y={0.5} />
+            <div>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</div>
+            <div>{"We cannot reverse this action as all the content is deleted immediately."}</div>
+            <div>{"We recommend you to transfer the ownership of your team to another user before deleting your account."}</div>
             <div className="flex flex-col gap-1">
               <Input
                 label="Confirm your email"
@@ -488,10 +466,10 @@ function EditUserForm() {
       <Modal isOpen={!!updateEmailToken}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h3">Update email</Text>
+            <div className="text-lg font-semibold font-tw">Update email</div>
           </ModalHeader>
           <ModalBody>
-            <Text>Are you sure you want to update your email?</Text>
+            <div>Are you sure you want to update your email?</div>
           </ModalBody>
           <ModalFooter>
             <Button
@@ -511,23 +489,23 @@ function EditUserForm() {
       </Modal>
 
       {deleteUserError && (
-        <Row>
-          <Callout
+        <div>
+          <Alert
             title="Something went wrong while deleting your account"
-            text={"Please try refreshing the page."}
+            description={"Please try refreshing the page."}
             color="danger"
           />
-        </Row>
+        </div>
       )}
 
       <Modal isOpen={!!removeMethod} onClose={() => setRemoveMethod(null)}>
         <ModalContent>
           <ModalHeader>
-            <Text h3>Remove 2FA method</Text>
+            <div className="text-lg font-semibold font-tw">Remove 2FA method</div>
           </ModalHeader>
           <ModalBody>
-            <p>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</p>
-            <p>To proceed with the deletion, please confirm your Chartbrew password.</p>
+            <div>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</div>
+            <div>To proceed with the deletion, please confirm your Chartbrew password.</div>
             <Input
               label="Password"
               placeholder="Enter your password"
@@ -540,15 +518,17 @@ function EditUserForm() {
           <ModalFooter>
             <Button
               variant="flat"
-              onClick={() => setRemoveMethod(null)}
+              onPress={() => setRemoveMethod(null)}
+              size="sm"
             >
               Close
             </Button>
             <Button
               color="danger"
               isDisabled={!removePassword}
-              onClick={_onRemove2fa}
+              onPress={_onRemove2fa}
               isLoading={removeLoading}
+              size="sm"
             >
               Remove 2FA
             </Button>
@@ -572,4 +552,4 @@ function EditUserForm() {
   );
 }
 
-export default EditUserForm;
+export default ManageUser;

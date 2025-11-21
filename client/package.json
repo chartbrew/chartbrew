@@ -22,6 +22,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-chart-matrix": "^3.0.0",
     "chartjs-plugin-datalabels": "^2.0.0",
+    "clsx": "^2.1.1",
     "date-fns": "^2.30.0",
     "dotenv": "^16.4.5",
     "dotenv-expand": "^11.0.6",
@@ -60,6 +61,7 @@
     "remark-gfm": "^4.0.0",
     "socket.io-client": "^4.8.1",
     "styled-components": "^4.4.1",
+    "tailwind-merge": "^3.4.0",
     "tailwind-variants": "^0.2.1",
     "uuid": "^9.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

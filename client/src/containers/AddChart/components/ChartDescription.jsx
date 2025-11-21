@@ -75,7 +75,7 @@ function ChartDescription(props) {
   };
 
   return (
-    <Container className={"bg-content1 rounded-md p-5 mt-10"}>
+    <Container className={"bg-content1 rounded-lg p-4 border-1 border-solid border-content3"}>
       <Row align="center" wrap="wrap">
         <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
           <Tab key="emptyChart" title="Create from scratch" />

@@ -567,7 +567,7 @@ function Chart(props) {
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
-                      <Link to={`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`}>
+                      <Link to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
                         <div className={"text-foreground font-bold text-sm"}>{chart.name}</div>
                       </Link>
                     )}
@@ -694,7 +694,7 @@ function Chart(props) {
                     {_canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuSettings />}
-                        onPress={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
+                        onPress={() => navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`)}
                         textValue="Edit chart"
                       >
                         Edit chart

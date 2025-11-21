@@ -42,6 +42,34 @@ const router = createBrowserRouter([
         path: "integrations",
       },
       {
+        path: "settings",
+        children: [
+          {
+            path: "profile"
+          },
+          {
+            path: "team",
+          },
+          {
+            path: "members",
+          },
+          {
+            path: "api-keys",
+          },
+        ],
+      },
+      {
+        path: "dashboard/:projectId",
+        children: [
+          {
+            path: "chart",
+          },
+          {
+            path: "chart/:chartId/edit",
+          },
+        ]
+      },
+      {
         path: "chart/:chartId/embedded",
       },
       {
@@ -88,41 +116,41 @@ const router = createBrowserRouter([
           },
         ],
       },
-      {
-        path: ":teamId/:projectId",
-        children: [
-          {
-            path: "connections",
-          },
-          {
-            path: "dashboard",
-          },
-          {
-            path: "chart",
-          },
-          {
-            path: "chart/:chartId/edit",
-          },
-          {
-            path: "members",
-          },
-          {
-            path: "settings",
-          },
-          {
-            path: "integrations",
-          },
-          {
-            path: "variables",
-          }
-        ],
-      },
-      {
-        path: ":teamId/dataset/:datasetId",
-      },
-      {
-        path: ":teamId/connection/:connectionId",
-      },
+      // {
+      //   path: ":teamId/:projectId",
+      //   children: [
+      //     {
+      //       path: "connections",
+      //     },
+      //     {
+      //       path: "dashboard",
+      //     },
+      //     {
+      //       path: "chart",
+      //     },
+      //     {
+      //       path: "chart/:chartId/edit",
+      //     },
+      //     {
+      //       path: "members",
+      //     },
+      //     {
+      //       path: "settings",
+      //     },
+      //     {
+      //       path: "integrations",
+      //     },
+      //     {
+      //       path: "variables",
+      //     }
+      //   ],
+      // },
+      // {
+      //   path: ":teamId/dataset/:datasetId",
+      // },
+      // {
+      //   path: ":teamId/connection/:connectionId",
+      // },
     ],
   },
 ]);
