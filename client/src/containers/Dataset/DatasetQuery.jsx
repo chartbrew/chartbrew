@@ -1,10 +1,13 @@
 import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
-  Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
-  CardFooter, Spinner, Input, Divider, Chip,
+  Button, Spacer, Avatar, Card, CardBody,
+  CardFooter, Input, Divider, Chip,
+  Tabs,
+  Tab,
+  Image,
 } from "@heroui/react";
-import { LuBrainCircuit, LuGitMerge, LuMonitorX, LuPlus, LuSearch, LuX } from "react-icons/lu";
+import { LuBrainCircuit, LuGitMerge, LuPlug, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -28,7 +31,6 @@ import CustomerioBuilder from "../Connections/Customerio/CustomerioBuilder";
 import ClickHouseBuilder from "../Connections/ClickHouse/ClickHouseBuilder";
 import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../components/Container";
-import Row from "../../components/Row";
 import { useTheme } from "../../modules/ThemeContext";
 import Text from "../../components/Text";
 import { selectProjects } from "../../slices/project";
@@ -56,11 +58,11 @@ function DatasetQuery(props) {
   const team = useSelector(selectTeam);
 
   useEffect(() => {
-    if (dataset?.id && !initRef.current) {
+    if (dataset?.id && team?.id && !initRef.current) {
       initRef.current = true;
 
       dispatch(getDataRequestsByDataset({
-        team_id: params.teamId,
+        team_id: team?.id,
         dataset_id: params.datasetId,
       }))
         .then((drs) => {
@@ -75,7 +77,7 @@ function DatasetQuery(props) {
 
           if (drs.payload?.[0] > 0 && !dataset.main_dr_id) {
             dispatch(updateDataset({
-              team_id: params.teamId,
+              team_id: team?.id,
               dataset_id: dataset.id,
               data: { main_dr_id: drs.payload[0].id },
             }));
@@ -95,7 +97,7 @@ function DatasetQuery(props) {
           return err;
         });
     }
-  }, [dataset]);
+  }, [dataset, team]);
 
   useEffect(() => {
     if (stateDataRequests.length > 0) {
@@ -129,7 +131,7 @@ function DatasetQuery(props) {
 
   const _onSaveRequest = (dr = selectedRequest) => {
     return dispatch(updateDataRequest({
-      team_id: params.teamId,
+      team_id: team?.id,
       dataset_id: dataset.id,
       dataRequest_id: dr.id,
       data: dr,
@@ -141,7 +143,7 @@ function DatasetQuery(props) {
         // if it's the first data request, update the main_dr_id
         if (dataRequests.length === 1 && !dataset.main_dr_id) {
           dispatch(updateDataset({
-            team_id: params.teamId,
+            team_id: team?.id,
             dataset_id: dataset.id,
             data: { main_dr_id: savedDr.id }
           }));
@@ -158,7 +160,7 @@ function DatasetQuery(props) {
 
   const _onCreateNewRequest = (connection) => {
     return dispatch(createDataRequest({
-      team_id: params.teamId,
+      team_id: team?.id,
       dataset_id: dataset.id,
       data: {
         dataset_id: dataset.id,
@@ -168,7 +170,7 @@ function DatasetQuery(props) {
       .then((newDr) => {
         if (dataRequests.length < 1) {
           dispatch(updateDataset({
-            team_id: params.teamId,
+            team_id: team?.id,
             dataset_id: dataset.id,
             data: { main_dr_id: newDr.payload.id },
           }));
@@ -197,7 +199,7 @@ function DatasetQuery(props) {
   const _onDeleteRequest = (drId) => {
     if (selectedRequest) {
       dispatch(deleteDataRequest({
-        team_id: params.teamId,
+        team_id: team?.id,
         dataset_id: dataset.id,
         dataRequest_id: drId
       }))
@@ -223,7 +225,7 @@ function DatasetQuery(props) {
 
   const _filteredConnections = () => {
     if (connectionSearch.length > 0) {
-      return connections.filter((c) => c.name.toLowerCase().includes(connectionSearch.toLowerCase()));
+      return connections.filter((c) => c?.name?.toLowerCase().includes(connectionSearch.toLowerCase()));
     }
 
     return connections;
@@ -242,79 +244,78 @@ function DatasetQuery(props) {
     return tags;
   };
 
+  const _getSelectedTab = () => {
+    if (selectedRequest?.isSettings) {
+      return "join";
+    }
+
+    if (createMode) {
+      return "add";
+    }
+    
+    if (selectedRequest?.id) {
+      return `${selectedRequest?.id}`;
+    }
+
+    return null;
+  };
+
   return (
     <>
-      <aside className="fixed top-32 left-0 z-40 w-20 h-screen">
-        <div className="h-full py-2 overflow-y-auto flex flex-col gap-2 items-center">
-          {selectedRequest && (
+      <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
+        <div className="flex flex-row items-center justify-start gap-2">
+          <Tabs selectedKey={selectedRequest?.isSettings ? "join" : null} variant="bordered">
+            {selectedRequest && (
+              <Tab
+                key="join"
+                title={(
+                  <div className="flex flex-row items-center gap-2">
+                    <LuGitMerge size={16} />
+                    <span>Join settings</span>
+                  </div>
+                )}
+                onPress={() => _onSelectSettings()}
+              />
+            )}
+          </Tabs>
+          {dataRequests && dataRequests.length > 0 && (
             <>
-              <Row>
-                <Tooltip content="Join data sources" css={{ zIndex: 99999 }} placement="right-start">
-                  <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
-                    <Avatar
-                      isBordered
-                      icon={(
-                        <LuGitMerge />
-                      )}
-                      radius="sm"
-                      className="cursor-pointer"
-                      color={selectedRequest.isSettings ? "primary" : "default"}
-                    />
-                  </Link>
-                </Tooltip>
-              </Row>
-              <Spacer y={2} />
+              <LuPlug />
+              <Tabs selectedKey={_getSelectedTab()} variant="bordered">
+                {dataRequests.map((dr) => (
+                  <Tab
+                    key={dr.id}
+                    title={(
+                      <div className="flex flex-row items-center gap-2">
+                        <Image
+                          src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
+                          alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                          width={16}
+                          height={16}
+                          className="rounded-sm"
+                        />
+                        <span>{dr?.Connection?.name}</span>
+                      </div>
+                    )}
+                    onPress={() => _onSelectDataRequest(dr)}
+                  />
+                ))}
+                <Tab
+                  key="add"
+                  title={(
+                    <div className="flex flex-row items-center gap-2">
+                      <LuPlus size={16} />
+                      <span>Add a new data source</span>
+                    </div>
+                  )}
+                  onPress={() => setCreateMode(true)}
+                />
+              </Tabs>
             </>
           )}
-          {dataRequests.map((dr, index) => (
-            <Fragment key={dr.id}>
-              <Row align="center">
-                <Badge
-                  variant={"faded"}
-                  color={
-                    dataRequests.find((r) => r.id === dr.id)?.error
-                      ? "danger"
-                      : dataRequests.find((r) => r.id === dr.id) ? "success" : "primary"
-                  }
-                  content={stateDataRequests.find((o) => o.id === dr.id)?.loading ? (<Spinner size="sm" />) : `${index + 1}`}
-                  shape="rectangle"
-                >
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    src={
-                      dr.Connection
-                        ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
-                        : null
-                    }
-                    icon={!dr.Connection ? <LuMonitorX /> : null}
-                    color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                    onClick={() => _onSelectDataRequest(dr)}
-                  />
-                </Badge>
-              </Row>
-              <Spacer y={0.6} />
-            </Fragment>
-          ))}
-          <Spacer y={1.5} />
-          <Row>
-            <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
-              <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
-                <Avatar
-                  icon={<LuPlus />}
-                  isBordered
-                  className="cursor-pointer"
-                  color="secondary"
-                />
-              </Link>
-            </Tooltip>
-          </Row>
         </div>
-      </aside>
-      <div className="grid grid-cols-12 ml-20">
-        <div className="col-span-12">
-          <Spacer y={4} />
-        </div>
+      </div>
+      <div className="grid grid-cols-12">
         {!createMode && selectedRequest?.isSettings && (
           <div className="col-span-12">
             <DatarequestSettings
@@ -324,8 +325,8 @@ function DatasetQuery(props) {
             />
           </div>
         )}
-        {!createMode && selectedRequest && (
-          <div className="col-span-12">
+        {!createMode && selectedRequest && !selectedRequest.isSettings && (
+          <div className="col-span-12 bg-background rounded-lg border-1 border-divider p-4">
             {dataRequests.map((dr) => (
               <Fragment key={dr.id}>
                 {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
@@ -420,9 +421,9 @@ function DatasetQuery(props) {
           </div>
         )}
         {createMode && (
-          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto px-4 pb-20">
+          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20">
             <Spacer y={1} />
-            <Text size="h2">Select a connection</Text>
+            <div className="text-lg font-tw font-semibold">Select a connection</div>
             <Spacer y={2} />
             {connections.length > 0 && (
               <div>
@@ -447,7 +448,7 @@ function DatasetQuery(props) {
                   <Spacer y={2} />
                   <div>
                     <Button
-                      onPress={() => navigate(`/${team.id}/connection/new`)}
+                      onPress={() => navigate("/connections/new")}
                       color="primary"
                     >
                       Create a connection

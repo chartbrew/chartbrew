@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuBrainCircuit, LuChartArea, LuCircleArrowLeft, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
+import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
 import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
@@ -10,7 +10,6 @@ import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
 import connectionImages from "../../config/connectionImages";
 import { useTheme } from "../../modules/ThemeContext";
-import Navbar from "../../components/Navbar";
 import ApiConnectionForm from "./components/ApiConnectionForm";
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import PostgresConnectionForm from "./components/PostgresConnectionForm";
@@ -38,31 +37,35 @@ function ConnectionWizard() {
   const [connectionToEdit, setConnectionToEdit] = useState(null);
 
   const { isDark } = useTheme();
+  const initRef = useRef(null);
   const bottomRef = useRef(null);
   const asideRef = useRef(null);
   const paramsInitRef = useRef(null);
   const fetchConnectionRef = useRef(null);
   const dispatch = useDispatch();
-  const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const params = useParams();
 
   const connections = useSelector(selectConnections);
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
 
   useEffect(() => {
-    dispatch(getTeamConnections({ team_id: params.teamId }));
-    dispatch(generateInviteUrl({
-      team_id: params.teamId,
-      projects: [],
-      canExport: true,
-      role: "teamAdmin",
-    }))
-      .then((data) => {
-        setInviteUrl(data.payload);
-      }).catch(() => {});
-  }, []);
+    if (team?.id && !initRef.current) {
+      initRef.current = true;
+      dispatch(getTeamConnections({ team_id: team.id }));
+      dispatch(generateInviteUrl({
+        team_id: team.id,
+        projects: [],
+        canExport: true,
+        role: "teamAdmin",
+      }))
+        .then((data) => {
+          setInviteUrl(data.payload);
+        }).catch(() => {});
+    }
+  }, [team]);
 
   useEffect(() => {
     if (selectedType) {
@@ -85,7 +88,7 @@ function ConnectionWizard() {
   useEffect(() => {
     if (params.connectionId && params.connectionId !== "new" && !paramsInitRef.current) {
       paramsInitRef.current = true;
-      dispatch(getConnection({ team_id: params.teamId, connection_id: params.connectionId }))
+      dispatch(getConnection({ team_id: team.id, connection_id: params.connectionId }))
         .then((res) => {
           if (res?.payload) {
             setConnectionToEdit(res.payload);
@@ -117,10 +120,10 @@ function ConnectionWizard() {
 
   const _onAddNewConnection = (data, files) => {
     if (params.connectionId !== "new") {
-      return dispatch(saveConnection({ team_id: params.teamId, connection: data }))
+      return dispatch(saveConnection({ team_id: team.id, connection: data }))
         .then(async () => {
           if (files) {
-            await dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: params.connectionId, files }));
+            await dispatch(addFilesToConnection({ team_id: team.id, connection_id: params.connectionId, files }));
           }
 
           toast.success("Connection saved successfully");
@@ -132,8 +135,8 @@ function ConnectionWizard() {
     }
 
     return dispatch(addConnection({
-        team_id: params.teamId,
-        connection: { ...data, team_id: params.teamId }
+        team_id: team.id,
+        connection: { ...data, team_id: team.id }
       }))
       .then(async (createdConnection) => {
         if (createdConnection.error) {
@@ -141,19 +144,19 @@ function ConnectionWizard() {
         }
 
         if (files) {
-          dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: createdConnection.payload.id, files }));
+          dispatch(addFilesToConnection({ team_id: team.id, connection_id: createdConnection.payload.id, files }));
         }
 
         if (data.type === "googleAnalytics") {
-          navigate(`/${params.teamId}/connection/${createdConnection.payload.id}`);
+          navigate(`/connections/${createdConnection.payload.id}`);
           return true;
         }
 
         setCompletionModal(true);
         setSelectedType("");
 
-        navigate(`/${params.teamId}/connection/${createdConnection.payload.id}`);
-        const resp = await dispatch(getConnection({ team_id: params.teamId, connection_id: createdConnection.payload.id }));
+        navigate(`/connections/${createdConnection.payload.id}`);
+        const resp = await dispatch(getConnection({ team_id: team.id, connection_id: createdConnection.payload.id }));
         setConnectionToEdit(resp.payload);
 
         return true;
@@ -185,7 +188,6 @@ function ConnectionWizard() {
   if (!_canAccess("teamAdmin", team.TeamRoles)) {
     return (
       <div>
-        <Navbar hideTeam transparent />
         <div className="flex flex-col items-center justify-center h-screen">
           <span className="text-xl text-secondary font-semibold">{"You don't have access to this page"}</span>
           <Spacer y={2} />
@@ -202,9 +204,8 @@ function ConnectionWizard() {
 
   return (
     <div>
-      <Navbar hideTeam transparent />
-      <div>
-        <div className="p-4 sm:mr-96">          
+      <div className="flex flex-col">
+        <div className="sm:mr-96">          
           <Spacer y={2} />
 
           {!newConnection && (
@@ -228,26 +229,25 @@ function ConnectionWizard() {
                 <Spacer y={4} />
                 <div className="grid grid-cols-12 gap-4">
                   {_filteredConnections.map((conn) => (
-                    <div key={conn.name} className="col-span-12 sm:col-span-6 md:col-span-6 lg:col-span-3 xl:col-span-2">
+                    <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
                       <Card
                         shadow="none"
                         isPressable
                         className={`w-full h-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
                         onPress={() => setSelectedType(conn.type)}
                       >
-                        <CardBody className="overflow-visible p-0">
+                        <CardBody className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
                           <Image
                             radius="lg"
-                            width="100%"
                             alt={conn.name}
-                            className="w-full object-cover h-[140px]"
+                            className="h-[80px]"
                             src={connectionImages(isDark)[conn.type]}
                           />
                         </CardBody>
                         <CardFooter className="justify-center flex flex-col gap-1">
                           {conn.ai && (
                             <Tooltip content="You can use AI to ask questions about your data">
-                              <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
+                              <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit size={14} />}>
                                 {"AI-powered"}
                               </Chip>
                             </Tooltip>
@@ -277,8 +277,8 @@ function ConnectionWizard() {
 
           {newConnection && (
             <div className="flex flex-row items-center gap-2">
-              <Link to="/connections" className="text-xl text-secondary font-semibold">
-                <LuCircleArrowLeft size={24} />
+              <Link to="/connections" className="text-xl font-semibold">
+                <LuArrowLeft size={24} className="text-foreground" />
               </Link>
               <span className="text-xl font-semibold">Edit your connection</span>
             </div>
@@ -487,7 +487,7 @@ function ConnectionWizard() {
               <Button
                 color="primary"
                 fullWidth
-                onPress={() => navigate(`/${params.teamId}/dataset/new`)}
+                onPress={() => navigate("/datasets/new")}
                 startContent={<LuChartArea />}
               >
                 Create dataset

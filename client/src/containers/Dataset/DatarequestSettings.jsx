@@ -278,7 +278,7 @@ function DatarequestSettings(props) {
   };
 
   return (
-    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4">
+    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4 py-4 bg-background rounded-lg border-1 border-divider">
       <div className="grid grid-cols-12">
         <div className="col-span-12 md:col-span-7 pr-4 pb-20">
           <Row>
@@ -576,7 +576,7 @@ function DatarequestSettings(props) {
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
-                  className="Customerio-result-tut"
+                  className="Dataset-result-tut"
                 />
               </div>
             </Row>

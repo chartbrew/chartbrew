@@ -41,7 +41,7 @@ function DatasetList() {
   const dispatch = useDispatch();
 
   const _onCreateDataset = () => {
-    navigate(`/${team.id}/dataset/new`);
+    navigate("/datasets/new");
   };
 
   const _getFilteredDatasets = () => {
@@ -305,7 +305,7 @@ function DatasetList() {
             <TableRow key={dataset.id}>
               <TableCell key="name">
                 <div className="flex flex-row items-center gap-2">
-                  <Link to={`/${team.id}/dataset/${dataset.id}`} className="cursor-pointer">
+                  <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
                     <span className="text-foreground font-medium">{dataset.legend}</span>
                   </Link>
                   {dataset.draft && (
@@ -392,7 +392,7 @@ function DatasetList() {
                       disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
                     >
                       <DropdownItem
-                        onPress={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
+                        onPress={() => navigate(`/datasets/${dataset.id}`)}
                         startContent={<LuPencilLine />}
                         key="dataset"
                         textValue="Edit dataset"

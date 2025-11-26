@@ -149,7 +149,7 @@ function UserDashboard(props) {
       <Spacer y={4} />
 
       {(teams && teams.length === 0) && (
-        <div className="bg-content2 pt-10">
+        <div className="bg-content2 pt-10 mt-[-20px]">
           <div className="flex justify-center items-center">
             <Spinner variant="simple" aria-label="Loading" />
           </div>

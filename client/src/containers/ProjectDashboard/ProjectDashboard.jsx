@@ -933,7 +933,7 @@ function ProjectDashboard() {
   };
 
   return (
-    <div className={`w-full ${editingLayout && "bg-background dark:bg-content3 overflow-x-auto"}`}>
+    <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>
       {charts && charts.length > 0
         && (
           <div ref={dashboardParentRef}>

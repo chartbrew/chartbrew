@@ -194,7 +194,9 @@ function Main(props) {
               <Route path="/" element={<UserDashboard />}>
                 <Route index element={<DashboardList />} />
                 <Route path="connections" element={<ConnectionList />} />
+                <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="datasets" element={<DatasetList />} />
+                <Route path="datasets/:datasetId" element={<Dataset />} />
                 <Route path="integrations" element={<Integrations />} />
                 <Route path="settings/*" element={<ManageTeam />} />
                 <Route path="dashboard" element={<ProjectBoard />}>

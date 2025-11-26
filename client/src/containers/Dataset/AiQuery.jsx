@@ -4,9 +4,11 @@ import { Spacer, Textarea, Button, Alert } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuBrainCircuit, LuSend } from "react-icons/lu";
+import { useSelector } from "react-redux";
 
 import { API_HOST } from "../../config/settings";
 import { getAuthToken } from "../../modules/auth";
+import { selectTeam } from "../../slices/team";
 
 function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }) {
   const [askAiLoading, setAskAiLoading] = useState(false);
@@ -14,7 +16,8 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
   const [conversation, setConversation] = useState([]);
   const [typedText, setTypedText] = useState("");
   const responseText = "I tried to generate a query based on your question. If it's not what you want, you can ask for clarification or try a different question.";
-
+  
+  const team = useSelector(selectTeam);
   const params = useParams();
 
   useEffect(() => {
@@ -43,7 +46,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
     // Add user message to conversation
     setConversation([...conversation, { role: "user", content: aiQuestion }]);
 
-    const url = `${API_HOST}/team/${params.teamId}/datasets/${params.datasetId}/dataRequests/${dataRequest.id}/askAi`;
+    const url = `${API_HOST}/team/${team?.id}/datasets/${params.datasetId}/dataRequests/${dataRequest.id}/askAi`;
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",

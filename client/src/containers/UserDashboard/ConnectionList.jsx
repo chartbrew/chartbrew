@@ -135,7 +135,7 @@ function ConnectionList() {
           <Button
             color="primary"
             endContent={<LuPlus />}
-            onPress={() => navigate(`/${team.id}/connection/new`)}
+            onPress={() => navigate("/connections/new")}
             isDisabled={user.temporary}
           >
             Create connection
@@ -177,7 +177,7 @@ function ConnectionList() {
                 <span>No connections found</span>
                 <Spacer y={1} />
                 <Button
-                  onPress={() => navigate(`/${team.id}/connection/new`)}
+                  onPress={() => navigate("/connections/new")}
                   color="primary"
                 >
                   Create your first connection
@@ -197,7 +197,7 @@ function ConnectionList() {
                     size="sm"
                     isBordered
                   />
-                  <Link to={`/${team.id}/connection/${connection.id}`} className="cursor-pointer">
+                  <Link to={`/connections/${connection.id}`} className="cursor-pointer">
                     <span className="text-foreground font-medium">{connection.name}</span>
                   </Link>
                 </div>

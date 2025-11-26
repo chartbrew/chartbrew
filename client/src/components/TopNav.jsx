@@ -23,6 +23,8 @@ function TopNav() {
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
   const chart = useSelector((state) => selectChart(state, params.chartId));
+  const connection = useSelector((state) => state.connection.data.find((c) => `${c.id}` === `${params.connectionId}`));
+  const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
 
   useEffect(() => {
     try {
@@ -46,6 +48,14 @@ function TopNav() {
 
   const isOnDashboard = () => {
     return location.pathname.startsWith("/dashboard/");
+  };
+
+  const isOnConnections = () => {
+    return location.pathname.startsWith("/connections");
+  };
+
+  const isOnDatasets = () => {
+    return location.pathname.startsWith("/datasets");
   };
 
   const _onDropdownAction = (key) => {
@@ -105,11 +115,38 @@ function TopNav() {
           {isOnDashboard() && project?.name && (
             <Breadcrumbs>
               <BreadcrumbItem onPress={() => navigate("/")}>
-                Dashboard
+                Dashboards
               </BreadcrumbItem>
               <BreadcrumbItem onPress={() => navigate(`/dashboard/${params.projectId}`)} isCurrent={!params.chartId}>{project.name}</BreadcrumbItem>
               {params.chartId && (
                 <BreadcrumbItem isCurrent={true}>{chart?.name}</BreadcrumbItem>
+              )}
+            </Breadcrumbs>
+          )}
+
+          {isOnConnections() && (
+            <Breadcrumbs>
+              <BreadcrumbItem onPress={() => navigate("/connections")}>
+                Connections
+              </BreadcrumbItem>
+              {connection?.name && (
+                <BreadcrumbItem isCurrent={true}>{connection?.name}</BreadcrumbItem>
+              )}
+              {params.connectionId === "new" && (
+                <BreadcrumbItem isCurrent={true}>New connection</BreadcrumbItem>
+              )}
+            </Breadcrumbs>
+          )}
+          {isOnDatasets() && (
+            <Breadcrumbs>
+              <BreadcrumbItem onPress={() => navigate("/datasets")}>
+                Datasets
+              </BreadcrumbItem>
+              {dataset?.name && (
+                <BreadcrumbItem isCurrent={true}>{dataset?.name}</BreadcrumbItem>
+              )}
+              {params.datasetId === "new" && (
+                <BreadcrumbItem isCurrent={true}>New dataset</BreadcrumbItem>
               )}
             </Breadcrumbs>
           )}
