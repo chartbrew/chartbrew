@@ -5,9 +5,9 @@ import {
   Chip, Autocomplete, AutocompleteItem, Button,
 } from "@heroui/react";
 import { LuActivity, LuX, LuBox } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 import { runHelperMethod } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 const activityTypes = [
   { text: "Add relationship", value: "add_relationship" },
@@ -119,7 +119,7 @@ const idTypes = [
 
 function ActivitiesQuery({
   onUpdate,
-  request,
+  request = null,
   connectionId,
 }) {
   const [activityType, setActivityType] = useState("");
@@ -135,9 +135,9 @@ function ActivitiesQuery({
   const [hasLimitChanges, setHasLimitChanges] = useState(false);
 
   const dispatch = useDispatch();
-  const params = useParams();
   const initRef = useRef(false);
-
+  const team = useSelector(selectTeam);
+  
   useEffect(() => {
     if (request?.configuration) {
       setActivityType(request.configuration.activityType || "");
@@ -151,11 +151,11 @@ function ActivitiesQuery({
 
   useEffect(() => {
     // Fetch object types when component mounts
-    if (!initRef.current && connectionId) {
+    if (!initRef.current && connectionId && team?.id) {
       setLoading(true);
       initRef.current = true;
       dispatch(runHelperMethod({
-        team_id: params.teamId,
+        team_id: team?.id,
         connection_id: connectionId,
         methodName: "getAllObjectTypes"
       }))
@@ -210,7 +210,7 @@ function ActivitiesQuery({
         })
         .catch(() => setLoading(false));
     }
-  }, [connectionId]);
+  }, [connectionId, team]);
 
   const _handleActivityTypeChange = (value) => {
     setActivityType(value);
@@ -504,10 +504,6 @@ ActivitiesQuery.propTypes = {
   onUpdate: PropTypes.func.isRequired,
   request: PropTypes.object,
   connectionId: PropTypes.number.isRequired,
-};
-
-ActivitiesQuery.defaultProps = {
-  request: null,
 };
 
 export default ActivitiesQuery;

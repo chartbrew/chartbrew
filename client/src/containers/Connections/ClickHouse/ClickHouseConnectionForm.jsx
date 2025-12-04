@@ -6,6 +6,8 @@ import {
 } from "@heroui/react";
 import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
 import AceEditor from "react-ace";
+import { useDispatch, useSelector } from "react-redux";
+import { RiArrowRightSLine } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -15,14 +17,12 @@ import Text from "../../../components/Text";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import { useTheme } from "../../../modules/ThemeContext";
-import { RiArrowRightSLine } from "react-icons/ri";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 function ClickHouseConnectionForm(props) {
   const {
-    editConnection, onComplete, addError,
+    editConnection = null, onComplete = () => {}, addError = false,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ function ClickHouseConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
   const initRef = useRef(null);
 
   useEffect(() => {
@@ -70,12 +70,12 @@ function ClickHouseConnectionForm(props) {
     
     if ((data.ssl && sslCerts.sslCa)) {
       response = await dispatch(testRequestWithFiles({
-        team_id: params.teamId,
+        team_id: team?.id,
         connection: data,
         files
       }));
     } else {
-      response = await dispatch(testRequest({ team_id: params.teamId, connection: data }));
+      response = await dispatch(testRequest({ team_id: team?.id, connection: data }));
     }
 
     newTestResult.status = response.payload.status;
@@ -519,12 +519,6 @@ function FormGuides() {
     </>
   );
 }
-
-ClickHouseConnectionForm.defaultProps = {
-  onComplete: () => {},
-  editConnection: null,
-  addError: false,
-};
 
 ClickHouseConnectionForm.propTypes = {
   onComplete: PropTypes.func,

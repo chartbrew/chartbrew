@@ -264,22 +264,22 @@ function DatasetQuery(props) {
     <>
       <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
         <div className="flex flex-row items-center justify-start gap-2">
-          <Tabs selectedKey={selectedRequest?.isSettings ? "join" : null} variant="bordered">
-            {selectedRequest && (
-              <Tab
-                key="join"
-                title={(
-                  <div className="flex flex-row items-center gap-2">
-                    <LuGitMerge size={16} />
-                    <span>Join settings</span>
-                  </div>
-                )}
-                onPress={() => _onSelectSettings()}
-              />
-            )}
-          </Tabs>
           {dataRequests && dataRequests.length > 0 && (
             <>
+              <Tabs selectedKey={selectedRequest?.isSettings ? "join" : null} variant="bordered">
+                {selectedRequest && (
+                  <Tab
+                    key="join"
+                    title={(
+                      <div className="flex flex-row items-center gap-2">
+                        <LuGitMerge size={16} />
+                        <span>Join settings</span>
+                      </div>
+                    )}
+                    onPress={() => _onSelectSettings()}
+                  />
+                )}
+              </Tabs>
               <LuPlug />
               <Tabs selectedKey={_getSelectedTab()} variant="bordered">
                 {dataRequests.map((dr) => (

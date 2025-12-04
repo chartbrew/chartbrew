@@ -23,6 +23,7 @@ import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import ActivitiesQuery from "./ActivitiesQuery";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The Customer.io data request builder
@@ -46,9 +47,10 @@ function CustomerioBuilder(props) {
   const dispatch = useDispatch();
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   const {
-    dataRequest, onChangeRequest,
+    dataRequest = null, onChangeRequest,
     connection, onSave, onDelete,
   } = props;
 
@@ -156,7 +158,7 @@ function CustomerioBuilder(props) {
     onSave(drData).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team?.id,
         dataset_id: drData.dataset_id,
         dataRequest_id: drData.id,
         getCache
@@ -436,10 +438,6 @@ const styles = {
   container: {
     flex: 1,
   },
-};
-
-CustomerioBuilder.defaultProps = {
-  dataRequest: null,
 };
 
 CustomerioBuilder.propTypes = {

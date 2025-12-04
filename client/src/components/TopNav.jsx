@@ -142,8 +142,8 @@ function TopNav() {
               <BreadcrumbItem onPress={() => navigate("/datasets")}>
                 Datasets
               </BreadcrumbItem>
-              {dataset?.name && (
-                <BreadcrumbItem isCurrent={true}>{dataset?.name}</BreadcrumbItem>
+              {dataset?.legend && (
+                <BreadcrumbItem isCurrent={true}>{dataset?.legend}</BreadcrumbItem>
               )}
               {params.datasetId === "new" && (
                 <BreadcrumbItem isCurrent={true}>New dataset</BreadcrumbItem>

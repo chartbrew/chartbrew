@@ -29,6 +29,7 @@ import { getConnection } from "../../../slices/connection";
 import AiQuery from "../../Dataset/AiQuery";
 import QueryResultsTable from "./QueryResultsTable";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The query builder for Mysql and Postgres
@@ -64,6 +65,7 @@ function SqlBuilder(props) {
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
   const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
+  const team = useSelector(selectTeam);
 
   const schemaInitRef = useRef(false);
 
@@ -106,7 +108,7 @@ function SqlBuilder(props) {
   const _onSaveQuery = () => {
     setSavingQuery(true);
     dispatch(createSavedQuery({
-      team_id: params.teamId,
+      team_id: team.id,
       data: {
         query: sqlRequest.query,
         summary: savedQuerySummary,
@@ -128,7 +130,7 @@ function SqlBuilder(props) {
   const _onUpdateSavedQuery = () => {
     setUpdatingSavedQuery(true);
     dispatch(updateSavedQuery({
-      team_id: params.teamId,
+      team_id: team.id,
       data: {
         ...savedQuery,
         query: sqlRequest.query,
@@ -161,7 +163,7 @@ function SqlBuilder(props) {
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team.id,
         dataset_id: dr.dataset_id,
         dataRequest_id: dr.id,
         getCache
@@ -177,7 +179,7 @@ function SqlBuilder(props) {
           }
 
           await dispatch(getConnection({
-            team_id: params.teamId,
+            team_id: team.id,
             connection_id: dr.connection_id,
           }));
 
@@ -226,7 +228,7 @@ function SqlBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -234,7 +236,7 @@ function SqlBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,

@@ -21,6 +21,7 @@ import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The API Data Request builder
@@ -45,10 +46,12 @@ function RealtimeDbBuilder(props) {
   const { isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
+
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   const {
-    dataRequest, onChangeRequest, connection, onSave, onDelete,
+    dataRequest = null, onChangeRequest, connection, onSave, onDelete,
   } = props;
 
   // Helper function to detect if a string contains variables
@@ -91,7 +94,7 @@ function RealtimeDbBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -99,7 +102,7 @@ function RealtimeDbBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,
@@ -140,7 +143,7 @@ function RealtimeDbBuilder(props) {
   useEffect(() => {
     const newRequest = firebaseRequest;
 
-    dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
+    dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
       .then((data) => {
         setFullConnection(data.payload);
         if (data?.payload && data.payload?.firebaseServiceAccount) {
@@ -177,7 +180,7 @@ function RealtimeDbBuilder(props) {
     onSave(firebaseRequest).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team?.id,
         dataset_id: firebaseRequest.dataset_id,
         dataRequest_id: firebaseRequest.id,
         getCache
@@ -721,10 +724,6 @@ const styles = {
   container: {
     flex: 1,
   },
-};
-
-RealtimeDbBuilder.defaultProps = {
-  dataRequest: null,
 };
 
 RealtimeDbBuilder.propTypes = {

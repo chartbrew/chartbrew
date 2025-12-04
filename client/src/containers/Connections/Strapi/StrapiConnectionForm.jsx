@@ -5,8 +5,7 @@ import {
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import { LuCirclePlus, LuCircleX } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -15,6 +14,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { testRequest } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The Form used to create a Strapi API connection
@@ -36,7 +36,7 @@ function StrapiConnectionForm(props) {
   const [testResult, setTestResult] = useState(null); // eslint-disable-line
 
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     _init();
@@ -44,7 +44,7 @@ function StrapiConnectionForm(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+    return dispatch(testRequest({ team_id: team?.id, connection: data }))
       .then(async (response) => {
         newTestResult.status = response.payload.status;
         newTestResult.body = await response.payload.text();

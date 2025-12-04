@@ -451,7 +451,7 @@ async function createDataset(payload) {
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
       name: dataset.legend,
-      dataset_url: `${clientUrl}/${team_id}/dataset/${dataset.id}`,
+      dataset_url: `${clientUrl}/datasets/${dataset.id}`,
     };
   } catch (error) {
     throw new Error(`Dataset creation failed: ${error.message}`);
@@ -460,7 +460,7 @@ async function createDataset(payload) {
 
 async function createChart(payload) {
   const {
-    project_id, dataset_id, spec, team_id,
+    project_id, dataset_id, spec,
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges
@@ -557,8 +557,8 @@ async function createChart(payload) {
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
-      dashboard_url: `${clientUrl}/${team_id}/${project_id}/dashboard`,
-      chart_url: `${clientUrl}/${team_id}/${project_id}/chart/${chart.id}/edit`,
+      dashboard_url: `${clientUrl}/dashboard/${project_id}`,
+      chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
     };
   } catch (error) {
     throw new Error(`Chart creation failed: ${error.message}`);

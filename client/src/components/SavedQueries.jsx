@@ -1,16 +1,16 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
 } from "@heroui/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
-import { useParams } from "react-router";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery, selectSavedQueries } from "../slices/savedQuery";
 import { secondaryTransparent } from "../config/colors";
 import Row from "./Row";
 import Text from "./Text";
+import { selectTeam } from "../slices/team";
 
 /*
   Contains the project creation functionality
@@ -31,15 +31,19 @@ function SavedQueries(props) {
   const savedQueries = useSelector(selectSavedQueries);
 
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    _getSavedQueries();
-  }, []);
+    if (team?.id && !initRef.current) {
+      initRef.current = true;
+      _getSavedQueries();
+    }
+  }, [team]);
 
   const _getSavedQueries = () => {
     setLoading(true);
-    dispatch(getSavedQueries({ team_id: params.teamId, type}))
+    dispatch(getSavedQueries({ team_id: team.id, type}))
       .then(() => {
         setLoading(false);
       })
@@ -55,7 +59,7 @@ function SavedQueries(props) {
 
   const _onEditQuery = () => {
     setEditLoading(true);
-    dispatch(updateSavedQuery({ team_id: params.teamId, data: {
+    dispatch(updateSavedQuery({ team_id: team.id, data: {
       id: editQuery.id,
       summary: savedQuerySummary,
     }}))
@@ -77,7 +81,7 @@ function SavedQueries(props) {
 
   const _onRemoveQuery = () => {
     setRemoveLoading(true);
-    dispatch(deleteSavedQuery({ team_id: params.teamId, id: removeQuery }))
+    dispatch(deleteSavedQuery({ team_id: team.id, id: removeQuery }))
       .then(() => {
         setRemoveQuery(null);
         setRemoveLoading(false);

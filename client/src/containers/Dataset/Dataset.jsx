@@ -153,14 +153,14 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    if (datasetMenu === "configure" && dataset?.id) {
+    if (datasetMenu === "configure" && dataset?.id && team?.id) {
       dispatch(runRequest({
         team_id: team.id,
         dataset_id: dataset.id,
         getCache: true,
       }));
     }
-  }, [datasetMenu]);
+  }, [datasetMenu, team]);
 
   useEffect(() => {
     let message = error;

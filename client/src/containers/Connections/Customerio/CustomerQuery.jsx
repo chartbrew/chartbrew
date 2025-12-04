@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Chip, Checkbox, Divider,
@@ -6,14 +6,14 @@ import {
 } from "@heroui/react";
 import { isEqual } from "lodash";
 import { LuCheck, LuCloud, LuFolder, LuUser, LuWrench, LuX } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import { runHelperMethod } from "../../../slices/connection";
 import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { selectTeam } from "../../../slices/team";
 
 const customerOperations = [
   { text: "All conditions match", key: "and", value: "and" },
@@ -45,32 +45,36 @@ function CustomerQuery(props) {
   const [mainOperation, setMainOperation] = useState("and");
 
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    // get segments
-    setLoading(true);
-    dispatch(runHelperMethod({
-      team_id: params.teamId,
-      connection_id: connectionId,
-      methodName: "getAllSegments"
-    }))
-      .then((data) => {
-        const segmentData = data.payload;
-        const segmentOptions = segmentData.map((segment) => {
-          return {
-            text: segment.name,
-            value: segment.id,
-            key: segment.id,
-            icon: segment.type === "dynamic" ? <LuCloud /> : <LuWrench />,
-          };
-        });
+    if (!initRef.current && team?.id) {
+      initRef.current = true;
+      // get segments
+      setLoading(true);
+      dispatch(runHelperMethod({
+        team_id: team?.id,
+        connection_id: connectionId,
+        methodName: "getAllSegments"
+      }))
+        .then((data) => {
+          const segmentData = data.payload;
+          const segmentOptions = segmentData.map((segment) => {
+            return {
+              text: segment.name,
+              value: segment.id,
+              key: segment.id,
+              icon: segment.type === "dynamic" ? <LuCloud /> : <LuWrench />,
+            };
+          });
 
-        setSegments(segmentOptions);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+          setSegments(segmentOptions);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [team]);
 
   const _onAddSegmentCondition = () => {
     if (!segmentConfig.ids || segmentConfig.ids.length < 1) return;

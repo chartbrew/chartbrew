@@ -13,7 +13,7 @@ import {
   selectUser,
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
-import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal } from "../slices/ui";
+import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
@@ -129,6 +129,24 @@ function Main(props) {
           }
         });
     }
+
+    // Keyboard shortcut for AI modal (Cmd+K on Mac, Ctrl+K on Windows)
+    const handleKeyDown = (event) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        // Prevent default browser behavior (usually search)
+        event.preventDefault();
+        dispatch(toggleAiModal());
+      }
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   useEffect(() => {

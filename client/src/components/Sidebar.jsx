@@ -238,7 +238,7 @@ function Sidebar() {
                   textValue="Team settings"
                   color={_getActiveMenu() === "settings" ? "primary" : "default"}
                   className={cn(collapsed && "max-w-min text-center", "text-foreground team-settings-tutorial")}
-                  onClick={() => navigate("/settings")}
+                  onClick={() => navigate("/settings/members")}
                 >
                   {collapsed ? <LuSettings size={20} /> : <span className="text-sm">Team settings</span>}
                 </ListboxItem>
@@ -321,7 +321,7 @@ function Sidebar() {
             </DropdownTrigger>
             <DropdownMenu variant="faded">
               <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
-                <Link to="/user/profile">
+                <Link to="/settings/profile">
                   <div className="w-full text-foreground">
                     Profile
                   </div>
