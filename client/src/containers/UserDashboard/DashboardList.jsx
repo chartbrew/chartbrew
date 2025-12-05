@@ -204,7 +204,7 @@ function DashboardList() {
           className="max-w-md"
           labelPlacement="outside"
         />
-        <Tabs onSelectionChange={(key) => _changeViewMode(key)}>
+        <Tabs selectedKey={viewMode} onSelectionChange={(key) => _changeViewMode(key)}>
           <Tab key="grid" title={<LuLayoutGrid />} />
           <Tab key="table" title={<LuTable />} />
         </Tabs>

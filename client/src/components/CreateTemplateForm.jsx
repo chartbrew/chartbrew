@@ -1,16 +1,15 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
+  Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
 } from "@heroui/react";
 import { useDispatch } from "react-redux";
 
 import { createTemplate } from "../slices/template";
-import Text from "./Text";
 
 function CreateTemplateForm(props) {
   const {
-    teamId, projectId, visible, onClose,
+    teamId, projectId, visible = false, onClose,
   } = props;
 
   const [templateName, setTemplateName] = useState("");
@@ -44,51 +43,51 @@ function CreateTemplateForm(props) {
   };
 
   return (
-    <>
-      <Modal isOpen={visible} onClose={() => onClose()} size="small">
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">Create a template</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Spacer y={1} />
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              _onSaveTemplate();
-            }}>
-              <Input
-                label="Template name"
-                placeholder="Enter a name for the template"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                color={validationError ? "error" : "default"}
-                variant="bordered"
-                fullWidth
-                autoFocus
-              />
-            </form>
-            <Spacer y={1} />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              color="warning"
-              onClick={() => onClose()}
-              auto
-            >
-              Close
-            </Button>
-            <Button
-              onClick={_onSaveTemplate}
-              color="primary"
-              isLoading={loading}
-            >
-              Save template
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>  
-    </>
+    <Modal isOpen={visible} onClose={() => onClose()}>
+      <ModalContent>
+        <ModalHeader>
+          <div className="font-bold">Create a template</div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="text-sm">
+            Templates are saved as a snapshot of the dashboard at the time of creation. You can use them to quickly create new dashboards.
+          </div>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            _onSaveTemplate();
+          }}>
+            <Input
+              label="Template name"
+              placeholder="Enter a name for the template"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              color={validationError ? "error" : "default"}
+              variant="bordered"
+              fullWidth
+              autoFocus
+            />
+          </form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="flat"
+            size="sm"
+            onPress={() => onClose()}
+          >
+            Close
+          </Button>
+          <Button
+            onPress={_onSaveTemplate}
+            color="primary"
+            isLoading={loading}
+            size="sm"
+          >
+            Save template
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
 
@@ -97,10 +96,6 @@ CreateTemplateForm.propTypes = {
   projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   visible: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
-};
-
-CreateTemplateForm.defaultProps = {
-  visible: false,
 };
 
 export default CreateTemplateForm;

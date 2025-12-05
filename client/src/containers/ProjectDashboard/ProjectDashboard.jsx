@@ -22,6 +22,7 @@ import {
   LuMonitorUp,
   LuArrowDownRight,
   LuPlug,
+  LuTvMinimal,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -767,8 +768,8 @@ function ProjectDashboard() {
     if (!team || !team.TeamRoles) return false;
 
     let canExport = false;
-    team.TeamRoles.map((teamRole) => {
-      if (teamRole.team_id === parseInt(params.teamId, 10)
+    team.TeamRoles.forEach((teamRole) => {
+      if (teamRole.team_id === team?.id
         && teamRole.user_id === user.id
         && (teamRole.canExport || teamRole.role === "teamOwner")
       ) {
@@ -989,7 +990,7 @@ function ProjectDashboard() {
                                   description={member.email}
                                   endContent={(
                                     <Chip size="sm" variant="flat">
-                                      {member.TeamRoles?.find((r) => r.team_id === parseInt(params.teamId, 10))?.role}
+                                      {member.TeamRoles?.find((r) => r.team_id === team?.id)?.role}
                                     </Chip>
                                   )}
                                 >
@@ -1056,6 +1057,15 @@ function ProjectDashboard() {
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
+                    <Button
+                      variant="bordered"
+                      className="bg-background"
+                      size="sm"
+                      onPress={() => setShowShare(true)}
+                      startContent={<LuShare size={18} />}
+                    >
+                      Share
+                    </Button>
                     <ButtonGroup className="hidden sm:flex">
                       <Button
                         variant="bordered"
@@ -1148,10 +1158,10 @@ function ProjectDashboard() {
                           {"Edit layout"}
                         </DropdownItem>
                         <DropdownItem
-                          startContent={<LuShare />}
-                          onPress={() => setShowShare(true)}
+                          startContent={<LuTvMinimal />}
+                          onPress={() => navigate(`/report/${project.brewName}/edit`)}
                         >
-                          {"Share dashboard"}
+                          {"Open report"}
                         </DropdownItem>
                         {_canAccess("projectEditor") && (
                           <DropdownItem
@@ -1249,7 +1259,7 @@ function ProjectDashboard() {
                     size="lg"
                     color="primary"
                     variant={connections.length > 0 ? "flat" : "solid"}
-                    onPress={() => navigate(`/${params.teamId}/connection/new`)}
+                    onPress={() => navigate("/connections/new")}
                   >
                     Create a connection
                   </Button>
@@ -1334,10 +1344,10 @@ function ProjectDashboard() {
         filters={filters}
       />
 
-      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl" scrollBehavior="outside">
+      <Modal isOpen={viewExport} onClose={() => setViewExport(false)} size="2xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h3">Export to Excel (.xlsx)</Text>
+            <div className="font-bold">Export to Excel (.xlsx)</div>
           </ModalHeader>
           <ModalBody>
             <ChartExport
@@ -1366,7 +1376,7 @@ function ProjectDashboard() {
       />
 
       <CreateTemplateForm
-        teamId={params.teamId}
+        teamId={team?.id}
         projectId={params.projectId}
         onClose={(isComplete) => {
           if (isComplete) toast.success("✨ The template was saved successfully");
