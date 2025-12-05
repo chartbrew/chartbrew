@@ -281,7 +281,6 @@ function ConnectionList() {
           <Spacer y={1} />
           {connections?.length === 0 && _canAccess("teamAdmin", team.TeamRoles) && (
             <Button
-              variant="flat"
               color="primary"
               onPress={() => navigate("/connections/new")}
             >

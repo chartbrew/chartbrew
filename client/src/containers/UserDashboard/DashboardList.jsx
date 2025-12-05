@@ -1,6 +1,6 @@
 import {
   Button, Card, CardHeader, Dropdown, DropdownTrigger, Input, Spacer,
-  DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
+  DropdownMenu, DropdownItem, CardBody, AvatarGroup,
   Avatar, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip,
   Tabs,
@@ -211,29 +211,29 @@ function DashboardList() {
       </div>
       <Spacer y={4} />
       {projects && viewMode === "grid" && (
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {_getFilteredProjects().map((project) => (
             <Card
               key={project.id}
               isPressable
               shadow="none"
-              className="border-1 border-solid border-divider"
+              className="border-1 border-solid border-divider p-2"
               radius="sm"
               onPress={() => directToProject(project.id)}
             >
               <CardHeader className="flex flex-row justify-between items-center">
                 <div className="flex flex-row items-center gap-2">
                   {pinnedDashboards.find((p) => p.project_id === project.id) && (
-                    <LuPin className="text-secondary" size={18} />
+                    <LuPin className="text-secondary" size={18} fill="currentColor" />
                   )}
                   <Link to={`/dashboard/${project.id}`} className="cursor-pointer text-foreground! hover:underline">
-                    <span className="text-sm font-medium">{project.name}</span>
+                    <span className="font-tw font-semibold">{project.name}</span>
                   </Link>
                 </div>
                 {_canAccess("teamAdmin", team.TeamRoles) && (
                   <Dropdown size="sm">
                     <DropdownTrigger>
-                      <Button isIconOnly variant="light" size="sm">
+                      <Button isIconOnly variant="flat" size="sm">
                         <LuEllipsis className="text-foreground-400" />
                       </Button>
                     </DropdownTrigger>
@@ -265,27 +265,23 @@ function DashboardList() {
                   </Dropdown>
                 )}
               </CardHeader>
-              <Divider />
               <CardBody>
                 <div className="flex flex-row justify-between items-center">
                   {_getProjectMembers(project)?.length > 0 && (
-                    <AvatarGroup max={3} isBordered size="sm">
-                      {_getProjectMembers(project)?.map((pr) => (
-                        <Avatar
-                          key={pr.id}
-                          name={pr.name}
-                        />
-                      ))}
-                    </AvatarGroup>
+                    <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                      <LuUsers size={16} />
+                      <span>{_getProjectMembers(project)?.length} {_getProjectMembers(project)?.length === 1 ? "member" : "members"}</span>
+                    </div>
                   )}
                   {_getProjectMembers(project)?.length === 0 && (
-                    <Chip variant="flat" size="sm">
+                    <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                      <LuUsers size={16} />
                       Team only
-                    </Chip>
+                    </div>
                   )}
-                  <div className="flex flex-row items-center gap-1 text-sm">
-                    <LuChartNoAxesColumnIncreasing />
-                    <span>{project?.Charts?.length || 0}</span>
+                  <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                    <LuChartNoAxesColumnIncreasing size={16} />
+                    <span>{project?.Charts?.length || 0} {project?.Charts?.length === 1 ? "chart" : "charts"}</span>
                   </div>
                 </div>
               </CardBody>
