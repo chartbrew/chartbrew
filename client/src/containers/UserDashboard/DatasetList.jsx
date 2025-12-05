@@ -1,6 +1,6 @@
-import { Avatar, AvatarGroup, Button, Checkbox, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useState } from "react"
-import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu";
+import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -15,8 +15,6 @@ import { selectUser } from "../../slices/user";
 import { selectProjects } from "../../slices/project";
 
 function DatasetList() {
-  const [datasetSearch, setDatasetSearch] = useState("");
-  const [showDatasetDrafts, setShowDatasetDrafts] = useState(false);
   const [modifyingDataset, setModifyingDataset] = useState(false);
   const [datasetToEdit, setDatasetToEdit] = useState(null);
   const [deletingDataset, setDeletingDataset] = useState(false);
@@ -30,6 +28,12 @@ function DatasetList() {
   const [showDeleteAllDrafts, setShowDeleteAllDrafts] = useState(false);
   const [deletingDatasets, setDeletingDatasets] = useState(false);
   const [showDeleteDatasets, setShowDeleteDatasets] = useState(false);
+  const [searchFilter, setSearchFilter] = useState({
+    project_id: "all",
+    search: "",
+    status: "all",
+    connection_id: "all",
+  });
 
   const team = useSelector(selectTeam);
   const connections = useSelector(selectConnections);
@@ -44,14 +48,52 @@ function DatasetList() {
     navigate("/datasets/new");
   };
 
-  const _getFilteredDatasets = () => {
-    if (!datasetSearch) return datasets.filter((d) => !d.draft || showDatasetDrafts);
+  const _getActiveFilterCount = () => {
+    let count = 0;
+    if (searchFilter.search && searchFilter.search.trim() !== "") count++;
+    if (searchFilter.project_id && searchFilter.project_id !== "all") count++;
+    if (searchFilter.connection_id && searchFilter.connection_id !== "all") count++;
+    if (searchFilter.status && searchFilter.status !== "all") count++;
+    return count;
+  };
 
-    const filteredDatasets = datasets.filter((d) => {
-      return d.legend.toLowerCase().indexOf(datasetSearch.toLowerCase()) > -1 && (!d.draft || showDatasetDrafts);
+  const _onClearAllFilters = () => {
+    setSearchFilter({
+      project_id: "all",
+      search: "",
+      status: "all",
+      connection_id: "all",
     });
+  };
 
-    return filteredDatasets;
+  const _getFilteredDatasets = () => {
+    return datasets.filter((dataset) => {
+      // Search filter - check if search text is in legend
+      const matchesSearch = !searchFilter.search ||
+        dataset.legend.toLowerCase().indexOf(searchFilter.search.toLowerCase()) > -1;
+
+      // Project filter - check if dataset has the selected project in project_ids
+      // Treat undefined/null as "all"
+      const projectFilter = searchFilter.project_id || "all";
+      const matchesProject = projectFilter === "all" ||
+        (dataset.project_ids && dataset.project_ids.includes(projectFilter));
+
+      // Connection filter - check if any DataRequest has the selected connection
+      // Treat undefined/null as "all"
+      const connectionFilter = searchFilter.connection_id || "all";
+      const matchesConnection = connectionFilter === "all" ||
+        (dataset.DataRequests && dataset.DataRequests.some(dr =>
+          `${dr.Connection?.id}` === connectionFilter
+        ));
+
+      // Status filter - show published datasets or drafts based on selection
+      const matchesStatus = searchFilter.status === "all" ||
+        (searchFilter.status === "published" && !dataset.draft) ||
+        (searchFilter.status === "draft" && dataset.draft);
+
+      // All filters must match (AND logic)
+      return matchesSearch && matchesProject && matchesConnection && matchesStatus;
+    });
   };
 
   const _canAccess = (role, teamRoles) => {
@@ -186,256 +228,365 @@ function DatasetList() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-row items-center justify-between flex-wrap gap-2">
-        <div className="flex flex-row items-center gap-2 flex-wrap md:flex-nowrap">
-          {connections.length > 0 && (
-            <div>
-              <Button
-                color="primary"
-                endContent={<LuPlus />}
-                onPress={() => _onCreateDataset()}
-              >
-                Create dataset
-              </Button>
-            </div>
-          )}
-          <Input
-            type="text"
-            placeholder="Search datasets"
-            variant="bordered"
-            endContent={<LuSearch />}
-            className="max-w-[300px]"
-            labelPlacement="outside"
-            onChange={(e) => setDatasetSearch(e.target.value)}
-          />
-          {selectedDatasets.length > 0 && (
-            <div>
-              <Button
-                variant="flat"
-                size="sm"
-                onPress={() => setShowDeleteDatasets(true)}
-                color="danger"
-                startContent={<LuTrash size={16} />}
-              >
-                Delete selected
-              </Button>
-            </div>
+      <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <div className="text-2xl font-semibold font-tw">
+            Datasets
+          </div>
+          <div className="text-sm text-foreground-500">
+            {"Query and transform data from your connections"}
+          </div>
+        </div>
+        {_canAccess("teamAdmin", team.TeamRoles) && (
+          <Button
+            color="primary"
+            endContent={<LuPlus />}
+            onPress={() => _onCreateDataset()}
+            isDisabled={connections.length === 0}
+          >
+            Create dataset
+          </Button>
+        )}
+      </div>
+      <Spacer y={8} />
+
+      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+        <div className="flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-2">
+            <LuListFilter strokeWidth={1.5} />
+            <span className="text-sm">Filters</span>
+            {_getActiveFilterCount() > 0 && (
+              <Chip size="sm" variant="flat" rounded="sm">
+                {_getActiveFilterCount()}
+              </Chip>
+            )}
+          </div>
+          {_getActiveFilterCount() > 0 && (
+            <Button
+              variant="light"
+              size="sm"
+              onPress={_onClearAllFilters}
+              startContent={<LuX size={14} />}
+            >
+              Clear all
+            </Button>
           )}
         </div>
-        <div className="flex flex-row items-center gap-2 flex-wrap md:flex-nowrap">
-          {showDatasetDrafts && (
+        <Spacer y={4} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div>
+            <Input
+              label="Search"
+              type="text"
+              placeholder="Search datasets"
+              endContent={<LuSearch />}
+              labelPlacement="outside"
+              onChange={(e) => setSearchFilter({ ...searchFilter, search: e.target.value })}
+              value={searchFilter.search}
+              size="sm"
+            />
+          </div>
+          <div>
+            <Autocomplete
+              label="Dashboard"
+              placeholder="Search by dashboard"
+              labelPlacement="outside"
+              onSelectionChange={(key) => setSearchFilter({ ...searchFilter, project_id: key })}
+              selectedKey={searchFilter.project_id}
+              aria-label="Search datasets by dashboard"
+              size="sm"
+            >
+              <AutocompleteItem
+                key="all"
+                textValue="All projects"
+              >
+                All projects
+              </AutocompleteItem>
+              {projects.filter((p) => !p.ghost).map((project) => (
+                <AutocompleteItem
+                  key={project.id}
+                  textValue={project.name}
+                >
+                  {project.name}
+                </AutocompleteItem>
+              ))}
+            </Autocomplete>
+          </div>
+          <div>
+            <Autocomplete
+              label="Connection"
+              placeholder="Search by connection"
+              labelPlacement="outside"
+              onSelectionChange={(key) => setSearchFilter({ ...searchFilter, connection_id: key })}
+              selectedKey={searchFilter.connection_id}
+              aria-label="Search datasets by connection"
+              size="sm"
+            >
+              <AutocompleteItem key="all" textValue="All connections">
+                All connections
+              </AutocompleteItem>
+              {connections.map((connection) => (
+                <AutocompleteItem key={connection.id} textValue={connection.name}>
+                  {connection.name}
+                </AutocompleteItem>
+              ))}
+            </Autocomplete>
+          </div>
+          <div>
+            <Select
+              label="Status"
+              placeholder="Select status"
+              labelPlacement="outside"
+              onSelectionChange={(keys) => setSearchFilter({ ...searchFilter, status: keys.currentKey })}
+              selectedKeys={[searchFilter.status]}
+              aria-label="Search datasets by status"
+              size="sm"
+              isClearable={false}
+            >
+              <SelectItem key="all" textValue="All statuses">
+                All
+              </SelectItem>
+              <SelectItem key="published" textValue="Published">
+                Published
+              </SelectItem>
+              <SelectItem key="draft" textValue="Draft">
+                Draft
+              </SelectItem>
+            </Select>
+          </div>
+        </div>
+
+        <Spacer y={4} />
+        <div className="flex flex-row items-center justify-between">
+          <div className="text-sm text-foreground-500">
+            {`Showing ${_getFilteredDatasets().length} of ${datasets.length} datasets`}
+          </div>
+          {(searchFilter.status === "draft" || searchFilter.status === "all") && (
             <Button
-              variant="flat"
+              variant="bordered"
               size="sm"
               onPress={() => {
                 setShowDeleteAllDrafts(true);
               }}
-              color="secondary"
+              className="border-1"
             >
               Delete all drafts
             </Button>
           )}
-          <Checkbox
-            isSelected={showDatasetDrafts}
-            onChange={() => setShowDatasetDrafts(!showDatasetDrafts)}
-            size="sm"
-          >
-            <span className="text-xs">Show drafts</span>
-          </Checkbox>
         </div>
       </div>
+
       <Spacer y={4} />
-      <Table
-        shadow="none"
-        isStriped
-        className="border-1 border-solid border-content3 rounded-xl max-h-[calc(100vh-150px)]"
-        aria-label="Dataset list"
-        selectionMode="multiple"
-        onSelectionChange={(keys) => {
-          if (keys === "all") {
-            setSelectedDatasets(datasets.map((d) => d.id));
-          } else {
-            setSelectedDatasets(Array.from(keys));
-          }
-        }}
-        onRowAction={() => {}}
-      >
-        <TableHeader>
-          <TableColumn key="name">Dataset name</TableColumn>
-          <TableColumn key="connections" textValue="Connections" align="center" justify="center">
-            <div className="flex flex-row items-center justify-center gap-1">
-              <LuPlug />
-              <span>Connections</span>
-            </div>
-          </TableColumn>
-          <TableColumn key="tags" textValue="Tags">
-            <div className="flex flex-row items-center gap-1">
-              <LuTags />
-              <span>Tags</span>
-            </div>
-          </TableColumn>
-          <TableColumn key="createdAt" textValue="Created at" align="center" justify="center">
-            <div className="flex flex-row items-center justify-center gap-1">
-              <LuCalendarDays />
-              <span>Created</span>
-            </div>
-          </TableColumn>
-          <TableColumn key="actions" align="center" hideHeader />
-        </TableHeader>
-        <TableBody
-          emptyContent={
-            connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
-              <div className="flex flex-col items-center gap-1">
-                <LuDatabase />
-                <span>No datasets found</span>
-                <Spacer y={1} />
-                <Button
-                  onPress={() => navigate(`/${team.id}/connection/new`)}
-                  color="primary"
-                >
-                  Create your first connection
-                </Button>
-              </div>
-            ) : (
-              "No datasets found"
-            )
-          }
+
+      {selectedDatasets.length > 0 && (
+        <div>
+          <Button
+            variant="flat"
+            size="sm"
+            onPress={() => setShowDeleteDatasets(true)}
+            color="danger"
+            startContent={<LuTrash size={16} />}
+          >
+            Delete selected
+          </Button>
+          <Spacer y={4} />
+        </div>
+      )}
+
+      <div className="border-1 border-solid border-content3 rounded-lg">
+        <Table
+          shadow="none"
+          radius="sm"
+          isStriped
+          className="max-h-[calc(100vh-150px)]"
+          aria-label="Dataset list"
+          selectionMode="multiple"
+          onSelectionChange={(keys) => {
+            if (keys === "all") {
+              setSelectedDatasets(datasets.map((d) => d.id));
+            } else {
+              setSelectedDatasets(Array.from(keys));
+            }
+          }}
+          onRowAction={() => {}}
         >
-          {_getFilteredDatasets().map((dataset) => (
-            <TableRow key={dataset.id}>
-              <TableCell key="name">
-                <div className="flex flex-row items-center gap-2">
-                  <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
-                    <span className="text-foreground font-medium">{dataset.legend}</span>
-                  </Link>
-                  {dataset.draft && (
-                    <Chip size="sm" variant="flat" color="secondary">
-                      Draft
-                    </Chip>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell key="connections">
-                <div className="flex flex-row items-center">
-                  <AvatarGroup max={3} isBordered size="sm">
-                    {dataset?.DataRequests?.map((dr) => (
-                      <Avatar
-                        src={dr.Connection ? connectionImages(isDark)[dr?.Connection?.subType] : null}
-                        showFallback={<LuPlug />}
-                        size="sm"
-                        isBordered
-                        key={dr.id}
-                        icon={!dr.Connection ? <LuMonitorX /> : null}
-                      />
-                    ))}
-                  </AvatarGroup>
-                </div>
-              </TableCell>
-              <TableCell key="tags">
-                {_getDatasetTags(dataset.project_ids).length > 0 && (
-                  <div
-                    className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
-                    onClick={() => {
-                      if (_canAccess("teamAdmin", team.TeamRoles)) {
-                        setDatasetToEdit(dataset);
-                      }
-                    }}
+          <TableHeader>
+            <TableColumn key="name">Dataset name</TableColumn>
+            <TableColumn key="connections" textValue="Connections" align="center" justify="center">
+              <div className="flex flex-row items-center justify-center gap-1">
+                <LuPlug />
+                <span>Connections</span>
+              </div>
+            </TableColumn>
+            <TableColumn key="tags" textValue="Tags">
+              <div className="flex flex-row items-center gap-1">
+                <LuTags />
+                <span>Tags</span>
+              </div>
+            </TableColumn>
+            <TableColumn key="createdAt" textValue="Created at" align="center" justify="center">
+              <div className="flex flex-row items-center justify-center gap-1">
+                <LuCalendarDays />
+                <span>Created</span>
+              </div>
+            </TableColumn>
+            <TableColumn key="actions" align="center" hideHeader />
+          </TableHeader>
+          <TableBody
+            emptyContent={
+              connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
+                <div className="flex flex-col items-center gap-1">
+                  <LuDatabase size={24} />
+                  <span>You need to create a connection to get started</span>
+                  <Spacer y={1} />
+                  <Button
+                    onPress={() => navigate("/connections/new")}
+                    color="primary"
                   >
-                    {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
-                      <Chip
-                        key={tag}
-                        size="sm"
-                        variant="flat"
-                        color="primary"
-                      >
-                        {tag}
+                    Create your first connection
+                  </Button>
+                </div>
+              ) : (
+                "No datasets found"
+              )
+            }
+          >
+            {_getFilteredDatasets().map((dataset) => (
+              <TableRow key={dataset.id}>
+                <TableCell key="name">
+                  <div className="flex flex-row items-center gap-2">
+                    <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
+                      <span className="text-foreground font-medium">{dataset.legend}</span>
+                    </Link>
+                    {dataset.draft && (
+                      <Chip size="sm" variant="flat" color="secondary">
+                        Draft
                       </Chip>
-                    ))}
-                    {_getDatasetTags(dataset.project_ids).length > 3 && (
-                      <span className="text-xs">{`+${_getDatasetTags(dataset.project_ids).length - 3} more`}</span>
                     )}
                   </div>
-                )}
-                {_getDatasetTags(dataset.project_ids).length === 0 && (
-                  <Button
-                    variant="light"
-                    startContent={<LuPlus size={18} />}
-                    size="sm"
-                    className="opacity-0 hover:opacity-100"
-                    onPress={() => {
-                      if (_canAccess("teamAdmin", team.TeamRoles)) {
-                        setDatasetToEdit(dataset);
-                      }
-                    }}
-                  >
-                    Add tag
-                  </Button>
-                )}
-              </TableCell>
-              <TableCell key="createdAt">
-                  <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
-              </TableCell>
-              <TableCell key="actions">
-                <div className="flex flex-row items-center justify-end">
-                  <Dropdown aria-label="Select a dataset option">
-                    <DropdownTrigger>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        size="sm"
-                      >
-                        <LuEllipsis />
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="flat"
-                      disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
+                </TableCell>
+                <TableCell key="connections">
+                  <div className="flex flex-row items-center">
+                    <AvatarGroup max={3} isBordered size="sm">
+                      {dataset?.DataRequests?.map((dr) => (
+                        <Avatar
+                          src={dr.Connection ? connectionImages(isDark)[dr?.Connection?.subType] : null}
+                          showFallback={<LuPlug />}
+                          size="sm"
+                          isBordered
+                          key={dr.id}
+                          icon={!dr.Connection ? <LuMonitorX /> : null}
+                        />
+                      ))}
+                    </AvatarGroup>
+                  </div>
+                </TableCell>
+                <TableCell key="tags">
+                  {_getDatasetTags(dataset.project_ids).length > 0 && (
+                    <div
+                      className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
+                      onClick={() => {
+                        if (_canAccess("teamAdmin", team.TeamRoles)) {
+                          setDatasetToEdit(dataset);
+                        }
+                      }}
                     >
-                      <DropdownItem
-                        onPress={() => navigate(`/datasets/${dataset.id}`)}
-                        startContent={<LuPencilLine />}
-                        key="dataset"
-                        textValue="Edit dataset"
+                      {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
+                        <Chip
+                          key={tag}
+                          size="sm"
+                          variant="flat"
+                          color="primary"
+                        >
+                          {tag}
+                        </Chip>
+                      ))}
+                      {_getDatasetTags(dataset.project_ids).length > 3 && (
+                        <span className="text-xs">{`+${_getDatasetTags(dataset.project_ids).length - 3} more`}</span>
+                      )}
+                    </div>
+                  )}
+                  {_getDatasetTags(dataset.project_ids).length === 0 && (
+                    <Button
+                      variant="light"
+                      startContent={<LuPlus size={18} />}
+                      size="sm"
+                      className="opacity-0 hover:opacity-100"
+                      onPress={() => {
+                        if (_canAccess("teamAdmin", team.TeamRoles)) {
+                          setDatasetToEdit(dataset);
+                        }
+                      }}
+                    >
+                      Add tag
+                    </Button>
+                  )}
+                </TableCell>
+                <TableCell key="createdAt">
+                    <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
+                </TableCell>
+                <TableCell key="actions">
+                  <div className="flex flex-row items-center justify-end">
+                    <Dropdown aria-label="Select a dataset option">
+                      <DropdownTrigger>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          size="sm"
+                        >
+                          <LuEllipsis />
+                        </Button>
+                      </DropdownTrigger>
+                      <DropdownMenu
+                        variant="flat"
+                        disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
                       >
-                        Edit dataset
-                      </DropdownItem>
-                      <DropdownItem
-                        key="duplicate"
-                        onPress={() => {
-                          setDatasetToDuplicate(dataset);
-                          setDuplicateDatasetName(dataset.legend);
-                        }}
-                        startContent={<LuCopy />}
-                        textValue="Duplicate dataset"
-                      >
-                        Duplicate dataset
-                      </DropdownItem>
-                      <DropdownItem
-                        key="tags"
-                        onPress={() => setDatasetToEdit(dataset)}
-                        startContent={<LuTags />}
-                        showDivider
-                        textValue="Edit tags"
-                      >
-                        Edit tags
-                      </DropdownItem>
-                      <DropdownItem
-                        key="delete"
-                        onPress={() => _onPressDeleteDataset(dataset)}
-                        startContent={<LuTrash />}
-                        color="danger"
-                        textValue="Delete"
-                      >
-                        Delete
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                        <DropdownItem
+                          onPress={() => navigate(`/datasets/${dataset.id}`)}
+                          startContent={<LuPencilLine />}
+                          key="dataset"
+                          textValue="Edit dataset"
+                        >
+                          Edit dataset
+                        </DropdownItem>
+                        <DropdownItem
+                          key="duplicate"
+                          onPress={() => {
+                            setDatasetToDuplicate(dataset);
+                            setDuplicateDatasetName(dataset.legend);
+                          }}
+                          startContent={<LuCopy />}
+                          textValue="Duplicate dataset"
+                        >
+                          Duplicate dataset
+                        </DropdownItem>
+                        <DropdownItem
+                          key="tags"
+                          onPress={() => setDatasetToEdit(dataset)}
+                          startContent={<LuTags />}
+                          showDivider
+                          textValue="Edit tags"
+                        >
+                          Edit tags
+                        </DropdownItem>
+                        <DropdownItem
+                          key="delete"
+                          onPress={() => _onPressDeleteDataset(dataset)}
+                          startContent={<LuTrash />}
+                          color="danger"
+                          textValue="Delete"
+                        >
+                          Delete
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <Modal isOpen={datasetToDelete?.id} onClose={() => setDatasetToDelete(null)}>
         <ModalContent>
           <ModalHeader>

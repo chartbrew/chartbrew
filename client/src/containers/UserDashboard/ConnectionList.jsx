@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@heroui/react"
+import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -181,9 +181,20 @@ function ConnectionList() {
                     <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tw cursor-pointer">{connection.name}</Link>
                   </div>
                   <div>
-                    <Chip size="sm" variant="flat" color="secondary" radius="sm">
-                      {connection.type}
-                    </Chip>
+                    {_getRelatedDatasets(connection.id).length > 0 && (
+                      <Tooltip content="Datasets are using this connection.">
+                        <Chip size="sm" variant="flat" color="success" radius="sm">
+                          Active
+                        </Chip>
+                      </Tooltip>
+                    )}
+                    {_getRelatedDatasets(connection.id).length === 0 && (
+                      <Tooltip content="No datasets are using this connection yet.">
+                        <Chip size="sm" variant="flat" color="danger" radius="sm">
+                          Inactive
+                        </Chip>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               </CardBody>
