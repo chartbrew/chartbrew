@@ -86,7 +86,7 @@ function ConnectionWizard() {
   }, [selectedType]);
 
   useEffect(() => {
-    if (params.connectionId && params.connectionId !== "new" && !paramsInitRef.current) {
+    if (params.connectionId && params.connectionId !== "new" && team?.id && !paramsInitRef.current) {
       paramsInitRef.current = true;
       dispatch(getConnection({ team_id: team.id, connection_id: params.connectionId }))
         .then((res) => {
@@ -95,7 +95,7 @@ function ConnectionWizard() {
           }
         });
     }
-  }, [params]);
+  }, [params, team]);
 
   useEffect(() => {
     if (searchParams.get("type")) {

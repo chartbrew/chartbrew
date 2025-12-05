@@ -1,6 +1,6 @@
-import { Avatar, Button, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
+import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@heroui/react"
 import React, { useState } from "react"
-import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
+import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router"
 import { toast } from "react-hot-toast"
@@ -130,7 +130,16 @@ function ConnectionList() {
 
   return (
     <div className="flex flex-col">
-      <div className={"flex flex-row items-center gap-4"}>
+      <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <div className="text-2xl font-semibold font-tw">
+            Data connections
+          </div>
+          <div className="text-sm text-foreground-500">
+            {"Connect your data sources to Chartbrew"}
+          </div>
+        </div>
+
         {_canAccess("teamAdmin", team.TeamRoles) && (
           <Button
             color="primary"
@@ -141,6 +150,9 @@ function ConnectionList() {
             Create connection
           </Button>
         )}
+      </div>
+      <Spacer y={2} />
+      <div className={"flex flex-row items-center gap-4"}>
         <Input
           type="text"
           placeholder="Search connections"
@@ -152,145 +164,123 @@ function ConnectionList() {
         />
       </div>
       <Spacer y={4} />
-      <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl" aria-label="Connection list">
-        <TableHeader>
-          <TableColumn key="name">Connection</TableColumn>
-          <TableColumn key="tags" className="tutorial-tags">
-            <div className="flex flex-row items-center gap-1">
-              <LuTags />
-              <span>Tags</span>
-            </div>
-          </TableColumn>
-          <TableColumn key="created" textValue="Created">
-            <div className="flex flex-row items-center gap-1">
-              <LuCalendarDays />
-              <span>Created</span>
-            </div>
-          </TableColumn>
-          <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
-        </TableHeader>
-        <TableBody
-          emptyContent={
-            connections.length === 0 ? (
-              <div className="flex flex-col items-center gap-1">
-                <LuPlug />
-                <span>No connections found</span>
-                <Spacer y={1} />
-                <Button
-                  onPress={() => navigate("/connections/new")}
-                  color="primary"
-                >
-                  Create your first connection
-                </Button>
-              </div>
-            ) : (
-              "No connections found"
-            )
-          }
-        >
-          {_getFilteredConnections()?.map((connection) => (
-            <TableRow key={connection.id}>
-              <TableCell key="name">
-                <div className="flex flex-row items-center gap-4">
-                  <Avatar
-                    src={connectionImages(isDark)[connection.subType]}
-                    size="sm"
-                    isBordered
-                  />
-                  <Link to={`/connections/${connection.id}`} className="cursor-pointer">
-                    <span className="text-foreground font-medium">{connection.name}</span>
-                  </Link>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {_getFilteredConnections()?.map((connection) => (
+          <div key={connection.id}>
+            <Card
+              shadow="none"
+              isHoverable
+              className="border-1 border-solid border-content3 p-4 h-full"
+              fullWidth
+            >
+              <CardBody>
+                <div className="flex flex-row items-center justify-between">
+                  <div className="flex flex-row items-center gap-2">
+                    <Avatar src={connectionImages(isDark)[connection.subType]} />
+                    <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tw cursor-pointer">{connection.name}</Link>
+                  </div>
+                  <div>
+                    <Chip size="sm" variant="flat" color="secondary" radius="sm">
+                      {connection.type}
+                    </Chip>
+                  </div>
                 </div>
-              </TableCell>
-              <TableCell key="tags">
-                {_getConnectionTags(connection.project_ids).length > 0 && (
-                  <div
-                    className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
-                    onClick={() => setConnectionToEdit(connection)}
-                  >
-                    {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
-                      <Chip
-                        key={tag}
-                        size="sm"
-                        variant="flat"
-                        color="primary"
-                      >
-                        {tag}
-                      </Chip>
-                    ))}
-                    {_getConnectionTags(connection.project_ids).length > 3 && (
-                      <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
-                    )}
-                  </div>
-                )}
-                {_getConnectionTags(connection.project_ids).length === 0 && (
-                  <Button
-                    variant="light"
-                    startContent={<LuPlus size={18} />}
-                    size="sm"
-                    className="opacity-0 hover:opacity-100"
-                    onPress={() => setConnectionToEdit(connection)}
-                  >
-                    Add tag
-                  </Button>
-                )}
-              </TableCell>
-              <TableCell key="created">
-                <div>{new Date(connection.createdAt).toLocaleDateString()}</div>
-              </TableCell>
-              <TableCell key="actions">
-                {_canAccess("teamAdmin", team.TeamRoles) && (
-                  <div className="flex flex-row justify-end items-center">
-                    <Dropdown aria-label="Select a connection option">
-                      <DropdownTrigger>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          size="sm"
-                        >
-                          <LuEllipsis />
-                        </Button>
-                      </DropdownTrigger>
-                      <DropdownMenu variant="flat">
-                        <DropdownItem
-                          onPress={() => navigate(`/${team.id}/connection/${connection.id}`)}
-                          startContent={<LuPencilLine />}
-                        >
-                          Edit connection
-                        </DropdownItem>
-                        <DropdownItem
-                          onPress={() => {
-                            setViewingDuplicateModal(connection);
-                            setDuplicateName(connection.name);
-                          }}
-                          startContent={<LuCopy />}
-                        >
-                          Duplicate connection
-                        </DropdownItem>
-                        <DropdownItem
-                          onPress={() => setConnectionToEdit(connection)}
-                          startContent={<LuTags />}
-                          showDivider
-                        >
-                          Edit tags
-                        </DropdownItem>
-                        <DropdownItem
-                          onPress={() => setConnectionToDelete(connection)}
-                          startContent={<LuTrash />}
-                          color="danger"
-                        >
-                          Delete
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <Spacer y={2} />
+              </CardBody>
+              <CardBody>
+                <div className="flex flex-row items-center flex-wrap gap-1">
+                  {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
+                    <Chip key={tag} size="sm" variant="flat" color="primary" radius="sm" className="cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
+                      {tag}
+                    </Chip>
+                  ))}
+                  {_getConnectionTags(connection.project_ids).length > 3 && (
+                    <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
+                  )}
+                </div>
+              </CardBody>
+              <CardBody>
+                <div className="flex flex-row items-center justify-between">
+                  <span className="text-xs text-foreground-500">{`${_getRelatedDatasets(connection.id).length} datasets`}</span>
+                  <span className="text-xs text-foreground-500">Created on {new Date(connection.createdAt).toLocaleDateString()}</span>
+                </div>
+              </CardBody>
+              <CardFooter>
+                <Button
+                  variant="flat"
+                  size="sm"
+                  onPress={() => navigate(`/connections/${connection.id}`)}
+                  fullWidth
+                >
+                  View connection
+                </Button>
+                <Spacer x={1} />
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      variant="flat"
+                      size="sm"
+                      fullWidth
+                      isIconOnly
+                    >
+                      <LuEllipsis />
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu variant="flat">
+                    <DropdownItem
+                      onPress={() => navigate(`/connections/${connection.id}`)}
+                      startContent={<LuPencilLine />}
+                    >
+                      Edit connection
+                    </DropdownItem>
+                    <DropdownItem
+                      onPress={() => setConnectionToEdit(connection)}
+                      startContent={<LuTags />}
+                    >
+                      Edit tags
+                    </DropdownItem>
+                    <DropdownItem
+                      onPress={() => {
+                        setViewingDuplicateModal(connection);
+                        setDuplicateName(connection.name);
+                      }}
+                      startContent={<LuCopy />}
+                    >
+                      Duplicate connection
+                    </DropdownItem>
+                    <DropdownItem
+                      onPress={() => setConnectionToDelete(connection)}
+                      startContent={<LuTrash />}
+                      color="danger"
+                    >
+                      Delete
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              </CardFooter>
+            </Card>
+          </div>
+        ))}
+      </div>
+
+      {_getFilteredConnections()?.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-full gap-1">
+          <LuPlug size={24} />
+          <span className="text-foreground-500 text-sm">No connections found</span>
+          <Spacer y={1} />
+          {connections?.length === 0 && _canAccess("teamAdmin", team.TeamRoles) && (
+            <Button
+              variant="flat"
+              color="primary"
+              onPress={() => navigate("/connections/new")}
+            >
+              Create your first connection
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Spacer y={4} />
       <Modal isOpen={connectionToDelete?.id} onClose={() => setConnectionToDelete(null)}>
         <ModalContent>
           <ModalHeader>
