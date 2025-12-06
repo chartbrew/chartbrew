@@ -5,8 +5,8 @@ import {
   Alert,
 } from "@heroui/react";
 import AceEditor from "react-ace";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import { LuCircleCheck, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -16,8 +16,8 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { LuCircleCheck, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 const formStrings = {
   postgres: {
@@ -75,7 +75,7 @@ function PostgresConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -117,12 +117,12 @@ function PostgresConnectionForm(props) {
     
     if ((data.ssl && sslCerts.sslCa) || (data.useSsh && sshFiles.sshPrivateKey)) {
       response = await dispatch(testRequestWithFiles({
-        team_id: params.teamId,
+        team_id: team.id,
         connection: data,
         files
       }));
     } else {
-      response = await dispatch(testRequest({ team_id: params.teamId, connection: data }));
+      response = await dispatch(testRequest({ team_id: team.id, connection: data }));
     }
     
     newTestResult.status = response.payload.status;

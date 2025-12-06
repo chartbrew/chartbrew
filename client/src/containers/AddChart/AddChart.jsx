@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button, Switch,
@@ -23,6 +23,7 @@ import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import { placeNewWidget } from "../../modules/autoLayout";
+import { selectTeam } from "../../slices/team";
 
 /*
   Container used for setting up a new chart
@@ -45,10 +46,12 @@ function AddChart() {
   const templates = useSelector(selectTemplates);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
+  const team = useSelector(selectTeam);
 
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const templateRef = useRef(null);
 
   useEffect(() => {
     dispatch(clearAlerts());
@@ -68,9 +71,14 @@ function AddChart() {
         chart_id: params.chartId
       }));
     }
-
-    dispatch(getTemplates(params.teamId));
   }, []);
+
+  useEffect(() => {
+    if (team?.id && !templateRef.current) {
+      templateRef.current = true;
+      dispatch(getTemplates(team.id));
+    }
+  }, [team]);
 
   useEffect(() => {
     charts.map((chart) => {
@@ -318,7 +326,7 @@ function AddChart() {
           name={chartName}
           onChange={_onNameChange}
           onCreate={_onCreateClicked}
-          teamId={params.teamId}
+          teamId={team?.id}
           projectId={params.projectId}
           connections={connections}
           templates={templates}

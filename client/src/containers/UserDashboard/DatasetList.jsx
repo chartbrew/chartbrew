@@ -288,7 +288,7 @@ function DatasetList() {
           </div>
           <div>
             <Autocomplete
-              label="Dashboard"
+              label="Dashboard (Tags)"
               placeholder="Search by dashboard"
               labelPlacement="outside"
               onSelectionChange={(key) => setSearchFilter({ ...searchFilter, project_id: key })}
@@ -398,7 +398,7 @@ function DatasetList() {
           shadow="none"
           radius="sm"
           isStriped
-          className="max-h-[calc(100vh-150px)]"
+          className="max-h-[65vh]"
           aria-label="Dataset list"
           selectionMode="multiple"
           onSelectionChange={(keys) => {

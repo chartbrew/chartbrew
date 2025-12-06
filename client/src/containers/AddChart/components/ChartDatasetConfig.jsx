@@ -785,7 +785,7 @@ function ChartDatasetConfig(props) {
           <Spacer y={4} />
           
           <div>
-            <LinkNext to={`/${params.teamId}/dataset/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}&editFilters=true`} className="flex items-center cursor-pointer chart-cdc-goal">
+            <LinkNext to={`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}&editFilters=true`} className="flex items-center cursor-pointer chart-cdc-goal">
               <LuListFilter size={24} className="text-primary" />
               <Spacer x={1} />
               <div className="text-sm text-foreground">Edit filters</div>
@@ -873,7 +873,7 @@ function ChartDatasetConfig(props) {
           variant="faded"
           color="danger"
           size="sm"
-          onClick={_onRemoveCdc}
+          onPress={_onRemoveCdc}
         >
           {`Remove ${cdc.legend}`}
         </Button>
@@ -890,15 +890,15 @@ function ChartDatasetConfig(props) {
           <ModalFooter>
             <Button
               variant="bordered"
-              onClick={() => setEditConfirmation(false)}
+              onPress={() => setEditConfirmation(false)}
             >
               Cancel
             </Button>
             <Button
               color="primary"
-              onClick={() => {
+              onPress={() => {
                 setEditConfirmation(false);
-                navigate(`/${params.teamId}/dataset/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);
+                navigate(`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);
               }}
             >
               Continue

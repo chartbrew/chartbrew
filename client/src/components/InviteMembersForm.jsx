@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
-import { useParams } from "react-router";
 
 import { generateInviteUrl } from "../slices/team";
 import { selectTeam } from "../slices/team";
@@ -23,13 +22,10 @@ function InviteMembersForm(props) {
   const [inviteUrl, setInviteUrl] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
 
-  const {
-    style, selectedProjects,
-  } = props;
+  const { selectedProjects = null } = props;
 
   const team = useSelector(selectTeam);
   const projects = useSelector(selectProjects);
-  const params = useParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -45,13 +41,10 @@ function InviteMembersForm(props) {
   }, [projectAccess, exportAllowed, role]);
 
   const _onGenerateUrl = () => {
-    const teamId = team.id
-      ? team.id : params.teamId;
-
     setLoading(true);
 
     dispatch(generateInviteUrl({
-      team_id: teamId,
+      team_id: team.id,
       projects: projectAccess,
       canExport: exportAllowed,
       role,
@@ -96,7 +89,7 @@ function InviteMembersForm(props) {
   };
 
   return (
-    <div style={style}>
+    <div>
       <div className="text-lg font-semibold font-tw">Invite team members</div>
       <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
       {!selectedProjects && (
@@ -234,7 +227,7 @@ function InviteMembersForm(props) {
               endContent={(
                 <Button
                   color={urlCopied ? "success" : "default"}
-                  onClick={_onCopyUrl}
+                  onPress={_onCopyUrl}
                   size="sm"
                   isIconOnly
                   variant="light"
@@ -269,26 +262,9 @@ function InviteMembersForm(props) {
   );
 }
 
-InviteMembersForm.defaultProps = {
-  style: {},
-  selectedProjects: null,
-};
-
 InviteMembersForm.propTypes = {
   match: PropTypes.object.isRequired,
   selectedProjects: PropTypes.array,
-  style: PropTypes.object,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    user: state.user,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(InviteMembersForm);
+export default InviteMembersForm;
