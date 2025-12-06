@@ -151,7 +151,6 @@ function LoginForm() {
                 value={email}
                 size="lg"
                 fullWidth
-                variant="bordered"
                 color={errors.email ? "danger" : "default"}
                 description={errors.email}
               />
@@ -175,7 +174,6 @@ function LoginForm() {
                 value={password}
                 size="lg"
                 fullWidth
-                variant="bordered"
                 color={errors.password ? "danger" : "default"}
                 description={errors.password && "Please enter your password"}
                 startContent={<LuLock />}

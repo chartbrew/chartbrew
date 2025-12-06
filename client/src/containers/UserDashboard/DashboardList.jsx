@@ -41,6 +41,14 @@ function DashboardList() {
     if (storageViewMode) setViewMode(storageViewMode);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") === "dashboard") {
+      setAddProject(true);
+      navigate("/");
+    }
+  }, [window.location.search]);
+
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.id, teamRoles);
   };

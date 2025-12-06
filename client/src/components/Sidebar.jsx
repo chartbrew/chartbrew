@@ -254,11 +254,11 @@ function Sidebar() {
             </div>
             <Spacer y={2} />
             <Button
-              variant="bordered"
+              variant="flat"
               size="sm"
               color="default"
               startContent={collapsed ? null : <LuPlus size={18} />}
-              onPress={() => navigate("/connections/new")}
+              onPress={() => navigate("/?create=dashboard")}
               isIconOnly={collapsed}
               fullWidth
               className={cn(collapsed ? "justify-center" : "justify-start")}
@@ -267,7 +267,7 @@ function Sidebar() {
             </Button>
             <Spacer y={1} />
             <Button
-              variant="bordered"
+              variant="flat"
               size="sm"
               color="default"
               startContent={collapsed ? null : <LuPlug size={18} />}

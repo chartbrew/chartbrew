@@ -40,9 +40,9 @@ module.exports.passwordReset = (data) => {
   const message = {
     from: settings.adminMail,
     to: data.email,
-    subject: "ChartBrew - Reset your password",
+    subject: "Chartbrew - Reset your password",
     text: `
-      Reset your ChartBrew password
+      Reset your Chartbrew password
 
       You can reset your password by clicking the link below:
 
@@ -52,7 +52,7 @@ module.exports.passwordReset = (data) => {
       ChartBrew
     `,
     html: `
-      <h3>Reset your ChartBrew password 🔑</h3>
+      <h3>Reset your Chartbrew password 🔑</h3>
 
       <p>You can reset your password by clicking the link below:</p>
 

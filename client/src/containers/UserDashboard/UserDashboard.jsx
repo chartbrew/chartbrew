@@ -123,14 +123,14 @@ function UserDashboard(props) {
   }
 
   return (
-    <div className="dashboard bg-content2 min-h-screen">
+    <div className="dashboard bg-content2">
       {team?.id && (
-        <div className="min-h-screen">
+        <div>
           <Sidebar />
 
           <div
             className={cn(
-              "min-h-screen transition-all duration-300",
+              "min-h-[calc(100vh-64px)] transition-all duration-300",
               collapsed ? "ml-16" : "ml-64"
             )}
           >
