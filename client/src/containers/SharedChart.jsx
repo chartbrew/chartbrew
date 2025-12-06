@@ -34,6 +34,8 @@ import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
 import toast from "react-hot-toast";
 import { canExportChart, exportChartToExcel } from "../modules/exportChart";
+import GaugeChart from "./Chart/components/GaugeChart";
+import MatrixChart from "./Chart/components/MatrixChart";
 
 const pageHeight = window.innerHeight;
 
@@ -425,6 +427,22 @@ function SharedChart() {
           )}
           {(chart.type === "kpi" || chart.type === "avg") && (
             <KpiMode chart={chart} />
+          )}
+          {chart.type === "matrix" && (
+            <MatrixChart
+              chart={chart}
+              redraw={redraw}
+              redrawComplete={() => setRedraw(false)}
+              embedded
+            />
+          )}
+          {chart.type === "gauge" && (
+            <GaugeChart
+              chart={chart}
+              redraw={redraw}
+              redrawComplete={() => setRedraw(false)}
+              embedded
+            />
           )}
         </div>
       )}
