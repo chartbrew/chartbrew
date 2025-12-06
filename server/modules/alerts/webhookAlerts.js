@@ -7,7 +7,7 @@ function send(data) {
     integration, chart, alert, alertsFound, snapshotUrl,
   } = data;
 
-  const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
+  const dashboardUrl = `${settings.client}/dashboard/${chart.project_id}`;
 
   // build the message for slack webhooks
   const { value, lower, upper } = alert.rules;

@@ -42,7 +42,7 @@ async function processAlert(chart, alert, alerts) {
     return false;
   }
 
-  const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
+  const dashboardUrl = `${settings.client}/dashboard/${chart.project_id}`;
 
   let thresholdText = "";
   if (type === "milestone") {

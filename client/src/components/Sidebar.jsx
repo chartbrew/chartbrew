@@ -237,7 +237,7 @@ function Sidebar() {
                   startContent={collapsed ? null : <LuSettings size={18} />}
                   textValue="Team settings"
                   color={_getActiveMenu() === "settings" ? "primary" : "default"}
-                  className={cn(collapsed && "max-w-min text-center", "text-foreground team-settings-tutorial")}
+                  className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "settings" ? "bg-content2 text-primary team-settings-tutorial" : "text-foreground team-settings-tutorial")}
                   onClick={() => navigate("/settings/members")}
                 >
                   {collapsed ? <LuSettings size={20} /> : <span className="text-sm">Team settings</span>}

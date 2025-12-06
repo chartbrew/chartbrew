@@ -37,7 +37,7 @@ async function sendSnapshotToEmail(project, snapshotPath, customEmails) {
   }
 
   const recipients = customEmails || [];
-  const dashboardUrl = `${settings.client}/b/${project.brewName}`;
+  const dashboardUrl = `${settings.client}/dashboard/${project.id}`;
   const snapshotUrl = `${fullApiUrl}/${snapshotPath}`;
 
   await mail.sendDashboardSnapshot({
@@ -53,7 +53,7 @@ async function sendSnapshotToIntegrations(project, snapshotPath, integrations) {
     return;
   }
 
-  const dashboardUrl = `${settings.client}/b/${project.brewName}`;
+  const dashboardUrl = `${settings.client}/dashboard/${project.id}`;
   const snapshotUrl = `${fullApiUrl}/${snapshotPath}`;
 
   const integrationPromises = integrations.map(async (integration) => {
