@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuDatabase, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUser, LuUsers } from "react-icons/lu"
+import { LuChevronDown, LuDatabase, LuDatabaseZap, LuGrid2X2Plus, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUsers } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
@@ -257,26 +257,39 @@ function Sidebar() {
               variant="flat"
               size="sm"
               color="default"
-              startContent={collapsed ? null : <LuPlus size={18} />}
+              startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
               onPress={() => navigate("/?create=dashboard")}
               isIconOnly={collapsed}
               fullWidth
               className={cn(collapsed ? "justify-center" : "justify-start")}
             >
-              {collapsed ? <LuPlus size={20} /> : "New dashboard"}
+              {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
             </Button>
             <Spacer y={1} />
             <Button
               variant="flat"
               size="sm"
               color="default"
-              startContent={collapsed ? null : <LuPlug size={18} />}
+              startContent={collapsed ? null : <LuDatabaseZap size={18} />}
+              onPress={() => navigate("/datasets/new")}
+              isIconOnly={collapsed}
+              fullWidth
+              className={cn(collapsed ? "justify-center" : "justify-start")}
+            >
+              {collapsed ? <LuDatabaseZap size={20} /> : "New dataset"}
+            </Button>
+            <Spacer y={1} />
+            <Button
+              variant="flat"
+              size="sm"
+              color="default"
+              startContent={collapsed ? null : <LuUnplug size={18} />}
               onPress={() => navigate("/connections/new")}
               isIconOnly={collapsed}
               fullWidth
               className={cn(collapsed ? "justify-center" : "justify-start")}
             >
-              {collapsed ? <LuPlug size={20} /> : "New connection"}
+              {collapsed ? <LuUnplug size={20} /> : "New connection"}
             </Button>
           </div>
         </div>
