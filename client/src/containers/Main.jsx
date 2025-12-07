@@ -243,56 +243,11 @@ function Main(props) {
               <Route exact path="/user/profile" element={<ManageUser />} />
               <Route exact path="/edit" element={<ManageUser />} />
               <Route exact path="/passwordReset" element={<PasswordReset />} />
-              <Route path="/manage/:teamId" element={<ManageTeam />} />
-              <Route path="/manage/:teamId/:tab" element={<ManageTeam />} />
               <Route
                 exact
                 path="/project/:projectId"
                 element={<ProjectRedirect />}
               />
-
-              {/* Add all the routes for the project board here */}
-              {/* <Route path="/:teamId/:projectId" element={<ProjectBoard />}>
-                <Route
-                  exact
-                  path="dashboard"
-                  element={<ProjectDashboard />}
-                />
-                <Route
-                  exact
-                  path="chart"
-                  element={<AddChart />}
-                />
-                <Route
-                  exact
-                  path="chart/:chartId/edit"
-                  element={<AddChart />}
-                />
-                <Route
-                  exact
-                  path="settings"
-                  element={<ProjectSettings />}
-                />
-                <Route
-                  exact
-                  path="members"
-                  element={
-                    <div className="container mx-auto pt-unit-lg">
-                      <TeamMembers />
-                    </div>
-                  }
-                />
-                <Route
-                  exact
-                  path="integrations"
-                  element={<Integrations />}
-                />
-                <Route
-                  exact
-                  path="variables"
-                  element={<Variables />}
-                />
-              </Route> */}
 
               <Route
                 exact
@@ -306,17 +261,6 @@ function Main(props) {
               />
 
               <Route exact path="/invite" element={<UserInvite />} />
-
-              <Route
-                exact
-                path="/:teamId/dataset/:datasetId"
-                element={<Dataset />}
-              />
-              <Route
-                exact
-                path="/:teamId/connection/:connectionId"
-                element={<ConnectionWizard />}
-              />
             </Routes>
           </Suspense>
         </div>

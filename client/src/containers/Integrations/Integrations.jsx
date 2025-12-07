@@ -10,9 +10,6 @@ import {
   getTeamIntegrations,
   selectIntegrations,
 } from "../../slices/integration";
-import Text from "../../components/Text";
-import Row from "../../components/Row";
-import Segment from "../../components/Segment";
 import { selectTeam } from "../../slices/team";
 
 function Integrations() {
@@ -30,27 +27,27 @@ function Integrations() {
   }, [team]);
 
   return (
-    <div>
-      <Segment className="container mx-auto bg-background">
-        <Row>
-          <Text size="h3">Integrations</Text>
-        </Row>
-        <Spacer y={1} />
-        <Row>
-          <Text>
-            {"Create new integrations that you can use across your team's projects. Currently, the integrations are mainly used for chart alerts and notifications."}
-          </Text>
-        </Row>
-        <Spacer y={4} />
+    <div className="flex flex-col">
+      <div className="flex flex-row items-center">
+        <div className="flex flex-col gap-1">
+          <div className="text-2xl font-semibold font-tw">
+            Integrations
+          </div>
+          <div className="text-sm text-foreground-500">
+            {"Create and manage your integrations with external services"}
+          </div>
+        </div>
+      </div>
 
-        <Row>
-          <WebhookIntegrations
-            integrations={integrations ? integrations.filter((i) => i.type === "webhook") : []}
-            teamId={team?.id}
-          />
-        </Row>
+      <Spacer y={4} />
+
+      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+        <WebhookIntegrations
+          integrations={integrations ? integrations.filter((i) => i.type === "webhook") : []}
+          teamId={team?.id}
+        />
         <Spacer y={4} />
-      </Segment>
+      </div>
     </div>
   );
 }

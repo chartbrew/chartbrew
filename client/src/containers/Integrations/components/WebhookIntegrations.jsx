@@ -156,104 +156,102 @@ function WebhookIntegrations({ teamId }) {
 
   return (
     <div>
-      <Container>
-        <Row align="center" justify="space-between">
-          <div className="flex items-center">
-            <Text><TbWebhook size={24} /></Text>
+      <Row align="center" justify="space-between">
+        <div className="flex items-center">
+          <Text><TbWebhook size={24} /></Text>
+          <Spacer x={1} />
+          <Text size="h4">Webhooks</Text>
+        </div>
+        <Spacer x={2} />
+        <Button
+          auto
+          onPress={() => {
+            setCreateOpen(true);
+          }}
+          startContent={<LuPlus />}
+          variant="flat"
+          color={"primary"}
+          size="sm"
+        >
+          Add a new webhook
+        </Button>
+      </Row>
+      <Spacer y={2} />
+      <Row>
+        <Divider />
+      </Row>
+      <Spacer y={2} />
+      <Row>
+        <div className="text-sm">
+          <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
+            <LuInfo size={16} />
             <Spacer x={1} />
-            <Text size="h4">Webhooks</Text>
-          </div>
-          <Spacer x={2} />
-          <Button
-            auto
-            onPress={() => {
-              setCreateOpen(true);
-            }}
-            startContent={<LuPlus />}
-            variant="flat"
-            color={"primary"}
-            size="sm"
-          >
-            Add a new webhook
-          </Button>
-        </Row>
-        <Spacer y={2} />
+            {"Click to see what Chartbrew sends over the webhook"}
+          </Link>
+        </div>
+      </Row>
+      <Spacer y={1} />
+      <Row>
+        <div className="text-sm">
+          <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
+            <LuSlack size={16} />
+            <Spacer x={1} />
+            {"Want to send events to Slack? Check out how to do it here"}
+          </Link>
+        </div>
+      </Row>
+      <Spacer y={2} />
+      {integrations.length > 0 && (
         <Row>
-          <Divider />
-        </Row>
-        <Spacer y={2} />
-        <Row>
-          <div className="text-sm">
-            <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
-              <LuInfo size={16} />
-              <Spacer x={1} />
-              {"Click to see what Chartbrew sends over the webhook"}
-            </Link>
-          </div>
-        </Row>
-        <Spacer y={1} />
-        <Row>
-          <div className="text-sm">
-            <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
-              <LuSlack size={16} />
-              <Spacer x={1} />
-              {"Want to send events to Slack? Check out how to do it here"}
-            </Link>
-          </div>
-        </Row>
-        <Spacer y={2} />
-        {integrations.length > 0 && (
-          <Row>
-            <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
-              <TableHeader>
-                <TableColumn key="name">Name</TableColumn>
-                <TableColumn key="url">URL</TableColumn>
-                <TableColumn key="created" align="flex-end">Date created</TableColumn>
-                <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
-              </TableHeader>
+          <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
+            <TableHeader>
+              <TableColumn key="name">Name</TableColumn>
+              <TableColumn key="url">URL</TableColumn>
+              <TableColumn key="created" align="flex-end">Date created</TableColumn>
+              <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
+            </TableHeader>
 
-              <TableBody emptyContent={"No integrations found"}>
-                {integrations.map((i) => (
-                  <TableRow key={i.id}>
-                    <TableCell key="name">
-                      {i.name}
-                    </TableCell>
-                    <TableCell key="url" className="max-w-[300px] truncate">
-                      <Text className={"truncate"}>
-                        {i.config?.url || "No URL"}
-                      </Text>
-                    </TableCell>
-                    <TableCell key="created">
-                      {formatRelative(new Date(i.createdAt), new Date())}
-                    </TableCell>
-                    <TableCell key="actions">
-                      <Row>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          onPress={() => _onEditOpen(i)}
-                          size="sm"
-                        >
-                          <LuPencilLine size={18} />
-                        </Button>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color="danger"
-                          onPress={() => setIntegrationToDelete(i.id)}
-                          size="sm"
-                        >
-                          <LuTrash size={18} />
-                        </Button>
-                      </Row>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Row>
-        )}
-      </Container>
+            <TableBody emptyContent={"No integrations found"}>
+              {integrations.map((i) => (
+                <TableRow key={i.id}>
+                  <TableCell key="name">
+                    {i.name}
+                  </TableCell>
+                  <TableCell key="url" className="max-w-[300px] truncate">
+                    <Text className={"truncate"}>
+                      {i.config?.url || "No URL"}
+                    </Text>
+                  </TableCell>
+                  <TableCell key="created">
+                    {formatRelative(new Date(i.createdAt), new Date())}
+                  </TableCell>
+                  <TableCell key="actions">
+                    <Row>
+                      <Button
+                        isIconOnly
+                        variant="light"
+                        onPress={() => _onEditOpen(i)}
+                        size="sm"
+                      >
+                        <LuPencilLine size={18} />
+                      </Button>
+                      <Button
+                        isIconOnly
+                        variant="light"
+                        color="danger"
+                        onPress={() => setIntegrationToDelete(i.id)}
+                        size="sm"
+                      >
+                        <LuTrash size={18} />
+                      </Button>
+                    </Row>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Row>
+      )}
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <ModalContent>

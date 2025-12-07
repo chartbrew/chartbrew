@@ -337,13 +337,13 @@ function DashboardList() {
                     {pinnedDashboards.find((p) => p.project_id === project.id) ? (
                       <Tooltip content="Unpin dashboard" placement="left-start">
                         <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
-                          <LuPin className="text-gray-500" size={18} />
+                          <LuPin className="text-secondary" size={18} fill="currentColor" />
                         </Button>
                       </Tooltip>
                     ) : (
                       <Tooltip content="Pin dashboard" placement="left-start">
                         <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <LuPin className="text-gray-500" size={18} />
+                          <LuPin className="text-secondary" size={18} />
                         </Button>
                       </Tooltip>
                     )}
