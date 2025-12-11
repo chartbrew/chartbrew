@@ -687,7 +687,7 @@ function Report({ editMode = false }) {
             <div className="flex flex-col gap-4 p-2">
               <div>
                 <Tooltip content="Back to your dashboard" placement="right-end">
-                  <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
+                  <LinkDom to={`/dashboard/${project.id}`}>
                     <Link className="text-foreground cursor-pointer">
                       <LuSquareArrowLeft size={26} className="text-foreground" />
                     </Link>

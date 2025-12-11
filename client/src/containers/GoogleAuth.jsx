@@ -62,7 +62,7 @@ function GoogleAuth() {
         setLoading(false);
         setSuccess(true);
 
-        let finalUrl = `/${result.team_id}/connection/${result.connection.id}`;
+        let finalUrl = `/connections/${result.connection.id}`;
         if (ids[2]) finalUrl += `?type=${ids[2]}`;
 
         navigate(finalUrl);

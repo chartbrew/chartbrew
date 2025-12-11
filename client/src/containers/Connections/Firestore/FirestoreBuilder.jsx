@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Select, SelectItem, PopoverTrigger, PopoverContent,
@@ -36,6 +36,7 @@ import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 export const operators = [{
   key: "=",
@@ -92,7 +93,7 @@ export const operators = [{
 */
 function FirestoreBuilder(props) {
   const {
-    dataRequest, connection, onSave, onDelete,
+    dataRequest = null, connection, onSave, onDelete,
   } = props;
 
   const [firestoreRequest, setFirestoreRequest] = useState({
@@ -123,6 +124,7 @@ function FirestoreBuilder(props) {
   const dispatch = useDispatch();
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   // on init effect
   useEffect(() => {
@@ -133,15 +135,15 @@ function FirestoreBuilder(props) {
   }, []);
 
   useEffect(() => {
-    if (connection?.id && !fullConnection?.id) {
-      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
+    if (connection?.id && !fullConnection?.id && team?.id) {
+      dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
         .then((data) => {
           setFullConnection(data.payload);
           _onFetchCollections(data.payload);
         })
         .catch(() => {});
     }
-  }, [firestoreRequest, connection]);
+  }, [firestoreRequest, connection, team]);
 
   useEffect(() => {
     if (dataRequest && dataRequest.configuration) {
@@ -308,7 +310,7 @@ function FirestoreBuilder(props) {
     }
 
     dispatch(runDataRequest({
-      team_id: params.teamId,
+      team_id: team?.id,
       dataset_id: params.datasetId,
       dataRequest_id: dataRequest.id,
       getCache,
@@ -347,7 +349,7 @@ function FirestoreBuilder(props) {
 
   const _onFetchCollections = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
+    return dispatch(testRequest({ team_id: team?.id, connection: conn }))
       .then((data) => {
         if (data?.error) {
           setCollectionsLoading(false);
@@ -548,7 +550,7 @@ function FirestoreBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -556,7 +558,7 @@ function FirestoreBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,
@@ -1326,29 +1328,12 @@ const styles = {
   },
 };
 
-FirestoreBuilder.defaultProps = {
-  dataRequest: null,
-};
-
 FirestoreBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
-  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    dataRequests: state.dataRequest.data,
-    responses: state.dataRequest.responses,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(FirestoreBuilder);
+export default FirestoreBuilder;

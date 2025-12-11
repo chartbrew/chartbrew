@@ -94,7 +94,7 @@ export default {
               DEFAULT: "#FFFFFF"
             },
             content2: {
-              DEFAULT: "#F2F6FC"
+              DEFAULT: "#f7f7f7"
             }
           }, // light theme colors
         },
@@ -150,10 +150,10 @@ export default {
               DEFAULT: "#F17041",
             },
             background: {
-              DEFAULT: "#04080b",
+              DEFAULT: "#03070a",
             },
             content1: {
-              DEFAULT: "#09151C"
+              DEFAULT: "#050f14"
             },
             content2: {
               DEFAULT: "#070d13"

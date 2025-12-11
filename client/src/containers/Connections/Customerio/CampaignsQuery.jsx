@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Divider, Input, Popover, Spacer, Switch, Tooltip, Select,
@@ -9,6 +9,8 @@ import {
 } from "date-fns";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
+import { useDispatch, useSelector } from "react-redux";
+import { LuCalendarDays, LuInfo } from "react-icons/lu";
 
 import { runHelperMethod } from "../../../slices/connection";
 import { primary, secondary } from "../../../config/colors";
@@ -16,9 +18,7 @@ import MessageTypeLabels from "./MessageTypeLabels";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import { LuCalendarDays, LuInfo } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { selectTeam } from "../../../slices/team";
 
 const periodOptions = [
   { key: "hours", value: "hours", text: "Hourly" },
@@ -62,66 +62,71 @@ function CampaignsQuery(props) {
   const [journeyEnd, setJourneyEnd] = useState(endOfDay(new Date()));
 
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
+
+  const initRef = useRef(false);
 
   useEffect(() => {
-    // get segments
-    setLoading(true);
-    dispatch(runHelperMethod({
-      team_id: params.teamId,
-      connection_id: connectionId,
-      methodName: "getAllCampaigns"
-    }))
-      .then((data) => {
-        const campaignData = data.payload;
-        const campaignOptions = campaignData.map((campaign) => {
-          return {
-            text: campaign.name,
-            value: campaign.id,
-            key: campaign.id,
-            label: {
-              content: campaign.active ? "Running" : "Stopped",
-              color: campaign.active ? "success" : "danger",
-            },
-          };
-        });
+    if (!initRef.current && team?.id) {
+      initRef.current = true;
+      // get segments
+      setLoading(true);
+      dispatch(runHelperMethod({
+        team_id: team?.id,
+        connection_id: connectionId,
+        methodName: "getAllCampaigns"
+      }))
+        .then((data) => {
+          const campaignData = data.payload;
+          const campaignOptions = campaignData.map((campaign) => {
+            return {
+              text: campaign.name,
+              value: campaign.id,
+              key: campaign.id,
+              label: {
+                content: campaign.active ? "Running" : "Stopped",
+                color: campaign.active ? "success" : "danger",
+              },
+            };
+          });
 
-        setCampaigns(campaignOptions);
-        setLoading(false);
+          setCampaigns(campaignOptions);
+          setLoading(false);
 
-        // initialize the config state
-        let newConfig = { ...config };
-        if (request && request.configuration) {
-          newConfig = {
-            ...newConfig,
-            ...request.configuration,
-          };
-
-          if (request.configuration.start && request.configuration.end) {
-            setJourneyStart(new Date(parseInt(request.configuration.start, 10) * 1000));
-            setJourneyEnd(new Date(parseInt(request.configuration.end, 10) * 1000));
-          } else {
+          // initialize the config state
+          let newConfig = { ...config };
+          if (request && request.configuration) {
             newConfig = {
               ...newConfig,
-              start: getUnixTime(journeyStart),
-              end: getUnixTime(journeyEnd),
+              ...request.configuration,
             };
+
+            if (request.configuration.start && request.configuration.end) {
+              setJourneyStart(new Date(parseInt(request.configuration.start, 10) * 1000));
+              setJourneyEnd(new Date(parseInt(request.configuration.end, 10) * 1000));
+            } else {
+              newConfig = {
+                ...newConfig,
+                start: getUnixTime(journeyStart),
+                end: getUnixTime(journeyEnd),
+              };
+            }
+
+            setConfig(newConfig);
+
+            if (request.configuration.linksMode === "links" && request.configuration.selectedLink) {
+              _onSelectClickTimeseries(newConfig);
+            }
+
+            _fetchActions(newConfig);
           }
 
-          setConfig(newConfig);
-
-          if (request.configuration.linksMode === "links" && request.configuration.selectedLink) {
-            _onSelectClickTimeseries(newConfig);
-          }
-
-          _fetchActions(newConfig);
-        }
-
-        // set default steps options
-        _onChangePeriod((request.configuration && request.configuration.period) || "days", newConfig);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+          // set default steps options
+          _onChangePeriod((request.configuration && request.configuration.period) || "days", newConfig);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [team]);
 
   useEffect(() => {
     if (config && config.campaignId) {
@@ -154,7 +159,7 @@ function CampaignsQuery(props) {
   const _fetchActions = (fetchConfig = config) => {
     setActionsLoading(true);
     dispatch(runHelperMethod({
-      team_id: params.teamId,
+      team_id: team?.id,
       connection_id: connectionId,
       methodName: "getCampaignActions",
       params: { campaignId: fetchConfig.campaignId }
@@ -286,7 +291,7 @@ function CampaignsQuery(props) {
     setConfig({ ...newConfig, linksMode: "links" });
     setLinksLoading(true);
     dispatch(runHelperMethod({
-      team_id: params.teamId,
+      team_id: team?.id,
       connection_id: connectionId,
       methodName: "getCampaignLinks",
       params: {

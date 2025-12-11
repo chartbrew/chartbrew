@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@heroui/react";
-import { connect, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
@@ -23,7 +23,7 @@ import { selectUser } from "../../../slices/user";
 
 function ChartDescription(props) {
   const {
-    name, onChange, onCreate, teamId, projectId, connections, templates,
+    name = "", onChange, onCreate, teamId, projectId, connections, templates,
   } = props;
 
   const [error, setError] = useState(false);
@@ -75,7 +75,7 @@ function ChartDescription(props) {
   };
 
   return (
-    <Container className={"bg-content1 rounded-md p-5 mt-10"}>
+    <Container className={"bg-content1 rounded-lg p-4 border-1 border-solid border-content3"}>
       <Row align="center" wrap="wrap">
         <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
           <Tab key="emptyChart" title="Create from scratch" />
@@ -136,7 +136,7 @@ function ChartDescription(props) {
                   isDisabled={!name}
                   isLoading={loading}
                   type="submit"
-                  onClick={_onCreatePressed}
+                  onPress={_onCreatePressed}
                   form="create-chart"
                   color="primary"
                   size="lg"
@@ -155,7 +155,7 @@ function ChartDescription(props) {
                     <Card
                       isPressable
                       isHoverable
-                      onClick={() => setFormType(t.type)}
+                      onPress={() => setFormType(t.type)}
                     >
                       <CardBody className="p-0">
                         <Image className="object-cover" width="300" height="300" src={t.image} />
@@ -179,7 +179,7 @@ function ChartDescription(props) {
               <CustomTemplates
                 templates={templates.data}
                 loading={templates.loading}
-                teamId={params.teamId}
+                teamId={team?.id}
                 projectId={params.projectId}
                 connections={connections}
                 onComplete={_onCompleteTemplate}
@@ -195,7 +195,7 @@ function ChartDescription(props) {
           <Row align={"start"} justify={"start"}>
             <Button
               variant="flat"
-              onClick={() => setFormType("")}
+              onPress={() => setFormType("")}
               startContent={<LuArrowLeft />}
               size="small"
             >
@@ -263,10 +263,6 @@ function ChartDescription(props) {
   );
 }
 
-ChartDescription.defaultProps = {
-  name: "",
-};
-
 ChartDescription.propTypes = {
   name: PropTypes.string,
   onChange: PropTypes.func.isRequired,
@@ -277,7 +273,4 @@ ChartDescription.propTypes = {
   templates: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = () => ({
-});
-
-export default connect(mapStateToProps)(ChartDescription);
+export default ChartDescription;

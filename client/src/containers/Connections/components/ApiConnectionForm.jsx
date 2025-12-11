@@ -7,8 +7,7 @@ import {
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
-import { useParams } from "react-router";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { LuEye, LuEyeOff, LuPlus, LuX } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -19,6 +18,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 
 const authTypes = [{
@@ -56,7 +56,7 @@ function ApiConnectionForm(props) {
   const { isDark } = useTheme();
   const initRef = useRef(null);
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (!initRef.current) {
@@ -93,7 +93,7 @@ function ApiConnectionForm(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+    return dispatch(testRequest({ team_id: team.id, connection: data }))
       .then(async (response) => {
         newTestResult.status = response.payload.status;
         newTestResult.body = await response.payload.text();

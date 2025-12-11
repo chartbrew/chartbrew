@@ -36,10 +36,44 @@ const router = createBrowserRouter([
         path: "connections",
       },
       {
+        path: "connections/:connectionId",
+      },
+      {
         path: "datasets",
       },
       {
+        path: "datasets/:datasetId",
+      },
+      {
         path: "integrations",
+      },
+      {
+        path: "settings",
+        children: [
+          {
+            path: "profile"
+          },
+          {
+            path: "team",
+          },
+          {
+            path: "members",
+          },
+          {
+            path: "api-keys",
+          },
+        ],
+      },
+      {
+        path: "dashboard/:projectId",
+        children: [
+          {
+            path: "chart",
+          },
+          {
+            path: "chart/:chartId/edit",
+          },
+        ]
       },
       {
         path: "chart/:chartId/embedded",
@@ -73,55 +107,6 @@ const router = createBrowserRouter([
       },
       {
         path: "feedback",
-      },
-      {
-        path: "manage/:teamId",
-        children: [
-          {
-            path: "members",
-          },
-          {
-            path: "settings",
-          },
-          {
-            path: "api-keys",
-          },
-        ],
-      },
-      {
-        path: ":teamId/:projectId",
-        children: [
-          {
-            path: "connections",
-          },
-          {
-            path: "dashboard",
-          },
-          {
-            path: "chart",
-          },
-          {
-            path: "chart/:chartId/edit",
-          },
-          {
-            path: "members",
-          },
-          {
-            path: "settings",
-          },
-          {
-            path: "integrations",
-          },
-          {
-            path: "variables",
-          }
-        ],
-      },
-      {
-        path: ":teamId/dataset/:datasetId",
-      },
-      {
-        path: ":teamId/connection/:connectionId",
       },
     ],
   },

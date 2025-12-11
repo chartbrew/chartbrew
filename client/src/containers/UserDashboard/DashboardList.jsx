@@ -1,8 +1,10 @@
 import {
   Button, Card, CardHeader, Dropdown, DropdownTrigger, Input, Spacer,
-  DropdownMenu, DropdownItem, Divider, CardBody, AvatarGroup,
+  DropdownMenu, DropdownItem, CardBody, AvatarGroup,
   Avatar, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tooltip,
+  Tabs,
+  Tab
 } from "@heroui/react";
 import React, { useEffect, useState } from "react";
 import { LuChartNoAxesColumnIncreasing, LuEllipsis, LuLayoutGrid, LuPencilLine, LuPin, LuPinOff, LuPlus, LuSearch, LuTable, LuTrash, LuUsers } from "react-icons/lu";
@@ -38,6 +40,14 @@ function DashboardList() {
     const storageViewMode = window.localStorage.getItem("__cb_view_mode");
     if (storageViewMode) setViewMode(storageViewMode);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") === "dashboard") {
+      setAddProject(true);
+      navigate("/");
+    }
+  }, [window.location.search]);
 
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.id, teamRoles);
@@ -95,7 +105,7 @@ function DashboardList() {
   };
 
   const directToProject = (projectId) => {
-    navigate(`/${team.id}/${projectId}/dashboard`);
+    navigate(`/dashboard/${projectId}`);
   };
 
   const _onEditProject = (project) => {
@@ -165,6 +175,16 @@ function DashboardList() {
         onClose={() => setAddProject(false)}
       />
       <div className="flex flex-row justify-between items-center">
+        <div className="flex flex-row items-center">
+          <div className="flex flex-col gap-1">
+            <div className="text-2xl font-semibold font-tw">
+              Dashboards
+            </div>
+            <div className="text-sm text-foreground-500">
+              {"Create and manage your dashboards"}
+            </div>
+          </div>
+        </div>
         <div className="flex flex-row items-center gap-2">
           {_canAccess("teamAdmin", team.TeamRoles) && (
             <div>
@@ -179,60 +199,49 @@ function DashboardList() {
               </Button>
             </div>
           )}
-          <Input
-            type="text"
-            placeholder="Search dashboards"
-            variant="bordered"
-            endContent={<LuSearch />}
-            onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
-            className="max-w-[300px]"
-            labelPlacement="outside"
-          />
         </div>
-        <div className="flex flex-row">
-          <Button
-            variant="light"
-            isIconOnly
-            color={viewMode === "grid" ? "primary" : "default"}
-            onPress={() => _changeViewMode("grid")}
-          >
-            <LuLayoutGrid />
-          </Button>
-          <Button
-            variant="light"
-            isIconOnly
-            color={viewMode === "table" ? "primary" : "default"}
-            onPress={() => _changeViewMode("table")}
-          >
-            <LuTable />
-          </Button>
-        </div>
+      </div>
+      <Spacer y={2} />
+      <div className="flex flex-row items-center gap-2">
+        <Input
+          type="text"
+          placeholder="Search dashboards"
+          variant="bordered"
+          endContent={<LuSearch />}
+          onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+          className="max-w-md"
+          labelPlacement="outside"
+        />
+        <Tabs selectedKey={viewMode} onSelectionChange={(key) => _changeViewMode(key)}>
+          <Tab key="grid" title={<LuLayoutGrid />} />
+          <Tab key="table" title={<LuTable />} />
+        </Tabs>
       </div>
       <Spacer y={4} />
       {projects && viewMode === "grid" && (
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {_getFilteredProjects().map((project) => (
             <Card
               key={project.id}
               isPressable
               shadow="none"
-              className="border-1 border-solid border-content3"
+              className="border-1 border-solid border-divider p-2"
               radius="sm"
               onPress={() => directToProject(project.id)}
             >
               <CardHeader className="flex flex-row justify-between items-center">
                 <div className="flex flex-row items-center gap-2">
                   {pinnedDashboards.find((p) => p.project_id === project.id) && (
-                    <LuPin className="text-foreground-500" size={18} />
+                    <LuPin className="text-secondary" size={18} fill="currentColor" />
                   )}
-                  <Link to={`/${team.id}/${project.id}/dashboard`} className="cursor-pointer !text-foreground hover:underline">
-                    <span className="text-sm font-medium">{project.name}</span>
+                  <Link to={`/dashboard/${project.id}`} className="cursor-pointer text-foreground! hover:underline">
+                    <span className="font-tw font-semibold">{project.name}</span>
                   </Link>
                 </div>
                 {_canAccess("teamAdmin", team.TeamRoles) && (
                   <Dropdown size="sm">
                     <DropdownTrigger>
-                      <Button isIconOnly variant="light" size="sm">
+                      <Button isIconOnly variant="flat" size="sm">
                         <LuEllipsis className="text-foreground-400" />
                       </Button>
                     </DropdownTrigger>
@@ -264,27 +273,23 @@ function DashboardList() {
                   </Dropdown>
                 )}
               </CardHeader>
-              <Divider />
               <CardBody>
                 <div className="flex flex-row justify-between items-center">
                   {_getProjectMembers(project)?.length > 0 && (
-                    <AvatarGroup max={3} isBordered size="sm">
-                      {_getProjectMembers(project)?.map((pr) => (
-                        <Avatar
-                          key={pr.id}
-                          name={pr.name}
-                        />
-                      ))}
-                    </AvatarGroup>
+                    <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                      <LuUsers size={16} />
+                      <span>{_getProjectMembers(project)?.length} {_getProjectMembers(project)?.length === 1 ? "member" : "members"}</span>
+                    </div>
                   )}
                   {_getProjectMembers(project)?.length === 0 && (
-                    <Chip variant="flat" size="sm">
+                    <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                      <LuUsers size={16} />
                       Team only
-                    </Chip>
+                    </div>
                   )}
-                  <div className="flex flex-row items-center gap-1 text-sm">
-                    <LuChartNoAxesColumnIncreasing />
-                    <span>{project?.Charts?.length || 0}</span>
+                  <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
+                    <LuChartNoAxesColumnIncreasing size={16} />
+                    <span>{project?.Charts?.length || 0} {project?.Charts?.length === 1 ? "chart" : "charts"}</span>
                   </div>
                 </div>
               </CardBody>
@@ -332,13 +337,13 @@ function DashboardList() {
                     {pinnedDashboards.find((p) => p.project_id === project.id) ? (
                       <Tooltip content="Unpin dashboard" placement="left-start">
                         <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
-                          <LuPin className="text-gray-500" size={18} />
+                          <LuPin className="text-secondary" size={18} fill="currentColor" />
                         </Button>
                       </Tooltip>
                     ) : (
                       <Tooltip content="Pin dashboard" placement="left-start">
                         <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <LuPin className="text-gray-500" size={18} />
+                          <LuPin className="text-secondary" size={18} />
                         </Button>
                       </Tooltip>
                     )}

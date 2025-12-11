@@ -6,7 +6,7 @@ import {
   Listbox, ListboxItem,
   Alert,
 } from "@heroui/react";
-import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuSettings, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
+import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -602,7 +602,6 @@ function SharingSettings(props) {
       classNames={{
         base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
       }}
-      style={{ marginTop: onReport ? "" : "54px" }}
       hideCloseButton={!onReport}
     >
       <DrawerContent>
@@ -637,7 +636,7 @@ function SharingSettings(props) {
               <Button
                 size="sm"
                 variant="flat"
-                endContent={<LuSettings size={18} />}
+                endContent={<LuPalette size={18} />}
                 onPress={() => navigate(`/report/${newBrewName}/edit`)}
               >
                 Edit visuals

@@ -33,6 +33,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 const methods = [{
   key: 1,
@@ -103,9 +104,10 @@ function ApiBuilder(props) {
   const connectionInitRef = useRef(false);
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   const {
-    dataRequest, onChangeRequest, connection, onSave, onDelete,
+    dataRequest = null, onChangeRequest, connection, onSave, onDelete,
   } = props;
 
   // on init effect
@@ -157,15 +159,15 @@ function ApiBuilder(props) {
       }
     }
 
-    if (connection && !connectionInitRef.current) {
-      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
+    if (connection && team?.id && !connectionInitRef.current) {
+      dispatch(getConnection({ team_id: team.id, connection_id: connection.id }))
         .then((data) => {
           setFullConnection(data.payload);
         })
         .catch(() => {});
       connectionInitRef.current = true;
     }
-  }, [apiRequest, connection]);
+  }, [apiRequest, connection, team]);
 
   useEffect(() => {
     if (stateDrs && stateDrs.length > 0) {
@@ -286,7 +288,7 @@ function ApiBuilder(props) {
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team.id,
         dataset_id: params.datasetId,
         dataRequest_id: dr.id,
         getCache,
@@ -345,7 +347,7 @@ function ApiBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -353,7 +355,7 @@ function ApiBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,
@@ -1026,10 +1028,6 @@ function ApiBuilder(props) {
     </div>
   );
 }
-
-ApiBuilder.defaultProps = {
-  dataRequest: null,
-};
 
 ApiBuilder.propTypes = {
   connection: PropTypes.object.isRequired,

@@ -3,15 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
   Button, Link, Spacer, Input, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
-  Breadcrumbs, BreadcrumbItem,
   Checkbox,
+  Tabs,
+  Tab,
 } from "@heroui/react";
 import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
 import { createCdc, createChart, runQuery } from "../../slices/chart";
 import { getDataset, runRequest, saveNewDataset, updateDataset } from "../../slices/dataset";
-import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
 import DatasetBuilder from "./DatasetBuilder";
@@ -42,6 +42,7 @@ function Dataset() {
   const navigate = useNavigate();
   const { search } = useLocation();
   const initRef = useRef(null);
+  const datasetInitRef = useRef(null);
   const chartInitRef = useRef(null);
   const createInitRef = useRef(null);
   const query = useQuery();
@@ -56,14 +57,18 @@ function Dataset() {
   useEffect(() => {
     async function fetchData() {
       dispatch(getDataset({
-        team_id: params.teamId,
+        team_id: team.id,
         dataset_id: params.datasetId,
       }));
-      dispatch(getTeamConnections({ team_id: params.teamId }));
-      dispatch(getProjects({ team_id: params.teamId }));
+      dispatch(getTeamConnections({ team_id: team.id }));
+      dispatch(getProjects({ team_id: team.id }));
     }
-    fetchData();
-  }, []);
+
+    if (team?.id && !initRef.current) {
+      initRef.current = true;
+      fetchData();
+    }
+  }, [team]);
 
   useEffect(() => {
     if (user?.id && !team) {
@@ -84,8 +89,8 @@ function Dataset() {
       return;
     }
 
-    if (!initRef.current) {
-      initRef.current = true;
+    if (!datasetInitRef.current) {
+      datasetInitRef.current = true;
       setLegend(dataset.legend);
     }
   }, [dataset]);
@@ -94,10 +99,10 @@ function Dataset() {
     if (params.datasetId === "new" && !createInitRef.current) {
       createInitRef.current = true;
       dispatch(saveNewDataset({
-        team_id: params.teamId,
+        team_id: team.id,
         data: {
           legend: "New dataset",
-          team_id: params.teamId,
+          team_id: team.id,
           draft: true,
         },
       }))
@@ -105,10 +110,10 @@ function Dataset() {
           if (newDataset?.error) {
             toast.error("Could not create dataset. Please try again.");
           } else {
-            let newPathname = `/${params.teamId}/dataset/${newDataset.payload?.id}${search}`;
+            let newPathname = `/datasets/${newDataset.payload?.id}${search}`;
             navigate(newPathname);
             dispatch(getDataset({
-              team_id: params.teamId,
+              team_id: team.id,
               dataset_id: newDataset.payload?.id,
             }));
           }
@@ -148,14 +153,14 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    if (datasetMenu === "configure" && dataset?.id) {
+    if (datasetMenu === "configure" && dataset?.id && team?.id) {
       dispatch(runRequest({
-        team_id: params.teamId,
+        team_id: team.id,
         dataset_id: dataset.id,
         getCache: true,
       }));
     }
-  }, [datasetMenu]);
+  }, [datasetMenu, team]);
 
   useEffect(() => {
     let message = error;
@@ -184,7 +189,7 @@ function Dataset() {
 
   const _onUpdateDataset = (data) => {
     return dispatch(updateDataset({
-      team_id: params.teamId,
+      team_id: team.id,
       dataset_id: dataset.id,
       data
     }))
@@ -209,7 +214,7 @@ function Dataset() {
 
   const _onSaveDataset = () => {
     if (fromChart === "edit") {
-      navigate(`/${params.teamId}/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
+      navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
       return;
     }
 
@@ -219,7 +224,7 @@ function Dataset() {
   const _onCompleteDataset = () => {
     setCompleteDatasetLoading(true);
     const datasetData = {
-      team_id: params.teamId,
+      team_id: team.id,
       dataset_id: dataset.id,
       data: {
         draft: false,
@@ -248,7 +253,7 @@ function Dataset() {
         },
       }))
         .then((cdcData) => {
-          navigate(`/${params.teamId}/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);          
+          navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);          
           dispatch(runQuery({
             project_id: query.get("project_id"),
             chart_id: cdcData.payload.chart_id,
@@ -315,7 +320,7 @@ function Dataset() {
           if (loadingCounter === completeProjects.length) {
             setCompleteDatasetLoading(false);
             if (completeProjects.length === 1) {
-              navigate(`/${params.teamId}/${completeProjects[0]}/dashboard`);
+              navigate(`/dashboard/${completeProjects[0]}/dashboard`);
             } else {
               navigate("/");
             }
@@ -338,115 +343,99 @@ function Dataset() {
 
   return (
     <div>
-      <Navbar hideTeam transparent />
-      <div>
-        <div className="flex flex-row justify-between items-center p-2 md:pl-8 md:pr-8 bg-content2 border-b border-divider">
-          <div className="flex flex-row gap-2 items-center">
-            {!editLegend && (
-              <>
-                <Link onClick={() => setEditLegend(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
-                  <div className="text-lg font-tw font-bold text-foreground">{dataset?.legend}</div>
-                  <LuPencil />
-                </Link>
-              </>
-            )}
+      <div className="flex flex-row justify-between flex-wrap gap-2 items-center bg-background px-4 rounded-lg border-1 border-divider py-2">
+        <div className="flex flex-row gap-2 items-center">
+          {!editLegend && (
+            <>
+              <Link onClick={() => setEditLegend(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
+                <div className="font-tw font-bold text-foreground">{dataset?.legend}</div>
+                <LuPencil size={16} className="text-secondary" />
+              </Link>
+            </>
+          )}
 
-            {editLegend && (
-              <>
-                <Input
-                  value={legend}
-                  onChange={(e) => setLegend(e.target.value)}
-                  placeholder="Dataset name"
-                  variant="bordered"
-                  labelPlacement="outside"
-                />
-                <Button
-                  variant="ghost"
-                  isIconOnly
-                  color="primary"
-                  onPress={() => {
-                    _onUpdateDataset({ legend });
-                    setEditLegend(false);
-                  }}
-                  size="sm"
-                >
-                  <LuCheck />
-                </Button>
-              </>
-            )}
-          </div>
-
-          <div>
-            <Breadcrumbs
-              aria-label="Dataset steps"
-              onAction={(key) => setDatasetMenu(key)}
-              size="lg"
-            >
-              {canAccess("projectAdmin", user.id, team.TeamRoles) && (
-                <BreadcrumbItem
-                  key="query"
-                  startContent={<LuDatabase size={18} />}
-                  isCurrent={datasetMenu === "query"}
-                  classNames={{
-                    item: "flex flex-row items-center gap-1",
-                  }}
-                >
-                  Query
-                </BreadcrumbItem>
-              )}
-              {canAccess("projectEditor", user.id, team.TeamRoles) && (
-                <BreadcrumbItem
-                  key="configure"
-                  startContent={<LuChartArea size={18} />}
-                  isCurrent={datasetMenu === "configure"}
-                  isDisabled={dataset?.DataRequests.length === 0}
-                  classNames={{
-                    item: "flex flex-row items-center gap-1",
-                  }}
-                >
-                  Configure
-                </BreadcrumbItem>
-              )}
-            </Breadcrumbs>
-          </div>
-
-          <div className="flex flex-row">
-            {datasetMenu === "query" && (
+          {editLegend && (
+            <>
+              <Input
+                value={legend}
+                onChange={(e) => setLegend(e.target.value)}
+                placeholder="Dataset name"
+                variant="bordered"
+                labelPlacement="outside"
+              />
               <Button
+                variant="ghost"
+                isIconOnly
                 color="primary"
-                // size="sm"
-                onPress={() => setDatasetMenu("configure")}
-                endContent={<LuArrowRight />}
-                isDisabled={dataset?.DataRequests.length === 0}
+                onPress={() => {
+                  _onUpdateDataset({ legend });
+                  setEditLegend(false);
+                }}
+                size="sm"
               >
-                Configure dataset
+                <LuCheck />
               </Button>
-            )}
-            {datasetMenu === "configure" && (
-              <Button
-                color="primary"
-                onPress={() => _onSaveDataset()}
-                endContent={<LuCheck />}
-                isDisabled={dataset?.DataRequests.length === 0}
-              >
-                {fromChart === "edit" && "Save & return to chart"}
-                {fromChart !== "edit" && "Complete dataset"}
-              </Button>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
-        {datasetMenu === "query" && (
-          <DatasetQuery onUpdateDataset={_onUpdateDataset} />
-        )}
-
-        {datasetMenu === "configure" && ghostChart && (
-          <DatasetBuilder
-            chart={ghostChart}
-            projectId={ghostProject?.id}
-          />
-        )}
+        <div className="flex flex-row gap-2 flex-wrap">
+          <Tabs
+            selectedKey={datasetMenu}
+            onSelectionChange={(key) => setDatasetMenu(key)}
+          >
+            {canAccess("projectAdmin", user.id, team.TeamRoles) && (
+              <Tab key="query" title={(
+                <div className="flex flex-row items-center gap-2">
+                  <LuDatabase size={18} />
+                  <span>1. Query</span>
+                </div>
+              )} />
+            )}
+            {canAccess("projectEditor", user.id, team.TeamRoles) && (
+              <Tab key="configure" title={(
+                <div className="flex flex-row items-center gap-2">
+                  <LuChartArea size={18} />
+                  <span>2. Configure</span>
+                </div>
+              )} />
+            )}
+          </Tabs>
+          {datasetMenu === "query" && (
+            <Button
+              color="primary"
+              // size="sm"
+              onPress={() => setDatasetMenu("configure")}
+              endContent={<LuArrowRight />}
+              isDisabled={dataset?.DataRequests.length === 0}
+            >
+              Configure dataset
+            </Button>
+          )}
+          {datasetMenu === "configure" && (
+            <Button
+              color="primary"
+              onPress={() => _onSaveDataset()}
+              endContent={<LuCheck />}
+              isDisabled={dataset?.DataRequests.length === 0}
+            >
+              {fromChart === "edit" && "Save & return to chart"}
+              {fromChart !== "edit" && "Complete dataset"}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {datasetMenu === "query" && (
+        <DatasetQuery onUpdateDataset={_onUpdateDataset} />
+      )}
+
+      {datasetMenu === "configure" && ghostChart && (
+        <DatasetBuilder
+          chart={ghostChart}
+          projectId={ghostProject?.id}
+        />
+      )}
 
       <Modal
         isOpen={completeModal}

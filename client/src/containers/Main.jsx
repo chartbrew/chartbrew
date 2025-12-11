@@ -13,12 +13,10 @@ import {
   selectUser,
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
+import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
-import TeamMembers from "./TeamMembers/TeamMembers";
-import TeamSettings from "./TeamSettings";
-import ApiKeys from "./ApiKeys/ApiKeys";
 import ProjectDashboard from "./ProjectDashboard/ProjectDashboard";
 import AddChart from "./AddChart/AddChart";
 import ProjectSettings from "./ProjectSettings";
@@ -26,8 +24,6 @@ import Integrations from "./Integrations/Integrations";
 import Dataset from "./Dataset/Dataset";
 // import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
-import LoadingScreen from "../components/LoadingScreen";
-import Variables from "./Variables/Variables";
 import { Toaster } from "react-hot-toast";
 import ConnectionList from "./UserDashboard/ConnectionList";
 import DatasetList from "./UserDashboard/DatasetList";
@@ -36,19 +32,22 @@ import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
 import SharedChart from "./SharedChart";
 import Report from "./PublicDashboard/Report";
+import { Button, Modal, ModalBody, ModalContent, ModalFooter } from "@heroui/react";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
 const Login = lazy(() => import("./Login"));
-const ManageTeam = lazy(() => import("./ManageTeam"));
+const ManageTeam = lazy(() => import("./Settings/ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
-const ManageUser = lazy(() => import("./ManageUser"));
-const FeedbackForm = lazy(() => import("../components/FeedbackForm"));
+const ManageUser = lazy(() => import("./Settings/ManageUser"));
 const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
+import FeedbackForm from "../components/FeedbackForm";
+import canAccess from "../config/canAccess";
+import AiModal from "./Ai/AiModal";
 
 function authenticatePage() {
   if (window.location.pathname === "/login") {
@@ -84,6 +83,8 @@ function Main(props) {
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
+  const feedbackModal = useSelector(selectFeedbackModalOpen);
+  const aiModalOpen = useSelector(selectAiModalOpen);
   const teamsRef = useRef(null);
 
   const { isDark } = useTheme();
@@ -128,6 +129,24 @@ function Main(props) {
           }
         });
     }
+
+    // Keyboard shortcut for AI modal (Cmd+K on Mac, Ctrl+K on Windows)
+    const handleKeyDown = (event) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        // Prevent default browser behavior (usually search)
+        event.preventDefault();
+        dispatch(toggleAiModal());
+      }
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -193,8 +212,17 @@ function Main(props) {
               <Route path="/" element={<UserDashboard />}>
                 <Route index element={<DashboardList />} />
                 <Route path="connections" element={<ConnectionList />} />
+                <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="datasets" element={<DatasetList />} />
+                <Route path="datasets/:datasetId" element={<Dataset />} />
                 <Route path="integrations" element={<Integrations />} />
+                <Route path="settings/*" element={<ManageTeam />} />
+                <Route path="dashboard" element={<ProjectBoard />}>
+                  <Route path=":projectId" element={<ProjectDashboard />} />
+                  <Route path=":projectId/chart" element={<AddChart />} />
+                  <Route path=":projectId/chart/:chartId/edit" element={<AddChart />} />
+                  <Route path=":projectId/settings" element={<ProjectSettings />} />
+                </Route>
               </Route>
               <Route exact path="/b/:brewName" element={<PublicDashboard />} />
               <Route path="/report/:brewName" element={<Report />} />
@@ -215,68 +243,11 @@ function Main(props) {
               <Route exact path="/user/profile" element={<ManageUser />} />
               <Route exact path="/edit" element={<ManageUser />} />
               <Route exact path="/passwordReset" element={<PasswordReset />} />
-              <Route path="/manage/:teamId" element={<ManageTeam />}>
-                <Route
-                  path="members"
-                  element={<TeamMembers />}
-                />
-                <Route
-                  path="settings"
-                  element={<TeamSettings />}
-                />
-                <Route
-                  path="api-keys"
-                  element={team?.id ? <ApiKeys teamId={team.id} /> : <LoadingScreen />}
-                />
-              </Route>
               <Route
                 exact
                 path="/project/:projectId"
                 element={<ProjectRedirect />}
               />
-
-              {/* Add all the routes for the project board here */}
-              <Route path="/:teamId/:projectId" element={<ProjectBoard />}>
-                <Route
-                  exact
-                  path="dashboard"
-                  element={<ProjectDashboard />}
-                />
-                <Route
-                  exact
-                  path="chart"
-                  element={<AddChart />}
-                />
-                <Route
-                  exact
-                  path="chart/:chartId/edit"
-                  element={<AddChart />}
-                />
-                <Route
-                  exact
-                  path="settings"
-                  element={<ProjectSettings />}
-                />
-                <Route
-                  exact
-                  path="members"
-                  element={
-                    <div className="container mx-auto pt-unit-lg">
-                      <TeamMembers />
-                    </div>
-                  }
-                />
-                <Route
-                  exact
-                  path="integrations"
-                  element={<Integrations />}
-                />
-                <Route
-                  exact
-                  path="variables"
-                  element={<Variables />}
-                />
-              </Route>
 
               <Route
                 exact
@@ -290,21 +261,35 @@ function Main(props) {
               />
 
               <Route exact path="/invite" element={<UserInvite />} />
-
-              <Route
-                exact
-                path="/:teamId/dataset/:datasetId"
-                element={<Dataset />}
-              />
-              <Route
-                exact
-                path="/:teamId/connection/:connectionId"
-                element={<ConnectionWizard />}
-              />
             </Routes>
           </Suspense>
         </div>
       </div>
+
+      <Modal
+        isOpen={feedbackModal}
+        onClose={() => dispatch(hideFeedbackModal())}
+      >
+        <ModalContent>
+          <ModalBody>
+            <FeedbackForm />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              onPress={() => dispatch(hideFeedbackModal())}
+            >
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+        <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+      )}
+
       <Toaster
         position="top-center"
         reverseOrder={false}

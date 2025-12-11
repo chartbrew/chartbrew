@@ -176,3 +176,11 @@ a:hover {
     opacity: 0.7;
   }
 }
+
+#HW_badge_cont, #HW_badge {
+  position: absolute !important;
+  top: 0 !important;
+  right: -5px !important;
+  /* background: transparent !important;
+  border: none !important; */
+}

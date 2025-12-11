@@ -1,51 +1,36 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router";
 import { useWindowSize } from "react-use";
 import {
-  Button, Spacer, Chip, CircularProgress,
-  DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Listbox, ListboxItem,
-  Spinner,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  Input,
-  ModalFooter,
+  Spacer, CircularProgress, Spinner,
 } from "@heroui/react";
-import {
-  LuChevronDown, LuDatabase, LuLayoutGrid, LuPlug, LuPlus, LuPuzzle, LuSettings, LuUsers,
-} from "react-icons/lu";
-import toast from "react-hot-toast";
 
 import { relog } from "../../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjects } from "../../slices/project";
-import { clearConnections, getTeamConnections } from "../../slices/connection";
-import Navbar from "../../components/Navbar";
-import canAccess from "../../config/canAccess";
+import { getTeamConnections } from "../../slices/connection";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers,
-  createTeam,
 } from "../../slices/team";
-import { clearDatasets, getDatasets } from "../../slices/dataset";
-import Segment from "../../components/Segment";
-import NoticeBoard from "./components/NoticeBoard";
+
 import DashboardList from "./DashboardList";
+import Sidebar from "../../components/Sidebar";
+import { cn } from "../../modules/utils";
+import TopNav from "../../components/TopNav";
+import { selectSidebarCollapsed } from "../../slices/ui";
+import { getDatasets } from "../../slices/dataset";
 
 /*
   The user dashboard with all the teams and projects
 */
 function UserDashboard(props) {
   const { cleanErrors } = props;
-
-  const [createTeamModal, setCreateTeamModal] = useState(false);
-  const [creatingTeam, setCreatingTeam] = useState(false);
-  const [teamName, setTeamName] = useState("");
+  const collapsed = useSelector(selectSidebarCollapsed);
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
@@ -125,40 +110,6 @@ function UserDashboard(props) {
     }
   };
 
-  const _canAccess = (role, teamRoles) => {
-    return canAccess(role, user.data.id, teamRoles);
-  };
-
-  const _getTeamRole = (teamRoles) => {
-    if (!teamRoles) return "";
-    return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
-  };
-
-  const _onChangeTeam = (teamId) => {
-    const team = teams.find((t) => `${t.id}` === `${teamId}`);
-    if (!team) return;
-
-    dispatch(saveActiveTeam(team));
-    dispatch(clearConnections());
-    dispatch(clearDatasets());
-    dispatch(getTeamMembers({ team_id: team.id }));
-    dispatch(getDatasets({ team_id: team.id }));
-
-    navigate("/");
-  };
-
-  const _onCreateTeam = async () => {
-    setCreatingTeam(true);
-    const teamData = await dispatch(createTeam({ name: teamName }));
-    if (teamData.error) {
-      toast.error(teamData.error);
-    }
-    
-    setCreateTeamModal(false);
-    setTeamName("");
-    setCreatingTeam(false);
-  };
-
   if (!user.data.id) {
     return (
       <div style={styles.container(height)}>
@@ -171,139 +122,20 @@ function UserDashboard(props) {
     );
   }
 
-  const _getActiveMenu = () => {
-    return window.location.pathname.split("/")[1];
-  };
-
   return (
-    <div className="dashboard bg-content2 flex flex-col min-h-screen h-full">
-      <Navbar hideTeam transparent />
-      <div className="w-full max-w-(--breakpoint-2xl) mx-auto px-4">
-        {team?.id && (
-          <div className="grid grid-cols-12 gap-4 mt-4">
-            <div className="col-span-12 sm:col-span-5 md:col-span-4 lg:col-span-3">
-              <Row
-                align={"center"}
-                justify={"space-between"}
-              >
-                <Row justify="flex-start" align="center" className={"w-full"}>
-                  <Dropdown aria-label="Select a team option">
-                    <DropdownTrigger>
-                      <Button
-                        startContent={<LuUsers size={20} />}
-                        variant="bordered"
-                        className="bg-background justify-between"
-                        endContent={<LuChevronDown />}
-                        fullWidth
-                      >
-                        {team.name}
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      selectedKeys={[`${team.id}`]}
-                      onSelectionChange={(keys) => {
-                        _onChangeTeam(keys.currentKey);
-                      }}
-                      selectionMode="single"
-                    >
-                      {teams.map((t, index) => (
-                        <DropdownItem
-                          key={t.id}
-                          textValue={t.name}
-                          endContent={(
-                            <Chip size="sm" variant="flat" color="primary">
-                              {_getTeamRole(t.TeamRoles)}
-                            </Chip>
-                          )}
-                          showDivider={index === teams.length - 1}
-                        >
-                          {t.name}
-                        </DropdownItem>
-                      ))}
-                      <DropdownItem
-                        key="createTeam"
-                        textValue="Add new team"
-                        onClick={() => setCreateTeamModal(true)}
-                        color="primary"
-                        endContent={<LuPlus size={18} />}
-                      >
-                        Add new team
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </Row>
-              </Row>
+    <div className="dashboard bg-content2">
+      {team?.id && (
+        <div>
+          <Sidebar />
 
-              <Spacer y={4} />
-              <Segment className={"p-1 sm:p-1 md:p-1 bg-content1 rounded-xl"}>
-                <Listbox aria-label="Actions" variant="faded">
-                  <ListboxItem
-                    key="projects"
-                    startContent={<LuLayoutGrid size={24} />}
-                    textValue="Dashboards"
-                    color={_getActiveMenu() === "" ? "primary" : "default"}
-                    className={_getActiveMenu() === "" ? "bg-content2 text-primary" : "text-foreground"}
-                    onClick={() => navigate("/")}
-                  >
-                    <span className="text-lg">Dashboards</span>
-                  </ListboxItem>
-                  {_canAccess("teamAdmin", team.TeamRoles) && (
-                    <ListboxItem
-                      key="connections"
-                      startContent={<LuPlug size={24} />}
-                      textValue="Connections"
-                      color={_getActiveMenu() === "connections" ? "primary" : "default"}
-                      className={_getActiveMenu() === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial"}
-                      onClick={() => navigate("/connections")}
-                    >
-                      <span className="text-lg">Connections</span>
-                    </ListboxItem>
-                  )}
-                  {_canAccess("projectEditor", team.TeamRoles) && (
-                    <ListboxItem
-                      key="datasets"
-                      startContent={<LuDatabase size={24} />}
-                      textValue="Datasets"
-                      color={_getActiveMenu() === "datasets" ? "primary" : "default"}
-                      className={_getActiveMenu() === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"}
-                      onClick={() => navigate("/datasets")}
-                    >
-                      <span className="text-lg">Datasets</span>
-                    </ListboxItem>
-                  )}
-                  {_canAccess("teamAdmin", team.TeamRoles) && (
-                    <ListboxItem
-                      key="integrations"
-                      showDivider={_canAccess("teamAdmin", team.TeamRoles)}
-                      startContent={<LuPuzzle size={24} />}
-                      textValue="Integrations"
-                      color={_getActiveMenu() === "integrations" ? "primary" : "default"}
-                      className={_getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"}
-                      onClick={() => navigate("/integrations")}
-                    >
-                      <span className="text-lg">Integrations</span>
-                    </ListboxItem>
-                  )}
-                  {_canAccess("teamAdmin", team.TeamRoles) && (
-                    <ListboxItem
-                      key="teamSettings"
-                      startContent={<LuSettings size={24} />}
-                      textValue="Team settings"
-                      color={"default"}
-                      className={"text-foreground team-settings-tutorial"}
-                      onClick={() => navigate(`/manage/${team.id}/settings`)}
-                    >
-                      <span className="text-lg">Team settings</span>
-                    </ListboxItem>
-                  )}
-                </Listbox>
-              </Segment>
-
-
-              <NoticeBoard />
-            </div>
-
-            <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">
+          <div
+            className={cn(
+              "min-h-[calc(100vh-64px)] transition-all duration-300",
+              collapsed ? "ml-16" : "ml-64"
+            )}
+          >
+            <TopNav />
+            <div className="px-6 py-4">
               <Outlet />
 
               {window.location.pathname === "/user" && (
@@ -311,52 +143,22 @@ function UserDashboard(props) {
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <Spacer y={4} />
+      <Spacer y={4} />
 
-        {(teams && teams.length === 0) && (
-          <>
-            <div className="flex justify-center items-center">
-              <Spinner variant="simple" aria-label="Loading" />
-            </div>
-            <Spacer y={1} />
-            <div className="flex justify-center items-center">
-              <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
-            </div>
-          </>
-        )}
-      </div>
-
-      <Modal isOpen={createTeamModal} onClose={() => setCreateTeamModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <span className="font-bold">Create a new team</span>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              label="Team name"
-              placeholder="Enter your new team name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              variant="bordered"
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={() => setCreateTeamModal(false)}>
-              Close
-            </Button>
-            <Button
-              color="primary"
-              isLoading={creatingTeam}
-              onPress={_onCreateTeam}
-              isDisabled={!teamName}
-            >
-              Create team
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {(teams && teams.length === 0) && (
+        <div className="bg-content2 pt-10 mt-[-20px]">
+          <div className="flex justify-center items-center">
+            <Spinner variant="simple" aria-label="Loading" />
+          </div>
+          <Spacer y={1} />
+          <div className="flex justify-center items-center">
+            <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

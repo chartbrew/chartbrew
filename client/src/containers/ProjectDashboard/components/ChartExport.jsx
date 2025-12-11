@@ -6,9 +6,6 @@ import {
 } from "@heroui/react";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
 
-import Row from "../../../components/Row";
-import Text from "../../../components/Text";
-
 function ChartExport(props) {
   const {
     charts, onExport, onUpdate, loading, error, showDisabled,
@@ -43,63 +40,55 @@ function ChartExport(props) {
 
   return (
     <div>
-      <Row>
-        <Text b>
-          Select which charts you want to export
-        </Text>
-      </Row>
+      <div>
+        Select which charts you want to export
+      </div>
       <Spacer y={2} />
-      <Row align="center">
+      <div className="flex flex-row flex-wrap gap-2">
         <Button
           variant="ghost"
-          onClick={_onSelectAll}
+          onPress={_onSelectAll}
           endContent={<LuCheckCheck />}
           size="sm"
         >
           Select all
         </Button>
-        <Spacer x={0.5} />
         <Button
           variant="ghost"
-          onClick={_onDeselectAll}
+          onPress={_onDeselectAll}
           size="sm"
           endContent={<LuX />}
         >
           Deselect all
         </Button>
-      </Row>
+      </div>
       <Spacer y={2} />
-      <Row align="center">
-        <div className="grid grid-cols-12 gap-2">
-          {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
-            return (
-              <div className="col-span-12 md:col-span-6" key={chart.id}>
-                <div className="flex items-center align-middle">
-                  <Row align="center">
-                    <Checkbox
-                      isSelected={_.indexOf(selectedIds, chart.id) > -1}
-                      onChange={() => _onSelectChart(chart.id)}
-                      size="sm"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
+          return (
+            <div key={chart.id}>
+              <div className="flex items-center align-middle">
+                <div className="flex flex-row flex-wrap gap-2">
+                  <Checkbox
+                    isSelected={_.indexOf(selectedIds, chart.id) > -1}
+                    onChange={() => _onSelectChart(chart.id)}
+                    size="sm"
                   >
-                      {chart.name}
-                    </Checkbox>
-                    {showDisabled && (
-                    <>
-                      <Spacer x={0.5} />
-                      <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
-                        <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
-                          <LuEye className="text-warning" />
-                        </LinkNext>
-                      </Tooltip>
-                    </>
-                    )}
-                  </Row>
+                    {chart.name}
+                  </Checkbox>
+                  {showDisabled && (
+                    <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
+                      <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
+                        <LuEye className="text-warning" />
+                      </LinkNext>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </Row>
+            </div>
+          );
+        })}
+      </div>
       <Spacer y={2} />
 
       {showDisabled && (
@@ -107,36 +96,32 @@ function ChartExport(props) {
           <Divider />
           <Spacer y={4} />
           {charts && charts.filter((c) => c.disabledExport).length > 0 && (
-            <Row>
-              <Text b>
-                Admin view - Charts disabled for export
-              </Text>
-            </Row>
+            <div>
+              Charts disabled for export
+            </div>
           )}
           <Spacer y={2} />
-          <Row align="center">
-            <div className="grid grid-cols-12 gap-2">
-              {charts && charts.filter((c) => c.disabledExport).map((chart) => {
-                return (
-                  <div className="col-span-6 sm:col-span-12" key={chart.id}>
-                    <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
-                      <LinkNext className="text-success cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
-                        <LuEyeOff className="text-success" />
-                        {chart.name}
-                      </LinkNext>
-                    </Tooltip>
-                  </div>
-                );
-              })}
-            </div>
-          </Row>
+          <div className="flex flex-row flex-wrap gap-2">
+            {charts && charts.filter((c) => c.disabledExport).map((chart) => {
+              return (
+                <div key={chart.id}>
+                  <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
+                    <LinkNext className="text-sm cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
+                      <LuEyeOff className="mr-1" size={16} />
+                      {chart.name}
+                    </LinkNext>
+                  </Tooltip>
+                </div>
+              );
+            })}
+          </div>
           <Spacer y={2} />
         </>
       )}
       <Spacer y={4} />
-      <Row align="center">
+      <div>
         <Button
-          onClick={() => onExport(selectedIds)}
+          onPress={() => onExport(selectedIds)}
           endContent={<LuFileDown />}
           isLoading={loading}
           color="primary"
@@ -144,12 +129,10 @@ function ChartExport(props) {
         >
           {"Export"}
         </Button>
-      </Row>
+      </div>
       <Spacer y={4} />
       {error && (
-        <Row>
-          <Text color="danger" i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</Text>
-        </Row>
+        <div color="text-danger italic">{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</div>
       )}
     </div>
   );

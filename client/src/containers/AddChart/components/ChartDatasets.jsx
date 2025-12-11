@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { LuExternalLink, LuGripVertical, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
@@ -33,18 +33,19 @@ function ChartDatasets(props) {
   const [activeCdc, setActiveCdc] = useState(null);
 
   const dispatch = useDispatch();
-  const params = useParams();
   const { isDark } = useTheme();
   const team = useSelector(selectTeam);
   const navigate = useNavigate();
 
   const initRef = useRef(null);
+  const datasetsRef = useRef(null);
 
   useEffect(() => {
-    if (!datasets || datasets.length === 0) {
-      dispatch(getDatasets({ team_id: params.teamId }));
+    if ((!datasets || datasets.length === 0) && !datasetsRef.current && team?.id) {
+      datasetsRef.current = true;
+      dispatch(getDatasets({ team_id: team.id }));
     }
-  }, []);
+  }, [team]);
 
   useEffect(() => {
     if (datasets?.length > 0 && !initRef.current && chart) {
@@ -153,7 +154,7 @@ function ChartDatasets(props) {
             <Button
               size="sm"
               color="primary"
-              onClick={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
+              onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             >
               Create dataset
             </Button>
@@ -164,7 +165,7 @@ function ChartDatasets(props) {
               isIconOnly
               variant="faded"
               size="sm"
-              onClick={() => setAddMode(!addMode)}
+              onPress={() => setAddMode(!addMode)}
               className="chart-cdc-add"
             >
               {!addMode && <LuPlus />}
@@ -302,7 +303,7 @@ function ChartDatasets(props) {
           <Spacer y={4} />
           <Button
             color="primary"
-            onPress={() => navigate(`/${params.teamId}/dataset/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
+            onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             fullWidth
           >
             Create dataset

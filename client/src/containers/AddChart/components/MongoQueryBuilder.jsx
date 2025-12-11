@@ -28,6 +28,7 @@ import QueryResultsTable from "./QueryResultsTable";
 import AiQuery from "../../Dataset/AiQuery";
 import DataTransform from "../../Dataset/DataTransform";
 import SqlAceEditor from "../../../components/SqlAceEditor";
+import { selectTeam } from "../../../slices/team";
 
 /*
   MongoDB query builder with variable support
@@ -60,6 +61,7 @@ function MongoQueryBuilder(props) {
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (dataRequest) {
@@ -89,7 +91,7 @@ function MongoQueryBuilder(props) {
   const _onSaveQuery = () => {
     setSavingQuery(true);
     dispatch(createSavedQuery({
-      team_id: params.teamId,
+      team_id: team.id,
       data: {
         query: mongoRequest.query,
         summary: savedQuerySummary,
@@ -113,7 +115,7 @@ function MongoQueryBuilder(props) {
     setUpdatingSavedQuery(true);
 
     dispatch(updateSavedQuery({
-      team_id: params.teamId,
+      team_id: team.id,
       data: {
         ...savedQuery,
         query: mongoRequest.query
@@ -143,7 +145,7 @@ function MongoQueryBuilder(props) {
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team.id,
         dataset_id: dr.dataset_id,
         dataRequest_id: dr.id,
         getCache
@@ -210,7 +212,7 @@ function MongoQueryBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -218,7 +220,7 @@ function MongoQueryBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,

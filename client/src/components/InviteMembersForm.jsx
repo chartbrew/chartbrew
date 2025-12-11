@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
-import { useParams } from "react-router";
 
 import { generateInviteUrl } from "../slices/team";
-import Row from "./Row";
-import Text from "./Text";
 import { selectTeam } from "../slices/team";
 import { selectProjects } from "../slices/project";
 
@@ -25,13 +22,10 @@ function InviteMembersForm(props) {
   const [inviteUrl, setInviteUrl] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
 
-  const {
-    style, selectedProjects,
-  } = props;
+  const { selectedProjects = null } = props;
 
   const team = useSelector(selectTeam);
   const projects = useSelector(selectProjects);
-  const params = useParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -47,13 +41,10 @@ function InviteMembersForm(props) {
   }, [projectAccess, exportAllowed, role]);
 
   const _onGenerateUrl = () => {
-    const teamId = team.id
-      ? team.id : params.teamId;
-
     setLoading(true);
 
     dispatch(generateInviteUrl({
-      team_id: teamId,
+      team_id: team.id,
       projects: projectAccess,
       canExport: exportAllowed,
       role,
@@ -98,21 +89,16 @@ function InviteMembersForm(props) {
   };
 
   return (
-    <div style={style}>
-      <Row>
-        <Text size="h4">Invite team members</Text>
-      </Row>
+    <div>
+      <div className="text-lg font-semibold font-tw">Invite team members</div>
+      <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
       {!selectedProjects && (
         <>
           <Spacer y={4} />
-          <Row align="center">
-            <Text b>
-              {"Select a role"}
-            </Text>
-          </Row>
+          <div className="font-bold">{"Select a role"}</div>
           <Spacer y={2} />
-          <Row>
-            <RadioGroup defaultValue="teamAdmin" value={role} onValueChange={(option) => setRole(option)}>
+          <div>
+            <RadioGroup size="sm" defaultValue="teamAdmin" value={role} onValueChange={(option) => setRole(option)}>
               <Radio
                 value="teamAdmin"
                 description={"Access to all projects, connections, datasets, but can't delete the team or interact with the team's billing"}
@@ -138,11 +124,11 @@ function InviteMembersForm(props) {
                 Client Viewer
               </Radio>
             </RadioGroup>
-          </Row>
+          </div>
           <Spacer y={4} />
 
           {role !== "teamAdmin" && (
-            <Row>
+            <div>
               <Accordion
                 variant="bordered"
               >
@@ -156,7 +142,7 @@ function InviteMembersForm(props) {
                         size="sm"
                         variant="ghost"
                         startContent={<LuCheckCheck />}
-                        onClick={_onSelectAllProjects}
+                        onPress={_onSelectAllProjects}
                       >
                         Select all
                       </Button>
@@ -165,7 +151,7 @@ function InviteMembersForm(props) {
                         size="sm"
                         variant="ghost"
                         startContent={<LuX />}
-                        onClick={_onDeselectAllProjects}
+                        onPress={_onDeselectAllProjects}
                       >
                         Deselect all
                       </Button>
@@ -185,7 +171,7 @@ function InviteMembersForm(props) {
                   </div>
                 </AccordionItem>
               </Accordion>
-            </Row>
+            </div>
           )}
         </>
       )}
@@ -193,45 +179,45 @@ function InviteMembersForm(props) {
       {role !== "teamAdmin" && (
         <>
           <Spacer y={4} />
-          <Row align="center">
-            <Text b>
+          <div className="flex flex-row items-center gap-1">
+            <div className="font-bold">
               {"Data export permissions "}
-            </Text>
+            </div>
             <Spacer x={1} />
             <Tooltip
               content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
             >
               <div><LuInfo /></div>
             </Tooltip>
-          </Row>
+          </div>
           <Spacer y={1} />
-          <Row>
+          <div>
             <Checkbox
               isSelected={exportAllowed}
               onValueChange={(isSelected) => setExportAllowed(isSelected)}
             >
               Allow data export
             </Checkbox>
-          </Row>
+          </div>
         </>
       )}
 
       <Spacer y={4} />
-      <Row>
+      <div>
         <Button
           isLoading={loading}
-          onClick={_onGenerateUrl}
+          onPress={_onGenerateUrl}
           color="primary"
           size="sm"
         >
           {loading ? "Generating..." : "Generate invite link"}
         </Button>
-      </Row>
+      </div>
 
       {inviteUrl && (
         <>
           <Spacer y={4} />
-          <Row>
+          <div>
             <Input
               label="Share this link with your team"
               id="url-text"
@@ -241,7 +227,7 @@ function InviteMembersForm(props) {
               endContent={(
                 <Button
                   color={urlCopied ? "success" : "default"}
-                  onClick={_onCopyUrl}
+                  onPress={_onCopyUrl}
                   size="sm"
                   isIconOnly
                   variant="light"
@@ -249,11 +235,11 @@ function InviteMembersForm(props) {
                   {urlCopied ? <LuCheck /> : <LuCopy />}
                 </Button>
               )}
-              className="max-w-[400px]"
+              className="max-w-md"
             />
-          </Row>
+          </div>
           <Spacer y={2} />
-          <Row wrap="wrap" align="center">
+          <div className="flex flex-wrap items-center gap-1">
             <Chip color="warning" variant={"flat"} size="sm">
               {`${role} role`}
             </Chip>
@@ -269,33 +255,16 @@ function InviteMembersForm(props) {
                 </Chip>
               </>
             )}
-          </Row>
+          </div>
         </>
       )}
     </div>
   );
 }
 
-InviteMembersForm.defaultProps = {
-  style: {},
-  selectedProjects: null,
-};
-
 InviteMembersForm.propTypes = {
   match: PropTypes.object.isRequired,
   selectedProjects: PropTypes.array,
-  style: PropTypes.object,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    user: state.user,
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(InviteMembersForm);
+export default InviteMembersForm;

@@ -8,6 +8,8 @@ import {
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
 import { FaGoogle } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { LuRefreshCw } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -18,17 +20,15 @@ import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { useTheme } from "../../../modules/ThemeContext";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
 import { testRequest } from "../../../slices/connection";
-import { LuRefreshCw } from "react-icons/lu";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The Form used to create GA connections
 */
 function GaConnectionForm(props) {
   const {
-    editConnection, onComplete, addError,
+    editConnection = null, onComplete = () => {}, addError = false,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ function GaConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     _init();
@@ -49,7 +49,7 @@ function GaConnectionForm(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+    return dispatch(testRequest({ team_id: team?.id, connection: data }))
       .then(async (response) => {
         newTestResult.status = response.payload.status;
         newTestResult.body = await response.payload.text();
@@ -103,7 +103,7 @@ function GaConnectionForm(props) {
   };
 
   const _onGoogleAuth = () => {
-    const url = `${API_HOST}/team/${params.teamId}/connections/${connection.id}/google/auth`;
+    const url = `${API_HOST}/team/${team?.id}/connections/${connection.id}/google/auth`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
@@ -271,11 +271,6 @@ function GaConnectionForm(props) {
     </div>
   );
 }
-
-GaConnectionForm.defaultProps = {
-  editConnection: null,
-  addError: null,
-};
 
 GaConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,

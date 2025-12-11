@@ -36,7 +36,7 @@ function Login(props) {
   }, []);
 
   return (
-    <div style={styles.container} className="pt-20">
+    <div className="pt-20">
       <Row justify="center" align="center">
         <Link to="/">
           <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
@@ -44,7 +44,7 @@ function Login(props) {
       </Row>
       <Spacer y={4} />
       <div className="sm:flex m-4 justify-center">
-        <Card>
+        <Card shadow="none" className="border-1 border-divider">
           <CardHeader className={"flex justify-center"}>
             <h1 className={"mt-4 text-xl font-bold"}>{"Welcome back to Chartbrew"}</h1>
           </CardHeader>
@@ -66,7 +66,7 @@ function Login(props) {
       <Spacer y={8} />
       <Row justify="center" align="center">
         <div>
-          <p style={styles.signupText}>
+          <p>
             {" You don't have an account yet? "}
             <Link to={"/signup"} className="underline decoration-2">Sign up here</Link>
           </p>
@@ -75,11 +75,6 @@ function Login(props) {
     </div>
   );
 }
-const styles = {
-  container: {
-    overflow: "hidden",
-  },
-};
 
 Login.propTypes = {
   errors: PropTypes.array.isRequired,

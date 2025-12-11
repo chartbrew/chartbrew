@@ -6,6 +6,8 @@ import {
 } from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
+import { LuChevronRight, LuCircleCheck, LuUpload } from "react-icons/lu";
+import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -15,11 +17,8 @@ import Text from "../../../components/Text";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import { useTheme } from "../../../modules/ThemeContext";
-import { RiArrowRightSLine } from "react-icons/ri";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
-import { LuCircleCheck, LuUpload } from "react-icons/lu";
+import { selectTeam } from "../../../slices/team";
 
 const formStrings = {
   mysql: {
@@ -67,8 +66,8 @@ function MysqlConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
   const initRef = useRef(null);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (editConnection?.id && !initRef.current) {
@@ -107,12 +106,12 @@ function MysqlConnectionForm(props) {
 
     if ((data.ssl && sslCerts.sslCa) || (data.useSsh && sshFiles.sshPrivateKey)) {
       response = await dispatch(testRequestWithFiles({
-        team_id: params.teamId,
+        team_id: team.id,
         connection: data,
         files
       }));
     } else {
-      response = await dispatch(testRequest({ team_id: params.teamId, connection: data }));
+      response = await dispatch(testRequest({ team_id: team.id, connection: data }));
     }
 
     newTestResult.status = response.payload.status;
@@ -816,7 +815,7 @@ function FormGuides({ subType }) {
     return (
       <>
         <Row align="center">
-          <RiArrowRightSLine />
+          <LuChevronRight />
           <Spacer x={1} />
           <Link
             target="_blank"
@@ -829,7 +828,7 @@ function FormGuides({ subType }) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <RiArrowRightSLine />
+          <LuChevronRight />
           <Spacer x={1} />
           <Link
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
@@ -848,7 +847,7 @@ function FormGuides({ subType }) {
   return (
     <>
       <Row align="center">
-        <RiArrowRightSLine />
+        <LuChevronRight />
         <Spacer x={1} />
         <Link
           target="_blank"
@@ -861,7 +860,7 @@ function FormGuides({ subType }) {
         <FaExternalLinkSquareAlt size={12} />
       </Row>
       <Row align="center">
-        <RiArrowRightSLine />
+        <LuChevronRight />
         <Spacer x={1} />
         <Link
           href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"

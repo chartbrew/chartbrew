@@ -1161,7 +1161,7 @@ export const getChartsNeedingFiltering = (charts, currentFilters, currentVariabl
 };
 
 export const selectCharts = (state) => state.chart.data;
-export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === id); 
+export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === parseInt(id, 10)); 
 export const selectCdc = (state, chartId, cdcId) => {
   const chart = state.chart.data.find((c) => c.id === chartId);
   if (!chart) return {};

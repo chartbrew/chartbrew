@@ -8,6 +8,7 @@ import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
 import { LuChevronRight, LuInfo, LuPlus, LuCircleX } from "react-icons/lu";
+import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -17,9 +18,8 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { useDispatch } from "react-redux";
 import { testRequest } from "../../../slices/connection";
-import { useParams } from "react-router";
+import { selectTeam } from "../../../slices/team";
 
 /*
   The MongoDB connection form
@@ -41,7 +41,7 @@ function MongoConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     _init();
@@ -84,7 +84,7 @@ function MongoConnectionForm(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+    return dispatch(testRequest({ team_id: team.id, connection: data }))
       .then(async (response) => {
         newTestResult.status = response.payload.status;
         newTestResult.body = await response.payload.text();

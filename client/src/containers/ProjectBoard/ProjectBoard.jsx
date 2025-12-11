@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
-import { Outlet, Route, Routes, useParams } from "react-router";
-import { Allotment } from "allotment";
-import { useWindowSize } from "react-use";
+import { Outlet, useParams } from "react-router";
 import {
   CircularProgress,
   Spacer,
@@ -16,44 +14,33 @@ import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
 import { getProjectCharts } from "../../slices/chart";
-import Navbar from "../../components/Navbar";
 import canAccess from "../../config/canAccess";
-import PrintView from "../PrintView/PrintView";
-import ProjectNavigation from "./components/ProjectNavigation";
 import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 import { selectUser } from "../../slices/user";
 
-const sideMaxSize = 220;
-const sideMinSize = 70;
 /*
   The project screen where the dashboard, builder, etc. are
 */
 function ProjectBoard() {
   const [loading, setLoading] = useState(true);
-  const [menuSize, setMenuSize] = useState("small");
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [update, setUpdate] = useState({});
+  const [setUpdate] = useState({});
 
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject) || {};
   const user = useSelector(selectUser);
 
-  const { height } = useWindowSize();
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(null);
 
   useEffect(() => {
-    if (params.projectId && !initRef.current) {
+    if (params.projectId && !initRef.current && team?.id) {
       initRef.current = true;
 
       _init();
-      if (window.localStorage.getItem("_cb_menu_size")) {
-        _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
-      }
 
       checkForUpdates()
         .then((release) => {
@@ -63,7 +50,7 @@ function ProjectBoard() {
           return release;
         });
     }
-  }, [params]);
+  }, [params, team]);
 
   const _init = (id) => {
     _getProject(id);
@@ -73,14 +60,13 @@ function ProjectBoard() {
 
   const _getProject = (id) => {
     let { projectId } = params;
-    const { teamId } = params;
     if (id) projectId = id;
 
-    dispatch(getTeam(teamId))
+    dispatch(getTeam(team.id))
       .then(() => {
-        dispatch(getTeamMembers({ team_id: teamId }));
-        dispatch(getProjects({ team_id: teamId }));
-        window.localStorage.setItem("__cb_active_team", teamId);
+        dispatch(getTeamMembers({ team_id: team.id }));
+        dispatch(getProjects({ team_id: team.id }));
+        window.localStorage.setItem("__cb_active_team", team.id);
         return dispatch(getProject({ project_id: projectId }));
       })
       .then(() => {
@@ -94,39 +80,8 @@ function ProjectBoard() {
       });
   };
 
-  const _setMenuSize = (size, init) => {
-    if (init) {
-      setMenuSize(size);
-      return;
-    }
-    let newMenuSize = "small";
-    if (size > sideMinSize) {
-      newMenuSize = "large";
-    }
-    setMenuSize(newMenuSize);
-    window.localStorage.setItem("_cb_menu_size", newMenuSize);
-  };
-
-  const _getDefaultMenuSize = () => {
-    if (menuSize === "small") return sideMinSize;
-    if (menuSize === "large") return sideMaxSize;
-    if (window.localStorage.getItem("_cb_menu_size") === "small") {
-      return sideMinSize;
-    } else {
-      return sideMaxSize;
-    }
-  };
-
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
-  };
-
-  const _onPrint = () => {
-    setIsPrinting(!isPrinting);
-  };
-
-  const _onChangeProject = (id) => {
-    window.location.href = `/${params.teamId}/${id}/dashboard`;
   };
 
   if (!project && loading) {
@@ -146,79 +101,15 @@ function ProjectBoard() {
 
   return (
     <div className="bg-content2">
-      {isPrinting && (
-        <Routes>
-          <Route
-            path="/:teamId/:projectId/dashboard"
-            element={(
-              <div style={{ textAlign: "center", width: "21cm" }}>
-                <PrintView onPrint={_onPrint} isPrinting={isPrinting} />
-              </div>
-            )} />
-        </Routes>
-      )}
-
-      {!isPrinting && (
-        <>
-          <Navbar />
-          {/* extract the navbar height from here */}
-          <div style={{ height: height - 50 }} className="hidden sm:block">
-            <Allotment>
-              <Allotment.Pane
-                minSize={_getDefaultMenuSize()}
-                maxSize={_getDefaultMenuSize()}
-                preferredSize={_getDefaultMenuSize()}
-                className="bg-content2 transition-all"
-              >
-                <div>
-                  <ProjectNavigation
-                    onSetMenuSize={(mSize) => _setMenuSize(mSize)}
-                    canAccess={_canAccess}
-                    menuSize={menuSize}
-                    onChangeProject={_onChangeProject}
-                    update={update}
-                  />
-                </div>
-              </Allotment.Pane>
-              <Allotment.Pane className="transition-all">
-                <div
-                  style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
-                >
-                  <div className="pl-0">
-                    <MainContent
-                      onPrint={_onPrint}
-                      _canAccess={_canAccess}
-                    />
-                  </div>
-                </div>
-              </Allotment.Pane>
-            </Allotment>
-          </div>
-
-          <div className="block sm:hidden">
-            <div className="grid grid-cols-12">
-              <div className="col-span-12">
-                <MainContent
-                  onPrint={_onPrint}
-                  _canAccess={_canAccess}
-                  mobile
-                />
-
-              </div>
-            </div>
-
-            <Spacer y={8} />
-
-            <ProjectNavigation
-              onSetMenuSize={(mSize) => _setMenuSize(mSize)}
-              canAccess={_canAccess}
-              menuSize={menuSize}
-              onChangeProject={_onChangeProject}
-              mobile
-            />
-          </div>
-        </>
-      )}
+      <div
+        style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
+      >
+        <div className="pl-0">
+          <MainContent
+            _canAccess={_canAccess}
+          />
+        </div>
+      </div>
     </div>
   );
 }

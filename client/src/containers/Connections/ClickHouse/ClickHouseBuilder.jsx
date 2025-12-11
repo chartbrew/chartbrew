@@ -30,6 +30,7 @@ import AiQuery from "../../Dataset/AiQuery";
 import QueryResultsTable from "../../AddChart/components/QueryResultsTable";
 import DataTransform from "../../Dataset/DataTransform";
 import SqlAceEditor from "../../../components/SqlAceEditor";
+import { selectTeam } from "../../../slices/team";
 
 const initialQuery =
 `-- Write your ClickHouse query here with variables
@@ -75,6 +76,7 @@ function ClickHouseBuilder(props) {
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
   const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
+  const team = useSelector(selectTeam);
 
   const schemaInitRef = useRef(false);
 
@@ -122,7 +124,7 @@ function ClickHouseBuilder(props) {
   const _onSaveQuery = () => {
     setSavingQuery(true);
     dispatch(createSavedQuery({
-      team_id: params.teamId,
+      team_id: team?.id,
       data: {
         query: sqlRequest.query,
         summary: savedQuerySummary,
@@ -144,7 +146,7 @@ function ClickHouseBuilder(props) {
   const _onUpdateSavedQuery = () => {
     setUpdatingSavedQuery(true);
     dispatch(updateSavedQuery({
-      team_id: params.teamId,
+      team_id: team?.id,
       data: {
         ...savedQuery,
         query: sqlRequest.query,
@@ -177,7 +179,7 @@ function ClickHouseBuilder(props) {
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
       dispatch(runDataRequest({
-        team_id: params.teamId,
+        team_id: team?.id,
         dataset_id: dr.dataset_id,
         dataRequest_id: dr.id,
         getCache
@@ -199,7 +201,7 @@ function ClickHouseBuilder(props) {
           }          
 
           await dispatch(getConnection({
-            team_id: params.teamId,
+            team_id: team?.id,
             connection_id: dr.connection_id,
           }));
 
@@ -248,7 +250,7 @@ function ClickHouseBuilder(props) {
       let response;
       if (variableSettings.id) {
         response = await dispatch(updateVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           variable_id: variableSettings.id,
@@ -256,7 +258,7 @@ function ClickHouseBuilder(props) {
         }));
       } else {
         response = await dispatch(createVariableBinding({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataRequest.dataset_id,
           dataRequest_id: dataRequest.id,
           data: variableSettings,

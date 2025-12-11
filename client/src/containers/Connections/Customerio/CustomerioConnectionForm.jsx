@@ -8,14 +8,14 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 import { LuExternalLink, LuInfo } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
+import { selectTeam } from "../../../slices/team";
 
 /*
 ** Customer.io form uses
@@ -24,7 +24,7 @@ import { testRequest } from "../../../slices/connection";
 */
 function CustomerioConnectionForm(props) {
   const {
-    editConnection, onComplete, addError,
+    editConnection = null, onComplete, addError = false,
   } = props;
 
   const [connection, setConnection] = useState({
@@ -37,7 +37,7 @@ function CustomerioConnectionForm(props) {
 
   const { isDark } = useTheme();
   const dispatch = useDispatch();
-  const params = useParams();
+  const team = useSelector(selectTeam);
   const initRef = useRef(null);
 
   const regionOptions = [
@@ -58,7 +58,7 @@ function CustomerioConnectionForm(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+    return dispatch(testRequest({ team_id: team?.id, connection: data }))
       .then(async (response) => {
         newTestResult.status = response.payload.status;
         newTestResult.body = await response.payload.text();
@@ -297,11 +297,6 @@ function CustomerioConnectionForm(props) {
     </div>
   );
 }
-
-CustomerioConnectionForm.defaultProps = {
-  editConnection: null,
-  addError: null,
-};
 
 CustomerioConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,

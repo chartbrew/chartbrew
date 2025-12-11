@@ -37,7 +37,7 @@ const messageTypes = {
 
 function MessageTypeLabels(props) {
   const {
-    selected, onSelect, mode, showPrimary
+    selected = "", onSelect, mode, showPrimary = true
   } = props;
 
   const [showAll, setShowAll] = useState(false);
@@ -114,11 +114,6 @@ MessageTypeLabels.propTypes = {
   selected: PropTypes.string,
   mode: PropTypes.string.isRequired,
   showPrimary: PropTypes.bool,
-};
-
-MessageTypeLabels.defaultProps = {
-  selected: "",
-  showPrimary: true,
 };
 
 export default MessageTypeLabels;

@@ -29,6 +29,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import DataTransform from "../../Dataset/DataTransform";
+import { selectTeam } from "../../../slices/team";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -72,6 +73,7 @@ function GaBuilder(props) {
   const dispatch = useDispatch();
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (!initRef.current) {
@@ -81,15 +83,15 @@ function GaBuilder(props) {
   }, [dataRequest]);
 
   useEffect(() => {
-    if (connection?.id && !fullConnection?.id) {
-      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
+    if (connection?.id && !fullConnection?.id && team?.id) {
+      dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
         .then((data) => {
           setFullConnection(data.payload);
           _onFetchAccountData(data.payload);
         })
         .catch(() => {});
     }
-  }, [connection]);
+  }, [connection, team]);
 
   useEffect(() => {
     if (accountOptions.length > 0
@@ -204,7 +206,7 @@ function GaBuilder(props) {
   };
 
   const _populateMetadata = (conn = fullConnection, propertyId) => {
-    getMetadata(params.teamId, conn.id, propertyId)
+    getMetadata(team?.id, conn.id, propertyId)
       .then((metadata) => {
         const metrics = [];
         const dimensions = [];
@@ -245,7 +247,7 @@ function GaBuilder(props) {
 
     const getCache = !invalidateCache;
     dispatch(runDataRequest({
-      team_id: params.teamId,
+      team_id: team?.id,
       dataset_id: params.datasetId,
       dataRequest_id: dr.id,
       getCache,
@@ -269,7 +271,7 @@ function GaBuilder(props) {
 
   const _onFetchAccountData = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
+    return dispatch(testRequest({ team_id: team?.id, connection: conn }))
       .then((data) => {
         return data.payload.json();
       })

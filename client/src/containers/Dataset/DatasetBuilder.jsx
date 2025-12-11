@@ -370,8 +370,8 @@ function DatasetBuilder(props) {
   );
 
   return (
-    <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4">
-      <div className="col-span-12 md:col-span-4 bg-content1 rounded-lg p-4">
+    <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4 mt-4">
+      <div className="col-span-12 md:col-span-4 bg-content1 rounded-lg border-1 border-divider p-4">
         <Autocomplete
           label="Dimension"
           labelPlacement="outside"
@@ -555,7 +555,7 @@ function DatasetBuilder(props) {
         />
       </div>
 
-      <div className="col-span-12 md:col-span-8 pl-4">
+      <div className="col-span-12 md:col-span-8 bg-background rounded-lg border-1 border-divider p-4">
         <ChartPreview
           chart={chart}
           onRefreshData={() => _onRefreshPreview(useCache)}

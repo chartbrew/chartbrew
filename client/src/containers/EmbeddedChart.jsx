@@ -28,6 +28,8 @@ import Text from "../components/Text";
 import KpiMode from "./Chart/components/KpiMode";
 import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
+import MatrixChart from "./Chart/components/MatrixChart";
+import GaugeChart from "./Chart/components/GaugeChart";
 
 const pageHeight = window.innerHeight;
 
@@ -377,6 +379,22 @@ function EmbeddedChart() {
           )}
           {(chart.type === "kpi" || chart.type === "avg") && (
             <KpiMode chart={chart} />
+          )}
+          {chart.type === "matrix" && (
+            <MatrixChart
+              chart={chart}
+              redraw={redraw}
+              redrawComplete={() => setRedraw(false)}
+              embedded
+            />
+          )}
+          {chart.type === "gauge" && (
+            <GaugeChart
+              chart={chart}
+              redraw={redraw}
+              redrawComplete={() => setRedraw(false)}
+              embedded
+            />
           )}
         </div>
       )}

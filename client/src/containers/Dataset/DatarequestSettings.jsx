@@ -23,6 +23,7 @@ import fieldFinder from "../../modules/fieldFinder";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { useTheme } from "../../modules/ThemeContext";
+import { selectTeam } from "../../slices/team";
 
 function DatarequestSettings(props) {
   const {
@@ -46,6 +47,7 @@ function DatarequestSettings(props) {
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
   const responses = useSelector(selectResponses);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (dataset?.joinSettings?.joins && !initRef.current) {
@@ -65,12 +67,12 @@ function DatarequestSettings(props) {
   }, [dataset]);
 
   useEffect(() => {
-    if (dataset?.main_dr_id) {
+    if (dataset?.main_dr_id && team?.id) {
       const dr = dataRequests.find((o) => o.id === dataset.main_dr_id);
       if (dr && !responseInitRef.current) {
         responseInitRef.current = true;
         dispatch(runDataRequest({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataset.id,
           dataRequest_id: dataset.main_dr_id,
           getCache: true
@@ -78,15 +80,15 @@ function DatarequestSettings(props) {
           .catch(() => {});
       }
     }
-  }, [dataset?.main_dr_id, dataRequests]);
+  }, [dataset?.main_dr_id, dataRequests, team]);
 
   useEffect(() => {
-    if (dataset?.joinSettings?.joins && !joinInitRef.current) {
+    if (dataset?.joinSettings?.joins && team?.id && !joinInitRef.current) {
       joinInitRef.current = true;
       dataset.joinSettings.joins.forEach(join => {
         if (join.dr_id) {
           dispatch(runDataRequest({
-            team_id: params.teamId,
+            team_id: team?.id,
             dataset_id: dataset.id,
             dataRequest_id: join.dr_id,
             getCache: true
@@ -94,7 +96,7 @@ function DatarequestSettings(props) {
         }
         if (join.join_id) {
           dispatch(runDataRequest({
-            team_id: params.teamId,
+            team_id: team?.id,
             dataset_id: dataset.id,
             dataRequest_id: join.join_id,
             getCache: true
@@ -102,7 +104,7 @@ function DatarequestSettings(props) {
         }
       });
     }
-  }, [dataset?.joinSettings?.joins]);
+  }, [dataset?.joinSettings?.joins, team]);
 
   useEffect(() => {
     if (_.isEqual(dataset?.joinSettings?.joins, joins)) {
@@ -182,7 +184,7 @@ function DatarequestSettings(props) {
       const dr = dataRequests.find((o) => o?.id === data.dr_id);
       if (!dr?.response || !dr.response?.data) {
         dispatch(runDataRequest({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataset.id,
           dataRequest_id: data.dr_id,
           getCache: true
@@ -195,7 +197,7 @@ function DatarequestSettings(props) {
       const drJoin = dataRequests.find((o) => o?.id === data.join_id);
       if (!drJoin?.response || !drJoin.response?.data) {
         dispatch(runDataRequest({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataset.id,
           dataRequest_id: data.join_id,
           getCache: true,
@@ -264,7 +266,7 @@ function DatarequestSettings(props) {
     _onSaveJoins()
       .then(() => {
         return dispatch(runRequest({
-          team_id: params.teamId,
+          team_id: team?.id,
           dataset_id: dataset.id,
           getCache: useCache
         }));
@@ -278,7 +280,7 @@ function DatarequestSettings(props) {
   };
 
   return (
-    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4">
+    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4 py-4 bg-background rounded-lg border-1 border-divider">
       <div className="grid grid-cols-12">
         <div className="col-span-12 md:col-span-7 pr-4 pb-20">
           <Row>
@@ -576,7 +578,7 @@ function DatarequestSettings(props) {
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
-                  className="Customerio-result-tut"
+                  className="Dataset-result-tut"
                 />
               </div>
             </Row>
