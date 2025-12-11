@@ -154,7 +154,7 @@ function DashboardList() {
     dispatch(getTeams());
     setAddProject(false);
 
-    let url = `/${project.team_id}/${project.id}/dashboard`;
+    let url = `/dashboard/${project.id}`;
     if (isNew) url += "?new=true";
     window.location.href = url;
   };
