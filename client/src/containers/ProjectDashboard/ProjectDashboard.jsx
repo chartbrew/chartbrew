@@ -57,6 +57,7 @@ import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
 import { selectConnections } from "../../slices/connection";
 import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
+import SuspenseLoader from "../../components/SuspenseLoader";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -932,6 +933,12 @@ function ProjectDashboard() {
 
     _prepareLayout([...charts, newChart]);
   };
+
+  if (!layouts && chartsLoading) {
+    return (
+      <SuspenseLoader />
+    );
+  }
 
   return (
     <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>

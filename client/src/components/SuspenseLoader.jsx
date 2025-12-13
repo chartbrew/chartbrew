@@ -3,7 +3,7 @@ import cbLogoInverted from "../assets/logo_inverted.png";
 
 function SuspenseLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center h-[70vh]">
       <img 
         src={cbLogoInverted} 
         alt="Chartbrew Logo" 
