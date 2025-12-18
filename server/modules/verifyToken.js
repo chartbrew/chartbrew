@@ -55,6 +55,6 @@ module.exports = async (req, res, next) => {
       })
       .catch((error) => { return res.status(400).send(error); });
   } else {
-    return res.status(400).send("Token is missing.");
+    return res.status(401).send("Token is missing.");
   }
 };

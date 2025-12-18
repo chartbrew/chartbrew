@@ -250,7 +250,8 @@ class UserController {
       return foundUser;
     }
 
-    if (user2FA.backup) {
+    // Avoid triggering the model getter when backup is null (getter decrypts the value)
+    if (user2FA.getDataValue("backup")) {
       try {
         const backupCodes = JSON.parse(user2FA.backup);
         if (backupCodes.includes(token)) {
@@ -266,7 +267,7 @@ class UserController {
       }
     }
 
-    return new Promise((resolve, reject) => reject(401));
+    return new Promise((resolve, reject) => reject(new Error(401)));
   }
 
   findAll() {

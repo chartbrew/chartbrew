@@ -129,21 +129,29 @@ server/
 ## In Progress 🔄
 
 ### User Authentication & Management
-- [ ] **User Registration API Tests**
-  - [ ] Valid registration with proper validation
-  - [ ] Duplicate email handling
+- [x] **User Registration API Tests**
+  - [x] Valid registration with proper validation
+  - [x] Duplicate email handling
   - [ ] Invalid data validation
-  - [ ] Password hashing verification
-- [ ] **User Login API Tests**
-  - [ ] Valid login credentials
-  - [ ] Invalid credentials handling
-  - [ ] JWT token generation
+  - [x] Password hashing verification
+- [x] **User Login API Tests**
+  - [x] Valid login credentials
+  - [x] Invalid credentials handling
+  - [x] JWT token generation
   - [ ] Rate limiting tests
+  - [x] Legacy password migration (simplecrypt → bcrypt)
+- [x] **Password Reset API Tests**
+  - [x] Request reset sets passwordResetToken
+  - [x] Change password with reset token + hash
+- [x] **Email Update API Tests**
+  - [x] Request email verification (authorized)
+  - [x] Update email using verification token
 - [ ] **User Management API Tests**
-  - [ ] User profile updates
+  - [x] User profile updates
+  - [x] Prevent admin escalation via API/controllers
+  - [x] User deletion
   - [ ] Password changes
-  - [ ] User deletion
-  - [ ] Admin user operations
+  - [ ] Admin user operations (admins are DB-only; API should stay locked down)
 
 ### Connection Management
 - [ ] **Connection CRUD Tests**

@@ -4,7 +4,13 @@ const ejs = require("ejs");
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 // setup nodemailer
-const nodemail = nodemailer.createTransport(settings.mailSettings);
+// In tests we don't want to connect to a real SMTP server.
+// jsonTransport stores the email payload in-memory and resolves immediately.
+const transportConfig = process.env.NODE_ENV === "test"
+  ? { jsonTransport: true }
+  : settings.mailSettings;
+
+const nodemail = nodemailer.createTransport(transportConfig);
 
 module.exports.sendInvite = (invite, admin, teamName) => {
   const inviteUrl = `${settings.client}/invite?team_id=${invite.team_id}&token=${invite.token}`;

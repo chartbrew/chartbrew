@@ -4,18 +4,26 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import methodOverride from "method-override";
-import _ from "lodash";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
 // Import your existing modules - we'll need to adjust paths
 import parseQueryParams from "../../middlewares/parseQueryParams.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 export async function createTestApp() {
   const app = express();
+
+  // Mimic production behavior: server/index.js sets app.settings = settings
+  // In tests, NODE_ENV is not "production", so settings-dev is used.
+  // settings-dev reads process.env at require-time (set defaults in tests/setup.js).
+  // eslint-disable-next-line global-require
+  const settings = require("../../settings-dev.js");
+  app.settings = settings;
 
   // Basic middleware setup (mimicking your main app)
   app.set("trust proxy", 1);
@@ -38,27 +46,17 @@ export async function createTestApp() {
   // Load middlewares
   app.use(parseQueryParams);
 
-  // We'll dynamically load routes here when needed
   return app;
 }
 
-export async function createTestAppWithRoutes() {
+export async function createTestAppWithUserRoutes() {
   const app = await createTestApp();
 
-  // Dynamically import routes (we'll need to convert them to ES modules or use require)
-  try {
-    // For now, we'll import the routes module
-    // Note: This might need adjustment based on your route structure
-    const routes = await import("../../api/index.js");
-
-    // Load the routes
-    _.each(routes.default || routes, (controller, route) => {
-      app.use(route, controller(app));
-    });
-  } catch (error) {
-    console.warn("Could not load routes:", error.message);
-    // For initial testing, we'll proceed without routes
-  }
+  // Mount User routes by executing the route module with the app instance.
+  // This matches server/index.js behavior (routes register handlers on the app).
+  // eslint-disable-next-line global-require
+  const userRoute = require("../../api/UserRoute.js");
+  userRoute(app);
 
   return app;
 }

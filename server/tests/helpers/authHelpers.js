@@ -20,7 +20,8 @@ export function generateTestToken(payload = {}, options = {}) {
     ...options
   };
 
-  const secret = process.env.CB_SECRET || "test-secret-key-for-testing-only";
+  // Use the same secret as the server for JWT verification
+  const secret = process.env.CB_ENCRYPTION_KEY_DEV || process.env.CB_ENCRYPTION_KEY || "0123456789abcdef0123456789abcdef";
   return jwt.sign(defaultPayload, secret, defaultOptions);
 }
 
@@ -59,6 +60,6 @@ export function getAdminAuthHeaders() {
  * Verify a JWT token (for testing token generation)
  */
 export function verifyTestToken(token) {
-  const secret = process.env.CB_SECRET || "test-secret-key-for-testing-only";
+  const secret = process.env.CB_ENCRYPTION_KEY_DEV || process.env.CB_ENCRYPTION_KEY || "0123456789abcdef0123456789abcdef";
   return jwt.verify(token, secret);
 }
