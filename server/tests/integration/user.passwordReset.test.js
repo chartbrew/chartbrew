@@ -125,5 +125,3 @@ describe("User Password Reset API", () => {
     await expect(bcrypt.compare(originalPassword, updatedUser.password)).resolves.toBe(false);
   });
 });
-
-

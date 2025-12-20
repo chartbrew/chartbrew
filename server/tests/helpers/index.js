@@ -2,4 +2,4 @@
 export * from "./dbHelpers.js";
 export * from "./authHelpers.js";
 export { testDbManager } from "./testDbManager.js";
-export { createTestApp, createTestAppWithRoutes } from "./testApp.js";
+export { createTestApp, createTestAppWithUserRoutes } from "./testApp.js";

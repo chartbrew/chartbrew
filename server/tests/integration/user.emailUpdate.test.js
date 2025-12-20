@@ -94,5 +94,3 @@ describe("User Email Update API", () => {
     expect(refreshed.email).toBe("bad.token.old@example.com");
   });
 });
-
-

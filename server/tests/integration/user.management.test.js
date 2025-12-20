@@ -9,7 +9,8 @@ import { getModels } from "../helpers/dbHelpers.js";
 import { getAuthHeaders, generateTestToken } from "../helpers/authHelpers.js";
 
 describe("User Management API", () => {
-  let app, models;
+  let app;
+  let models;
 
   beforeAll(async () => {
     // Ensure database is started
@@ -156,7 +157,6 @@ describe("User Management API", () => {
       const userData = userFactory.build();
       const testUser = await models.User.create(userData);
       await testUser.reload(); // Reload to ensure getters work properly
-
 
       const token = generateTestToken({
         id: testUser.id,

@@ -116,5 +116,3 @@ describe("User 2FA API", () => {
     expect(response.text).toBe("The credentials are incorrect");
   });
 });
-
-
