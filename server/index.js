@@ -19,6 +19,7 @@ const busboy = require("connect-busboy");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
+const appsRoutes = require("./apps");
 
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
@@ -71,6 +72,11 @@ app.use(parseQueryParams);
 
 // Load the routes
 _.each(routes, (controller, route) => {
+  app.use(route, controller(app));
+});
+
+// Load the apps routes
+_.each(appsRoutes, (controller, route) => {
   app.use(route, controller(app));
 });
 

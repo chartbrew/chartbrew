@@ -32,6 +32,7 @@
     "@google-analytics/data": "^5.1.0",
     "@socket.io/pm2": "^6.0.8",
     "@socket.io/redis-adapter": "^8.3.0",
+    "@slack/web-api": "^7.0.0",
     "accesscontrol": "^2.2.1",
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",

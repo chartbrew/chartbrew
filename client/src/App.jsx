@@ -46,6 +46,11 @@ const router = createBrowserRouter([
       },
       {
         path: "integrations",
+        children: [
+          {
+            path: "auth/:integrationType",
+          },
+        ],
       },
       {
         path: "settings",

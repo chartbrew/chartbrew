@@ -67,6 +67,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Apikey.associate = (models) => {
     models.Apikey.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.Apikey.hasMany(models.Integration, { foreignKey: "apikey_id" });
   };
 
   return Apikey;
