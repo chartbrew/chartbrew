@@ -845,8 +845,10 @@ async function buildSemanticLayer(teamId) {
 }
 
 async function orchestrate(
-  teamId, question, conversationHistory = [], conversation = null, context = null
+  teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
+  // Extract optional tool progress callback
+  const { toolProgressCallback } = options;
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
@@ -991,6 +993,16 @@ async function orchestrate(
           toolArgs.team_id = teamId;
         }
 
+        // Call progress callback before tool execution
+        if (toolProgressCallback) {
+          try {
+            await toolProgressCallback(toolName, "start", toolArgs);
+          } catch (callbackError) {
+            // eslint-disable-next-line no-console
+            console.error("Tool progress callback error:", callbackError);
+          }
+        }
+
         try {
           const result = await callTool(toolName, toolArgs);
 
@@ -1029,6 +1041,16 @@ async function orchestrate(
             content: JSON.stringify(result)
           };
         } catch (error) {
+          // Call progress callback on error
+          if (toolProgressCallback) {
+            try {
+              await toolProgressCallback(toolName, "error", { error: error.message });
+            } catch (callbackError) {
+              // eslint-disable-next-line no-console
+              console.error("Tool progress callback error:", callbackError);
+            }
+          }
+
           return {
             tool_call_id: toolCall.id,
             role: "tool",

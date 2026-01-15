@@ -6,6 +6,7 @@ const { fn, col } = require("sequelize");
 const db = require("../../../models/models");
 const TeamController = require("../../../controllers/TeamController");
 const { orchestrate } = require("../../../modules/ai/orchestrator/orchestrator");
+const { getToolMilestone } = require("../../../modules/ai/orchestrator/toolMilestones");
 const verifyToken = require("../../../modules/verifyToken");
 
 const {
@@ -380,13 +381,42 @@ module.exports = (app) => {
         return messageObj;
       });
 
+      // Create progress callback for real-time Slack updates
+      const toolProgressCallback = async (toolName, phase) => {
+        if (!thinkingMessageTs || !botToken) return;
+
+        try {
+          const message = getToolMilestone(toolName, phase);
+          const client = new WebClient(botToken);
+
+          await client.chat.update({
+            channel: channelId || slackUserId,
+            ts: thinkingMessageTs,
+            text: message,
+            blocks: [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: message,
+                },
+              },
+            ],
+          });
+        } catch (updateError) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to update progress message:", updateError);
+        }
+      };
+
       // Call orchestrator with conversation history
       const result = await orchestrate(
         integration.team_id,
         finalQuestion,
         conversationHistory,
         conversation,
-        projectContext
+        projectContext,
+        { toolProgressCallback }
       );
 
       // Save new messages to database

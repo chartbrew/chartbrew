@@ -105,7 +105,6 @@ async function createChart(payload) {
       snapshot = await chartController.takeSnapshot(chart.id);
     } catch (snapshotError) {
       // Ignore snapshot errors - chart creation was successful
-      console.warn(`Failed to take snapshot for chart ${chart.id}:`, snapshotError.message);
     }
 
     return {
