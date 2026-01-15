@@ -159,11 +159,12 @@ function AiModal({ isOpen, onClose }) {
         .map(msg => {
           try {
             const content = JSON.parse(msg.content);
-            if ((msg.name === "create_chart" || msg.name === "update_chart") && content.chart_id) {
+            if ((msg.name === "create_chart" || msg.name === "update_chart" || msg.name === "create_temporary_chart") && content.chart_id) {
               return {
                 chartId: content.chart_id,
                 projectId: content.project_id,
-                isUpdate: msg.name === "update_chart"
+                isUpdate: msg.name === "update_chart",
+                isTemporary: msg.name === "create_temporary_chart"
               };
             }
           } catch (e) {
@@ -173,7 +174,7 @@ function AiModal({ isOpen, onClose }) {
         })
         .filter(Boolean);
 
-      // Fetch charts that haven't been loaded yet (for both create and update)
+      // Fetch charts that haven't been loaded yet (for both create and update, including temporary)
       for (const { chartId, projectId } of chartMessages) {
         if (!fetchedChartsRef.current.has(chartId)) {
           fetchedChartsRef.current.add(chartId);
@@ -640,15 +641,17 @@ function AiModal({ isOpen, onClose }) {
       const content = JSON.parse(message.content);
 
       // Check if this is a chart creation or update result
-      if ((message.name === "create_chart" || message.name === "update_chart") && content.chart_id) {
+      if ((message.name === "create_chart" || message.name === "update_chart" || message.name === "create_temporary_chart") && content.chart_id) {
+        const isTemporary = message.name === "create_temporary_chart";
         return {
-          type: message.name === "create_chart" ? "chart_created" : "chart_updated",
+          type: message.name === "create_chart" ? "chart_created" : message.name === "update_chart" ? "chart_updated" : "chart_temporary",
           chartId: content.chart_id,
           chartName: content.name,
           chartType: content.type,
-          projectId: content.project_id,
+          projectId: content.project_id || content.ghost_project_id,
           dashboardUrl: content.dashboard_url,
           chartUrl: content.chart_url,
+          isTemporary,
           content: content
         };
       }
@@ -739,10 +742,10 @@ function AiModal({ isOpen, onClose }) {
     messages.forEach((message) => {
       const parsed = _parseMessage(message);
 
-      if (message.role === "user" || parsed.type === "chart_created" || parsed.type === "chart_updated") {
+      if (message.role === "user" || parsed.type === "chart_created" || parsed.type === "chart_updated" || parsed.type === "chart_temporary") {
         // User messages and chart creation/update messages are always separate
         groups.push({
-          type: parsed.type === "chart_created" ? "chart_created" : parsed.type === "chart_updated" ? "chart_updated" : "user",
+          type: parsed.type === "chart_created" ? "chart_created" : parsed.type === "chart_updated" ? "chart_updated" : parsed.type === "chart_temporary" ? "chart_temporary" : "user",
           messages: [message]
         });
         currentGroup = null;
@@ -926,6 +929,66 @@ function AiModal({ isOpen, onClose }) {
       );
     }
 
+    // Temporary chart messages - render the chart with temporary styling
+    if (parsed.type === "chart_temporary" && createdCharts?.length > 0) {
+      const chartData = createdCharts.find((c) => c.id === parsed.chartId);
+
+      return (
+        <div key={index} className="flex justify-center mb-4 px-4">
+          <div className="w-full max-w-[90%]">
+            <div className="px-6 py-4 rounded-lg border border-primary-200 bg-primary-50/50">
+              <div className="flex items-start gap-3">
+                <Avatar
+                  icon={<LuBrainCircuit size={16} className="text-background" />}
+                  size="sm"
+                  color="primary"
+                />
+                <div className="w-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium">
+                      Temporary Chart Preview
+                    </span>
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color="primary"
+                    >
+                      {parsed.chartName}
+                    </Chip>
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color="default"
+                      className="ml-auto"
+                    >
+                      Not saved to dashboard
+                    </Chip>
+                  </div>
+                  {chartData ? (
+                    <div className="overflow-hidden h-[300px]">
+                      <Chart
+                        chart={chartData}
+                        isPublic={false}
+                        showExport={false}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-primary-200 rounded-lg p-8">
+                      <CircularProgress aria-label="Loading chart" />
+                      <div className="text-sm mt-2">Loading chart...</div>
+                    </div>
+                  )}
+                  <div className="text-xs text-foreground-500 mt-3 mb-2">
+                    {"This chart is temporary. Tell me which dashboard you'd like to add it to."}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Assistant messages with suggestions - centered, taking most space
     if (message.role === "assistant" && parsed.type === "message_with_suggestions") {
       const isError = message.isError;
@@ -1023,8 +1086,8 @@ function AiModal({ isOpen, onClose }) {
       return _renderMessage(group.messages[0], `group-${groupIndex}-user`);
     }
 
-    if (group.type === "chart_created" || group.type === "chart_updated") {
-      // Render chart creation/update message
+    if (group.type === "chart_created" || group.type === "chart_updated" || group.type === "chart_temporary") {
+      // Render chart creation/update/temporary message
       return _renderMessage(group.messages[0], `group-${groupIndex}-chart`);
     }
 

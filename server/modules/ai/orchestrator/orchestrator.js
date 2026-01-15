@@ -23,6 +23,7 @@ const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
 const { chartColors } = require("../../../charts/colors");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
+const { calculateChartLayout, ensureCompleteLayout } = require("../../chartLayoutEngine");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
 const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
@@ -903,6 +904,211 @@ async function updateChart(payload) {
   }
 }
 
+async function createTemporaryChart(payload) {
+  const {
+    connection_id, name, legend, type, subType, displayLegend, pointRadius,
+    dataLabels, includeZeros, timeInterval, stacked, horizontal,
+    showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
+    xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
+    query, conditions = [], configuration = {}, variables = [], transform = null,
+    variableBindings = [], spec = {}, team_id
+  } = payload;
+
+  if (!team_id) {
+    throw new Error("team_id is required to create a temporary chart");
+  }
+
+  if (!connection_id) {
+    throw new Error("connection_id is required to create a temporary chart");
+  }
+
+  if (!name) {
+    throw new Error("name is required to create a temporary chart");
+  }
+
+  try {
+    // Find the temporary preview project for this team
+    const ghostProject = await db.Project.findOne({
+      where: {
+        team_id,
+        ghost: true
+      }
+    });
+
+    if (!ghostProject) {
+      throw new Error("Temporary preview project not found for this team");
+    }
+
+    // Create the dataset first
+    const dataset = await datasetController.createWithDataRequests({
+      team_id,
+      project_ids: [ghostProject.id],
+      draft: false,
+      legend: name || "AI Generated Dataset",
+      xAxis,
+      yAxis,
+      yAxisOperation,
+      dateField,
+      dateFormat,
+      conditions,
+      variableBindings,
+      dataRequests: [{
+        connection_id,
+        query,
+        conditions: conditions || [],
+        configuration: configuration || {},
+        variables: variables || [],
+        transform: transform || null
+      }],
+      main_dr_index: 0
+    });
+
+    // Extract data request ID from the returned dataset
+    const dataRequestId = dataset.DataRequests && dataset.DataRequests.length > 0
+      ? dataset.DataRequests[0].id
+      : dataset.main_dr_id;
+
+    // Create the chart in the temporary preview project
+    const chart = await chartController.createWithChartDatasetConfigs({
+      project_id: ghostProject.id,
+      name: name || "AI Generated Chart",
+      type: type || spec.type || "line",
+      subType: subType || spec.subType,
+      draft: false,
+      // eslint-disable-next-line no-nested-ternary
+      displayLegend: displayLegend !== undefined
+        ? displayLegend
+        : spec.displayLegend !== undefined
+          ? spec.displayLegend
+          : true,
+      pointRadius: pointRadius || spec.pointRadius || 0,
+      dataLabels: dataLabels || spec.dataLabels || false,
+      // eslint-disable-next-line no-nested-ternary
+      includeZeros: includeZeros !== undefined
+        ? includeZeros
+        : spec.includeZeros !== undefined
+          ? spec.includeZeros
+          : true,
+      timeInterval: timeInterval || spec.timeInterval || "day",
+      stacked: stacked ?? spec.stacked ?? spec.options?.stacked ?? false,
+      horizontal: horizontal ?? spec.horizontal ?? spec.options?.horizontal ?? false,
+      showGrowth: showGrowth || spec.showGrowth || false,
+      invertGrowth: invertGrowth || spec.invertGrowth || false,
+      mode: mode || spec.mode || "chart",
+      maxValue: maxValue || spec.maxValue,
+      minValue: minValue || spec.minValue,
+      ranges: ranges || spec.ranges,
+      chartDatasetConfigs: [{
+        dataset_id: dataset.id,
+        formula: spec.formula,
+        datasetColor: spec.datasetColor || spec.options?.color || "#4285F4",
+        fillColor: spec.fillColor,
+        fill: spec.fill || false,
+        multiFill: spec.multiFill || false,
+        legend: legend || spec.title || dataset.legend,
+        pointRadius: pointRadius || spec.pointRadius || 0,
+        excludedFields: spec.excludedFields || [],
+        sort: spec.sort,
+        columnsOrder: spec.columnsOrder,
+        order: 1,
+        maxRecords: spec.maxRecords,
+        goal: spec.goal,
+        configuration: spec.configuration || {}
+      }]
+    }, null);
+
+    return {
+      chart_id: chart.id,
+      dataset_id: dataset.id,
+      data_request_id: dataRequestId,
+      name: chart.name,
+      type: chart.type,
+      project_id: ghostProject.id,
+      is_temporary: true,
+    };
+  } catch (error) {
+    throw new Error(`Temporary chart creation failed: ${error.message}`);
+  }
+}
+
+async function moveChartToDashboard(payload) {
+  const {
+    chart_id, target_project_id, team_id
+  } = payload;
+
+  if (!chart_id) {
+    throw new Error("chart_id is required to move a chart");
+  }
+
+  if (!target_project_id) {
+    throw new Error("target_project_id is required to move a chart");
+  }
+
+  if (!team_id) {
+    throw new Error("team_id is required to move a chart");
+  }
+
+  try {
+    // Find the chart
+    const chart = await db.Chart.findByPk(chart_id);
+    if (!chart) {
+      throw new Error("Chart not found");
+    }
+
+    // Verify the chart belongs to the team
+    const currentProject = await db.Project.findByPk(chart.project_id);
+    if (!currentProject || currentProject.team_id !== team_id) {
+      throw new Error("Chart does not belong to the specified team");
+    }
+
+    // Verify the target project exists and belongs to the team
+    const targetProject = await db.Project.findByPk(target_project_id);
+    if (!targetProject || targetProject.team_id !== team_id) {
+      throw new Error("Target project not found or does not belong to the specified team");
+    }
+
+    if (targetProject.ghost) {
+      throw new Error("Cannot move chart to this project");
+    }
+
+    // Get existing charts in the target project for layout calculation
+    const existingCharts = await db.Chart.findAll({
+      where: { project_id: target_project_id },
+      attributes: ["layout"],
+    });
+
+    // Calculate new layout for the chart
+    const calculatedLayout = calculateChartLayout(existingCharts);
+    const finalLayout = ensureCompleteLayout(calculatedLayout);
+
+    // Update the chart's project_id and layout
+    await db.Chart.update(
+      {
+        project_id: target_project_id,
+        layout: finalLayout
+      },
+      { where: { id: chart_id } }
+    );
+
+    // Run the chart update in the background
+    try {
+      chartController.updateChartData(chart_id, null, {});
+    } catch {
+      // Ignore background update errors
+    }
+
+    return {
+      chart_id,
+      previous_project_id: chart.project_id,
+      new_project_id: target_project_id,
+      dashboard_url: `${clientUrl}/dashboard/${target_project_id}`,
+      chart_url: `${clientUrl}/dashboard/${target_project_id}/chart/${chart_id}/edit`,
+    };
+  } catch (error) {
+    throw new Error(`Chart move failed: ${error.message}`);
+  }
+}
+
 async function disambiguate(payload) {
   const { prompt, options } = payload;
 
@@ -1185,6 +1391,84 @@ async function availableTools() {
       // returns: { chart_id, name, type, project_id, dashboard_url, chart_url, updated_fields }
     },
     {
+      name: "create_temporary_chart",
+      description: "Create a temporary preview chart when the user doesn't specify a dashboard. Use this when the user asks to create a chart without mentioning a specific project/dashboard. The chart will be created as a temporary preview and can later be moved to a real dashboard using move_chart_to_dashboard.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string", description: "Connection ID to use for data fetching (must be MySQL, PostgreSQL, or MongoDB)" },
+          name: { type: "string", description: "Chart name/title" },
+          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
+          displayLegend: { type: "boolean", description: "Show chart legend" },
+          pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
+          dataLabels: { type: "boolean", description: "Show values on data points" },
+          includeZeros: { type: "boolean", description: "Include zero values" },
+          timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
+          stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
+          horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          showGrowth: { type: "boolean", description: "Show percentage growth" },
+          invertGrowth: { type: "boolean", description: "Invert growth calculation" },
+          mode: { type: "string", enum: ["chart", "kpichart"] },
+          maxValue: { type: "integer", description: "Cap maximum value" },
+          minValue: { type: "integer", description: "Cap minimum value" },
+          ranges: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                min: { type: "number" },
+                max: { type: "number" },
+                label: { type: "string" },
+                color: { type: "string" }
+              }
+            },
+            description: "Gauge ranges [{min, max, label, color}]"
+          },
+          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxisOperation: {
+            type: "string",
+            enum: ["none", "sum", "avg", "min", "max", "count"],
+            default: "none",
+            description: "Y axis aggregation operation"
+          },
+          dateField: { type: "string", description: "Date field for filtering" },
+          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          query: { type: "string", description: "SQL query for the dataset" },
+          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
+          configuration: { type: "object", description: "Dialect-specific settings" },
+          variables: {
+            type: "array",
+            items: { type: "string" },
+            default: [],
+            description: "Query variables/parameters"
+          },
+          transform: { type: "object", description: "Data transformation rules" },
+          spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
+        },
+        required: ["connection_id", "name", "xAxis", "yAxis", "query"]
+      }
+      // returns: {
+      //   chart_id, dataset_id, data_request_id, name, type,
+      //   is_temporary: true, ghost_project_id
+      // }
+    },
+    {
+      name: "move_chart_to_dashboard",
+      description: "Move a temporary chart from the ghost project to a real dashboard/project. Use this after creating a temporary chart when the user confirms they want to add it to a specific dashboard. The chart's layout will be automatically recalculated for the new dashboard.",
+      parameters: {
+        type: "object",
+        properties: {
+          chart_id: { type: "string", description: "The ID of the chart to move (from create_temporary_chart)" },
+          target_project_id: { type: "string", description: "The project/dashboard ID where the chart should be placed" }
+        },
+        required: ["chart_id", "target_project_id"]
+      }
+      // returns: { chart_id, previous_project_id, new_project_id, dashboard_url, chart_url }
+    },
+    {
       name: "disambiguate",
       description: "Ask the user to choose among options when planning couldn’t decide.",
       parameters: {
@@ -1228,6 +1512,10 @@ async function callTool(name, payload) {
         return updateDataset(payload);
       case "update_chart":
         return updateChart(payload);
+      case "create_temporary_chart":
+        return createTemporaryChart(payload);
+      case "move_chart_to_dashboard":
+        return moveChartToDashboard(payload);
       case "disambiguate":
         return disambiguate(payload);
       default:
@@ -1291,6 +1579,7 @@ ${ENTITY_CREATION_RULES}
 - Execute database queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
+- Create temporary charts when no project is specified, then move them to dashboards upon user confirmation
 - Inform users when they request unsupported data sources (APIs, etc.) that these will be available in future updates
 - Only suggest actions that correspond to these tools - no exports, sharing features, or other unimplemented functionality
 
@@ -1319,16 +1608,23 @@ ${ENTITY_CREATION_RULES}
      * **TAKE INITIATIVE: If a project/dashboard was mentioned in the conversation or context, automatically create a chart without asking. Users can edit afterwards.**
 
 2. When creating charts - TAKE INITIATIVE:
-   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once, in the exact project specified by the user.
+   
+   **Deciding between create_chart and create_temporary_chart:**
+   - **Use create_chart when**: The user explicitly mentions a specific project/dashboard (e.g., "create a chart in my Sales Dashboard") OR a project is clearly mentioned in the conversation context
+   - **Use create_temporary_chart when**: The user asks to create a chart WITHOUT specifying a project/dashboard (e.g., "create a chart showing X" or "visualize Y")
+   - **Temporary chart workflow**: After creating a temporary chart, present the results and offer to add it to a dashboard. If the user agrees and specifies a dashboard, use move_chart_to_dashboard to place it. The layout will be automatically recalculated.
+   
+   **General chart creation rules:**
+   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once, in the exact project specified by the user or as a temporary chart.
    - **CRITICAL: Always use the exact project provided by the user or context.** Never create charts in different projects for testing or validation purposes.
-   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate" - create the final chart directly in the user's specified project.
-   - **PROACTIVE BEHAVIOR: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it automatically. Don't ask "which project?" - just proceed.**
+   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate" - create the final chart directly in the user's specified project or as a temporary chart.
+   - **PROACTIVE BEHAVIOR: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it automatically. Don't ask "which project?" - just proceed with create_chart.**
+   - **PROACTIVE BEHAVIOR: If NO project/dashboard is mentioned, create a temporary chart and then ask if they want to add it to a dashboard.**
    - **PROACTIVE BEHAVIOR: If only one connection exists or the connection is obvious from context (e.g., user mentions "my database" or "the sales database"), use it automatically. Only ask if there are multiple ambiguous options.**
-   - **PROACTIVE BEHAVIOR: After answering a data question, if a project was mentioned or can be inferred from context, automatically create a chart. Don't ask "would you like me to create a chart?" - just create it.**
+   - **PROACTIVE BEHAVIOR: After answering a data question, automatically create a chart (temporary if no project specified, or directly in the project if one was mentioned).**
    - Suggest the most appropriate chart type based on the data automatically
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
    - **DEFAULT TO ACTION: Create charts and datasets proactively. Only ask questions when context is truly ambiguous or when multiple valid options exist.**
-   - Create the dataset first, then the chart
    - When creating charts, provide a descriptive name that reflects the data being visualized (e.g., "Monthly Sales Trends" instead of "AI Generated Chart")
    - When creating resources, integrate clickable markdown links naturally into your response sentences instead of listing them separately (e.g., "I've created your chart! You can [view it here](chart_url) or [see it on your dashboard](dashboard_url)" - NOT "Chart URL: url, Dashboard URL: url")
    - Keep responses conversational and focused on insights/results rather than listing technical metadata like IDs and connection details
@@ -1734,7 +2030,7 @@ async function orchestrate(
         const toolArgs = JSON.parse(toolCall.function.arguments);
 
         // Inject team_id into tools that need it
-        if (toolName === "create_dataset" || toolName === "run_query" || toolName === "create_chart" || toolName === "update_dataset" || toolName === "update_chart") {
+        if (toolName === "create_dataset" || toolName === "run_query" || toolName === "create_chart" || toolName === "update_dataset" || toolName === "update_chart" || toolName === "create_temporary_chart" || toolName === "move_chart_to_dashboard") {
           toolArgs.team_id = teamId;
         }
 
