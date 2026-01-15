@@ -240,6 +240,17 @@ async function updateChart(payload) {
       }]
     });
 
+    // Take a snapshot of the updated chart for visualization
+    let snapshot = null;
+    try {
+      const chartController = new ChartController();
+      snapshot = await chartController.takeSnapshot(updatedChart.id);
+    } catch (snapshotError) {
+      // Ignore snapshot errors - chart update was successful
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to take snapshot for chart ${updatedChart.id}:`, snapshotError.message);
+    }
+
     return {
       chart_id: updatedChart.id,
       name: updatedChart.name,
@@ -247,6 +258,7 @@ async function updateChart(payload) {
       project_id: updatedChart.project_id,
       dashboard_url: `${global.clientUrl}/${team_id}/${updatedChart.project_id}/dashboard`,
       chart_url: `${global.clientUrl}/${team_id}/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
+      snapshot,
       updated_fields: {
         chart: Object.keys(chartUpdates),
         config: dataset_id || legend || datasetColor || fillColor || fill || multiFill || excludedFields || sort || columnsOrder || maxRecords || goal ? "chart_dataset_config" : null

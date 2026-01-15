@@ -118,6 +118,14 @@ async function createTemporaryChart(payload) {
       }]
     }, null);
 
+    // Take a snapshot of the temporary chart for visualization
+    let snapshot = null;
+    try {
+      snapshot = await chartController.takeSnapshot(chart.id);
+    } catch (snapshotError) {
+      // Ignore snapshot errors - chart creation was successful
+    }
+
     return {
       chart_id: chart.id,
       dataset_id: dataset.id,
@@ -126,6 +134,7 @@ async function createTemporaryChart(payload) {
       type: chart.type,
       project_id: ghostProject.id,
       is_temporary: true,
+      snapshot,
     };
   } catch (error) {
     throw new Error(`Temporary chart creation failed: ${error.message}`);

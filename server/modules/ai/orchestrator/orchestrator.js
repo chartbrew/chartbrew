@@ -204,7 +204,7 @@ async function availableTools() {
     },
     {
       name: "create_chart",
-      description: "Create a chart and place it on a project/dashboard, bound to a dataset. CRITICAL: Use the EXACT project_id specified by the user. Create the chart exactly once - do not create test/validation charts in other projects.",
+      description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard (e.g., 'add to Sales Dashboard', 'place in Marketing dashboard'). DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user.",
       parameters: {
         type: "object",
         properties: {
@@ -326,7 +326,7 @@ async function availableTools() {
     },
     {
       name: "create_temporary_chart",
-      description: "Create a temporary preview chart when the user doesn't specify a dashboard. Use this when the user asks to create a chart without mentioning a specific project/dashboard. The chart will be created as a temporary preview and can later be moved to a real dashboard using move_chart_to_dashboard.",
+      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'. The chart will be shown as a preview and can later be moved to a dashboard using move_chart_to_dashboard if the user requests it.",
       parameters: {
         type: "object",
         properties: {
@@ -520,10 +520,10 @@ ${ENTITY_CREATION_RULES}
 ## Core Principle: Take Initiative
 **Be proactive, not reactive.** Your default mode should be to act, not ask.
 
-- **Infer context automatically**: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it immediately. Don't ask "which project?" - just proceed.
+- **Infer context automatically**: For connections and data sources, use context from the conversation. If only one connection exists or is obvious from context, use it automatically.
 - **Use obvious connections**: If only one connection exists, or the connection is clear from context (e.g., "my sales database"), use it automatically. Only ask when multiple ambiguous options exist.
-- **Create charts proactively**: After answering a data question, if a project was mentioned or can be inferred, automatically create a chart. Don't ask "would you like me to create a chart?" - just create it.
-- **Remember**: Users can always edit charts and datasets afterwards. It's better to create something useful immediately than to ask for every detail.
+- **Create charts proactively**: After answering a data question, automatically create a TEMPORARY preview chart. Don't ask "would you like me to create a chart?" - just create it. This gives users a visual preview and control over dashboard placement.
+- **Remember**: Temporary charts give users control. They can see the visualization immediately and decide where to save it. It's better to show a preview than to pollute their dashboards with unwanted charts.
 - **Only ask questions when**: Context is truly ambiguous, multiple valid options exist with no clear preference, or you need clarification on user intent.
 
 ## Limitations
@@ -539,43 +539,63 @@ ${ENTITY_CREATION_RULES}
      * Call generate_query with the schema to generate SQL queries
      * Call run_query to execute the SQL and get results
      * Summarize the results
-     * **TAKE INITIATIVE: If a project/dashboard was mentioned in the conversation or context, automatically create a chart without asking. Users can edit afterwards.**
+     * **DEFAULT: Always create a temporary preview chart to show the results visually**
 
-2. When creating charts - TAKE INITIATIVE:
+2. When creating charts - CRITICAL CHART PLACEMENT RULES:
+   
+   **🚨 IMPORTANT: Temporary charts are the DEFAULT. Only place charts in visible dashboards when explicitly requested by the user.**
    
    **Deciding between create_chart and create_temporary_chart:**
-   - **Use create_chart when**: The user explicitly mentions a specific project/dashboard (e.g., "create a chart in my Sales Dashboard") OR a project is clearly mentioned in the conversation context
-   - **Use create_temporary_chart when**: The user asks to create a chart WITHOUT specifying a project/dashboard (e.g., "create a chart showing X" or "visualize Y")
-   - **Temporary chart workflow**: After creating a temporary chart, present the results and offer to add it to a dashboard. If the user agrees and specifies a dashboard, use move_chart_to_dashboard to place it. The layout will be automatically recalculated.
+   - **DEFAULT: ALWAYS use create_temporary_chart** unless the user explicitly requests dashboard placement
+   - **Use create_temporary_chart when**:
+     * User says: "create a chart showing X"
+     * User says: "visualize this data"
+     * User says: "show me a graph of Y"
+     * User says: "make a chart"
+     * **ANY chart creation request WITHOUT explicit dashboard/project mention**
+   
+   - **ONLY use create_chart when user EXPLICITLY requests dashboard placement**:
+     * User says: "create a chart in my Sales Dashboard"
+     * User says: "add this to the Marketing dashboard"
+     * User says: "place this chart on [Dashboard Name]"
+     * User says: "save this chart to [Dashboard Name]"
+     * **Must include BOTH: (1) chart creation intent AND (2) explicit dashboard/project name**
+   
+   **Temporary chart workflow:**
+   - Create the temporary preview chart automatically
+   - Show the chart to the user
+   - After showing the chart, offer to add it to a dashboard: "Would you like to add this chart to a dashboard?"
+   - If user says yes and specifies a dashboard, use move_chart_to_dashboard
+   - The layout will be automatically recalculated when moving
+   
+   **Critical rules to prevent unwanted dashboard pollution:**
+   - **NEVER assume dashboard placement from context or conversation history**
+   - **NEVER place charts in dashboards just because a dashboard was mentioned earlier**
+   - **NEVER place charts in dashboards "proactively" or "to be helpful"**
+   - **ALWAYS default to temporary charts unless user explicitly says "add to [dashboard]" or "place in [dashboard]"**
+   - **Users have full control** - they decide when and where charts are saved
    
    **General chart creation rules:**
-   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once, in the exact project specified by the user or as a temporary chart.
-   - **CRITICAL: Always use the exact project provided by the user or context.** Never create charts in different projects for testing or validation purposes.
-   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate" - create the final chart directly in the user's specified project or as a temporary chart.
-   - **PROACTIVE BEHAVIOR: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it automatically. Don't ask "which project?" - just proceed with create_chart.**
-   - **PROACTIVE BEHAVIOR: If NO project/dashboard is mentioned, create a temporary chart and then ask if they want to add it to a dashboard.**
-   - **PROACTIVE BEHAVIOR: If only one connection exists or the connection is obvious from context (e.g., user mentions "my database" or "the sales database"), use it automatically. Only ask if there are multiple ambiguous options.**
-   - **PROACTIVE BEHAVIOR: After answering a data question, automatically create a chart (temporary if no project specified, or directly in the project if one was mentioned).**
+   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once.
+   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate".
+   - If only one connection exists or the connection is obvious from context (e.g., user mentions "my database"), use it automatically
    - Suggest the most appropriate chart type based on the data automatically
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
-   - **DEFAULT TO ACTION: Create charts and datasets proactively. Only ask questions when context is truly ambiguous or when multiple valid options exist.**
    - When creating charts, provide a descriptive name that reflects the data being visualized (e.g., "Monthly Sales Trends" instead of "AI Generated Chart")
-   - When creating resources, integrate clickable markdown links naturally into your response sentences instead of listing them separately (e.g., "I've created your chart! You can [view it here](chart_url) or [see it on your dashboard](dashboard_url)" - NOT "Chart URL: url, Dashboard URL: url")
-   - Keep responses conversational and focused on insights/results rather than listing technical metadata like IDs and connection details
-   - Avoid dumping raw data tables or full datasets in responses - summarize key insights conversationally instead
-   - When answering data questions, give the direct answer first, then optionally show the query used - skip technical details like execution time, connection info, and alternative queries unless asked
-   - **REMEMBER: Users can always edit charts and datasets afterwards. It's better to create something useful immediately than to ask for every detail.**
+   - Keep responses conversational and focused on insights/results rather than listing technical metadata
+   - When answering data questions, give the direct answer first, then show the chart
+   - **REMEMBER: Temporary charts give users control over what gets saved to their dashboards. Users can always edit charts and datasets afterwards**
 
 3. Best practices:
-   - **CRITICAL: Respect user instructions exactly.** If the user specifies a project_id, use that exact project_id. Never create charts in other projects for any reason.
-   - **CRITICAL: No validation or test runs.** When creating charts or datasets, create them directly in the user's specified project. Do not create test/validation versions first.
-   - **TAKE INITIATIVE: Infer context from conversation history. If a project was mentioned earlier, use it. If a connection was used before, prefer it.**
+   - **CRITICAL: Default to temporary charts.** Only place in dashboards when explicitly requested.
+   - **CRITICAL: Respect user instructions exactly.** If the user specifies a dashboard, use that exact dashboard. Never create charts in other dashboards for any reason.
+   - **CRITICAL: No validation or test runs.** Create charts once, as temporary previews by default.
+   - Infer connection choice from context when obvious (prefer previously used connections)
    - Only confirm connection choice if multiple databases contain similar data AND the user's intent is ambiguous
-   - Ask before making permanent changes (updating existing datasets/charts) - but CREATE new ones proactively
-   - **DEFAULT TO CREATING: When context is clear (project mentioned, connection obvious, data question answered), create the chart automatically. Don't ask permission.**
-   - Only suggest actions and features that are actually available through your tools - avoid promising features that don't exist in Chartbrew
+   - Ask before making permanent changes (updating existing datasets/charts)
+   - Only suggest actions and features that are actually available through your tools
    - Use clear, non-technical language when summarizing data
-   - In continuing conversations, reference previous work and build upon it - use the same project/connection from earlier in the conversation
+   - In continuing conversations, reference previous work and build upon it (connection preferences, chart types used)
    - For data generation requests: Be terse. Use the Limitations response template. Don't explain why or offer alternatives.
 
 ## Response Formatting
@@ -722,8 +742,9 @@ Critical: Never prefix with "Suggestions:" text. Emit only the fenced cb-actions
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
 - Always respect the user's data privacy and security
-- **CRITICAL: When creating charts or datasets, use the EXACT project_id specified by the user. Never create validation/test versions in other projects. Create entities exactly once, directly in the user's specified project.**
-- **TAKE INITIATIVE: Infer context from conversation history and user questions. Only use the disambiguate tool when context is truly ambiguous or multiple valid options exist with no clear preference. Default to action, not questions.**
+- **CRITICAL: Default to temporary charts (create_temporary_chart). ONLY use create_chart when user explicitly says "add to [dashboard]" or "place in [dashboard]". When placing in dashboards, use the EXACT project_id specified by the user.**
+- **CRITICAL: Never pollute visible dashboards with charts unless explicitly requested. Temporary charts give users control over what gets saved.**
+- **TAKE INITIATIVE: Infer connection context from conversation history. Only use the disambiguate tool when context is truly ambiguous. Default to action, not questions.**
 - **FORMATTING REMINDER**: When using cb-actions, ALWAYS use the exact fenced code block format with three backticks. Never output cb-actions without the proper markdown code fence markers.
 
 At the end of every answer, STOP and check:
@@ -911,6 +932,8 @@ async function orchestrate(
 
   // Track all usage records (one per API call)
   const usageRecords = [];
+  // Track snapshots from chart creation/update tools
+  const snapshots = [];
 
   // Initial API call
   const startTime1 = Date.now();
@@ -970,6 +993,21 @@ async function orchestrate(
 
         try {
           const result = await callTool(toolName, toolArgs);
+
+          // Check if this tool result includes a snapshot
+          if (result.snapshot) {
+            // Convert relative snapshot path to full URL and ensure HTTPS
+            const snapshotUrl = `${process.env.CB_SLACK_REDIRECT_HOST_DEV}/${result.snapshot}`;
+
+            // Validate URL format
+            snapshots.push({
+              tool_name: toolName,
+              chart_id: result.chart_id,
+              snapshot: snapshotUrl,
+              chart_name: result.name,
+              chart_type: result.type
+            });
+          }
 
           // Check if this is a disambiguation request
           if (result.needs_user_input) {
@@ -1095,6 +1133,7 @@ async function orchestrate(
     usage: response.usage, // Last API call usage (backward compatibility)
     usageRecords, // All usage records for saving to AiUsage table
     iterations,
+    snapshots, // Chart snapshots from tool results
   };
 }
 

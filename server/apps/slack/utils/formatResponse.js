@@ -264,7 +264,7 @@ function parseMessageToBlocks(message) {
  * Format AI orchestrator response for Slack using Block Kit
  * Returns an object with blocks and fallback text
  */
-function formatResponse(message) {
+function formatResponse(message, snapshots = []) {
   if (!message) {
     return {
       text: "I couldn't generate a response. Please try again.",
@@ -273,6 +273,22 @@ function formatResponse(message) {
   }
 
   const blocks = parseMessageToBlocks(message);
+
+  // Add snapshot images as blocks at the end
+  if (snapshots && snapshots.length > 0) {
+    snapshots.forEach((snapshot) => {
+      if (snapshot.snapshot && typeof snapshot.snapshot === "string" && snapshot.snapshot.length > 0) {
+        // Add image block
+        // eslint-disable-next-line prefer-template
+        const altText = ("Chart: " + (snapshot.chart_name || "Generated Chart")).substring(0, 200);
+        blocks.push({
+          type: "image",
+          image_url: snapshot.snapshot,
+          alt_text: altText,
+        });
+      }
+    });
+  }
 
   // Create fallback text (for notifications and accessibility)
   const fallbackText = message

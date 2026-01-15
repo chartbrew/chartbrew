@@ -99,6 +99,15 @@ async function createChart(payload) {
       }]
     }, null); // No user for AI-created charts
 
+    // Take a snapshot of the chart for visualization
+    let snapshot = null;
+    try {
+      snapshot = await chartController.takeSnapshot(chart.id);
+    } catch (snapshotError) {
+      // Ignore snapshot errors - chart creation was successful
+      console.warn(`Failed to take snapshot for chart ${chart.id}:`, snapshotError.message);
+    }
+
     return {
       chart_id: chart.id,
       name: chart.name,
@@ -106,6 +115,7 @@ async function createChart(payload) {
       project_id: chart.project_id,
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
+      snapshot,
     };
   } catch (error) {
     throw new Error(`Chart creation failed: ${error.message}`);

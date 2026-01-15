@@ -444,7 +444,7 @@ module.exports = (app) => {
       const totalTokens = parseInt(usageStats[0]?.total_tokens, 10) || 0;
 
       // Format response for Slack using Block Kit
-      const formattedResponse = formatResponse(result.message);
+      const formattedResponse = formatResponse(result.message, result.snapshots);
 
       // Add token usage and reset info as context footer
       if (formattedResponse.blocks) {

@@ -8,6 +8,29 @@ This module provides AI-powered conversational interactions for Chartbrew.
 - **`responseParser.js`** - Parses AI responses and emits progress events to frontend.
 - **`generateSqlQuery.js`** - Generates SQL queries from natural language using OpenAI.
 - **`entityCreationRules.js`** - Configuration for how AI creates Chartbrew entities (datasets, charts, etc.)
+- **`tools/`** - Directory containing all AI tool functions. Each tool is in its own file (e.g., `listConnections.js`, `createChart.js`)
+
+## AI Tools
+
+The AI orchestrator uses function calling to execute specific tools. All tools are located in the `tools/` directory.
+
+### Adding New Tools
+
+When adding new AI capabilities:
+
+1. **Create a new tool file** in `tools/yourToolName.js`
+2. **Export the function** as the default export
+3. **Add the tool to `tools/index.js`** to make it available to the orchestrator
+4. **Update the `availableTools()` function** in `orchestrator.js` to define the tool schema for OpenAI
+5. **Add a case in `callTool()`** to route the tool call to your function
+
+### Tool Organization
+
+Each tool file should:
+- Be self-contained with its own imports
+- Export a single async function
+- Handle errors appropriately
+- Access shared resources via global variables (openaiClient, openAiModel, clientUrl)
 
 ## Customizing Entity Creation
 
