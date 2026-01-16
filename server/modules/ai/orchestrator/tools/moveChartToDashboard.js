@@ -60,6 +60,28 @@ async function moveChartToDashboard(payload) {
       { where: { id: chart_id } }
     );
 
+    // Update project_ids for all datasets used by this chart
+    const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
+      where: { chart_id },
+      include: [{
+        model: db.Dataset,
+        as: "Dataset"
+      }]
+    });
+
+    for (const cdc of chartDatasetConfigs) {
+      if (cdc.Dataset) {
+        const currentProjectIds = cdc.Dataset.project_ids || [];
+
+        // Add target project if not already included
+        if (!currentProjectIds.includes(target_project_id)) {
+          cdc.Dataset.update({
+            project_ids: [...currentProjectIds, target_project_id]
+          });
+        }
+      }
+    }
+
     // Run the chart update in the background
     try {
       const ChartController = require("../../../controllers/ChartController"); // eslint-disable-line

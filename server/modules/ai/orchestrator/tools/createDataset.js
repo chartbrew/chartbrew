@@ -1,3 +1,4 @@
+const db = require("../../../../models/models");
 const DatasetController = require("../../../../controllers/DatasetController");
 
 const datasetController = new DatasetController();
@@ -17,10 +18,19 @@ async function createDataset(payload) {
   }
 
   try {
+    // Check if the project is a ghost project - ghost projects should not be in project_ids
+    let projectIds = [];
+    if (project_id) {
+      const project = await db.Project.findByPk(project_id);
+      if (project && !project.ghost) {
+        projectIds = [project_id];
+      }
+    }
+
     // Use the quick-create function to create dataset with data request in one go
     const dataset = await datasetController.createWithDataRequests({
       team_id,
-      project_ids: project_id ? [project_id] : [],
+      project_ids: projectIds,
       draft: false,
       legend: name || "AI Generated Dataset",
       xAxis,

@@ -48,6 +48,22 @@ async function createChart(payload) {
       throw new Error("Dataset not found");
     }
 
+    // Check if project is a ghost project
+    const project = await db.Project.findByPk(project_id);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    // Update dataset's project_ids to include this project (if not ghost and not already included)
+    if (!project.ghost) {
+      const currentProjectIds = dataset.project_ids || [];
+      if (!currentProjectIds.includes(project_id)) {
+        await dataset.update({
+          project_ids: [...currentProjectIds, project_id]
+        });
+      }
+    }
+
     // Use the quick-create function to create chart with chart dataset config in one go
     // Layout will be auto-calculated by the controller
     const chart = await chartController.createWithChartDatasetConfigs({

@@ -41,9 +41,10 @@ async function createTemporaryChart(payload) {
     }
 
     // Create the dataset first
+    // Note: project_ids is empty for temporary charts - ghost projects should not be included
     const dataset = await datasetController.createWithDataRequests({
       team_id,
-      project_ids: [ghostProject.id],
+      project_ids: [],
       draft: false,
       legend: name || "AI Generated Dataset",
       xAxis,
