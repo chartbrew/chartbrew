@@ -1,7 +1,7 @@
 const { WebClient } = require("@slack/web-api");
 const crypto = require("crypto");
 
-const slackClientId = process.env.CB_SLACK_CLIENT_ID;
+const slackClientId = process.env.VITE_APP_SLACK_CLIENT_ID;
 const slackClientSecret = process.env.CB_SLACK_CLIENT_SECRET;
 const slackSigningSecret = process.env.CB_SLACK_SIGNING_SECRET;
 

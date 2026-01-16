@@ -5,7 +5,6 @@ import {
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
-import { TbWebhook } from "react-icons/tb";
 import { formatRelative } from "date-fns";
 
 import {
@@ -15,7 +14,7 @@ import {
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash } from "react-icons/lu";
+import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash, LuWebhook } from "react-icons/lu";
 
 const urlRegex = /^https?:\/\/.+/;
 
@@ -31,6 +30,7 @@ function WebhookIntegrations({ teamId }) {
   const [urlError, setUrlError] = useState(false);
 
   const integrations = useSelector(selectIntegrations);
+  const webhookIntegrations = integrations.filter((i) => i.type === "webhook");
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -158,9 +158,9 @@ function WebhookIntegrations({ teamId }) {
     <div>
       <Row align="center" justify="space-between">
         <div className="flex items-center">
-          <Text><TbWebhook size={24} /></Text>
+          <LuWebhook size={24} />
           <Spacer x={1} />
-          <Text size="h4">Webhooks</Text>
+          <div className="text-lg font-semibold">Webhooks</div>
         </div>
         <Spacer x={2} />
         <Button
@@ -201,57 +201,53 @@ function WebhookIntegrations({ teamId }) {
         </div>
       </Row>
       <Spacer y={2} />
-      {integrations.length > 0 && (
-        <Row>
-          <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
-            <TableHeader>
-              <TableColumn key="name">Name</TableColumn>
-              <TableColumn key="url">URL</TableColumn>
-              <TableColumn key="created" align="flex-end">Date created</TableColumn>
-              <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
-            </TableHeader>
+      <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
+        <TableHeader>
+          <TableColumn key="name">Name</TableColumn>
+          <TableColumn key="url">URL</TableColumn>
+          <TableColumn key="created" align="flex-end">Date created</TableColumn>
+          <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
+        </TableHeader>
 
-            <TableBody emptyContent={"No integrations found"}>
-              {integrations.map((i) => (
-                <TableRow key={i.id}>
-                  <TableCell key="name">
-                    {i.name}
-                  </TableCell>
-                  <TableCell key="url" className="max-w-[300px] truncate">
-                    <Text className={"truncate"}>
-                      {i.config?.url || "No URL"}
-                    </Text>
-                  </TableCell>
-                  <TableCell key="created">
-                    {formatRelative(new Date(i.createdAt), new Date())}
-                  </TableCell>
-                  <TableCell key="actions">
-                    <Row>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        onPress={() => _onEditOpen(i)}
-                        size="sm"
-                      >
-                        <LuPencilLine size={18} />
-                      </Button>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color="danger"
-                        onPress={() => setIntegrationToDelete(i.id)}
-                        size="sm"
-                      >
-                        <LuTrash size={18} />
-                      </Button>
-                    </Row>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Row>
-      )}
+        <TableBody emptyContent={"No webhook integrations"}>
+          {webhookIntegrations.map((i) => (
+            <TableRow key={i.id}>
+              <TableCell key="name">
+                {i.name}
+              </TableCell>
+              <TableCell key="url" className="max-w-[300px] truncate">
+                <Text className={"truncate"}>
+                  {i.config?.url || "No URL"}
+                </Text>
+              </TableCell>
+              <TableCell key="created">
+                {formatRelative(new Date(i.createdAt), new Date())}
+              </TableCell>
+              <TableCell key="actions">
+                <Row>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    onPress={() => _onEditOpen(i)}
+                    size="sm"
+                  >
+                    <LuPencilLine size={18} />
+                  </Button>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    color="danger"
+                    onPress={() => setIntegrationToDelete(i.id)}
+                    size="sm"
+                  >
+                    <LuTrash size={18} />
+                  </Button>
+                </Row>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <ModalContent>

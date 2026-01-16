@@ -50,6 +50,9 @@ const router = createBrowserRouter([
           {
             path: "auth/:integrationType",
           },
+          {
+            path: "auth/:integrationType/callback",
+          }
         ],
       },
       {

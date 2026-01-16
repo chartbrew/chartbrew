@@ -1004,30 +1004,11 @@ module.exports = (app) => {
 
     // Handle OAuth errors from Slack
     if (error) {
-      // eslint-disable-next-line no-console
-      console.error("Slack OAuth error:", error);
-      return res.status(400).send(`
-        <html>
-          <head><title>Slack Installation Failed</title></head>
-          <body>
-            <h1>Installation Failed</h1>
-            <p>Error: ${error}</p>
-            <p>Please try installing the app again from Slack.</p>
-          </body>
-        </html>
-      `);
+      return res.status(400).send(error);
     }
 
     if (!code) {
-      return res.status(400).send(`
-        <html>
-          <head><title>Slack Installation Failed</title></head>
-          <body>
-            <h1>Installation Failed</h1>
-            <p>Missing authorization code. Please try installing the app again from Slack.</p>
-          </body>
-        </html>
-      `);
+      return res.status(400).send("Missing authorization code. Please try installing the app again from Slack.");
     }
 
     try {
@@ -1094,37 +1075,13 @@ module.exports = (app) => {
           }
         );
       } catch (dmError) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to send welcome DM:", dmError);
         // Don't fail the installation if DM fails
       }
 
       // Return success page (Slack redirects the browser here)
-      return res.status(200).send(`
-        <html>
-          <head><title>Chartbrew Installed</title></head>
-          <body>
-            <h1>✅ Chartbrew has been installed!</h1>
-            <p>The app has been successfully installed in your Slack workspace: <strong>${tokenData.team_name}</strong></p>
-            <p>You can close this window and return to Slack.</p>
-            <p>To connect this workspace to a Chartbrew team, use the command in Slack:</p>
-            <p><code>/chartbrew connect</code></p>
-          </body>
-        </html>
-      `);
+      return res.status(200).send({ success: true });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("OAuth callback error:", error);
-      return res.status(500).send(`
-        <html>
-          <head><title>Installation Error</title></head>
-          <body>
-            <h1>Installation Error</h1>
-            <p>An error occurred during installation: ${error.message}</p>
-            <p>Please try installing the app again from Slack.</p>
-          </body>
-        </html>
-      `);
+      return res.status(500).send({ error: error.message });
     }
   });
   // --------------------------------------

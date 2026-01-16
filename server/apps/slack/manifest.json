@@ -1,0 +1,57 @@
+{
+  "display_information": {
+    "name": "Chartbrew",
+    "description": "Chartbrew insights in Slack",
+    "background_color": "#048bde",
+    "long_description": "Chartbrew brings your data into Slack, so your team can get answers without context switching. Connect data sources, pick dashboards or projects, ask questions in plain English, and get clear, shareable insights with links back to Chartbrew."
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": false,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    },
+    "bot_user": {
+      "display_name": "Chartbrew",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/chartbrew",
+        "url": "https://api.your-chartbrew-url.com/apps/slack/commands",
+        "description": "Chartbrew commands",
+        "usage_hint": "help | connect | ask",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "https://client.your-chartbrew-url.com/integrations/auth/slack/callback"
+    ],
+    "scopes": {
+      "bot": [
+        "commands",
+        "chat:write",
+        "chat:write.public",
+        "im:write",
+        "users:read"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://api.your-chartbrew-url.com/apps/slack/events",
+      "bot_events": [
+        "app_home_opened"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://api.your-chartbrew-url.com/apps/slack/interactions"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}
