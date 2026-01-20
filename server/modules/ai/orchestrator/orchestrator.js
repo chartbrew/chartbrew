@@ -221,9 +221,10 @@ async function availableTools() {
           timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
           stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
-          mode: { type: "string", enum: ["chart", "kpichart"] },
+          mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
           maxValue: { type: "integer", description: "Cap maximum value" },
           minValue: { type: "integer", description: "Cap minimum value" },
           ranges: {
@@ -291,6 +292,7 @@ async function availableTools() {
           timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"], description: "Time interval for time-based charts" },
           stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
           mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
@@ -342,9 +344,10 @@ async function availableTools() {
           timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
           stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
-          mode: { type: "string", enum: ["chart", "kpichart"] },
+          mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
           maxValue: { type: "integer", description: "Cap maximum value" },
           minValue: { type: "integer", description: "Cap minimum value" },
           ranges: {
@@ -940,17 +943,19 @@ async function orchestrate(
   // Initial API call
   const startTime1 = Date.now();
   let response = await openaiClient.chat.completions.create({
-    model: openAiModel || "gpt-4o-mini",
+    model: openAiModel || "gpt-5-nano",
     messages,
     tools,
     tool_choice: "auto",
+    reasoning_effort: "low",
+    verbosity: "low",
   });
   const elapsedMs1 = Date.now() - startTime1;
 
   // Record first usage
   if (response.usage) {
     usageRecords.push({
-      model: openAiModel || "gpt-4o-mini",
+      model: openAiModel || "gpt-5-nano",
       prompt_tokens: response.usage.prompt_tokens || 0,
       completion_tokens: response.usage.completion_tokens || 0,
       total_tokens: response.usage.total_tokens || 0,
@@ -1102,17 +1107,19 @@ async function orchestrate(
     const startTime = Date.now();
     // eslint-disable-next-line no-await-in-loop
     response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
+      model: openAiModel || "gpt-5-nano",
       messages: updatedMessages,
       tools,
       tool_choice: "auto",
+      reasoning_effort: "low",
+      verbosity: "low",
     });
     const elapsedMs = Date.now() - startTime;
 
     // Record usage for this API call
     if (response.usage) {
       usageRecords.push({
-        model: openAiModel || "gpt-4o-mini",
+        model: openAiModel || "gpt-5-nano",
         prompt_tokens: response.usage.prompt_tokens || 0,
         completion_tokens: response.usage.completion_tokens || 0,
         total_tokens: response.usage.total_tokens || 0,

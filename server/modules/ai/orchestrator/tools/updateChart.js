@@ -6,7 +6,7 @@ async function updateChart(payload) {
     chart_id, dataset_id, spec, team_id,
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
-    showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
+    xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     datasetColor, fillColor, fill, multiFill, excludedFields, sort, columnsOrder, maxRecords, goal
   } = payload;
 
@@ -39,6 +39,7 @@ async function updateChart(payload) {
       includeZeros: true,
       stacked: false,
       horizontal: false,
+      xLabelTicks: "default",
       showGrowth: false,
       invertGrowth: false,
       mode: "chart",
@@ -87,6 +88,12 @@ async function updateChart(payload) {
     } else if (chartSpec.horizontal !== undefined || chartSpec.options?.horizontal !== undefined) {
       chartUpdates.horizontal = horizontal
         ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false;
+    }
+
+    if (xLabelTicks !== undefined) {
+      chartUpdates.xLabelTicks = xLabelTicks;
+    } else if (chartSpec.xLabelTicks !== undefined) {
+      chartUpdates.xLabelTicks = chartSpec.xLabelTicks;
     }
 
     if (showGrowth !== undefined) {

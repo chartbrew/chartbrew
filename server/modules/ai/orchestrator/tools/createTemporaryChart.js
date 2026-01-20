@@ -8,7 +8,7 @@ const chartController = new ChartController();
 async function createTemporaryChart(payload) {
   const {
     connection_id, name, legend, type, subType, displayLegend, pointRadius,
-    dataLabels, includeZeros, timeInterval, stacked, horizontal,
+    dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
     query, conditions = [], configuration = {}, variables = [], transform = null,
@@ -94,6 +94,7 @@ async function createTemporaryChart(payload) {
       timeInterval: timeInterval || spec.timeInterval || "day",
       stacked: stacked ?? spec.stacked ?? spec.options?.stacked ?? false,
       horizontal: horizontal ?? spec.horizontal ?? spec.options?.horizontal ?? false,
+      xLabelTicks: xLabelTicks || spec.xLabelTicks || "default",
       showGrowth: showGrowth || spec.showGrowth || false,
       invertGrowth: invertGrowth || spec.invertGrowth || false,
       mode: mode || spec.mode || "chart",

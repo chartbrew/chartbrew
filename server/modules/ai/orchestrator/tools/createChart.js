@@ -10,7 +10,7 @@ async function createChart(payload) {
     project_id, dataset_id, spec,
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
-    showGrowth, invertGrowth, mode, maxValue, minValue, ranges
+    xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
   } = payload;
 
   if (!project_id) {
@@ -33,6 +33,7 @@ async function createChart(payload) {
     includeZeros: true,
     stacked: false,
     horizontal: false,
+    xLabelTicks: "default",
     showGrowth: false,
     invertGrowth: false,
     mode: "chart",
@@ -89,6 +90,7 @@ async function createChart(payload) {
       timeInterval: timeInterval || chartSpec.timeInterval || "day",
       stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked ?? false,
       horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false,
+      xLabelTicks: xLabelTicks || chartSpec.xLabelTicks || "default",
       showGrowth: showGrowth || chartSpec.showGrowth || false,
       invertGrowth: invertGrowth || chartSpec.invertGrowth || false,
       mode: mode || chartSpec.mode || "chart",

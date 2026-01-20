@@ -43,7 +43,7 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - name: string - chart name/title (optional)
 - legend: string - short legend for data points (separate from chart name, max 20-30 chars)
 - type: string - line|bar|pie|doughnut|radar|polar|table|kpi|avg|gauge|matrix
-- subType: string - "AddTimeseries" for KPI totals (optional)
+- subType: string - "AddTimeseries" for KPI totals and cumulative charts
 - chartSize: integer - 1-4 (size: small to full-width) (default: 2)
 - displayLegend: boolean - show legend (default: true)
 - pointRadius: integer - 0(hide) >0(show points) (default: 0)
@@ -52,6 +52,7 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - timeInterval: string - second|minute|hour|day|week|month|year (default: "day")
 - stacked: boolean - stack bars (bar only) (default: false)
 - horizontal: boolean - horizontal bars (bar only) (default: false)
+- xLabelTicks: string - "default", "half", "third", "fourth", "showAll" (default: "default"). Use showAll when making breakdown charts where categories are not that many.
 - showGrowth: boolean - percentage growth (default: false)
 - invertGrowth: boolean - invert growth calc (default: false)
 - mode: string - "chart" or "kpichart" (default: "chart")
@@ -143,6 +144,7 @@ const FIELD_SPECS = {
       dataLabels: false,
       stacked: false,
       horizontal: false,
+      xLabelTicks: "default",
       showGrowth: false,
       invertGrowth: false,
       mode: "chart",
