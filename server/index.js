@@ -52,8 +52,9 @@ app.use(cookieParser());
 app.use(urlencoded({
   extended: true,
   verify: (req, res, buf, encoding) => {
+    const url = req.originalUrl;
     // Save raw body for Slack signature verification (URL-encoded requests)
-    if (req.headers["content-type"]?.includes("application/x-www-form-urlencoded")) {
+    if (req.headers["content-type"]?.includes("application/x-www-form-urlencoded") && url.includes("/apps/slack/")) {
       req.rawBody = buf.toString(encoding || "utf8");
     }
   },
