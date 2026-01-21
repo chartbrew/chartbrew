@@ -39,19 +39,8 @@ module.exports = (app) => {
             break;
           }
 
-          case "ask": {
-            const question = parts.slice(1).join(" ");
-            await slackController.handleAsk(team_id, user_id, channel_id, question, response_url);
-            break;
-          }
-
           case "status": {
             await slackController.handleStatus(team_id, user_id, channel_id, response_url);
-            break;
-          }
-
-          case "reset": {
-            await slackController.handleReset(team_id, user_id, channel_id, response_url);
             break;
           }
 
@@ -142,7 +131,7 @@ module.exports = (app) => {
   app.get("/apps/slack/oauth/start", (req, res) => {
     const params = new URLSearchParams({
       client_id: process.env.CB_SLACK_CLIENT_ID,
-      scope: "commands,chat:write,chat:write.public,im:write,users:read",
+      scope: "commands,chat:write,chat:write.public,im:write,users:read,app_mentions:read",
       redirect_uri: process.env.NODE_ENV === "production" ? `${process.env.VITE_APP_CLIENT_HOST}/apps/slack/oauth/callback` : `${process.env.CB_SLACK_REDIRECT_HOST_DEV}/apps/slack/oauth/callback`,
       state: `dev_${Date.now()}`,
     });
@@ -180,8 +169,6 @@ module.exports = (app) => {
       // Default response for unhandled interactions
       return res.status(200).send();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Interaction handling error:", error);
       return res.status(200).send(); // Always acknowledge to Slack
     }
   });
@@ -190,12 +177,57 @@ module.exports = (app) => {
   /*
   ** Events API
   */
-  app.post("/apps/slack/events", (req, res) => {
-    const { challenge } = req.body;
+  app.post("/apps/slack/events", verifySlackSignature, async (req, res) => {
+    const { challenge, type, event } = req.body;
+
+    // Handle URL verification challenge
     if (challenge) {
       return res.status(200).send({ challenge });
     }
-    return res.status(200).send({ message: "Event received" });
+
+    // eslint-disable-next-line no-console
+    console.log("Slack Events API received:", {
+      type,
+      eventType: event?.type,
+      hasEvent: !!event,
+      eventKeys: event ? Object.keys(event) : [],
+    });
+
+    // Slack Events API wraps events in event_callback
+    // Structure: { type: "event_callback", event: { type: "app_mention", ... } }
+    if (type === "event_callback" && event && event.type === "app_mention") {
+      // Acknowledge immediately (Slack requires response within 3 seconds)
+      res.status(200).send();
+
+      try {
+        // eslint-disable-next-line no-console
+        console.log("Processing app_mention event:", {
+          team: event.team,
+          channel: event.channel,
+          user: event.user,
+          text: event.text?.substring(0, 50),
+          ts: event.ts,
+          thread_ts: event.thread_ts,
+        });
+        await slackController.handleMention(event);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Slack app_mention event error:", error);
+        // eslint-disable-next-line no-console
+        console.error("Error stack:", error.stack);
+        // Error handling is done in the controller
+      }
+      return true;
+    } else {
+      // Acknowledge other events
+      // eslint-disable-next-line no-console
+      console.log("Received Slack event (not app_mention):", {
+        type,
+        eventType: event?.type,
+        fullBody: JSON.stringify(req.body).substring(0, 500),
+      });
+      return res.status(200).send({ message: "Event received" });
+    }
   });
   // --------------------------------------
 

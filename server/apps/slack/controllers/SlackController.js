@@ -197,12 +197,13 @@ class SlackController {
   }
 
   /**
-   * Get or create a conversation for a Slack channel
+   * Get or create a conversation for a Slack thread
+   * Each thread has its own conversation history
    */
-  async getSlackConversation(integration, channelId, slackUserId) {
-    // Use channel-specific conversations for persistent context
-    // Format: slack_conversations: { "channel_id": "conversation_uuid" }
-    const conversationKey = channelId || slackUserId;
+  async getSlackConversation(integration, threadTs) {
+    // Use thread-specific conversations for persistent context
+    // Format: slack_conversations: { "thread_ts": "conversation_uuid" }
+    const conversationKey = threadTs;
     const slackConversations = integration.config.slack_conversations || {};
 
     let conversationId = slackConversations[conversationKey];
@@ -246,7 +247,7 @@ class SlackController {
       const conversation = await db.AiConversation.create({
         team_id: integration.team_id,
         user_id: chartbrewUserId,
-        title: `Slack: ${conversationKey}`,
+        title: `Slack Thread: ${threadTs.substring(0, 10)}...`,
         status: "active",
       });
       conversationId = conversation.id;
@@ -265,9 +266,9 @@ class SlackController {
   }
 
   /**
-   * Handle ask command
+   * Process a question in a Slack thread (shared logic for mentions and button clicks)
    */
-  async handleAsk(slackTeamId, slackUserId, channelId, question, responseUrl = null) {
+  async processQuestionInThread(slackTeamId, slackUserId, channelId, question, threadTs) {
     let thinkingMessageTs = null;
     let botToken = null;
 
@@ -279,27 +280,6 @@ class SlackController {
           external_id: slackTeamId,
         },
       });
-
-      if (!question || question.trim().length === 0) {
-        const message = {
-          text: "Please provide a question. Usage: `/chartbrew ask <your question>`",
-          blocks: [
-            {
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: "Please provide a question.\n\n*Usage:* `/chartbrew ask <your question>`",
-              },
-            },
-          ],
-        };
-        if (responseUrl) {
-          await postResponseUrl(responseUrl, message);
-        } else if (integration && integration.config && integration.config.bot_token) {
-          await postMessage(integration.config.bot_token, channelId || slackUserId, message);
-        }
-        return;
-      }
 
       if (!integration) {
         throw new Error("This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
@@ -315,54 +295,52 @@ class SlackController {
         throw new Error("Bot token not found. Please reinstall the Chartbrew Slack app.");
       }
 
-      // Send immediate "thinking" message to acknowledge request
-      const thinkingResult = await postMessage(
-        botToken,
-        channelId || slackUserId,
-        {
-          text: this.getThinkingMessage(),
+      if (!question || question.trim().length === 0) {
+        // If no question provided, send helpful message
+        const message = {
+          text: "Hi! Ask me a question about your data.",
           blocks: [
             {
               type: "section",
               text: {
                 type: "mrkdwn",
-                text: this.getThinkingMessage(),
+                text: "Hi! Ask me a question about your data. For example:\n• How many users do I have?\n• What's my revenue this month?\n• Show me active subscriptions",
               },
             },
           ],
-        }
-      );
+        };
+        const client = new WebClient(botToken);
+        await client.chat.postMessage({
+          channel: channelId,
+          thread_ts: threadTs,
+          text: message.text,
+          blocks: message.blocks,
+        });
+        return;
+      }
+
+      // Send immediate "thinking" message to acknowledge request
+      const client = new WebClient(botToken);
+      const thinkingResult = await client.chat.postMessage({
+        channel: channelId,
+        thread_ts: threadTs,
+        text: this.getThinkingMessage(),
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: this.getThinkingMessage(),
+            },
+          },
+        ],
+      });
       if (thinkingResult && thinkingResult.ts) {
         thinkingMessageTs = thinkingResult.ts;
       }
 
-      // Parse project context if specified: "ask in [project] <question>"
-      let projectContext = null;
-      let finalQuestion = question;
-      const projectMatch = question.match(/^in\s+([^\s]+)\s+(.+)$/i);
-      if (projectMatch) {
-        const [, projectName, questionText] = projectMatch;
-        finalQuestion = questionText;
-        // Find project by name
-        const project = await db.Project.findOne({
-          where: {
-            team_id: integration.team_id,
-            name: projectName,
-          },
-        });
-        if (project) {
-          projectContext = [{ label: project.name, value: project.id }];
-        }
-      } else if (integration.config.default_project_id) {
-        // Use default project if no project specified
-        const project = await db.Project.findByPk(integration.config.default_project_id);
-        if (project) {
-          projectContext = [{ label: project.name, value: project.id }];
-        }
-      }
-
-      // Get or create conversation for this Slack channel
-      const conversationId = await this.getSlackConversation(integration, channelId, slackUserId);
+      // Get or create conversation for this thread
+      const conversationId = await this.getSlackConversation(integration, threadTs);
 
       // Load conversation and history
       const conversation = await db.AiConversation.findByPk(conversationId);
@@ -389,11 +367,10 @@ class SlackController {
 
         try {
           const message = getToolMilestone(toolName, phase);
-          const client = new WebClient(botToken);
-
           await client.chat.update({
-            channel: channelId || slackUserId,
+            channel: channelId,
             ts: thinkingMessageTs,
+            thread_ts: threadTs,
             text: message,
             blocks: [
               {
@@ -411,13 +388,13 @@ class SlackController {
         }
       };
 
-      // Call orchestrator with conversation history
+      // Call orchestrator with conversation history (let agent decide project context)
       const result = await orchestrate(
         integration.team_id,
-        finalQuestion,
+        question,
         conversationHistory,
         conversation,
-        projectContext,
+        null, // No project context - let agent decide
         { toolProgressCallback }
       );
 
@@ -474,11 +451,12 @@ class SlackController {
         raw: true,
       });
       const totalTokens = parseInt(usageStats[0]?.total_tokens, 10) || 0;
+      const totalCredits = Math.floor(totalTokens / 10000);
 
       // Format response for Slack using Block Kit
       const formattedResponse = formatResponse(result.message, result.snapshots);
 
-      // Add token usage and reset info as context footer
+      // Add token usage info as context footer
       if (formattedResponse.blocks) {
         formattedResponse.blocks.push({
           type: "divider",
@@ -488,7 +466,7 @@ class SlackController {
           elements: [
             {
               type: "mrkdwn",
-              text: `💬 *${totalTokens.toLocaleString()}* tokens used in this conversation · Continue conversation with \`/chartbrew ask\` · Use \`/chartbrew reset\` to start fresh`,
+              text: `💬 *${totalCredits.toLocaleString()}* credits used in this conversation`,
             },
           ],
         });
@@ -497,10 +475,10 @@ class SlackController {
       // Update the thinking message with actual response, or post new if update fails
       if (thinkingMessageTs) {
         try {
-          const client = new WebClient(botToken);
           await client.chat.update({
-            channel: channelId || slackUserId,
+            channel: channelId,
             ts: thinkingMessageTs,
+            thread_ts: threadTs,
             text: formattedResponse.text,
             blocks: formattedResponse.blocks,
           });
@@ -508,38 +486,48 @@ class SlackController {
           // eslint-disable-next-line no-console
           console.error("Failed to update thinking message, posting new message:", updateError);
           // Fallback: post new message if update fails
-          const postResult = await postMessage(
-            botToken,
-            channelId || slackUserId,
-            formattedResponse
-          );
-          if (!postResult) {
-            throw new Error("Failed to post message to Slack");
-          }
+          await client.chat.postMessage({
+            channel: channelId,
+            thread_ts: threadTs,
+            text: formattedResponse.text,
+            blocks: formattedResponse.blocks,
+          });
         }
       } else {
         // No thinking message was posted, post new message
-        const postResult = await postMessage(botToken, channelId || slackUserId, formattedResponse);
-        if (!postResult) {
-          throw new Error("Failed to post message to Slack");
-        }
+        await client.chat.postMessage({
+          channel: channelId,
+          thread_ts: threadTs,
+          text: formattedResponse.text,
+          blocks: formattedResponse.blocks,
+        });
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("handleAsk error:", error);
+      console.error("processQuestionInThread error:", error);
+      // eslint-disable-next-line no-console
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        thinkingMessageTs,
+        botToken: !!botToken,
+        channelId,
+        threadTs,
+      });
       let finalError = error;
       if (error.message.includes("OpenAI")) {
         finalError = new Error("AI features aren't available. Please configure OpenAI API keys.");
       }
 
       // If we have a thinking message, update it with the error
-      if (thinkingMessageTs && botToken) {
+      if (thinkingMessageTs && botToken && channelId && threadTs) {
         try {
           const errorMessage = formatError(finalError.message || finalError || "An error occurred");
           const client = new WebClient(botToken);
           await client.chat.update({
-            channel: channelId || slackUserId,
+            channel: channelId,
             ts: thinkingMessageTs,
+            thread_ts: threadTs,
             text: errorMessage.text,
             blocks: errorMessage.blocks,
           });
@@ -552,18 +540,116 @@ class SlackController {
       }
 
       // Fallback: send error message if we couldn't update thinking message
-      const errorSent = await this.sendErrorMessage(
-        finalError,
-        slackTeamId,
-        slackUserId,
-        channelId,
-        responseUrl
-      );
-      // Don't re-throw - error has been sent to user, just log it
-      if (!errorSent) {
+      if (botToken && channelId && threadTs) {
+        try {
+          const errorMessage = formatError(finalError.message || finalError || "An error occurred");
+          const client = new WebClient(botToken);
+          await client.chat.postMessage({
+            channel: channelId,
+            thread_ts: threadTs,
+            text: errorMessage.text,
+            blocks: errorMessage.blocks,
+          });
+        } catch (postError) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to send error message to Slack:", postError);
+        }
+      } else {
         // eslint-disable-next-line no-console
-        console.error("Failed to send error message to Slack");
+        console.error("Cannot send error message - missing required data:", {
+          botToken: !!botToken,
+          channelId,
+          threadTs,
+        });
       }
+    }
+  }
+
+  /**
+   * Handle app_mention event - when user tags @chartbrew
+   */
+  async handleMention(event) {
+    // eslint-disable-next-line no-console
+    console.log("handleMention called with event:", {
+      team: event.team,
+      channel: event.channel,
+      user: event.user,
+      text: event.text?.substring(0, 100),
+      ts: event.ts,
+      thread_ts: event.thread_ts,
+    });
+
+    const {
+      team: slackTeamId,
+      user: slackUserId,
+      channel: channelId,
+      text: mentionText,
+      ts: messageTs,
+      thread_ts: existingThreadTs,
+    } = event;
+
+    // Determine thread_ts: use existing thread_ts if in a thread,
+    // otherwise use message ts to start new thread
+    const threadTs = existingThreadTs || messageTs;
+
+    try {
+      // Find integration to extract bot mention patterns
+      const integration = await db.Integration.findOne({
+        where: {
+          type: "slack",
+          external_id: slackTeamId,
+        },
+      });
+
+      // Extract question from mention text (remove @chartbrew mention)
+      // Slack mentions come as <@BOT_USER_ID> or <@BOT_USER_ID|display_name>
+      let question = mentionText || "";
+
+      // Remove bot mention patterns (handle both with and without bot_user_id)
+      if (integration && integration.config && integration.config.bot_user_id) {
+        const botUserId = integration.config.bot_user_id;
+        question = question.replace(new RegExp(`<@${botUserId}[^>]*>`, "gi"), "").trim();
+      }
+
+      // Also handle generic @chartbrew mentions and any <@...> pattern
+      question = question.replace(/@chartbrew/gi, "").trim();
+      question = question.replace(/<@[^>]+>/g, "").trim();
+
+      if (!question || question.length === 0) {
+        // If no question provided, send helpful message
+        const botToken = integration?.config?.bot_token;
+        if (!botToken) {
+          throw new Error("Bot token not found.");
+        }
+        const message = {
+          text: "Hi! Ask me a question about your data.",
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "Hi! Ask me a question about your data. For example:\n• How many users do I have?\n• What's my revenue this month?\n• Show me active subscriptions",
+              },
+            },
+          ],
+        };
+        const client = new WebClient(botToken);
+        await client.chat.postMessage({
+          channel: channelId,
+          thread_ts: threadTs,
+          text: message.text,
+          blocks: message.blocks,
+        });
+        return;
+      }
+
+      // Process the question in the thread
+      await this.processQuestionInThread(slackTeamId, slackUserId, channelId, question, threadTs);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("handleMention error:", error);
+      // Error handling is done in processQuestionInThread
+      throw error;
     }
   }
 
@@ -661,81 +747,6 @@ class SlackController {
   }
 
   /**
-   * Handle reset command
-   */
-  async handleReset(slackTeamId, slackUserId, channelId, responseUrl = null) {
-    try {
-      const integration = await db.Integration.findOne({
-        where: {
-          type: "slack",
-          external_id: slackTeamId,
-        },
-      });
-
-      if (!integration) {
-        throw new Error("This workspace isn't connected to Chartbrew.");
-      }
-
-      const botToken = integration.config.bot_token;
-      if (!botToken) {
-        throw new Error("Bot token not found.");
-      }
-
-      // Clear conversation for this channel
-      const conversationKey = channelId || slackUserId;
-      const slackConversations = integration.config.slack_conversations || {};
-
-      if (slackConversations[conversationKey]) {
-        delete slackConversations[conversationKey];
-        await integration.update({
-          config: {
-            ...integration.config,
-            slack_conversations: slackConversations,
-          },
-        });
-      }
-
-      const message = {
-        text: "Conversation reset successfully",
-        blocks: [
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "✅ Conversation history cleared! Your next question will start a fresh conversation.",
-            },
-          },
-        ],
-      };
-
-      let result = null;
-      if (responseUrl) {
-        result = await postResponseUrl(responseUrl, message);
-      }
-      if (!result && botToken) {
-        result = await postMessage(botToken, channelId || slackUserId, message);
-      }
-      if (!result) {
-        throw new Error("Failed to post reset message");
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("handleReset error:", error);
-      const errorSent = await this.sendErrorMessage(
-        error,
-        slackTeamId,
-        slackUserId,
-        channelId,
-        responseUrl
-      );
-      if (!errorSent) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to send error message to Slack");
-      }
-    }
-  }
-
-  /**
    * Handle help command
    */
   async handleHelp(slackTeamId, slackUserId, channelId, responseUrl = null) { // eslint-disable-line max-len
@@ -758,10 +769,11 @@ class SlackController {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "• `/chartbrew connect` - Connect this workspace to a Chartbrew team\n"
-              + "• `/chartbrew ask <question>` - Ask a question about your data\n"
-              + "• `/chartbrew ask in [dashboard] <question>` - Ask a question in a specific dashboard context\n"
-              + "• `/chartbrew reset` - Clear conversation history and start fresh\n"
+            text: "*Ask Questions:*\n"
+              + "Tag @chartbrew in any channel to ask questions about your data. Each thread maintains its own conversation history.\n\n"
+              + "*Example:* `@chartbrew how many users do I have?`\n\n"
+              + "*Setup Commands:*\n"
+              + "• `/chartbrew connect` - Connect this workspace to a Chartbrew team\n"
               + "• `/chartbrew status` - Check connection status\n"
               + "• `/chartbrew disconnect` - Disconnect from Chartbrew team\n"
               + "• `/chartbrew help` - Show this help message",
@@ -1100,7 +1112,7 @@ class SlackController {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "You can now use `/chartbrew ask <question>` to query your data!",
+              text: "You can now tag @chartbrew in any channel to ask questions about your data!",
             },
           },
         ],
@@ -1122,17 +1134,27 @@ class SlackController {
    */
   async handleInteraction(interaction) {
     const {
-      type, user, team, channel, actions, view
+      type, user, team, channel, actions, view, message
     } = interaction;
 
     // eslint-disable-next-line no-console
     console.log("Slack interaction received:", {
-      type, user: user.id, team: team.id
+      type, user: user.id, team: team.id, channel: channel?.id,
     });
 
     // Handle button clicks (quick replies)
     if (type === "block_actions" && actions && actions.length > 0) {
       const action = actions[0];
+
+      // Get thread_ts from the message that contains the button
+      // If message is in a thread, use thread_ts; otherwise use message ts to continue thread
+      const threadTs = message?.thread_ts || message?.ts;
+
+      if (!threadTs) {
+        // eslint-disable-next-line no-console
+        console.error("Cannot determine thread_ts from interaction message");
+        return;
+      }
 
       // Handle "Something else" button - open modal
       if (action.action_id === "quick_reply_something_else") {
@@ -1192,6 +1214,7 @@ class SlackController {
               private_metadata: JSON.stringify({
                 channel_id: channel.id,
                 user_id: user.id,
+                thread_ts: threadTs,
               }),
             },
           });
@@ -1206,8 +1229,8 @@ class SlackController {
       if (action.action_id.startsWith("quick_reply_")) {
         const questionText = action.value;
 
-        // Call handleAsk with the selected option
-        await this.handleAsk(team.id, user.id, channel.id, questionText, null);
+        // Process the question in the same thread
+        await this.processQuestionInThread(team.id, user.id, channel.id, questionText, threadTs);
         return;
       }
     }
@@ -1217,15 +1240,14 @@ class SlackController {
       const metadata = JSON.parse(view.private_metadata);
       const queryText = view.state.values.query_input.query_text.value;
 
-      if (queryText && queryText.trim()) {
-        // Call handleAsk with the custom query
-        await this.handleAsk(
+      if (queryText && queryText.trim() && metadata.thread_ts) {
+        // Process the custom query in the thread
+        await this.processQuestionInThread(
           team.id,
           metadata.user_id,
           metadata.channel_id,
           queryText.trim(),
-          null,
-          user.email
+          metadata.thread_ts
         );
       }
     }

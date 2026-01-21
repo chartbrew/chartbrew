@@ -42,12 +42,19 @@ function verifySignature(req) {
     bodyString = req.rawBody;
   } else if (req.body) {
     // Fallback: reconstruct from parsed body
-    // Note: This may not be 100% accurate for complex payloads
-    const params = new URLSearchParams();
-    Object.keys(req.body).forEach((key) => {
-      params.append(key, req.body[key]);
-    });
-    bodyString = params.toString();
+    // Events API sends JSON, commands/interactions send URL-encoded form data
+    const contentType = req.headers["content-type"] || "";
+    if (contentType.includes("application/json")) {
+      // For JSON payloads (Events API), stringify the body
+      bodyString = JSON.stringify(req.body);
+    } else {
+      // For URL-encoded payloads (commands/interactions), use URLSearchParams
+      const params = new URLSearchParams();
+      Object.keys(req.body).forEach((key) => {
+        params.append(key, req.body[key]);
+      });
+      bodyString = params.toString();
+    }
   }
 
   // Create the signature base string
@@ -73,12 +80,19 @@ function verifySignature(req) {
       // eslint-disable-next-line no-console
       console.warn("Computed:", mySignature);
 
-      // In development, allow interactive payloads to proceed for testing
-      // Interactive payloads are harder to verify without raw body
-      if (process.env.NODE_ENV !== "production" && req.body && req.body.payload) {
-        // eslint-disable-next-line no-console
-        console.warn("Allowing interactive payload in development mode");
-        return true;
+      // In development, allow interactive payloads and events to proceed for testing
+      // These are harder to verify without raw body
+      if (process.env.NODE_ENV !== "production") {
+        if (req.body && req.body.payload) {
+          // eslint-disable-next-line no-console
+          console.warn("Allowing interactive payload in development mode");
+          return true;
+        }
+        if (req.body && (req.body.type === "event_callback" || req.body.event)) {
+          // eslint-disable-next-line no-console
+          console.warn("Allowing event payload in development mode");
+          return true;
+        }
       }
     }
     return isValid;
