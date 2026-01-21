@@ -451,7 +451,6 @@ class SlackController {
         raw: true,
       });
       const totalTokens = parseInt(usageStats[0]?.total_tokens, 10) || 0;
-      const totalCredits = Math.floor(totalTokens / 10000);
 
       // Format response for Slack using Block Kit
       const formattedResponse = formatResponse(result.message, result.snapshots);
@@ -466,7 +465,7 @@ class SlackController {
           elements: [
             {
               type: "mrkdwn",
-              text: `💬 *${totalCredits.toLocaleString()}* credits used in this conversation`,
+              text: `💬 *${totalTokens.toLocaleString()}* credits used in this conversation`,
             },
           ],
         });
