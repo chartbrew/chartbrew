@@ -656,12 +656,11 @@ class SlackController {
       });
 
       if (!integration) {
-        await sendDM(integration.config.bot_token, slackUserId, "This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
-        return;
+        throw new Error("This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
       }
 
       if (!integration.team_id || !integration.apikey_id) {
-        await sendDM(integration.config.bot_token, slackUserId, "This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
+        await sendDM(integration?.config?.bot_token, slackUserId, "This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
         return;
       }
 
