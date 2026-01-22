@@ -15,6 +15,7 @@ import {
 } from "../../../slices/integration";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { API_HOST } from "../../../config/settings";
 
 const SLACK_CLIENT_ID = import.meta.env.VITE_APP_SLACK_CLIENT_ID;
 
@@ -258,7 +259,7 @@ function SlackIntegrations({ teamId }) {
                 1. Click the install button below to install Chartbrew in your Slack workspace.
               </div>
               <div>
-                <a href={`https://slack.com/oauth/v2/authorize?client_id=${SLACK_CLIENT_ID}&scope=commands,chat:write,chat:write.public,im:write,users:read&user_scope=`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+                <a href={`${API_HOST}/apps/slack/oauth/start`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
               </div>
               <div>
                 2. Once installed, you can use the <Code size="sm">/chartbrew</Code> command in your Slack workspace to start using Chartbrew.

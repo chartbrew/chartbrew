@@ -127,9 +127,9 @@ module.exports = (app) => {
 
   app.get("/apps/slack/oauth/start", (req, res) => {
     const params = new URLSearchParams({
-      client_id: process.env.CB_SLACK_CLIENT_ID,
+      client_id: process.env.VITE_APP_SLACK_CLIENT_ID,
       scope: "commands,chat:write,chat:write.public,im:write,users:read,app_mentions:read",
-      redirect_uri: process.env.NODE_ENV === "production" ? `${process.env.VITE_APP_CLIENT_HOST}/apps/slack/oauth/callback` : `${process.env.CB_SLACK_REDIRECT_HOST_DEV}/apps/slack/oauth/callback`,
+      redirect_uri: `${process.env.VITE_APP_CLIENT_HOST}/integrations/auth/slack/callback`,
       state: `dev_${Date.now()}`,
     });
 
