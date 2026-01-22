@@ -185,7 +185,7 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
     order: [["updatedAt", "DESC"]],
     limit,
     offset,
-    attributes: ["id", "title", "status", "message_count", "createdAt", "updatedAt"],
+    attributes: ["id", "title", "status", "message_count", "createdAt", "updatedAt", "source"],
     include: [
       {
         model: db.AiUsage,
@@ -211,6 +211,7 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
     return {
       id: conv.id,
       title: conv.title,
+      source: conv.source,
       status: conv.status,
       message_count: conv.message_count,
       total_tokens: parseInt(stats.total_tokens, 10) || 0,

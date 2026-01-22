@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress, Listbox, ListboxItem } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuDatabase } from "react-icons/lu"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuDatabase, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
@@ -1444,7 +1444,9 @@ function AiModal({ isOpen, onClose }) {
                       className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
                       onClick={() => _onSelectConversation(conv.id)}
                     >
-                      <div className="pt-1"><LuMessageSquare size={16} /></div>
+                      <div className="pt-1">
+                        {conv.source === "slack" ? <LuSlack size={16} /> : <LuMessageSquare size={16} />}
+                      </div>
                       <div className="flex flex-col gap-1 flex-1">
                         <div className="text-sm text-foreground font-medium">{conv.title}</div>
                         <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
@@ -1522,7 +1524,9 @@ function AiModal({ isOpen, onClose }) {
                         className={`flex flex-row gap-2 cursor-pointer px-2 py-2 rounded-lg transition-colors group relative ${c.id === conversation.id ? "bg-background shadow-sm" : "hover:bg-background/50"}`}
                         onClick={() => _onSelectConversation(c.id)}
                       >
-                        <div className="pt-1"><LuMessageSquare size={14} /></div>
+                        <div className="pt-1">
+                          {c.source === "slack" ? <LuSlack size={14} /> : <LuMessageSquare size={14} />}
+                        </div>
                         <div className="flex flex-col gap-1 flex-1 min-w-0">
                           <div className="text-sm text-foreground truncate pr-6">{c.title}</div>
                           <div className="flex flex-col gap-1">

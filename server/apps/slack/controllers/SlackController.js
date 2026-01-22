@@ -249,6 +249,7 @@ class SlackController {
         user_id: chartbrewUserId,
         title: `Slack Thread: ${threadTs.substring(0, 10)}...`,
         status: "active",
+        source: "slack",
       });
       conversationId = conversation.id;
 
