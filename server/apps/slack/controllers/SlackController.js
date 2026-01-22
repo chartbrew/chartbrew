@@ -655,12 +655,20 @@ class SlackController {
       });
 
       if (!integration) {
-        throw new Error("This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
+        await sendDM(integration.config.bot_token, slackUserId, "This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
+        return;
       }
 
+      if (!integration.team_id || !integration.apikey_id) {
+        await sendDM(integration.config.bot_token, slackUserId, "This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
+        return;
+      }
+
+      // Get bot token
       const botToken = integration.config.bot_token;
       if (!botToken) {
-        throw new Error("Bot token not found. Please reinstall the Chartbrew Slack app.");
+        await sendDM(integration.config.bot_token, slackUserId, "Bot token not found. Please reinstall the Chartbrew Slack app.");
+        return;
       }
 
       const blocks = [
