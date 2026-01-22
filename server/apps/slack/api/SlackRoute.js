@@ -18,9 +18,6 @@ module.exports = (app) => {
   ** Commands API
   */
   app.post("/apps/slack/commands", verifySlackSignature, async (req, res) => {
-    // eslint-disable-next-line no-console
-    console.log("Slack command received:", req.body);
-
     const {
       command, text, team_id, user_id, channel_id, response_url,
     } = req.body;
@@ -185,14 +182,6 @@ module.exports = (app) => {
       return res.status(200).send({ challenge });
     }
 
-    // eslint-disable-next-line no-console
-    console.log("Slack Events API received:", {
-      type,
-      eventType: event?.type,
-      hasEvent: !!event,
-      eventKeys: event ? Object.keys(event) : [],
-    });
-
     // Slack Events API wraps events in event_callback
     // Structure: { type: "event_callback", event: { type: "app_mention", ... } }
     if (type === "event_callback" && event && event.type === "app_mention") {
@@ -200,15 +189,6 @@ module.exports = (app) => {
       res.status(200).send();
 
       try {
-        // eslint-disable-next-line no-console
-        console.log("Processing app_mention event:", {
-          team: event.team,
-          channel: event.channel,
-          user: event.user,
-          text: event.text?.substring(0, 50),
-          ts: event.ts,
-          thread_ts: event.thread_ts,
-        });
         await slackController.handleMention(event);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -220,12 +200,6 @@ module.exports = (app) => {
       return true;
     } else {
       // Acknowledge other events
-      // eslint-disable-next-line no-console
-      console.log("Received Slack event (not app_mention):", {
-        type,
-        eventType: event?.type,
-        fullBody: JSON.stringify(req.body).substring(0, 500),
-      });
       return res.status(200).send({ message: "Event received" });
     }
   });

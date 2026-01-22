@@ -209,8 +209,6 @@ async function postMessage(botToken, channel, message, options = {}) {
     }
 
     const result = await client.chat.postMessage(messagePayload);
-    // eslint-disable-next-line no-console
-    console.log("Successfully posted message to Slack channel:", channel, "Result:", result.ok);
     return result;
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -265,8 +263,6 @@ async function postResponseUrl(responseUrl, message) {
 
     // Slack returns "ok" as plain text, not JSON
     const responseText = await response.text();
-    // eslint-disable-next-line no-console
-    console.log("Successfully posted to response_url, response:", responseText);
 
     // Try to parse as JSON, but handle plain text "ok" response
     try {

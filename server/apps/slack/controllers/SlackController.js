@@ -568,16 +568,6 @@ class SlackController {
    * Handle app_mention event - when user tags @chartbrew
    */
   async handleMention(event) {
-    // eslint-disable-next-line no-console
-    console.log("handleMention called with event:", {
-      team: event.team,
-      channel: event.channel,
-      user: event.user,
-      text: event.text?.substring(0, 100),
-      ts: event.ts,
-      thread_ts: event.thread_ts,
-    });
-
     const {
       team: slackTeamId,
       user: slackUserId,
@@ -749,11 +739,6 @@ class SlackController {
    * Handle help command
    */
   async handleHelp(slackTeamId, slackUserId, channelId, responseUrl = null) { // eslint-disable-line max-len
-    // eslint-disable-next-line no-console
-    console.log("handleHelp called with:", {
-      slackTeamId, slackUserId, channelId, responseUrl,
-    });
-
     const helpMessage = {
       text: "Chartbrew Slack Commands",
       blocks: [
@@ -790,15 +775,8 @@ class SlackController {
           external_id: slackTeamId,
         },
       });
-      // eslint-disable-next-line no-console
-      console.log("Integration found:", integration ? "yes" : "no");
       if (integration && integration.config && integration.config.bot_token) {
         botToken = integration.config.bot_token;
-        // eslint-disable-next-line no-console
-        console.log("Bot token found:", botToken ? "yes" : "no");
-      } else {
-        // eslint-disable-next-line no-console
-        console.log("Integration config:", integration ? JSON.stringify(integration.config) : "null");
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -808,12 +786,8 @@ class SlackController {
     // Try response_url first (works even without bot token)
     if (responseUrl) {
       try {
-        // eslint-disable-next-line no-console
-        console.log("Attempting to post via response_url");
         const result = await postResponseUrl(responseUrl, helpMessage);
         if (result) {
-          // eslint-disable-next-line no-console
-          console.log("Help message posted via response_url: success");
           return;
         }
       } catch (e) {
@@ -825,9 +799,7 @@ class SlackController {
     // Fallback to bot token if available
     if (botToken) {
       try {
-        const result = await postMessage(botToken, channelId || slackUserId, helpMessage);
-        // eslint-disable-next-line no-console
-        console.log("Help message posted via bot token result:", result ? "success" : "failed");
+        await postMessage(botToken, channelId || slackUserId, helpMessage);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error("Error posting help message via bot token:", e);
@@ -1135,11 +1107,6 @@ class SlackController {
     const {
       type, user, team, channel, actions, view, message
     } = interaction;
-
-    // eslint-disable-next-line no-console
-    console.log("Slack interaction received:", {
-      type, user: user.id, team: team.id, channel: channel?.id,
-    });
 
     // Handle button clicks (quick replies)
     if (type === "block_actions" && actions && actions.length > 0) {
