@@ -234,7 +234,7 @@ async function updateChart(payload) {
     // Run the chart update in the background
     try {
       const chartController = new ChartController();
-      await chartController.updateChartData(chart_id, null, {});
+      await chartController.updateChartData(chart_id, null, { getCache: false });
     } catch {
       // Ignore background update errors
     }
