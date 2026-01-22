@@ -1013,10 +1013,9 @@ async function orchestrate(
 
           // Check if this tool result includes a snapshot
           if (result.snapshot) {
-            // Convert relative snapshot path to full URL and ensure HTTPS
-            const snapshotUrl = `${process.env.CB_SLACK_REDIRECT_HOST_DEV}/${result.snapshot}`;
+            // Convert relative snapshot path to full URL
+            const snapshotUrl = `${process.env.VITE_APP_API_HOST}/${result.snapshot}`;
 
-            // Validate URL format
             snapshots.push({
               tool_name: toolName,
               chart_id: result.chart_id,
