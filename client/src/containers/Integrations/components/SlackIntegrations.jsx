@@ -268,7 +268,7 @@ function SlackIntegrations({ teamId }) {
                 3. Use <Code size="sm">/chartbrew connect</Code> to connect your Slack workspace to a Chartbrew team.
               </div>
               <div>
-                4. Use <Code size="sm">/chartbrew ask</Code> to ask a question to Chartbrew.
+                4. Mention <Code size="sm">@Chartbrew</Code> in a channel and ask any question about your data.
               </div>
             </ModalBody>
           )}
