@@ -16,12 +16,13 @@ module.exports.snapChart = async (shareString) => {
     await page.waitForSelector("div#chart-container");
     await page.waitForTimeout(500);
 
-    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${shareString}.png`);
-    await page.screenshot({ path: snapshotPath, omitBackground: true });
+    const snapshotId = nanoid(8);
+    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${shareString}-${snapshotId}.png`);
+    await page.screenshot({ path: snapshotPath, omitBackground: false });
 
     await browser.close();
 
-    return `uploads/snapshots/snap-${shareString}.png`;
+    return `uploads/snapshots/snap-${shareString}-${snapshotId}.png`;
   } catch (err) {
     console.log("Could not take snapshot", err); // eslint-disable-line no-console
     return null;

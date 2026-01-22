@@ -7,12 +7,25 @@ module.exports = (sequelize, DataTypes) => {
     },
     team_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       reference: {
         model: "Team",
         key: "id",
         onDelete: "cascade",
       },
+    },
+    apikey_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      reference: {
+        model: "Apikey",
+        key: "id",
+        onDelete: "set null",
+      },
+    },
+    external_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     name: {
       type: DataTypes.STRING,
@@ -49,6 +62,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Integration.associate = (models) => {
     models.Integration.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.Integration.belongsTo(models.Apikey, { foreignKey: "apikey_id" });
     models.Integration.hasMany(models.AlertIntegration, { foreignKey: "integration_id" });
   };
 

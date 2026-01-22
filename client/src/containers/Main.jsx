@@ -48,6 +48,8 @@ const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
 import FeedbackForm from "../components/FeedbackForm";
 import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
+import Auth from "./Integrations/Auth/Auth";
+import SlackCallback from "./Integrations/Auth/SlackCallback";
 
 function authenticatePage() {
   if (window.location.pathname === "/login") {
@@ -216,6 +218,8 @@ function Main(props) {
                 <Route path="datasets" element={<DatasetList />} />
                 <Route path="datasets/:datasetId" element={<Dataset />} />
                 <Route path="integrations" element={<Integrations />} />
+                <Route path="integrations/auth/:integrationType" element={<Auth />} />
+                <Route path="integrations/auth/slack/callback" element={<SlackCallback />} />
                 <Route path="settings/*" element={<ManageTeam />} />
                 <Route path="dashboard" element={<ProjectBoard />}>
                   <Route path=":projectId" element={<ProjectDashboard />} />

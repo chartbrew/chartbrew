@@ -46,6 +46,14 @@ const router = createBrowserRouter([
       },
       {
         path: "integrations",
+        children: [
+          {
+            path: "auth/:integrationType",
+          },
+          {
+            path: "auth/:integrationType/callback",
+          }
+        ],
       },
       {
         path: "settings",

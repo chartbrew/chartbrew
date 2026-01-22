@@ -3,6 +3,7 @@ import {
   Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
+  cn,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
@@ -332,7 +333,7 @@ function EmbeddedChart() {
       </div>
       <Spacer y={1} />
       {chart && (
-        <div className="h-[calc(100vh-100px)]">
+        <div className={cn("h-[calc(100vh-100px)]", isSnapshot && "bg-background")}>
           {chart.type === "line" && (
             <LineChart
               chart={chart}

@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       comment: "Auto-generated conversation title"
     },
+    source: {
+      type: DataTypes.ENUM("slack", "app", "api"),
+      allowNull: false,
+      defaultValue: "app",
+    },
     status: {
       type: DataTypes.ENUM("active", "completed", "error", "cancelled"),
       defaultValue: "active",

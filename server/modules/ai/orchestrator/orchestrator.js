@@ -14,14 +14,9 @@
 
 const OpenAI = require("openai");
 const db = require("../../../models/models");
-const { generateSqlQuery } = require("../generateSqlQuery");
-const ConnectionController = require("../../../controllers/ConnectionController");
-const ChartController = require("../../../controllers/ChartController");
-const DatasetController = require("../../../controllers/DatasetController");
 const socketManager = require("../../socketManager");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
-const { ENTITY_CREATION_RULES, SUPPORTED_CONNECTIONS, isConnectionSupported } = require("./entityCreationRules");
-const { chartColors } = require("../../../charts/colors");
+const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
@@ -36,884 +31,29 @@ if (openAiKey) {
 
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
-const connectionController = new ConnectionController();
-const datasetController = new DatasetController();
-const chartController = new ChartController();
-
-async function listConnections(payload) {
-  const { project_id } = payload; // scope could be used for filtering in the future
-
-  const whereClause = {};
-
-  // If project_id is provided, filter by connections used in that project
-  if (project_id) {
-    const datasets = await db.Dataset.findAll({
-      attributes: ["connection_id"],
-      include: [{
-        model: db.DataRequest,
-        attributes: ["connection_id"],
-      }],
-    });
-
-    const connectionIds = new Set();
-    datasets.forEach((ds) => {
-      if (ds.connection_id) connectionIds.add(ds.connection_id);
-      if (ds.DataRequests) {
-        ds.DataRequests.forEach((dr) => {
-          if (dr.connection_id) connectionIds.add(dr.connection_id);
-        });
-      }
-    });
-
-    if (connectionIds.size > 0) {
-      whereClause.id = Array.from(connectionIds);
-    }
-  }
-
-  // Only support MySQL, PostgreSQL, and MongoDB connections for now
-  const supportedTypes = Object.keys(SUPPORTED_CONNECTIONS);
-
-  const connections = await db.Connection.findAll({
-    where: {
-      ...whereClause,
-      type: supportedTypes
-    },
-    attributes: ["id", "type", "subType", "name"],
-    order: [["createdAt", "DESC"]],
-  });
-
-  // Filter connections to only include supported subtypes
-  const filteredConnections = connections.filter(
-    (conn) => isConnectionSupported(conn.type, conn.subType)
-  );
-
-  return {
-    connections: filteredConnections.map((c) => ({
-      id: c.id,
-      type: c.type,
-      subType: c.subType,
-      name: c.name,
-    })),
-  };
-}
-
-async function getSchema(payload) {
-  const { connection_id, include_samples = true } = payload;
-  // sample_rows_per_entity could be used when extracting samples in the future
-
-  const connection = await db.Connection.findByPk(connection_id);
-  if (!connection) {
-    throw new Error("Connection not found");
-  }
-
-  // Check if connection type and subtype are supported
-  if (!isConnectionSupported(connection.type, connection.subType)) {
-    throw new Error(`Connection type '${connection.type}'${connection.subType ? `/${connection.subType}` : ""} is not supported. Currently only MySQL, PostgreSQL, and MongoDB connections are supported. API connections and other sources will be available in future updates.`);
-  }
-
-  // For supported database connections, return schema
-  return {
-    dialect: connection.type,
-    connection_id: connection.id,
-    name: connection.name,
-    entities: connection.schema || [],
-    samples: include_samples ? {} : undefined,
-  };
-}
-
-async function generateQuery(payload) {
-  const {
-    question, schema, preferred_dialect
-  } = payload;
-  // hints could be used for entity-level hints in the future
-
-  if (!openaiClient) {
-    return {
-      status: "unsupported",
-      message: "Query generation requires OpenAI to be configured",
-    };
-  }
-
-  try {
-    // For database connections, use SQL generation
-    // Validate schema input (make optional for robustness)
-    if (schema && typeof schema !== "object") {
-      throw new Error("Schema must be a valid object if provided");
-    }
-
-    // If no schema provided, create a minimal one (AI should provide schema)
-    const effectiveSchema = schema || {
-      tables: ["User"],
-      description: {
-        User: {
-          id: { type: "INT" },
-          name: { type: "VARCHAR(255)" },
-          email: { type: "VARCHAR(255)" },
-          createdAt: { type: "DATETIME" }
-        }
-      }
-    };
-
-    // Use the existing SQL generation module
-    const result = await generateSqlQuery(effectiveSchema, question, []);
-
-    // Check if query generation succeeded
-    if (!result || !result.query || result.query.trim() === "") {
-      throw new Error("Query generation failed - no query returned");
-    }
-
-    // Basic validation: check for forbidden keywords (whole words only)
-    const forbiddenKeywords = ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE"];
-    const upperQuery = result.query.toUpperCase();
-    const hasForbiddenKeyword = forbiddenKeywords.some((keyword) => {
-      // Use word boundaries to avoid false positives
-      const regex = new RegExp(`\\b${keyword}\\b`, "i");
-      return regex.test(upperQuery);
-    });
-
-    if (hasForbiddenKeyword) {
-      return {
-        status: "unsupported",
-        message: "Generated query contains forbidden operations (only SELECT queries are allowed)",
-        query: result.query,
-      };
-    }
-
-    return {
-      status: "ok",
-      dialect: preferred_dialect,
-      query: result.query,
-      rationale: {
-        message: "Query generated successfully",
-      },
-    };
-  } catch (error) {
-    return {
-      status: "error",
-      message: `Query generation failed: ${error.message}`,
-    };
-  }
-}
-
-async function validateQuery() {
-  // TODO: Implement dry-run validation using existing connection handlers
-  // Should use the appropriate connection handler based on dialect
-  // const { connection_id, dialect, query } = payload;
-
-  return {
-    valid: true,
-    message: "Query validation not yet implemented",
-    estimatedShape: {
-      columns: [],
-    },
-  };
-}
-
-async function runQuery(payload) {
-  const {
-    connection_id, dialect, query, row_limit = 1000, timeout_ms = 8000, team_id
-  } = payload;
-
-  if (!team_id) {
-    throw new Error("team_id is required to run queries");
-  }
-
-  // Validate that the query is read-only (whole words only)
-  const forbiddenKeywords = ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE"];
-  const upperQuery = query.toUpperCase();
-  const hasForbiddenKeyword = forbiddenKeywords.some((keyword) => {
-    // Use word boundaries to avoid false positives
-    const regex = new RegExp(`\\b${keyword}\\b`, "i");
-    return regex.test(upperQuery);
-  });
-
-  if (hasForbiddenKeyword) {
-    throw new Error("Only read-only queries (SELECT) are allowed");
-  }
-
-  try {
-    const startTime = Date.now();
-
-    // Add LIMIT clause if not present to respect row_limit
-    let limitedQuery = query.trim();
-    if (!upperQuery.includes("LIMIT") && (dialect === "postgres" || dialect === "mysql")) {
-      limitedQuery = `${limitedQuery.replace(/;$/, "")} LIMIT ${row_limit}`;
-    }
-
-    // Create a temporary Dataset and DataRequest for proper database relationships
-    const tempDataset = await db.Dataset.create({
-      team_id,
-      connection_id,
-      legend: "AI Query Dataset",
-      draft: true,
-      query: limitedQuery,
-    });
-
-    const tempDataRequest = await db.DataRequest.create({
-      dataset_id: tempDataset.id,
-      connection_id,
-      query: limitedQuery,
-      method: "GET",
-      useGlobalHeaders: true,
-    });
-
-    // Set as main data request
-    await db.Dataset.update(
-      { main_dr_id: tempDataRequest.id },
-      { where: { id: tempDataset.id } }
-    );
-
-    let result;
-    try {
-      if (dialect === "postgres" || dialect === "mysql") {
-        result = await connectionController.runMysqlOrPostgres(
-          connection_id,
-          tempDataRequest,
-          false, // don't use cache
-          limitedQuery
-        );
-      } else if (dialect === "mongodb") {
-        result = await connectionController.runMongo(
-          connection_id,
-          tempDataRequest,
-          false,
-          limitedQuery
-        );
-      } else {
-        throw new Error(`Unsupported dialect: ${dialect}`);
-      }
-
-      const elapsedMs = Date.now() - startTime;
-
-      // Check if query exceeded timeout (post-execution check)
-      if (elapsedMs > timeout_ms) {
-        throw new Error(`Query exceeded timeout of ${timeout_ms}ms`);
-      }
-
-      const data = result.responseData?.data || [];
-
-      // Extract column names from first row
-      const columns = data.length > 0
-        ? Object.keys(data[0]).map((name) => ({ name, type: typeof data[0][name] }))
-        : [];
-
-      return {
-        rows: data.slice(0, row_limit),
-        columns,
-        rowCount: data.length,
-        elapsedMs,
-      };
-    } finally {
-      // Clean up the temporary Dataset and DataRequest
-      await db.DataRequest.destroy({
-        where: { id: tempDataRequest.id }
-      });
-
-      await db.Dataset.destroy({
-        where: { id: tempDataset.id }
-      });
-
-      // Also clean up any cache entries
-      await db.DataRequestCache.destroy({
-        where: { dr_id: tempDataRequest.id }
-      });
-    }
-  } catch (error) {
-    throw new Error(`Query execution failed: ${error.message}`);
-  }
-}
-
-async function summarize(payload) {
-  const { question, result } = payload;
-
-  // If no result provided, return a generic message
-  if (!result) {
-    return {
-      text: "Query executed successfully. Use run_query to get specific results for summarization.",
-    };
-  }
-
-  if (!openaiClient) {
-    return {
-      text: `Found ${result.rowCount} results`,
-    };
-  }
-
-  // Use AI to generate a natural language summary
-  const prompt = `Based on the question "${question}" and the following query results, provide a concise summary:\n\nResults: ${JSON.stringify(result.rows.slice(0, 5))}\nTotal rows: ${result.rowCount}`;
-
-  try {
-    const response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a data analyst. Provide concise summaries of query results." },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 150,
-    });
-
-    return {
-      text: response.choices[0].message.content,
-    };
-  } catch (error) {
-    return {
-      text: `Found ${result.rowCount} results`,
-      notes: `AI summarization failed: ${error.message}`,
-    };
-  }
-}
-
-async function suggestChart(payload) {
-  const {
-    question, result_shape
-  } = payload;
-  // dialect and query could be used for context in the future
-
-  if (!openaiClient) {
-    return {
-      type: "table",
-      title: "Query Results",
-      encodings: {},
-      options: {},
-    };
-  }
-
-  // Use AI to suggest appropriate chart type
-  const prompt = `Based on the question "${question}" and result columns ${JSON.stringify(result_shape.columns)}, suggest the most appropriate Chartbrew chart type and configuration.
-  
-Available chart types: line, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge.
-
-Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "options": {} }`;
-
-  try {
-    const response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
-    });
-
-    const suggestion = JSON.parse(response.choices[0].message.content);
-    return suggestion;
-  } catch (error) {
-    return {
-      type: "table",
-      title: "Query Results",
-      encodings: {},
-      options: {},
-      notes: `Chart suggestion failed: ${error.message}`,
-    };
-  }
-}
-
-async function createDataset(payload) {
-  const {
-    project_id, connection_id, name, team_id,
-    xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
-    query, conditions = [], configuration = {}, variables = [], transform = null,
-    variableBindings = []
-  } = payload;
-
-  if (!team_id) {
-    throw new Error("team_id is required to create a dataset");
-  }
-
-  try {
-    // Use the quick-create function to create dataset with data request in one go
-    const dataset = await datasetController.createWithDataRequests({
-      team_id,
-      project_ids: project_id ? [project_id] : [],
-      draft: false,
-      legend: name || "AI Generated Dataset",
-      xAxis,
-      yAxis,
-      yAxisOperation,
-      dateField,
-      dateFormat,
-      conditions,
-      variableBindings,
-      dataRequests: [{
-        connection_id,
-        query,
-        conditions: conditions || [],
-        configuration: configuration || {},
-        variables: variables || [],
-        transform: transform || null
-      }],
-      main_dr_index: 0
-    });
-
-    // Extract data request ID from the returned dataset
-    const dataRequestId = dataset.DataRequests && dataset.DataRequests.length > 0
-      ? dataset.DataRequests[0].id
-      : dataset.main_dr_id;
-
-    return {
-      dataset_id: dataset.id,
-      data_request_id: dataRequestId,
-      name: dataset.legend,
-      dataset_url: `${clientUrl}/datasets/${dataset.id}`,
-    };
-  } catch (error) {
-    throw new Error(`Dataset creation failed: ${error.message}`);
-  }
-}
-
-async function createChart(payload) {
-  const {
-    project_id, dataset_id, spec,
-    name, legend, type, subType, displayLegend, pointRadius,
-    dataLabels, includeZeros, timeInterval, stacked, horizontal,
-    showGrowth, invertGrowth, mode, maxValue, minValue, ranges
-  } = payload;
-
-  if (!project_id) {
-    throw new Error("project_id is required to create a chart");
-  }
-
-  if (!name) {
-    throw new Error("name is required to create a chart");
-  }
-
-  // Provide default chart spec if not provided
-  const defaultSpec = {
-    type: "line",
-    title: "AI Generated Chart",
-    timeInterval: "day",
-    chartSize: 2,
-    displayLegend: true,
-    pointRadius: 0,
-    dataLabels: false,
-    includeZeros: true,
-    stacked: false,
-    horizontal: false,
-    showGrowth: false,
-    invertGrowth: false,
-    mode: "chart",
-    options: {}
-  };
-
-  const chartSpec = spec || defaultSpec;
-
-  try {
-    // Get the dataset to get its legend for default values
-    const dataset = await db.Dataset.findByPk(dataset_id);
-    if (!dataset) {
-      throw new Error("Dataset not found");
-    }
-
-    // Use the quick-create function to create chart with chart dataset config in one go
-    // Layout will be auto-calculated by the controller
-    const chart = await chartController.createWithChartDatasetConfigs({
-      project_id,
-      name: name || chartSpec.title || "AI Generated Chart",
-      type: type || chartSpec.type,
-      subType: subType || chartSpec.subType,
-      draft: false,
-      // eslint-disable-next-line no-nested-ternary
-      displayLegend: displayLegend !== undefined
-        ? displayLegend
-        : chartSpec.displayLegend !== undefined
-          ? chartSpec.displayLegend
-          : true,
-      pointRadius: pointRadius || chartSpec.pointRadius || 0,
-      dataLabels: dataLabels || chartSpec.dataLabels || false,
-      // eslint-disable-next-line no-nested-ternary
-      includeZeros: includeZeros !== undefined
-        ? includeZeros
-        : chartSpec.includeZeros !== undefined
-          ? chartSpec.includeZeros
-          : true,
-      timeInterval: timeInterval || chartSpec.timeInterval || "day",
-      stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked ?? false,
-      horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false,
-      showGrowth: showGrowth || chartSpec.showGrowth || false,
-      invertGrowth: invertGrowth || chartSpec.invertGrowth || false,
-      mode: mode || chartSpec.mode || "chart",
-      maxValue: maxValue || chartSpec.maxValue,
-      minValue: minValue || chartSpec.minValue,
-      ranges: ranges || chartSpec.ranges,
-      layout: chartSpec.layout, // Will be auto-calculated if not provided
-      chartDatasetConfigs: [{
-        dataset_id,
-        formula: chartSpec.formula,
-        datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
-        fillColor: chartSpec.fillColor,
-        fill: chartSpec.fill || false,
-        multiFill: chartSpec.multiFill || false,
-        legend: legend || chartSpec.title || dataset.legend,
-        pointRadius: pointRadius || chartSpec.pointRadius || 0,
-        excludedFields: chartSpec.excludedFields || [],
-        sort: chartSpec.sort,
-        columnsOrder: chartSpec.columnsOrder,
-        order: 1,
-        maxRecords: chartSpec.maxRecords,
-        goal: chartSpec.goal,
-        configuration: chartSpec.configuration || {}
-      }]
-    }, null); // No user for AI-created charts
-
-    return {
-      chart_id: chart.id,
-      name: chart.name,
-      type: chart.type,
-      project_id: chart.project_id,
-      dashboard_url: `${clientUrl}/dashboard/${project_id}`,
-      chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
-    };
-  } catch (error) {
-    throw new Error(`Chart creation failed: ${error.message}`);
-  }
-}
-
-async function updateDataset(payload) {
-  const {
-    dataset_id, name, team_id,
-    xAxis, yAxis, yAxisOperation, dateField, dateFormat,
-    query, conditions, configuration, variables, transform
-  } = payload;
-
-  if (!dataset_id) {
-    throw new Error("dataset_id is required to update a dataset");
-  }
-
-  if (!team_id) {
-    throw new Error("team_id is required to update a dataset");
-  }
-
-  try {
-    // Find the existing dataset
-    const dataset = await db.Dataset.findByPk(dataset_id);
-    if (!dataset) {
-      throw new Error("Dataset not found");
-    }
-
-    // Verify team ownership
-    if (dataset.team_id !== team_id) {
-      throw new Error("Dataset does not belong to the specified team");
-    }
-
-    // Update dataset fields (only if provided)
-    const datasetUpdates = {};
-    if (name !== undefined) datasetUpdates.legend = name;
-    if (xAxis !== undefined) datasetUpdates.xAxis = xAxis;
-    if (yAxis !== undefined) datasetUpdates.yAxis = yAxis;
-    if (yAxisOperation !== undefined) datasetUpdates.yAxisOperation = yAxisOperation;
-    if (dateField !== undefined) datasetUpdates.dateField = dateField;
-    if (dateFormat !== undefined) datasetUpdates.dateFormat = dateFormat;
-    if (conditions !== undefined) datasetUpdates.conditions = conditions;
-
-    if (Object.keys(datasetUpdates).length > 0) {
-      await db.Dataset.update(datasetUpdates, { where: { id: dataset_id } });
-    }
-
-    // Find and update the main data request
-    const dataRequest = await db.DataRequest.findByPk(dataset.main_dr_id);
-    if (!dataRequest) {
-      throw new Error("DataRequest not found for this dataset");
-    }
-
-    // Update data request fields (only if provided)
-    const drUpdates = {};
-    if (query !== undefined) drUpdates.query = query;
-    if (conditions !== undefined) drUpdates.conditions = conditions;
-    if (configuration !== undefined) drUpdates.configuration = configuration;
-    if (variables !== undefined) drUpdates.variables = variables;
-    if (transform !== undefined) drUpdates.transform = transform;
-
-    if (Object.keys(drUpdates).length > 0) {
-      await db.DataRequest.update(drUpdates, { where: { id: dataRequest.id } });
-    }
-
-    // Refresh the dataset to get updated values
-    const updatedDataset = await db.Dataset.findByPk(dataset_id, {
-      include: [{
-        model: db.DataRequest,
-        attributes: ["id", "query", "conditions", "configuration", "variables", "transform"]
-      }]
-    });
-
-    return {
-      dataset_id: updatedDataset.id,
-      data_request_id: updatedDataset.main_dr_id,
-      name: updatedDataset.legend,
-      dataset_url: `${clientUrl}/${team_id}/dataset/${updatedDataset.id}`,
-      updated_fields: {
-        dataset: Object.keys(datasetUpdates),
-        data_request: Object.keys(drUpdates)
-      }
-    };
-  } catch (error) {
-    throw new Error(`Dataset update failed: ${error.message}`);
-  }
-}
-
-async function updateChart(payload) {
-  const {
-    chart_id, dataset_id, spec, team_id,
-    name, legend, type, subType, displayLegend, pointRadius,
-    dataLabels, includeZeros, timeInterval, stacked, horizontal,
-    showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
-    datasetColor, fillColor, fill, multiFill, excludedFields, sort, columnsOrder, maxRecords, goal
-  } = payload;
-
-  if (!chart_id) {
-    throw new Error("chart_id is required to update a chart");
-  }
-
-  if (!team_id) {
-    throw new Error("team_id is required to update a chart");
-  }
-
-  try {
-    // Find the existing chart
-    const chart = await db.Chart.findByPk(chart_id);
-    if (!chart) {
-      throw new Error("Chart not found");
-    }
-
-    // Verify team ownership through project
-    const project = await db.Project.findByPk(chart.project_id);
-    if (!project || project.team_id !== team_id) {
-      throw new Error("Chart does not belong to the specified team");
-    }
-
-    // Provide default chart spec if not provided
-    const defaultSpec = {
-      displayLegend: true,
-      pointRadius: 0,
-      dataLabels: false,
-      includeZeros: true,
-      stacked: false,
-      horizontal: false,
-      showGrowth: false,
-      invertGrowth: false,
-      mode: "chart",
-    };
-
-    const chartSpec = spec || defaultSpec;
-
-    // Update chart fields (only if provided)
-    const chartUpdates = {};
-    if (name !== undefined) chartUpdates.name = name;
-    if (type !== undefined) chartUpdates.type = type;
-    if (subType !== undefined) chartUpdates.subType = subType;
-    if (displayLegend !== undefined) chartUpdates.displayLegend = displayLegend;
-    else if (chartSpec.displayLegend !== undefined) {
-      chartUpdates.displayLegend = chartSpec.displayLegend;
-    }
-    if (pointRadius !== undefined) {
-      chartUpdates.pointRadius = pointRadius;
-    } else if (chartSpec.pointRadius !== undefined) {
-      chartUpdates.pointRadius = chartSpec.pointRadius;
-    }
-    if (dataLabels !== undefined) {
-      chartUpdates.dataLabels = dataLabels;
-    } else if (chartSpec.dataLabels !== undefined) {
-      chartUpdates.dataLabels = chartSpec.dataLabels;
-    }
-    if (includeZeros !== undefined) {
-      chartUpdates.includeZeros = includeZeros;
-    } else if (chartSpec.includeZeros !== undefined) {
-      chartUpdates.includeZeros = chartSpec.includeZeros;
-    }
-    if (timeInterval !== undefined) {
-      chartUpdates.timeInterval = timeInterval;
-    } else if (chartSpec.timeInterval !== undefined) {
-      chartUpdates.timeInterval = chartSpec.timeInterval;
-    }
-
-    if (stacked !== undefined) {
-      chartUpdates.stacked = stacked;
-    } else if (chartSpec.stacked !== undefined || chartSpec.options?.stacked !== undefined) {
-      chartUpdates.stacked = chartSpec.stacked ?? chartSpec.options?.stacked ?? false;
-    }
-
-    if (horizontal !== undefined) {
-      chartUpdates.horizontal = horizontal;
-    } else if (chartSpec.horizontal !== undefined || chartSpec.options?.horizontal !== undefined) {
-      chartUpdates.horizontal = horizontal
-        ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false;
-    }
-
-    if (showGrowth !== undefined) {
-      chartUpdates.showGrowth = showGrowth;
-    } else if (chartSpec.showGrowth !== undefined) chartUpdates.showGrowth = chartSpec.showGrowth;
-
-    if (invertGrowth !== undefined) {
-      chartUpdates.invertGrowth = invertGrowth;
-    } else if (chartSpec.invertGrowth !== undefined) {
-      chartUpdates.invertGrowth = chartSpec.invertGrowth;
-    }
-
-    if (mode !== undefined) {
-      chartUpdates.mode = mode;
-    } else if (chartSpec.mode !== undefined) {
-      chartUpdates.mode = chartSpec.mode;
-    }
-
-    if (maxValue !== undefined) chartUpdates.maxValue = maxValue;
-    else if (chartSpec.maxValue !== undefined) {
-      chartUpdates.maxValue = chartSpec.maxValue;
-    }
-
-    if (minValue !== undefined) {
-      chartUpdates.minValue = minValue;
-    } else if (chartSpec.minValue !== undefined) {
-      chartUpdates.minValue = chartSpec.minValue;
-    }
-    if (ranges !== undefined) {
-      chartUpdates.ranges = ranges;
-    } else if (chartSpec.ranges !== undefined) {
-      chartUpdates.ranges = chartSpec.ranges;
-    }
-
-    if (Object.keys(chartUpdates).length > 0) {
-      await db.Chart.update(chartUpdates, { where: { id: chart_id } });
-    }
-
-    // Find and update the chart dataset config (if dataset_id is provided)
-    if (
-      dataset_id
-      || legend || datasetColor || fillColor || fill || multiFill
-      || excludedFields || sort || columnsOrder || maxRecords || goal
-      || pointRadius !== undefined || chartSpec.pointRadius !== undefined
-    ) {
-      const configWhere = { chart_id };
-      if (dataset_id) {
-        configWhere.dataset_id = dataset_id;
-      }
-
-      const chartDatasetConfig = await db.ChartDatasetConfig.findOne({
-        where: configWhere
-      });
-
-      if (chartDatasetConfig) {
-        const configUpdates = {};
-
-        if (legend !== undefined) {
-          configUpdates.legend = legend;
-        } else if (chartSpec.title !== undefined) {
-          configUpdates.legend = chartSpec.title;
-        }
-
-        if (datasetColor !== undefined) {
-          configUpdates.datasetColor = datasetColor;
-        } else if (chartSpec.datasetColor !== undefined) {
-          configUpdates.datasetColor = chartSpec.datasetColor;
-        } else if (chartSpec.options?.color !== undefined) {
-          configUpdates.datasetColor = chartSpec.options.color;
-        }
-
-        if (fillColor !== undefined) {
-          configUpdates.fillColor = fillColor;
-        } else if (chartSpec.fillColor !== undefined) {
-          configUpdates.fillColor = chartSpec.fillColor;
-        }
-
-        if (fill !== undefined) {
-          configUpdates.fill = fill;
-        } else if (chartSpec.fill !== undefined) {
-          configUpdates.fill = chartSpec.fill;
-        }
-
-        if (multiFill !== undefined) {
-          configUpdates.multiFill = multiFill;
-        } else if (chartSpec.multiFill !== undefined) {
-          configUpdates.multiFill = chartSpec.multiFill;
-        }
-
-        if (excludedFields !== undefined) {
-          configUpdates.excludedFields = excludedFields;
-        } else if (chartSpec.excludedFields !== undefined) {
-          configUpdates.excludedFields = chartSpec.excludedFields;
-        }
-
-        if (sort !== undefined) {
-          configUpdates.sort = sort;
-        } else if (chartSpec.sort !== undefined) {
-          configUpdates.sort = chartSpec.sort;
-        }
-
-        if (columnsOrder !== undefined) {
-          configUpdates.columnsOrder = columnsOrder;
-        } else if (chartSpec.columnsOrder !== undefined) {
-          configUpdates.columnsOrder = chartSpec.columnsOrder;
-        }
-
-        if (maxRecords !== undefined) {
-          configUpdates.maxRecords = maxRecords;
-        } else if (chartSpec.maxRecords !== undefined) {
-          configUpdates.maxRecords = chartSpec.maxRecords;
-        }
-
-        if (goal !== undefined) {
-          configUpdates.goal = goal;
-        } else if (chartSpec.goal !== undefined) {
-          configUpdates.goal = chartSpec.goal;
-        }
-
-        if (chartSpec.formula !== undefined) {
-          configUpdates.formula = chartSpec.formula;
-        }
-
-        if (pointRadius !== undefined) {
-          configUpdates.pointRadius = pointRadius;
-        } else if (chartSpec.pointRadius !== undefined) {
-          configUpdates.pointRadius = chartSpec.pointRadius;
-        }
-
-        if (Object.keys(configUpdates).length > 0) {
-          await db.ChartDatasetConfig.update(
-            configUpdates, { where: { id: chartDatasetConfig.id } }
-          );
-        }
-      }
-    }
-
-    // Run the chart update in the background
-    try {
-      const chartController = new ChartController();
-      chartController.updateChartData(chart_id, null, {});
-    } catch {
-      // Ignore background update errors
-    }
-
-    // Refresh the chart to get updated values
-    const updatedChart = await db.Chart.findByPk(chart_id, {
-      include: [{
-        model: db.Project,
-        attributes: ["id", "name"]
-      }]
-    });
-
-    return {
-      chart_id: updatedChart.id,
-      name: updatedChart.name,
-      type: updatedChart.type,
-      project_id: updatedChart.project_id,
-      dashboard_url: `${clientUrl}/${team_id}/${updatedChart.project_id}/dashboard`,
-      chart_url: `${clientUrl}/${team_id}/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
-      updated_fields: {
-        chart: Object.keys(chartUpdates),
-        config: dataset_id || legend || datasetColor || fillColor || fill || multiFill || excludedFields || sort || columnsOrder || maxRecords || goal ? "chart_dataset_config" : null
-      }
-    };
-  } catch (error) {
-    throw new Error(`Chart update failed: ${error.message}`);
-  }
-}
-
-async function disambiguate(payload) {
-  const { prompt, options } = payload;
-
-  // This is a special tool that pauses execution and asks the user to choose
-  // The orchestrator should handle this by returning a disambiguation request
-  return {
-    needs_user_input: true,
-    prompt,
-    options,
-  };
-}
+// Import tool functions
+const {
+  listConnections,
+  getSchema,
+  generateQuery,
+  validateQuery,
+  runQuery,
+  summarize,
+  suggestChart,
+  createDataset,
+  createChart,
+  updateDataset,
+  updateChart,
+  createTemporaryChart,
+  moveChartToDashboard,
+  disambiguate,
+} = require("./tools");
+const { chartColors } = require("../../../charts/colors");
+
+// Make global variables available to tool functions
+global.openaiClient = openaiClient;
+global.openAiModel = openAiModel;
+global.clientUrl = clientUrl;
 
 async function availableTools() {
   return [
@@ -1064,7 +204,7 @@ async function availableTools() {
     },
     {
       name: "create_chart",
-      description: "Create a chart and place it on a project/dashboard, bound to a dataset. CRITICAL: Use the EXACT project_id specified by the user. Create the chart exactly once - do not create test/validation charts in other projects.",
+      description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard (e.g., 'add to Sales Dashboard', 'place in Marketing dashboard'). DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user.",
       parameters: {
         type: "object",
         properties: {
@@ -1081,9 +221,10 @@ async function availableTools() {
           timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
           stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
-          mode: { type: "string", enum: ["chart", "kpichart"] },
+          mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
           maxValue: { type: "integer", description: "Cap maximum value" },
           minValue: { type: "integer", description: "Cap minimum value" },
           ranges: {
@@ -1151,6 +292,7 @@ async function availableTools() {
           timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"], description: "Time interval for time-based charts" },
           stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
           horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
           showGrowth: { type: "boolean", description: "Show percentage growth" },
           invertGrowth: { type: "boolean", description: "Invert growth calculation" },
           mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
@@ -1183,6 +325,85 @@ async function availableTools() {
         required: ["chart_id"]
       }
       // returns: { chart_id, name, type, project_id, dashboard_url, chart_url, updated_fields }
+    },
+    {
+      name: "create_temporary_chart",
+      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'. The chart will be shown as a preview and can later be moved to a dashboard using move_chart_to_dashboard if the user requests it.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string", description: "Connection ID to use for data fetching (must be MySQL, PostgreSQL, or MongoDB)" },
+          name: { type: "string", description: "Chart name/title" },
+          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
+          displayLegend: { type: "boolean", description: "Show chart legend" },
+          pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
+          dataLabels: { type: "boolean", description: "Show values on data points" },
+          includeZeros: { type: "boolean", description: "Include zero values" },
+          timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
+          stacked: { type: "boolean", description: "Stack bars (bar charts only)" },
+          horizontal: { type: "boolean", description: "Horizontal bars (bar charts only)" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"], description: "How many ticks to display on the x-axis" },
+          showGrowth: { type: "boolean", description: "Show percentage growth" },
+          invertGrowth: { type: "boolean", description: "Invert growth calculation" },
+          mode: { type: "string", enum: ["chart", "kpichart"], description: "Chart mode - kpichart shows a KPI on top of the chart" },
+          maxValue: { type: "integer", description: "Cap maximum value" },
+          minValue: { type: "integer", description: "Cap minimum value" },
+          ranges: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                min: { type: "number" },
+                max: { type: "number" },
+                label: { type: "string" },
+                color: { type: "string" }
+              }
+            },
+            description: "Gauge ranges [{min, max, label, color}]"
+          },
+          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxisOperation: {
+            type: "string",
+            enum: ["none", "sum", "avg", "min", "max", "count"],
+            default: "none",
+            description: "Y axis aggregation operation"
+          },
+          dateField: { type: "string", description: "Date field for filtering" },
+          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          query: { type: "string", description: "SQL query for the dataset" },
+          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
+          configuration: { type: "object", description: "Dialect-specific settings" },
+          variables: {
+            type: "array",
+            items: { type: "string" },
+            default: [],
+            description: "Query variables/parameters"
+          },
+          transform: { type: "object", description: "Data transformation rules" },
+          spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
+        },
+        required: ["connection_id", "name", "xAxis", "yAxis", "query"]
+      }
+      // returns: {
+      //   chart_id, dataset_id, data_request_id, name, type,
+      //   is_temporary: true, ghost_project_id
+      // }
+    },
+    {
+      name: "move_chart_to_dashboard",
+      description: "Move a temporary chart from the ghost project to a real dashboard/project. Use this after creating a temporary chart when the user confirms they want to add it to a specific dashboard. The chart's layout will be automatically recalculated for the new dashboard.",
+      parameters: {
+        type: "object",
+        properties: {
+          chart_id: { type: "string", description: "The ID of the chart to move (from create_temporary_chart)" },
+          target_project_id: { type: "string", description: "The project/dashboard ID where the chart should be placed" }
+        },
+        required: ["chart_id", "target_project_id"]
+      }
+      // returns: { chart_id, previous_project_id, new_project_id, dashboard_url, chart_url }
     },
     {
       name: "disambiguate",
@@ -1228,6 +449,10 @@ async function callTool(name, payload) {
         return updateDataset(payload);
       case "update_chart":
         return updateChart(payload);
+      case "create_temporary_chart":
+        return createTemporaryChart(payload);
+      case "move_chart_to_dashboard":
+        return moveChartToDashboard(payload);
       case "disambiguate":
         return disambiguate(payload);
       default:
@@ -1291,16 +516,17 @@ ${ENTITY_CREATION_RULES}
 - Execute database queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
+- Create temporary charts when no project is specified, then move them to dashboards upon user confirmation
 - Inform users when they request unsupported data sources (APIs, etc.) that these will be available in future updates
 - Only suggest actions that correspond to these tools - no exports, sharing features, or other unimplemented functionality
 
 ## Core Principle: Take Initiative
 **Be proactive, not reactive.** Your default mode should be to act, not ask.
 
-- **Infer context automatically**: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it immediately. Don't ask "which project?" - just proceed.
+- **Infer context automatically**: For connections and data sources, use context from the conversation. If only one connection exists or is obvious from context, use it automatically.
 - **Use obvious connections**: If only one connection exists, or the connection is clear from context (e.g., "my sales database"), use it automatically. Only ask when multiple ambiguous options exist.
-- **Create charts proactively**: After answering a data question, if a project was mentioned or can be inferred, automatically create a chart. Don't ask "would you like me to create a chart?" - just create it.
-- **Remember**: Users can always edit charts and datasets afterwards. It's better to create something useful immediately than to ask for every detail.
+- **Create charts proactively**: After answering a data question, automatically create a TEMPORARY preview chart. Don't ask "would you like me to create a chart?" - just create it. This gives users a visual preview and control over dashboard placement.
+- **Remember**: Temporary charts give users control. They can see the visualization immediately and decide where to save it. It's better to show a preview than to pollute their dashboards with unwanted charts.
 - **Only ask questions when**: Context is truly ambiguous, multiple valid options exist with no clear preference, or you need clarification on user intent.
 
 ## Limitations
@@ -1316,36 +542,63 @@ ${ENTITY_CREATION_RULES}
      * Call generate_query with the schema to generate SQL queries
      * Call run_query to execute the SQL and get results
      * Summarize the results
-     * **TAKE INITIATIVE: If a project/dashboard was mentioned in the conversation or context, automatically create a chart without asking. Users can edit afterwards.**
+     * **DEFAULT: Always create a temporary preview chart to show the results visually**
 
-2. When creating charts - TAKE INITIATIVE:
-   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once, in the exact project specified by the user.
-   - **CRITICAL: Always use the exact project provided by the user or context.** Never create charts in different projects for testing or validation purposes.
-   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate" - create the final chart directly in the user's specified project.
-   - **PROACTIVE BEHAVIOR: If a project/dashboard is mentioned in the user's question, conversation history, or context, use it automatically. Don't ask "which project?" - just proceed.**
-   - **PROACTIVE BEHAVIOR: If only one connection exists or the connection is obvious from context (e.g., user mentions "my database" or "the sales database"), use it automatically. Only ask if there are multiple ambiguous options.**
-   - **PROACTIVE BEHAVIOR: After answering a data question, if a project was mentioned or can be inferred from context, automatically create a chart. Don't ask "would you like me to create a chart?" - just create it.**
+2. When creating charts - CRITICAL CHART PLACEMENT RULES:
+   
+   **🚨 IMPORTANT: Temporary charts are the DEFAULT. Only place charts in visible dashboards when explicitly requested by the user.**
+   
+   **Deciding between create_chart and create_temporary_chart:**
+   - **DEFAULT: ALWAYS use create_temporary_chart** unless the user explicitly requests dashboard placement
+   - **Use create_temporary_chart when**:
+     * User says: "create a chart showing X"
+     * User says: "visualize this data"
+     * User says: "show me a graph of Y"
+     * User says: "make a chart"
+     * **ANY chart creation request WITHOUT explicit dashboard/project mention**
+   
+   - **ONLY use create_chart when user EXPLICITLY requests dashboard placement**:
+     * User says: "create a chart in my Sales Dashboard"
+     * User says: "add this to the Marketing dashboard"
+     * User says: "place this chart on [Dashboard Name]"
+     * User says: "save this chart to [Dashboard Name]"
+     * **Must include BOTH: (1) chart creation intent AND (2) explicit dashboard/project name**
+   
+   **Temporary chart workflow:**
+   - Create the temporary preview chart automatically
+   - Show the chart to the user
+   - After showing the chart, offer to add it to a dashboard: "Would you like to add this chart to a dashboard?"
+   - If user says yes and specifies a dashboard, use move_chart_to_dashboard
+   - The layout will be automatically recalculated when moving
+   
+   **Critical rules to prevent unwanted dashboard pollution:**
+   - **NEVER assume dashboard placement from context or conversation history**
+   - **NEVER place charts in dashboards just because a dashboard was mentioned earlier**
+   - **NEVER place charts in dashboards "proactively" or "to be helpful"**
+   - **ALWAYS default to temporary charts unless user explicitly says "add to [dashboard]" or "place in [dashboard]"**
+   - **Users have full control** - they decide when and where charts are saved
+   
+   **General chart creation rules:**
+   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once.
+   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate".
+   - If only one connection exists or the connection is obvious from context (e.g., user mentions "my database"), use it automatically
    - Suggest the most appropriate chart type based on the data automatically
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
-   - **DEFAULT TO ACTION: Create charts and datasets proactively. Only ask questions when context is truly ambiguous or when multiple valid options exist.**
-   - Create the dataset first, then the chart
    - When creating charts, provide a descriptive name that reflects the data being visualized (e.g., "Monthly Sales Trends" instead of "AI Generated Chart")
-   - When creating resources, integrate clickable markdown links naturally into your response sentences instead of listing them separately (e.g., "I've created your chart! You can [view it here](chart_url) or [see it on your dashboard](dashboard_url)" - NOT "Chart URL: url, Dashboard URL: url")
-   - Keep responses conversational and focused on insights/results rather than listing technical metadata like IDs and connection details
-   - Avoid dumping raw data tables or full datasets in responses - summarize key insights conversationally instead
-   - When answering data questions, give the direct answer first, then optionally show the query used - skip technical details like execution time, connection info, and alternative queries unless asked
-   - **REMEMBER: Users can always edit charts and datasets afterwards. It's better to create something useful immediately than to ask for every detail.**
+   - Keep responses conversational and focused on insights/results rather than listing technical metadata
+   - When answering data questions, give the direct answer first, then show the chart
+   - **REMEMBER: Temporary charts give users control over what gets saved to their dashboards. Users can always edit charts and datasets afterwards**
 
 3. Best practices:
-   - **CRITICAL: Respect user instructions exactly.** If the user specifies a project_id, use that exact project_id. Never create charts in other projects for any reason.
-   - **CRITICAL: No validation or test runs.** When creating charts or datasets, create them directly in the user's specified project. Do not create test/validation versions first.
-   - **TAKE INITIATIVE: Infer context from conversation history. If a project was mentioned earlier, use it. If a connection was used before, prefer it.**
+   - **CRITICAL: Default to temporary charts.** Only place in dashboards when explicitly requested.
+   - **CRITICAL: Respect user instructions exactly.** If the user specifies a dashboard, use that exact dashboard. Never create charts in other dashboards for any reason.
+   - **CRITICAL: No validation or test runs.** Create charts once, as temporary previews by default.
+   - Infer connection choice from context when obvious (prefer previously used connections)
    - Only confirm connection choice if multiple databases contain similar data AND the user's intent is ambiguous
-   - Ask before making permanent changes (updating existing datasets/charts) - but CREATE new ones proactively
-   - **DEFAULT TO CREATING: When context is clear (project mentioned, connection obvious, data question answered), create the chart automatically. Don't ask permission.**
-   - Only suggest actions and features that are actually available through your tools - avoid promising features that don't exist in Chartbrew
+   - Ask before making permanent changes (updating existing datasets/charts)
+   - Only suggest actions and features that are actually available through your tools
    - Use clear, non-technical language when summarizing data
-   - In continuing conversations, reference previous work and build upon it - use the same project/connection from earlier in the conversation
+   - In continuing conversations, reference previous work and build upon it (connection preferences, chart types used)
    - For data generation requests: Be terse. Use the Limitations response template. Don't explain why or offer alternatives.
 
 ## Response Formatting
@@ -1492,8 +745,9 @@ Critical: Never prefix with "Suggestions:" text. Emit only the fenced cb-actions
 ## Important Notes
 - You can only create read-only queries (no INSERT, UPDATE, DELETE, DROP)
 - Always respect the user's data privacy and security
-- **CRITICAL: When creating charts or datasets, use the EXACT project_id specified by the user. Never create validation/test versions in other projects. Create entities exactly once, directly in the user's specified project.**
-- **TAKE INITIATIVE: Infer context from conversation history and user questions. Only use the disambiguate tool when context is truly ambiguous or multiple valid options exist with no clear preference. Default to action, not questions.**
+- **CRITICAL: Default to temporary charts (create_temporary_chart). ONLY use create_chart when user explicitly says "add to [dashboard]" or "place in [dashboard]". When placing in dashboards, use the EXACT project_id specified by the user.**
+- **CRITICAL: Never pollute visible dashboards with charts unless explicitly requested. Temporary charts give users control over what gets saved.**
+- **TAKE INITIATIVE: Infer connection context from conversation history. Only use the disambiguate tool when context is truly ambiguous. Default to action, not questions.**
 - **FORMATTING REMINDER**: When using cb-actions, ALWAYS use the exact fenced code block format with three backticks. Never output cb-actions without the proper markdown code fence markers.
 
 At the end of every answer, STOP and check:
@@ -1594,8 +848,10 @@ async function buildSemanticLayer(teamId) {
 }
 
 async function orchestrate(
-  teamId, question, conversationHistory = [], conversation = null, context = null
+  teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
+  // Extract optional tool progress callback
+  const { toolProgressCallback } = options;
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
@@ -1681,21 +937,25 @@ async function orchestrate(
 
   // Track all usage records (one per API call)
   const usageRecords = [];
+  // Track snapshots from chart creation/update tools
+  const snapshots = [];
 
   // Initial API call
   const startTime1 = Date.now();
   let response = await openaiClient.chat.completions.create({
-    model: openAiModel || "gpt-4o-mini",
+    model: openAiModel || "gpt-5-nano",
     messages,
     tools,
     tool_choice: "auto",
+    reasoning_effort: "low",
+    verbosity: "low",
   });
   const elapsedMs1 = Date.now() - startTime1;
 
   // Record first usage
   if (response.usage) {
     usageRecords.push({
-      model: openAiModel || "gpt-4o-mini",
+      model: openAiModel || "gpt-5-nano",
       prompt_tokens: response.usage.prompt_tokens || 0,
       completion_tokens: response.usage.completion_tokens || 0,
       total_tokens: response.usage.total_tokens || 0,
@@ -1734,12 +994,37 @@ async function orchestrate(
         const toolArgs = JSON.parse(toolCall.function.arguments);
 
         // Inject team_id into tools that need it
-        if (toolName === "create_dataset" || toolName === "run_query" || toolName === "create_chart" || toolName === "update_dataset" || toolName === "update_chart") {
+        if (toolName === "create_dataset" || toolName === "run_query" || toolName === "create_chart" || toolName === "update_dataset" || toolName === "update_chart" || toolName === "create_temporary_chart" || toolName === "move_chart_to_dashboard") {
           toolArgs.team_id = teamId;
+        }
+
+        // Call progress callback before tool execution
+        if (toolProgressCallback) {
+          try {
+            await toolProgressCallback(toolName, "start", toolArgs);
+          } catch (callbackError) {
+            // eslint-disable-next-line no-console
+            console.error("Tool progress callback error:", callbackError);
+          }
         }
 
         try {
           const result = await callTool(toolName, toolArgs);
+
+          // Check if this tool result includes a snapshot
+          if (result.snapshot) {
+            // Convert relative snapshot path to full URL and ensure HTTPS
+            const snapshotUrl = `${process.env.CB_SLACK_REDIRECT_HOST_DEV}/${result.snapshot}`;
+
+            // Validate URL format
+            snapshots.push({
+              tool_name: toolName,
+              chart_id: result.chart_id,
+              snapshot: snapshotUrl,
+              chart_name: result.name,
+              chart_type: result.type
+            });
+          }
 
           // Check if this is a disambiguation request
           if (result.needs_user_input) {
@@ -1761,6 +1046,16 @@ async function orchestrate(
             content: JSON.stringify(result)
           };
         } catch (error) {
+          // Call progress callback on error
+          if (toolProgressCallback) {
+            try {
+              await toolProgressCallback(toolName, "error", { error: error.message });
+            } catch (callbackError) {
+              // eslint-disable-next-line no-console
+              console.error("Tool progress callback error:", callbackError);
+            }
+          }
+
           return {
             tool_call_id: toolCall.id,
             role: "tool",
@@ -1812,17 +1107,19 @@ async function orchestrate(
     const startTime = Date.now();
     // eslint-disable-next-line no-await-in-loop
     response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
+      model: openAiModel || "gpt-5-nano",
       messages: updatedMessages,
       tools,
       tool_choice: "auto",
+      reasoning_effort: "low",
+      verbosity: "low",
     });
     const elapsedMs = Date.now() - startTime;
 
     // Record usage for this API call
     if (response.usage) {
       usageRecords.push({
-        model: openAiModel || "gpt-4o-mini",
+        model: openAiModel || "gpt-5-nano",
         prompt_tokens: response.usage.prompt_tokens || 0,
         completion_tokens: response.usage.completion_tokens || 0,
         total_tokens: response.usage.total_tokens || 0,
@@ -1865,6 +1162,7 @@ async function orchestrate(
     usage: response.usage, // Last API call usage (backward compatibility)
     usageRecords, // All usage records for saving to AiUsage table
     iterations,
+    snapshots, // Chart snapshots from tool results
   };
 }
 

@@ -19,6 +19,7 @@ const busboy = require("connect-busboy");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
+const appsRoutes = require("./apps");
 
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
@@ -48,9 +49,25 @@ if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 app.use(cookieParser());
-app.use(urlencoded({ extended: true }));
+app.use(urlencoded({
+  extended: true,
+  verify: (req, res, buf, encoding) => {
+    const url = req.originalUrl;
+    // Save raw body for Slack signature verification (URL-encoded requests)
+    if (req.headers["content-type"]?.includes("application/x-www-form-urlencoded") && url.includes("/apps/slack/")) {
+      req.rawBody = buf.toString(encoding || "utf8");
+    }
+  },
+}));
 app.set("query parser", "simple");
-app.use(json());
+app.use(json({
+  verify: (req, res, buf, encoding) => {
+    // Save raw body for Slack signature verification (JSON requests)
+    if (req.headers["content-type"]?.includes("application/json")) {
+      req.rawBody = buf.toString(encoding || "utf8");
+    }
+  },
+}));
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -71,6 +88,11 @@ app.use(parseQueryParams);
 
 // Load the routes
 _.each(routes, (controller, route) => {
+  app.use(route, controller(app));
+});
+
+// Load the apps routes
+_.each(appsRoutes, (controller, route) => {
   app.use(route, controller(app));
 });
 

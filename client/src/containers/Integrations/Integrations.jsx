@@ -8,12 +8,11 @@ import {
 import WebhookIntegrations from "./components/WebhookIntegrations";
 import {
   getTeamIntegrations,
-  selectIntegrations,
 } from "../../slices/integration";
 import { selectTeam } from "../../slices/team";
+import SlackIntegrations from "./components/SlackIntegrations";
 
 function Integrations() {
-  const integrations = useSelector(selectIntegrations);
   const dispatch = useDispatch();
 
   const team = useSelector(selectTeam);
@@ -43,10 +42,12 @@ function Integrations() {
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
         <WebhookIntegrations
-          integrations={integrations ? integrations.filter((i) => i.type === "webhook") : []}
           teamId={team?.id}
         />
         <Spacer y={4} />
+        <SlackIntegrations
+          teamId={team?.id}
+        />
       </div>
     </div>
   );
