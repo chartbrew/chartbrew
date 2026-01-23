@@ -11,9 +11,6 @@ import {
   createIntegration, deleteIntegration, updateIntegration, getTeamIntegrations,
   selectIntegrations,
 } from "../../../slices/integration";
-import Container from "../../../components/Container";
-import Text from "../../../components/Text";
-import Row from "../../../components/Row";
 import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash, LuWebhook } from "react-icons/lu";
 
 const urlRegex = /^https?:\/\/.+/;
@@ -156,7 +153,7 @@ function WebhookIntegrations({ teamId }) {
 
   return (
     <div>
-      <Row align="center" justify="space-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           <LuWebhook size={24} />
           <Spacer x={1} />
@@ -175,13 +172,14 @@ function WebhookIntegrations({ teamId }) {
         >
           Add a new webhook
         </Button>
-      </Row>
+      </div>
+      <div className="text-sm text-foreground-500">
+        {"Create webhooks to send alerts and reports to external services"}
+      </div>
       <Spacer y={2} />
-      <Row>
-        <Divider />
-      </Row>
+      <Divider />
       <Spacer y={2} />
-      <Row>
+      <div>
         <div className="text-sm">
           <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
             <LuInfo size={16} />
@@ -189,9 +187,9 @@ function WebhookIntegrations({ teamId }) {
             {"Click to see what Chartbrew sends over the webhook"}
           </Link>
         </div>
-      </Row>
+      </div>
       <Spacer y={1} />
-      <Row>
+      <div>
         <div className="text-sm">
           <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
             <LuSlack size={16} />
@@ -199,7 +197,7 @@ function WebhookIntegrations({ teamId }) {
             {"Want to send events to Slack? Check out how to do it here"}
           </Link>
         </div>
-      </Row>
+      </div>
       <Spacer y={2} />
       <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
         <TableHeader>
@@ -216,15 +214,15 @@ function WebhookIntegrations({ teamId }) {
                 {i.name}
               </TableCell>
               <TableCell key="url" className="max-w-[300px] truncate">
-                <Text className={"truncate"}>
+                <div className="truncate">
                   {i.config?.url || "No URL"}
-                </Text>
+                </div>
               </TableCell>
               <TableCell key="created">
                 {formatRelative(new Date(i.createdAt), new Date())}
               </TableCell>
               <TableCell key="actions">
-                <Row>
+                <div className="flex items-center">
                   <Button
                     isIconOnly
                     variant="light"
@@ -242,7 +240,7 @@ function WebhookIntegrations({ teamId }) {
                   >
                     <LuTrash size={18} />
                   </Button>
-                </Row>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -252,13 +250,13 @@ function WebhookIntegrations({ teamId }) {
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">
+            <div className="font-bold">
               {!newIntegration.id && "Create a new webhook integration"}
               {newIntegration.id && "Update the webhook"}
-            </Text>
+            </div>
           </ModalHeader>
           <ModalBody>
-            <Row>
+            <div>
               <Input
                 label="A name to recognize this integration"
                 placeholder="Webhook name"
@@ -271,8 +269,8 @@ function WebhookIntegrations({ teamId }) {
                 required
                 description={`${newIntegration.name?.length || 0}/20 characters`}
               />
-            </Row>
-            <Row>
+            </div>
+            <div>
               <Input
                 label="The URL where Chartbrew sends a POST request to"
                 placeholder="Webhook URL"
@@ -282,8 +280,8 @@ function WebhookIntegrations({ teamId }) {
                 variant="bordered"
                 color={urlError ? "danger" : "default"}
               />
-            </Row>
-            <Row align={"center"}>
+            </div>
+            <div className="flex items-center">
               <Checkbox
                 checked={newIntegration.slackMode}
                 onValueChange={(isSelected) => {
@@ -300,11 +298,11 @@ function WebhookIntegrations({ teamId }) {
                 <Spacer x={1} />
                 {"What is this?"}
               </Link>
-            </Row>
+            </div>
             {error && (
-              <Row>
-                <Text color="danger">There was an error creating the integration. Please try again.</Text>
-              </Row>
+              <div className="text-danger text-sm">
+                There was an error creating the integration. Please try again.
+              </div>
             )}
           </ModalBody>
           <ModalFooter>
@@ -331,24 +329,15 @@ function WebhookIntegrations({ teamId }) {
       <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} size="3xl">
       <ModalContent>
           <ModalHeader>
-            <Text size="h4">Are you sure you want to delete this integration?</Text>
+            <div className="font-bold">Are you sure you want to delete this integration?</div>
           </ModalHeader>
           <ModalBody>
-            <Container>
-              <Row>
-                <Text>
-                  All alerts that are configured to use this integration will be disabled.
-                </Text>
-              </Row>
-              {deleteError && (
-                <>
-                  <Spacer y={2} />
-                  <Row>
-                    <Text color="danger">There was an error deleting the integration. Please try again.</Text>
-                  </Row>
-                </>
-              )}
-            </Container>
+            <div>
+              All alerts that are configured to use this integration will be disabled.
+            </div>
+            {deleteError && (
+              <div className="text-danger text-sm">There was an error deleting the integration. Please try again.</div>
+            )}
           </ModalBody>
           <ModalFooter>
             <Button
@@ -373,7 +362,7 @@ function WebhookIntegrations({ teamId }) {
       <Modal isOpen={slackModalOpen} size="5xl" onClose={() => setSlackModalOpen(false)}>
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">How to set up Slack alerts</Text>
+            <div className="font-bold">How to set up Slack alerts</div>
           </ModalHeader>
           <ModalBody>
             <div

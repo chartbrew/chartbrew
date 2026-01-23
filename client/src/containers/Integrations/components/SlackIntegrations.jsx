@@ -13,8 +13,6 @@ import {
   deleteIntegration, updateIntegration, getTeamIntegrations,
   selectIntegrations,
 } from "../../../slices/integration";
-import Text from "../../../components/Text";
-import Row from "../../../components/Row";
 import { API_HOST } from "../../../config/settings";
 
 const SLACK_CLIENT_ID = import.meta.env.VITE_APP_SLACK_CLIENT_ID;
@@ -94,7 +92,7 @@ function SlackIntegrations({ teamId }) {
 
   return (
     <div>
-      <Row align="center" justify="space-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           <LuSlack size={24} />
           <Spacer x={1} />
@@ -113,11 +111,12 @@ function SlackIntegrations({ teamId }) {
         >
           Add a new Slack integration
         </Button>
-      </Row>
+      </div>
+      <div className="text-sm text-foreground-500">
+        {"Add Chartbrew's AI assistant to your Slack workspaces"}
+      </div>
       <Spacer y={2} />
-      <Row>
-        <Divider />
-      </Row>
+      <Divider />
       <Spacer y={2} />
       <Table shadow={"none"} aria-label="Slack integrations" className="border-1 border-divider rounded-lg">
         <TableHeader>
@@ -138,15 +137,15 @@ function SlackIntegrations({ teamId }) {
                 {i.config?.slack_team_name || "No Slack workspace"}
               </TableCell>
               <TableCell key="installer_slack_user_id" className="max-w-[300px] truncate">
-                <Text className={"truncate"}>
+                <div className="truncate">
                   {i.config?.installer_slack_user_id || "No Slack user ID"}
-                </Text>
+                </div>
               </TableCell>
               <TableCell key="created">
                 {formatRelative(new Date(i.createdAt), new Date())}
               </TableCell>
               <TableCell key="actions">
-                <Row>
+                <div className="flex items-center">
                   <Button
                     isIconOnly
                     variant="light"
@@ -164,7 +163,7 @@ function SlackIntegrations({ teamId }) {
                   >
                     <LuTrash size={18} />
                   </Button>
-                </Row>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -213,7 +212,7 @@ function SlackIntegrations({ teamId }) {
       <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} size="3xl">
         <ModalContent>
           <ModalHeader>
-            <Text size="h4">Are you sure you want to delete this integration?</Text>
+            <div className="font-bold">Are you sure you want to delete this integration?</div>
           </ModalHeader>
           <ModalBody>
               <div>
@@ -222,9 +221,7 @@ function SlackIntegrations({ teamId }) {
               {deleteError && (
                 <>
                   <Spacer y={2} />
-                  <Row>
-                    <Text color="danger">There was an error deleting the integration. Please try again.</Text>
-                  </Row>
+                  <div className="text-danger text-sm">There was an error deleting the integration. Please try again.</div>
                 </>
               )}
           </ModalBody>
