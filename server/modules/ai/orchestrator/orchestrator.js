@@ -760,7 +760,9 @@ At the end of every answer, STOP and check:
 /**
  * Sanitizes conversation history to ensure OpenAI API compliance.
  * Removes any assistant messages with tool_calls that don't have complete tool responses.
- * OpenAI requires that every tool_call_id has a corresponding tool response message.
+ * Also removes orphaned tool responses that don't match any tool_call_id.
+ * OpenAI requires that every tool_call_id has a corresponding tool response message,
+ * and every tool response must reference a valid tool_call_id from the previous assistant message.
  */
 function sanitizeConversationHistory(history) {
   if (!Array.isArray(history) || history.length === 0) {
@@ -786,18 +788,36 @@ function sanitizeConversationHistory(history) {
         j++;
       }
 
-      // Check if all tool_call_ids have responses
-      const respondedIds = new Set(toolResponses.map((tr) => tr.tool_call_id).filter(Boolean));
+      // Filter tool responses to only include those with valid tool_call_ids
+      const validToolResponses = toolResponses.filter((tr) => {
+        const callId = tr.tool_call_id;
+        return callId && toolCallIds.has(callId);
+      });
+
+      // Check for orphaned tool responses (responses without matching tool_call_ids)
+      const orphanedResponses = toolResponses.filter((tr) => {
+        const callId = tr.tool_call_id;
+        return callId && !toolCallIds.has(callId);
+      });
+
+      if (orphanedResponses.length > 0) {
+        const orphanedIds = orphanedResponses.map((tr) => tr.tool_call_id).join(", ");
+        // eslint-disable-next-line no-console
+        console.warn(`Removing orphaned tool responses with tool_call_ids: ${orphanedIds}`);
+      }
+
+      // Check if all tool_call_ids have valid responses
+      const respondedIds = new Set(validToolResponses.map((tr) => tr.tool_call_id).filter(Boolean));
       const allResponded = toolCallIds.size > 0
         && Array.from(toolCallIds).every((id) => respondedIds.has(id));
 
-      if (allResponded) {
-        // All tool calls have responses - include the assistant message and all tool responses
+      if (allResponded && validToolResponses.length === toolResponses.length) {
+        // All tool calls have valid responses - include assistant message and tool responses
         sanitized.push(message);
-        sanitized.push(...toolResponses);
+        sanitized.push(...validToolResponses);
         i = j; // Skip past all the tool responses
       } else {
-        // Incomplete tool calls - remove the assistant message and tool responses
+        // Incomplete or invalid tool calls - remove the assistant message and tool responses
         // This prevents OpenAI API errors
         const missingIds = Array.from(toolCallIds)
           .filter((id) => !respondedIds.has(id))
@@ -806,6 +826,12 @@ function sanitizeConversationHistory(history) {
         console.warn(`Removing incomplete assistant message with tool_calls. Missing responses for tool_call_ids: ${missingIds}`);
         i = j; // Skip past the incomplete sequence
       }
+    } else if (message.role === "tool") {
+      // Orphaned tool response (no preceding assistant message with tool_calls)
+      // Remove it to prevent OpenAI API errors
+      // eslint-disable-next-line no-console
+      console.warn(`Removing orphaned tool response with tool_call_id: ${message.tool_call_id || "unknown"}`);
+      i++;
     } else {
       // Regular message - include it
       sanitized.push(message);
