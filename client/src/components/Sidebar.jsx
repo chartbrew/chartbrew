@@ -249,48 +249,52 @@ function Sidebar() {
           <Spacer y={4} />
 
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-4 flex flex-col items-start justify-center")}>
-            <div className="text-sm text-gray-500">
-              {collapsed ? "" : "Quick actions"}
-            </div>
-            <Spacer y={2} />
-            <Button
-              variant="flat"
-              size="sm"
-              color="default"
-              startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
-              onPress={() => navigate("/?create=dashboard")}
-              isIconOnly={collapsed}
-              fullWidth
-              className={cn(collapsed ? "justify-center" : "justify-start")}
-            >
-              {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
-            </Button>
-            <Spacer y={1} />
-            <Button
-              variant="flat"
-              size="sm"
-              color="default"
-              startContent={collapsed ? null : <LuDatabaseZap size={18} />}
-              onPress={() => navigate("/datasets/new")}
-              isIconOnly={collapsed}
-              fullWidth
-              className={cn(collapsed ? "justify-center" : "justify-start")}
-            >
-              {collapsed ? <LuDatabaseZap size={20} /> : "New dataset"}
-            </Button>
-            <Spacer y={1} />
-            <Button
-              variant="flat"
-              size="sm"
-              color="default"
-              startContent={collapsed ? null : <LuUnplug size={18} />}
-              onPress={() => navigate("/connections/new")}
-              isIconOnly={collapsed}
-              fullWidth
-              className={cn(collapsed ? "justify-center" : "justify-start")}
-            >
-              {collapsed ? <LuUnplug size={20} /> : "New connection"}
-            </Button>
+            {_canAccess("teamAdmin", team.TeamRoles) && (
+              <>
+                <div className="text-sm text-gray-500">
+                  {collapsed ? "" : "Quick actions"}
+                </div>
+                <Spacer y={2} />
+                <Button
+                  variant="flat"
+                  size="sm"
+                  color="default"
+                  startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
+                  onPress={() => navigate("/?create=dashboard")}
+                  isIconOnly={collapsed}
+                  fullWidth
+                  className={cn(collapsed ? "justify-center" : "justify-start")}
+                >
+                  {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
+                </Button>
+                <Spacer y={1} />
+                <Button
+                  variant="flat"
+                  size="sm"
+                  color="default"
+                  startContent={collapsed ? null : <LuDatabaseZap size={18} />}
+                  onPress={() => navigate("/datasets/new")}
+                  isIconOnly={collapsed}
+                  fullWidth
+                  className={cn(collapsed ? "justify-center" : "justify-start")}
+                >
+                  {collapsed ? <LuDatabaseZap size={20} /> : "New dataset"}
+                </Button>
+                <Spacer y={1} />
+                <Button
+                  variant="flat"
+                  size="sm"
+                  color="default"
+                  startContent={collapsed ? null : <LuUnplug size={18} />}
+                  onPress={() => navigate("/connections/new")}
+                  isIconOnly={collapsed}
+                  fullWidth
+                  className={cn(collapsed ? "justify-center" : "justify-start")}
+                >
+                  {collapsed ? <LuUnplug size={20} /> : "New connection"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
         
