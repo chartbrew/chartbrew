@@ -11,6 +11,7 @@ import { selectUser } from "../slices/user";
 import { selectTeam } from "../slices/team";
 import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
+import { selectIntegrations } from "../slices/integration";
 
 function TopNav() {
   const dispatch = useDispatch();
@@ -25,6 +26,7 @@ function TopNav() {
   const chart = useSelector((state) => selectChart(state, params.chartId));
   const connection = useSelector((state) => state.connection.data.find((c) => `${c.id}` === `${params.connectionId}`));
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
+  const integrations = useSelector(selectIntegrations);
 
   useEffect(() => {
     try {
@@ -56,6 +58,10 @@ function TopNav() {
 
   const isOnDatasets = () => {
     return location.pathname.startsWith("/datasets");
+  };
+
+  const isOnIntegrations = () => {
+    return location.pathname.startsWith("/integrations");
   };
 
   const _onDropdownAction = (key) => {
@@ -147,6 +153,16 @@ function TopNav() {
               )}
               {params.datasetId === "new" && (
                 <BreadcrumbItem isCurrent={true}>New dataset</BreadcrumbItem>
+              )}
+            </Breadcrumbs>
+          )}
+          {isOnIntegrations() && (
+            <Breadcrumbs>
+              <BreadcrumbItem onPress={() => navigate("/integrations")}>
+                Integrations
+              </BreadcrumbItem>
+              {params.integrationId && (
+                <BreadcrumbItem isCurrent={true}>{integrations?.find((i) => i.id === params.integrationId)?.name}</BreadcrumbItem>
               )}
             </Breadcrumbs>
           )}

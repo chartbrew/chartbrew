@@ -36,7 +36,9 @@
         "chat:write.public",
         "im:write",
         "users:read",
-        "app_mentions:read"
+        "app_mentions:read",
+        "channels:read",
+        "groups:read"
       ]
     }
   },

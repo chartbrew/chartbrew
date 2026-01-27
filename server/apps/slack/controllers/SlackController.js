@@ -14,6 +14,7 @@ const {
   postMessage,
   postResponseUrl,
   isWorkspaceAdmin,
+  getChannels,
 } = require("../utils/slackClient");
 const { formatResponse, formatError } = require("../utils/formatResponse");
 
@@ -267,6 +268,69 @@ class SlackController {
   }
 
   /**
+   * Check if channel is allowed for this integration
+   */
+  checkChannelAccess(integration, channelId) {
+    // If allowAllChannels is true, allow all channels
+    if (integration?.config?.allowAllChannels === true) {
+      return true;
+    }
+
+    // If allowAllChannels is false or not set, check allowedChannels list
+    const allowedChannels = integration?.config?.allowedChannels;
+    if (!allowedChannels || !Array.isArray(allowedChannels) || allowedChannels.length === 0) {
+      // No allowed channels and allowAllChannels is false/not set - deny access
+      return false;
+    }
+
+    // Check if channel is in the allowed list
+    return allowedChannels.includes(channelId);
+  }
+
+  /**
+   * Send channel access denied message
+   */
+  async sendChannelAccessDeniedMessage(botToken, channelId, threadTs, integrationId) {
+    const integrationUrl = `${clientUrl}/integrations/${integrationId}`;
+    const message = {
+      text: "This integration is not allowed in this channel",
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "❌ *This integration is not allowed in this channel.*\n\nTo enable Chartbrew in this channel, add it to the allowed channels list.",
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `<${integrationUrl}|Configure integration settings>`,
+          },
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: "Go to the integration settings and add this channel to the allowed channels list.",
+            },
+          ],
+        },
+      ],
+    };
+
+    const client = new WebClient(botToken);
+    await client.chat.postMessage({
+      channel: channelId,
+      thread_ts: threadTs,
+      text: message.text,
+      blocks: message.blocks,
+    });
+  }
+
+  /**
    * Process a question in a Slack thread (shared logic for mentions and button clicks)
    */
   async processQuestionInThread(slackTeamId, slackUserId, channelId, question, threadTs) {
@@ -294,6 +358,12 @@ class SlackController {
       botToken = integration.config.bot_token;
       if (!botToken) {
         throw new Error("Bot token not found. Please reinstall the Chartbrew Slack app.");
+      }
+
+      // Check channel access
+      if (!this.checkChannelAccess(integration, channelId)) {
+        await this.sendChannelAccessDeniedMessage(botToken, channelId, threadTs, integration.id);
+        return;
       }
 
       if (!question || question.trim().length === 0) {
@@ -583,13 +653,28 @@ class SlackController {
     const threadTs = existingThreadTs || messageTs;
 
     try {
-      // Find integration to extract bot mention patterns
+      // Find integration to extract bot mention patterns and check channel access
       const integration = await db.Integration.findOne({
         where: {
           type: "slack",
           external_id: slackTeamId,
         },
       });
+
+      if (!integration) {
+        throw new Error("This workspace isn't connected to Chartbrew. Use `/chartbrew connect` to get started.");
+      }
+
+      // Check channel access early - before processing the question
+      const botToken = integration?.config?.bot_token;
+      if (!botToken) {
+        throw new Error("Bot token not found.");
+      }
+
+      if (!this.checkChannelAccess(integration, channelId)) {
+        await this.sendChannelAccessDeniedMessage(botToken, channelId, threadTs, integration.id);
+        return;
+      }
 
       // Extract question from mention text (remove @chartbrew mention)
       // Slack mentions come as <@BOT_USER_ID> or <@BOT_USER_ID|display_name>
@@ -607,10 +692,6 @@ class SlackController {
 
       if (!question || question.length === 0) {
         // If no question provided, send helpful message
-        const botToken = integration?.config?.bot_token;
-        if (!botToken) {
-          throw new Error("Bot token not found.");
-        }
         const message = {
           text: "Hi! Ask me a question about your data.",
           blocks: [
@@ -1074,6 +1155,7 @@ class SlackController {
     const team = await db.Team.findByPk(teamId);
 
     // Send success DM
+    const integrationUrl = `${clientUrl}/integrations/${integration.id}`;
     await sendDM(
       integration.config.bot_token,
       authState.external_user_id,
@@ -1091,7 +1173,9 @@ class SlackController {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "You can now tag @chartbrew in any channel to ask questions about your data!",
+              text: "Next steps:\n\n"
+                + `1. Edit app channel access from the <${integrationUrl}|integrations settings>\n`
+                + "2. Tag @chartbrew in your channels to ask questions about your data",
             },
           },
         ],
@@ -1105,6 +1189,8 @@ class SlackController {
       success: true,
       team_name: team.name,
       workspace_name: integration.config.slack_team_name,
+      integration_id: integration.id,
+      team_id: teamId,
     };
   }
 
@@ -1142,6 +1228,17 @@ class SlackController {
         if (!integration || !integration.config || !integration.config.bot_token) {
           // eslint-disable-next-line no-console
           console.error("Bot token not found for modal");
+          return;
+        }
+
+        // Check channel access before opening modal
+        if (!this.checkChannelAccess(integration, channel.id)) {
+          await this.sendChannelAccessDeniedMessage(
+            integration.config.bot_token,
+            channel.id,
+            threadTs,
+            integration.id
+          );
           return;
         }
 
@@ -1201,6 +1298,27 @@ class SlackController {
 
       // Handle regular quick reply buttons - treat as if user typed the text
       if (action.action_id.startsWith("quick_reply_")) {
+        // Find integration to check channel access
+        const integration = await db.Integration.findOne({
+          where: {
+            type: "slack",
+            external_id: team.id,
+          },
+        });
+
+        if (integration && integration.config && integration.config.bot_token) {
+          // Check channel access before processing
+          if (!this.checkChannelAccess(integration, channel.id)) {
+            await this.sendChannelAccessDeniedMessage(
+              integration.config.bot_token,
+              channel.id,
+              threadTs,
+              integration.id
+            );
+            return;
+          }
+        }
+
         const questionText = action.value;
 
         // Process the question in the same thread
@@ -1215,6 +1333,27 @@ class SlackController {
       const queryText = view.state.values.query_input.query_text.value;
 
       if (queryText && queryText.trim() && metadata.thread_ts) {
+        // Find integration to check channel access
+        const integration = await db.Integration.findOne({
+          where: {
+            type: "slack",
+            external_id: team.id,
+          },
+        });
+
+        if (integration && integration.config && integration.config.bot_token) {
+          // Check channel access before processing
+          if (!this.checkChannelAccess(integration, metadata.channel_id)) {
+            await this.sendChannelAccessDeniedMessage(
+              integration.config.bot_token,
+              metadata.channel_id,
+              metadata.thread_ts,
+              integration.id
+            );
+            return;
+          }
+        }
+
         // Process the custom query in the thread
         await this.processQuestionInThread(
           team.id,
@@ -1225,6 +1364,23 @@ class SlackController {
         );
       }
     }
+  }
+
+  /**
+   * Get Slack channels
+   */
+  async getChannels(integrationId) {
+    const integration = await db.Integration.findOne({
+      where: {
+        id: integrationId,
+      },
+    });
+
+    if (!integration || !integration?.config?.bot_token) {
+      throw new Error("Integration not found");
+    }
+
+    return getChannels(integration.config.bot_token);
   }
 }
 

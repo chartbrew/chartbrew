@@ -311,6 +311,22 @@ async function isWorkspaceAdmin(botToken, userId) {
   }
 }
 
+/**
+ * Get Slack channels
+ */
+async function getChannels(botToken) {
+  const client = new WebClient(botToken);
+
+  try {
+    const channelsResponse = await client.conversations.list({
+      types: "public_channel,private_channel",
+    });
+    return channelsResponse.channels;
+  } catch (error) {
+    throw new Error(`Failed to get channels: ${error.message}`);
+  }
+}
+
 module.exports = {
   verifySignature,
   exchangeCodeForToken,
@@ -319,4 +335,5 @@ module.exports = {
   postResponseUrl,
   getUserInfo,
   isWorkspaceAdmin,
+  getChannels,
 };

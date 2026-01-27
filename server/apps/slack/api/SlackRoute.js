@@ -1,3 +1,4 @@
+const db = require("../../../models/models");
 const verifyToken = require("../../../modules/verifyToken");
 const SlackController = require("../controllers/SlackController");
 
@@ -204,6 +205,28 @@ module.exports = (app) => {
     }
   });
   // --------------------------------------
+
+  /*
+  ** Get Slack channels
+  */
+  app.get("/apps/slack/:integrationId/channels", verifyToken, async (req, res) => {
+    const { team_id } = req.query;
+
+    // allow only team owners and admins
+    const teamRole = await db.TeamRole.findOne({
+      where: {
+        team_id,
+        user_id: req.user.id,
+      },
+    });
+
+    if (!teamRole?.role || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const channels = await slackController.getChannels(req.params.integrationId);
+    return res.status(200).json(channels);
+  });
 
   return (req, res, next) => {
     next();

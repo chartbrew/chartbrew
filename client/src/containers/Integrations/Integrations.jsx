@@ -5,12 +5,12 @@ import {
 } from "@heroui/react";
 
 
-import WebhookIntegrations from "./components/WebhookIntegrations";
+import WebhookIntegrationsList from "./components/WebhookIntegrationsList";
 import {
   getTeamIntegrations,
 } from "../../slices/integration";
 import { selectTeam } from "../../slices/team";
-import SlackIntegrations from "./components/SlackIntegrations";
+import SlackIntegrationsList from "./components/SlackIntegrationsList";
 
 function Integrations() {
   const dispatch = useDispatch();
@@ -41,11 +41,11 @@ function Integrations() {
       <Spacer y={4} />
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
-        <WebhookIntegrations
+        <WebhookIntegrationsList
           teamId={team?.id}
         />
         <Spacer y={4} />
-        <SlackIntegrations
+        <SlackIntegrationsList
           teamId={team?.id}
         />
       </div>

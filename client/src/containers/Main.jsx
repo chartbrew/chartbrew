@@ -50,6 +50,8 @@ import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
 import Auth from "./Integrations/Auth/Auth";
 import SlackCallback from "./Integrations/Auth/SlackCallback";
+import Integration from "./Integrations/Integration/Integration";
+import NoAccessPage from "../components/NoAccessPage";
 
 function authenticatePage() {
   if (window.location.pathname === "/login") {
@@ -217,9 +219,21 @@ function Main(props) {
                 <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="datasets" element={<DatasetList />} />
                 <Route path="datasets/:datasetId" element={<Dataset />} />
-                <Route path="integrations" element={<Integrations />} />
-                <Route path="integrations/auth/:integrationType" element={<Auth />} />
-                <Route path="integrations/auth/slack/callback" element={<SlackCallback />} />
+                {canAccess("teamAdmin", user.id, team?.TeamRoles) ? (
+                  <>
+                    <Route path="integrations" element={<Integrations />} />
+                    <Route path="integrations/auth/:integrationType" element={<Auth />} />
+                    <Route path="integrations/auth/slack/callback" element={<SlackCallback />} />
+                    <Route path="integrations/:integrationId" element={<Integration />} />
+                  </>
+                ) : (
+                  <>
+                    <Route path="integrations" element={<NoAccessPage />} />
+                    <Route path="integrations/auth/:integrationType" element={<NoAccessPage />} />
+                    <Route path="integrations/auth/slack/callback" element={<NoAccessPage />} />
+                    <Route path="integrations/:integrationId" element={<NoAccessPage />} />
+                  </>
+                )}
                 <Route path="settings/*" element={<ManageTeam />} />
                 <Route path="dashboard" element={<ProjectBoard />}>
                   <Route path=":projectId" element={<ProjectDashboard />} />

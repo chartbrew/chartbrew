@@ -1,18 +1,20 @@
 import React, { useState } from "react"
 import { Alert, Button, Select, SelectItem, Spacer } from "@heroui/react"
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 
-import { selectTeams } from "../../../slices/team";
+import { selectTeams, saveActiveTeam, selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import { API_HOST } from "../../../config/settings";
 import { getAuthToken } from "../../../modules/auth";
 
 function SlackAuth() {
   const [selectedTeam, setSelectedTeam] = useState(null);
-
+  
+  const dispatch = useDispatch();
   const teams = useSelector(selectTeams);
+  const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
 
   const navigate = useNavigate();
@@ -43,12 +45,21 @@ function SlackAuth() {
       toast.error("Failed to connect to Slack. Please try generating a new link in Slack.");
       return;
     }
-    await response.json();
+    const result = await response.json();
+
+    if (team?.id !== selectedTeam?.id) {
+      dispatch(saveActiveTeam(selectedTeam));
+    }
+
     toast.success("Successfully connected to Slack workspace");
 
     setTimeout(() => {
       setSelectedTeam(null);
-      navigate("/integrations");
+      if (result?.integration_id) {
+        navigate(`/integrations/${result.integration_id}`);
+      } else {
+        navigate("/integrations");
+      }
     }, 1500);
 
   };

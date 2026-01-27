@@ -28,6 +28,24 @@ export const getTeamIntegrations = createAsyncThunk(
   }
 );
 
+export const getIntegration = createAsyncThunk(
+  "integration/getIntegration",
+  async ({ team_id, integration_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/integration/${integration_id}`;
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+    const response = await fetch(url, { headers, method: "GET" });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  }
+);
+
 export const createIntegration = createAsyncThunk(
   "integration/createIntegration",
   async ({ data }) => {
@@ -92,6 +110,27 @@ export const deleteIntegration = createAsyncThunk(
   }
 );
 
+export const getIntegrationChannels = createAsyncThunk(
+  "integration/getIntegrationChannels",
+  async ({ integration_id, team_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/apps/slack/${integration_id}/channels?team_id=${team_id}`;
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { headers, method: "GET" });
+
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
 export const integrationSlice = createSlice({
   name: "integration",
   initialState,
@@ -110,6 +149,29 @@ export const integrationSlice = createSlice({
       state.data = action.payload;
     })
     builder.addCase(getTeamIntegrations.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
+
+    // getIntegration
+    builder.addCase(getIntegration.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(getIntegration.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = state.data.map((integration) => {
+        if (integration.id === action.payload.id) {
+          return action.payload;
+        }
+
+        return integration;
+      });
+
+      if (!state.data.find((integration) => integration.id === action.payload.id)) {
+        state.data.push(action.payload);
+      }
+    })
+    builder.addCase(getIntegration.rejected, (state) => {
       state.loading = false;
       state.error = true;
     })
