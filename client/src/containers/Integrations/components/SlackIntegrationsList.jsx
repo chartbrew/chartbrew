@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Button, Code, Divider, Modal, ModalBody, ModalContent, ModalFooter,
+  Button, Chip, Code, Divider, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
@@ -21,14 +21,15 @@ function SlackIntegrations() {
   const integrations = useSelector(selectIntegrations);
   const slackIntegrations = integrations.filter((i) => i.type === "slack");
 
-
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           <LuSlack size={24} />
-          <Spacer x={1} />
           <div className="text-lg font-semibold">Slack</div>
+          <Chip color="secondary" variant="flat" size="sm" radius="sm">
+            New!
+          </Chip>
         </div>
         <Spacer x={2} />
         <Button
