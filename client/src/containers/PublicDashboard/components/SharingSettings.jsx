@@ -3,10 +3,9 @@ import PropTypes from "prop-types";
 import {
   Button, Divider, Input, Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
-  Listbox, ListboxItem,
   Alert,
 } from "@heroui/react";
-import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette } from "react-icons/lu";
+import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -72,9 +71,6 @@ function SharingSettings(props) {
     
     if (hasSharePolicies) {
       setSharePolicies(project.SharePolicies);
-      if (project.SharePolicies.length > 0) {
-        setSelectedPolicy(project.SharePolicies[0]);
-      }
     } else {
       setSharePolicies([]);
     }
@@ -342,75 +338,6 @@ function SharingSettings(props) {
     return `<iframe src="${url}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
-  const _renderPolicyList = () => {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center">
-          <Button
-            size="sm"
-            variant="flat"
-            onPress={_onCreateNewPolicy}
-            startContent={<LuPlus />}
-            isLoading={shareLoading}
-          >
-            New Link
-          </Button>
-        </div>
-        
-        {sharePolicies.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <LuShare2 className="mx-auto mb-2" size={24} />
-            <div className="text-sm">No share links created yet</div>
-            <div className="text-xs">Create your first share link to get started</div>
-          </div>
-        ) : (
-          <Listbox
-            aria-label="Share policies"
-            selectionMode="single"
-            selectedKeys={selectedPolicy ? [selectedPolicy.id.toString()] : []}
-            onSelectionChange={(keys) => {
-              const selectedId = Array.from(keys)[0];
-              if (selectedId) {
-                const policy = sharePolicies.find(p => p.id.toString() === selectedId);
-                setSelectedPolicy(policy);
-              }
-            }}
-            variant="faded"
-            hideSelectedIcon
-          >
-            {sharePolicies.map((policy, index) => (
-              <ListboxItem
-                key={policy.id.toString()}
-                className={`mb-2 ${selectedPolicy?.id === policy.id ? "bg-content3" : ""}`}
-                endContent={
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="danger"
-                    onPress={() => _onDeletePolicy(policy.id)}
-                  >
-                    <LuTrash2 size={14} />
-                  </Button>
-                }
-              >
-                <div>
-                  <div className="flex flex-row items-center gap-2">
-                    <div className="font-medium">Link {index + 1}</div>
-                  </div>
-                  <Spacer y={0.5} />
-                  <div className="text-xs text-gray-500">
-                    {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
-                  </div>
-                </div>
-              </ListboxItem>
-            ))}
-          </Listbox>
-        )}
-      </div>
-    );
-  };
-
   const _renderPolicyDetails = () => {
     if (!selectedPolicy) {
       return (
@@ -427,10 +354,10 @@ function SharingSettings(props) {
       <div className="space-y-6">
         {shareToken && (
           <>
-            <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Direct Link</div>
               <div>
                 <Input
-                  label="Direct Link"
                   labelPlacement="outside"
                   value={_getEmbedUrl()}
                   fullWidth
@@ -449,9 +376,9 @@ function SharingSettings(props) {
                 />
               </div>
               <Spacer y={2} />
+              <div className="text-sm font-medium">Embedding Code</div>
               <div>
                 <Textarea
-                  label="Embedding Code"
                   value={_getSignedEmbedString()}
                   fullWidth
                   readOnly
@@ -468,8 +395,8 @@ function SharingSettings(props) {
         )}
 
         <div>
+          <div className="text-sm font-medium mb-1">Theme</div>
           <RadioGroup
-            label="Theme"
             orientation="horizontal"
             size="sm"
             value={embedTheme}
@@ -626,20 +553,12 @@ function SharingSettings(props) {
             </Tooltip>
             <div className="flex flex-row items-center gap-2">
               <Button
-                onPress={_onCopyUrl}
                 size="sm"
-                variant="flat"
-                endContent={<LuCopy size={18} />}
-              >
-                Copy URL
-              </Button>
-              <Button
-                size="sm"
-                variant="flat"
+                color="primary"
                 endContent={<LuPalette size={18} />}
                 onPress={() => navigate(`/report/${newBrewName}/edit`)}
               >
-                Edit visuals
+                Edit report visuals
               </Button>
             </div>
           </DrawerHeader>
@@ -750,20 +669,96 @@ function SharingSettings(props) {
 
           <Divider />
 
-          <div className="flex flex-row items-center justify-between">
+          <div className="flex flex-col gap-2">
             <div className="font-medium text-gray-500">Share Links</div>
-            {_hasUnsavedChanges() && (
-              <div>
-                <Button
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                  onPress={_onUpdatePolicy}
-                  isLoading={isUpdating}
-                  startContent={<LuRefreshCcw size={16} />}
-                >
-                  Regenerate link
-                </Button>
+
+            <div className="flex items-center">
+              <Button
+                size="sm"
+                variant="flat"
+                onPress={_onCreateNewPolicy}
+                startContent={<LuPlus />}
+                isLoading={shareLoading}
+              >
+                New Link
+              </Button>
+            </div>
+
+            {sharePolicies.length === 0 && (
+              <div className="text-center py-4 text-gray-500">
+                <LuShare className="mx-auto mb-2" size={24} />
+                <div className="text-sm">No share links created yet</div>
+                <div className="text-xs">Create your first share link to get started</div>
+              </div>
+            )}
+
+            {sharePolicies.length > 0 && (
+              <div className="border-1 border-divider rounded-medium p-2">
+                {!selectedPolicy && sharePolicies.map((policy, index) => (
+                  <div
+                    key={policy.id}
+                    className="flex flex-row items-center justify-between cursor-pointer hover:bg-content2 rounded-medium p-2"
+                    onClick={() => setSelectedPolicy(policy)}
+                  >
+                    <div className="flex flex-col">
+                      <div className="font-medium text-sm">Link {index + 1}</div>
+                      <div className="text-xs text-gray-500">
+                        {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
+                      </div>
+                    </div>
+                    <div className="flex flex-row items-center gap-2">
+                      <Button isIconOnly size="sm" variant="flat" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                        <LuExternalLink size={16} />
+                      </Button>
+                      <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
+                        {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy size={16} />}
+                      </Button>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="flat"
+                        color="danger"
+                        onPress={() => _onDeletePolicy(policy.id)}
+                      >
+                        <LuTrash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+
+                {selectedPolicy && (
+                  <div>
+                    <div
+                      key={selectedPolicy.id}
+                      className="flex flex-row items-center gap-1 hover:cursor-pointer text-primary mt-2"
+                      onClick={() => setSelectedPolicy(null)}
+                    >
+                      <div><LuArrowLeft size={16} /></div>
+                      <div className="text-sm">Back to all links</div>
+                    </div>
+
+                    <Spacer y={4} />
+                    <Divider />
+                    <Spacer y={4} />
+
+                    {_renderPolicyDetails()}
+
+                    {_hasUnsavedChanges() && (
+                      <div className="mt-4 mb-2">
+                        <Button
+                          size="sm"
+                          color="primary"
+                          onPress={_onUpdatePolicy}
+                          isLoading={isUpdating}
+                          startContent={<LuRefreshCcw size={16} />}
+                        >
+                          Save & Regenerate links
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -771,21 +766,6 @@ function SharingSettings(props) {
           {shareLoading && (
             <div className="flex items-center justify-center py-4">
               <Spinner size="sm" aria-label="Loading" />
-            </div>
-          )}
-
-          {/* Two-panel layout */}
-          {!shareLoading && (
-            <div className="grid grid-cols-12 gap-4">
-              {/* Left panel - Share policies list */}
-              <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r pr-4 overflow-y-auto max-h-96">
-                {_renderPolicyList()}
-              </div>
-              
-              {/* Right panel - Selected policy details */}
-              <div className="col-span-12 md:col-span-8 pl-4 overflow-y-auto max-h-96">
-                {_renderPolicyDetails()}
-              </div>
             </div>
           )}
 
@@ -798,7 +778,7 @@ function SharingSettings(props) {
               />
             </div>
           )}
-          
+
           <Divider />
           
           <Row align="center">
