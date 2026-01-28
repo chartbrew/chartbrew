@@ -7,8 +7,6 @@ import {
   Spacer,
 } from "@heroui/react";
 
-import "allotment/dist/style.css";
-
 import { getProject, changeActiveProject, selectProject, getProjects } from "../../slices/project";
 import {
   getTeam, getTeamMembers, selectTeam,

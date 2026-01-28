@@ -17,7 +17,6 @@
     "@reduxjs/toolkit": "^2.2.1",
     "@tailwindcss/vite": "^4.1.11",
     "ace-builds": "^1.4.12",
-    "allotment": "^1.19.3",
     "chart.js": "^4.4.2",
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-chart-matrix": "^3.0.0",

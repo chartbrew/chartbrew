@@ -75,7 +75,7 @@ function SlackIntegrations() {
               </TableCell>
               <TableCell key="installer_slack_user_id" className="max-w-[300px] truncate">
                 <div className="truncate">
-                  {`${i.config?.allowedChannels?.length} ${i.config?.allowedChannels?.length === 1 ? "channel" : "channels"}` || "No channels"}
+                  {i.config?.allowedChannels?.length ? `${i.config?.allowedChannels?.length} ${i.config?.allowedChannels?.length === 1 ? "channel" : "channels"}` : "No channels"}
                 </div>
               </TableCell>
               <TableCell key="created">
