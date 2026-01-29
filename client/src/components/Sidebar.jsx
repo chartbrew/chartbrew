@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuDatabase, LuDatabaseZap, LuGrid2X2Plus, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUsers } from "react-icons/lu"
+import { LuChevronDown, LuDatabase, LuDatabaseZap, LuGrid2X2Plus, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
@@ -292,6 +292,19 @@ function Sidebar() {
                   className={cn(collapsed ? "justify-center" : "justify-start")}
                 >
                   {collapsed ? <LuUnplug size={20} /> : "New connection"}
+                </Button>
+                <Spacer y={1} />
+                <Button
+                  variant="flat"
+                  size="sm"
+                  color="default"
+                  startContent={collapsed ? null : <LuUserPlus size={18} />}
+                  onPress={() => navigate("/settings/members")}
+                  isIconOnly={collapsed}
+                  fullWidth
+                  className={cn(collapsed ? "justify-center" : "justify-start")}
+                >
+                  {collapsed ? <LuUserPlus size={20} /> : "Add team member"}
                 </Button>
               </>
             )}
