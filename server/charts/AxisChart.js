@@ -525,7 +525,7 @@ class AxisChart {
           }
 
           // if it's an accumulation chart
-          if (this.chart.subType?.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
+          if (this.chart?.subType?.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
             const newY = [];
             this.axisData.y[yLength].map((item, index) => {
               let formattedItem = item;
@@ -607,7 +607,7 @@ class AxisChart {
           if (_.indexOf(this.axisData.x[i], x) === -1) {
             this.axisData.x[i].splice(index, 0, x);
 
-            if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
+            if (index > 0 && this.chart?.subType?.indexOf("AddTimeseries") > -1 && this.chart.type !== "matrix") {
               this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
             } else if (this.chart.timeInterval === "second" && this.datasets.length > 1) {
               this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1] || 0);
@@ -802,7 +802,7 @@ class AxisChart {
             });
 
             if (goal) {
-              const valueIndex = this.chart.subType.indexOf("AddTimeseries") > -1
+              const valueIndex = this.chart?.subType?.indexOf("AddTimeseries") > -1
                 ? d.data.length - 1 : index;
               const goalCurrentValue = `${d.data[valueIndex]}`.replace(",", "").match(/[\d.]+/g);
               configuration.goals.push({
