@@ -121,6 +121,15 @@ function ChartDatasets(props) {
     setAddMode(false);
   };
 
+  const _onRemoveCdc = (cdcId) => {
+    const newSelectedCdc = chart.ChartDatasetConfigs.find((c) => c.id !== cdcId);
+    if (newSelectedCdc) {
+      setActiveCdc(newSelectedCdc);
+    } else {
+      setActiveCdc(null);
+    }
+  };
+
   const _onReorderCdc = async ({ dragId, newOrder }) => {
     const dragged = chart.ChartDatasetConfigs.find((c) => c.id === dragId);
     if (dragged && newOrder !== dragged.order) {
@@ -347,6 +356,7 @@ function ChartDatasets(props) {
           chartId={chartId}
           cdcId={activeCdc.id}
           dataRequests={datasets.find((d) => d.id === activeCdc.dataset_id)?.DataRequests}
+          onRemove={(cdcId) => _onRemoveCdc(cdcId)}
         />
       )}
     </div>

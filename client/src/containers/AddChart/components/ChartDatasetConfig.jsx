@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
   Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
-  PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors,
+  PopoverTrigger, ScrollShadow, Spacer, Spinner, Tooltip, commonColors,
 } from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
@@ -34,7 +34,7 @@ import connectionImages from "../../../config/connectionImages";
 import { useTheme } from "../../../modules/ThemeContext";
 
 function ChartDatasetConfig(props) {
-  const { chartId, cdcId, dataRequests } = props;
+  const { chartId, cdcId, dataRequests, onRemove } = props;
 
   const [legend, setLegend] = useState("");
   const [formula, setFormula] = useState("");
@@ -47,7 +47,7 @@ function ChartDatasetConfig(props) {
   const [variableValues, setVariableValues] = useState({});
 
   const cdc = useSelector((state) => selectCdc(state, chartId, cdcId));
-  const drs = useSelector((state) => state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))?.DataRequests);
+  const drs = useSelector((state) => cdc?.dataset_id ? state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))?.DataRequests : []);
 
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
   const team = useSelector(selectTeam);
@@ -60,16 +60,16 @@ function ChartDatasetConfig(props) {
   // removed initVars; variables are initialized per CDC change
 
   useEffect(() => {
-    if (cdc.formula) {
+    if (cdc?.formula) {
       setFormula(cdc.formula);
     }
-    if (cdc.legend) {
+    if (cdc?.legend) {
       setLegend(cdc.legend);
     }
-    if (cdc.maxRecords) {
+    if (cdc?.maxRecords) {
       setMaxRecords(cdc.maxRecords);
     }
-    if (cdc.goal) {
+    if (cdc?.goal) {
       setGoal(cdc.goal);
     }
   }, [cdc]);
@@ -108,11 +108,11 @@ function ChartDatasetConfig(props) {
     });
 
     setVariableValues(initialValues);
-  }, [drs, cdc.id, cdc.configuration]);
+  }, [drs, cdc?.id, cdc?.configuration]);
 
   useEffect(() => {
     let tempDataItems;
-    if (chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
+    if (cdc?.id && chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
       // find the dataset in the chart data
       let foundIndex;
       for (let i = 0; i < chart.ChartDatasetConfigs.length; i++) {
@@ -137,7 +137,7 @@ function ChartDatasetConfig(props) {
 
   useEffect(() => {
     // extract the table fields if table view is selected
-    if (chart.type === "table" && chart.chartData && chart.chartData[cdc.legend]) {
+    if (cdc?.id && chart.type === "table" && chart.chartData && chart.chartData[cdc.legend]) {
       const datasetData = chart.chartData[cdc.legend];
       const flatColumns = flatMap(datasetData.columns, (f) => {
         if (f.columns) return [f, ...f.columns];
@@ -261,21 +261,22 @@ function ChartDatasetConfig(props) {
     }
   };
 
-  const _onRemoveCdc = () => {
-    dispatch(removeCdc({
+  const _onRemoveCdc = async () => {
+    onRemove(cdc.id);
+
+    await dispatch(removeCdc({
       project_id: params.projectId,
       chart_id: chartId,
       cdc_id: cdc.id,
-    }))
-      .then(() => {
-        dispatch(runQuery({
-          project_id: params.projectId,
-          chart_id: chartId,
-          noSource: false,
-          skipParsing: false,
-          getCache: true,
-        }));
-      });
+    }));
+
+    await dispatch(runQuery({
+      project_id: params.projectId,
+      chart_id: chartId,
+      noSource: false,
+      skipParsing: false,
+      getCache: true,
+    }));
   };
 
   const _onUpdateTableConfig = (data) => {
@@ -353,6 +354,14 @@ function ChartDatasetConfig(props) {
       [variableName]: variable?.default_value || ""
     }));
   };
+
+  if (!cdc?.id) {
+    return (
+      <div className="flex flex-col items-center justify-center mt-8">
+        <Spinner variant="simple" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -914,6 +923,7 @@ ChartDatasetConfig.propTypes = {
   chartId: PropTypes.number.isRequired,
   dataRequests: PropTypes.array,
   cdcId: PropTypes.number.isRequired,
+  onRemove: PropTypes.func.isRequired,
 };
 
 ChartDatasetConfig.defaultProps = {
