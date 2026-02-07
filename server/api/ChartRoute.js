@@ -46,7 +46,8 @@ module.exports = (app) => {
 
   const checkPermissions = (actionType = "readOwn", entity = "chart") => {
     return async (req, res, next) => {
-      const projectId = req.params.project_id || req.body.project_id;
+      const projectId = req.params.project_id || req.body?.project_id;
+      const chartId = req.params.chart_id || req.body?.chart_id;
 
       const project = await projectController.findById(projectId);
       if (!project) {
@@ -59,6 +60,30 @@ module.exports = (app) => {
 
       if (!teamRole?.role) {
         return res.status(403).json({ message: "Access denied" });
+      }
+
+      // check if the chart is part of the right project
+      if (chartId && projectId) {
+        const chart = await chartController.findById(req.params.chart_id);
+        if (chart.project_id.toString() !== projectId.toString()) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      // check if the alert is part of a chart in the right project
+      if (chartId && req.params.alert_id) {
+        const alert = await alertController.findById(req.params.alert_id);
+        if (alert.chart_id.toString() !== chartId.toString()) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      // check if the cdc is part of a chart in the right project
+      if (chartId && req.params.cdc_id) {
+        const cdc = await chartController.findChartDatasetConfigById(req.params.cdc_id);
+        if (cdc.chart_id.toString() !== chartId.toString()) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
@@ -141,8 +166,8 @@ module.exports = (app) => {
   /*
   ** Route to get a chart by id
   */
-  app.get("/project/:project_id/chart/:id", verifyToken, checkPermissions("readAny"), (req, res) => {
-    return chartController.findById(req.params.id)
+  app.get("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("readAny"), (req, res) => {
+    return chartController.findById(req.params.chart_id)
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -199,8 +224,8 @@ module.exports = (app) => {
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.update(req.params.id, req.body, req.user, req.query.justUpdates)
+  app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.update(req.params.chart_id, req.body, req.user, req.query.justUpdates)
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -216,8 +241,8 @@ module.exports = (app) => {
   /*
   ** Route to update the order of the chart
   */
-  app.put("/project/:project_id/chart/:id/order", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.changeDashboardOrder(req.params.id, req.body.otherId)
+  app.put("/project/:project_id/chart/:chart_id/order", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.changeDashboardOrder(req.params.chart_id, req.body.otherId)
       .then((updates) => {
         return res.status(200).send(updates);
       })
@@ -230,8 +255,8 @@ module.exports = (app) => {
   /*
   ** Route to remove a chart
   */
-  app.delete("/project/:project_id/chart/:id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
-    return chartController.remove(req.params.id)
+  app.delete("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
+    return chartController.remove(req.params.chart_id)
       .then((response) => {
         return res.status(200).send({ removed: response });
       })
@@ -297,9 +322,9 @@ module.exports = (app) => {
   /*
   ** Route to run the query for a chart
   */
-  app.post("/project/:project_id/chart/:id/query", verifyToken, checkPermissions("readOwn"), (req, res) => {
+  app.post("/project/:project_id/chart/:chart_id/query", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return chartController.updateChartData(
-      req.params.id,
+      req.params.chart_id,
       req.user,
       {
         noSource: req.query.no_source === "true",
@@ -328,7 +353,7 @@ module.exports = (app) => {
   /*
   ** Route to filter the charts from the dashboard
   */
-  app.post("/project/:project_id/chart/:id/filter", apiLimiter(50), (req, res) => {
+  app.post("/project/:project_id/chart/:chart_id/filter", apiLimiter(50), (req, res) => {
     if (!req.body?.filters) return res.status(400).send("No filters selected");
     let noSource = req.query.no_source === "true";
     let skipParsing = req.query.skip_parsing === "true";
@@ -343,7 +368,7 @@ module.exports = (app) => {
 
     // filters are being passed, so the chart is not updated in the database
     return chartController.updateChartData(
-      req.params.id,
+      req.params.chart_id,
       req.user,
       {
         noSource,
@@ -443,8 +468,8 @@ module.exports = (app) => {
   /*
   ** Route to generate a share token
   */
-  app.post("/project/:project_id/chart/:id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.generateShareToken(req.params.id, req.body)
+  app.post("/project/:project_id/chart/:chart_id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.generateShareToken(req.params.chart_id, req.body)
       .then(({ token, url }) => {
         return res.status(200).send({ token, url });
       })
@@ -457,9 +482,9 @@ module.exports = (app) => {
   /*
   ** Route to get latest chart data without an authentication token
   */
-  app.get("/chart/:id", apiLimiter(50), (req, res) => {
+  app.get("/chart/:chart_id", apiLimiter(50), (req, res) => {
     // check if the chart is on a public report first
-    return chartController.findById(req.params.id)
+    return chartController.findById(req.params.chart_id)
       .then(async (chart) => {
         const project = await projectController.findById(chart.project_id);
 
@@ -498,8 +523,8 @@ module.exports = (app) => {
   /*
   ** Route to run the query for a chart on a project that enables this
   */
-  app.post("/chart/:id/query", apiLimiter(50), (req, res) => {
-    return chartController.findById(req.params.id)
+  app.post("/chart/:chart_id/query", apiLimiter(50), (req, res) => {
+    return chartController.findById(req.params.chart_id)
       .then(async (chart) => {
         const project = await projectController.findById(chart.project_id);
 
@@ -510,7 +535,7 @@ module.exports = (app) => {
         }
 
         return chartController.updateChartData(
-          req.params.id,
+          req.params.chart_id,
           null,
           {
             noSource: req.query.no_source === "true",
@@ -578,10 +603,10 @@ module.exports = (app) => {
   /*
   ** Route to create a new share link
   */
-  app.post("/project/:project_id/chart/:id/share", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.createShare(req.params.id)
+  app.post("/project/:project_id/chart/:chart_id/share", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.createShare(req.params.chart_id)
       .then(() => {
-        return chartController.findById(req.params.id);
+        return chartController.findById(req.params.chart_id);
       })
       .then((chart) => {
         return res.status(200).send(chart);
@@ -601,7 +626,7 @@ module.exports = (app) => {
   /*
   ** Route to delete a share link
   */
-  app.delete("/project/:project_id/chart/:id/share/:share_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.delete("/project/:project_id/chart/:chart_id/share/:share_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     return chartController.removeShare(req.params.share_id)
       .catch((error) => {
         if (error === "401" || error.message === "401") {
@@ -618,9 +643,9 @@ module.exports = (app) => {
   /*
   ** Route to create a new share policy
   */
-  app.post("/project/:project_id/chart/:id/share/policy", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+  app.post("/project/:project_id/chart/:chart_id/share/policy", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
     try {
-      const policy = await chartController.createSharePolicy(req.params.id);
+      const policy = await chartController.createSharePolicy(req.params.chart_id);
       return res.status(200).send(policy);
     } catch (error) {
       return res.status(400).send(error);
@@ -631,9 +656,9 @@ module.exports = (app) => {
   /*
   ** Route to get all share policies for a chart
   */
-  app.get("/project/:project_id/chart/:id/share/policy", verifyToken, checkPermissions("readAny"), async (req, res) => {
+  app.get("/project/:project_id/chart/:chart_id/share/policy", verifyToken, checkPermissions("readAny"), async (req, res) => {
     try {
-      const policies = await SharePolicyController.findByEntityId(req.params.id);
+      const policies = await SharePolicyController.findByEntityId(req.params.chart_id);
       return res.status(200).send(policies);
     } catch (error) {
       return res.status(400).send(error);
@@ -644,7 +669,7 @@ module.exports = (app) => {
   /*
   ** Route to update a share policy
   */
-  app.put("/project/:project_id/chart/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+  app.put("/project/:project_id/chart/:chart_id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
     try {
       await SharePolicyController.updateSharePolicy(req.params.policy_id, req.body);
       const updatedPolicy = await db.SharePolicy.findByPk(req.params.policy_id);
@@ -658,7 +683,7 @@ module.exports = (app) => {
   /*
   ** Route to delete a share policy
   */
-  app.delete("/project/:project_id/chart/:id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+  app.delete("/project/:project_id/chart/:chart_id/share/policy/:policy_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
     try {
       await SharePolicyController.deleteSharePolicy(req.params.policy_id);
       return res.status(200).send({ deleted: true });
@@ -671,8 +696,8 @@ module.exports = (app) => {
   /*
   ** Route to get chart alerts
   */
-  app.get("/project/:project_id/chart/:id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return alertController.getByChartId(req.params.id)
+  app.get("/project/:project_id/chart/:chart_id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return alertController.getByChartId(req.params.chart_id)
       .then((alerts) => {
         return res.status(200).send(alerts);
       })
@@ -685,7 +710,7 @@ module.exports = (app) => {
   /*
   ** Route to create a new chart alert
   */
-  app.post("/project/:project_id/chart/:id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.post("/project/:project_id/chart/:chart_id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     // check to see if the recipients are in the same team
     return teamController.getTeamMembers(req.user?.teamRole?.team_id)
       .then((teamMembers) => {
@@ -711,7 +736,7 @@ module.exports = (app) => {
   /*
   ** Route to update a chart alert
   */
-  app.put("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.put("/project/:project_id/chart/:chart_id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     // check to see if the recipients are in the same team
     return teamController.getTeamMembers(req.user?.teamRole?.team_id)
       .then((teamMembers) => {
@@ -737,7 +762,7 @@ module.exports = (app) => {
   /*
   ** Route to delete a chart alert
   */
-  app.delete("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.delete("/project/:project_id/chart/:chart_id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     return alertController.remove(req.params.alert_id)
       .then(() => {
         return res.status(200).send({ message: "Alert deleted" });
@@ -751,12 +776,12 @@ module.exports = (app) => {
   /*
   ** Route to create ChartDatasetConfig
   */
-  app.post("/project/:project_id/chart/:id/chart-dataset-config",
+  app.post("/project/:project_id/chart/:chart_id/chart-dataset-config",
     verifyToken,
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.createChartDatasetConfig(req.params.id, req.body);
+        const cdc = await chartController.createChartDatasetConfig(req.params.chart_id, req.body);
 
         return res.status(200).send(cdc);
       } catch (error) {
@@ -768,12 +793,12 @@ module.exports = (app) => {
   /*
   ** Route to update ChartDatasetConfigs
   */
-  app.put("/project/:project_id/chart/:id/chart-dataset-config/:cdcId",
+  app.put("/project/:project_id/chart/:chart_id/chart-dataset-config/:cdc_id",
     verifyToken,
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.updateChartDatasetConfig(req.params.cdcId, req.body);
+        const cdc = await chartController.updateChartDatasetConfig(req.params.cdc_id, req.body);
 
         return res.status(200).send(cdc);
       } catch (error) {
@@ -785,12 +810,12 @@ module.exports = (app) => {
   /*
   ** Route to delete ChartDatasetConfigs
   */
-  app.delete("/project/:project_id/chart/:id/chart-dataset-config/:cdcId",
+  app.delete("/project/:project_id/chart/:chart_id/chart-dataset-config/:cdc_id",
     verifyToken,
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        await chartController.deleteChartDatasetConfig(req.params.cdcId);
+        await chartController.deleteChartDatasetConfig(req.params.cdc_id);
 
         return res.status(200).send({ removed: true });
       } catch (error) {
