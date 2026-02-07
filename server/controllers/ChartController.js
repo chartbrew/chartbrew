@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
+const validateMongoQuery = require("../modules/validateMongoQuery");
 
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
@@ -545,9 +546,18 @@ class ChartController {
 
   runQuery(id) {
     let gChart;
+    let formattedQuery = "";
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
+        formattedQuery = chart.query;
+        if (formattedQuery.indexOf("connection.") === 0) {
+          formattedQuery = formattedQuery.replace("connection.", "");
+        }
+        const validation = validateMongoQuery(formattedQuery);
+        if (!validation.valid) {
+          return Promise.reject(new Error(`Invalid MongoDB query: ${validation.message}`));
+        }
         return this.connectionController.getConnectionUrl(chart.connection_id);
       })
       .then((url) => {
@@ -557,11 +567,11 @@ class ChartController {
         return mongoose.connect(url, options);
       })
       .then(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${gChart.query}.toArray()`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoose) => mongoose.${formattedQuery}.toArray()`)()(mongoose); // eslint-disable-line
       })
       // if array fails, check if it works with object (for example .findOne() return object)
       .catch(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${gChart.query}`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoose) => mongoose.${formattedQuery}`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
         return this.getChartData(gChart.getDataValue("id"), data);
@@ -575,6 +585,15 @@ class ChartController {
   }
 
   testMongoQuery({ connection_id, query }) {
+    let formattedQuery = query;
+    if (formattedQuery.indexOf("connection.") === 0) {
+      formattedQuery = formattedQuery.replace("connection.", "");
+    }
+    const validation = validateMongoQuery(formattedQuery);
+    if (!validation.valid) {
+      return Promise.reject(new Error(`Invalid MongoDB query: ${validation.message}`));
+    }
+
     return this.connectionController.getConnectionUrl(connection_id)
       .then((url) => {
         const options = {
@@ -583,13 +602,13 @@ class ChartController {
         return mongoose.connect(url, options);
       })
       .then(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${query}.toArray()`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoose) => mongoose.${formattedQuery}.toArray()`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
         return new Promise((resolve) => resolve(data));
       })
       .catch(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${query}`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoose) => mongoose.${formattedQuery}`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
         return new Promise((resolve) => resolve(data));
