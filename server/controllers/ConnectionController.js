@@ -26,6 +26,7 @@ const { getQueueOptions } = require("../redisConnection");
 const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
 const { applyApiVariables, applyVariables } = require("../modules/applyVariables");
+const validateMongoQuery = require("../modules/validateMongoQuery");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -685,6 +686,13 @@ class ConnectionController {
     // formatting required since introducing the multiple mongo connection support
     if (formattedQuery.indexOf("connection.") === 0) {
       formattedQuery = formattedQuery.replace("connection.", "");
+    }
+
+    // Validate the query before executing it to prevent code injection (RCE)
+    const validation = validateMongoQuery(formattedQuery);
+    if (!validation.valid) {
+      console.error(`Invalid MongoDB query: ${validation.message}`);
+      return Promise.reject(new Error(`Invalid MongoDB query: ${validation.message}`));
     }
 
     return this.getConnectionUrl(id)
