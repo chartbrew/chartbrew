@@ -101,7 +101,12 @@ function DatasetQuery(props) {
 
   useEffect(() => {
     if (stateDataRequests.length > 0) {
-      setDataRequests(stateDataRequests);
+      setDataRequests((prev) => {
+        if (prev.length !== stateDataRequests.length || prev.some((p, i) => p?.id !== stateDataRequests[i]?.id)) {
+          return stateDataRequests;
+        }
+        return prev;
+      });
     }
   }, [stateDataRequests]);
 
@@ -246,7 +251,7 @@ function DatasetQuery(props) {
 
   const _getSelectedTab = () => {
     if (selectedRequest?.isSettings) {
-      return "join";
+      return dataRequests[0]?.id ?? "add";
     }
 
     if (createMode) {
@@ -257,7 +262,7 @@ function DatasetQuery(props) {
       return `${selectedRequest?.id}`;
     }
 
-    return null;
+    return "add";
   };
 
   return (
@@ -266,22 +271,21 @@ function DatasetQuery(props) {
         <div className="flex flex-row items-center justify-start gap-2">
           {dataRequests && dataRequests.length > 0 && (
             <>
-              <Tabs selectedKey={selectedRequest?.isSettings ? "join" : null} variant="bordered">
-                {selectedRequest && (
-                  <Tab
-                    key="join"
-                    title={(
-                      <div className="flex flex-row items-center gap-2">
-                        <LuGitMerge size={16} />
-                        <span>Join settings</span>
-                      </div>
-                    )}
-                    onPress={() => _onSelectSettings()}
-                  />
-                )}
-              </Tabs>
+              <Button
+                variant={selectedRequest?.isSettings ? "flat" : "bordered"}
+                color={selectedRequest?.isSettings ? "primary" : "default"}
+                className="h-9 min-w-unit-16"
+                onPress={() => _onSelectSettings()}
+                startContent={<LuGitMerge size={16} />}
+              >
+                Join settings
+              </Button>
               <LuPlug />
-              <Tabs selectedKey={_getSelectedTab()} variant="bordered">
+              <Tabs
+                key={`sources-${_getSelectedTab()}`}
+                defaultSelectedKey={_getSelectedTab()}
+                variant="bordered"
+              >
                 {dataRequests.map((dr) => (
                   <Tab
                     key={dr.id}

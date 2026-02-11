@@ -888,12 +888,13 @@ export const { clearDatasets } = datasetSlice.actions;
 export const selectDatasets = (state) => state.dataset.data;
 export const selectDatasetsNoDrafts = (state) => state.dataset.data.filter((dataset) => !dataset.draft);
 export const selectResponses = (state) => state.dataset.responses;
+const EMPTY_DATA_REQUESTS = [];
 export const selectDataRequests = (state, datasetId) => {
   const dataset = state.dataset.data.find((dataset) => dataset.id === parseInt(datasetId, 10));
-  if (dataset) {
+  if (dataset?.DataRequests) {
     return dataset.DataRequests;
   }
-  return [];
+  return EMPTY_DATA_REQUESTS;
 }
 
 export const selectDataRequest = (state, datasetId, drId) => {
