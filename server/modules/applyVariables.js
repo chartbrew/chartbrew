@@ -74,8 +74,8 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
             break;
           case "date":
             replacementValue = variable.isAlreadyQuoted
-              ? String(runtimeValue)
-              : `'${String(runtimeValue)}'`;
+              ? String(runtimeValue).replace(/'/g, "''").replace(/"/g, "\"\"")
+              : `'${String(runtimeValue).replace(/'/g, "''")}'`;
             break;
           default:
             replacementValue = variable.isAlreadyQuoted
@@ -108,8 +108,8 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
           break;
         case "date":
           replacementValue = variable.isAlreadyQuoted
-            ? binding.default_value
-            : `'${binding.default_value}'`;
+            ? String(binding.default_value).replace(/'/g, "''").replace(/"/g, "\"\"")
+            : `'${String(binding.default_value).replace(/'/g, "''")}'`;
           break;
         default:
           replacementValue = variable.isAlreadyQuoted
