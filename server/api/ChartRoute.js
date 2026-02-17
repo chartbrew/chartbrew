@@ -80,7 +80,7 @@ module.exports = (app) => {
 
       // check if the cdc is part of a chart in the right project
       if (chartId && req.params.cdc_id) {
-        const cdc = await chartController.findChartDatasetConfigById(req.params.cdc_id);
+        const cdc = await db.ChartDatasetConfig.findByPk(req.params.cdc_id);
         if (cdc.chart_id.toString() !== chartId.toString()) {
           return res.status(403).json({ message: "Access denied" });
         }
