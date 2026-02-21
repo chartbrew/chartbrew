@@ -167,6 +167,35 @@ class DatasetController {
       });
   }
 
+  findByIdAndTeam(id, teamId) {
+    return db.Dataset.findOne({
+      where: { id, team_id: teamId },
+      include: [
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+        {
+          model: db.VariableBinding,
+          on: Sequelize.and(
+            { "$VariableBindings.entity_type$": "Dataset" },
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col("VariableBindings.entity_id"), "INTEGER"),
+              Sequelize.col("Dataset.id")
+            )
+          ),
+          required: false
+        },
+      ],
+    })
+      .then((dataset) => {
+        if (!dataset) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return dataset;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   findByChart(chartId) {
     return db.Dataset.findAll({
       where: { chart_id: chartId },
@@ -235,6 +264,19 @@ class DatasetController {
       });
   }
 
+  updateByTeam(id, teamId, data) {
+    return db.Dataset.update(data, { where: { id, team_id: teamId } })
+      .then(([affectedRows]) => {
+        if (affectedRows === 0) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return this.findByIdAndTeam(id, teamId);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   remove(id) {
     return db.Dataset.destroy({ where: { id } })
       .then(() => {
@@ -245,13 +287,26 @@ class DatasetController {
       });
   }
 
+  removeByTeam(id, teamId) {
+    return db.Dataset.destroy({ where: { id, team_id: teamId } })
+      .then((deletedRows) => {
+        if (deletedRows === 0) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return true;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   runRequest({
-    dataset_id, chart_id, noSource, getCache, filters, timezone, variables = {},
+    dataset_id, chart_id, noSource, getCache, filters, timezone, variables = {}, team_id,
   }) {
     let gDataset;
     let mainDr;
     return db.Dataset.findOne({
-      where: { id: dataset_id },
+      where: { id: dataset_id, ...(team_id ? { team_id } : {}) },
       include: [
         {
           model: db.DataRequest,
@@ -284,6 +339,10 @@ class DatasetController {
       ],
     })
       .then((dataset) => {
+        if (!dataset) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+
         gDataset = dataset;
         const drPromises = [];
         let dataRequests = dataset.DataRequests;

@@ -443,6 +443,8 @@ function PublicDashboard() {
               project_id: project.id,
               chart_id: chart.id,
               filters: allFilters,
+              shareToken: searchParams.get("token"),
+              password: window.localStorage.getItem("reportPassword"),
             }))
           );
         }
@@ -483,6 +485,8 @@ function PublicDashboard() {
         project_id: refresh.projectId,
         chart_id: refresh.chartId,
         filters: refresh.dateFilter,
+        shareToken: searchParams.get("token"),
+        password: window.localStorage.getItem("reportPassword"),
       }))
       .catch(() => {
         // Continue even if one request fails

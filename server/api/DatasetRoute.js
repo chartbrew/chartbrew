@@ -53,6 +53,25 @@ module.exports = (app) => {
     };
   };
 
+  const ensureDatasetBelongsToTeam = async (req, res, next) => {
+    const datasetId = req.params.dataset_id || req.params.id;
+
+    if (!datasetId) {
+      return res.status(400).send("Missing dataset id");
+    }
+
+    try {
+      const dataset = await datasetController.findByIdAndTeam(datasetId, req.params.team_id);
+      req.dataset = dataset;
+      return next();
+    } catch (error) {
+      if (error?.message === "404") {
+        return res.status(404).send((error && error.message) || error);
+      }
+      return res.status(400).send((error && error.message) || error);
+    }
+  };
+
   /*
   ** Route to get all datasets
   */
@@ -79,8 +98,8 @@ module.exports = (app) => {
   /*
   ** Route to get a dataset by ID
   */
-  app.get(`${root}/:dataset_id`, verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return datasetController.findById(req.params.dataset_id)
+  app.get(`${root}/:dataset_id`, verifyToken, checkPermissions("readOwn"), ensureDatasetBelongsToTeam, (req, res) => {
+    return datasetController.findByIdAndTeam(req.params.dataset_id, req.params.team_id)
       .then((dataset) => {
         return res.status(200).send(dataset);
       })
@@ -147,7 +166,7 @@ module.exports = (app) => {
   /*
   ** Route to duplicate a dataset
   */
-  app.post(`${root}/:dataset_id/duplicate`, verifyToken, checkPermissions("createAny"), (req, res) => {
+  app.post(`${root}/:dataset_id/duplicate`, verifyToken, checkPermissions("createAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.duplicateDataset(req.params.dataset_id, req.body.name)
       .then((dataset) => {
         return res.status(200).send(dataset);
@@ -183,8 +202,10 @@ module.exports = (app) => {
   /*
   ** Route to update a dataset
   */
-  app.put(`${root}/:dataset_id`, verifyToken, checkPermissions("updateAny"), (req, res) => {
-    return datasetController.update(req.params.dataset_id, req.body)
+  app.put(`${root}/:dataset_id`, verifyToken, checkPermissions("updateAny"), ensureDatasetBelongsToTeam, (req, res) => {
+    req.body.team_id = req.params.team_id;
+
+    return datasetController.updateByTeam(req.params.dataset_id, req.params.team_id, req.body)
       .then((dataset) => {
         return res.status(200).send(dataset);
       })
@@ -215,8 +236,8 @@ module.exports = (app) => {
   /*
   ** Route to delete a dataset
   */
-  app.delete(`${root}/:dataset_id`, verifyToken, checkPermissions("deleteAny"), (req, res) => {
-    return datasetController.remove(req.params.dataset_id)
+  app.delete(`${root}/:dataset_id`, verifyToken, checkPermissions("deleteAny"), ensureDatasetBelongsToTeam, (req, res) => {
+    return datasetController.removeByTeam(req.params.dataset_id, req.params.team_id)
       .then((result) => {
         return res.status(200).send(result);
       })
@@ -229,9 +250,15 @@ module.exports = (app) => {
   /*
   ** [DEPRECATED] Route to run the request attached to the dataset
   */
-  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.runRequest(
-      req.params.dataset_id, req.params.chart_id, req.query.noSource, req.query.getCache
+      {
+        dataset_id: req.params.dataset_id,
+        chart_id: req.params.chart_id,
+        noSource: req.query.noSource,
+        getCache: req.query.getCache,
+        team_id: req.params.team_id,
+      }
     )
       .then((dataset) => {
         const newDataset = dataset;
@@ -270,13 +297,14 @@ module.exports = (app) => {
   /*
   ** [NEW] Route to run the request attached to the dataset
   */
-  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.runRequest({
       dataset_id: req.params.dataset_id,
       chart_id: req.body.chart_id,
       noSource: req.body.noSource,
       getCache: req.body.getCache,
       variables: req.body.variables,
+      team_id: req.params.team_id,
     })
       .then((dataset) => {
         const newDataset = dataset;
@@ -315,7 +343,7 @@ module.exports = (app) => {
   /*
   ** Route to get the charts associated with the dataset
   */
-  app.get(`${root}/:dataset_id/charts`, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.get(`${root}/:dataset_id/charts`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.findRelatedCharts(req.params.dataset_id)
       .then((charts) => {
         return res.status(200).send(charts);
@@ -329,7 +357,7 @@ module.exports = (app) => {
   /*
 ** Route to create a new variable binding
 */
-  app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions("updateAny"), (req, res) => {
+  app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions("updateAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.createVariableBinding(
       req.params.id,
       req.body,
@@ -343,7 +371,7 @@ module.exports = (app) => {
   /*
   ** Route to update a variable binding
   */
-  app.put(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions("updateAny"), (req, res) => {
+  app.put(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions("updateAny"), ensureDatasetBelongsToTeam, (req, res) => {
     return datasetController.updateVariableBinding(
       req.params.id,
       req.params.variable_id,

@@ -187,9 +187,9 @@ export const runQuery = createAsyncThunk(
 
 export const runQueryWithFilters = createAsyncThunk(
   "chart/runQueryWithFilters",
-  async ({ project_id, chart_id, filters, variables }) => {
+  async ({ project_id, chart_id, filters, variables, shareToken, password }) => {
     const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
+    let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
     const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
@@ -197,6 +197,14 @@ export const runQueryWithFilters = createAsyncThunk(
       "authorization": `Bearer ${token}`,
     });
     const body = JSON.stringify({ filters, variables });
+
+    if (shareToken) {
+      url += `&token=${encodeURIComponent(shareToken)}`;
+    }
+
+    if (password) {
+      url += `&pass=${encodeURIComponent(password)}`;
+    }
 
     const response = await fetch(url, { method, headers, body });
     const responseJson = await response.json();

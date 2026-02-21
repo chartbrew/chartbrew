@@ -27,6 +27,22 @@ class SavedQueryController {
       });
   }
 
+  findByIdAndTeam(id, teamId) {
+    return db.SavedQuery.findOne({
+      where: { id, team_id: teamId },
+      include: [{ model: db.User }],
+    })
+      .then((savedQuery) => {
+        if (!savedQuery) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return savedQuery;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   findByTeam(teamId, type) {
     return db.SavedQuery.findAll({
       where: { team_id: teamId, type },
@@ -70,9 +86,35 @@ class SavedQueryController {
       });
   }
 
+  updateByTeam(id, teamId, data) {
+    return db.SavedQuery.update(data, { where: { id, team_id: teamId } })
+      .then(([affectedRows]) => {
+        if (affectedRows === 0) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return this.findByIdAndTeam(id, teamId);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   remove(id) {
     return db.SavedQuery.destroy({ where: { id } })
       .then(() => {
+        return true;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  removeByTeam(id, teamId) {
+    return db.SavedQuery.destroy({ where: { id, team_id: teamId } })
+      .then((deletedRows) => {
+        if (deletedRows === 0) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
         return true;
       })
       .catch((error) => {

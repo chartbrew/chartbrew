@@ -152,6 +152,22 @@ class ConnectionController {
       });
   }
 
+  findByIdAndTeam(id, teamId) {
+    return db.Connection.findOne({
+      where: { id, team_id: teamId },
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+    })
+      .then((connection) => {
+        if (!connection) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
+        return connection;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   findByTeam(teamId) {
     return db.Connection.findAll({
       where: { team_id: teamId },
@@ -691,7 +707,6 @@ class ConnectionController {
     // Validate the query before executing it to prevent code injection (RCE)
     const validation = validateMongoQuery(formattedQuery);
     if (!validation.valid) {
-      console.error(`Invalid MongoDB query: ${validation.message}`);
       return Promise.reject(new Error(`Invalid MongoDB query: ${validation.message}`));
     }
 

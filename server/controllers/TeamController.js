@@ -488,15 +488,25 @@ class TeamController {
       });
   }
 
-  deleteApiKey(keyId) {
-    return db.Apikey.findByPk(keyId)
+  deleteApiKey(keyId, teamId) {
+    const whereCondition = teamId
+      ? { id: keyId, team_id: teamId }
+      : { id: keyId };
+
+    return db.Apikey.findOne({ where: whereCondition })
       .then((apiKey) => {
+        if (!apiKey) {
+          return Promise.reject(new Error(404));
+        }
         return db.TokenBlacklist.create({ token: apiKey.token });
       })
       .then(() => {
-        return db.Apikey.destroy({ where: { id: keyId } });
+        return db.Apikey.destroy({ where: whereCondition });
       })
       .then((result) => {
+        if (result === 0) {
+          return Promise.reject(new Error(404));
+        }
         return result;
       })
       .catch((err) => {

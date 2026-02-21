@@ -32,14 +32,20 @@ module.exports = (app) => {
   app.get("/team/:team_id/integration/:id", verifyToken, (req, res) => {
     return checkAccess(req.params.team_id, req.params.id, req.user, "readOwn", "readAny")
       .then(() => {
-        return integrationController.findById(req.params.id);
+        return integrationController.findById(req.params.id, req.params.team_id);
       })
       .then((integration) => {
+        if (!integration) {
+          throw new Error(404);
+        }
         return res.status(200).send(integration);
       })
       .catch((err) => {
         if (err.message === "401") {
           return res.status(401).send("Unauthorized");
+        }
+        if (err.message === "404") {
+          return res.status(404).send("Not Found");
         }
 
         return res.status(400).send(err);
@@ -97,9 +103,11 @@ module.exports = (app) => {
   ** Update an integration
   */
   app.put("/team/:team_id/integration/:id", verifyToken, (req, res) => {
+    req.body.team_id = req.params.team_id;
+
     return checkAccess(req.params.team_id, req.params.id, req.user, "updateOwn", "updateAny")
       .then(() => {
-        return integrationController.update(req.params.id, req.body);
+        return integrationController.update(req.params.id, req.body, req.params.team_id);
       })
       .then((integration) => {
         return res.status(200).send(integration);
@@ -107,6 +115,9 @@ module.exports = (app) => {
       .catch((err) => {
         if (err.message === "401") {
           return res.status(401).send("Unauthorized");
+        }
+        if (err.message === "404") {
+          return res.status(404).send("Not Found");
         }
 
         return res.status(400).send(err);
@@ -120,7 +131,7 @@ module.exports = (app) => {
   app.delete("/team/:team_id/integration/:id", verifyToken, (req, res) => {
     return checkAccess(req.params.team_id, req.params.id, req.user, "updateOwn", "deleteAny")
       .then(() => {
-        return integrationController.remove(req.params.id);
+        return integrationController.remove(req.params.id, req.params.team_id);
       })
       .then(() => {
         return res.status(200).send({ deleted: true });
@@ -128,6 +139,9 @@ module.exports = (app) => {
       .catch((err) => {
         if (err.message === "401") {
           return res.status(401).send("Unauthorized");
+        }
+        if (err.message === "404") {
+          return res.status(404).send("Not Found");
         }
 
         return res.status(400).send(err);

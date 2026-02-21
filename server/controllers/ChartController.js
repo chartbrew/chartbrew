@@ -735,13 +735,32 @@ class ChartController {
       });
   }
 
-  exportChartData(userId, chartIds, filters) {
+  exportChartData(userId, chartIds, filters, projectId) {
+    const parsedChartIds = Array.isArray(chartIds)
+      ? [...new Set(chartIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0))]
+      : [];
+
+    if (parsedChartIds.length === 0) {
+      return Promise.reject(new Error("Invalid chart IDs"));
+    }
+
+    const whereCondition = { id: parsedChartIds };
+    if (projectId) {
+      whereCondition.project_id = projectId;
+    }
+
     return db.Chart.findAll({
-      where: { id: chartIds },
+      where: whereCondition,
       include: [{ model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] }],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     })
       .then((charts) => {
+        if (charts.length !== parsedChartIds.length) {
+          return Promise.reject(new Error("One or more charts are not accessible"));
+        }
+
         const dataPromises = [];
         charts.forEach((chart) => {
           dataPromises.push(

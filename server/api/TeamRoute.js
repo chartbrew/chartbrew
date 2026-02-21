@@ -288,11 +288,14 @@ module.exports = (app) => {
 
   // route to remove an API key
   app.delete("/team/:id/apikey/:keyId", verifyToken, checkPermissions("deleteAny", "apiKey"), (req, res) => {
-    return teamController.deleteApiKey(req.params.keyId)
+    return teamController.deleteApiKey(req.params.keyId, req.params.id)
       .then(() => {
         return res.status(200).send({ deleted: true });
       })
       .catch((err) => {
+        if (err?.message === "404") {
+          return res.status(404).send({ error: "Not Found" });
+        }
         return res.status(400).send(err);
       });
   });

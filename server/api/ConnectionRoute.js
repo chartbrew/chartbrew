@@ -92,6 +92,18 @@ module.exports = (app) => {
     };
   };
 
+  const ensureConnectionBelongsToTeam = async (req, res, next) => {
+    try {
+      await connectionController.findByIdAndTeam(req.params.connection_id, req.params.team_id);
+      return next();
+    } catch (error) {
+      if (error?.message === "404") {
+        return res.status(404).send({ error: "Not Found" });
+      }
+      return res.status(400).send(error);
+    }
+  };
+
   /*
   ** [MASTER] Route to get all the connections
   */
@@ -173,7 +185,7 @@ module.exports = (app) => {
   /*
   ** Route to duplicate a connection
   */
-  app.post("/team/:team_id/connections/:connection_id/duplicate", verifyToken, checkPermissions("createOwn"), (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/duplicate", verifyToken, checkPermissions("createOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.duplicateConnection(req.params.connection_id, req.body.name)
       .then((connection) => {
         return res.status(200).send(connection);
@@ -187,8 +199,8 @@ module.exports = (app) => {
   /*
   ** Route to get a connection by ID
   */
-  app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return connectionController.findById(req.params.connection_id)
+  app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
+    return connectionController.findByIdAndTeam(req.params.connection_id, req.params.team_id)
       .then((connection) => {
         let newConnection = connection;
         if (!req.user.isEditor) {
@@ -258,7 +270,9 @@ module.exports = (app) => {
   /*
   ** Route to update a connection
   */
-  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, (req, res) => {
+    req.body.team_id = req.params.team_id;
+
     return connectionController.update(req.params.connection_id, req.body)
       .then((connection) => {
         return res.status(200).send(connection);
@@ -275,7 +289,7 @@ module.exports = (app) => {
   /*
   ** Route to trigger a MongoDB schema update for a connection
   */
-  app.post("/team/:team_id/connections/:connection_id/update-schema", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/update-schema", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.updateMongoSchema(req.params.connection_id)
       .then((result) => {
         return res.status(200).send(result);
@@ -292,7 +306,7 @@ module.exports = (app) => {
   /*
   ** Route to add files to a connection
   */
-  app.post("/team/:team_id/connections/:connection_id/files", verifyToken, checkPermissions("updateOwn"), upload.any(), (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/files", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, upload.any(), (req, res) => {
     if (!req.files || req.files.length === 0) {
       return res.status(400).send({ error: "No files were uploaded" });
     }
@@ -324,7 +338,7 @@ module.exports = (app) => {
   /*
   ** Route to remove a connection
   */
-  app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
+  app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.removeConnection(req.params.connection_id, req.query.removeDatasets)
       .then((success) => {
         if (success) {
@@ -345,7 +359,7 @@ module.exports = (app) => {
   /*
   ** Route to test a connection
   */
-  app.get("/team/:team_id/connections/:connection_id/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
+  app.get("/team/:team_id/connections/:connection_id/test", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.testConnection(req.params.connection_id)
       .then((response) => {
         return res.status(200).send(response);
@@ -362,7 +376,7 @@ module.exports = (app) => {
   /*
   ** Route to test a potential api request
   */
-  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     const requestData = req.body;
     requestData.connection_id = req.params.connection_id;
 
@@ -452,7 +466,7 @@ module.exports = (app) => {
   /*
   ** Route to run helper methods for different connections
   */
-  app.post("/team/:team_id/connections/:connection_id/helper/:method", verifyToken, checkPermissions("readOwn"), (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/helper/:method", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.runHelperMethod(
       req.params.connection_id, req.params.method, req.body,
     )

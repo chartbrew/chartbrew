@@ -19,20 +19,24 @@ const apiLimiter = (max = 10) => {
 };
 
 const checkAccess = async (req, res, next) => {
-  const teamId = req.body?.teamId || req.query?.teamId || req.params?.teamId;
+  try {
+    const teamId = req.body?.teamId || req.query?.teamId || req.params?.teamId;
 
-  if (!teamId) {
-    res.status(400).json({ error: "teamId is required" });
+    if (!teamId) {
+      return res.status(400).json({ error: "teamId is required" });
+    }
+
+    const teamController = new TeamController();
+    const teamRole = await teamController.getTeamRole(teamId, req.user.id);
+
+    if (!teamRole?.role || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    return next();
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Access check failed" });
   }
-
-  const teamController = new TeamController();
-  const teamRole = await teamController.getTeamRole(teamId, req.user.id);
-
-  if (!teamRole?.role || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
-    res.status(403).json({ error: "Access denied" });
-  }
-
-  next();
 };
 
 const isOpenAiApiKeySet = () => {

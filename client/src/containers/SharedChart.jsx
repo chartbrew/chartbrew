@@ -174,6 +174,7 @@ function SharedChart() {
       project_id: chart.project_id, 
       chart_id: chart.id, 
       filters: newConditions,
+      shareToken: searchParams.get("token"),
     }))
       .then((data) => {
         if (data.payload) {
@@ -205,6 +206,7 @@ function SharedChart() {
       project_id: chart.project_id, 
       chart_id: chart.id, 
       filters: newConditions,
+      shareToken: searchParams.get("token"),
     }))
       .then((data) => {
         if (data.payload) {

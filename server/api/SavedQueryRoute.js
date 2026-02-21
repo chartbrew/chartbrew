@@ -105,13 +105,16 @@ module.exports = (app) => {
     newSavedQuery.team_id = req.params.team_id;
     newSavedQuery.user_id = req.user.id;
 
-    return savedQueryController.update(req.params.id, newSavedQuery)
+    return savedQueryController.updateByTeam(req.params.id, req.params.team_id, newSavedQuery)
       .then((savedQuery) => {
         return res.status(200).send(savedQuery);
       })
       .catch((error) => {
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error.message === "404") {
+          return res.status(404).send({ error: "Not Found" });
         }
         return res.status(400).send(error);
       });
@@ -122,13 +125,16 @@ module.exports = (app) => {
   ** Remove a savedQuery
   */
   app.delete("/team/:team_id/savedQuery/:id", verifyToken, checkPermissions("deleteAny"), (req, res) => {
-    return savedQueryController.remove(req.params.id)
+    return savedQueryController.removeByTeam(req.params.id, req.params.team_id)
       .then((resp) => {
         return res.status(200).send(resp);
       })
       .catch((error) => {
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error.message === "404") {
+          return res.status(404).send({ error: "Not Found" });
         }
 
         return res.status(400).send(error);
