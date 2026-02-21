@@ -81,7 +81,16 @@ app.get("/", (req, res) => {
   return res.send("Welcome to chartBrew server API");
 });
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads", {
+  setHeaders: (res) => {
+    // Uploaded assets should never be script-executable even if a bad file slips through.
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:;"
+    );
+  },
+}));
 
 // load middlewares
 app.use(parseQueryParams);

@@ -13,6 +13,13 @@ const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
+const {
+  MAX_LOGO_UPLOAD_SIZE_BYTES,
+  buildSafeLogoFilename,
+  isAllowedLogoMimeType,
+  isValidLogoImageBuffer,
+  resolveSafeUploadPath,
+} = require("../modules/logoUploadSecurity");
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -148,26 +155,122 @@ module.exports = (app) => {
   ** Route to update a project's Logo
   */
   app.post("/project/:id/logo", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    let logoPath;
+    if (!req.busboy) {
+      return res.status(400).send({ error: "Upload stream is missing" });
+    }
 
-    req.pipe(req.busboy);
-    req.busboy.on("file", (fieldname, file, info) => {
-      const newFilename = `${nanoid(6)}-${info.filename}`;
-      const uploadPath = path.normalize(`${__dirname}/../uploads/${newFilename}`);
-      logoPath = `uploads/${newFilename}`;
+    const parseUpload = () => {
+      return new Promise((resolve, reject) => {
+        let hasFile = false;
+        let fileCount = 0;
+        let settled = false;
+        const uploadDirectory = path.resolve(__dirname, "../uploads");
 
-      file.pipe(fs.createWriteStream(uploadPath));
-    });
+        const fail = (status, message) => {
+          if (settled) return;
+          settled = true;
+          reject({ status, message });
+        };
 
-    req.busboy.on("finish", () => {
-      return projectController.update(req.params.id, { logo: logoPath })
-        .then((project) => {
-          return res.status(200).send(project);
-        })
-        .catch((err) => {
-          return res.status(400).send(err);
+        const succeed = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        req.pipe(req.busboy);
+
+        req.busboy.on("file", (fieldName, file, info) => {
+          fileCount += 1;
+          if (fileCount > 1) {
+            file.resume();
+            fail(400, "Only one logo file can be uploaded");
+            return;
+          }
+
+          hasFile = true;
+          const mimeType = `${info?.mimeType || ""}`.toLowerCase();
+          if (!isAllowedLogoMimeType(mimeType)) {
+            file.resume();
+            fail(415, "Unsupported file type. Only png, jpg, gif, webp, and svg are allowed");
+            return;
+          }
+
+          const chunks = [];
+          let totalSize = 0;
+
+          file.on("data", (chunk) => {
+            if (settled) return;
+
+            totalSize += chunk.length;
+            if (totalSize > MAX_LOGO_UPLOAD_SIZE_BYTES) {
+              file.resume();
+              fail(413, "Logo exceeds maximum size (5MB)");
+              return;
+            }
+
+            chunks.push(chunk);
+          });
+
+          file.on("error", () => {
+            fail(400, "Could not process uploaded file");
+          });
+
+          file.on("end", async () => {
+            if (settled) return;
+
+            const payload = Buffer.concat(chunks);
+            if (payload.length === 0) {
+              fail(400, "No file uploaded");
+              return;
+            }
+
+            if (!isValidLogoImageBuffer(payload, mimeType)) {
+              fail(415, "Invalid image content");
+              return;
+            }
+
+            const fileName = buildSafeLogoFilename(mimeType, () => nanoid(18));
+            const uploadPath = resolveSafeUploadPath(uploadDirectory, fileName);
+            if (!fileName || !uploadPath) {
+              fail(400, "Could not determine safe upload path");
+              return;
+            }
+
+            try {
+              await fs.promises.writeFile(uploadPath, payload, { flag: "wx" });
+              succeed(`uploads/${fileName}`);
+            } catch (error) {
+              fail(400, "Could not save uploaded file");
+            }
+          });
         });
-    });
+
+        req.busboy.on("error", () => {
+          fail(400, "Could not parse upload request");
+        });
+
+        req.busboy.on("finish", () => {
+          if (!settled && !hasFile) {
+            fail(400, "No file uploaded");
+          }
+        });
+      });
+    };
+
+    return parseUpload()
+      .then((logoPath) => {
+        return projectController.update(req.params.id, { logo: logoPath });
+      })
+      .then((project) => {
+        return res.status(200).send(project);
+      })
+      .catch((error) => {
+        if (error?.status) {
+          return res.status(error.status).send({ error: error.message });
+        }
+        return res.status(400).send(error);
+      });
   });
   // -------------------------------------------
 
