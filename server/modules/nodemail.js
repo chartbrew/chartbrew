@@ -130,18 +130,23 @@ module.exports.sendDashboardSnapshot = (data) => {
     from: settings.adminMail,
     to: data.recipients,
     subject: `Chartbrew - ${data.projectName} snapshot`,
+    attachments: data.attachments || [],
   };
 
-  ejs.renderFile(`${__dirname}/emailTemplates/snapshot.ejs`, {
-    projectName: data.projectName,
-    dashboardUrl: data.dashboardUrl,
-    snapshotUrl: data.snapshotUrl,
-  }, (err, str) => {
-    if (err) {
-      console.log(err); // eslint-disable-line no-console
-    }
-    message.html = str;
+  return new Promise((resolve, reject) => {
+    ejs.renderFile(`${__dirname}/emailTemplates/snapshot.ejs`, {
+      projectName: data.projectName,
+      dashboardUrl: data.dashboardUrl,
+      snapshotUrl: data.snapshotUrl,
+    }, (err, str) => {
+      if (err) {
+        return reject(err);
+      }
 
-    return nodemail.sendMail(message);
+      message.html = str;
+      return nodemail.sendMail(message)
+        .then((result) => resolve(result))
+        .catch((sendErr) => reject(sendErr));
+    });
   });
 };

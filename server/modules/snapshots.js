@@ -2,6 +2,7 @@ const { chromium } = require("playwright");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const { nanoid } = require("nanoid");
+const fs = require("fs");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -17,7 +18,9 @@ module.exports.snapChart = async (shareString) => {
     await page.waitForTimeout(500);
 
     const snapshotId = nanoid(8);
-    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${shareString}-${snapshotId}.png`);
+    const snapshotsDirectory = path.resolve(__dirname, "../uploads/snapshots");
+    const snapshotPath = path.join(snapshotsDirectory, `snap-${shareString}-${snapshotId}.png`);
+    await fs.promises.mkdir(snapshotsDirectory, { recursive: true });
     await page.screenshot({ path: snapshotPath, omitBackground: false });
 
     await browser.close();
@@ -77,8 +80,9 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
     await page.waitForTimeout(2000);
 
     const snapshotId = nanoid(20);
-
-    const snapshotPath = path.join(__dirname, `../uploads/snapshots/snap-${snapshotId}.png`);
+    const snapshotsDirectory = path.resolve(__dirname, "../uploads/snapshots");
+    const snapshotPath = path.join(snapshotsDirectory, `snap-${snapshotId}.png`);
+    await fs.promises.mkdir(snapshotsDirectory, { recursive: true });
     await page.screenshot({ path: snapshotPath, fullPage: true, omitBackground: true });
 
     await browser.close();

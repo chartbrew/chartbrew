@@ -31,12 +31,25 @@ const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
 
+const uploadsDirectory = path.resolve(__dirname, "uploads");
+const legacyUploadsDirectory = path.resolve(process.cwd(), "uploads");
+
+const setUploadHeaders = (res) => {
+  // Uploaded assets should never be script-executable even if a bad file slips through.
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:;"
+  );
+};
+
 // check if the encryption keys are valid 32-byte hex strings
 checkEncryptionKeys();
 
 // set up folders
 fs.mkdir(".cache", () => { });
-fs.mkdir("uploads", () => { });
+fs.mkdir(uploadsDirectory, { recursive: true }, () => { });
+fs.mkdir(path.join(uploadsDirectory, "snapshots"), { recursive: true }, () => { });
 
 const app = express();
 app.settings = settings;
@@ -81,16 +94,16 @@ app.get("/", (req, res) => {
   return res.send("Welcome to chartBrew server API");
 });
 
-app.use("/uploads", express.static("uploads", {
-  setHeaders: (res) => {
-    // Uploaded assets should never be script-executable even if a bad file slips through.
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader(
-      "Content-Security-Policy",
-      "default-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:;"
-    );
-  },
+app.use("/uploads", express.static(uploadsDirectory, {
+  setHeaders: setUploadHeaders,
 }));
+
+// Backwards-compatible fallback for files previously written relative to process.cwd().
+if (legacyUploadsDirectory !== uploadsDirectory) {
+  app.use("/uploads", express.static(legacyUploadsDirectory, {
+    setHeaders: setUploadHeaders,
+  }));
+}
 
 // load middlewares
 app.use(parseQueryParams);

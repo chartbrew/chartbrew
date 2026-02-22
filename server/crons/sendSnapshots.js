@@ -6,7 +6,12 @@ const db = require("../models/models");
 
 async function addSnapshotToQueue(queue, projectId) {
   const jobId = `snapshot_${projectId}`;
+  const existingJob = await queue.getJob(jobId);
+  if (existingJob) {
+    return false;
+  }
   await queue.add("sendSnapshot", { id: projectId }, { jobId });
+  return true;
 }
 
 async function checkSnapshots(queue) {
@@ -23,7 +28,7 @@ async function checkSnapshots(queue) {
       return;
     }
 
-    projects.forEach(async (project) => {
+    const snapshotChecks = projects.map(async (project) => {
       const {
         timezone,
         frequency,
@@ -100,6 +105,8 @@ async function checkSnapshots(queue) {
         await addSnapshotToQueue(queue, project.id);
       }
     });
+
+    await Promise.all(snapshotChecks);
   } catch (error) {
     console.error(`Error checking and sending snapshots: ${error.message}`); // eslint-disable-line
   }

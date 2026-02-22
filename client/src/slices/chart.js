@@ -187,7 +187,9 @@ export const runQuery = createAsyncThunk(
 
 export const runQueryWithFilters = createAsyncThunk(
   "chart/runQueryWithFilters",
-  async ({ project_id, chart_id, filters, variables, shareToken, password }) => {
+  async ({
+    project_id, chart_id, filters, variables, shareToken, password, accessToken
+  }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
     const method = "POST";
@@ -204,6 +206,10 @@ export const runQueryWithFilters = createAsyncThunk(
 
     if (password) {
       url += `&pass=${encodeURIComponent(password)}`;
+    }
+
+    if (accessToken) {
+      url += `&accessToken=${encodeURIComponent(accessToken)}`;
     }
 
     const response = await fetch(url, { method, headers, body });

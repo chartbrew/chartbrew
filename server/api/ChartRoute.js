@@ -189,6 +189,18 @@ module.exports = (app) => {
         }
       }
 
+      const snapshotAccessToken = req.query.accessToken || req.body?.accessToken;
+      if (snapshotAccessToken) {
+        try {
+          const decodedAccessToken = jwt.verify(snapshotAccessToken, settings.encryptionKey);
+          if (`${decodedAccessToken?.project_id}` === `${project.id}`) {
+            return next();
+          }
+        } catch (error) {
+          // Continue to other auth mechanisms.
+        }
+      }
+
       const shareToken = req.query.token || req.body?.token;
       if (!shareToken) {
         const passwordInput = req.query.pass || req.headers.pass || req.body?.password;

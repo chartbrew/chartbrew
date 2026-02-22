@@ -23,8 +23,10 @@ module.exports = async (job) => {
 
     // remove the previous snapshot
     if (project.currentSnapshot) {
-      const previousSnapshotPath = path.join(__dirname, `../../uploads/snapshots/${project.currentSnapshot}`);
-      if (fs.existsSync(previousSnapshotPath)) {
+      const uploadsRoot = path.resolve(__dirname, "../../uploads");
+      const previousSnapshotPath = path.resolve(__dirname, "../../", project.currentSnapshot);
+      const isUploadSnapshot = previousSnapshotPath.startsWith(`${uploadsRoot}${path.sep}`);
+      if (isUploadSnapshot && fs.existsSync(previousSnapshotPath)) {
         fs.unlinkSync(previousSnapshotPath);
       }
     }

@@ -449,6 +449,7 @@ function Report({ editMode = false }) {
               filters: allFilters,
               shareToken: searchParams.get("token"),
               password: window.localStorage.getItem("reportPassword"),
+              accessToken: searchParams.get("accessToken"),
             }))
           );
         }
@@ -491,6 +492,7 @@ function Report({ editMode = false }) {
         filters: refresh.dateFilter,
         shareToken: searchParams.get("token"),
         password: window.localStorage.getItem("reportPassword"),
+        accessToken: searchParams.get("accessToken"),
       }))
       .catch(() => {
         // Continue even if one request fails
