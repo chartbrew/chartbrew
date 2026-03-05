@@ -1,8 +1,8 @@
-const request = require("request-promise");
 const _ = require("lodash");
+const safeRequest = require("./safeRequest");
 
-function PaginateRequests(options, limit, items, offset, totalResults = []) {
-  return request(options)
+function PaginateRequests(options, limit, items, offset, policyContext, totalResults = []) {
+  return safeRequest(options, policyContext)
     .then((response) => {
       let results;
       try {
@@ -43,17 +43,17 @@ function PaginateRequests(options, limit, items, offset, totalResults = []) {
       const newOptions = options;
       newOptions.qs[offset] = parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
 
-      return PaginateRequests(newOptions, limit, items, offset, tempResults);
+      return PaginateRequests(newOptions, limit, items, offset, policyContext, tempResults);
     })
     .catch((e) => {
       return Promise.reject(e);
     });
 }
 
-function PaginatePages(options, limit, offset, totalResults = []) {
+function PaginatePages(options, limit, offset, policyContext, totalResults = []) {
   if (!options.qs[offset]) options.qs[offset] = 1; // eslint-disable-line
 
-  return request(options)
+  return safeRequest(options, policyContext)
     .then((response) => {
       let results;
       try {
@@ -95,15 +95,15 @@ function PaginatePages(options, limit, offset, totalResults = []) {
       const newOptions = options;
       newOptions.qs[offset] = parseInt(options.qs[offset], 10) + 1;
 
-      return PaginatePages(newOptions, limit, offset, tempResults);
+      return PaginatePages(newOptions, limit, offset, policyContext, tempResults);
     })
     .catch((e) => {
       return Promise.reject(e);
     });
 }
 
-function PaginateStripe(options, limit, totalResults) {
-  return request(options)
+function PaginateStripe(options, limit, policyContext, totalResults) {
+  return safeRequest(options, policyContext)
     .then((response) => {
       // introduce a delay so Stripe doesn't shut down the request
       return new Promise((resolve) => setTimeout(() => resolve(response), 1500));
@@ -130,7 +130,7 @@ function PaginateStripe(options, limit, totalResults) {
         const newOptions = options;
         newOptions.qs.starting_after = tempResults.data[tempResults.data.length - 1].id;
 
-        return PaginateStripe(newOptions, limit, tempResults);
+        return PaginateStripe(newOptions, limit, policyContext, tempResults);
       } catch (error) {
         return new Promise((resolve, reject) => reject(response.statusCode));
       }
@@ -140,8 +140,8 @@ function PaginateStripe(options, limit, totalResults) {
     });
 }
 
-function PaginateUrl(options, paginationField, limit, totalResults = []) {
-  return request(options)
+function PaginateUrl(options, paginationField, limit, policyContext, totalResults = []) {
+  return safeRequest(options, policyContext)
     .then((response) => {
       let results;
       let paginationURL;
@@ -191,15 +191,15 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
       const newOptions = options;
       newOptions.url = paginationURL;
 
-      return PaginateUrl(newOptions, paginationField, limit, tempResults);
+      return PaginateUrl(newOptions, paginationField, limit, policyContext, tempResults);
     })
     .catch((err) => {
       return Promise.reject(err);
     });
 }
 
-function PaginateCursor(options, limit, items, offset, totalResults = []) {
-  return request(options)
+function PaginateCursor(options, limit, items, offset, policyContext, totalResults = []) {
+  return safeRequest(options, policyContext)
     .then((response) => {
       const resultsKey = [];
       try {
@@ -242,7 +242,7 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
         if (!newOptions.qs) newOptions.qs = {};
         newOptions.qs[offset] = nextCursor;
 
-        return PaginateCursor(newOptions, limit, items, offset, tempResults);
+        return PaginateCursor(newOptions, limit, items, offset, policyContext, tempResults);
       } catch (error) {
         return new Promise((resolve, reject) => reject(response.statusCode));
       }
@@ -253,32 +253,32 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
 }
 
 module.exports = (template = "custom", {
-  options, limit, items, offset, paginationField,
+  options, limit, items, offset, paginationField, policyContext = {},
 }) => {
   let results;
 
   switch (template) {
     case "custom":
-      results = PaginateRequests(options, limit, items, offset);
+      results = PaginateRequests(options, limit, items, offset, policyContext);
       break;
     case "stripe": {
       // make sure stripe's query parameters include the max limit value
       const stripeOpt = _.cloneDeep(options);
       stripeOpt.qs.limit = 100;
-      results = PaginateStripe(stripeOpt, limit);
+      results = PaginateStripe(stripeOpt, limit, policyContext);
       break;
     }
     case "url":
-      results = PaginateUrl(options, paginationField, limit);
+      results = PaginateUrl(options, paginationField, limit, policyContext);
       break;
     case "pages":
-      results = PaginatePages(options, limit, offset);
+      results = PaginatePages(options, limit, offset, policyContext);
       break;
     case "cursor":
-      results = PaginateCursor(options, limit, items, offset);
+      results = PaginateCursor(options, limit, items, offset, policyContext);
       break;
     default:
-      results = PaginateRequests(options, limit, items, offset);
+      results = PaginateRequests(options, limit, items, offset, policyContext);
   }
 
   return results;

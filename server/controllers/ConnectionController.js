@@ -14,6 +14,7 @@ const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
 const assembleMongoUrl = require("../modules/assembleMongoUrl");
 const paginateRequests = require("../modules/paginateRequests");
+const safeRequest = require("../modules/safeRequest");
 const firebaseConnector = require("../modules/firebaseConnector");
 const googleConnector = require("../modules/googleConnector");
 const FirestoreConnection = require("../connections/FirestoreConnection");
@@ -35,6 +36,26 @@ const getMomentObj = (timezone) => {
     return (...args) => moment.utc(...args);
   }
 };
+
+function buildApiPolicyContext(source, connection, overrides = {}) {
+  const context = {
+    source,
+    teamId: overrides.teamId || connection?.team_id || null,
+    connectionId: overrides.connectionId || connection?.id || null,
+  };
+
+  if (typeof overrides.allowPrivateHost === "boolean") {
+    context.allowPrivateHost = overrides.allowPrivateHost;
+  } else if (overrides.allowPrivateHost === null) {
+    context.allowPrivateHost = null;
+  } else if (typeof connection?.allowPrivateHost === "boolean") {
+    context.allowPrivateHost = connection.allowPrivateHost;
+  } else {
+    context.allowPrivateHost = null;
+  }
+
+  return context;
+}
 
 async function checkAndGetCache(connection_id, dataRequest) {
   // check if there is a cache available and valid
@@ -375,7 +396,16 @@ class ConnectionController {
     }
 
     if (data.type === "api") {
-      return this.testApi(connectionParams);
+      return this.testApi(connectionParams, buildApiPolicyContext(
+        "connection_type_test",
+        null,
+        {
+          teamId: data.team_id || null,
+          connectionId: null,
+          // Unsaved test payloads should not override private network policy.
+          allowPrivateHost: null,
+        }
+      ));
     } else if (data.type === "mongodb") {
       return this.testMongo(connectionParams);
     } else if (data.type === "mysql" || data.type === "postgres") {
@@ -395,9 +425,9 @@ class ConnectionController {
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
   }
 
-  testApi(data) {
+  testApi(data, policyContext = {}) {
     const testOpt = this.getApiTestOptions(data);
-    return request(testOpt);
+    return safeRequest(testOpt, policyContext);
   }
 
   testMongo(data) {
@@ -550,7 +580,7 @@ class ConnectionController {
           case "mongodb":
             return this.getConnectionUrl(id);
           case "api":
-            return request(this.getApiTestOptions(connection));
+            return this.testApi(connection, buildApiPolicyContext("connection_test", connection));
           case "postgres":
           case "mysql":
             return externalDbConnection(connection);
@@ -615,6 +645,7 @@ class ConnectionController {
       ? parseInt(itemsLimit, 10) : 0;
     return this.findById(connection_id)
       .then((connection) => {
+        const policyContext = buildApiPolicyContext("api_request_test", connection);
         const tempUrl = `${connection.getApiUrl(connection)}${dataRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
 
@@ -662,11 +693,12 @@ class ConnectionController {
               items,
               offset,
               paginationField,
+              policyContext,
             });
           }
         }
 
-        return request(options);
+        return safeRequest(options, policyContext);
       })
       .then((response) => {
         if (pagination) {
@@ -854,6 +886,7 @@ class ConnectionController {
 
     return this.findById(id)
       .then(async (connection) => {
+        const policyContext = buildApiPolicyContext("api_request_run", connection);
         // Apply variable substitution for API requests
         let processedRoute = dataRequest.route || "";
         let processedHeaders = dataRequest.headers || {};
@@ -1156,11 +1189,12 @@ class ConnectionController {
               items: dataRequest.items,
               offset: dataRequest.offset,
               paginationField: dataRequest.paginationField,
+              policyContext,
             });
           }
         }
 
-        return request(options);
+        return safeRequest(options, policyContext);
       })
       .then(async (response) => {
         if (dataRequest.pagination) {

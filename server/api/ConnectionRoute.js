@@ -7,6 +7,10 @@ const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const { encryptFile } = require("../modules/fileEncryption");
+const {
+  isOutboundPolicyError,
+  serializeOutboundPolicyError,
+} = require("../modules/outboundTargetPolicy");
 
 const upload = multer({
   dest: ".connectionFiles/",
@@ -27,6 +31,11 @@ module.exports = (app) => {
   const connectionController = new ConnectionController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  const sendPolicyError = (res, error) => {
+    if (!isOutboundPolicyError(error)) return false;
+    return res.status(400).send(serializeOutboundPolicyError(error));
+  };
 
   const checkAccess = (req) => {
     let gProject;
@@ -365,6 +374,8 @@ module.exports = (app) => {
         return res.status(200).send(response);
       })
       .catch((error) => {
+        const policyResponse = sendPolicyError(res, error);
+        if (policyResponse) return policyResponse;
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -386,7 +397,14 @@ module.exports = (app) => {
         return res.status(200).send(dataRequest);
       })
       .catch((errorCode) => {
-        return res.status(errorCode).send({ error: errorCode });
+        const policyResponse = sendPolicyError(res, errorCode);
+        if (policyResponse) return policyResponse;
+
+        if (typeof errorCode === "number") {
+          return res.status(errorCode).send({ error: errorCode });
+        }
+
+        return res.status(400).send({ error: errorCode?.message || errorCode });
       });
   });
   // -------------------------------------------------
@@ -395,7 +413,8 @@ module.exports = (app) => {
   ** Route to test any connection
   */
   app.post("/team/:team_id/connections/:type/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return connectionController.testRequest(req.body)
+    const requestData = { ...req.body, team_id: req.params.team_id };
+    return connectionController.testRequest(requestData)
       .then((response) => {
         if (req.params.type === "api") {
           return res.status(response.statusCode).send(response.body);
@@ -404,6 +423,8 @@ module.exports = (app) => {
         }
       })
       .catch((err) => {
+        const policyResponse = sendPolicyError(res, err);
+        if (policyResponse) return policyResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -431,6 +452,7 @@ module.exports = (app) => {
     // Wait for all files to be encrypted before testing the connection
     return Promise.all(encryptionPromises)
       .then(() => {
+        connectionParams.team_id = req.params.team_id;
         return connectionController.testRequest(connectionParams, { files: req.files });
       })
       .then((response) => {
@@ -450,6 +472,8 @@ module.exports = (app) => {
         }
       })
       .catch((err) => {
+        const policyResponse = sendPolicyError(res, err);
+        if (policyResponse) return policyResponse;
         // remove the files if there is an error
         try {
           req.files.forEach((file) => {

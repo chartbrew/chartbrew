@@ -25,8 +25,8 @@ This is a monorepo containing two main applications:
 - Keep generated code minimal with TODOs, no dead code.
 
 ### Workflow
-- Spec-first: create `docs/specs/FS-YYYYMMDD-<slug>.md`.
-- After acceptance, scaffold from spec, add rollout flags, add telemetry.
+- Implement spec if requested `docs/specs/FS-YYYYMMDD-<slug>.md`.
+- Scaffold from spec, or directly implement if requested, run tests and linting to validate works, and fix any issues.
 
 ### Docs
 - Specs ≤ 2 pages. ADRs short. Use Mermaid if needed.

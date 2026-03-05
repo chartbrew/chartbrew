@@ -12,6 +12,10 @@ const spreadsheetExport = require("../modules/spreadsheetExport");
 const alertController = require("../controllers/AlertController");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 const db = require("../models/models");
+const {
+  isOutboundPolicyError,
+  serializeOutboundPolicyError,
+} = require("../modules/outboundTargetPolicy");
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const apiLimiter = (max = 10) => {
@@ -25,6 +29,11 @@ module.exports = (app) => {
   const chartController = new ChartController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  const sendPolicyError = (res, error) => {
+    if (!isOutboundPolicyError(error)) return false;
+    return res.status(400).send(serializeOutboundPolicyError(error));
+  };
 
   const checkPublicAccess = (req, requiredAccess) => {
     return projectController.findById(req.params.project_id)
@@ -494,6 +503,8 @@ module.exports = (app) => {
       })
       .catch((error) => {
         console.error((error && error.message) || error); // eslint-disable-line
+        const policyResponse = sendPolicyError(res, error);
+        if (policyResponse) return policyResponse;
         if (`${error}` === "401" || error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }

@@ -67,6 +67,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    allowPrivateHost: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: null,
+    },
     host: {
       type: DataTypes.TEXT("long"),
       set(val) {
