@@ -290,6 +290,7 @@ describe("User Management API", () => {
 
     it("should delete team-owned dependencies before deleting owned team", async () => {
       const user = await models.User.create(userFactory.build());
+      const collaborator = await models.User.create(userFactory.build());
       const team = await models.Team.create(teamFactory.build());
       const project = await models.Project.create(projectFactory.build({ team_id: team.id }));
 
@@ -314,6 +315,23 @@ describe("User Management API", () => {
         type: "sql"
       });
 
+      await models.DashboardFilter.create({
+        project_id: project.id,
+        configuration: { type: "select", key: "country" },
+        onReport: true
+      });
+
+      await models.Variable.create({
+        project_id: project.id,
+        name: "country"
+      });
+
+      await models.ProjectRole.create({
+        user_id: collaborator.id,
+        project_id: project.id,
+        role: "admin"
+      });
+
       const token = generateTestToken({
         id: user.id,
         email: user.email,
@@ -329,11 +347,21 @@ describe("User Management API", () => {
       const deletedTeam = await models.Team.findByPk(team.id);
       const pinnedCount = await models.PinnedDashboard.count({ where: { team_id: team.id } });
       const savedQueryCount = await models.SavedQuery.count({ where: { team_id: team.id } });
+      const dashboardFilterCount = await models.DashboardFilter.count({
+        where: { project_id: project.id }
+      });
+      const variableCount = await models.Variable.count({ where: { project_id: project.id } });
+      const projectRoleCount = await models.ProjectRole.count({
+        where: { project_id: project.id }
+      });
 
       expect(deletedUser).toBeNull();
       expect(deletedTeam).toBeNull();
       expect(pinnedCount).toBe(0);
       expect(savedQueryCount).toBe(0);
+      expect(dashboardFilterCount).toBe(0);
+      expect(variableCount).toBe(0);
+      expect(projectRoleCount).toBe(0);
     });
 
     it("should keep restrictive foreign key coverage explicit for user/team deletion", async () => {
@@ -353,6 +381,7 @@ describe("User Management API", () => {
         "aiusage",
         "apikey",
         "connection",
+        "dashboardfilter",
         "dataset",
         "integration",
         "oauth",
@@ -361,11 +390,13 @@ describe("User Management API", () => {
         "savedquery",
         "teaminvitation",
         "teamrole",
-        "template"
+        "template",
+        "variable"
       ]);
 
       const restrictiveUserRefs = await getRestrictiveForeignKeyTables(models, "User");
       const restrictiveTeamRefs = await getRestrictiveForeignKeyTables(models, "Team");
+      const restrictiveProjectRefs = await getRestrictiveForeignKeyTables(models, "Project");
 
       const uncoveredUserRefs = restrictiveUserRefs.filter((ref) => {
         return !handledUserTables.has(String(ref.tableName).toLowerCase());
@@ -375,8 +406,21 @@ describe("User Management API", () => {
         return !handledTeamTables.has(String(ref.tableName).toLowerCase());
       });
 
+      const handledProjectTables = new Set([
+        "chart",
+        "dashboardfilter",
+        "pinneddashboard",
+        "projectrole",
+        "variable"
+      ]);
+
+      const uncoveredProjectRefs = restrictiveProjectRefs.filter((ref) => {
+        return !handledProjectTables.has(String(ref.tableName).toLowerCase());
+      });
+
       expect(uncoveredUserRefs).toEqual([]);
       expect(uncoveredTeamRefs).toEqual([]);
+      expect(uncoveredProjectRefs).toEqual([]);
     });
   });
 

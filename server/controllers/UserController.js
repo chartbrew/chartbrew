@@ -175,10 +175,24 @@ class UserController {
 
         const projectIds = projects.map((project) => project.id);
         if (projectIds.length > 0) {
-          await db.Chart.destroy({
-            where: { "project_id": { [Op.in]: projectIds } },
-            transaction
-          });
+          await Promise.all([
+            db.Variable.destroy({
+              where: { "project_id": { [Op.in]: projectIds } },
+              transaction
+            }),
+            db.DashboardFilter.destroy({
+              where: { "project_id": { [Op.in]: projectIds } },
+              transaction
+            }),
+            db.ProjectRole.destroy({
+              where: { "project_id": { [Op.in]: projectIds } },
+              transaction
+            }),
+            db.Chart.destroy({
+              where: { "project_id": { [Op.in]: projectIds } },
+              transaction
+            })
+          ]);
         }
 
         await cleanupConversations({ team_id: teamId });
