@@ -6,17 +6,34 @@ const { Worker } = require("bullmq");
 
 const db = require("../models/models");
 
+const CHART_WORKER_LOCK_DURATION_MS = parseInt(
+  process.env.CB_QUEUE_LOCK_DURATION_MS,
+  10
+) || 900000;
+const CHART_WORKER_LOCK_RENEW_TIME_MS = parseInt(
+  process.env.CB_QUEUE_LOCK_RENEW_TIME_MS,
+  10
+) || 60000;
+
+function buildJobId(entity, id) {
+  return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+}
+
 async function addChartsToQueue(charts, queue) {
   const addJobPromises = charts.map(async (chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
-    const jobId = `chart_${chartToUpdate.id}`;
-    await queue.add("updateChart", chartToUpdate, { jobId });
+    await queue.add("updateChart", chartToUpdate, {
+      jobId: buildJobId("chart", chartToUpdate.id),
+      deduplication: {
+        id: `chart_${chartToUpdate.id}`,
+      },
+    });
   });
 
   await Promise.all(addJobPromises);
 }
 
-function updateCharts(queue) {
+async function updateCharts(queue) {
   const conditions = {
     where: {
       autoUpdate: { [Op.gt]: 0 },
@@ -26,42 +43,17 @@ function updateCharts(queue) {
     include: [{ model: db.ChartDatasetConfig }],
   };
 
-  return db.Chart.findAll(conditions)
-    .then((charts) => {
-      if (!charts || charts.length === 0) {
-        return new Promise((resolve) => resolve({ completed: true }));
-      }
-
-      const filteredCharts = charts.filter((chart) => moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment()));
-
-      addChartsToQueue(filteredCharts, queue);
-
-      return { completed: true };
-    })
-    .catch((error) => {
-      return new Promise((resolve, reject) => reject(error));
-    });
-}
-
-async function checkActiveJobs(updateChartsQueue) {
-  try {
-    const activeJobs = await updateChartsQueue.getJobs(["active"]);
-
-    const jobPromises = activeJobs.map(async (job) => {
-      const jobTimestamp = moment(job.timestamp);
-      const currentTime = moment();
-      const duration = moment.duration(currentTime.diff(jobTimestamp));
-      const minutes = duration.asMinutes();
-      if (minutes > 5) {
-        await job.moveToFailed({ message: "Job manually failed due to being stuck" });
-        await job.remove();
-      }
-    });
-
-    await Promise.all(jobPromises);
-  } catch (err) {
-    //
+  const charts = await db.Chart.findAll(conditions);
+  if (!charts || charts.length === 0) {
+    return;
   }
+
+  const filteredCharts = charts.filter((chart) => moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment()));
+  if (filteredCharts.length === 0) {
+    return;
+  }
+
+  await addChartsToQueue(filteredCharts, queue);
 }
 
 function createWorker(queue) {
@@ -69,21 +61,43 @@ function createWorker(queue) {
     const updateChartPath = path.join(__dirname, "workers", "updateChart.js");
     const updateChart = require(updateChartPath); // eslint-disable-line
     await updateChart(job);
-  }, { connection: queue.opts.connection, concurrency: 5 });
+  }, {
+    connection: queue.opts.connection,
+    concurrency: 5,
+    lockDuration: CHART_WORKER_LOCK_DURATION_MS,
+    lockRenewTime: Math.min(
+      CHART_WORKER_LOCK_RENEW_TIME_MS,
+      Math.floor(CHART_WORKER_LOCK_DURATION_MS / 2)
+    ),
+  });
 }
 
 module.exports = (queue) => {
-  createWorker(queue);
+  const worker = createWorker(queue);
+  let isTickRunning = false;
+
+  const runTick = async () => {
+    if (isTickRunning) {
+      return;
+    }
+
+    isTickRunning = true;
+    try {
+      await updateCharts(queue);
+    } catch (error) {
+      console.error(`Error updating charts: ${error.message}`); // eslint-disable-line
+    } finally {
+      isTickRunning = false;
+    }
+  };
 
   // run once initially to cover for server downtime
-  updateCharts(queue);
-  checkActiveJobs(queue);
+  runTick();
 
   // now run the cron job
   cron.schedule("*/1 * * * *", () => {
-    updateCharts(queue);
-    checkActiveJobs(queue);
+    runTick();
   });
 
-  return true;
+  return worker;
 };

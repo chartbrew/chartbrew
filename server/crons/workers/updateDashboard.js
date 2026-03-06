@@ -6,6 +6,34 @@ const db = require("../../models/models");
 const { checkChartForAlerts } = require("../../modules/alerts/checkAlerts");
 
 const chartController = new ChartController();
+const DASHBOARD_CHART_UPDATE_CONCURRENCY = parseInt(
+  process.env.CB_DASHBOARD_CHART_UPDATE_CONCURRENCY,
+  10
+) || 3;
+
+async function runWithConcurrency(items, workerFn, concurrency) {
+  if (!items || items.length === 0) {
+    return;
+  }
+
+  const maxConcurrency = Math.max(1, Math.min(concurrency, items.length));
+  let nextIndex = 0;
+
+  const processNext = async () => {
+    if (nextIndex >= items.length) {
+      return;
+    }
+
+    const currentIndex = nextIndex;
+    nextIndex += 1;
+    await workerFn(items[currentIndex]);
+    await processNext();
+  };
+
+  const runners = Array.from({ length: maxConcurrency }, async () => processNext());
+
+  await Promise.all(runners);
+}
 
 async function updateChart(chart) {
   try {
@@ -25,7 +53,7 @@ module.exports = async (job) => {
       attributes: ["id"],
     });
 
-    await Promise.all(charts.map(updateChart));
+    await runWithConcurrency(charts, updateChart, DASHBOARD_CHART_UPDATE_CONCURRENCY);
 
     await db.Project.update(
       { lastUpdatedAt: DateTime.now().toJSDate() },

@@ -1,4 +1,4 @@
-const { Queue, Worker } = require("bullmq");
+const { Queue, Worker, QueueEvents } = require("bullmq");
 const { createBullBoard } = require("@bull-board/api");
 const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
@@ -9,21 +9,25 @@ const updateDashboards = require("./crons/updateDashboards");
 const sendSnapshots = require("./crons/sendSnapshots");
 // const updateSnapshots = require("./crons/updateSnapshots");
 
-async function cleanActiveJobs(queue) {
-  try {
-    const activeJobs = await queue.getJobs(["active"]);
+const WORKER_LOCK_DURATION_MS = parseInt(process.env.CB_QUEUE_LOCK_DURATION_MS, 10) || 900000;
+const WORKER_LOCK_RENEW_TIME_MS = parseInt(process.env.CB_QUEUE_LOCK_RENEW_TIME_MS, 10) || 60000;
+const EFFECTIVE_WORKER_LOCK_RENEW_TIME_MS = Math.min(
+  WORKER_LOCK_RENEW_TIME_MS,
+  Math.floor(WORKER_LOCK_DURATION_MS / 2)
+);
+const isQueueDebugEnabled = /^(1|true|yes|on)$/i.test(`${process.env.CB_QUEUE_DEBUG || ""}`);
 
-    const jobPromises = activeJobs.map(async (job) => {
-      await job.moveToFailed({ message: "Job manually failed due to server restart" });
-      await job.remove();
-    });
-
-    await Promise.all(jobPromises);
-
-    console.log(`Cleaned ${activeJobs.length} active jobs.`); // eslint-disable-line
-  } catch (err) {
-    console.error(`Failed to clean active jobs: ${err.message}`); // eslint-disable-line
+function debugQueueLog(queueName, eventName, payload = null) {
+  if (!isQueueDebugEnabled) {
+    return;
   }
+
+  if (payload) {
+    console.log(`[queue:${queueName}] ${eventName}`, payload); // eslint-disable-line no-console
+    return;
+  }
+
+  console.log(`[queue:${queueName}] ${eventName}`); // eslint-disable-line no-console
 }
 
 let updateChartsQueue;
@@ -31,12 +35,21 @@ let updateDashboardsQueue;
 let updateMongoDBSchemaQueue;
 
 const setUpQueues = (app) => {
+  const queuesToClose = [];
+  const workersToClose = [];
+  const queueEventsToClose = [];
+
+  if (isQueueDebugEnabled) {
+    console.log("[setUpQueues] queue debug logging is ENABLED"); // eslint-disable-line no-console
+  }
+
   // set up bullmq queues
 
   /*
   ** Update Charts Queue
   */
   updateChartsQueue = new Queue("updateChartsQueue", getQueueOptions());
+  queuesToClose.push(updateChartsQueue);
   updateChartsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -48,6 +61,7 @@ const setUpQueues = (app) => {
   ** Update Dashboards Queue
   */
   updateDashboardsQueue = new Queue("updateDashboardsQueue", getQueueOptions());
+  queuesToClose.push(updateDashboardsQueue);
   updateDashboardsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -55,10 +69,40 @@ const setUpQueues = (app) => {
     }
   });
 
+  const updateDashboardsQueueEvents = new QueueEvents(updateDashboardsQueue.name, {
+    connection: updateDashboardsQueue.opts.connection,
+  });
+  queueEventsToClose.push(updateDashboardsQueueEvents);
+
+  if (isQueueDebugEnabled) {
+    updateDashboardsQueueEvents.on("waiting", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "waiting", event);
+    });
+    updateDashboardsQueueEvents.on("active", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "active", event);
+    });
+    updateDashboardsQueueEvents.on("completed", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "completed", event);
+    });
+    updateDashboardsQueueEvents.on("failed", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "failed", event);
+    });
+    updateDashboardsQueueEvents.on("stalled", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "stalled", event);
+    });
+    updateDashboardsQueueEvents.on("deduplicated", (event) => {
+      debugQueueLog(updateDashboardsQueue.name, "deduplicated", event);
+    });
+    updateDashboardsQueueEvents.on("error", (error) => {
+      debugQueueLog(updateDashboardsQueue.name, "error", { message: error.message });
+    });
+  }
+
   /*
   ** Update MongoDB Schema Queue
   */
   updateMongoDBSchemaQueue = new Queue("updateMongoDBSchemaQueue", getQueueOptions());
+  queuesToClose.push(updateMongoDBSchemaQueue);
   updateMongoDBSchemaQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the MongoDB schema update queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -69,12 +113,19 @@ const setUpQueues = (app) => {
   const updateMongoDBSchemaWorker = new Worker(updateMongoDBSchemaQueue.name, async (job) => { // eslint-disable-line
     const updateMongoDBSchema = require("./crons/workers/updateMongoSchema"); // eslint-disable-line
     await updateMongoDBSchema(job);
-  }, { connection: updateMongoDBSchemaQueue.opts.connection, concurrency: 1 });
+  }, {
+    connection: updateMongoDBSchemaQueue.opts.connection,
+    concurrency: 1,
+    lockDuration: WORKER_LOCK_DURATION_MS,
+    lockRenewTime: EFFECTIVE_WORKER_LOCK_RENEW_TIME_MS,
+  });
+  workersToClose.push(updateMongoDBSchemaWorker);
 
   /*
   ** Dashboard Snapshot Queue
   */
   const dashboardSnapshotQueue = new Queue("sendSnapshotsQueue", getQueueOptions());
+  queuesToClose.push(dashboardSnapshotQueue);
   dashboardSnapshotQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the dashboard snapshot queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -85,12 +136,19 @@ const setUpQueues = (app) => {
   const sendSnapshotWorker = new Worker(dashboardSnapshotQueue.name, async (job) => { // eslint-disable-line
     const sendSnapshot = require("./crons/workers/sendSnapshot"); // eslint-disable-line
     await sendSnapshot(job);
-  }, { connection: dashboardSnapshotQueue.opts.connection, concurrency: 1 });
+  }, {
+    connection: dashboardSnapshotQueue.opts.connection,
+    concurrency: 1,
+    lockDuration: WORKER_LOCK_DURATION_MS,
+    lockRenewTime: EFFECTIVE_WORKER_LOCK_RENEW_TIME_MS,
+  });
+  workersToClose.push(sendSnapshotWorker);
 
   /*
   ** Update Snapshots Queue
   */
   const updateSnapshotsQueue = new Queue("updateSnapshotsQueue", getQueueOptions());
+  queuesToClose.push(updateSnapshotsQueue);
   updateSnapshotsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
       console.error("Failed to set up the update snapshots queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
@@ -101,7 +159,13 @@ const setUpQueues = (app) => {
   const takeSnapshotWorker = new Worker(updateSnapshotsQueue.name, async (job) => { // eslint-disable-line
     const takeSnapshot = require("./crons/workers/takeSnapshot"); // eslint-disable-line
     await takeSnapshot(job);
-  }, { connection: updateSnapshotsQueue.opts.connection, concurrency: 10 });
+  }, {
+    connection: updateSnapshotsQueue.opts.connection,
+    concurrency: 10,
+    lockDuration: WORKER_LOCK_DURATION_MS,
+    lockRenewTime: EFFECTIVE_WORKER_LOCK_RENEW_TIME_MS,
+  });
+  workersToClose.push(takeSnapshotWorker);
 
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/apps/queues");
@@ -128,37 +192,53 @@ const setUpQueues = (app) => {
   }, serverAdapter.getRouter());
 
   // set up cron jobs
-  updateCharts(updateChartsQueue);
-  updateDashboards(updateDashboardsQueue);
+  const updateChartsWorker = updateCharts(updateChartsQueue);
+  const updateDashboardsWorker = updateDashboards(updateDashboardsQueue);
+  workersToClose.push(updateChartsWorker, updateDashboardsWorker);
   sendSnapshots(dashboardSnapshotQueue);
 
   // Uncomment this to enable regular snapshot updates
-  // updateSnapshots(updateSnapshotsQueue, takeSnapshotWorker);
+  // updateSnapshots(updateSnapshotsQueue);
 
-  // Handle PM2 shutdown/reload
-  process.on("SIGINT", async () => {
-    console.log("SIGINT received. Cleaning active jobs..."); // eslint-disable-line
-    await cleanActiveJobs(updateChartsQueue);
-    await cleanActiveJobs(updateDashboardsQueue);
-    await cleanActiveJobs(updateMongoDBSchemaQueue);
-    process.exit(0);
-  });
+  let isShuttingDown = false;
+  const closeQueuesAndWorkers = async (signal) => {
+    if (isShuttingDown) {
+      return;
+    }
 
-  process.on("SIGTERM", async () => {
-    console.log("SIGTERM received. Cleaning active jobs..."); // eslint-disable-line
-    await cleanActiveJobs(updateChartsQueue);
-    await cleanActiveJobs(updateDashboardsQueue);
-    await cleanActiveJobs(updateMongoDBSchemaQueue);
-    process.exit(0);
-  });
+    isShuttingDown = true;
+    console.log(`${signal} received. Closing BullMQ workers and queues...`); // eslint-disable-line
 
-  // Handle Nodemon reload
-  process.on("SIGUSR2", async () => {
-    console.log("SIGUSR2 received. Cleaning active jobs..."); // eslint-disable-line
-    await cleanActiveJobs(updateChartsQueue);
-    await cleanActiveJobs(updateDashboardsQueue);
-    await cleanActiveJobs(updateMongoDBSchemaQueue);
+    const workerResults = await Promise.allSettled(workersToClose.map((worker) => worker.close()));
+    workerResults
+      .filter((result) => result.status === "rejected")
+      .forEach((result) => {
+        console.error(`Failed to close worker: ${result.reason?.message || result.reason}`); // eslint-disable-line
+      });
+
+    const queueResults = await Promise.allSettled(queuesToClose.map((queue) => queue.close()));
+    queueResults
+      .filter((result) => result.status === "rejected")
+      .forEach((result) => {
+        console.error(`Failed to close queue: ${result.reason?.message || result.reason}`); // eslint-disable-line
+      });
+
+    const queueEventResults = await Promise.allSettled(
+      queueEventsToClose.map((queueEvents) => queueEvents.close())
+    );
+    queueEventResults
+      .filter((result) => result.status === "rejected")
+      .forEach((result) => {
+        console.error(`Failed to close queue events: ${result.reason?.message || result.reason}`); // eslint-disable-line
+      });
+
     process.exit(0);
+  };
+
+  ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) => {
+    process.on(signal, () => {
+      closeQueuesAndWorkers(signal);
+    });
   });
 };
 

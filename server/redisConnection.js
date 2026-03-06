@@ -24,6 +24,15 @@ const getRedisOptions = () => {
   }
 };
 
+const parsePositiveInt = (value, fallback) => {
+  const parsedValue = parseInt(value, 10);
+  if (Number.isNaN(parsedValue) || parsedValue <= 0) {
+    return fallback;
+  }
+
+  return parsedValue;
+};
+
 const getRedisClusterOptions = () => {
   const clusterNodes = process.env.NODE_ENV === "production"
     ? process.env.CB_REDIS_CLUSTER_NODES
@@ -62,6 +71,19 @@ const getRedisClusterOptions = () => {
 const getQueueOptions = () => {
   // Check if cluster configuration is available
   const clusterConfig = getRedisClusterOptions();
+  const removeOnCompleteAge = parsePositiveInt(
+    process.env.CB_QUEUE_KEEP_COMPLETE_AGE_SECONDS,
+    86400
+  );
+  const removeOnCompleteCount = parsePositiveInt(
+    process.env.CB_QUEUE_KEEP_COMPLETE_COUNT,
+    1000
+  );
+  const removeOnFailAge = parsePositiveInt(
+    process.env.CB_QUEUE_KEEP_FAIL_AGE_SECONDS,
+    604800
+  );
+  const removeOnFailCount = parsePositiveInt(process.env.CB_QUEUE_KEEP_FAIL_COUNT, 5000);
 
   return {
     connection: clusterConfig || getRedisOptions(),
@@ -71,8 +93,14 @@ const getQueueOptions = () => {
         type: "fixed",
         delay: 5000
       },
-      removeOnComplete: true,
-      removeOnFail: true,
+      removeOnComplete: {
+        age: removeOnCompleteAge,
+        count: removeOnCompleteCount,
+      },
+      removeOnFail: {
+        age: removeOnFailAge,
+        count: removeOnFailCount,
+      },
     },
     settings: {
       stalledInterval: 30000,

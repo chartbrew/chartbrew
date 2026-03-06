@@ -1,12 +1,18 @@
 const cron = require("node-cron");
-const { DateTime } = require("luxon");
 
 const db = require("../models/models");
 
-async function addSnapshotToQueue(queue, project) {
-  const jobId = `update_snapshot_${project.id}`;
+function buildJobId(entity, id) {
+  return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+}
 
-  await queue.add("takeSnapshot", project, { jobId });
+async function addSnapshotToQueue(queue, project) {
+  await queue.add("takeSnapshot", project, {
+    jobId: buildJobId("update_snapshot", project.id),
+    deduplication: {
+      id: `update_snapshot_${project.id}`,
+    },
+  });
 }
 
 async function updateSnapshots(queue) {
@@ -44,31 +50,26 @@ async function updateSnapshots(queue) {
   }
 }
 
-async function checkActiveJobs(worker) {
-  try {
-    const activeJobs = await worker.getJobs(["active"]);
+module.exports = (queue) => {
+  let isTickRunning = false;
 
-    const jobPromises = activeJobs.map(async (job) => {
-      const jobTimestamp = DateTime.fromMillis(job.timestamp);
-      const currentTime = DateTime.now();
-      const duration = currentTime.diff(jobTimestamp);
-      const minutes = duration.as("minutes");
-      if (minutes > 5) {
-        await job.moveToFailed({ message: "Job manually failed due to being stuck" });
-        await job.remove();
-      }
-    });
+  const runTick = async () => {
+    if (isTickRunning) {
+      return;
+    }
 
-    await Promise.all(jobPromises);
-  } catch (err) {
-    //
-  }
-}
+    isTickRunning = true;
+    try {
+      await updateSnapshots(queue);
+    } finally {
+      isTickRunning = false;
+    }
+  };
 
-module.exports = (queue, worker) => {
-  checkActiveJobs(worker);
+  runTick();
+
   // Run at 2 AM every day
   cron.schedule("0 2 * * *", () => {
-    updateSnapshots(queue);
+    runTick();
   });
 };

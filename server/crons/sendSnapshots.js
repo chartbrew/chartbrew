@@ -4,13 +4,17 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 
+function buildJobId(entity, id) {
+  return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+}
+
 async function addSnapshotToQueue(queue, projectId) {
-  const jobId = `snapshot_${projectId}`;
-  const existingJob = await queue.getJob(jobId);
-  if (existingJob) {
-    return false;
-  }
-  await queue.add("sendSnapshot", { id: projectId }, { jobId });
+  await queue.add("sendSnapshot", { id: projectId }, {
+    jobId: buildJobId("snapshot", projectId),
+    deduplication: {
+      id: `snapshot_${projectId}`,
+    },
+  });
   return true;
 }
 
@@ -113,9 +117,24 @@ async function checkSnapshots(queue) {
 }
 
 module.exports = (queue) => {
-  checkSnapshots(queue);
+  let isTickRunning = false;
+
+  const runTick = async () => {
+    if (isTickRunning) {
+      return;
+    }
+
+    isTickRunning = true;
+    try {
+      await checkSnapshots(queue);
+    } finally {
+      isTickRunning = false;
+    }
+  };
+
+  runTick();
 
   cron.schedule("* * * * *", () => {
-    checkSnapshots(queue);
+    runTick();
   });
 };
