@@ -91,87 +91,161 @@ class UserController {
 
   async deleteUser(id) {
     const transaction = await db.sequelize.transaction();
-
-    try {
-      let gTeam;
-
-      // Delete saved queries for the user
-      await db.SavedQuery.destroy({
-        where: { "user_id": id },
+    const cleanupConversations = async (where) => {
+      const conversations = await db.AiConversation.findAll({
+        attributes: ["id"],
+        where,
         transaction
       });
 
-      // Find all team roles for the user
+      if (conversations.length < 1) {
+        return;
+      }
+
+      const conversationIds = conversations.map((conversation) => conversation.id);
+
+      await Promise.all([
+        db.AiMessage.destroy({
+          where: { conversation_id: { [Op.in]: conversationIds } },
+          transaction
+        }),
+        db.AiUsage.update(
+          { conversation_id: null },
+          {
+            where: { conversation_id: { [Op.in]: conversationIds } },
+            transaction
+          }
+        )
+      ]);
+
+      await db.AiConversation.destroy({
+        where: { id: { [Op.in]: conversationIds } },
+        transaction
+      });
+    };
+
+    try {
+      await cleanupConversations({ user_id: id });
+
+      await Promise.all([
+        db.SavedQuery.destroy({
+          where: { "user_id": id },
+          transaction
+        }),
+        db.ChartCache.destroy({
+          where: { "user_id": id },
+          transaction
+        }),
+        db.User2fa.destroy({
+          where: { "user_id": id },
+          transaction
+        }),
+        db.PinnedDashboard.destroy({
+          where: { "user_id": id },
+          transaction
+        }),
+        db.ProjectRole.destroy({
+          where: { "user_id": id },
+          transaction
+        }),
+        db.TeamInvitation.destroy({
+          where: { "user_id": id },
+          transaction
+        })
+      ]);
+
       const teamRoles = await db.TeamRole.findAll({
         where: { "user_id": id },
         transaction
       });
+      const ownedTeamIds = [...new Set(
+        teamRoles
+          .filter((teamRole) => teamRole.role === "teamOwner")
+          .map((teamRole) => teamRole.team_id)
+      )];
 
-      // Process team roles and identify teams to delete
-      if (teamRoles.length > 0) {
-        const teamDeletions = [];
-        const roleDeletions = [];
-
-        teamRoles.forEach((teamRole) => {
-          if (teamRole.role === "teamOwner") {
-            gTeam = teamRole.team_id;
-            // Batch team deletion
-            teamDeletions.push(
-              db.Team.destroy({
-                where: { "id": teamRole.team_id },
-                transaction
-              })
-            );
-          }
-          // Batch team role deletion
-          roleDeletions.push(
-            db.TeamRole.destroy({
-              where: { "user_id": id },
-              transaction
-            })
-          );
-        });
-
-        // Execute all team and role deletions in parallel
-        await Promise.all([...teamDeletions, ...roleDeletions]);
-      }
-
-      // If user was a team owner, delete all team-related data
-      if (gTeam) {
-        // Find all projects for the team
+      // Keep team cleanup sequential to preserve delete order per team.
+      /* eslint-disable no-await-in-loop */
+      for (const teamId of ownedTeamIds) {
         const projects = await db.Project.findAll({
-          where: { "team_id": gTeam },
+          attributes: ["id"],
+          where: { "team_id": teamId },
           transaction
         });
 
-        // Batch delete all charts for all projects
-        const chartDeletions = projects
-          .map((project) => db.Chart.destroy({
-            where: { "project_id": project.id },
+        const projectIds = projects.map((project) => project.id);
+        if (projectIds.length > 0) {
+          await db.Chart.destroy({
+            where: { "project_id": { [Op.in]: projectIds } },
             transaction
-          }));
+          });
+        }
 
-        // Execute chart deletions first, then team-related entities
-        await Promise.all(chartDeletions);
+        await cleanupConversations({ team_id: teamId });
 
-        // Delete team-related entities
         await Promise.all([
+          db.PinnedDashboard.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.SavedQuery.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.Integration.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.OAuth.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.Template.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.Apikey.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
           db.Project.destroy({
-            where: { "team_id": gTeam },
+            where: { "team_id": teamId },
             transaction
           }),
           db.Dataset.destroy({
-            where: { "team_id": gTeam },
+            where: { "team_id": teamId },
             transaction
           }),
           db.Connection.destroy({
-            where: { "team_id": gTeam },
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.TeamInvitation.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.TeamRole.destroy({
+            where: { "team_id": teamId },
+            transaction
+          }),
+          db.AiUsage.destroy({
+            where: { "team_id": teamId },
             transaction
           })
         ]);
-      }
 
-      // Delete the user
+        await db.Team.destroy({
+          where: { "id": teamId },
+          transaction
+        });
+      }
+      /* eslint-enable no-await-in-loop */
+
+      await db.TeamRole.destroy({
+        where: { "user_id": id },
+        transaction
+      });
+
       await db.User.destroy({
         where: { id },
         transaction
