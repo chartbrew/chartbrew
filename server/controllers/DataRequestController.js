@@ -297,8 +297,13 @@ class RequestController {
               .updateMongoSchema(connection.id);
             schema = updatedConnection?.schema;
           } else if (connection.type === "postgres" || connection.type === "mysql") {
-            const dbConnection = await externalDbConnection(connection);
-            schema = await this.connectionController.getSchema(dbConnection);
+            let dbConnection;
+            try {
+              dbConnection = await externalDbConnection(connection);
+              schema = await this.connectionController.getSchema(dbConnection);
+            } finally {
+              await this.connectionController.closeSqlConnection(dbConnection);
+            }
           } else if (connection.type === "clickhouse") {
             schema = await this.connectionController.getClickhouseSchema(connection.id);
           }

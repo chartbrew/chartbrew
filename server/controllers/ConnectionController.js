@@ -491,6 +491,28 @@ class ConnectionController {
     };
   }
 
+  async closeSqlConnection(sqlDb) {
+    if (!sqlDb) {
+      return;
+    }
+
+    if (typeof sqlDb.close === "function") {
+      try {
+        await sqlDb.close();
+      } catch (error) {
+        // no-op
+      }
+    }
+
+    if (sqlDb.sshTunnel && typeof sqlDb.sshTunnel.close === "function") {
+      try {
+        sqlDb.sshTunnel.close();
+      } catch (error) {
+        // no-op
+      }
+    }
+  }
+
   async testMysql(data) {
     let sqlDb;
     try {
@@ -504,10 +526,7 @@ class ConnectionController {
     } catch (err) {
       return Promise.reject(err.message || err);
     } finally {
-      // Close SSH tunnel if it exists
-      if (sqlDb && sqlDb.sshTunnel) {
-        sqlDb.sshTunnel.close();
-      }
+      await this.closeSqlConnection(sqlDb);
     }
   }
 
@@ -573,6 +592,7 @@ class ConnectionController {
   testConnection(id) {
     let gConnection;
     let mongoConnection;
+    let sqlConnection;
     return db.Connection.findByPk(id)
       .then((connection) => {
         gConnection = connection;
@@ -583,7 +603,11 @@ class ConnectionController {
             return this.testApi(connection, buildApiPolicyContext("connection_test", connection));
           case "postgres":
           case "mysql":
-            return externalDbConnection(connection);
+            return externalDbConnection(connection)
+              .then((dbConnection) => {
+                sqlConnection = dbConnection;
+                return dbConnection;
+              });
           case "realtimedb":
           case "firestore":
             return firebaseConnector.getAuthToken(connection);
@@ -621,20 +645,21 @@ class ConnectionController {
         }
       })
       .then(() => {
-        // close the mongodb connection if it exists
-        if (mongoConnection) {
-          mongoConnection.close();
-        }
-
         return new Promise((resolve) => resolve({ success: true }));
       })
       .catch((err) => {
-        // close the mongodb connection if it exists
+        return new Promise((resolve, reject) => reject(err));
+      })
+      .finally(async () => {
         if (mongoConnection) {
-          mongoConnection.close();
+          try {
+            mongoConnection.close();
+          } catch (error) {
+            // no-op
+          }
         }
 
-        return new Promise((resolve, reject) => reject(err));
+        await this.closeSqlConnection(sqlConnection);
       });
   }
 
@@ -811,12 +836,6 @@ class ConnectionController {
       const connection = await this.findById(id);
       dbConnection = await externalDbConnection(connection);
 
-      // Update schema in the background
-      this.getSchema(dbConnection)
-        .then((schema) => {
-          db.Connection.update({ schema }, { where: { id } });
-        });
-
       // Use the processed query if provided, otherwise use the original query
       const queryToExecute = queryOverride || dataRequest.query;
       const results = await dbConnection
@@ -837,10 +856,7 @@ class ConnectionController {
     } catch (error) {
       return Promise.reject(error);
     } finally {
-      // Close SSH tunnel if it exists
-      if (dbConnection && dbConnection.sshTunnel) {
-        dbConnection.sshTunnel.close();
-      }
+      await this.closeSqlConnection(dbConnection);
     }
   }
 

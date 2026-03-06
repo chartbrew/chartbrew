@@ -24,6 +24,28 @@ const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
+async function closeExternalSqlConnection(sqlConnection) {
+  if (!sqlConnection) {
+    return;
+  }
+
+  if (typeof sqlConnection.close === "function") {
+    try {
+      await sqlConnection.close();
+    } catch (error) {
+      // no-op
+    }
+  }
+
+  if (sqlConnection.sshTunnel && typeof sqlConnection.sshTunnel.close === "function") {
+    try {
+      sqlConnection.sshTunnel.close();
+    } catch (error) {
+      // no-op
+    }
+  }
+}
+
 class ChartController {
   constructor() {
     this.connectionController = new ConnectionController();
@@ -512,23 +534,19 @@ class ChartController {
       });
   }
 
-  runPostgresQuery(chart) {
-    return this.connectionController.findById(chart.connection_id)
-      .then((connection) => {
-        return externalDbConnection(connection);
-      })
-      .then((db) => {
-        return db.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
-      })
-      .then((results) => {
-        return this.getChartData(chart.id, results);
-      })
-      .then(() => {
-        return this.findById(chart.id);
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async runPostgresQuery(chart) {
+    let sqlConnection;
+    try {
+      const connection = await this.connectionController.findById(chart.connection_id);
+      sqlConnection = await externalDbConnection(connection);
+      const results = await sqlConnection.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
+      await this.getChartData(chart.id, results);
+      return this.findById(chart.id);
+    } catch (error) {
+      return new Promise((resolve, reject) => reject(error));
+    } finally {
+      await closeExternalSqlConnection(sqlConnection);
+    }
   }
 
   runRequest(chart) {
@@ -644,17 +662,17 @@ class ChartController {
       });
   }
 
-  getPostgresData(chart, projectId, connection) {
-    return externalDbConnection(connection)
-      .then((db) => {
-        return db.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
-      })
-      .then((results) => {
-        return new Promise((resolve) => resolve(results));
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async getPostgresData(chart, projectId, connection) {
+    let sqlConnection;
+    try {
+      sqlConnection = await externalDbConnection(connection);
+      const results = await sqlConnection.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
+      return new Promise((resolve) => resolve(results));
+    } catch (error) {
+      return new Promise((resolve, reject) => reject(error));
+    } finally {
+      await closeExternalSqlConnection(sqlConnection);
+    }
   }
 
   getPreviewData(chart, projectId, user, noSource) {
