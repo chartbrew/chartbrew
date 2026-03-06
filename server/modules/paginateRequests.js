@@ -1,21 +1,37 @@
 const _ = require("lodash");
 const safeRequest = require("./safeRequest");
 
+function parseResponseBody(response) {
+  if (_.isObject(response.body)) return response.body;
+  return JSON.parse(response.body);
+}
+
+function extractArrayResults(parsedResponse) {
+  if (parsedResponse instanceof Array) {
+    return parsedResponse;
+  }
+
+  if (!parsedResponse || typeof parsedResponse !== "object") {
+    return [];
+  }
+
+  let results = [];
+  Object.keys(parsedResponse).forEach((key) => {
+    if (parsedResponse[key] instanceof Array) {
+      results = parsedResponse[key];
+    }
+  });
+
+  return results;
+}
+
 function PaginateRequests(options, limit, items, offset, policyContext, totalResults = []) {
   return safeRequest(options, policyContext)
     .then((response) => {
       let results;
       try {
-        const parsedResponse = JSON.parse(response.body);
-        if (parsedResponse instanceof Array) {
-          results = parsedResponse;
-        } else {
-          Object.keys(parsedResponse).forEach((key) => {
-            if (parsedResponse[key] instanceof Array) {
-              results = parsedResponse[key];
-            }
-          });
-        }
+        const parsedResponse = parseResponseBody(response);
+        results = extractArrayResults(parsedResponse);
       } catch (error) {
         return new Promise((resolve, reject) => reject(response.statusCode));
       }
@@ -57,16 +73,8 @@ function PaginatePages(options, limit, offset, policyContext, totalResults = [])
     .then((response) => {
       let results;
       try {
-        const parsedResponse = JSON.parse(response.body);
-        if (parsedResponse instanceof Array) {
-          results = parsedResponse;
-        } else {
-          Object.keys(parsedResponse).forEach((key) => {
-            if (parsedResponse[key] instanceof Array) {
-              results = parsedResponse[key];
-            }
-          });
-        }
+        const parsedResponse = parseResponseBody(response);
+        results = extractArrayResults(parsedResponse);
       } catch (error) {
         return new Promise((resolve, reject) => reject(response.statusCode));
       }
