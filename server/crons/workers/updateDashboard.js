@@ -6,10 +6,19 @@ const db = require("../../models/models");
 const { checkChartForAlerts } = require("../../modules/alerts/checkAlerts");
 
 const chartController = new ChartController();
-const DASHBOARD_CHART_UPDATE_CONCURRENCY = parseInt(
+function parsePositiveInt(value, fallback) {
+  const parsedValue = parseInt(value, 10);
+  if (Number.isNaN(parsedValue) || parsedValue <= 0) {
+    return fallback;
+  }
+
+  return parsedValue;
+}
+
+const DASHBOARD_CHART_UPDATE_CONCURRENCY = parsePositiveInt(
   process.env.CB_DASHBOARD_CHART_UPDATE_CONCURRENCY,
-  10
-) || 3;
+  2
+);
 
 async function runWithConcurrency(items, workerFn, concurrency) {
   if (!items || items.length === 0) {

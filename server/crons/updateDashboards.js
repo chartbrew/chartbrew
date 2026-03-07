@@ -6,14 +6,35 @@ const path = require("path");
 
 const db = require("../models/models");
 
-const DASHBOARD_WORKER_LOCK_DURATION_MS = parseInt(
-  process.env.CB_QUEUE_LOCK_DURATION_MS,
-  10
-) || 900000;
-const DASHBOARD_WORKER_LOCK_RENEW_TIME_MS = parseInt(
-  process.env.CB_QUEUE_LOCK_RENEW_TIME_MS,
-  10
-) || 60000;
+function parsePositiveInt(value, fallback) {
+  const parsedValue = parseInt(value, 10);
+  if (Number.isNaN(parsedValue) || parsedValue <= 0) {
+    return fallback;
+  }
+
+  return parsedValue;
+}
+
+const BASE_DASHBOARD_WORKER_LOCK_DURATION_MS = parsePositiveInt(
+  process.env.CB_DASHBOARD_QUEUE_LOCK_DURATION_MS,
+  parsePositiveInt(process.env.CB_QUEUE_LOCK_DURATION_MS, 900000)
+);
+const DASHBOARD_WORKER_LOCK_DURATION_MS = Math.max(BASE_DASHBOARD_WORKER_LOCK_DURATION_MS, 300000);
+const BASE_DASHBOARD_WORKER_LOCK_RENEW_TIME_MS = parsePositiveInt(
+  process.env.CB_DASHBOARD_QUEUE_LOCK_RENEW_TIME_MS,
+  parsePositiveInt(process.env.CB_QUEUE_LOCK_RENEW_TIME_MS, 60000)
+);
+const DASHBOARD_WORKER_LOCK_RENEW_TIME_MS = Math.max(
+  10000,
+  Math.min(
+    BASE_DASHBOARD_WORKER_LOCK_RENEW_TIME_MS,
+    Math.floor(DASHBOARD_WORKER_LOCK_DURATION_MS / 2)
+  )
+);
+const DASHBOARD_WORKER_CONCURRENCY = Math.max(
+  1,
+  parsePositiveInt(process.env.CB_DASHBOARD_WORKER_CONCURRENCY, 2)
+);
 const isQueueDebugEnabled = /^(1|true|yes|on)$/i.test(`${process.env.CB_QUEUE_DEBUG || ""}`);
 
 function debugLog(message, details = null) {
@@ -187,18 +208,21 @@ async function updateDashboards(queue) {
 }
 
 function createWorker(queue) {
+  debugLog("worker config", {
+    concurrency: DASHBOARD_WORKER_CONCURRENCY,
+    lockDurationMs: DASHBOARD_WORKER_LOCK_DURATION_MS,
+    lockRenewTimeMs: DASHBOARD_WORKER_LOCK_RENEW_TIME_MS,
+  });
+
   return new Worker(queue.name, async (job) => {
     const updateDashboardPath = path.join(__dirname, "workers", "updateDashboard.js");
     const updateDashboard = require(updateDashboardPath); // eslint-disable-line
     await updateDashboard(job);
   }, {
     connection: queue.opts.connection,
-    concurrency: 5,
+    concurrency: DASHBOARD_WORKER_CONCURRENCY,
     lockDuration: DASHBOARD_WORKER_LOCK_DURATION_MS,
-    lockRenewTime: Math.min(
-      DASHBOARD_WORKER_LOCK_RENEW_TIME_MS,
-      Math.floor(DASHBOARD_WORKER_LOCK_DURATION_MS / 2)
-    ),
+    lockRenewTime: DASHBOARD_WORKER_LOCK_RENEW_TIME_MS,
   });
 }
 
