@@ -28,6 +28,14 @@ const updateMongoSchema = require("../crons/workers/updateMongoSchema");
 const ClickhouseConnector = require("../modules/clickhouse/clickhouseConnector");
 const { applyApiVariables, applyVariables } = require("../modules/applyVariables");
 const validateMongoQuery = require("../modules/validateMongoQuery");
+const {
+  completeRun,
+  failRun,
+  finishEvent,
+  getItemCount,
+  sanitizeSnippet,
+  serializeResponsePreview,
+} = require("../modules/updateAudit");
 
 const getMomentObj = (timezone) => {
   if (timezone) {
@@ -109,6 +117,56 @@ function isArrayPresent(responseData) {
   });
 
   return arrayFound;
+}
+
+async function completeConnectorAudit(auditContext, payload = {}, summary = null) {
+  if (!auditContext?.traceContext) {
+    return;
+  }
+
+  const finalPayload = {
+    ...(auditContext.requestMetadata || {}),
+    ...payload,
+  };
+
+  if (auditContext.requestEvent) {
+    await finishEvent(auditContext.traceContext, auditContext.requestEvent, "success", finalPayload);
+  }
+
+  await completeRun(auditContext.traceContext, {
+    status: "success",
+    payload: finalPayload,
+    summary: summary || finalPayload,
+  });
+}
+
+async function failConnectorAudit(auditContext, error, stage = "connection", payload = {}) {
+  if (!auditContext?.traceContext) {
+    return;
+  }
+
+  const wrappedError = error instanceof Error ? error : new Error(String(error));
+  wrappedError.auditStage = wrappedError.auditStage || stage;
+
+  const finalPayload = {
+    ...(auditContext.requestMetadata || {}),
+    ...payload,
+  };
+
+  if (auditContext.requestEvent) {
+    await finishEvent(auditContext.traceContext, auditContext.requestEvent, "failed", {
+      ...finalPayload,
+      errorMessage: wrappedError.message,
+    });
+  }
+
+  await failRun(auditContext.traceContext, wrappedError, {
+    stage: wrappedError.auditStage || stage,
+    payload: finalPayload,
+    summary: finalPayload,
+  });
+
+  wrappedError.auditLogged = true;
 }
 
 // Recursively convert MongoDB ObjectId instances into hex string values
@@ -440,7 +498,9 @@ class ConnectionController {
       })
       .then((collections) => {
         // Close the connection
-        mongoConnection.close();
+        if (mongoConnection) {
+          mongoConnection.close();
+        }
 
         return Promise.resolve({
           success: true,
@@ -449,7 +509,9 @@ class ConnectionController {
       })
       .catch((err) => {
         // Close the connection
-        mongoConnection.close();
+        if (mongoConnection) {
+          mongoConnection.close();
+        }
 
         return Promise.reject(err.message || err);
       });
@@ -745,10 +807,17 @@ class ConnectionController {
       });
   }
 
-  async runMongo(id, dataRequest, getCache, queryOverride = null) {
+  async runMongo(id, dataRequest, getCache, queryOverride = null, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "mongodb",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     let mongoConnection;
@@ -804,6 +873,12 @@ class ConnectionController {
 
         await drCacheController.create(dataRequest.id, dataToCache);
 
+        await completeConnectorAudit(auditContext, {
+          cacheHit: false,
+          connectionType: "mongodb",
+          ...serializeResponsePreview(dataToCache.responseData),
+        });
+
         // close the mongodb connection
         mongoConnection.close();
 
@@ -816,18 +891,30 @@ class ConnectionController {
 
         return Promise.resolve(dataToCache);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         // close the mongodb connection
         mongoConnection.close();
+
+        await failConnectorAudit(auditContext, error, error.auditStage || "connection", {
+          cacheHit: false,
+          connectionType: "mongodb",
+        });
 
         return new Promise((resolve, reject) => reject(error));
       });
   }
 
-  async runMysqlOrPostgres(id, dataRequest, getCache, queryOverride = null) {
+  async runMysqlOrPostgres(id, dataRequest, getCache, queryOverride = null, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: dataRequest?.Connection?.type || "sql",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     let dbConnection = null;
@@ -851,19 +938,36 @@ class ConnectionController {
       };
 
       await drCacheController.create(dataRequest.id, dataToCache);
+      await completeConnectorAudit(auditContext, {
+        cacheHit: false,
+        connectionType: connection.type,
+        rowCount: results.length,
+        ...serializeResponsePreview(dataToCache.responseData),
+      });
 
       return dataToCache;
     } catch (error) {
+      await failConnectorAudit(auditContext, error, error.auditStage || "connection", {
+        cacheHit: false,
+        connectionType: dataRequest?.Connection?.type || "sql",
+      });
       return Promise.reject(error);
     } finally {
       await this.closeSqlConnection(dbConnection);
     }
   }
 
-  async runClickhouse(id, dataRequest, getCache, queryOverride = null) {
+  async runClickhouse(id, dataRequest, getCache, queryOverride = null, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "clickhouse",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     try {
@@ -884,16 +988,33 @@ class ConnectionController {
       };
 
       await drCacheController.create(dataRequest.id, dataToCache);
+      await completeConnectorAudit(auditContext, {
+        cacheHit: false,
+        connectionType: "clickhouse",
+        rowCount: Array.isArray(result) ? result.length : getItemCount(result),
+        ...serializeResponsePreview(dataToCache.responseData),
+      });
       return dataToCache;
     } catch (error) {
+      await failConnectorAudit(auditContext, error, error.auditStage || "connection", {
+        cacheHit: false,
+        connectionType: "clickhouse",
+      });
       return Promise.reject(error);
     }
   }
 
-  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "", runtimeVariables = {}) {
+  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "", runtimeVariables = {}, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "api",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     const limit = dataRequest.itemsLimit
@@ -1224,6 +1345,13 @@ class ConnectionController {
           };
 
           await drCacheController.create(dataRequest.id, dataToCache);
+          await completeConnectorAudit(auditContext, {
+            cacheHit: false,
+            connectionType: "api",
+            paginated: true,
+            itemCount: getItemCount(response),
+            responseSnippet: sanitizeSnippet(response),
+          });
 
           return new Promise((resolve) => resolve(dataToCache));
         }
@@ -1249,6 +1377,13 @@ class ConnectionController {
             };
 
             await drCacheController.create(dataRequest.id, dataToCache);
+            await completeConnectorAudit(auditContext, {
+              cacheHit: false,
+              connectionType: "api",
+              statusCode: response.statusCode,
+              bodySnippet: sanitizeSnippet(response.body),
+              ...serializeResponsePreview(dataToCache.responseData),
+            });
 
             return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
@@ -1258,15 +1393,28 @@ class ConnectionController {
           return new Promise((resolve, reject) => reject(response.statusCode));
         }
       })
-      .catch((error) => {
+      .catch(async (error) => {
+        await failConnectorAudit(auditContext, error, error.auditStage || "connection", {
+          cacheHit: false,
+          connectionType: "api",
+          statusCode: error?.statusCode || (typeof error === "number" ? error : null),
+          responseSnippet: sanitizeSnippet(error?.body || error?.error || error?.message || error),
+        });
         return new Promise((resolve, reject) => reject(error));
       });
   }
 
-  async runFirestore(id, dataRequest, getCache, runtimeVariables = {}) {
+  async runFirestore(id, dataRequest, getCache, runtimeVariables = {}, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "firestore",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     return this.findById(id)
@@ -1301,18 +1449,34 @@ class ConnectionController {
         };
 
         await drCacheController.create(dataRequest.id, dataToCache);
+        await completeConnectorAudit(auditContext, {
+          cacheHit: false,
+          connectionType: "firestore",
+          ...serializeResponsePreview(dataToCache.responseData),
+        });
 
         return dataToCache;
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+          cacheHit: false,
+          connectionType: "firestore",
+        });
         return new Promise((resolve, reject) => reject(err));
       });
   }
 
-  async runRealtimeDb(id, dataRequest, getCache, runtimeVariables = {}) {
+  async runRealtimeDb(id, dataRequest, getCache, runtimeVariables = {}, auditContext = null) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "realtimedb",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     return this.findById(id)
@@ -1349,15 +1513,24 @@ class ConnectionController {
         };
 
         await drCacheController.create(dataRequest.id, dataToCache);
+        await completeConnectorAudit(auditContext, {
+          cacheHit: false,
+          connectionType: "realtimedb",
+          ...serializeResponsePreview(dataToCache.responseData),
+        });
 
         return dataToCache;
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+          cacheHit: false,
+          connectionType: "realtimedb",
+        });
         return new Promise((resolve, reject) => reject(err));
       });
   }
 
-  async runGoogleAnalytics(conn, dataRequest, getCache) {
+  async runGoogleAnalytics(conn, dataRequest, getCache, auditContext = null) {
     let connection = conn;
     if (connection.id) {
       try {
@@ -1369,7 +1542,14 @@ class ConnectionController {
 
     if (getCache) {
       const drCache = await checkAndGetCache(connection.id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "googleAnalytics",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     if (!connection.oauth_id) return Promise.reject({ error: "No oauth token" });
@@ -1387,10 +1567,19 @@ class ConnectionController {
         };
 
         await drCacheController.create(dataRequest.id, dataToCache);
+        await completeConnectorAudit(auditContext, {
+          cacheHit: false,
+          connectionType: "googleAnalytics",
+          ...serializeResponsePreview(dataToCache.responseData),
+        });
 
         return dataToCache;
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+          cacheHit: false,
+          connectionType: "googleAnalytics",
+        });
         return new Promise((resolve, reject) => reject(err));
       });
   }
@@ -1402,11 +1591,18 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
-  async runCustomerio(conn, dataRequest, getCache) {
+  async runCustomerio(conn, dataRequest, getCache, auditContext = null) {
     let connection = conn;
     if (getCache) {
       const drCache = await checkAndGetCache(conn.id, dataRequest);
-      if (drCache) return drCache;
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "customerio",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
     }
 
     if (conn.id) {
@@ -1437,10 +1633,21 @@ class ConnectionController {
           };
 
           await drCacheController.create(dataRequest.id, dataToCache);
+          await completeConnectorAudit(auditContext, {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "customers",
+            ...serializeResponsePreview(dataToCache.responseData),
+          });
 
           return dataToCache;
         })
-        .catch((err) => {
+        .catch(async (err) => {
+          await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "customers",
+          });
           return new Promise((resolve, reject) => reject(err));
         });
     } else if (cioRoute === "campaigns") {
@@ -1456,10 +1663,21 @@ class ConnectionController {
           };
 
           await drCacheController.create(dataRequest.id, dataToCache);
+          await completeConnectorAudit(auditContext, {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "campaigns",
+            ...serializeResponsePreview(dataToCache.responseData),
+          });
 
           return dataToCache;
         })
-        .catch((err) => {
+        .catch(async (err) => {
+          await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "campaigns",
+          });
           return new Promise((resolve, reject) => reject(err));
         });
     } else if (cioRoute === "activities") {
@@ -1475,13 +1693,30 @@ class ConnectionController {
           };
 
           await drCacheController.create(dataRequest.id, dataToCache);
+          await completeConnectorAudit(auditContext, {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "activities",
+            ...serializeResponsePreview(dataToCache.responseData),
+          });
 
           return dataToCache;
         })
-        .catch((err) => {
+        .catch(async (err) => {
+          await failConnectorAudit(auditContext, err, err.auditStage || "connection", {
+            cacheHit: false,
+            connectionType: "customerio",
+            routeType: "activities",
+          });
           return new Promise((resolve, reject) => reject(err));
         });
     }
+
+    await failConnectorAudit(auditContext, new Error("Unsupported Customer.io route"), "connection", {
+      cacheHit: false,
+      connectionType: "customerio",
+      routeType: cioRoute,
+    });
 
     return new Promise((resolve, reject) => reject(404));
   }

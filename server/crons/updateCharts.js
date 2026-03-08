@@ -5,6 +5,14 @@ const path = require("path");
 const { Worker } = require("bullmq");
 
 const db = require("../models/models");
+const {
+  completeRun,
+  failRun,
+  finishEvent,
+  startEvent,
+  startRun,
+  updateRunContext,
+} = require("../modules/updateAudit");
 
 const CHART_WORKER_LOCK_DURATION_MS = parseInt(
   process.env.CB_QUEUE_LOCK_DURATION_MS,
@@ -22,12 +30,80 @@ function buildJobId(entity, id) {
 async function addChartsToQueue(charts, queue) {
   const addJobPromises = charts.map(async (chart) => {
     const chartToUpdate = chart.dataValues ? chart.dataValues : chart;
-    await queue.add("updateChart", chartToUpdate, {
-      jobId: buildJobId("chart", chartToUpdate.id),
-      deduplication: {
-        id: `chart_${chartToUpdate.id}`,
+    const traceContext = await startRun({
+      triggerType: "chart_auto",
+      entityType: "chart",
+      status: "queued",
+      teamId: chart.Project?.team_id || null,
+      projectId: chartToUpdate.project_id,
+      chartId: chartToUpdate.id,
+      queueName: queue.name,
+      summary: {
+        autoUpdateSeconds: chartToUpdate.autoUpdate || null,
       },
     });
+    const queueEvent = await startEvent(traceContext, "queue_enqueued", {
+      chartId: chartToUpdate.id,
+      projectId: chartToUpdate.project_id,
+      queueName: queue.name,
+    });
+    const candidateJobId = buildJobId("chart", chartToUpdate.id);
+
+    try {
+      const job = await queue.add("updateChart", {
+        chart: chartToUpdate,
+        traceContext,
+      }, {
+        jobId: candidateJobId,
+        deduplication: {
+          id: `chart_${chartToUpdate.id}`,
+        },
+      });
+
+      const returnedJobId = `${job.id}`;
+      const deduplicated = returnedJobId !== candidateJobId;
+      traceContext.jobId = returnedJobId;
+      traceContext.queueName = queue.name;
+
+      await finishEvent(traceContext, queueEvent, deduplicated ? "deduplicated" : "success", {
+        chartId: chartToUpdate.id,
+        candidateJobId,
+        returnedJobId,
+        deduplicated,
+      });
+      await updateRunContext(traceContext, {
+        jobId: returnedJobId,
+        queueName: queue.name,
+        status: deduplicated ? "deduplicated" : "queued",
+      });
+
+      if (deduplicated) {
+        await completeRun(traceContext, {
+          status: "deduplicated",
+          summary: {
+            chartId: chartToUpdate.id,
+            deduplicated: true,
+            candidateJobId,
+            returnedJobId,
+          },
+        });
+      }
+    } catch (error) {
+      await finishEvent(traceContext, queueEvent, "failed", {
+        chartId: chartToUpdate.id,
+        candidateJobId,
+      });
+      await failRun(traceContext, error, {
+        stage: "queue",
+        payload: {
+          chartId: chartToUpdate.id,
+          projectId: chartToUpdate.project_id,
+          queueName: queue.name,
+          candidateJobId,
+        },
+      });
+      throw error;
+    }
   });
 
   await Promise.all(addJobPromises);
@@ -40,7 +116,10 @@ async function updateCharts(queue) {
       type: { [Op.not]: "markdown" },
     },
     attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
-    include: [{ model: db.ChartDatasetConfig }],
+    include: [
+      { model: db.ChartDatasetConfig },
+      { model: db.Project, attributes: ["team_id"] },
+    ],
   };
 
   const charts = await db.Chart.findAll(conditions);

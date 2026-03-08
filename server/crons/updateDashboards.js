@@ -5,6 +5,14 @@ const { Worker } = require("bullmq");
 const path = require("path");
 
 const db = require("../models/models");
+const {
+  completeRun,
+  failRun,
+  finishEvent,
+  startEvent,
+  startRun,
+  updateRunContext,
+} = require("../modules/updateAudit");
 
 function parsePositiveInt(value, fallback) {
   const parsedValue = parseInt(value, 10);
@@ -37,69 +45,107 @@ const DASHBOARD_WORKER_CONCURRENCY = Math.max(
 );
 const isQueueDebugEnabled = /^(1|true|yes|on)$/i.test(`${process.env.CB_QUEUE_DEBUG || ""}`);
 
-function debugLog(message, details = null) {
-  if (!isQueueDebugEnabled) {
-    return;
-  }
-
-  if (details) {
-    console.log(`[updateDashboards] ${message}`, details); // eslint-disable-line no-console
-    return;
-  }
-
-  console.log(`[updateDashboards] ${message}`); // eslint-disable-line no-console
-}
-
 function buildJobId(entity, id) {
   return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
 }
 
-async function addDashboardToQueue(queue, dashboardId) {
-  const candidateJobId = buildJobId("dashboard", dashboardId);
-  const job = await queue.add("updateDashboard", { id: dashboardId }, {
-    jobId: candidateJobId,
-    // Keep this in simple mode: enqueue only if no same dedupe key exists.
-    // TTL+extend can starve 1-minute schedules when jobs are repeatedly deduped.
-    deduplication: {
-      id: `dashboard_${dashboardId}`,
+async function addDashboardToQueue(queue, dashboard) {
+  const dashboardId = dashboard.id;
+  const traceContext = await startRun({
+    triggerType: "dashboard_auto",
+    entityType: "dashboard",
+    status: "queued",
+    teamId: dashboard.team_id || null,
+    projectId: dashboardId,
+    queueName: queue.name,
+    summary: {
+      frequency: dashboard.updateSchedule?.frequency || null,
+      frequencyNumber: dashboard.updateSchedule?.frequencyNumber || null,
+      timezone: dashboard.updateSchedule?.timezone || null,
     },
   });
-
-  const returnedJobId = `${job.id}`;
-  const deduplicated = returnedJobId !== candidateJobId;
-
-  debugLog("queue.add", {
+  const queueEvent = await startEvent(traceContext, "queue_enqueued", {
     dashboardId,
-    candidateJobId,
-    returnedJobId,
-    deduplicated,
+    queueName: queue.name,
   });
+  const candidateJobId = buildJobId("dashboard", dashboardId);
+  try {
+    const job = await queue.add("updateDashboard", {
+      id: dashboardId,
+      traceContext,
+    }, {
+      jobId: candidateJobId,
+      // Keep this in simple mode: enqueue only if no same dedupe key exists.
+      // TTL+extend can starve 1-minute schedules when jobs are repeatedly deduped.
+      deduplication: {
+        id: `dashboard_${dashboardId}`,
+      },
+    });
 
-  return {
-    deduplicated,
-    jobId: returnedJobId,
-  };
+    const returnedJobId = `${job.id}`;
+    const deduplicated = returnedJobId !== candidateJobId;
+    traceContext.jobId = returnedJobId;
+    traceContext.queueName = queue.name;
+
+    await finishEvent(traceContext, queueEvent, deduplicated ? "deduplicated" : "success", {
+      dashboardId,
+      candidateJobId,
+      returnedJobId,
+      deduplicated,
+    });
+    await updateRunContext(traceContext, {
+      jobId: returnedJobId,
+      queueName: queue.name,
+      status: deduplicated ? "deduplicated" : "queued",
+    });
+
+    if (deduplicated) {
+      await completeRun(traceContext, {
+        status: "deduplicated",
+        summary: {
+          dashboardId,
+          deduplicated: true,
+          candidateJobId,
+          returnedJobId,
+        },
+      });
+    }
+
+    return {
+      deduplicated,
+      jobId: returnedJobId,
+    };
+  } catch (error) {
+    await finishEvent(traceContext, queueEvent, "failed", {
+      dashboardId,
+      candidateJobId,
+    });
+    await failRun(traceContext, error, {
+      stage: "queue",
+      payload: {
+        dashboardId,
+        queueName: queue.name,
+        candidateJobId,
+      },
+    });
+    throw error;
+  }
 }
 
 async function updateDashboards(queue) {
-  const tickStartedAt = Date.now();
   const conditions = {
     where: {
       updateSchedule: { [Op.ne]: "" }
     },
-    attributes: ["id", "lastUpdatedAt", "updateSchedule"],
+    attributes: ["id", "team_id", "lastUpdatedAt", "updateSchedule"],
   };
 
   try {
     const dashboards = await db.Project.findAll(conditions);
     if (!dashboards || dashboards.length === 0) {
-      debugLog("tick: no dashboards with updateSchedule");
       return;
     }
 
-    let shouldUpdateCount = 0;
-    let queuedCount = 0;
-    let deduplicatedCount = 0;
     const skippedDashboardIds = [];
 
     const jobs = dashboards.map(async (dashboard) => {
@@ -173,47 +219,16 @@ async function updateDashboards(queue) {
         return;
       }
 
-      shouldUpdateCount += 1;
-      debugLog("dashboard due", {
-        dashboardId: dashboard.id,
-        frequency,
-        frequencyNumber,
-        timezone,
-        lastUpdatedAt: dashboard.lastUpdatedAt
-          ? dashboard.lastUpdatedAt.toISOString()
-          : null,
-      });
-
-      const result = await addDashboardToQueue(queue, dashboard.id);
-      if (result.deduplicated) {
-        deduplicatedCount += 1;
-      } else {
-        queuedCount += 1;
-      }
+      await addDashboardToQueue(queue, dashboard);
     });
 
     await Promise.all(jobs);
-
-    debugLog("tick summary", {
-      totalDashboards: dashboards.length,
-      shouldUpdateCount,
-      queuedCount,
-      deduplicatedCount,
-      sampleSkippedDashboardIds: skippedDashboardIds,
-      tickDurationMs: Date.now() - tickStartedAt,
-    });
   } catch (error) {
     console.error(`Error checking and updating dashboards: ${error.message}`); // eslint-disable-line
   }
 }
 
 function createWorker(queue) {
-  debugLog("worker config", {
-    concurrency: DASHBOARD_WORKER_CONCURRENCY,
-    lockDurationMs: DASHBOARD_WORKER_LOCK_DURATION_MS,
-    lockRenewTimeMs: DASHBOARD_WORKER_LOCK_RENEW_TIME_MS,
-  });
-
   return new Worker(queue.name, async (job) => {
     const updateDashboardPath = path.join(__dirname, "workers", "updateDashboard.js");
     const updateDashboard = require(updateDashboardPath); // eslint-disable-line
@@ -232,17 +247,14 @@ module.exports = (queue) => {
 
   const runTick = async () => {
     if (isTickRunning) {
-      debugLog("tick skipped (previous tick still running)");
       return;
     }
 
     isTickRunning = true;
     try {
-      debugLog("tick started");
       await updateDashboards(queue);
     } finally {
       isTickRunning = false;
-      debugLog("tick finished");
     }
   };
 
