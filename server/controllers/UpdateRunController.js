@@ -16,7 +16,7 @@ function parseDate(value) {
 }
 
 class UpdateRunController {
-  buildFilters(teamId, filters = {}, allowedProjectIds = null) {
+  buildFilters(teamId, filters = {}) {
     const where = {
       teamId,
     };
@@ -64,42 +64,22 @@ class UpdateRunController {
       };
     }
 
-    if (Array.isArray(allowedProjectIds)) {
-      if (where.projectId) {
-        if (!allowedProjectIds.includes(Number(where.projectId))) {
-          where.projectId = {
-            [Op.in]: [],
-          };
-        }
-      } else {
-        where.projectId = {
-          [Op.in]: allowedProjectIds,
-        };
-      }
-    }
-
     return where;
   }
 
-  async findByTeam(teamId, filters = {}, allowedProjectIds = null) {
-    const where = this.buildFilters(teamId, filters, allowedProjectIds);
+  async findByTeam(teamId, filters = {}) {
+    const where = this.buildFilters(teamId, filters);
     return db.UpdateRun.findAll({
       where,
       order: [["startedAt", "DESC"]],
     });
   }
 
-  async findByIdAndTeam(id, teamId, allowedProjectIds = null) {
+  async findByIdAndTeam(id, teamId) {
     const where = {
       id,
       teamId,
     };
-
-    if (Array.isArray(allowedProjectIds)) {
-      where.projectId = {
-        [Op.in]: allowedProjectIds,
-      };
-    }
 
     const run = await db.UpdateRun.findOne({
       where,

@@ -1,7 +1,8 @@
 const UpdateRunController = require("../controllers/UpdateRunController");
 const TeamController = require("../controllers/TeamController");
-const accessControl = require("../modules/accessControl");
 const verifyToken = require("../modules/verifyToken");
+
+const ALLOWED_AUDIT_ROLES = ["teamOwner", "teamAdmin"];
 
 module.exports = (app) => {
   const updateRunController = new UpdateRunController();
@@ -16,29 +17,16 @@ module.exports = (app) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { role } = teamRole;
-      const canReadChart = accessControl.can(role).readAny("chart");
-
-      if (!canReadChart.granted) {
+      if (!ALLOWED_AUDIT_ROLES.includes(teamRole.role)) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      if (["teamOwner", "teamAdmin"].includes(role)) {
-        req.user.allowedAuditProjects = null;
-        return next();
-      }
-
-      req.user.allowedAuditProjects = Array.isArray(teamRole.projects) ? teamRole.projects : [];
       return next();
     };
   };
 
   app.get("/team/:team_id/update-runs", verifyToken, checkPermissions(), (req, res) => {
-    return updateRunController.findByTeam(
-      req.params.team_id,
-      req.query,
-      req.user.allowedAuditProjects
-    )
+    return updateRunController.findByTeam(req.params.team_id, req.query)
       .then((runs) => {
         return res.status(200).send(runs);
       })
@@ -48,11 +36,7 @@ module.exports = (app) => {
   });
 
   app.get("/team/:team_id/update-runs/:run_id", verifyToken, checkPermissions(), (req, res) => {
-    return updateRunController.findByIdAndTeam(
-      req.params.run_id,
-      req.params.team_id,
-      req.user.allowedAuditProjects
-    )
+    return updateRunController.findByIdAndTeam(req.params.run_id, req.params.team_id)
       .then((run) => {
         if (!run) {
           return res.status(404).send({ error: "Not Found" });
