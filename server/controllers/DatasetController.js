@@ -6,6 +6,18 @@ const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const { applyTransformation } = require("../modules/dataTransformations");
 const { applyVariables } = require("../modules/applyVariables");
+const {
+  createHash,
+  completeRun,
+  failRun,
+  finishEvent,
+  sanitizeHeaderNames,
+  sanitizeQueryPreview,
+  sanitizeRouteSnippet,
+  sanitizeSnippet,
+  startEvent,
+  startRun,
+} = require("../modules/updateAudit");
 
 function joinData(joins, index, requests, data) {
   const dr = requests.find((r) => r?.dataRequest?.id === joins[index].dr_id);
@@ -87,6 +99,18 @@ function joinData(joins, index, requests, data) {
   });
 
   return newData;
+}
+
+function toAuditError(error, stage = "unknown") {
+  if (error instanceof Error) {
+    const wrappedError = error;
+    wrappedError.auditStage = wrappedError.auditStage || stage;
+    return wrappedError;
+  }
+
+  const wrappedError = new Error(String(error));
+  wrappedError.auditStage = stage;
+  return wrappedError;
 }
 
 class DatasetController {
@@ -301,7 +325,17 @@ class DatasetController {
   }
 
   runRequest({
-    dataset_id, chart_id, noSource, getCache, filters, timezone, variables = {}, team_id,
+    dataset_id,
+    chart_id,
+    noSource,
+    getCache,
+    filters,
+    timezone,
+    variables = {},
+    team_id,
+    traceContext,
+    projectId,
+    teamId,
   }) {
     let gDataset;
     let mainDr;
@@ -344,7 +378,6 @@ class DatasetController {
         }
 
         gDataset = dataset;
-        const drPromises = [];
         let dataRequests = dataset.DataRequests;
         mainDr = dataRequests.find((dr) => dr.id === dataset.main_dr_id);
         if (!mainDr) {
@@ -380,44 +413,96 @@ class DatasetController {
         if (!mainDr) throw new Error("There is no main data request for this dataset.");
 
         // go through all data requests
-        dataRequests.forEach((dataRequest) => {
-          // Apply variables before processing the request
-          const {
-            dataRequest: originalDataRequest,
-            processedQuery,
-          } = applyVariables(dataRequest, variables);
-          const connection = originalDataRequest.Connection;
+        const drPromises = dataRequests.map(async (dataRequest) => {
+          const requestTraceContext = traceContext
+            ? await startRun({
+              triggerType: traceContext.triggerType || "chart_manual",
+              entityType: "dataset_request",
+              status: "running",
+              teamId: teamId || team_id || traceContext.teamId || null,
+              projectId: projectId || traceContext.projectId || null,
+              chartId: chart_id || traceContext.chartId || null,
+              datasetId: dataset.id,
+              dataRequestId: dataRequest.id,
+              connectionId: dataRequest.Connection?.id || null,
+            }, traceContext)
+            : null;
 
-          if (!originalDataRequest
-            || (originalDataRequest && originalDataRequest.length === 0)
-          ) {
-            drPromises.push(
-              new Promise((resolve, reject) => reject(new Error("404")))
-            );
-          }
+          let requestEvent;
+          let requestMetadata = {
+            datasetId: dataset.id,
+            dataRequestId: dataRequest.id,
+            connectionId: dataRequest.Connection?.id || null,
+            connectionType: dataRequest.Connection?.type || null,
+          };
 
-          if (!connection) {
-            drPromises.push(
-              new Promise((resolve) => { resolve({}); })
-            );
-          }
+          try {
+            // Apply variables before processing the request
+            const {
+              dataRequest: originalDataRequest,
+              processedQuery,
+            } = applyVariables(dataRequest, variables);
+            const connection = originalDataRequest.Connection;
 
-          if (noSource === true) {
-            drPromises.push(new Promise((resolve) => resolve({})));
-          }
+            requestMetadata = {
+              ...requestMetadata,
+              queryHash: createHash(processedQuery || originalDataRequest.query),
+              queryPreview: sanitizeQueryPreview(processedQuery || originalDataRequest.query),
+              routeHash: createHash(originalDataRequest.route),
+              routeSnippet: sanitizeRouteSnippet(originalDataRequest.route),
+              method: originalDataRequest.method || null,
+              headerNames: sanitizeHeaderNames(originalDataRequest.headers),
+              bodySnippet: sanitizeSnippet(originalDataRequest.body),
+            };
 
-          if (connection.type === "mongodb") {
-            drPromises.push(
-              this.connectionController.runMongo(
+            if (requestTraceContext) {
+              requestEvent = await startEvent(requestTraceContext, "dataset_request_started", requestMetadata);
+            }
+
+            if (!originalDataRequest
+              || (originalDataRequest && originalDataRequest.length === 0)
+            ) {
+              throw toAuditError(new Error("404"), "connection");
+            }
+
+            if (!connection) {
+              throw toAuditError(new Error("Connection not found"), "connection");
+            }
+
+            if (noSource === true) {
+              if (requestTraceContext) {
+                await finishEvent(requestTraceContext, requestEvent, "success", {
+                  ...requestMetadata,
+                  noSource: true,
+                });
+                await completeRun(requestTraceContext, {
+                  status: "success",
+                  summary: {
+                    ...requestMetadata,
+                    noSource: true,
+                  },
+                });
+              }
+
+              return {};
+            }
+
+            const auditContext = {
+              traceContext: requestTraceContext,
+              requestEvent,
+              requestMetadata,
+            };
+
+            if (connection.type === "mongodb") {
+              return this.connectionController.runMongo(
                 connection.id,
                 originalDataRequest,
                 getCache,
-                processedQuery
-              )
-            );
-          } else if (connection.type === "api") {
-            drPromises.push(
-              this.connectionController.runApiRequest(
+                processedQuery,
+                auditContext
+              );
+            } else if (connection.type === "api") {
+              return this.connectionController.runApiRequest(
                 connection.id,
                 chart_id,
                 originalDataRequest,
@@ -425,93 +510,111 @@ class DatasetController {
                 filters,
                 timezone,
                 variables,
-              )
-            );
-          } else if (connection.type === "postgres" || connection.type === "mysql") {
-            drPromises.push(
-              this.connectionController.runMysqlOrPostgres(
+                auditContext,
+              );
+            } else if (connection.type === "postgres" || connection.type === "mysql") {
+              return this.connectionController.runMysqlOrPostgres(
                 connection.id,
                 originalDataRequest,
                 getCache,
                 processedQuery,
-              )
-            );
-          } else if (connection.type === "clickhouse") {
-            drPromises.push(
-              this.connectionController.runClickhouse(
+                auditContext,
+              );
+            } else if (connection.type === "clickhouse") {
+              return this.connectionController.runClickhouse(
                 connection.id,
                 originalDataRequest,
                 getCache,
                 processedQuery,
-              )
-            );
-          } else if (connection.type === "firestore") {
-            drPromises.push(
-              this.connectionController.runFirestore(
+                auditContext,
+              );
+            } else if (connection.type === "firestore") {
+              return this.connectionController.runFirestore(
                 connection.id,
                 originalDataRequest,
                 getCache,
                 variables,
-              )
-            );
-          } else if (connection.type === "googleAnalytics") {
-            drPromises.push(
-              this.connectionController.runGoogleAnalytics(
+                auditContext,
+              );
+            } else if (connection.type === "googleAnalytics") {
+              return this.connectionController.runGoogleAnalytics(
                 connection,
                 originalDataRequest,
                 getCache,
-              )
-            );
-          } else if (connection.type === "realtimedb") {
-            drPromises.push(
-              this.connectionController.runRealtimeDb(
+                auditContext,
+              );
+            } else if (connection.type === "realtimedb") {
+              return this.connectionController.runRealtimeDb(
                 connection.id,
                 originalDataRequest,
                 getCache,
                 variables,
-              )
-            );
-          } else if (connection.type === "customerio") {
-            drPromises.push(
-              this.connectionController.runCustomerio(connection, originalDataRequest, getCache)
-            );
-          } else {
-            drPromises.push(
-              new Promise((resolve, reject) => reject(new Error("Invalid connection type")))
-            );
+                auditContext,
+              );
+            } else if (connection.type === "customerio") {
+              return this.connectionController.runCustomerio(
+                connection,
+                originalDataRequest,
+                getCache,
+                auditContext
+              );
+            }
+
+            throw toAuditError(new Error("Invalid connection type"), "connection");
+          } catch (error) {
+            const wrappedError = toAuditError(error, error.auditStage || "connection");
+            if (requestTraceContext && !wrappedError.auditLogged) {
+              if (requestEvent) {
+                await finishEvent(requestTraceContext, requestEvent, "failed", {
+                  ...requestMetadata,
+                  errorMessage: wrappedError.message,
+                });
+              }
+              await failRun(requestTraceContext, wrappedError, {
+                stage: wrappedError.auditStage || "connection",
+                payload: requestMetadata,
+                summary: requestMetadata,
+              });
+              wrappedError.auditLogged = true;
+            }
+            throw wrappedError;
           }
         });
 
         return Promise.all(drPromises);
       })
       .then(async (promisedRequests) => {
-        const filteredRequests = promisedRequests.filter((request) => request !== undefined);
-        let data = [];
-        const mainResponseData = filteredRequests
-          .find((r) => r?.dataRequest?.id === mainDr.id)?.responseData?.data;
+        try {
+          const filteredRequests = promisedRequests.filter((request) => request !== undefined);
+          let data = [];
+          const mainResponseData = filteredRequests
+            .find((r) => r?.dataRequest?.id === mainDr.id)?.responseData?.data;
 
-        if (filteredRequests.length === 1 || gDataset?.joinSettings?.joins?.length === 0) {
-          data = mainResponseData;
-        } else {
-          const joins = gDataset?.joinSettings?.joins;
-          data = mainResponseData;
+          if (filteredRequests.length === 1 || gDataset?.joinSettings?.joins?.length === 0) {
+            data = mainResponseData;
+          } else {
+            const joins = gDataset?.joinSettings?.joins;
+            data = mainResponseData;
 
-          if (joins) {
-            joins.forEach((join, index) => {
-              data = joinData(joins, index, filteredRequests, data);
-            });
+            if (joins) {
+              joins.forEach((join, index) => {
+                data = joinData(joins, index, filteredRequests, data);
+              });
+            }
           }
-        }
 
-        // Apply transformation if enabled
-        if (mainDr.transform && mainDr.transform.enabled) {
-          data = applyTransformation(data, mainDr.transform);
-        }
+          // Apply transformation if enabled
+          if (mainDr.transform && mainDr.transform.enabled) {
+            data = applyTransformation(data, mainDr.transform);
+          }
 
-        return Promise.resolve({
-          options: gDataset,
-          data,
-        });
+          return Promise.resolve({
+            options: gDataset,
+            data,
+          });
+        } catch (error) {
+          throw toAuditError(error, "transform");
+        }
       })
       .catch((err) => {
         return Promise.reject(err);

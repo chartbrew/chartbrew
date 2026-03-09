@@ -27,6 +27,7 @@ const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
+const updateAuditRetention = require("./modules/updateAuditRetention");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
@@ -151,6 +152,7 @@ db.migrate()
           cleanChartCache();
           cleanAuthCache();
           cleanGhostChartsCron();
+          updateAuditRetention();
         }, 5000);
       }
 

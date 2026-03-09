@@ -12,6 +12,7 @@ const spreadsheetExport = require("../modules/spreadsheetExport");
 const alertController = require("../controllers/AlertController");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 const db = require("../models/models");
+const { startRun } = require("../modules/updateAudit");
 const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
@@ -486,33 +487,48 @@ module.exports = (app) => {
   /*
   ** Route to run the query for a chart
   */
-  app.post("/project/:project_id/chart/:chart_id/query", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return chartController.updateChartData(
-      req.params.chart_id,
-      req.user,
-      {
-        noSource: req.query.no_source === "true",
-        skipParsing: req.query.skip_parsing === "true",
-        getCache: req.query.getCache,
-        filters: req.body.filters,
-        variables: req.body.variables,
-      },
-    )
-      .then((chart) => {
-        return res.status(200).send(chart);
-      })
-      .catch((error) => {
-        console.error((error && error.message) || error); // eslint-disable-line
-        const policyResponse = sendPolicyError(res, error);
-        if (policyResponse) return policyResponse;
-        if (`${error}` === "401" || error.message === "401") {
-          return res.status(401).send({ error: "Not authorized" });
-        }
-        if (`${error}` === "413" && error.message === "413") {
-          return res.status(413).send(`${error}`);
-        }
-        return res.status(400).send(`${(error && error.message) || error}`);
+  app.post("/project/:project_id/chart/:chart_id/query", verifyToken, checkPermissions("readOwn"), async (req, res) => {
+    try {
+      const project = await projectController.findById(req.params.project_id);
+      const traceContext = await startRun({
+        triggerType: "chart_manual",
+        entityType: "chart",
+        status: "running",
+        teamId: project.team_id,
+        projectId: Number(req.params.project_id),
+        chartId: Number(req.params.chart_id),
+        summary: {
+          noSource: req.query.no_source === "true",
+          getCache: Boolean(req.query.getCache),
+        },
       });
+
+      const chart = await chartController.updateChartData(
+        req.params.chart_id,
+        req.user,
+        {
+          noSource: req.query.no_source === "true",
+          skipParsing: req.query.skip_parsing === "true",
+          getCache: req.query.getCache,
+          filters: req.body.filters,
+          variables: req.body.variables,
+          traceContext,
+        },
+      );
+
+      return res.status(200).send(chart);
+    } catch (error) {
+      console.error((error && error.message) || error); // eslint-disable-line
+      const policyResponse = sendPolicyError(res, error);
+      if (policyResponse) return policyResponse;
+      if (`${error}` === "401" || error.message === "401") {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+      if (`${error}` === "413" && error.message === "413") {
+        return res.status(413).send(`${error}`);
+      }
+      return res.status(400).send(`${(error && error.message) || error}`);
+    }
   });
   // --------------------------------------------------------
 

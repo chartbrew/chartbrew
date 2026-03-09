@@ -11,6 +11,7 @@ const google = require("./GoogleRoute");
 const update = require("./UpdateRoute");
 const integration = require("./IntegrationRoute");
 const ai = require("./AiRoute");
+const updateRun = require("./UpdateRunRoute");
 
 module.exports = {
   team,
@@ -24,6 +25,7 @@ module.exports = {
   template,
   google,
   update,
+  updateRun,
   integration,
   ai,
 };
