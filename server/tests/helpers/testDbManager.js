@@ -6,7 +6,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// We'll check for testcontainers availability at runtime
 let GenericContainer = null;
 let Wait = null;
 
@@ -18,7 +17,6 @@ class TestDbManager {
     this.database = "chartbrew_test";
     this.username = "root";
     this.password = "test_password";
-    this.useContainers = false; // Will be set during initialization
   }
 
   async start() {
@@ -27,11 +25,11 @@ class TestDbManager {
       return;
     }
 
-    // Check if we should use containers based on environment and availability
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
-    const forceContainers = process.env.FORCE_CONTAINERS === "true";
+    if (dbDialect !== "mysql" && dbDialect !== "postgres") {
+      throw new Error(`Unsupported test database dialect: ${dbDialect}`);
+    }
 
-    // Set PostgreSQL SSL environment variables early if using PostgreSQL
     if (dbDialect === "postgres") {
       process.env.PGSSLMODE = "disable";
       process.env.PGSSL = "false";
@@ -41,51 +39,30 @@ class TestDbManager {
       console.log("🔧 Set PostgreSQL SSL environment variables to disable SSL");
     }
 
-    if (dbDialect !== "sqlite") {
-      // Try to load testcontainers
-      try {
-        const testcontainers = await import("testcontainers");
-        GenericContainer = testcontainers.GenericContainer;
-        Wait = testcontainers.Wait;
-        this.useContainers = true;
-        console.log("✅ Testcontainers loaded successfully");
-      } catch (error) {
-        console.log("❌ Testcontainers not available:", error.message);
-        if (forceContainers) {
-          console.log("🔄 FORCE_CONTAINERS is true, falling back to SQLite");
-          process.env.CB_DB_DIALECT_DEV = "sqlite";
-        }
-        this.useContainers = false;
-      }
+    try {
+      const testcontainers = await import("testcontainers");
+      GenericContainer = testcontainers.GenericContainer;
+      Wait = testcontainers.Wait;
+      console.log("✅ Testcontainers loaded successfully");
+    } catch (error) {
+      throw new Error(`Testcontainers is required for server tests: ${error.message}`);
     }
 
-    if (this.useContainers && process.env.CB_DB_DIALECT_DEV !== "sqlite") {
-      try {
-        console.log("🐳 Starting test database container...");
+    try {
+      console.log("🐳 Starting test database container...");
 
-        if (process.env.CB_DB_DIALECT_DEV === "postgres") {
-          await this.startPostgres();
-        } else {
-          await this.startMySQL();
-        }
-
-        console.log(`✅ Database container started on port ${this.port}`);
-
-        // Set up environment variables for the test database
-        this.setTestEnvVars();
-      } catch (error) {
-        console.log("❌ Failed to start database container:", error.message);
-        console.log("🔄 Falling back to SQLite...");
-        this.useContainers = false;
-        process.env.CB_DB_DIALECT_DEV = "sqlite";
-        this.setTestEnvVarsSQLite();
+      if (dbDialect === "postgres") {
+        await this.startPostgres();
+      } else {
+        await this.startMySQL();
       }
-    } else {
-      console.log("📦 Using in-memory SQLite database for testing...");
-      this.setTestEnvVarsSQLite();
+
+      console.log(`✅ Database container started on port ${this.port}`);
+      this.setTestEnvVars();
+    } catch (error) {
+      throw new Error(`Failed to start test database container: ${error.message}`);
     }
 
-    // Initialize Sequelize and run migrations
     await this.initializeDatabase();
   }
 
@@ -156,72 +133,42 @@ class TestDbManager {
     }
   }
 
-  setTestEnvVarsSQLite() {
-    process.env.CB_DB_HOST_DEV = "localhost";
-    process.env.CB_DB_PORT_DEV = "";
-    process.env.CB_DB_NAME_DEV = ":memory:";
-    process.env.CB_DB_USERNAME_DEV = "";
-    process.env.CB_DB_PASSWORD_DEV = "";
-    process.env.CB_DB_DIALECT_DEV = "sqlite";
-  }
-
   async initializeDatabase() {
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
 
-    let sequelizeOptions;
+    const sequelizeOptions = {
+      host: "localhost",
+      port: this.port,
+      dialect: dbDialect,
+      logging: false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      },
+    };
 
-    if (dbDialect === "sqlite") {
-      sequelizeOptions = {
-        dialect: "sqlite",
-        storage: ":memory:",
-        logging: false,
+    if (dbDialect === "mysql") {
+      sequelizeOptions.define = {
+        charset: "utf8mb4",
+        collate: "utf8mb4_general_ci",
       };
-
-      this.sequelize = new Sequelize(sequelizeOptions);
-    } else {
-      sequelizeOptions = {
-        host: "localhost",
-        port: this.port,
-        dialect: dbDialect,
-        logging: false,
-        pool: {
-          max: 5,
-          min: 0,
-          acquire: 30000,
-          idle: 10000
-        },
+      sequelizeOptions.dialectOptions = {
+        charset: "utf8mb4",
       };
-
-      // Add database-specific options
-      if (dbDialect === "mysql") {
-        sequelizeOptions.define = {
-          charset: "utf8mb4",
-          collate: "utf8mb4_general_ci",
-        };
-        sequelizeOptions.dialectOptions = {
-          charset: "utf8mb4",
-        };
-      }
-
-      this.sequelize = new Sequelize(
-        this.database,
-        this.username,
-        this.password,
-        sequelizeOptions
-      );
     }
 
-    // Test connection with retry logic
+    this.sequelize = new Sequelize(
+      this.database,
+      this.username,
+      this.password,
+      sequelizeOptions
+    );
+
     await this.authenticateWithRetry();
     console.log("✅ Database connection established successfully");
-
-    // Run migrations (or create basic schema for SQLite)
-    const finalDbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
-    if (finalDbDialect === "sqlite") {
-      await this.createBasicSQLiteSchema();
-    } else {
-      await this.runMigrations();
-    }
+    await this.runMigrations();
   }
 
   async authenticateWithRetry(maxRetries = 5, delay = 1000) {
@@ -283,214 +230,6 @@ class TestDbManager {
     console.log("✅ Migrations completed successfully");
   }
 
-  async createBasicSQLiteSchema() {
-    console.log("🔄 Creating basic SQLite schema for testing...");
-
-    const queryInterface = this.sequelize.getQueryInterface();
-
-    // Create basic tables needed for testing
-    // User table
-    await queryInterface.createTable("User", {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      oneaccountId: {
-        type: Sequelize.STRING,
-      },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      admin: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      lastLogin: {
-        type: Sequelize.DATE,
-      },
-      active: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      icon: {
-        type: Sequelize.STRING,
-      },
-      passwordResetToken: {
-        type: Sequelize.STRING,
-      },
-      tutorials: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-        defaultValue: "{}",
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      }
-    });
-
-    // Team table
-    await queryInterface.createTable("Team", {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      showBranding: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      allowReportRefresh: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      allowReportExport: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      }
-    });
-
-    // Project table
-    await queryInterface.createTable("Project", {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      team_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      name: {
-        type: Sequelize.STRING,
-      },
-      brewName: {
-        type: Sequelize.STRING,
-        unique: true,
-      },
-      dashboardTitle: {
-        type: Sequelize.STRING,
-      },
-      description: {
-        type: Sequelize.TEXT,
-      },
-      backgroundColor: {
-        type: Sequelize.STRING,
-        defaultValue: "#103751",
-      },
-      titleColor: {
-        type: Sequelize.STRING,
-        defaultValue: "white",
-      },
-      public: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      passwordProtected: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      password: {
-        type: Sequelize.STRING,
-      },
-      timezone: {
-        type: Sequelize.STRING,
-      },
-      ghost: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      }
-    });
-
-    // Connection table
-    await queryInterface.createTable("Connection", {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      team_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      name: {
-        type: Sequelize.STRING,
-      },
-      type: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      subType: {
-        type: Sequelize.STRING,
-      },
-      active: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true,
-      },
-      host: {
-        type: Sequelize.TEXT,
-      },
-      dbName: {
-        type: Sequelize.TEXT,
-      },
-      port: {
-        type: Sequelize.TEXT,
-      },
-      username: {
-        type: Sequelize.TEXT,
-      },
-      password: {
-        type: Sequelize.TEXT,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-      }
-    });
-
-    console.log("✅ Basic SQLite schema created successfully");
-  }
-
   async stop() {
     if (this.sequelize) {
       try {
@@ -523,35 +262,22 @@ class TestDbManager {
 
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
 
-    // Handle different database dialects
-    if (dbDialect === "sqlite") {
-      // For SQLite, we need to delete from tables instead of truncate
-      for (const table of tables) {
-        if (table !== "SequelizeMeta") {
-          await this.sequelize.query(`DELETE FROM "${table}"`);
+    if (dbDialect === "mysql") {
+      await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
+    }
+
+    for (const table of tables) {
+      if (table !== "SequelizeMeta") {
+        if (dbDialect === "postgres") {
+          await this.sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
+        } else {
+          await this.sequelize.query(`TRUNCATE TABLE \`${table}\``);
         }
       }
-    } else {
-      // Disable foreign key checks
-      if (dbDialect === "mysql") {
-        await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
-      }
+    }
 
-      // Truncate all tables except SequelizeMeta (migration tracking)
-      for (const table of tables) {
-        if (table !== "SequelizeMeta") {
-          if (dbDialect === "postgres") {
-            await this.sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
-          } else {
-            await this.sequelize.query(`TRUNCATE TABLE \`${table}\``);
-          }
-        }
-      }
-
-      // Re-enable foreign key checks for MySQL
-      if (dbDialect === "mysql") {
-        await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
-      }
+    if (dbDialect === "mysql") {
+      await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
     }
 
     console.log("✅ Database cleanup completed");
@@ -563,13 +289,6 @@ class TestDbManager {
 
   getConnectionDetails() {
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
-
-    if (dbDialect === "sqlite") {
-      return {
-        database: ":memory:",
-        dialect: "sqlite"
-      };
-    }
 
     return {
       host: "localhost",

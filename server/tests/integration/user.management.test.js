@@ -60,38 +60,7 @@ async function getRestrictiveForeignKeyTables(models, referencedTable) {
     return rows;
   }
 
-  if (dialect === "sqlite") {
-    const [tables] = await sequelize.query(`
-      SELECT name
-      FROM sqlite_master
-      WHERE type = 'table'
-        AND name NOT LIKE 'sqlite_%'
-        AND name NOT LIKE 'SequelizeMeta%'
-    `);
-    const rows = [];
-
-    /* eslint-disable no-await-in-loop */
-    for (const table of tables) {
-      const tableName = table.name;
-      const escaped = tableName.replace(/'/g, "''");
-      const [fks] = await sequelize.query(`PRAGMA foreign_key_list('${escaped}')`);
-      fks.forEach((fk) => {
-        const deleteRule = (fk.on_delete || "NO ACTION").toUpperCase();
-        if (fk.table === referencedTable && (deleteRule === "RESTRICT" || deleteRule === "NO ACTION")) {
-          rows.push({
-            tableName,
-            columnName: fk.from,
-            deleteRule
-          });
-        }
-      });
-    }
-    /* eslint-enable no-await-in-loop */
-
-    return rows;
-  }
-
-  return [];
+  throw new Error(`Unsupported dialect for restrictive FK introspection: ${dialect}`);
 }
 
 describe("User Management API", () => {

@@ -54,16 +54,10 @@ describe("Health Check API", () => {
 
       expect(connectionDetails).toHaveProperty("database");
       expect(connectionDetails).toHaveProperty("dialect");
-
-      // Different checks for different database types
-      if (connectionDetails.dialect === "sqlite") {
-        expect(connectionDetails.database).toBe(":memory:");
-      } else {
-        expect(connectionDetails).toHaveProperty("host");
-        expect(connectionDetails).toHaveProperty("port");
-        expect(connectionDetails).toHaveProperty("username");
-        expect(connectionDetails.database).toBe("chartbrew_test");
-      }
+      expect(connectionDetails).toHaveProperty("host");
+      expect(connectionDetails).toHaveProperty("port");
+      expect(connectionDetails).toHaveProperty("username");
+      expect(connectionDetails.database).toBe("chartbrew_test");
     });
   });
 });
