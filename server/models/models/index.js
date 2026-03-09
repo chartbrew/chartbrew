@@ -21,7 +21,7 @@ const options = {
     idle: 10000
   },
   define: {
-    chartset: "utf8mb4",
+    charset: "utf8mb4",
     collate: "utf8mb4_general_ci",
   },
   dialectOptions: {
