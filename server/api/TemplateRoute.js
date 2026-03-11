@@ -15,6 +15,10 @@ module.exports = (app) => {
   const checkAccess = (req, level, model) => {
     return teamController.getTeamRole(req.params.team_id, req.user.id)
       .then((teamRole) => {
+        if (!teamRole) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
         const permission = accessControl.can(teamRole.role)[level](model);
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
@@ -165,10 +169,12 @@ module.exports = (app) => {
     if (req.body.project_id) {
       try {
         const project = await projectController.findById(req.body.project_id);
+        if (!project) return formatError(new Error(404), res);
+
         // if the project is not in the same team, return unauthorized error
         if (project.team_id !== teamRole.team_id) return formatError(new Error(401), res);
 
-        data.model = await templateController.getDashboardModel(req.body.project_id);
+        data.model = await templateController.getDashboardModel(project.id, teamRole.team_id);
       } catch (error) {
         return formatError(error, res);
       }
@@ -187,20 +193,24 @@ module.exports = (app) => {
   /*
   ** Route to create a template from a project and get the generation JSON
   */
-  app.get(`${url}/generate/:project_id`, verifyToken, (req, res) => {
+  app.get(`${url}/generate/:project_id`, verifyToken, async (req, res) => {
+    let teamRole;
     try {
-      checkAccess(req, "updateAny", "chart");
+      teamRole = await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
 
-    return templateController.getDashboardModel(req.params.project_id)
-      .then((template) => {
-        return res.status(200).send(template);
-      })
-      .catch((err) => {
-        return formatError(err, res);
-      });
+    try {
+      const project = await projectController.findById(req.params.project_id);
+      if (!project) return formatError(new Error(404), res);
+      if (project.team_id !== teamRole.team_id) return formatError(new Error(401), res);
+
+      const template = await templateController.getDashboardModel(project.id, teamRole.team_id);
+      return res.status(200).send(template);
+    } catch (error) {
+      return formatError(error, res);
+    }
   });
   // -------------------------------------
 

@@ -1,5 +1,43 @@
 const db = require("../models/models");
 
+const chartAttributeExcludes = ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"];
+const chartDatasetConfigAttributeExcludes = ["id", "chart_id", "createdAt", "updatedAt"];
+
+const toPlainObject = (record) => {
+  if (!record) return record;
+  return record.toJSON ? record.toJSON() : { ...record };
+};
+
+const sanitizeTemplateChart = (chart, tid) => {
+  const safeChart = toPlainObject(chart);
+  safeChart.tid = tid;
+  safeChart.ChartDatasetConfigs = (safeChart.ChartDatasetConfigs || []).map((config) => {
+    const safeConfig = { ...config };
+    delete safeConfig.Dataset;
+    return safeConfig;
+  });
+
+  return safeChart;
+};
+
+const sanitizeTemplateDataset = (dataset) => {
+  const safeDataset = toPlainObject(dataset);
+  delete safeDataset.DataRequests;
+  return safeDataset;
+};
+
+const sanitizeTemplateConnection = (connection) => {
+  const {
+    id, type, subType, name,
+  } = toPlainObject(connection);
+  return {
+    id,
+    type,
+    subType,
+    name,
+  };
+};
+
 module.exports.findById = (id) => {
   return db.Template.findByPk(id);
 };
@@ -25,85 +63,69 @@ module.exports.delete = (id) => {
   return db.Template.destroy({ where: { id } });
 };
 
-module.exports.getDashboardModel = async (projectId) => {
-  const template = {
-    Charts: [],
-    Connections: [],
-    Datasets: [],
-  };
+module.exports.getDashboardModel = async (projectId, teamId = null) => {
+  const projectWhere = { id: projectId };
+  if (teamId !== null && teamId !== undefined) {
+    projectWhere.team_id = teamId;
+  }
 
-  const project = await db.Project.findByPk(projectId, {
+  const project = await db.Project.findOne({
+    where: projectWhere,
     include: [{
       model: db.Variable,
     }],
   });
 
   if (!project) {
-    throw new Error("Project not found");
+    throw new Error("404");
   }
 
-  return db.Chart.findAll({
+  const charts = await db.Chart.findAll({
     where: { project_id: projectId },
-    attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
+    attributes: { exclude: chartAttributeExcludes },
     include: [{
       model: db.ChartDatasetConfig,
-      attributes: { exclude: ["id", "chart_id", "createdAt", "updatedAt"] },
+      attributes: { exclude: chartDatasetConfigAttributeExcludes },
       include: [{
         model: db.Dataset,
         include: [{
           model: db.DataRequest,
+          attributes: ["id", "connection_id"],
           include: [{
             model: db.Connection,
-            attributes: ["id", "type", "subType", "name", "host", "createdAt", "updatedAt"],
+            attributes: ["id", "type", "subType", "name"],
           }],
         }],
       }],
     }],
-  })
-    .then((charts) => {
-      charts.forEach((chart, dIndex) => {
-        const newChart = chart;
-        // set a template ID for each chart
-        newChart.setDataValue("tid", dIndex);
+  });
 
-        // extract the connections and datasets from the chart
-        const datasets = [];
-        const connections = [];
-        chart.ChartDatasetConfigs.forEach((config) => {
-          const dataset = config.Dataset;
-          const dataRequests = dataset.DataRequests;
-          const drConnections = [];
-          dataRequests.forEach((dr) => {
-            if (dr.Connection) {
-              drConnections.push(dr.Connection);
-            }
-          });
+  const datasets = new Map();
+  const connections = new Map();
 
-          // add datasets and connections only if not already added
-          if (!datasets.find((d) => d.id === dataset.id)
-            && !template.Datasets.find((d) => d.id === dataset.id)
-          ) {
-            datasets.push(dataset);
-          }
+  const templateCharts = charts.map((chart, dIndex) => {
+    chart.ChartDatasetConfigs.forEach((config) => {
+      if (config.Dataset && !datasets.has(config.Dataset.id)) {
+        datasets.set(config.Dataset.id, sanitizeTemplateDataset(config.Dataset));
+      }
 
-          drConnections.forEach((c) => {
-            if (!connections.find((conn) => conn.id === c.id)
-              && !template.Connections.find((conn) => conn.id === c.id)
-            ) {
-              connections.push(c);
-            }
-          });
-        });
-
-        template.Charts.push(newChart);
-        template.Connections = template.Connections.concat(connections);
-        template.Datasets = template.Datasets.concat(datasets);
-        template.Variables = project.Variables;
+      config.Dataset?.DataRequests?.forEach((dataRequest) => {
+        if (dataRequest.Connection && !connections.has(dataRequest.Connection.id)) {
+          connections.set(
+            dataRequest.Connection.id,
+            sanitizeTemplateConnection(dataRequest.Connection)
+          );
+        }
       });
-
-      return template;
-    })
-    .catch((err) => {
-      throw err;
     });
+
+    return sanitizeTemplateChart(chart, dIndex);
+  });
+
+  return {
+    Charts: templateCharts,
+    Connections: Array.from(connections.values()),
+    Datasets: Array.from(datasets.values()),
+    Variables: (project.Variables || []).map((variable) => toPlainObject(variable)),
+  };
 };
