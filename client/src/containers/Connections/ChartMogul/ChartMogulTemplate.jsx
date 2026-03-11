@@ -84,7 +84,7 @@ function ChartMogulTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "chartmogul" }))
       .then(() => {
         setTimeout(() => {
-          navigate(`/${teamId}/${newProjectId}/dashboard`);
+          navigate(`/dashboard/${newProjectId}`);
           onComplete();
         }, 2000);
       })

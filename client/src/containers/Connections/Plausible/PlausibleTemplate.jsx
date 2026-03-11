@@ -93,7 +93,7 @@ function PlausibleTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "plausible" }))
       .then(() => {
         setTimeout(() => {
-          navigate(`/${teamId}/${newProjectId}/dashboard`);
+          navigate(`/dashboard/${newProjectId}`);
           onComplete();
         }, 2000);
       })

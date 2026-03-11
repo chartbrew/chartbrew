@@ -151,7 +151,7 @@ function GaTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "googleAnalytics" }))
       .then(() => {
         setTimeout(() => {
-          navigate(`/${teamId}/${newProjectId}/dashboard`);
+          navigate(`/dashboard/${newProjectId}`);
           onComplete();
         }, 2000);
       })
@@ -300,7 +300,7 @@ function GaTemplate(props) {
             <Button
               color="primary"
               variant="ghost"
-              onClick={() => navigate(`/${teamId}/connection/new?type=googleAnalytics`)}
+              onPress={() => navigate("/connection/new?type=googleAnalytics")}
               startContent={<LuPlus />}
             >
               {"Create a new Google Analytics connection"}
@@ -331,7 +331,7 @@ function GaTemplate(props) {
             
             <Button
               variant="ghost"
-              onClick={() => navigate(`/${teamId}/connection/new?type=googleAnalytics`)}
+              onPress={() => navigate("/connection/new?type=googleAnalytics")}
               startContent={<LuPlus />}
               className="min-w-[200px]"
             >

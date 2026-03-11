@@ -88,7 +88,7 @@ function SimpleAnalyticsTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "simpleanalytics" }))
       .then(() => {
         setTimeout(() => {
-          navigate(`/${teamId}/${newProjectId}/dashboard`);
+          navigate(`/dashboard/${newProjectId}`);
           onComplete();
         }, 2000);
       })

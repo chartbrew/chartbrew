@@ -107,7 +107,7 @@ function MailgunTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "mailgun" }))
       .then(() => {
         setTimeout(() => {
-          navigate(`/${teamId}/${newProjectId}/dashboard`);
+          navigate(`/dashboard/${newProjectId}`);
           onComplete();
         }, 2000);
       })
