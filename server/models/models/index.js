@@ -3,6 +3,8 @@ const path = require("path");
 const { Sequelize, DataTypes } = require("sequelize");
 const { Umzug, SequelizeStorage } = require("umzug");
 
+require("../../modules/legacyCryptoCompat");
+
 const basename = path.basename(__filename);
 const config = process.env.NODE_ENV === "production"
   ? require("../config/config.js").production : require("../config/config.js").development;

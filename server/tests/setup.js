@@ -1,3 +1,4 @@
+import "../modules/legacyCryptoCompat.js";
 import { beforeEach } from "vitest";
 import { testDbManager } from "./helpers/testDbManager.js";
 
