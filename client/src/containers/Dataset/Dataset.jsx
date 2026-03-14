@@ -7,7 +7,7 @@ import {
   Tabs,
   Tab,
 } from "@heroui/react";
-import { LuArrowRight, LuChartArea, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
+import { LuArrowRight, LuChartArea, LuCheck, LuLayers, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
 import { createCdc, createChart, runQuery } from "../../slices/chart";
@@ -320,7 +320,7 @@ function Dataset() {
           if (loadingCounter === completeProjects.length) {
             setCompleteDatasetLoading(false);
             if (completeProjects.length === 1) {
-              navigate(`/dashboard/${completeProjects[0]}/dashboard`);
+              navigate(`/dashboard/${completeProjects[0]}`);
             } else {
               navigate("/");
             }
@@ -387,7 +387,7 @@ function Dataset() {
             {canAccess("projectAdmin", user.id, team.TeamRoles) && (
               <Tab key="query" title={(
                 <div className="flex flex-row items-center gap-2">
-                  <LuDatabase size={18} />
+                  <LuLayers size={18} />
                   <span>1. Query</span>
                 </div>
               )} />
