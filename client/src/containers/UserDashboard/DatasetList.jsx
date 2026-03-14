@@ -1,5 +1,5 @@
-import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import React, { useState } from "react"
+import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,6 +13,8 @@ import { useTheme } from "../../modules/ThemeContext";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import { selectProjects } from "../../slices/project";
+
+const DATASETS_PER_PAGE = 25;
 
 function DatasetList() {
   const [modifyingDataset, setModifyingDataset] = useState(false);
@@ -28,6 +30,7 @@ function DatasetList() {
   const [showDeleteAllDrafts, setShowDeleteAllDrafts] = useState(false);
   const [deletingDatasets, setDeletingDatasets] = useState(false);
   const [showDeleteDatasets, setShowDeleteDatasets] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchFilter, setSearchFilter] = useState({
     project_id: "all",
     search: "",
@@ -226,6 +229,25 @@ function DatasetList() {
     setDeletingDatasets(false);
   };
 
+  const filteredDatasets = _getFilteredDatasets();
+  const totalPages = Math.max(1, Math.ceil(filteredDatasets.length / DATASETS_PER_PAGE));
+  const pageStart = filteredDatasets.length === 0 ? 0 : ((currentPage - 1) * DATASETS_PER_PAGE) + 1;
+  const pageEnd = Math.min(currentPage * DATASETS_PER_PAGE, filteredDatasets.length);
+  const paginatedDatasets = filteredDatasets.slice(
+    (currentPage - 1) * DATASETS_PER_PAGE,
+    currentPage * DATASETS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-row items-center justify-between">
@@ -359,7 +381,7 @@ function DatasetList() {
         <Spacer y={4} />
         <div className="flex flex-row items-center justify-between">
           <div className="text-sm text-foreground-500">
-            {`Showing ${_getFilteredDatasets().length} of ${datasets.length} datasets`}
+            {`Showing ${pageStart}-${pageEnd} of ${filteredDatasets.length} datasets`}
           </div>
           {(searchFilter.status === "draft" || searchFilter.status === "all") && (
             <Button
@@ -401,11 +423,23 @@ function DatasetList() {
           className="max-h-[65vh]"
           aria-label="Dataset list"
           selectionMode="multiple"
+          selectedKeys={selectedDatasets}
           onSelectionChange={(keys) => {
+            const paginatedDatasetIds = paginatedDatasets.map((dataset) => `${dataset.id}`);
             if (keys === "all") {
-              setSelectedDatasets(datasets.map((d) => d.id));
+              setSelectedDatasets((prev) => {
+                const prevIds = prev.map((id) => `${id}`);
+                return [...new Set([...prevIds, ...paginatedDatasetIds])];
+              });
             } else {
-              setSelectedDatasets(Array.from(keys));
+              const nextPageSelection = Array.from(keys).map((key) => `${key}`);
+              setSelectedDatasets((prev) => {
+                const offPageSelections = prev
+                  .map((id) => `${id}`)
+                  .filter((id) => !paginatedDatasetIds.includes(id));
+
+                return [...new Set([...offPageSelections, ...nextPageSelection])];
+              });
             }
           }}
           onRowAction={() => {}}
@@ -451,8 +485,8 @@ function DatasetList() {
               )
             }
           >
-            {_getFilteredDatasets().map((dataset) => (
-              <TableRow key={dataset.id}>
+            {paginatedDatasets.map((dataset) => (
+              <TableRow key={`${dataset.id}`}>
                 <TableCell key="name">
                   <div className="flex flex-row items-center gap-2">
                     <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
@@ -587,6 +621,20 @@ function DatasetList() {
           </TableBody>
         </Table>
       </div>
+      {filteredDatasets.length > DATASETS_PER_PAGE && (
+        <>
+          <Spacer y={3} />
+          <div className="flex justify-center">
+            <Pagination
+              total={totalPages}
+              page={currentPage}
+              onChange={setCurrentPage}
+              size="sm"
+              aria-label="Dataset list pagination"
+            />
+          </div>
+        </>
+      )}
       <Modal isOpen={datasetToDelete?.id} onClose={() => setDatasetToDelete(null)}>
         <ModalContent>
           <ModalHeader>

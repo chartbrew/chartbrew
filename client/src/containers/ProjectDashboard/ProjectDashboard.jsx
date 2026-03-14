@@ -90,6 +90,7 @@ function ProjectDashboard() {
   const [previewSize, setPreviewSize] = useState({});
   const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
   const [gridBreakpoint, setGridBreakpoint] = useState(null);
+  const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState(null);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -202,6 +203,26 @@ function ProjectDashboard() {
       }
     }
   }, [project?.DashboardFilters]);
+
+  useEffect(() => {
+    if (!pendingScrollWidgetId || !layouts) return undefined;
+
+    const hasPendingWidget = charts.some((chart) => `${chart.id}` === `${pendingScrollWidgetId}`);
+    if (!hasPendingWidget) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      const widgetElement = document.getElementById(`dashboard-widget-${pendingScrollWidgetId}`);
+      if (!widgetElement) return;
+
+      widgetElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      setPendingScrollWidgetId(null);
+    }, 200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [charts, layouts, pendingScrollWidgetId]);
 
   const _onEditLayout = async () => {
     if (editingLayout) {
@@ -932,6 +953,7 @@ function ProjectDashboard() {
     });
 
     _prepareLayout([...charts, newChart]);
+    setPendingScrollWidgetId(newChart.id);
   };
 
   if (!layouts && chartsLoading) {
@@ -1311,7 +1333,11 @@ function ProjectDashboard() {
             }}
           >
             {charts.map((chart, index) => (
-              <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>
+              <div
+                key={chart.id}
+                id={chart.type === "markdown" ? `dashboard-widget-${chart.id}` : undefined}
+                className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}
+              >
                 {chart.type === "markdown" ? (
                   <TextWidget
                     chart={chart}
