@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress, Listbox, ListboxItem } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuDatabase, LuSlack } from "react-icons/lu"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
@@ -1350,7 +1350,7 @@ function AiModal({ isOpen, onClose }) {
                               startContent={
                                 entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
                                 entity.entity_type === "connection" ? <LuPlug size={16} /> :
-                                entity.entity_type === "dataset" ? <LuDatabase size={16} /> : null
+                                entity.entity_type === "dataset" ? <LuLayers size={16} /> : null
                               }
                               endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
                               className={isSelected ? "bg-primary-50" : ""}
@@ -1749,7 +1749,7 @@ function AiModal({ isOpen, onClose }) {
                                       startContent={
                                         entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
                                           entity.entity_type === "connection" ? <LuPlug size={16} /> :
-                                            entity.entity_type === "dataset" ? <LuDatabase size={16} /> : null
+                                            entity.entity_type === "dataset" ? <LuLayers size={16} /> : null
                                       }
                                       endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
                                       className={isSelected ? "bg-primary-50" : ""}

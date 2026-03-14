@@ -1,6 +1,6 @@
 import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useEffect, useState } from "react"
-import { LuCalendarDays, LuCopy, LuDatabase, LuEllipsis, LuInfo, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
+import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -420,7 +420,6 @@ function DatasetList() {
           shadow="none"
           radius="sm"
           isStriped
-          className="max-h-[65vh]"
           aria-label="Dataset list"
           selectionMode="multiple"
           selectedKeys={selectedDatasets}
@@ -470,7 +469,7 @@ function DatasetList() {
             emptyContent={
               connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
                 <div className="flex flex-col items-center gap-1">
-                  <LuDatabase size={24} />
+                  <LuLayers size={24} />
                   <span>You need to create a connection to get started</span>
                   <Spacer y={1} />
                   <Button
@@ -624,7 +623,7 @@ function DatasetList() {
       {filteredDatasets.length > DATASETS_PER_PAGE && (
         <>
           <Spacer y={3} />
-          <div className="flex justify-center">
+          <div className="flex justify-start px-4 py-2 border-1 border-solid border-content3 rounded-lg bg-content1">
             <Pagination
               total={totalPages}
               page={currentPage}

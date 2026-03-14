@@ -1,8 +1,8 @@
 import React, { useState } from "react"
-import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@heroui/react"
+import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuDatabase, LuDatabaseZap, LuGrid2X2Plus, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
+import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
@@ -193,7 +193,11 @@ function Sidebar() {
                 className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "" || window.location.pathname.indexOf("dashboard") > -1 ? "bg-content2 text-primary" : "text-foreground")}
                 onClick={() => navigate("/")}
               >
-                {collapsed ? <LuLayoutGrid size={20} /> : <span className="text-sm">Dashboards</span>}
+                <Tooltip content="Dashboards" hidden={!collapsed} placement="right">
+                  <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                    {collapsed ? <LuLayoutGrid size={20} /> : <span className="text-sm">Dashboards</span>}
+                  </div>
+                </Tooltip>
               </ListboxItem>
               {_canAccess("teamAdmin", team.TeamRoles) && (
                 <ListboxItem
@@ -204,19 +208,27 @@ function Sidebar() {
                   className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial")}
                   onClick={() => navigate("/connections")}
                 >
-                  {collapsed ? <LuPlug size={20} /> : <span className="text-sm">Connections</span>}
+                  <Tooltip content="Connections" hidden={!collapsed} placement="right">
+                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                      {collapsed ? <LuPlug size={20} /> : <span className="text-sm">Connections</span>}
+                    </div>
+                  </Tooltip>
                 </ListboxItem>
               )}
               {_canAccess("projectEditor", team.TeamRoles) && (
                 <ListboxItem
                   key="datasets"
-                  startContent={collapsed ? null : <LuDatabase size={18} />}
+                  startContent={collapsed ? null : <LuLayers size={18} />}
                   textValue="Datasets"
                   color={_getActiveMenu() === "datasets" ? "primary" : "default"}
                   className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial")}
                   onClick={() => navigate("/datasets")}
                 >
-                  {collapsed ? <LuDatabase size={20} /> : <span className="text-sm">Datasets</span>}
+                  <Tooltip content="Datasets" hidden={!collapsed} placement="right">
+                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                      {collapsed ? <LuLayers size={20} /> : <span className="text-sm">Datasets</span>}
+                    </div>
+                  </Tooltip>
                 </ListboxItem>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -228,7 +240,11 @@ function Sidebar() {
                   className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial")}
                   onClick={() => navigate("/integrations")}
                 >
-                  {collapsed ? <LuPuzzle size={20} /> : <span className="text-sm">Integrations</span>}
+                  <Tooltip content="Integrations" hidden={!collapsed} placement="right">
+                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                      {collapsed ? <LuPuzzle size={20} /> : <span className="text-sm">Integrations</span>}
+                    </div>
+                  </Tooltip>
                 </ListboxItem>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -255,57 +271,65 @@ function Sidebar() {
                   {collapsed ? "" : "Quick actions"}
                 </div>
                 <Spacer y={2} />
-                <Button
-                  variant="flat"
-                  size="sm"
-                  color="default"
-                  startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
-                  onPress={() => navigate("/?create=dashboard")}
-                  isIconOnly={collapsed}
-                  fullWidth
-                  className={cn(collapsed ? "justify-center" : "justify-start")}
-                >
-                  {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
-                </Button>
+                <Tooltip content="Create a new dashboard" hidden={!collapsed} placement="right">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    color="default"
+                    startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
+                    onPress={() => navigate("/?create=dashboard")}
+                    isIconOnly={collapsed}
+                    fullWidth
+                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                  >
+                    {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
+                  </Button>
+                </Tooltip>
                 <Spacer y={1} />
-                <Button
-                  variant="flat"
-                  size="sm"
-                  color="default"
-                  startContent={collapsed ? null : <LuDatabaseZap size={18} />}
-                  onPress={() => navigate("/datasets/new")}
-                  isIconOnly={collapsed}
-                  fullWidth
-                  className={cn(collapsed ? "justify-center" : "justify-start")}
-                >
-                  {collapsed ? <LuDatabaseZap size={20} /> : "New dataset"}
-                </Button>
+                <Tooltip content="Create a new dataset" hidden={!collapsed} placement="right">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    color="default"
+                    startContent={collapsed ? null : <LuLayers2 size={18} />}
+                    onPress={() => navigate("/datasets/new")}
+                    isIconOnly={collapsed}
+                    fullWidth
+                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                  >
+                    {collapsed ? <LuLayers2 size={20} /> : "New dataset"}
+                  </Button>
+                </Tooltip>
                 <Spacer y={1} />
-                <Button
-                  variant="flat"
-                  size="sm"
-                  color="default"
-                  startContent={collapsed ? null : <LuUnplug size={18} />}
-                  onPress={() => navigate("/connections/new")}
-                  isIconOnly={collapsed}
-                  fullWidth
-                  className={cn(collapsed ? "justify-center" : "justify-start")}
-                >
-                  {collapsed ? <LuUnplug size={20} /> : "New connection"}
-                </Button>
+                <Tooltip content="Create a new connection" hidden={!collapsed} placement="right">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    color="default"
+                    startContent={collapsed ? null : <LuUnplug size={18} />}
+                    onPress={() => navigate("/connections/new")}
+                    isIconOnly={collapsed}
+                    fullWidth
+                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                  >
+                    {collapsed ? <LuUnplug size={20} /> : "New connection"}
+                  </Button>
+                </Tooltip>
                 <Spacer y={1} />
-                <Button
-                  variant="flat"
-                  size="sm"
-                  color="default"
-                  startContent={collapsed ? null : <LuUserPlus size={18} />}
-                  onPress={() => navigate("/settings/members")}
-                  isIconOnly={collapsed}
-                  fullWidth
-                  className={cn(collapsed ? "justify-center" : "justify-start")}
-                >
-                  {collapsed ? <LuUserPlus size={20} /> : "Add team member"}
-                </Button>
+                <Tooltip content="Add a team member" hidden={!collapsed} placement="right">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    color="default"
+                    startContent={collapsed ? null : <LuUserPlus size={18} />}
+                    onPress={() => navigate("/settings/members")}
+                    isIconOnly={collapsed}
+                    fullWidth
+                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                  >
+                    {collapsed ? <LuUserPlus size={20} /> : "Add team member"}
+                  </Button>
+                </Tooltip>
               </>
             )}
           </div>
@@ -313,16 +337,18 @@ function Sidebar() {
         
         <div className="flex flex-col">
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            <Button
-              variant="light"
-              startContent={collapsed? null : _getTheme().icon}
-              onPress={() => _onCycleTheme()}
-              fullWidth
-              className={cn(collapsed ? "justify-center" : "justify-start")}
-              isIconOnly={collapsed}
-            >
-              {collapsed ? _getTheme().icon : _getTheme().name}
-            </Button>
+            <Tooltip content="Change theme" hidden={!collapsed} placement="right">
+              <Button
+                variant="light"
+                startContent={collapsed? null : _getTheme().icon}
+                onPress={() => _onCycleTheme()}
+                fullWidth
+                className={cn(collapsed ? "justify-center" : "justify-start")}
+                isIconOnly={collapsed}
+              >
+                {collapsed ? _getTheme().icon : _getTheme().name}
+              </Button>
+            </Tooltip>
           </div>
           <Spacer y={2} />
           <Divider />

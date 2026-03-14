@@ -176,7 +176,7 @@ function TopNav() {
               size="sm"
               className="from-primary-300 via-violet-200 to-secondary-300 dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500 bg-linear-to-tr hover:bg-linear-to-br transition-all duration-300 shadow-md"
             >
-              Ask Chartbrew AI
+              Ask your data
             </Button>
           )}
 

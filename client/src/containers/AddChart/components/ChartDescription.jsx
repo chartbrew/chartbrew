@@ -6,7 +6,7 @@ import {
   Button, Chip, CircularProgress, Input, Pagination, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
 } from "@heroui/react";
 import {
-  LuDatabase, LuPlus, LuSearch,
+  LuLayers, LuPlus, LuSearch,
 } from "react-icons/lu";
 
 import canAccess from "../../../config/canAccess";
@@ -200,7 +200,7 @@ function ChartDescription(props) {
               </div>
             ) : (
               <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">
-                <LuDatabase size={20} />
+                <LuLayers size={20} />
                 <span>No datasets found</span>
               </div>
             )}
