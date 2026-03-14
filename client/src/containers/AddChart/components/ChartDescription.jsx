@@ -1,276 +1,327 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
-} from "@heroui/react";
+import moment from "moment";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router";
-import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
+import {
+  Button, Chip, CircularProgress, Input, Pagination, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
+} from "@heroui/react";
+import {
+  LuDatabase, LuPlus, LuSearch,
+} from "react-icons/lu";
 
-import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
-import ChartMogulTemplate from "../../Connections/ChartMogul/ChartMogulTemplate";
-import MailgunTemplate from "../../Connections/Mailgun/MailgunTemplate";
-import GaTemplate from "../../Connections/GoogleAnalytics/GaTemplate";
-import CustomTemplates from "../../Connections/CustomTemplates/CustomTemplates";
-import PlausibleTemplate from "../../Connections/Plausible/PlausibleTemplate";
 import canAccess from "../../../config/canAccess";
-import Container from "../../../components/Container";
-import Text from "../../../components/Text";
-import Row from "../../../components/Row";
-import availableTemplates from "../../../modules/availableTemplates";
+import availableConnections from "../../../modules/availableConnections";
+import { selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 
+const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
+  ...acc,
+  [connection.type]: connection.name,
+}), {
+  chartmogul: "ChartMogul",
+  customerio: "Customer.io",
+  mailgun: "Mailgun",
+  plausible: "Plausible",
+  simpleanalytics: "Simple Analytics",
+  strapi: "Strapi",
+  stripe: "Stripe",
+  supabase: "Supabase",
+  supabaseapi: "Supabase API",
+});
+
+const _formatConnectionType = (type) => {
+  if (!type) return "Unknown source";
+  if (connectionTypeLabels[type]) return connectionTypeLabels[type];
+
+  return type
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const _formatLastModified = (dateValue) => {
+  if (!dateValue) return "Recently";
+  return moment(dateValue).fromNow();
+};
+
+const DATASETS_PER_PAGE = 25;
+
 function ChartDescription(props) {
   const {
-    name = "", onChange, onCreate, teamId, projectId, connections, templates,
+    datasets,
+    creatingDatasetId,
+    creatingNewDataset,
+    onCreateFromDataset,
+    onCreateDataset,
   } = props;
 
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formType, setFormType] = useState("");
-  const [selectedMenu, setSelectedMenu] = useState("emptyChart");
+  const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const navigate = useNavigate();
-  const params = useParams();
-  const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
+  const team = useSelector(selectTeam);
+  const projects = useSelector(selectProjects);
+  const datasetLoading = useSelector((state) => state.dataset.loading);
+
+  const canCreateDataset = team?.TeamRoles
+    ? canAccess("teamAdmin", user.id, team.TeamRoles)
+    : false;
+  const isBusy = Boolean(creatingDatasetId) || creatingNewDataset;
+
+  const _getDatasetTags = (dataset) => {
+    if (!projects || !dataset?.project_ids) return [];
+
+    return dataset.project_ids.reduce((tags, projectId) => {
+      const project = projects.find((item) => item.id === projectId);
+      if (project) tags.push(project.name);
+      return tags;
+    }, []);
+  };
+
+  const _getDatasetConnectionTypes = (dataset) => {
+    const connectionTypes = dataset?.DataRequests?.map((request) => (
+      _formatConnectionType(request?.Connection?.subType || request?.Connection?.type)
+    )) || [];
+
+    return [...new Set(connectionTypes)];
+  };
+
+  const filteredDatasets = [...datasets]
+    .filter((dataset) => {
+      if (!searchValue.trim()) return true;
+
+      const search = searchValue.trim().toLowerCase();
+      const haystack = [
+        dataset.legend,
+        ..._getDatasetTags(dataset),
+        ..._getDatasetConnectionTypes(dataset),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(search);
+    })
+    .sort((a, b) => (
+      new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+    ));
+
+  const totalPages = Math.max(1, Math.ceil(filteredDatasets.length / DATASETS_PER_PAGE));
+  const paginatedDatasets = filteredDatasets.slice(
+    (currentPage - 1) * DATASETS_PER_PAGE,
+    currentPage * DATASETS_PER_PAGE
+  );
 
   useEffect(() => {
-    if (!name) _populateName();
-  }, []);
+    setCurrentPage(1);
+  }, [searchValue]);
 
-  const _onNameChange = (e) => {
-    onChange(e.target.value);
-  };
-
-  const _onCreatePressed = () => {
-    if (!name) {
-      setError(true);
-      return;
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-    setLoading(true);
-    onCreate()
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
-  };
+  }, [currentPage, totalPages]);
 
-  const _onCompleteTemplate = () => {
-    navigate(`/${teamId}/${projectId}/dashboard`);
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  };
+  const _onSelectDataset = (selectedDataset) => {
+    const dataset = typeof selectedDataset === "object"
+      ? selectedDataset
+      : datasets.find((item) => `${item.id}` === `${selectedDataset}`);
 
-  const _populateName = () => {
-    const names = [
-      "Awesome", "Majestic", "Spectacular", "Superb", "Grandiose", "Charty", "Breathtaking", "Awe-inspiring",
-      "Chartiful", "Beautiful", "Super", "Formidable", "Stunning", "Astonishing", "Magnificent",
-    ];
-    onChange(`${names[Math.floor(Math.random() * names.length)]} chart`);
-  };
-
-  const _canAccess = (role) => {
-    return canAccess(role, user.id, team.TeamRoles);
+    if (!dataset || !dataset.id) return;
+    if (isBusy) return;
+    onCreateFromDataset(dataset);
   };
 
   return (
-    <Container className={"bg-content1 rounded-lg p-4 border-1 border-solid border-content3"}>
-      <Row align="center" wrap="wrap">
-        <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
-          <Tab key="emptyChart" title="Create from scratch" />
-          <Tab key="communityTemplates" title="Community templates" isDisabled={!_canAccess("teamAdmin")} />
-          <Tab key="customTemplates" title="Custom templates" isDisabled={!_canAccess("teamAdmin")} />
-        </Tabs>
-      </Row>
-      <Spacer y={4} />
-      {!formType && (
-        <>
-          {selectedMenu === "emptyChart" && (
-            <>
-              <Row align="center">
-                <Text size="h3">
-                  {"What are you brewing today?"}
-                </Text>
-              </Row>
-              <Row align="center">
-                <Text>
-                  {"Write a short summary of your visualization"}
-                </Text>
-              </Row>
-              <Spacer y={2} />
-              <Row align="center">
-                <form
-                  id="create-chart"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    _onCreatePressed();
-                  }}
-                  style={{ width: "100%" }}
-                >
-                  <Input
-                    placeholder="'User growth in the last month'"
-                    color={error ? "danger" : "primary"}
-                    description={error}
-                    value={name}
-                    onChange={_onNameChange}
-                    size="lg"
-                    fullWidth
-                    autoFocus
-                    variant="bordered"
-                  />
-                </form>
-              </Row>
-              <Spacer y={1} />
-              <Row align="center">
-                <Link
-                  onClick={_populateName}
-                >
-                  <Text className={"text-primary"}>{"Can't think of something?"}</Text>
-                </Link>
-              </Row>
+    <div className="flex flex-col rounded-lg border border-divider bg-content1 p-4">
+      <div className="flex flex-col gap-1">
+        <div className="font-tw text-2xl font-semibold">
+          Create chart from dataset
+        </div>
+        <div className="text-sm text-foreground-500">
+          Select an existing dataset or create a new one to build your chart
+        </div>
+      </div>
+      <Spacer y={6} />
 
-              <Spacer y={4} />
-              <Row align="center">
-                <Button
-                  isDisabled={!name}
-                  isLoading={loading}
-                  type="submit"
-                  onPress={_onCreatePressed}
-                  form="create-chart"
-                  color="primary"
-                  size="lg"
-                  endContent={<LuArrowRight />}
-                >
-                  Start editing
-                </Button>
-              </Row>
-            </>
-          )}
-          {selectedMenu === "communityTemplates" && (
-            <Row align="center">
-              <div className="grid grid-cols-12 gap-2">
-                {availableTemplates.map((t) => (
-                  <div key={t.type} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
-                    <Card
-                      isPressable
-                      isHoverable
-                      onPress={() => setFormType(t.type)}
-                    >
-                      <CardBody className="p-0">
-                        <Image className="object-cover" width="300" height="300" src={t.image} />
-                      </CardBody>
-                      <CardFooter>
-                        <Row wrap="wrap" justify="center" align="center">
-                          <Text size="h4">
-                            {t.name}
-                          </Text>
-                        </Row>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                ))}
-              </div>
-            </Row>
-          )}
-
-          {selectedMenu === "customTemplates" && (
-            <Row align="center">
-              <CustomTemplates
-                templates={templates.data}
-                loading={templates.loading}
-                teamId={team?.id}
-                projectId={params.projectId}
-                connections={connections}
-                onComplete={_onCompleteTemplate}
-                isAdmin={canAccess("teamAdmin", user.id, team.TeamRoles)}
-              />
-            </Row>
-          )}
-        </>
-      )}
-
-      {formType && (
-        <>
-          <Row align={"start"} justify={"start"}>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          {canCreateDataset && (
             <Button
-              variant="flat"
-              onPress={() => setFormType("")}
-              startContent={<LuArrowLeft />}
-              size="small"
+              color="primary"
+              size="sm"
+              startContent={!creatingNewDataset ? <LuPlus size={16} /> : null}
+              isLoading={creatingNewDataset}
+              onPress={onCreateDataset}
             >
-              Back
+              Start from scratch
             </Button>
-          </Row>
+          )}
+        </div>
+        <div className="w-full md:max-w-sm">
+          <Input
+            placeholder="Search datasets"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            endContent={<LuSearch size={16} />}
+            variant="bordered"
+            size="sm"
+          />
+        </div>
+      </div>
+      <Spacer y={4} />
 
-          <Spacer y={2} />
-          <Divider />
-          <Spacer y={4} />
+      <div className="text-sm text-foreground-500">
+        {`Showing ${filteredDatasets.length} of ${datasets.length} datasets`}
+      </div>
+      <Spacer y={3} />
+
+      <div className="rounded-lg border-1 border-solid border-content3">
+        <Table
+          shadow="none"
+          radius="sm"
+          aria-label="Dataset picker"
+          selectionMode="single"
+          onRowAction={(key) => _onSelectDataset(key)}
+        >
+          <TableHeader>
+            <TableColumn key="name">Dataset</TableColumn>
+            <TableColumn key="source">Source</TableColumn>
+            <TableColumn key="tags">Tags</TableColumn>
+            <TableColumn key="createdBy">Created by</TableColumn>
+            <TableColumn key="modified">Last modified</TableColumn>
+            <TableColumn key="actions" align="center" hideHeader />
+          </TableHeader>
+          <TableBody
+            emptyContent={datasetLoading ? (
+              <div className="flex min-h-40 items-center justify-center">
+                <CircularProgress aria-label="Loading datasets" />
+              </div>
+            ) : (
+              <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">
+                <LuDatabase size={20} />
+                <span>No datasets found</span>
+              </div>
+            )}
+          >
+            {paginatedDatasets.map((dataset) => {
+              const tags = _getDatasetTags(dataset);
+              const connectionTypes = _getDatasetConnectionTypes(dataset);
+              const isCreatingChart = creatingDatasetId === dataset.id;
+
+              return (
+                <TableRow key={dataset.id}>
+                  <TableCell key="name">
+                    <div className={cn(`min-w-0 ${isBusy && !isCreatingChart ? "opacity-60" : ""} cursor-pointer hover:underline`)}>
+                      <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
+                        {dataset.legend}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell key="source">
+                    <div className={`flex flex-wrap gap-1 ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
+                      {connectionTypes.length > 0 && connectionTypes.map((connectionType) => (
+                        <Chip
+                          key={`${dataset.id}-${connectionType}`}
+                          size="sm"
+                          variant="flat"
+                        >
+                          {connectionType}
+                        </Chip>
+                      ))}
+                      {connectionTypes.length === 0 && (
+                        <span className="text-sm text-foreground-400">Unknown source</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell key="tags">
+                    <div className={`flex flex-wrap gap-1 ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
+                      {tags.length > 0 && tags.slice(0, 3).map((tag) => (
+                        <Chip key={`${dataset.id}-${tag}`} size="sm" variant="flat" color="primary">
+                          {tag}
+                        </Chip>
+                      ))}
+                      {tags.length > 3 && (
+                        <span className="self-center text-xs text-foreground-500">
+                          {`+${tags.length - 3} more`}
+                        </span>
+                      )}
+                      {tags.length === 0 && (
+                        <span className="text-sm text-foreground-400">No tags</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell key="createdBy">
+                    <div className={`text-sm text-foreground ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
+                      you
+                    </div>
+                  </TableCell>
+                  <TableCell key="modified">
+                    <div className={`text-sm text-foreground ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
+                      {_formatLastModified(dataset.updatedAt || dataset.createdAt)}
+                    </div>
+                  </TableCell>
+                  <TableCell key="actions">
+                    <div className="flex justify-end">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        onPress={() => _onSelectDataset(dataset)}
+                        isLoading={isCreatingChart}
+                        isDisabled={isBusy && !isCreatingChart}
+                        aria-label={`Create chart from ${dataset.legend}`}
+                      >
+                        {!isCreatingChart && <LuPlus size={16} />}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {filteredDatasets.length > DATASETS_PER_PAGE && (
+        <>
+          <Spacer y={3} />
+          <div className="flex justify-center">
+            <Pagination
+              total={totalPages}
+              page={currentPage}
+              onChange={setCurrentPage}
+              size="sm"
+              aria-label="Dataset pagination"
+            />
+          </div>
         </>
       )}
 
-      {formType === "saTemplate" && selectedMenu === "communityTemplates"
-        && (
-          <SimpleAnalyticsTemplate
-            teamId={teamId}
-            projectId={projectId}
-            onComplete={_onCompleteTemplate}
-            connections={connections}
-            onBack={() => setFormType("")}
-          />
-        )}
-      {formType === "cmTemplate" && selectedMenu === "communityTemplates"
-        && (
-          <ChartMogulTemplate
-            teamId={teamId}
-            projectId={projectId}
-            onComplete={_onCompleteTemplate}
-            connections={connections}
-            onBack={() => setFormType("")}
-          />
-        )}
-      {formType === "mailgunTemplate" && selectedMenu === "communityTemplates"
-        && (
-          <MailgunTemplate
-            teamId={teamId}
-            projectId={projectId}
-            onComplete={_onCompleteTemplate}
-            connections={connections}
-            onBack={() => setFormType("")}
-          />
-        )}
-      {formType === "googleAnalyticsTemplate" && selectedMenu === "communityTemplates"
-        && (
-          <GaTemplate
-            teamId={teamId}
-            projectId={projectId}
-            onComplete={_onCompleteTemplate}
-            connections={connections}
-            onBack={() => setFormType("")}
-          />
-        )}
-      {formType === "plausibleTemplate" && selectedMenu === "communityTemplates"
-        && (
-          <PlausibleTemplate
-            teamId={teamId}
-            projectId={projectId}
-            onComplete={_onCompleteTemplate}
-            connections={connections}
-            onBack={() => setFormType("")}
-          />
-        )}
-    </Container>
+      <Spacer y={1} />
+    </div>
   );
 }
 
 ChartDescription.propTypes = {
-  name: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  onCreate: PropTypes.func.isRequired,
-  teamId: PropTypes.string.isRequired,
-  projectId: PropTypes.string.isRequired,
-  connections: PropTypes.array.isRequired,
-  templates: PropTypes.object.isRequired,
+  creatingDatasetId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  creatingNewDataset: PropTypes.bool,
+  datasets: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    legend: PropTypes.string,
+    createdAt: PropTypes.string,
+    updatedAt: PropTypes.string,
+    project_ids: PropTypes.array,
+    DataRequests: PropTypes.array,
+  })).isRequired,
+  onCreateDataset: PropTypes.func.isRequired,
+  onCreateFromDataset: PropTypes.func.isRequired,
+};
+
+ChartDescription.defaultProps = {
+  creatingDatasetId: null,
+  creatingNewDataset: false,
 };
 
 export default ChartDescription;

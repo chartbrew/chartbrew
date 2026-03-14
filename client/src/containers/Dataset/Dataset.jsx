@@ -520,6 +520,7 @@ function Dataset() {
                 color="primary"
                 onPress={_onCompleteDataset}
                 isLoading={completeDatasetLoading}
+                size="sm"
               >
                 Save & return to chart
               </Button>

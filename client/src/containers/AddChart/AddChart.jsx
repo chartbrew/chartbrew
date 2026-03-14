@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Spacer, Tooltip, Input, Button, Switch,
+  Link as LinkNext, Spacer, Tooltip, Input, Button, CircularProgress, Switch,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
@@ -12,28 +12,71 @@ import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import ChartDescription from "./components/ChartDescription";
 import {
-  createChart, updateChart, runQuery, runQueryWithFilters, selectCharts,
+  createChart, createCdc, updateChart, runQuery, runQueryWithFilters, selectCharts,
 } from "../../slices/chart";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
-import { getTemplates, selectTemplates } from "../../slices/template";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
-import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import { placeNewWidget } from "../../modules/autoLayout";
-import { selectTeam } from "../../slices/team";
+import { chartColors } from "../../config/colors";
+
+const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
+const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
+const defaultChart = {
+  type: "line",
+  subType: "lcTimeseries",
+};
+
+const _getStoredPendingChartIds = () => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const storedIds = window.sessionStorage.getItem(AUTO_NAME_PENDING_STORAGE_KEY);
+    return storedIds ? JSON.parse(storedIds) : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const _savePendingChartIds = (chartIds) => {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(AUTO_NAME_PENDING_STORAGE_KEY, JSON.stringify(chartIds));
+};
+
+const _rememberPendingChartName = (chartId) => {
+  const storedIds = _getStoredPendingChartIds();
+  if (storedIds.includes(chartId)) return;
+  _savePendingChartIds([...storedIds, chartId]);
+};
+
+const _clearPendingChartName = (chartId) => {
+  const storedIds = _getStoredPendingChartIds();
+  _savePendingChartIds(storedIds.filter((storedId) => storedId !== chartId));
+};
+
+const _shouldAutoNameChart = (chartId) => _getStoredPendingChartIds().includes(chartId);
+
+const _getNewChartLayout = (charts) => {
+  const layouts = getDashboardLayout(charts);
+  const chartLayout = {};
+
+  Object.keys(layouts).forEach((bp) => {
+    const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
+    const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
+    chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
+  });
+
+  return chartLayout;
+};
 
 /*
   Container used for setting up a new chart
 */
 function AddChart() {
-  const [titleScreen, setTitleScreen] = useState(true);
-  const [newChart, setNewChart] = useState({
-    type: "line",
-    subType: "lcTimeseries",
-  });
+  const [newChart, setNewChart] = useState(defaultChart);
   const [editingTitle, setEditingTitle] = useState(false);
   const [chartName, setChartName] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
@@ -41,44 +84,27 @@ function AddChart() {
   const [loading, setLoading] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [useCache, setUseCache] = useState(true);
+  const [creatingDatasetId, setCreatingDatasetId] = useState(null);
+  const [creatingNewDataset, setCreatingNewDataset] = useState(false);
 
   const charts = useSelector(selectCharts);
-  const templates = useSelector(selectTemplates);
-  const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
-  const team = useSelector(selectTeam);
 
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const templateRef = useRef(null);
 
   useEffect(() => {
     dispatch(clearAlerts());
 
     if (params.chartId) {
-      charts.map((chart) => {
-        if (chart.id === parseInt(params.chartId, 10)) {
-          setNewChart(chart);
-        }
-        return chart;
-      });
-      setTitleScreen(false);
-
       // also fetch the chart's datasets and alerts
       dispatch(getChartAlerts({
         project_id: params.projectId,
         chart_id: params.chartId
       }));
     }
-  }, []);
-
-  useEffect(() => {
-    if (team?.id && !templateRef.current) {
-      templateRef.current = true;
-      dispatch(getTemplates(team.id));
-    }
-  }, [team]);
+  }, [dispatch, params.chartId, params.projectId]);
 
   useEffect(() => {
     charts.map((chart) => {
@@ -90,7 +116,7 @@ function AddChart() {
       }
       return chart;
     });
-  }, [charts]);
+  }, [charts, newChart, params.chartId]);
 
   useEffect(() => {
     let found = false;
@@ -104,7 +130,7 @@ function AddChart() {
       return chart;
     });
     if (!found) setSaveRequired(false);
-  }, [newChart]);
+  }, [charts, newChart, params.chartId]);
 
   const _onNameChange = (value) => {
     setChartName(value);
@@ -115,31 +141,65 @@ function AddChart() {
     _onChangeChart({ name: chartName });
   };
 
-  const _onCreateClicked = () => {
-    const tempChart = { ...newChart, name: chartName };
+  const _createChart = async (name) => {
+    const chartData = {
+      ...defaultChart,
+      name,
+      layout: _getNewChartLayout(charts),
+    };
 
-    // add chart at the end of the dashboard
-    const layouts = getDashboardLayout(charts);
-    const chartLayout = {};
-    Object.keys(layouts).map((bp) => {
-      const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-      const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
-      chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-      return bp;
-    });
+    return dispatch(createChart({ project_id: params.projectId, data: chartData })).unwrap();
+  };
 
-    tempChart.layout = chartLayout;
+  const _onCreateFromDataset = async (dataset) => {
+    setCreatingDatasetId(dataset.id);
 
-    return dispatch(createChart({ project_id: params.projectId, data: tempChart }))
-      .then((res) => {
-        setNewChart(res.payload);
-        setTitleScreen(false);
-        navigate(`${res.payload.id}/edit`);
-        return true;
-      })
-      .catch(() => {
-        return false;
-      });
+    try {
+      const chart = await _createChart(dataset.legend);
+
+      await dispatch(createCdc({
+        project_id: chart.project_id,
+        chart_id: chart.id,
+        data: {
+          dataset_id: dataset.id,
+          datasetColor: chartColors.blue.hex,
+          fill: false,
+          order: 0,
+        },
+      })).unwrap();
+
+      try {
+        await dispatch(runQuery({
+          project_id: chart.project_id,
+          chart_id: chart.id,
+          noSource: false,
+          skipParsing: false,
+          getCache: true,
+        })).unwrap();
+      } catch (error) {
+        // The chart editor can recover from a failed first run.
+      }
+
+      navigate(`${chart.id}/edit`);
+    } catch (error) {
+      toast.error("Oups! Can't create the chart. Please try again.");
+    } finally {
+      setCreatingDatasetId(null);
+    }
+  };
+
+  const _onCreateDataset = async () => {
+    setCreatingNewDataset(true);
+
+    try {
+      const chart = await _createChart(AUTO_NAME_PLACEHOLDER);
+      _rememberPendingChartName(chart.id);
+      navigate(`/datasets/new?create=true&project_id=${params.projectId}&chart_id=${chart.id}`);
+    } catch (error) {
+      toast.error("Oups! Can't start the chart setup. Please try again.");
+    } finally {
+      setCreatingNewDataset(false);
+    }
   };
 
   const _onChangeGlobalSettings = ({
@@ -319,20 +379,52 @@ function AddChart() {
     }));
   };
 
-  if (titleScreen) {
+  useEffect(() => {
+    if (!params.chartId || !newChart?.id || !_shouldAutoNameChart(newChart.id)) {
+      return;
+    }
+
+    const datasetName = newChart.ChartDatasetConfigs?.[0]?.legend;
+    if (!datasetName) {
+      return;
+    }
+
+    _clearPendingChartName(newChart.id);
+
+    if (newChart.name === datasetName) {
+      setChartName(datasetName);
+      return;
+    }
+
+    setChartName(datasetName);
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: params.chartId,
+      data: { name: datasetName },
+    })).unwrap().catch(() => {
+      toast.error("Oups! Can't update the chart name. Please try again.");
+    });
+  }, [dispatch, newChart, params.chartId, params.projectId]);
+
+  if (!params.chartId) {
     return (
-      <div style={{ textAlign: "center" }}>
+      <div className="pt-4">
         <ChartDescription
-          name={chartName}
-          onChange={_onNameChange}
-          onCreate={_onCreateClicked}
-          teamId={team?.id}
-          projectId={params.projectId}
-          connections={connections}
-          templates={templates}
-          noConnections={connections.length === 0}
+          datasets={datasets}
+          creatingDatasetId={creatingDatasetId}
+          creatingNewDataset={creatingNewDataset}
+          onCreateFromDataset={_onCreateFromDataset}
+          onCreateDataset={_onCreateDataset}
         />
         <Spacer y={2} />
+      </div>
+    );
+  }
+
+  if (params.chartId && !newChart?.id) {
+    return (
+      <div className="flex min-h-[240px] items-center justify-center">
+        <CircularProgress aria-label="Loading chart" />
       </div>
     );
   }
