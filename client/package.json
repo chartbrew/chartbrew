@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
+    "dev": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
     "build": "npm run prepareSettings && vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",

@@ -12,6 +12,7 @@
     "test:integration": "vitest run tests/integration",
     "test:ui": "vitest --ui",
     "start-dev": "set NODE_ENV=development && nodemon index",
+    "dev": "set NODE_ENV=development && nodemon index",
     "start": "NODE_ENV=production node index",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
