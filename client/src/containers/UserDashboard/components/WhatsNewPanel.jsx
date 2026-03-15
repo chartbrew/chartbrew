@@ -30,7 +30,7 @@ function getWhatsNewContent({ navigate, dispatch }) {
             id: "slack-ai-integration",
             type: "newFeature",
             title: "Ask Chartbrew from Slack",
-            body: "Connect Slack and ask questions about your data in plain English.",
+            body: "Use Slack to ask Chartbrew questions and get instant insights.",
             // badge: "New",
             icon: "slack",
             colorScheme: "primary",
