@@ -13,6 +13,7 @@ import { duplicateConnection, removeConnection, saveConnection, selectConnection
 import { useTheme } from "../../modules/ThemeContext"
 import { selectProjects } from "../../slices/project"
 import { selectDatasets } from "../../slices/dataset"
+import { getDatasetDisplayName } from "../../modules/getDatasetDisplayName"
 
 function ConnectionList() {
   const [connectionSearch, setConnectionSearch] = useState("");
@@ -318,7 +319,7 @@ function ConnectionList() {
                   variant="flat"
                   color="primary"
                 >
-                  {dataset.legend}
+                  {getDatasetDisplayName(dataset)}
                 </Chip>
               ))}
               {_getRelatedDatasets(connectionToDelete?.id).length > 10 && (

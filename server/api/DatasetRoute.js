@@ -2,6 +2,12 @@ const DatasetController = require("../controllers/DatasetController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const {
+  completeRun,
+  failRun,
+  recordInstantEvent,
+  startRun,
+} = require("../modules/updateAudit");
 
 module.exports = (app) => {
   const datasetController = new DatasetController();
@@ -202,20 +208,24 @@ module.exports = (app) => {
   /*
   ** Route to update a dataset
   */
-  app.put(`${root}/:dataset_id`, verifyToken, checkPermissions("updateAny"), ensureDatasetBelongsToTeam, (req, res) => {
+  app.put(`${root}/:dataset_id`, verifyToken, checkPermissions("updateAny"), ensureDatasetBelongsToTeam, async (req, res) => {
     req.body.team_id = req.params.team_id;
 
-    return datasetController.updateByTeam(req.params.dataset_id, req.params.team_id, req.body)
-      .then((dataset) => {
-        return res.status(200).send(dataset);
-      })
-      .catch((err) => {
-        if (err && err.message && err.message === "401") {
-          return res.status(401).send(err);
-        }
+    try {
+      const dataset = await datasetController.updateByTeam(
+        req.params.dataset_id,
+        req.params.team_id,
+        req.body
+      );
 
-        return res.status(400).send(err);
-      });
+      return res.status(200).send(dataset);
+    } catch (err) {
+      if (err && err.message && err.message === "401") {
+        return res.status(401).send(err);
+      }
+
+      return res.status(400).send(err);
+    }
   });
   // ----------------------------------------------------
 
@@ -297,46 +307,83 @@ module.exports = (app) => {
   /*
   ** [NEW] Route to run the request attached to the dataset
   */
-  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
-    return datasetController.runRequest({
-      dataset_id: req.params.dataset_id,
-      chart_id: req.body.chart_id,
-      noSource: req.body.noSource,
-      getCache: req.body.getCache,
-      variables: req.body.variables,
-      team_id: req.params.team_id,
-    })
-      .then((dataset) => {
-        const newDataset = dataset;
-        if (newDataset?.data) {
-          const { data } = newDataset;
-          if (typeof data === "object" && data instanceof Array) {
-            newDataset.data = data.slice(0, 20);
-          } else if (typeof data === "object") {
-            const resultsKey = [];
-            Object.keys(data).forEach((key) => {
-              if (data[key] instanceof Array) {
-                resultsKey.push(key);
-              }
-            });
+  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, async (req, res) => {
+    const traceContext = await startRun({
+      triggerType: "dataset_manual",
+      entityType: "dataset_preview",
+      status: "running",
+      teamId: req.params.team_id,
+      datasetId: req.params.dataset_id,
+      chartId: req.body.chart_id || null,
+    });
 
-            if (resultsKey.length > 0) {
-              resultsKey.forEach((resultKey) => {
-                const slicedArray = data[resultKey].slice(0, 20);
-                newDataset.data[resultKey] = slicedArray;
-              });
+    try {
+      const dataset = await datasetController.runRequest({
+        dataset_id: req.params.dataset_id,
+        chart_id: req.body.chart_id,
+        noSource: req.body.noSource,
+        getCache: req.body.getCache,
+        variables: req.body.variables,
+        team_id: req.params.team_id,
+        traceContext,
+        teamId: req.params.team_id,
+      });
+
+      const newDataset = dataset;
+      if (newDataset?.data) {
+        const { data } = newDataset;
+        if (typeof data === "object" && data instanceof Array) {
+          newDataset.data = data.slice(0, 20);
+        } else if (typeof data === "object") {
+          const resultsKey = [];
+          Object.keys(data).forEach((key) => {
+            if (data[key] instanceof Array) {
+              resultsKey.push(key);
             }
+          });
+
+          if (resultsKey.length > 0) {
+            resultsKey.forEach((resultKey) => {
+              const slicedArray = data[resultKey].slice(0, 20);
+              newDataset.data[resultKey] = slicedArray;
+            });
           }
         }
+      }
 
-        return res.status(200).send(newDataset);
-      })
-      .catch((err) => {
-        if (err && err.message === "404") {
-          return res.status(404).send((err && err.message) || err);
-        }
-        return res.status(400).send((err && err.message) || err);
+      await recordInstantEvent(traceContext, "dataset_preview_loaded", {
+        datasetId: req.params.dataset_id,
+        getCache: Boolean(req.body.getCache),
+        itemCount: Array.isArray(newDataset?.data) ? newDataset.data.length : 0,
       });
+      await completeRun(traceContext, {
+        status: "success",
+        summary: {
+          datasetId: req.params.dataset_id,
+          fieldCount: newDataset?.options?.fieldsMetadata
+            ?.filter((field) => field.missing !== true)
+            .length || 0,
+        },
+      });
+
+      return res.status(200).send(newDataset);
+    } catch (err) {
+      await failRun(traceContext, err, {
+        stage: err?.auditStage || "preview",
+        payload: {
+          datasetId: req.params.dataset_id,
+          teamId: req.params.team_id,
+        },
+        summary: {
+          datasetId: req.params.dataset_id,
+        },
+      });
+
+      if (err && err.message === "404") {
+        return res.status(404).send((err && err.message) || err);
+      }
+      return res.status(400).send((err && err.message) || err);
+    }
   });
   // ----------------------------------------------------
 

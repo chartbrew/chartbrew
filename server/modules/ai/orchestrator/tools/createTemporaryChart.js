@@ -1,6 +1,7 @@
 const db = require("../../../../models/models");
 const DatasetController = require("../../../../controllers/DatasetController");
 const ChartController = require("../../../../controllers/ChartController");
+const { getDatasetDisplayName } = require("../../../datasetIdentity");
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
@@ -46,7 +47,7 @@ async function createTemporaryChart(payload) {
       team_id,
       project_ids: [],
       draft: false,
-      legend: name || "AI Generated Dataset",
+      name: name || "AI Generated Dataset",
       xAxis,
       yAxis,
       yAxisOperation,
@@ -108,7 +109,7 @@ async function createTemporaryChart(payload) {
         fillColor: spec.fillColor,
         fill: spec.fill || false,
         multiFill: spec.multiFill || false,
-        legend: legend || spec.title || dataset.legend,
+        legend: legend || spec.title || getDatasetDisplayName(dataset),
         pointRadius: pointRadius || spec.pointRadius || 0,
         excludedFields: spec.excludedFields || [],
         sort: spec.sort,

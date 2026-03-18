@@ -111,6 +111,31 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       description: "The goal of the dataset - used to display a progress bar for KPIs"
     },
+    vizVersion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      description: "Visualization engine version. 1 = legacy AxisChart path, 2 = V2 vizConfig path."
+    },
+    vizConfig: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("vizConfig"));
+        } catch (e) {
+          return this.getDataValue("vizConfig");
+        }
+      },
+      set(val) {
+        if (val === null || val === undefined) {
+          return this.setDataValue("vizConfig", val);
+        }
+
+        return this.setDataValue("vizConfig", JSON.stringify(val));
+      },
+      description: "V2 chart-side question definition with dimensions, metrics, filters, and options."
+    },
     configuration: {
       type: DataTypes.TEXT,
       set(val) {

@@ -19,6 +19,7 @@ import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
 import { selectProjects } from "../../../slices/project";
+import { getDatasetDisplayName } from "../../../modules/getDatasetDisplayName";
 
 function ChartDatasets(props) {
   const { chartId, user } = props;
@@ -52,7 +53,7 @@ function ChartDatasets(props) {
       initRef.current = true;
       const projectDatasets = datasets.filter((d) => (
         !d.draft
-        && d?.legend?.toLowerCase().includes(datasetSearch?.toLowerCase())
+        && getDatasetDisplayName(d).toLowerCase().includes(datasetSearch?.toLowerCase())
         && d.project_ids?.includes(chart.project_id)
       ));
       if (projectDatasets.length === 0) {
@@ -72,11 +73,13 @@ function ChartDatasets(props) {
     if (tag === "project") {
       return datasets.filter((d) => (
         !d.draft
-        && d?.legend?.toLowerCase().includes(datasetSearch.toLowerCase())
+        && getDatasetDisplayName(d).toLowerCase().includes(datasetSearch.toLowerCase())
         && d?.project_ids?.includes(chart.project_id)
       ));
     }
-    return datasets.filter((d) => !d.draft && d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
+    return datasets.filter((d) => {
+      return !d.draft && getDatasetDisplayName(d).toLowerCase().includes(datasetSearch.toLowerCase());
+    });
   };
 
   const _getDatasetTags = (dataset) => {
@@ -238,7 +241,7 @@ function ChartDatasets(props) {
                     <div className={"flex flex-row justify-between gap-4 w-full"}>
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
                         <div className="flex flex-col gap-1 items-start">
-                          <Text b>{dataset.legend}</Text>
+                          <Text b>{getDatasetDisplayName(dataset)}</Text>
                           <div className="flex flex-wrap gap-1">
                             {_getDatasetTags(dataset).map((tag) => (
                               <Chip key={tag} size="sm" variant="flat" color="primary">

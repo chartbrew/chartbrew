@@ -17,6 +17,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "db:migrate": "cd models && npx sequelize-cli db:migrate",
+    "viz:migrate": "node scripts/migrateVisualizationV2.js",
     "precommit": "lint-staged",
     "postinstall": "npx --yes playwright install chromium --with-deps"
   },

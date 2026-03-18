@@ -571,6 +571,7 @@ export const datasetSlice = createSlice({
         const indexReq = state.responses.findIndex(
           (response) => response.dataset_id === datasetId
         );
+        const refreshedDatasetOptions = action.payload.options || null;
 
         if (indexReq > -1) {
           state.responses[indexReq] = {
@@ -582,6 +583,19 @@ export const datasetSlice = createSlice({
           state.responses.push({
             data: action.payload.data,
             dataset_id: datasetId,
+          });
+        }
+
+        if (refreshedDatasetOptions) {
+          state.data = state.data.map((dataset) => {
+            if (dataset.id === datasetId) {
+              return {
+                ...dataset,
+                ...refreshedDatasetOptions,
+              };
+            }
+
+            return dataset;
           });
         }
 

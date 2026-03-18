@@ -1,4 +1,8 @@
 const db = require("../../../../models/models");
+const {
+  getDatasetDisplayName,
+  normalizeDatasetIdentityPayload,
+} = require("../../../datasetIdentity");
 
 async function updateDataset(payload) {
   const {
@@ -28,14 +32,15 @@ async function updateDataset(payload) {
     }
 
     // Update dataset fields (only if provided)
-    const datasetUpdates = {};
-    if (name !== undefined) datasetUpdates.legend = name;
+    let datasetUpdates = {};
+    if (name !== undefined) datasetUpdates.name = name;
     if (xAxis !== undefined) datasetUpdates.xAxis = xAxis;
     if (yAxis !== undefined) datasetUpdates.yAxis = yAxis;
     if (yAxisOperation !== undefined) datasetUpdates.yAxisOperation = yAxisOperation;
     if (dateField !== undefined) datasetUpdates.dateField = dateField;
     if (dateFormat !== undefined) datasetUpdates.dateFormat = dateFormat;
     if (conditions !== undefined) datasetUpdates.conditions = conditions;
+    datasetUpdates = normalizeDatasetIdentityPayload(datasetUpdates);
 
     if (Object.keys(datasetUpdates).length > 0) {
       await db.Dataset.update(datasetUpdates, { where: { id: dataset_id } });
@@ -70,7 +75,7 @@ async function updateDataset(payload) {
     return {
       dataset_id: updatedDataset.id,
       data_request_id: updatedDataset.main_dr_id,
-      name: updatedDataset.legend,
+      name: getDatasetDisplayName(updatedDataset),
       dataset_url: `${global.clientUrl}/${team_id}/dataset/${updatedDataset.id}`,
       updated_fields: {
         dataset: Object.keys(datasetUpdates),

@@ -22,6 +22,7 @@ import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import { placeNewWidget } from "../../modules/autoLayout";
 import { chartColors } from "../../config/colors";
+import { getDatasetDisplayName } from "../../modules/getDatasetDisplayName";
 
 const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
 const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
@@ -155,7 +156,7 @@ function AddChart() {
     setCreatingDatasetId(dataset.id);
 
     try {
-      const chart = await _createChart(dataset.legend);
+      const chart = await _createChart(getDatasetDisplayName(dataset));
 
       await dispatch(createCdc({
         project_id: chart.project_id,

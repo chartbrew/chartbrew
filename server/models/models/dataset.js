@@ -49,6 +49,20 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
       description: "Whether the dataset is a draft and should be hidden from dashboard viewers"
     },
+    name: {
+      type: DataTypes.STRING,
+      get() {
+        return this.getDataValue("name") || this.getDataValue("legend");
+      },
+      set(val) {
+        this.setDataValue("name", val);
+
+        if (val !== undefined && val !== null && val !== "") {
+          this.setDataValue("legend", val);
+        }
+      },
+      description: "Dataset display name"
+    },
     /*
     ** Traversal syntax for both x and y axes
     ** root[].field when root is an array
@@ -84,6 +98,16 @@ module.exports = (sequelize, DataTypes) => {
     },
     legend: {
       type: DataTypes.STRING,
+      get() {
+        return this.getDataValue("legend") || this.getDataValue("name");
+      },
+      set(val) {
+        this.setDataValue("legend", val);
+
+        if (val !== undefined && val !== null && val !== "") {
+          this.setDataValue("name", val);
+        }
+      },
       description: "Legend label (name) of the dataset"
     },
     /*
@@ -130,6 +154,28 @@ module.exports = (sequelize, DataTypes) => {
         return this.setDataValue("fieldsSchema", encrypt(JSON.stringify(val)));
       },
       description: "Schema of the fields in the dataset key(field name) => value(type)"
+    },
+    fieldsMetadata: {
+      type: DataTypes.TEXT("long"),
+      get() {
+        try {
+          return JSON.parse(decrypt(this.getDataValue("fieldsMetadata")));
+        } catch (e) {
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("fieldsMetadata")));
+          } catch (error) {
+            return this.getDataValue("fieldsMetadata");
+          }
+        }
+      },
+      set(val) {
+        if (val === null || val === undefined) {
+          return this.setDataValue("fieldsMetadata", val);
+        }
+
+        return this.setDataValue("fieldsMetadata", encrypt(JSON.stringify(val)));
+      },
+      description: "Canonical V2 field catalog with types, roles, and legacy path mapping"
     },
     /*
     ** Join settings of the dataset - used for tables

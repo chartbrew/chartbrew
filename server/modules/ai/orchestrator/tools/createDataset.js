@@ -1,5 +1,6 @@
 const db = require("../../../../models/models");
 const DatasetController = require("../../../../controllers/DatasetController");
+const { getDatasetDisplayName } = require("../../../datasetIdentity");
 
 const datasetController = new DatasetController();
 
@@ -32,7 +33,7 @@ async function createDataset(payload) {
       team_id,
       project_ids: projectIds,
       draft: false,
-      legend: name || "AI Generated Dataset",
+      name: name || "AI Generated Dataset",
       xAxis,
       yAxis,
       yAxisOperation,
@@ -59,7 +60,7 @@ async function createDataset(payload) {
     return {
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
-      name: dataset.legend,
+      name: getDatasetDisplayName(dataset),
       dataset_url: `${clientUrl}/datasets/${dataset.id}`,
     };
   } catch (error) {

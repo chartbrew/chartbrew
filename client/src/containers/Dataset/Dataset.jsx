@@ -23,6 +23,8 @@ import useQuery from "../../modules/useQuery";
 import { selectUser } from "../../slices/user";
 import { getTeams, selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
+import DatasetFields from "./DatasetFields";
+import { getDatasetDisplayName } from "../../modules/getDatasetDisplayName";
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -91,7 +93,7 @@ function Dataset() {
 
     if (!datasetInitRef.current) {
       datasetInitRef.current = true;
-      setLegend(dataset.legend);
+      setLegend(getDatasetDisplayName(dataset));
     }
   }, [dataset]);
 
@@ -101,7 +103,7 @@ function Dataset() {
       dispatch(saveNewDataset({
         team_id: team.id,
         data: {
-          legend: "New dataset",
+          name: "New dataset",
           team_id: team.id,
           draft: true,
         },
@@ -127,7 +129,7 @@ function Dataset() {
       dispatch(createChart({
         project_id: ghostProject.id,
         data: {
-          name: dataset.legend,
+          name: getDatasetDisplayName(dataset),
           type: "line",
           subType: "timeseries",
         },
@@ -153,7 +155,7 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    if (datasetMenu === "configure" && dataset?.id && team?.id) {
+    if ((datasetMenu === "configure" || datasetMenu === "fields") && dataset?.id && team?.id) {
       dispatch(runRequest({
         team_id: team.id,
         dataset_id: dataset.id,
@@ -228,7 +230,7 @@ function Dataset() {
       dataset_id: dataset.id,
       data: {
         draft: false,
-        legend,
+        name: legend,
       },
     };
 
@@ -348,7 +350,7 @@ function Dataset() {
           {!editLegend && (
             <>
               <Link onClick={() => setEditLegend(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
-                <div className="font-tw font-bold text-foreground">{dataset?.legend}</div>
+                <div className="font-tw font-bold text-foreground">{getDatasetDisplayName(dataset)}</div>
                 <LuPencil size={16} className="text-secondary" />
               </Link>
             </>
@@ -368,7 +370,7 @@ function Dataset() {
                 isIconOnly
                 color="primary"
                 onPress={() => {
-                  _onUpdateDataset({ legend });
+                  _onUpdateDataset({ name: legend });
                   setEditLegend(false);
                 }}
                 size="sm"
@@ -400,6 +402,14 @@ function Dataset() {
                 </div>
               )} />
             )}
+            {canAccess("projectEditor", user.id, team.TeamRoles) && (
+              <Tab key="fields" title={(
+                <div className="flex flex-row items-center gap-2">
+                  <LuLayers size={18} />
+                  <span>3. Fields</span>
+                </div>
+              )} />
+            )}
           </Tabs>
           {datasetMenu === "query" && (
             <Button
@@ -412,7 +422,7 @@ function Dataset() {
               Configure dataset
             </Button>
           )}
-          {datasetMenu === "configure" && (
+          {(datasetMenu === "configure" || datasetMenu === "fields") && (
             <Button
               color="primary"
               onPress={() => _onSaveDataset()}
@@ -435,6 +445,10 @@ function Dataset() {
           chart={ghostChart}
           projectId={ghostProject?.id}
         />
+      )}
+
+      {datasetMenu === "fields" && dataset && (
+        <DatasetFields dataset={dataset} />
       )}
 
       <Modal

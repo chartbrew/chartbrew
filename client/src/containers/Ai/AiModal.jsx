@@ -104,7 +104,7 @@ function AiModal({ isOpen, onClose }) {
       case "connection":
         return `Connection: ${entity.name} (${entity.type})`;
       case "dataset":
-        return `Dataset: ${entity.legend || entity.name}`;
+        return `Dataset: ${entity.name || entity.legend}`;
       default:
         return entity.name;
     }
@@ -258,7 +258,7 @@ function AiModal({ isOpen, onClose }) {
       }
       if (datasetId && selectedContext?.multiSelect?.find(e => e.id === datasetId) === undefined) {
         const dataset = datasets.find(d => d.id === datasetId);
-        const datasetLabel = `Dataset: ${dataset?.legend || dataset?.name}`;
+        const datasetLabel = `Dataset: ${dataset?.name || dataset?.legend}`;
         setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
       }
     }

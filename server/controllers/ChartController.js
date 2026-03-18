@@ -29,6 +29,7 @@ const {
 const AxisChart = require("../charts/AxisChart");
 const TableView = require("../charts/TableView");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
+const { getDatasetDisplayName } = require("../modules/datasetIdentity");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -1236,7 +1237,7 @@ class ChartController {
 
     return db.ChartDatasetConfig.create({
       ...data,
-      legend: dataset.legend,
+      legend: getDatasetDisplayName(dataset),
       chart_id: chartId,
     })
       .then((chartDatasetConfig) => {
@@ -1360,7 +1361,7 @@ class ChartController {
           const cdcToCreate = {
             ...cdcRest,
             chart_id: chart.id,
-            legend: cdcData.legend || dataset?.legend || null
+            legend: cdcData.legend || getDatasetDisplayName(dataset) || null
           };
 
           return db.ChartDatasetConfig.create(cdcToCreate);

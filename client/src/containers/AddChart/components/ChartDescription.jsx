@@ -11,6 +11,7 @@ import {
 
 import canAccess from "../../../config/canAccess";
 import availableConnections from "../../../modules/availableConnections";
+import { getDatasetDisplayName } from "../../../modules/getDatasetDisplayName";
 import { selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
@@ -93,7 +94,7 @@ function ChartDescription(props) {
 
       const search = searchValue.trim().toLowerCase();
       const haystack = [
-        dataset.legend,
+        getDatasetDisplayName(dataset),
         ..._getDatasetTags(dataset),
         ..._getDatasetConnectionTypes(dataset),
       ]
@@ -215,7 +216,7 @@ function ChartDescription(props) {
                   <TableCell key="name">
                     <div className={cn(`min-w-0 ${isBusy && !isCreatingChart ? "opacity-60" : ""} cursor-pointer hover:underline`)}>
                       <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
-                        {dataset.legend}
+                        {getDatasetDisplayName(dataset)}
                       </div>
                     </div>
                   </TableCell>
@@ -271,7 +272,7 @@ function ChartDescription(props) {
                         onPress={() => _onSelectDataset(dataset)}
                         isLoading={isCreatingChart}
                         isDisabled={isBusy && !isCreatingChart}
-                        aria-label={`Create chart from ${dataset.legend}`}
+                        aria-label={`Create chart from ${getDatasetDisplayName(dataset)}`}
                       >
                         {!isCreatingChart && <LuPlus size={16} />}
                       </Button>

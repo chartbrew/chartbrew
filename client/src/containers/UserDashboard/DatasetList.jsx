@@ -13,6 +13,7 @@ import { useTheme } from "../../modules/ThemeContext";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import { selectProjects } from "../../slices/project";
+import { getDatasetDisplayName } from "../../modules/getDatasetDisplayName";
 
 const DATASETS_PER_PAGE = 25;
 
@@ -71,9 +72,10 @@ function DatasetList() {
 
   const _getFilteredDatasets = () => {
     return datasets.filter((dataset) => {
+      const datasetName = getDatasetDisplayName(dataset).toLowerCase();
       // Search filter - check if search text is in legend
       const matchesSearch = !searchFilter.search ||
-        dataset.legend.toLowerCase().indexOf(searchFilter.search.toLowerCase()) > -1;
+        datasetName.indexOf(searchFilter.search.toLowerCase()) > -1;
 
       // Project filter - check if dataset has the selected project in project_ids
       // Treat undefined/null as "all"
@@ -489,7 +491,7 @@ function DatasetList() {
                 <TableCell key="name">
                   <div className="flex flex-row items-center gap-2">
                     <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
-                      <span className="text-foreground font-medium">{dataset.legend}</span>
+                      <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
                     </Link>
                     {dataset.draft && (
                       <Chip size="sm" variant="flat" color="secondary">
@@ -586,7 +588,7 @@ function DatasetList() {
                           key="duplicate"
                           onPress={() => {
                             setDatasetToDuplicate(dataset);
-                            setDuplicateDatasetName(dataset.legend);
+                            setDuplicateDatasetName(getDatasetDisplayName(dataset));
                           }}
                           startContent={<LuCopy />}
                           textValue="Duplicate dataset"

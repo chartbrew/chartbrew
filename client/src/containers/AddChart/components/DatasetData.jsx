@@ -37,6 +37,7 @@ import DatasetAlerts from "./DatasetAlerts";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { useParams } from "react-router";
+import { buildDatasetFieldOptions } from "../../../modules/datasetFieldMetadata";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -138,11 +139,11 @@ function DatasetData(props) {
         fieldsSchema[obj.field] = obj.type;
       });
 
-      if (Object.keys(fieldsSchema).length > 0) updateObj.fieldsSchema = fieldsSchema;
-
       tempFieldOptions = tempFieldOptions.concat(tempObjectOptions);
 
-      setFieldOptions(tempFieldOptions);
+      if (!dataset?.fieldsMetadata?.length) {
+        setFieldOptions(tempFieldOptions);
+      }
 
       // initialise values for the user if there were no prior selections
       const autoFields = autoFieldSelector(tempFieldOptions);
@@ -195,30 +196,8 @@ function DatasetData(props) {
       setGoal(dataset.goal);
     }
 
-    if (dataset.fieldsSchema) {
-      const tempFieldOptions = [];
-      Object.keys(dataset.fieldsSchema).forEach((key) => {
-        const type = dataset.fieldsSchema[key];
-        tempFieldOptions.push({
-          key,
-          text: key && key.replace("root[].", "").replace("root.", ""),
-          value: key,
-          type,
-          isObject: key.indexOf("[]") === -1,
-          label: {
-            style: { width: 55, textAlign: "center" },
-            content: type || "unknown",
-            size: "mini",
-            color: type === "date" ? "secondary"
-              : type === "number" ? "primary"
-                : type === "string" ? "success"
-                  : type === "boolean" ? "warning"
-                    : "default"
-          },
-        });
-      });
-
-      setFieldOptions(tempFieldOptions);
+    if (dataset.fieldsMetadata || dataset.fieldsSchema) {
+      setFieldOptions(buildDatasetFieldOptions(dataset));
     }
 
     if (dataset.columnsOrder) {

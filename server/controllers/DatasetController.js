@@ -7,6 +7,11 @@ const DataRequestController = require("./DataRequestController");
 const { applyTransformation } = require("../modules/dataTransformations");
 const { applyVariables } = require("../modules/applyVariables");
 const {
+  buildFieldsSchemaFromMetadata,
+  inferDatasetFieldMetadata,
+} = require("../modules/datasetFieldMetadata");
+const { normalizeDatasetIdentityPayload } = require("../modules/datasetIdentity");
+const {
   createHash,
   completeRun,
   failRun,
@@ -259,7 +264,7 @@ class DatasetController {
   }
 
   create(data) {
-    return db.Dataset.create(data)
+    return db.Dataset.create(normalizeDatasetIdentityPayload(data))
       .then((dataset) => {
         return this.findById(dataset.id);
       })
@@ -270,7 +275,7 @@ class DatasetController {
 
   update(id, data) {
     if (!id) {
-      return db.Dataset.create(data)
+      return db.Dataset.create(normalizeDatasetIdentityPayload(data))
         .then((dataset) => {
           return this.findById(dataset.id);
         })
@@ -279,7 +284,7 @@ class DatasetController {
         });
     }
 
-    return db.Dataset.update(data, { where: { id } })
+    return db.Dataset.update(normalizeDatasetIdentityPayload(data), { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -289,7 +294,10 @@ class DatasetController {
   }
 
   updateByTeam(id, teamId, data) {
-    return db.Dataset.update(data, { where: { id, team_id: teamId } })
+    return db.Dataset.update(
+      normalizeDatasetIdentityPayload(data),
+      { where: { id, team_id: teamId } }
+    )
       .then(([affectedRows]) => {
         if (affectedRows === 0) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -608,6 +616,27 @@ class DatasetController {
             data = applyTransformation(data, mainDr.transform);
           }
 
+          const fieldsMetadata = inferDatasetFieldMetadata(data, gDataset.fieldsMetadata);
+          if (fieldsMetadata.length > 0) {
+            const fieldsSchema = buildFieldsSchemaFromMetadata(fieldsMetadata);
+            const fieldsSchemaChanged = JSON.stringify(gDataset.fieldsSchema || {})
+              !== JSON.stringify(fieldsSchema);
+            const fieldsMetadataChanged = JSON.stringify(gDataset.fieldsMetadata || [])
+              !== JSON.stringify(fieldsMetadata);
+
+            if (fieldsSchemaChanged || fieldsMetadataChanged) {
+              await db.Dataset.update({
+                fieldsSchema,
+                fieldsMetadata,
+              }, {
+                where: { id: gDataset.id },
+              });
+            }
+
+            gDataset.set("fieldsSchema", fieldsSchema);
+            gDataset.set("fieldsMetadata", fieldsMetadata);
+          }
+
           return Promise.resolve({
             options: gDataset,
             data,
@@ -655,11 +684,11 @@ class DatasetController {
     delete datasetToSave.updatedAt;
 
     if (name) {
-      datasetToSave.legend = name;
+      datasetToSave.name = name;
     }
 
     // Create the new dataset
-    const newDataset = await db.Dataset.create(datasetToSave);
+    const newDataset = await db.Dataset.create(normalizeDatasetIdentityPayload(datasetToSave));
 
     // Get all data requests for the original dataset
     const dataRequests = await db.DataRequest.findAll({
@@ -749,9 +778,9 @@ class DatasetController {
 
     const cleanDatasetData = {};
     const allowedFields = [
-      "team_id", "project_ids", "draft", "xAxis", "xAxisOperation", "yAxis",
+      "team_id", "project_ids", "draft", "name", "xAxis", "xAxisOperation", "yAxis",
       "yAxisOperation", "dateField", "dateFormat", "legend", "conditions",
-      "fieldsSchema"
+      "fieldsSchema", "fieldsMetadata"
     ];
 
     allowedFields.forEach((field) => {
@@ -761,7 +790,7 @@ class DatasetController {
     });
 
     // Create the dataset first (without joinSettings - will be set after data requests are created)
-    const dataset = await db.Dataset.create(cleanDatasetData);
+    const dataset = await db.Dataset.create(normalizeDatasetIdentityPayload(cleanDatasetData));
 
     // Create all data requests with their variable bindings
     const createdDataRequests = await Promise.all(

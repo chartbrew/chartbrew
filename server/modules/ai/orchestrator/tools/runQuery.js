@@ -38,7 +38,7 @@ async function runQuery(payload) {
     const tempDataset = await db.Dataset.create({
       team_id,
       connection_id,
-      legend: "AI Query Dataset",
+      name: "AI Query Dataset",
       draft: true,
       query: limitedQuery,
     });

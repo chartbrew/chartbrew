@@ -19,6 +19,7 @@ import FormulaTips from "../../components/FormulaTips";
 import DatasetFilters from "../../components/DatasetFilters";
 import ChartSettings from "../AddChart/components/ChartSettings";
 import { updateCdc } from "../../slices/chart";
+import { buildDatasetFieldOptions } from "../../modules/datasetFieldMetadata";
 
 
 function DatasetBuilder(props) {
@@ -41,6 +42,12 @@ function DatasetBuilder(props) {
       setFormula(dataset.formula);
     }
   }, [dataset]);
+
+  useEffect(() => {
+    if (dataset?.fieldsMetadata?.length > 0 || dataset?.fieldsSchema) {
+      setFieldOptions(buildDatasetFieldOptions(dataset));
+    }
+  }, [dataset?.fieldsMetadata, dataset?.fieldsSchema]);
 
   useEffect(() => {
     if (chart && dataset && !datasetResponse && !initRef.current) {
@@ -117,11 +124,11 @@ function DatasetBuilder(props) {
         fieldsSchema[obj.field] = obj.type;
       });
 
-      if (Object.keys(fieldsSchema).length > 0) updateObj.fieldsSchema = fieldsSchema;
-
       tempFieldOptions = tempFieldOptions.concat(tempObjectOptions);
 
-      setFieldOptions(tempFieldOptions);
+      if (!dataset?.fieldsMetadata?.length) {
+        setFieldOptions(tempFieldOptions);
+      }
 
       // initialise values for the user if there were no prior selections
       const autoFields = autoFieldSelector(tempFieldOptions);

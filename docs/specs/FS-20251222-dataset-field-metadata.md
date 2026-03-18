@@ -89,19 +89,14 @@ Datasets already infer field types via the datatype determination module, but th
 - `POST /project/:project_id/chart/:id/chart-dataset-config`: accept `series` definitions; if omitted, auto-create one from legacy fields.
 - Migration script to backfill `series` for existing CDCs using their `legend`, `datasetColor`, and `options.yAxis`.
 
-## Telemetry
-- Track `dataset_fields_auto_generated` (count of fields inferred) and `dataset_field_override` (role/aggregation edits).
-- Track new events: `chart_series_added`, `chart_series_removed`, `chart_series_converted_from_legacy`.
-- Include dataset_id, team_id, number of fields, duration of inference.
-
-## Rollout & Flags
-- Feature flag `datasetFieldMetadata` gates metadata generation.
-- Separate flag `chartMultiSeries` wraps the new chart builder UI + CDC/Axis changes. Enable only after metadata flag is on for the team.
-- CLI/admin toggle to backfill inference for selected teams.
+## Validation & Migration Reporting
+- Use tests and migration dry-runs to validate inferred metadata and legacy-series conversion before production rollout.
+- Migration tooling should emit per-dataset and per-chart reports for unsupported mappings or ambiguous field roles.
+- CLI/admin tooling should support dry-run and apply modes for selected teams.
 
 ## Risks & Mitigations
 - **Inaccurate inference**: Provide clear manual override UI and “Reset to auto” option.
 - **Performance**: Run inference on sample data only (already available); cache results to avoid repetitive scans.
 - **Backward compatibility**: Charts ignoring fields metadata still work; metadata only augments API responses.
-- **AxisChart complexity**: Implement feature flagging and extensive tests before defaulting to the new flow.
+- **AxisChart complexity**: Rely on extensive tests and migration validation before defaulting to the new flow.
 - **Multiple CDCs referencing same dataset**: Document that this remains supported for scenarios requiring distinct filters; UI should warn when redundant CDCs exist to encourage consolidation.

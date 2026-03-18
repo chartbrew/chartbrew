@@ -1,5 +1,6 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
+const { getDatasetDisplayName } = require("../../../datasetIdentity");
 
 const chartController = new ChartController();
 
@@ -105,7 +106,7 @@ async function createChart(payload) {
         fillColor: chartSpec.fillColor,
         fill: chartSpec.fill || false,
         multiFill: chartSpec.multiFill || false,
-        legend: legend || chartSpec.title || dataset.legend,
+        legend: legend || chartSpec.title || getDatasetDisplayName(dataset),
         pointRadius: pointRadius || chartSpec.pointRadius || 0,
         excludedFields: chartSpec.excludedFields || [],
         sort: chartSpec.sort,
