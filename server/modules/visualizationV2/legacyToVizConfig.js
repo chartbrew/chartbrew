@@ -1,6 +1,18 @@
 const { getDatasetDisplayName } = require("../datasetIdentity");
 
-const SUPPORTED_LEGACY_CHART_TYPES = Object.freeze(["line", "bar", "kpi", "avg"]);
+const SUPPORTED_LEGACY_CHART_TYPES = Object.freeze([
+  "line",
+  "bar",
+  "kpi",
+  "avg",
+  "pie",
+  "doughnut",
+  "radar",
+  "polar",
+  "table",
+  "gauge",
+  "matrix",
+]);
 const SUPPORTED_AGGREGATIONS = Object.freeze(["none", "sum", "avg", "min", "max", "count", "countUnique"]);
 
 function createIssue(code, message) {
@@ -133,18 +145,144 @@ function buildMetricStyle(chart = {}, cdc = {}) {
   };
 }
 
-function buildCompatibilityOptions({ chart, dataset, dateFieldReference }) {
+function normalizeLegacyRanges(ranges) {
+  if (!Array.isArray(ranges)) {
+    return null;
+  }
+
+  return ranges.map((range) => ({
+    min: range?.min ?? null,
+    max: range?.max ?? null,
+    label: range?.label || null,
+    color: range?.color || null,
+  }));
+}
+
+function getVisualizationDataMode(legacyChartType) {
+  if (legacyChartType === "table") {
+    return "table";
+  }
+
+  if (legacyChartType === "avg") {
+    return "seriesAverage";
+  }
+
+  if (legacyChartType === "kpi" || legacyChartType === "gauge") {
+    return "latestValue";
+  }
+
+  if (legacyChartType === "matrix") {
+    return "weekdayHeatmap";
+  }
+
+  return "series";
+}
+
+function buildTableVisualizationOptions(cdc = {}, dimensionField = null) {
+  return {
+    collectionFieldId: dimensionField?.fieldId || null,
+    excludedFields: Array.isArray(cdc?.excludedFields) ? cdc.excludedFields : [],
+    columnsOrder: Array.isArray(cdc?.columnsOrder) ? cdc.columnsOrder : [],
+    columnsFormatting: cdc?.configuration?.columnsFormatting || null,
+    summaryField: cdc?.configuration?.sum || null,
+  };
+}
+
+function buildVisualizationOptions({
+  chart,
+  cdc,
+  legacyChartType,
+  dimensionField,
+}) {
+  const baseOptions = {
+    type: legacyChartType,
+    dataMode: getVisualizationDataMode(legacyChartType),
+    mode: chart?.mode || null,
+    subType: chart?.subType || null,
+    displayLegend: chart?.displayLegend === true,
+    dataLabels: chart?.dataLabels === true,
+    stacked: chart?.stacked === true,
+    horizontal: chart?.horizontal === true,
+    showGrowth: chart?.showGrowth === true,
+    invertGrowth: chart?.invertGrowth === true,
+    isLogarithmic: chart?.isLogarithmic === true,
+    xLabelTicks: chart?.xLabelTicks || "default",
+    minValue: chart?.minValue ?? null,
+    maxValue: chart?.maxValue ?? null,
+    ranges: legacyChartType === "gauge" ? normalizeLegacyRanges(chart?.ranges) : null,
+    defaultRowsPerPage: legacyChartType === "table" && Number.isInteger(chart?.defaultRowsPerPage)
+      ? chart.defaultRowsPerPage
+      : null,
+    table: null,
+  };
+
+  if (legacyChartType === "table") {
+    baseOptions.table = buildTableVisualizationOptions(cdc, dimensionField);
+  }
+
+  return baseOptions;
+}
+
+function buildCompatibilityOptions({
+  chart,
+  dataset,
+  cdc,
+  dateFieldReference,
+  legacyChartType,
+  dimensionField,
+  metricField,
+}) {
+  const tableOptions = legacyChartType === "table"
+    ? buildTableVisualizationOptions(cdc, dimensionField)
+    : null;
+
   return {
     includeEmptyBuckets: chart?.includeZeros !== false,
+    visualization: buildVisualizationOptions({
+      chart,
+      cdc,
+      legacyChartType,
+      dimensionField,
+    }),
     compatibility: {
-      legacyChartType: chart?.type || null,
+      legacyRawChartType: chart?.type || null,
+      legacyChartType: legacyChartType || chart?.type || null,
       legacyMode: chart?.mode || null,
+      legacySubType: chart?.subType || null,
       legacyDateFieldId: dateFieldReference?.fieldId || null,
       legacyDateFormat: dataset?.dateFormat || chart?.dateVarsFormat || null,
       preserveDatasetConditions:
         Array.isArray(dataset?.conditions) && dataset.conditions.length > 0,
+      legacyDimensionFieldId: dimensionField?.fieldId || null,
+      legacyMetricFieldId: metricField?.fieldId || null,
+      legacyRanges: legacyChartType === "gauge" ? normalizeLegacyRanges(chart?.ranges) : null,
+      legacyExcludedFields: tableOptions?.excludedFields || null,
+      legacyColumnsOrder: tableOptions?.columnsOrder || null,
+      legacyColumnsFormatting: tableOptions?.columnsFormatting || null,
+      legacyTableSummaryField: tableOptions?.summaryField || null,
     },
   };
+}
+
+function buildPostOperations({ cdc, metricId, legacyChartType }) {
+  const operations = [];
+
+  if (cdc?.formula) {
+    operations.push({
+      type: "formula",
+      metricId,
+      expression: cdc.formula,
+    });
+  }
+
+  if (legacyChartType === "avg") {
+    operations.push({
+      type: "seriesAverage",
+      metricId,
+    });
+  }
+
+  return operations;
 }
 
 function legacyToVizConfig({ chart, dataset, cdc }) {
@@ -204,12 +342,14 @@ function legacyToVizConfig({ chart, dataset, cdc }) {
     reasons.push(createIssue("missing_x_axis", "Dataset is missing a legacy xAxis field."));
   }
 
-  if (!dataset.yAxis) {
+  const requiresMetric = legacyChartType !== "table";
+
+  if (requiresMetric && !dataset.yAxis) {
     reasons.push(createIssue("missing_y_axis", "Dataset is missing a legacy yAxis field."));
   }
 
-  const aggregation = normalizeLegacyAggregation(dataset.yAxisOperation);
-  if (!aggregation) {
+  const aggregation = requiresMetric ? normalizeLegacyAggregation(dataset.yAxisOperation) : null;
+  if (requiresMetric && !aggregation) {
     reasons.push(
       createIssue(
         "unsupported_y_axis_operation",
@@ -219,14 +359,14 @@ function legacyToVizConfig({ chart, dataset, cdc }) {
   }
 
   const dimensionField = resolveFieldReference(dataset, dataset.xAxis);
-  const metricField = resolveFieldReference(dataset, dataset.yAxis);
+  const metricField = requiresMetric ? resolveFieldReference(dataset, dataset.yAxis) : null;
   const dateFieldReference = resolveFieldReference(dataset, dataset.dateField);
 
   if (!dimensionField) {
     reasons.push(createIssue("unresolved_x_axis", "Could not resolve the dataset xAxis field reference."));
   }
 
-  if (!metricField) {
+  if (requiresMetric && !metricField) {
     reasons.push(createIssue("unresolved_y_axis", "Could not resolve the dataset yAxis field reference."));
   }
 
@@ -269,10 +409,10 @@ function legacyToVizConfig({ chart, dataset, cdc }) {
     dimensions: [{
       id: dimensionId,
       fieldId: dimensionField.fieldId,
-      role: "x",
+      role: legacyChartType === "table" ? "table" : "x",
       grain: xAxisIsDate ? (chart.timeInterval || null) : null,
     }],
-    metrics: [{
+    metrics: requiresMetric ? [{
       id: metricId,
       fieldId: metricField.fieldId,
       aggregation,
@@ -280,17 +420,23 @@ function legacyToVizConfig({ chart, dataset, cdc }) {
       axis: "left",
       enabled: true,
       style: buildMetricStyle(chart, cdc),
-    }],
+    }] : [],
     filters: [],
     filterControls: [],
-    sort: normalizeSortDirection(cdc.sort)
+    sort: requiresMetric && normalizeSortDirection(cdc.sort)
       ? [{ ref: metricId, dir: normalizeSortDirection(cdc.sort) }]
       : [],
     limit: Number.isInteger(cdc.maxRecords) && cdc.maxRecords > 0 ? cdc.maxRecords : null,
-    postOperations: cdc.formula
-      ? [{ type: "formula", metricId, expression: cdc.formula }]
-      : [],
-    options: buildCompatibilityOptions({ chart, dataset, dateFieldReference }),
+    postOperations: buildPostOperations({ cdc, metricId, legacyChartType }),
+    options: buildCompatibilityOptions({
+      chart,
+      dataset,
+      cdc,
+      dateFieldReference,
+      legacyChartType,
+      dimensionField,
+      metricField,
+    }),
   };
 
   return {
@@ -302,7 +448,7 @@ function legacyToVizConfig({ chart, dataset, cdc }) {
     vizConfig,
     summary: {
       chartType: legacyChartType,
-      metricFieldId: metricField.fieldId,
+      metricFieldId: metricField?.fieldId || null,
       dimensionFieldId: dimensionField.fieldId,
       dateFieldId: dateFieldReference?.fieldId || null,
       aggregation,

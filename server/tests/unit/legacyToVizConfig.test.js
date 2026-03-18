@@ -138,27 +138,268 @@ describe("legacyToVizConfig", () => {
     expect(report.vizConfig.options.includeEmptyBuckets).toBe(false);
   });
 
-  it("reports unsupported chart types instead of generating a config", () => {
+  it("supports the categorical legacy chart family", () => {
+    ["pie", "doughnut", "radar", "polar"].forEach((chartType) => {
+      const report = legacyToVizConfig({
+        chart: {
+          id: 12,
+          type: chartType,
+          mode: "chart",
+          displayLegend: true,
+          dataLabels: true,
+        },
+        dataset: {
+          id: 88,
+          xAxis: "root[].status",
+          yAxis: "root[].id",
+          yAxisOperation: "count",
+          fieldsSchema: {
+            "root[].status": "string",
+            "root[].id": "number",
+          },
+        },
+        cdc: {
+          id: `cdc_${chartType}`,
+          legend: "Orders",
+          fillColor: ["#111111", "#222222"],
+        },
+      });
+
+      expect(report.supported).toBe(true);
+      expect(report.status).toBe("ready");
+      expect(report.summary.chartType).toBe(chartType);
+      expect(report.vizConfig.metrics[0]).toMatchObject({
+        fieldId: "root[].id",
+        aggregation: "count",
+      });
+      expect(report.vizConfig.options.visualization).toMatchObject({
+        type: chartType,
+        dataMode: "series",
+        displayLegend: true,
+        dataLabels: true,
+      });
+    });
+  });
+
+  it("captures table chart semantics without requiring a legacy metric field", () => {
     const report = legacyToVizConfig({
       chart: {
-        id: 12,
-        type: "pie",
+        id: 13,
+        type: "table",
         mode: "chart",
+        defaultRowsPerPage: 25,
       },
       dataset: {
-        id: 88,
-        xAxis: "root[].status",
-        yAxis: "root[].id",
-        yAxisOperation: "count",
+        id: 90,
+        xAxis: "root[].orders",
+        dateField: "root[].created_at",
+        fieldsSchema: {
+          "root[].orders": "array",
+          "root[].created_at": "date",
+        },
       },
       cdc: {
-        id: "cdc_pie",
+        id: "cdc_table",
+        excludedFields: ["status"],
+        columnsOrder: ["id", "status", "total"],
+        configuration: {
+          sum: "total",
+          columnsFormatting: {
+            total: { type: "currency", symbol: "$" },
+          },
+        },
+        maxRecords: 50,
       },
     });
 
-    expect(report.supported).toBe(false);
-    expect(report.status).toBe("unsupported");
-    expect(report.vizConfig).toBeNull();
-    expect(report.reasons.map((reason) => reason.code)).toContain("unsupported_chart_type");
+    expect(report.supported).toBe(true);
+    expect(report.summary.chartType).toBe("table");
+    expect(report.summary.metricFieldId).toBeNull();
+    expect(report.vizConfig.dimensions[0]).toMatchObject({
+      fieldId: "root[].orders",
+      role: "table",
+    });
+    expect(report.vizConfig.metrics).toEqual([]);
+    expect(report.vizConfig.limit).toBe(50);
+    expect(report.vizConfig.options.visualization).toMatchObject({
+      type: "table",
+      dataMode: "table",
+      defaultRowsPerPage: 25,
+      table: {
+        collectionFieldId: "root[].orders",
+        excludedFields: ["status"],
+        columnsOrder: ["id", "status", "total"],
+        summaryField: "total",
+      },
+    });
+  });
+
+  it("captures single-value legacy chart semantics for kpi, avg, and gauge", () => {
+    const kpiReport = legacyToVizConfig({
+      chart: {
+        id: 14,
+        type: "line",
+        mode: "kpi",
+        showGrowth: true,
+      },
+      dataset: {
+        id: 91,
+        xAxis: "root[].created_at",
+        yAxis: "root[].revenue",
+        yAxisOperation: "sum",
+        dateField: "root[].created_at",
+        fieldsSchema: {
+          "root[].created_at": "date",
+          "root[].revenue": "number",
+        },
+      },
+      cdc: {
+        id: "cdc_kpi",
+        legend: "Revenue",
+      },
+    });
+
+    expect(kpiReport.supported).toBe(true);
+    expect(kpiReport.summary.chartType).toBe("kpi");
+    expect(kpiReport.vizConfig.options.visualization).toMatchObject({
+      type: "kpi",
+      dataMode: "latestValue",
+      showGrowth: true,
+    });
+    expect(kpiReport.vizConfig.options.compatibility).toMatchObject({
+      legacyRawChartType: "line",
+      legacyChartType: "kpi",
+    });
+
+    const avgReport = legacyToVizConfig({
+      chart: {
+        id: 15,
+        type: "avg",
+        mode: "chart",
+      },
+      dataset: {
+        id: 92,
+        xAxis: "root[].created_at",
+        yAxis: "root[].revenue",
+        yAxisOperation: "sum",
+        dateField: "root[].created_at",
+        fieldsSchema: {
+          "root[].created_at": "date",
+          "root[].revenue": "number",
+        },
+      },
+      cdc: {
+        id: "cdc_avg",
+      },
+    });
+
+    expect(avgReport.supported).toBe(true);
+    expect(avgReport.summary.chartType).toBe("avg");
+    expect(avgReport.vizConfig.options.visualization).toMatchObject({
+      type: "avg",
+      dataMode: "seriesAverage",
+    });
+    expect(avgReport.vizConfig.postOperations).toContainEqual({
+      type: "seriesAverage",
+      metricId: "metric_cdc_avg",
+    });
+
+    const gaugeReport = legacyToVizConfig({
+      chart: {
+        id: 16,
+        type: "gauge",
+        mode: "chart",
+        ranges: [
+          {
+            min: 0,
+            max: 50,
+            label: "Low",
+            color: "#0f0",
+          },
+          {
+            min: 50,
+            max: 100,
+            label: "High",
+            color: "#f00",
+          },
+        ],
+      },
+      dataset: {
+        id: 93,
+        xAxis: "root[].created_at",
+        yAxis: "root[].usage",
+        yAxisOperation: "avg",
+        dateField: "root[].created_at",
+        fieldsSchema: {
+          "root[].created_at": "date",
+          "root[].usage": "number",
+        },
+      },
+      cdc: {
+        id: "cdc_gauge",
+      },
+    });
+
+    expect(gaugeReport.supported).toBe(true);
+    expect(gaugeReport.summary.chartType).toBe("gauge");
+    expect(gaugeReport.vizConfig.options.visualization).toMatchObject({
+      type: "gauge",
+      dataMode: "latestValue",
+      ranges: [
+        {
+          min: 0,
+          max: 50,
+          label: "Low",
+          color: "#0f0",
+        },
+        {
+          min: 50,
+          max: 100,
+          label: "High",
+          color: "#f00",
+        },
+      ],
+    });
+  });
+
+  it("captures matrix chart semantics as a dedicated temporal heatmap view", () => {
+    const report = legacyToVizConfig({
+      chart: {
+        id: 17,
+        type: "matrix",
+        mode: "chart",
+        timeInterval: "day",
+      },
+      dataset: {
+        id: 94,
+        xAxis: "root[].created_at",
+        yAxis: "root[].count",
+        yAxisOperation: "count",
+        dateField: "root[].created_at",
+        fieldsMetadata: [
+          {
+            id: "created_at",
+            legacyPath: "root[].created_at",
+            type: "date",
+          },
+          {
+            id: "count",
+            legacyPath: "root[].count",
+            type: "number",
+          },
+        ],
+      },
+      cdc: {
+        id: "cdc_matrix",
+        datasetColor: "#3b82f6",
+      },
+    });
+
+    expect(report.supported).toBe(true);
+    expect(report.summary.chartType).toBe("matrix");
+    expect(report.vizConfig.options.visualization).toMatchObject({
+      type: "matrix",
+      dataMode: "weekdayHeatmap",
+    });
   });
 });

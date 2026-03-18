@@ -25,7 +25,6 @@ We need a new visualization pipeline that is source-agnostic across SQL, APIs, a
 
 ## Non-goals
 - Replacing the current dataset request/join system in this project.
-- Shipping every chart type on V2 in the first release. Initial priority is axis-based charts plus export/filter parity.
 - Removing legacy fields immediately from `Dataset` or `ChartDatasetConfig`.
 - Introducing multi-dashboard shared chart ownership in the first V2 rollout.
 
@@ -36,6 +35,7 @@ We need a new visualization pipeline that is source-agnostic across SQL, APIs, a
 - Existing `updateChartData(id, user, { filters, variables, ... })` callers must remain valid for both legacy and V2 charts.
 - Existing automation entry points must keep working through the same public controller methods.
 - No bulk migration will rewrite all existing chart rows on initial release.
+- The canonical DB should not enter a partially migrated V2 state. Broad apply happens only after migration coverage exists for every current legacy chart type and the full-db dry-run is clean.
 - Rollback must be possible by preserving legacy runtime/data and by using reversible migration scripts, not destructive data repair.
 
 ## Ownership Boundary
@@ -164,9 +164,21 @@ flowchart LR
   sort: [{ ref: "d1", dir: "asc" }],
   limit: null,
   postOperations: [{ type: "runningTotal", metricId: "m2" }],
-  options: { includeEmptyBuckets: true }
+  options: {
+    includeEmptyBuckets: true,
+    visualization: {
+      type: "bar",
+      dataMode: "series"
+    },
+    compatibility: {
+      legacyRawChartType: "bar",
+      legacyChartType: "bar"
+    }
+  }
 }
 ```
+
+- Migration-generated V2 configs may carry `options.visualization` and `options.compatibility` details to preserve legacy chart-family semantics until the dedicated V2 runtime and builder own those settings directly.
 
 ## Filtering And Variables
 V2 must stop treating filtering as scattered special-case logic inside `AxisChart`. The runtime should compile one resolved filter plan from four distinct scopes plus variables.
@@ -353,6 +365,8 @@ Legacy dashboard filters without explicit bindings should continue to use the cu
   - write `vizVersion = 2` and `vizConfig` only when mapping is clean and supported
   - keep legacy columns after migration so rollback remains a data-selection choice, not a repair task
   - store migration audit output for review before production rollout
+- Do not partially apply V2 migrations to the canonical DB while chart-type coverage is incomplete.
+- Limited apply runs on local/staging/DB clones are acceptable for engine development and fixture creation.
 - Legacy UI must show a `Legacy` badge and offer a migration entry point rather than a separate V2 preview mode.
 - Dataset UI remains shared; migration actions belong on charts, not on datasets.
 
@@ -420,8 +434,9 @@ This keeps the user journey question-first while preserving datasets as reusable
 
 ### Phase 2: Migration Utilities
 - Add `legacyToVizConfig()` conversion utilities and migration scripts with dry-run/apply/report modes.
-- Add migration validation for unsupported legacy charts before any production backfill.
-- Exit criteria: representative legacy charts can be converted into stored V2 configs safely, without changing the runtime path yet.
+- Cover every current legacy chart type with deterministic migration output, including non-axis visualizations and table-style views.
+- Add migration validation for unsupported shapes inside supported chart families before any production backfill.
+- Exit criteria: the full legacy chart inventory dry-runs clean by chart type, stored V2 configs are deterministic for every current chart type, and no runtime path changes are required yet.
 
 ### Phase 3: V2 Engine
 - Build selector compiler, filter compiler, variable resolver, date ops, and map-based aggregation engine.
@@ -455,9 +470,10 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Added manual field override UI in the dataset editor with refresh support, editable labels/descriptions/roles/aggregation, and persisted `fieldsMetadata` updates.
 - Updated dataset preview state and existing dataset/chart editors to prefer `fieldsMetadata` while keeping `fieldsSchema` as a compatibility fallback.
 - Added additive `Dataset.name` support as the canonical dataset display field, with compatibility sync to legacy `legend` for existing flows.
-- Phase 2 migration utilities started with a deterministic `legacyToVizConfig()` converter for supported legacy line/bar/kpi/avg charts.
+- Phase 2 migration utilities now generate deterministic `vizConfig` output across the current legacy chart inventory, including line/bar/pie/doughnut/radar/polar/table/kpi/avg/gauge/matrix shapes.
 - Added chart-level migration reporting/apply helpers plus a dry-run/apply CLI script (`npm run viz:migrate -- ...`) that writes `vizVersion = 2` and `vizConfig` only when every CDC on the chart is migration-safe.
 - Unsupported chart types or mixed-version charts now produce explicit validation reasons instead of partial writes.
+- Full-db dry-runs clarified a rollout requirement: broad apply should wait until deterministic migration coverage exists for every current legacy chart type, not just an initial subset.
 
 ## Master Checklist
 - [x] Add `Dataset.fieldsMetadata`.
@@ -485,6 +501,7 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [ ] Add filter metadata adapter that reads `VizFrame`.
 - [ ] Define and document V2 chartData compatibility contract for alerts/snapshots/embeds.
 - [x] Add `legacyToVizConfig()` for deterministic migration generation and validation.
+- [x] Extend deterministic migration generation to every current legacy chart type before any broad apply run.
 - [ ] Add V2 builder UI for dimensions/metrics/breakouts.
 - [ ] Add homepage/sidebar `New chart` CTA and out-of-dashboard draft chart flow.
 - [ ] Add `Legacy` badge and migration entry points for legacy charts.
