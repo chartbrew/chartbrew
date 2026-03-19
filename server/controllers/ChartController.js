@@ -30,6 +30,10 @@ const AxisChart = require("../charts/AxisChart");
 const TableView = require("../charts/TableView");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 const { getDatasetDisplayName } = require("../modules/datasetIdentity");
+const {
+  isVisualizationV2Chart,
+  runVisualizationV2,
+} = require("../modules/visualizationV2/runtime");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -477,6 +481,18 @@ class ChartController {
       })
       .then((chartData) => {
         try {
+          if (isVisualizationV2Chart(gChart)) {
+            return runVisualizationV2({
+              chart: gChart,
+              datasets: chartData.datasets,
+              filters,
+              variables,
+              timezone: project?.timezone,
+              isExport,
+              skipParsing,
+            });
+          }
+
           if (isExport) {
             return dataExtractor(chartData, filters, project?.timezone);
           }
@@ -539,7 +555,13 @@ class ChartController {
                 const dataset = cdc?.Dataset;
                 if (dataset?.conditions) {
                   const newConditions = dataset.conditions.map((c) => {
-                    const optCondition = opt.conditions.find((o) => o.field === c.field);
+                    const optCondition = opt.conditions.find((o) => {
+                      if (c.id && o.id) {
+                        return o.id === c.id;
+                      }
+
+                      return o.field === c.field;
+                    });
                     let values = (optCondition && optCondition.values) || [];
                     values = optCondition?.hideValues ? [] : values.slice(0, 100);
 

@@ -8,6 +8,7 @@ const PieChart = require("./PieChart");
 const MatrixChart = require("./MatrixChart");
 const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
+const { getScopedRuntimeFilters } = require("../modules/visualizationV2/filterPlan");
 
 const checkNumbersOnlyAndLength = /^\d{10,13}$/;
 
@@ -111,6 +112,8 @@ class AxisChart {
         const dataset = this.datasets[i];
         const { yAxisOperation, dateField } = dataset.options;
         let { xAxis, yAxis } = dataset.options;
+        const scopedFilters = getScopedRuntimeFilters(filters, this.chart, dataset.options);
+        const fieldFilters = scopedFilters.filter((filter) => filter?.field && filter.type !== "date");
         let xData;
         let yData;
         let yType;
@@ -141,8 +144,8 @@ class AxisChart {
           });
         }
 
-        if (filters && filters.length > 0) {
-          filters.forEach((filter) => {
+        if (scopedFilters && scopedFilters.length > 0) {
+          scopedFilters.forEach((filter) => {
             if (filter.field === dateField && filter.exposed && filter.value) {
               alreadyDateFiltered = true;
             }
@@ -151,13 +154,14 @@ class AxisChart {
 
         let filteredData = filterData.data;
 
-        const dateDashboardFilter = filters && filters?.find((f) => f.type === "date" && f.startDate && f.endDate);
+        const dateDashboardFilter = scopedFilters
+          && scopedFilters.find((f) => f.type === "date" && f.startDate && f.endDate);
         if (dateField
           && ((this.chart.startDate && this.chart.endDate) || dateDashboardFilter)
           && canDateFilter
           && !alreadyDateFiltered
         ) {
-          if (filters?.length > 0) {
+          if (scopedFilters?.length > 0) {
             if (dateDashboardFilter) {
               startDate = momentObj(dateDashboardFilter.startDate).startOf("day");
               endDate = momentObj(dateDashboardFilter.endDate).endOf("day");
@@ -179,19 +183,19 @@ class AxisChart {
           ).data;
         }
 
-        if (filters && filters.length > 0) {
+        if (fieldFilters.length > 0) {
           if (dataset.options && dataset.options.fieldsSchema) {
             let found = false;
             Object.keys(dataset.options.fieldsSchema).forEach((key) => {
-              if (_.find(filters, (o) => o.field === key)) {
+              if (_.find(fieldFilters, (o) => o.field === key)) {
                 found = true;
               }
             });
 
             if (found) {
-              filters.map((filter) => {
+              fieldFilters.map((filter) => {
                 filteredData = dataFilter(
-                  filteredData, filter.field, filters, this.timezone, this.chart.timeInterval
+                  filteredData, filter.field, fieldFilters, this.timezone, this.chart.timeInterval
                 ).data;
                 return filter;
               });

@@ -2,6 +2,7 @@ const momentObj = require("moment");
 const _ = require("lodash");
 
 const dataFilter = require("./dataFilter");
+const { getScopedRuntimeFilters } = require("../modules/visualizationV2/filterPlan");
 
 module.exports = (data, filters, timezone) => {
   const { chart, datasets } = data;
@@ -38,6 +39,8 @@ module.exports = (data, filters, timezone) => {
     const dataset = datasets[i];
     const { dateField } = dataset.options;
     let { xAxis } = dataset.options;
+    const scopedFilters = getScopedRuntimeFilters(filters, chart, dataset.options);
+    const fieldFilters = scopedFilters.filter((filter) => filter?.field && filter.type !== "date");
     let xData;
 
     const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
@@ -72,8 +75,8 @@ module.exports = (data, filters, timezone) => {
 
       // check if any date filters should be applied
       // these filters come from the dashboard filters and override the global date filter
-      if (filters && filters.length > 0) {
-        const dateRangeFilter = filters.find((o) => o.type === "date" && o.startDate && o.endDate);
+      if (scopedFilters && scopedFilters.length > 0) {
+        const dateRangeFilter = scopedFilters.find((o) => o.type === "date" && o.startDate && o.endDate);
         if (dateRangeFilter) {
           dateConditions[0] = {
             field: dateField,
@@ -92,18 +95,18 @@ module.exports = (data, filters, timezone) => {
     }
 
     // these are the custom-field filters
-    if (filters && filters.length > 0) {
+    if (fieldFilters.length > 0) {
       if (dataset.options && dataset.options.fieldsSchema) {
         let found = false;
         Object.keys(dataset.options.fieldsSchema).forEach((key) => {
-          if (_.find(filters, (o) => o.type !== "date" && o.field === key)) {
+          if (_.find(fieldFilters, (o) => o.field === key)) {
             found = true;
           }
         });
 
         if (found) {
-          filters.map((filter) => {
-            filteredData = dataFilter(filteredData, filter.field, filters).data;
+          fieldFilters.map((filter) => {
+            filteredData = dataFilter(filteredData, filter.field, fieldFilters).data;
             return filter;
           });
         }

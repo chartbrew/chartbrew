@@ -443,7 +443,7 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Introduce `VizFrame` and V2 chart/export adapters.
 - Define alert-compatible chartData output contract for V2 chart types.
 - Preserve `updateChartData(... { filters, variables })` behavior through the new filter plan.
-- Exit criteria: line/bar/kpi preview works for V2 charts and migrated configs.
+- Exit criteria: all chart types previews work for V2 charts and migrated configs.
 
 ### Phase 4: V2 Builder UX
 - Ship question-builder UI for new charts as the default authoring experience.
@@ -474,6 +474,13 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Added chart-level migration reporting/apply helpers plus a dry-run/apply CLI script (`npm run viz:migrate -- ...`) that writes `vizVersion = 2` and `vizConfig` only when every CDC on the chart is migration-safe.
 - Unsupported chart types or mixed-version charts now produce explicit validation reasons instead of partial writes.
 - Full-db dry-runs clarified a rollout requirement: broad apply should wait until deterministic migration coverage exists for every current legacy chart type, not just an initial subset.
+- Phase 3 started with `ChartController.updateChartData()` dispatching migrated charts through a V2 runtime module that resolves `vizConfig` selectors back into runtime dataset paths and emits the existing persisted `chartData` contract.
+- The initial Phase 3 runtime intentionally keeps alerts/export/embed compatibility by preserving legacy `chartData` and table output shapes while V2 execution internals are being replaced incrementally.
+- Added a dedicated V2 selector + filter-plan layer that resolves `fieldId`/binding-based question filters, variable-backed filters, and runtime dashboard/chart filters into scoped legacy-path filters before `AxisChart` and `DataExtractor` run.
+- Added scoped runtime filter handling by chart/CDC/dataset so V2 field filters do not leak across reused datasets, and added explicit field-bound date filtering that no longer depends on legacy `dataset.dateField` when the V2 target field is known.
+- Added shared V2 date/window helpers plus the first map-based `VizFrame` builder for scalar series charts, including zero-filled time buckets and deterministic date labels.
+- Wired the V2 runtime to render line/bar/pie/doughnut/radar/polar/kpi/avg/gauge charts from `VizFrame` while keeping table, matrix, export, and unsupported compatibility shapes on the legacy bridge path for now.
+- Added shared V2 row extraction for table and export flows, plus matrix rendering from `VizFrame`, so migrated table/matrix/export paths no longer depend on the legacy `DataExtractor` or `AxisChart` bridge for their primary execution path.
 
 ## Master Checklist
 - [x] Add `Dataset.fieldsMetadata`.
@@ -486,16 +493,16 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [ ] Keep saved chart ownership single-dashboard in the initial V2 rollout.
 - [x] Add field metadata inference and overrides.
 - [ ] Add selector compiler for SQL/API/NoSQL field access.
-- [ ] Add shared date/window helpers.
+- [x] Add shared date/window helpers.
 - [ ] Add unified filter scope model for dataset, question, dashboard, and chart-control filters.
 - [ ] Add variable resolution model that supports dataset/request bindings and V2 question filters.
 - [ ] Add explicit dashboard filter bindings for field/date/variable targets.
 - [ ] Keep legacy dashboard filter heuristics as a compatibility path.
-- [ ] Preserve canonical `fieldId` to legacy traversal-path mapping for migration and runtime interop.
+- [x] Preserve canonical `fieldId` to legacy traversal-path mapping for migration and runtime interop.
 - [ ] Add single-pass filter pipeline.
 - [ ] Add request pushdown hooks where source connectors support filter/variable pushdown.
-- [ ] Add map-based bucket aggregation.
-- [ ] Add `VizFrame` intermediate model.
+- [x] Add map-based bucket aggregation.
+- [x] Add `VizFrame` intermediate model.
 - [ ] Add Chart.js adapters that read `VizFrame`.
 - [ ] Add export adapter that reads `VizFrame`.
 - [ ] Add filter metadata adapter that reads `VizFrame`.

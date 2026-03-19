@@ -451,8 +451,12 @@ module.exports = (data, selectedField, conditions, timezone = "", timeInterval =
     }
 
     conditionsOptions.push({
+      id: condition.id,
       field,
       exposed: condition.exposed,
+      source: condition.source || null,
+      bindingId: condition.bindingId || null,
+      filterId: condition.filterId || null,
       values: _.uniq(_.map(finalData, fieldFinder))
     });
 
