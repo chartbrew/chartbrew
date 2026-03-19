@@ -190,4 +190,56 @@ describe("visualizationV2 filter plan", () => {
       },
     ]);
   });
+
+  it("resolves scalar dashboard-filter bindings for V2 question filters", () => {
+    const plan = buildVisualizationFilterPlan({
+      chart: {
+        id: 13,
+        ChartDatasetConfigs: [{
+          id: "cdc_scalar_binding",
+          vizConfig: {
+            filters: [{
+              id: "region_question_filter",
+              fieldId: "region",
+              operator: "is",
+              valueSource: "dashboardFilter",
+              bindingId: "region_binding",
+            }],
+          },
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 61,
+          cdcId: "cdc_scalar_binding",
+          conditions: [],
+          fieldsMetadata: [
+            { id: "region", legacyPath: "root[].region", type: "string" },
+          ],
+          fieldsSchema: {
+            "root[].region": "string",
+          },
+        },
+        data: [],
+      }],
+      filters: [{
+        id: "region_binding",
+        fieldId: "region",
+        operator: "is",
+        value: "west",
+      }],
+      variables: {},
+    });
+
+    expect(plan.datasets[0].options.conditions).toEqual([{
+      id: "v2_question_region_question_filter",
+      field: "root[].region",
+      operator: "is",
+      value: "west",
+      exposed: false,
+      source: "v2_question",
+      bindingId: "region_binding",
+      filterId: "region_question_filter",
+    }]);
+  });
 });

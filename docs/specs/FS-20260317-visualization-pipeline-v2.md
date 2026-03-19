@@ -315,6 +315,11 @@ Legacy dashboard filters without explicit bindings should continue to use the cu
 - Dashboard/chart cron jobs already rely on `ChartController.updateChartData()` and should continue to do so.
 - V2 must not require separate schedulers or alternate execution APIs.
 - `updateChartData()` must continue to persist the same chart-level runtime outputs needed by downstream jobs.
+- V2 `updateChartData()` compatibility contract:
+  - Normal runs persist `chart.chartData` in the legacy-compatible shape plus `chartDataUpdated`, and may refresh `Dataset.conditions[].values` from runtime `conditionsOptions`.
+  - Filtered runs return filtered `chartData` to the caller but must not persist filtered chart output or dataset condition values.
+  - Export runs return export-row payloads to the caller but must not persist export output or dataset condition values.
+  - `conditionsOptions` remains a runtime-only side channel; it is used to refresh reusable filter values during normal runs and is never written into persisted `chart.chartData`.
 
 ### Alerts
 - Current alert evaluation reads `chart.chartData.data.labels` and `chart.chartData.data.datasets[index].data` by CDC order.
@@ -331,6 +336,14 @@ Legacy dashboard filters without explicit bindings should continue to use the cu
 - Snapshot generation uses the existing embedded/public chart routes and frontend rendering.
 - V2 charts must render correctly through those same routes without special-case snapshot code.
 - Persisted chart output must remain sufficient for Playwright-based chart snapshots and dashboard snapshots.
+- Embedded/share renders that apply URL variables or share-policy variables must treat that output as runtime-only and must not overwrite persisted `chart.chartData`.
+- Embedded/public payloads must keep returning legacy-compatible `chartData` plus `ChartDatasetConfigs` so existing frontend embed and snapshot rendering keeps working unchanged.
+- Snapshot token access should remain compatible with the existing `snapshot` and `isSnapshot` route/query conventions.
+
+### Public Dashboards And Share Filters
+- Public dashboard/report share routes must keep treating non-field URL params as runtime variables for request bindings and V2 question filters.
+- URL field filters such as `fields[status]=paid` must be normalized into runtime field filters before `updateChartData()` so both legacy and V2 chart execution see the same filter shape.
+- Public/share dashboard filtering remains runtime-only and must not persist variable- or field-filter-specific chart output back to the chart rows.
 
 ### AI Orchestrator And Tools
 - The AI orchestrator currently assumes legacy dataset fields such as `xAxis`, `yAxis`, `yAxisOperation`, and `dateField`.
@@ -481,6 +494,25 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Added shared V2 date/window helpers plus the first map-based `VizFrame` builder for scalar series charts, including zero-filled time buckets and deterministic date labels.
 - Wired the V2 runtime to render line/bar/pie/doughnut/radar/polar/kpi/avg/gauge charts from `VizFrame` while keeping table, matrix, export, and unsupported compatibility shapes on the legacy bridge path for now.
 - Added shared V2 row extraction for table and export flows, plus matrix rendering from `VizFrame`, so migrated table/matrix/export paths no longer depend on the legacy `DataExtractor` or `AxisChart` bridge for their primary execution path.
+- Added Phase 3 regression coverage for connector/request-boundary contracts and V2 runtime inputs: Firestore-style `DataRequest.configuration` variable resolution, `transform.config` flattening, nested joined-selector traversal, and dataset `VariableBindings`-backed conditions.
+- Captured a documentation follow-up for the literal JSON config mapping: the detailed V1-to-V2 field/shape explanation should live in a dedicated migration doc rather than relying on OpenAPI alone.
+- Extracted pure alert-trigger evaluation from `checkAlerts()` so V2-generated `chartData` can be regression-tested against alert semantics without controller or delivery side effects.
+- Added explicit Phase 3 parity tests showing V2 runtime output still feeds alert threshold evaluation and embedded-chart payloads through the same legacy-compatible `chartData` contract.
+- Added controller-level Phase 3 parity tests for `ChartController.updateChartData()` covering normal persisted runs, filtered runs, and export runs for migrated V2 charts.
+- Documented the V2 `updateChartData()` compatibility contract so persistence, `conditionsOptions`, filtered responses, and export responses have explicit legacy-compatible behavior.
+- Fixed CDC-scoped runtime variable resolution so V2 question filters and dataset variable-backed conditions honor `ChartDatasetConfig.configuration.variables` the same way request execution already does.
+- Added a controller-level regression proving the same dataset can be reused by multiple V2 CDCs with different variable-backed bindings without filter leakage between series.
+- Fixed scalar dashboard-filter bindings for V2 question filters so non-date bindings resolve to the bound filter value rather than the whole runtime filter object.
+- Added V2 runtime regressions for reusable filter metadata on both chart and export paths, covering dataset conditions plus question filters bound through dashboard-filter metadata.
+- Fixed shared/embed V2 variable renders so `findByShareString()` and `findBySharePolicy()` reuse `updateChartData()` without persisting variable-specific chart output back to the chart row.
+- Added controller-level parity tests for V2 public/share-policy chart access, including share-policy variable merging and snapshot-token lookup through the embedded route.
+- Normalized public dashboard `fields[...]` URL params into runtime chart filters before `updateChartData()` so project share/report links can drive legacy and V2 field filtering through the same controller path.
+- Added project-controller regressions covering public dashboard field-filter normalization and runtime-only chart updates for shared dashboards.
+- Aligned public dashboard/report interactive filtering with the authenticated dashboard flow so dashboard variable filters are sent as runtime variables, cleared variable/date filters trigger rerenders, and shared dashboards use the same filter-hash optimization inputs as the main builder.
+- Fixed inline chart-filter widgets to merge their exposed chart conditions with dashboard filters instead of replacing them, and to rerun the chart when the last inline filter is cleared so charts do not get stuck on stale filtered state.
+- Fixed embedded/shared chart filter widgets and auto-refresh to preserve the original URL/share variables on follow-up filter requests, so public chart filtering no longer drops the base share-context variables after the first interactive filter change.
+- Centralized dashboard filter request shaping into a shared client runtime helper and added regression coverage for active and cleared field/date/variable filters so authenticated and public dashboard filtering build the same runtime payloads.
+- Centralized chart widget filter request shaping into a shared client runtime helper and added regression coverage for inline filter upsert/remove behavior, dashboard-filter merging, chart-scoped date filters, and public/shared runtime variable preservation without adding a browser UI test stack.
 
 ## Master Checklist
 - [x] Add `Dataset.fieldsMetadata`.
@@ -506,7 +538,7 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [ ] Add Chart.js adapters that read `VizFrame`.
 - [ ] Add export adapter that reads `VizFrame`.
 - [ ] Add filter metadata adapter that reads `VizFrame`.
-- [ ] Define and document V2 chartData compatibility contract for alerts/snapshots/embeds.
+- [x] Define and document V2 chartData compatibility contract for alerts/snapshots/embeds.
 - [x] Add `legacyToVizConfig()` for deterministic migration generation and validation.
 - [x] Extend deterministic migration generation to every current legacy chart type before any broad apply run.
 - [ ] Add V2 builder UI for dimensions/metrics/breakouts.
@@ -516,14 +548,15 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [x] Add apply-safe admin backfill tooling for approved migrations.
 - [ ] Add regression tests for legacy charts.
 - [ ] Add regression tests for V2 charts across SQL, API, Mongo/Firestore-style data.
-- [ ] Add export/filter parity tests.
-- [ ] Add dataset filter parity tests.
-- [ ] Add dashboard date/field/variable filter parity tests.
-- [ ] Add chart filter widget parity tests.
+- [x] Add export/filter parity tests.
+- [x] Add dataset filter parity tests.
+- [x] Add dashboard date/field/variable filter parity tests.
+- [x] Add chart filter widget parity tests.
 - [ ] Add variable binding tests for API/SQL/embed/share flows.
-- [ ] Add tests for dashboards where the same dataset is reused by multiple CDCs with different bindings.
-- [ ] Add automated update parity tests through `updateChartData()`.
-- [ ] Add alert parity tests or alert capability guards for V2 charts.
+- [ ] Add V1-to-V2 migration doc for dataset/CDC/request JSON contract mapping and keep OpenAPI schemas aligned.
+- [x] Add tests for dashboards where the same dataset is reused by multiple CDCs with different bindings.
+- [x] Add automated update parity tests through `updateChartData()`.
+- [x] Add alert parity tests or alert capability guards for V2 charts.
 - [ ] Add snapshot/embed rendering verification for V2 charts.
 - [ ] Update AI orchestrator tool schemas for V2 chart creation and update.
 - [ ] Update AI semantic-layer serialization to include `fieldsMetadata`, `vizVersion`, and `vizConfig`.

@@ -10,7 +10,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
 import { Helmet } from "react-helmet-async";
-import { clone } from "lodash";
+import { clone, cloneDeep } from "lodash";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
 import {
@@ -50,6 +50,12 @@ import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
 import DashboardFilters from "../ProjectDashboard/components/DashboardFilters";
 import useInterval from "../../modules/useInterval";
+import {
+  buildProcessedChartFilters,
+  getActiveDateFilters,
+  getDashboardVariables,
+  getProjectFilters,
+} from "../../modules/dashboardFilterRuntime";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -388,19 +394,32 @@ function Report({ editMode = false }) {
 
     const refreshPromises = [];
     const queries = [];
-
-    // Prepare filter arrays for optimization check
-    const currentFilterArray = currentFilters[project.id] || [];
+    const previousFilters = cloneDeep(dashboardFilters);
+    const projectFilters = getProjectFilters(currentFilters, project.id);
+    const previousProjectFilters = getProjectFilters(previousFilters, project.id);
+    const dashboardVariables = getDashboardVariables(projectFilters);
 
     // Filter charts based on chartIds if provided
     const chartsToProcess = chartIds 
       ? charts.filter(chart => chartIds.includes(chart.id))
       : charts;
 
-    // Only process charts that actually need filtering
-    const chartsNeedingFiltering = chartsToProcess.filter(chart => 
-      !shouldSkipFiltering(chart, currentFilterArray, {})
-    );
+    const chartsNeedingFiltering = [];
+
+    chartsToProcess.forEach((chart) => {
+      const { processedFilters } = buildProcessedChartFilters({
+        chart,
+        currentFilters: projectFilters,
+        previousFilters: previousProjectFilters,
+      });
+
+      if (!shouldSkipFiltering(chart, processedFilters, dashboardVariables)) {
+        chartsNeedingFiltering.push({
+          chart,
+          processedFilters,
+        });
+      }
+    });
 
     if (chartsNeedingFiltering.length === 0) {
       // All charts already have the correct filter state, no API calls needed
@@ -408,45 +427,19 @@ function Report({ editMode = false }) {
       return Promise.resolve("done");
     }
     
-    chartsNeedingFiltering.forEach((chart) => {
+    chartsNeedingFiltering.forEach((chartData) => {
       if (currentFilters && currentFilters[project.id]) {
         setFilterLoading(true);
-        
-        // Get all conditions from the chart's datasets
-        let identifiedConditions = [];
-        chart.ChartDatasetConfigs.forEach((cdc) => {
-          if (Array.isArray(cdc.Dataset?.conditions)) {
-            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-          }
-        });
+        const { chart, processedFilters } = chartData;
+        const activeDateFilters = getActiveDateFilters(projectFilters, previousProjectFilters);
 
-        // Separate filters by type
-        const variableFilters = currentFilters[project.id].filter(f => f.type === "variable" && f.value);
-        const dateFilters = currentFilters[project.id].filter(f => f.type === "date" && f.startDate && f.endDate);
-        const otherFilters = currentFilters[project.id].filter(f => f.type !== "variable" && f.type !== "date");
-
-        // Handle dashboard variable filters (these are interactive filters, not URL variables)
-        let newConditions = [];
-        variableFilters.forEach((variableFilter) => {
-          const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
-          if (found) {
-            newConditions.push({
-              ...found,
-              value: variableFilter.value,
-            });
-          }
-        });
-
-        // Combine non-date filters into a single array
-        const allFilters = [...newConditions, ...otherFilters];
-
-        // Only make an API call if there are filters to apply
-        if (allFilters.length > 0) {
+        if (processedFilters.length > 0 || Object.keys(dashboardVariables).length > 0) {
           refreshPromises.push(
             dispatch(runQueryWithFilters({
               project_id: project.id,
               chart_id: chart.id,
-              filters: allFilters,
+              filters: processedFilters,
+              variables: dashboardVariables,
               shareToken: searchParams.get("token"),
               password: window.localStorage.getItem("reportPassword"),
               accessToken: searchParams.get("accessToken"),
@@ -454,12 +447,12 @@ function Report({ editMode = false }) {
           );
         }
 
-        // Handle date filters for selected charts
-        if (dateFilters.length > 0 && dateFilters[0].charts?.includes(chart.id)) {
+        if (activeDateFilters.length > 0 && activeDateFilters[0].charts?.includes(chart.id)) {
           queries.push({
             projectId: project.id,
             chartId: chart.id,
-            dateFilter: dateFilters[0], // We only use the first date filter since we only allow one
+            dateFilter: activeDateFilters[0],
+            variables: dashboardVariables,
           });
         }
       }
@@ -486,10 +479,13 @@ function Report({ editMode = false }) {
     // Get the next batch of refreshes to process
     const batch = refreshes.slice(index, index + batchSize);
     const batchPromises = batch.map((refresh) => {
+      const filtersToUse = refresh.filters || (refresh.dateFilter ? [refresh.dateFilter] : []);
+
       return dispatch(runQueryWithFilters({
         project_id: refresh.projectId,
         chart_id: refresh.chartId,
-        filters: refresh.dateFilter,
+        filters: filtersToUse,
+        variables: refresh.variables || {},
         shareToken: searchParams.get("token"),
         password: window.localStorage.getItem("reportPassword"),
         accessToken: searchParams.get("accessToken"),

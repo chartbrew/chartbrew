@@ -19,7 +19,6 @@ import {
 } from "react-icons/lu";
 
 import moment from "moment";
-import _ from "lodash";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
@@ -48,6 +47,12 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
+import {
+  buildChartFilterRequest,
+  removeChartCondition,
+  shouldRunFilterRequest,
+  upsertChartCondition,
+} from "../../modules/chartFilterRuntime";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -88,7 +93,7 @@ function Chart(props) {
   const [updateFrequency, setUpdateFrequency] = useState(false);
   const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
   const [publicLoading, setPublicLoading] = useState(false);
-  const [dashboardFilters, setDashboardFilters] = useState(
+  const [, setDashboardFilters] = useState(
     getFiltersFromStorage(params.projectId)
   );
   const [conditions, setConditions] = useState([]);
@@ -103,17 +108,20 @@ function Chart(props) {
   const [isCompact, setIsCompact] = useState(false);
   const containerRef = useRef(null);
 
+  const _buildFilterRequest = (projectId = params.projectId, chartFilters = conditions) => {
+    return buildChartFilterRequest({
+      storedFilters: projectId ? (getFiltersFromStorage(projectId) || []) : [],
+      inlineFilters: chartFilters,
+      chartId: chart.id,
+    });
+  };
+
   useInterval(async () => {
-    // Get the current filters and check if we have variables
-    const currentFilters = params.projectId ? getFiltersFromStorage(params.projectId) : null;
-    const hasVariables = currentFilters && currentFilters.some(f => f.type === "variable");
-    
-    // If we have filters or variables, we should use filtering instead of just getting the chart
-    if ((currentFilters && currentFilters.length > 0) || hasVariables) {
-      // Just run filtering, which will get the filtered data
-      await _runFiltering(currentFilters, params.projectId);
+    const { applicableFilters, variables } = _buildFilterRequest(params.projectId, conditions);
+
+    if (shouldRunFilterRequest({ filters: applicableFilters, variables })) {
+      await _runFiltering(conditions, params.projectId);
     } else {
-      // No filters, just get the base chart data
       await dispatch(getChart({
         project_id: chart.project_id,
         chart_id: chart.id,
@@ -163,44 +171,22 @@ function Chart(props) {
 
   const _onGetChartData = () => {
     const { projectId } = params;
+    const { applicableFilters, variables } = _buildFilterRequest(projectId, conditions);
+    const shouldRunFilteredQuery = shouldRunFilterRequest({ filters: applicableFilters, variables });
 
-    const filters = getFiltersFromStorage(projectId);
-
-    const unsortedVarFilters = filters?.filter((f) => f.type === "variable");
-    const variableFilters = {};
-    if (unsortedVarFilters?.length > 0) {
-      unsortedVarFilters.forEach((f) => {
-        if (f.variable && f.value) {
-          variableFilters[f.variable] = f.value;
-        }
-      });
-    }
-
-    const otherFilters = filters?.filter((f) => f.type !== "variable");
-    
-    // Filter out date filters that don't apply to this chart (same logic as _runFiltering)
-    const applicableFilters = otherFilters?.filter((filter) => {
-      if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
-        return filter.charts.includes(chart.id);
-      }
-      return true; // Keep all non-date filters
-    });
-
-    // TODO: add filters and variables to the query instead of running filtering again
     setChartLoading(true);
-    dispatch(runQuery({
+    dispatch(shouldRunFilteredQuery ? runQueryWithFilters({
       project_id: projectId,
       chart_id: chart.id,
       filters: applicableFilters,
-      variables: variableFilters,
+      variables,
+    }) : runQuery({
+      project_id: projectId,
+      chart_id: chart.id,
     }))
       .then(() => {
         setChartLoading(false);
-
-        setDashboardFilters(filters);
-        if (applicableFilters && applicableFilters.length > 0 && _chartHasFilter(applicableFilters)) {
-          _runFiltering(applicableFilters);
-        }
+        setDashboardFilters(projectId ? getFiltersFromStorage(projectId) : null);
       })
       .catch((error) => {
         if (error === 413) {
@@ -212,42 +198,12 @@ function Chart(props) {
       });
   };
 
-  const _runFiltering = async (filters, projectId = params.projectId) => {
+  const _runFiltering = async (chartFilters = conditions, projectId = params.projectId, force = false) => {
     if (!chart.ChartDatasetConfigs) return;
 
-    // Get all conditions from the chart's datasets
-    let identifiedConditions = [];
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-      }
-    });
+    const { applicableFilters, variables } = _buildFilterRequest(projectId, chartFilters);
 
-    // If no filters are provided, get them from localStorage
-    const allFilters = filters || getFiltersFromStorage(projectId) || [];
-    
-    // Separate variable filters from other filters
-    const variableFilters = allFilters.filter((f) => f.type === "variable");
-    const otherFilters = allFilters.filter((f) => f.type !== "variable");
-
-    // Convert variable filters to the expected format { [variable_name]: variable_value }
-    const variables = {};
-    variableFilters.forEach((f) => {
-      if (f.variable && f.value) {
-        variables[f.variable] = f.value;
-      }
-    });
-
-    // Filter out date filters that don't apply to this chart
-    const applicableFilters = otherFilters.filter((filter) => {
-      if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
-        return filter.charts.includes(chart.id);
-      }
-      return true; // Keep all non-date filters
-    });
-
-    // Make an API call if there are filters to apply OR if there are variables
-    if (applicableFilters.length > 0 || Object.keys(variables).length > 0) {
+    if (shouldRunFilterRequest({ filters: applicableFilters, variables }) || force) {
       await dispatch(runQueryWithFilters({
         project_id: chart.project_id,
         chart_id: chart.id,
@@ -391,34 +347,6 @@ function Chart(props) {
       });
   };
 
-  const _chartHasFilter = (dashFilters = dashboardFilters) => {
-    let found = false;
-    if (chart.ChartDatasetConfigs) {
-      chart.ChartDatasetConfigs.forEach((cdConfig) => {
-        if (cdConfig.Dataset?.fieldsSchema) {
-          Object.keys(cdConfig.Dataset.fieldsSchema).forEach((key) => {
-            if (_.find(dashFilters, (o) => o.field === key)) {
-              found = true;
-            }
-          });
-        }
-      });
-    }
-
-    // Also check for date filters that apply to this specific chart
-    if (dashFilters && Array.isArray(dashFilters)) {
-      dashFilters.forEach((filter) => {
-        if (filter.type === "date" && filter.charts && Array.isArray(filter.charts)) {
-          if (filter.charts.includes(chart.id)) {
-            found = true;
-          }
-        }
-      });
-    }
-
-    return found;
-  };
-
   const _checkIfFilters = () => {
     let filterCount = 0;
     if (!chart.ChartDatasetConfigs) return false;
@@ -489,28 +417,16 @@ function Chart(props) {
   };
 
   const _onAddFilter = (condition) => {
-    let found = false;
-    const newConditions = conditions.map((c) => {
-      let newCondition = c;
-      if (c.id === condition.id) {
-        newCondition = condition;
-        found = true;
-      }
-      return newCondition;
-    });
-    if (!found) newConditions.push(condition);
+    const newConditions = upsertChartCondition(conditions, condition);
     setConditions(newConditions);
 
-    _runFiltering(newConditions);
+    _runFiltering(newConditions, params.projectId, true);
   };
 
   const _onClearFilter = (condition) => {
-    const newConditions = [...conditions];
-    const clearIndex = _.findIndex(conditions, { id: condition.id });
-    if (clearIndex > -1) newConditions.splice(clearIndex, 1);
-
+    const newConditions = removeChartCondition(conditions, condition);
     setConditions(newConditions);
-    _runFiltering(newConditions);
+    _runFiltering(newConditions, params.projectId, true);
   };
 
   const _onPublishChart = async () => {

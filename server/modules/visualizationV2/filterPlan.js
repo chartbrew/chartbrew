@@ -1,4 +1,5 @@
 const { resolveSelectorLegacyPath, toPlainObject } = require("./selectors");
+const { mergeCdcRuntimeVariables } = require("./runtimeVariables");
 
 function getRuntimeVariableValue(variables = {}, variableName) {
   if (!variableName || !variables || typeof variables !== "object") {
@@ -200,11 +201,19 @@ function compileQuestionFilter(filterDefinition = {}, context, filterLookup, var
     });
   }
 
+  const normalizedValue = (
+    resolvedValue
+    && typeof resolvedValue === "object"
+    && Object.prototype.hasOwnProperty.call(resolvedValue, "value")
+  )
+    ? resolvedValue.value
+    : resolvedValue;
+
   const condition = createConditionBase({
     id: createSyntheticConditionId(source, baseId),
     field,
-    operator: filterDefinition.operator || "is",
-    value: resolvedValue,
+    operator: filterDefinition.operator || resolvedValue?.operator || "is",
+    value: normalizedValue,
     source,
     exposed: filterDefinition.exposed === true,
     bindingId: filterDefinition.bindingId || null,
@@ -301,6 +310,7 @@ function buildVisualizationFilterPlan({
     const plainDataset = toPlainObject(dataset) || {};
     const datasetOptions = toPlainObject(plainDataset.options) || {};
     const cdc = plainChart.ChartDatasetConfigs?.[index] || {};
+    const cdcVariables = mergeCdcRuntimeVariables(variables, cdc);
     const vizFilters = Array.isArray(cdc?.vizConfig?.filters) ? cdc.vizConfig.filters : [];
     const baseConditions = Array.isArray(datasetOptions.conditions)
       ? datasetOptions.conditions
@@ -310,7 +320,7 @@ function buildVisualizationFilterPlan({
         chart: plainChart,
         cdc,
         datasetOptions,
-      }, filterLookup, variables);
+      }, filterLookup, cdcVariables);
     });
 
     runtimeFilters.push(
@@ -323,6 +333,7 @@ function buildVisualizationFilterPlan({
 
     return {
       ...plainDataset,
+      runtimeVariables: cdcVariables,
       options: {
         ...datasetOptions,
         conditions: [...baseConditions, ...questionConditions],

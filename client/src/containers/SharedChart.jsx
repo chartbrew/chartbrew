@@ -36,6 +36,12 @@ import toast from "react-hot-toast";
 import { canExportChart, exportChartToExcel } from "../modules/exportChart";
 import GaugeChart from "./Chart/components/GaugeChart";
 import MatrixChart from "./Chart/components/MatrixChart";
+import { getAllSearchParams, getPublicChartRuntimeVariables } from "../modules/publicChartRuntime";
+import {
+  removeChartCondition,
+  shouldRunFilterRequest,
+  upsertChartCondition,
+} from "../modules/chartFilterRuntime";
 
 const pageHeight = window.innerHeight;
 
@@ -59,30 +65,58 @@ function SharedChart() {
   const [searchParams] = useSearchParams();
   const filterRef = useRef(null);
   const chartSize = useChartSize(chart?.layout);
+
+  const _loadSharedChart = async ({ snapshot = false } = {}) => {
+    const response = await dispatch(getSharedChart({
+      share_string: params.share_string,
+      snapshot,
+      token: searchParams.get("token"),
+      queryParams: getAllSearchParams(searchParams),
+    }));
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    if (response?.payload) {
+      setChart(response.payload);
+      return response.payload;
+    }
+
+    return null;
+  };
+
+  const _runFiltering = async (nextConditions = conditions) => {
+    const runtimeVariables = getPublicChartRuntimeVariables(searchParams);
+
+    if (!shouldRunFilterRequest({ filters: nextConditions, variables: runtimeVariables })) {
+      return _loadSharedChart();
+    }
+
+    const response = await dispatch(runQueryWithFilters({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      filters: nextConditions,
+      variables: runtimeVariables,
+      shareToken: searchParams.get("token"),
+    }));
+
+    if (response?.payload) {
+      setChart(response.payload);
+      return response.payload;
+    }
+
+    return null;
+  };
   
   useInterval(() => {
-    setDataLoading(true);
-    
-    // Extract all query parameters to pass to the backend
-    const allQueryParams = {};
-    searchParams.forEach((value, key) => {
-      allQueryParams[key] = value;
-    });
-    
-    // We pass all query parameters so the backend can process variables based on the share policy
-    dispatch(getSharedChart({ 
-      share_string: params.share_string, 
-      token: searchParams.get("token"),
-      queryParams: allQueryParams
-    }))
-      .then((chart) => {
-        if (chart?.error) {
-          setError(true);
-          setChart({ error: "no chart" });
-        } else {
-          setChart(chart.payload);
-        }
+    if (!chart?.id || !chart?.project_id) {
+      return;
+    }
 
+    setDataLoading(true);
+    _runFiltering(conditions)
+      .then(() => {
         setDataLoading(false);
       })
       .catch(() => {
@@ -102,26 +136,8 @@ function SharedChart() {
 
     setLoading(true);
     setTimeout(() => {
-      // Extract all query parameters to pass to the backend
-      const allQueryParams = {};
-      searchParams.forEach((value, key) => {
-        allQueryParams[key] = value;
-      });
-      
-      // The backend now handles all variable filtering based on the share policy
-      dispatch(getSharedChart({ 
-        share_string: params.share_string, 
-        snapshot: urlParams.has("isSnapshot"), 
-        token: searchParams.get("token"),
-        queryParams: allQueryParams
-      }))
-        .then((chart) => {
-          if (chart?.error) {
-            setError(true);
-            setChart({ error: "no chart" });
-          } else {
-            setChart(chart.payload);
-          }
+      _loadSharedChart({ snapshot: urlParams.has("isSnapshot") })
+        .then(() => {
           setLoading(false);
         })
         .catch(() => {
@@ -157,30 +173,12 @@ function SharedChart() {
   };
 
   const _onAddFilter = async (condition) => {
-    let found = false;
-    const newConditions = conditions.map((c) => {
-      let newCondition = c;
-      if (c.id === condition.id) {
-        newCondition = condition;
-        found = true;
-      }
-      return newCondition;
-    });
-    if (!found) newConditions.push(condition);
+    const newConditions = upsertChartCondition(conditions, condition);
     setConditions(newConditions);
 
     setDataLoading(true);
-    await dispatch(runQueryWithFilters({ 
-      project_id: chart.project_id, 
-      chart_id: chart.id, 
-      filters: newConditions,
-      shareToken: searchParams.get("token"),
-    }))
-      .then((data) => {
-        if (data.payload) {
-          setChart(data.payload);
-        }
-
+    await _runFiltering(newConditions)
+      .then(() => {
         setDataLoading(false);
       })
       .catch(() => {
@@ -189,29 +187,15 @@ function SharedChart() {
   };
 
   const _onClearFilter = (condition) => {
-    const newConditions = [...conditions];
-    let clearIndex;
-    for (let i = 0; i < conditions.length; i++) {
-      if (conditions[i].id === condition.id) {
-        clearIndex = i;
-        break;
-      }
-    }
-    if (clearIndex > -1) newConditions.splice(clearIndex, 1);
-
+    const newConditions = removeChartCondition(conditions, condition);
     setConditions(newConditions);
 
     setDataLoading(true);
-    dispatch(runQueryWithFilters({ 
-      project_id: chart.project_id, 
-      chart_id: chart.id, 
-      filters: newConditions,
-      shareToken: searchParams.get("token"),
-    }))
-      .then((data) => {
-        if (data.payload) {
-          setChart(data.payload);
-        }
+    _runFiltering(newConditions)
+      .then(() => {
+        setDataLoading(false);
+      })
+      .catch(() => {
         setDataLoading(false);
       });
   };

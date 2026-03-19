@@ -435,6 +435,179 @@ describe("visualizationV2 runtime", () => {
     });
   });
 
+  it("resolves nested joined-style selector paths through the V2 runtime", () => {
+    const fieldsMetadata = [
+      {
+        id: "company_name",
+        legacyPath: "root[].company.name",
+        type: "string",
+        label: "Company Name",
+      },
+      {
+        id: "revenue",
+        legacyPath: "root[].revenue",
+        type: "number",
+        label: "Revenue",
+      },
+    ];
+
+    const migration = legacyToVizConfig({
+      chart: {
+        id: 20,
+        type: "bar",
+        mode: "chart",
+      },
+      dataset: {
+        id: 59,
+        xAxis: "root[].company.name",
+        yAxis: "root[].revenue",
+        yAxisOperation: "sum",
+        fieldsMetadata,
+      },
+      cdc: {
+        id: "cdc_joined_runtime",
+        legend: "Revenue",
+      },
+    });
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 20,
+        type: "bar",
+        mode: "chart",
+        includeZeros: true,
+        ChartDatasetConfigs: [{
+          id: "cdc_joined_runtime",
+          legend: "Revenue",
+          vizVersion: 2,
+          vizConfig: migration.vizConfig,
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 59,
+          name: "Joined dataset",
+          fieldsMetadata,
+          fieldsSchema: {
+            "root[].company.name": "string",
+            "root[].revenue": "number",
+          },
+          conditions: [],
+        },
+        data: [
+          { company: { name: "Acme" }, revenue: 10 },
+          { company: { name: "Globex" }, revenue: 20 },
+        ],
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration.data.labels).toEqual(["Acme", "Globex"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([10, 20]);
+  });
+
+  it("applies dataset VariableBindings-backed conditions through the V2 runtime", () => {
+    const fieldsMetadata = [
+      {
+        id: "step",
+        legacyPath: "root[].step",
+        type: "number",
+        label: "Step",
+      },
+      {
+        id: "status",
+        legacyPath: "root[].status",
+        type: "string",
+        label: "Status",
+      },
+      {
+        id: "value",
+        legacyPath: "root[].value",
+        type: "number",
+        label: "Value",
+      },
+    ];
+
+    const migration = legacyToVizConfig({
+      chart: {
+        id: 21,
+        type: "bar",
+        mode: "chart",
+      },
+      dataset: {
+        id: 60,
+        xAxis: "root[].step",
+        yAxis: "root[].value",
+        yAxisOperation: "sum",
+        fieldsMetadata,
+        conditions: [{
+          id: "dataset_binding_filter",
+          field: "root[].status",
+          operator: "is",
+          value: "{{selected_status}}",
+        }],
+      },
+      cdc: {
+        id: "cdc_dataset_variable_runtime",
+        legend: "Revenue",
+      },
+    });
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 21,
+        type: "bar",
+        mode: "chart",
+        includeZeros: true,
+        ChartDatasetConfigs: [{
+          id: "cdc_dataset_variable_runtime",
+          legend: "Revenue",
+          vizVersion: 2,
+          vizConfig: migration.vizConfig,
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 60,
+          name: "Variable dataset",
+          fieldsMetadata,
+          fieldsSchema: {
+            "root[].step": "number",
+            "root[].status": "string",
+            "root[].value": "number",
+          },
+          conditions: [{
+            id: "dataset_binding_filter",
+            field: "root[].status",
+            operator: "is",
+            value: "{{selected_status}}",
+          }],
+          VariableBindings: [{
+            name: "selected_status",
+            type: "string",
+          }],
+        },
+        data: [
+          { step: 1, status: "paid", value: 10 },
+          { step: 2, status: "pending", value: 20 },
+          { step: 3, status: "paid", value: 30 },
+        ],
+      }],
+      filters: [],
+      variables: {
+        selected_status: "paid",
+      },
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration.data.labels).toEqual(["1", "3"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([10, 30]);
+  });
+
   it("applies runtime fieldId filters through the V2 runtime", () => {
     const fieldsMetadata = [
       {
@@ -875,5 +1048,251 @@ describe("visualizationV2 runtime", () => {
     });
 
     expect(result.configuration.data.datasets[0].data).toEqual([20]);
+  });
+
+  it("emits reusable filter metadata for dataset conditions and V2 question filters", () => {
+    const vizConfig = {
+      version: 2,
+      dimensions: [{
+        id: "dimension_step",
+        fieldId: "step",
+        role: "x",
+      }],
+      metrics: [{
+        id: "metric_value",
+        fieldId: "value",
+        aggregation: "sum",
+        label: "Revenue",
+        axis: "left",
+        enabled: true,
+        style: {
+          color: "#2563eb",
+          fillColor: "transparent",
+          lineStyle: "solid",
+          pointRadius: 0,
+          goal: null,
+        },
+      }],
+      filters: [{
+        id: "region_question_filter",
+        fieldId: "region",
+        operator: "is",
+        valueSource: "dashboardFilter",
+        bindingId: "region_binding",
+      }],
+      filterControls: [],
+      sort: [],
+      limit: null,
+      postOperations: [],
+      options: {
+        includeEmptyBuckets: true,
+        visualization: {
+          type: "bar",
+          dataMode: "series",
+        },
+        compatibility: {
+          legacyRawChartType: "bar",
+          legacyChartType: "bar",
+          legacyDimensionFieldId: "step",
+          legacyMetricFieldId: "value",
+        },
+      },
+    };
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 18,
+        type: "bar",
+        mode: "chart",
+        includeZeros: true,
+        ChartDatasetConfigs: [{
+          id: "cdc_runtime_filter_metadata",
+          legend: "Revenue",
+          vizVersion: 2,
+          vizConfig,
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 57,
+          name: "Revenue",
+          fieldsMetadata: [
+            { id: "step", legacyPath: "root[].step", type: "number" },
+            { id: "status", legacyPath: "root[].status", type: "string" },
+            { id: "region", legacyPath: "root[].region", type: "string" },
+            { id: "value", legacyPath: "root[].value", type: "number" },
+          ],
+          fieldsSchema: {
+            "root[].step": "number",
+            "root[].status": "string",
+            "root[].region": "string",
+            "root[].value": "number",
+          },
+          conditions: [{
+            id: "dataset_status_filter",
+            field: "root[].status",
+            operator: "is",
+            value: "paid",
+            exposed: true,
+          }],
+        },
+        data: [
+          {
+            step: 1,
+            status: "paid",
+            region: "east",
+            value: 10,
+          },
+          {
+            step: 2,
+            status: "pending",
+            region: "west",
+            value: 20,
+          },
+          {
+            step: 3,
+            status: "paid",
+            region: "west",
+            value: 30,
+          },
+        ],
+      }],
+      filters: [{
+        id: "region_binding",
+        fieldId: "region",
+        operator: "is",
+        value: "west",
+      }],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration.data.labels).toEqual(["3"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([30]);
+    expect(result.conditionsOptions).toEqual([{
+      dataset_id: 57,
+      conditions: [
+        {
+          id: "dataset_status_filter",
+          field: "root[].status",
+          exposed: true,
+          source: null,
+          bindingId: null,
+          filterId: null,
+          values: ["paid", "pending"],
+        },
+        {
+          id: "v2_question_region_question_filter",
+          field: "root[].region",
+          exposed: false,
+          source: "v2_question",
+          bindingId: "region_binding",
+          filterId: "region_question_filter",
+          values: ["east", "west"],
+        },
+      ],
+    }]);
+  });
+
+  it("preserves reusable filter metadata on the V2 export path", () => {
+    const migration = legacyToVizConfig({
+      chart: {
+        id: 19,
+        type: "table",
+        mode: "chart",
+      },
+      dataset: {
+        id: 58,
+        xAxis: "root.orders[]",
+        fieldsMetadata: [{
+          id: "orders",
+          legacyPath: "root.orders[]",
+          type: "array",
+          label: "Orders",
+        }],
+        fieldsSchema: {
+          "root.orders[]": "array",
+        },
+        conditions: [{
+          id: "dataset_order_status_filter",
+          field: "root.orders[].status",
+          operator: "is",
+          value: "paid",
+          exposed: true,
+        }],
+      },
+      cdc: {
+        id: "cdc_runtime_export_filters",
+        legend: "Orders Export",
+      },
+    });
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 19,
+        type: "table",
+        mode: "chart",
+        ChartDatasetConfigs: [{
+          id: "cdc_runtime_export_filters",
+          legend: "Orders Export",
+          vizVersion: 2,
+          vizConfig: migration.vizConfig,
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 58,
+          name: "Orders dataset",
+          fieldsMetadata: [{
+            id: "orders",
+            legacyPath: "root.orders[]",
+            type: "array",
+            label: "Orders",
+          }],
+          fieldsSchema: {
+            "root.orders[]": "array",
+          },
+          conditions: [{
+            id: "dataset_order_status_filter",
+            field: "root.orders[].status",
+            operator: "is",
+            value: "paid",
+            exposed: true,
+          }],
+        },
+        data: {
+          orders: [
+            { id: 1, status: "paid", total: 100 },
+            { id: 2, status: "pending", total: 50 },
+            { id: 3, status: "paid", total: 75 },
+          ],
+        },
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      isExport: true,
+      skipParsing: false,
+    });
+
+    expect(result.configuration).toEqual({
+      "Orders Export": [
+        { id: 1, status: "paid", total: 100 },
+        { id: 3, status: "paid", total: 75 },
+      ],
+    });
+    expect(result.conditionsOptions).toEqual([{
+      dataset_id: 58,
+      conditions: [{
+        id: "dataset_order_status_filter",
+        field: "root.orders[].status",
+        exposed: true,
+        source: null,
+        bindingId: null,
+        filterId: null,
+        values: ["paid", "pending"],
+      }],
+    }]);
   });
 });

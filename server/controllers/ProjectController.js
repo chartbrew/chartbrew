@@ -9,6 +9,44 @@ const { snapDashboard } = require("../modules/snapshots");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
+function normalizePublicRuntimeInputs(variables = {}) {
+  const runtimeVariables = {};
+  const runtimeFilters = [];
+
+  if (!variables || typeof variables !== "object") {
+    return {
+      variables: runtimeVariables,
+      filters: runtimeFilters,
+    };
+  }
+
+  Object.keys(variables).forEach((key) => {
+    if (key.startsWith("__field_")) {
+      const field = key.replace("__field_", "");
+      const value = variables[key];
+
+      if (field && value !== null && value !== undefined && value !== "") {
+        runtimeFilters.push({
+          id: `public_field_${field}`,
+          field,
+          operator: "is",
+          value,
+          source: "public_dashboard_url",
+        });
+      }
+
+      return;
+    }
+
+    runtimeVariables[key] = variables[key];
+  });
+
+  return {
+    variables: runtimeVariables,
+    filters: runtimeFilters,
+  };
+}
+
 class ProjectController {
   constructor() {
     this.teamController = new TeamController();
@@ -203,6 +241,7 @@ class ProjectController {
       return project;
     }
 
+    const normalizedInputs = normalizePublicRuntimeInputs(variables);
     const ChartController = require("./ChartController"); // eslint-disable-line
     const chartController = new ChartController();
 
@@ -216,7 +255,8 @@ class ProjectController {
           {
             noSource: false,
             skipParsing: false,
-            variables,
+            variables: normalizedInputs.variables,
+            filters: normalizedInputs.filters,
             getCache: false,
             skipSave: true, // Don't save to database, just return filtered data
           }
@@ -582,3 +622,4 @@ class ProjectController {
 }
 
 module.exports = ProjectController;
+module.exports.normalizePublicRuntimeInputs = normalizePublicRuntimeInputs;

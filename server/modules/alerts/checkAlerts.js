@@ -6,6 +6,7 @@ const ChartController = require("../../controllers/ChartController");
 const db = require("../../models/models");
 const mail = require("../mail");
 const webhookAlerts = require("./webhookAlerts");
+const { findAlertTriggers, getAlertDataItems } = require("./alertEvaluation");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
@@ -169,96 +170,32 @@ async function checkChartForAlerts(chart) {
 
   const { chartData, ChartDatasetConfigs } = chart;
   const dateFormat = chart.getDataValue("dateFormat");
+  const isTimeseries = chart.getDataValue("isTimeseries");
 
   ChartDatasetConfigs.forEach((cdc, index) => {
-    const chartDataset = chartData.data.datasets[index];
     const datasetAlerts = alerts.filter((alert) => alert.cdc_id === cdc.id);
 
     if (datasetAlerts.length > 0) {
       datasetAlerts.forEach(async (alert) => {
-        let dataItems = chartDataset.data;
-        if (chart.getDataValue("isTimeseries") && alert.events.length === 0 && alert.type !== "anomaly") {
-          dataItems = [chartDataset.data[chartDataset.data.length - 1]];
-        }
+        const dataItems = getAlertDataItems({
+          chartData,
+          datasetIndex: index,
+          isTimeseries,
+          alert,
+        });
 
-        const { rules, type } = alert;
-        const { value, lower, upper } = rules;
+        const { type } = alert;
 
-        if (type === "milestone" && dataItems) {
-          // find potential alerts
-          const alertsFound = [];
-          dataItems.forEach((d, i) => {
-            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
-            if (d >= value) {
-              alertsFound.push({
-                label: chartData.data.labels[labelIndex],
-                value: d,
-              });
-            }
-          });
-
-          if (alertsFound.length > 0) {
-            processAlert(chart, alert, alertsFound);
-          }
-        } else if (type === "threshold_above" && dataItems) {
-          // find potential alerts
-          const alertsFound = [];
-          dataItems.forEach((d, i) => {
-            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
-            if (d > value) {
-              alertsFound.push({
-                label: chartData.data.labels[labelIndex],
-                value: d,
-              });
-            }
-          });
-
-          if (alertsFound.length > 0) {
-            processAlert(chart, alert, alertsFound);
-          }
-        } else if (type === "threshold_below" && dataItems) {
-          // find potential alerts
-          const alertsFound = [];
-          dataItems.forEach((d, i) => {
-            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
-            if (d < value) {
-              alertsFound.push({
-                label: chartData.data.labels[labelIndex],
-                value: d,
-              });
-            }
-          });
-
-          if (alertsFound.length > 0) {
-            processAlert(chart, alert, alertsFound);
-          }
-        } else if (type === "threshold_between" && dataItems) {
-          // find potential alerts
-          const alertsFound = [];
-          dataItems.forEach((d, i) => {
-            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
-            if (d > lower && d < upper) {
-              alertsFound.push({
-                label: chartData.data.labels[labelIndex],
-                value: d,
-              });
-            }
-          });
-
-          if (alertsFound.length > 0) {
-            processAlert(chart, alert, alertsFound);
-          }
-        } else if (type === "threshold_outside" && dataItems) {
-          // find potential alerts
-          const alertsFound = [];
-          dataItems.forEach((d, i) => {
-            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
-            if (d < lower || d > upper) {
-              alertsFound.push({
-                label: chartData.data.labels[labelIndex],
-                value: d,
-              });
-            }
+        if (
+          ["milestone", "threshold_above", "threshold_below", "threshold_between", "threshold_outside"]
+            .includes(type)
+          && dataItems
+        ) {
+          const alertsFound = findAlertTriggers({
+            chartData,
+            datasetIndex: index,
+            alert,
+            isTimeseries,
           });
 
           if (alertsFound.length > 0) {

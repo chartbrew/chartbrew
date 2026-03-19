@@ -58,6 +58,12 @@ import DashboardFilters from "./components/DashboardFilters";
 import { selectConnections } from "../../slices/connection";
 import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
 import SuspenseLoader from "../../components/SuspenseLoader";
+import {
+  buildProcessedChartFilters,
+  getActiveDateFilters,
+  getDashboardVariables,
+  getProjectFilters,
+} from "../../modules/dashboardFilterRuntime";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -505,16 +511,9 @@ function ProjectDashboard() {
     const refreshPromises = [];
     const queries = [];
     const previousFilters = _.cloneDeep(filters);
-
-    // Extract variables from dashboard filters for the new variable system
-    const dashboardVariables = {};
-    if (currentFilters[projectId]) {
-      currentFilters[projectId].forEach((filter) => {
-        if (filter.type === "variable" && filter.variable && filter.value) {
-          dashboardVariables[filter.variable] = filter.value;
-        }
-      });
-    }
+    const projectFilters = getProjectFilters(currentFilters, projectId);
+    const previousProjectFilters = getProjectFilters(previousFilters, projectId);
+    const dashboardVariables = getDashboardVariables(projectFilters);
     
     // Filter charts based on chartIds if provided
     const chartsToProcess = chartIds 
@@ -525,49 +524,17 @@ function ProjectDashboard() {
     const chartsNeedingFiltering = [];
     
     chartsToProcess.forEach((chart) => {
-      // Get all conditions from the chart's datasets to calculate the processed filters
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
+      const { processedFilters } = buildProcessedChartFilters({
+        chart,
+        currentFilters: projectFilters,
+        previousFilters: previousProjectFilters,
       });
-
-      // Separate filters by type
-      const variableFilters = currentFilters[projectId].filter(f => f.type === "variable" && f.value);
-      const otherFilters = currentFilters[projectId].filter(f => f.type !== "variable" && f.type !== "date");
-
-      // Check for variable filters that were just cleared (have empty values)
-      const clearedVariableFilters = currentFilters[projectId].filter(f => 
-        f.type === "variable" && 
-        !f.value && 
-        previousFilters?.[projectId]?.find(pf => 
-          pf.id === f.id &&
-          pf.value
-        )
-      );
-
-      // Handle variable filters by matching against chart conditions (legacy behavior)
-      let newConditions = [];
-      variableFilters.forEach((variableFilter) => {
-        const found = identifiedConditions.find((c) => c.variable === variableFilter.variable);
-        if (found) {
-          newConditions.push({
-            ...found,
-            value: variableFilter.value,
-          });
-        }
-      });
-
-      // Combine non-date filters into a single array (this matches what will be sent to API)
-      const processedFilters = [...newConditions, ...otherFilters, ...clearedVariableFilters];
 
       // Check if this chart needs filtering using the processed filters
       if (!shouldSkipFiltering(chart, processedFilters, dashboardVariables)) {
         chartsNeedingFiltering.push({
           chart,
           processedFilters,
-          identifiedConditions,
         });
       }
     });
@@ -584,20 +551,7 @@ function ProjectDashboard() {
         
         const { chart, processedFilters } = chartData;
 
-        // Get date filters for this specific chart
-        const dateFilters = currentFilters[projectId].filter(f => f.type === "date" && f.startDate && f.endDate);
-        
-        // Check for date filters that were just cleared (have null values)
-        const clearedDateFilters = currentFilters[projectId].filter(f => 
-          f.type === "date" && 
-          !f.startDate && 
-          !f.endDate &&
-          previousFilters?.[projectId]?.find(pf => 
-            pf.id === f.id && 
-            pf.startDate && 
-            pf.endDate
-          )
-        );
+        const activeDateFilters = getActiveDateFilters(projectFilters, previousProjectFilters);
 
         // Make an API call if there are filters to apply OR variables to pass
         if (processedFilters.length > 0 || Object.keys(dashboardVariables).length > 0) {
@@ -612,7 +566,6 @@ function ProjectDashboard() {
         }
 
         // Handle date filters for selected charts
-        const activeDateFilters = [...dateFilters, ...clearedDateFilters];
         if (activeDateFilters.length > 0 && activeDateFilters[0].charts?.includes(chart.id)) {
           queries.push({
             projectId,

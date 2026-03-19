@@ -149,6 +149,7 @@ function applyDatasetFilters({
   timezone = "",
 }) {
   const datasetOptions = dataset.options || {};
+  const resolvedVariables = dataset.runtimeVariables || variables;
   const { xAxis } = datasetOptions;
   const { startDate, endDate } = getResolvedChartDateWindow(chart, timezone);
   const conditionsOptions = [];
@@ -226,7 +227,7 @@ function applyDatasetFilters({
     ).data;
   });
 
-  const variableConditions = buildVariableConditions(datasetOptions, variables);
+  const variableConditions = buildVariableConditions(datasetOptions, resolvedVariables);
   variableConditions.forEach((condition) => {
     filteredData = dataFilter(
       filteredData,

@@ -34,6 +34,7 @@ const {
   isVisualizationV2Chart,
   runVisualizationV2,
 } = require("../modules/visualizationV2/runtime");
+const { mergeCdcRuntimeVariables } = require("../modules/visualizationV2/runtimeVariables");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -399,17 +400,7 @@ class ChartController {
 
         const requestPromises = [];
         gChart.ChartDatasetConfigs.forEach((cdc) => {
-          // Build variables per CDC: start with provided variables and merge CDC-specific overrides
-          const cdcVariables = { ...(variables || {}) };
-          if (cdc?.configuration?.variables) {
-            cdc.configuration.variables.forEach((configVar) => {
-              if (cdcVariables[configVar.name] === undefined
-                  || cdcVariables[configVar.name] === null
-                  || cdcVariables[configVar.name] === "") {
-                cdcVariables[configVar.name] = configVar.value;
-              }
-            });
-          }
+          const cdcVariables = mergeCdcRuntimeVariables(variables, cdc);
 
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
@@ -984,7 +975,7 @@ class ChartController {
    * @returns {Promise<Object>} - The embedded chart data
    */
   async findByShareString(shareString, queryParams) {
-    if (queryParams.snapshot) {
+    if (queryParams?.snapshot || queryParams?.isSnapshot) {
       const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
       if (!chart) {
         return Promise.reject("Chart not found");
@@ -1009,34 +1000,7 @@ class ChartController {
 
     // Handle variable filtering based on share policy
     const urlVariables = this._extractVariablesFromQuery(queryParams);
-    // If we have variables to apply, update the chart data with filters
-    if (Object.keys(urlVariables).length > 0) {
-      try {
-        const updatedChart = await this.updateChartData(
-          chart.id,
-          null, // no user for embedded charts
-          {
-            noSource: false,
-            skipParsing: false,
-            variables: urlVariables,
-            getCache: false,
-          }
-        );
-
-        // Merge the updated chart data with the embedded chart structure
-        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
-        return embeddedChartData;
-      } catch (error) {
-        // If variable filtering fails, return the chart without filtering
-        // eslint-disable-next-line no-console
-        console.error("Failed to apply variables to embedded chart:", error);
-        const embeddedChartData = getEmbeddedChartData(chart, team);
-        return embeddedChartData;
-      }
-    }
-
-    const embeddedChartData = getEmbeddedChartData(chart, team);
-    return embeddedChartData;
+    return this._buildEmbeddedChartData(chart, team, urlVariables);
   }
 
   /**
@@ -1072,34 +1036,33 @@ class ChartController {
     // Handle variable filtering based on share policy
     const urlVariables = this._extractVariablesFromQuery(queryParams);
     const finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
-    // If we have variables to apply, update the chart data with filters
-    if (Object.keys(finalVariables).length > 0) {
-      try {
-        const updatedChart = await this.updateChartData(
-          chart.id,
-          null, // no user for embedded charts
-          {
-            noSource: false,
-            skipParsing: false,
-            variables: finalVariables,
-            getCache: false,
-          }
-        );
+    return this._buildEmbeddedChartData(chart, team, finalVariables);
+  }
 
-        // Merge the updated chart data with the embedded chart structure
-        const embeddedChartData = getEmbeddedChartData(updatedChart, team);
-        return embeddedChartData;
-      } catch (error) {
-        // If variable filtering fails, return the chart without filtering
-        // eslint-disable-next-line no-console
-        console.error("Failed to apply variables to embedded chart:", error);
-        const embeddedChartData = getEmbeddedChartData(chart, team);
-        return embeddedChartData;
-      }
+  async _buildEmbeddedChartData(chart, team, variables = {}) {
+    if (!variables || Object.keys(variables).length === 0) {
+      return getEmbeddedChartData(chart, team);
     }
 
-    const embeddedChartData = getEmbeddedChartData(chart, team);
-    return embeddedChartData;
+    try {
+      const updatedChart = await this.updateChartData(
+        chart.id,
+        null,
+        {
+          noSource: false,
+          skipParsing: false,
+          variables,
+          getCache: false,
+          skipSave: true,
+        }
+      );
+
+      return getEmbeddedChartData(updatedChart, team);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to apply variables to embedded chart:", error);
+      return getEmbeddedChartData(chart, team);
+    }
   }
 
   /**
