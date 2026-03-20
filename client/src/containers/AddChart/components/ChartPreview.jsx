@@ -27,6 +27,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
+import { countExposedChartFilters } from "../../../modules/chartFilterRuntime";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import GaugeChart from "../../Chart/components/GaugeChart";
@@ -55,14 +56,7 @@ function ChartPreview(props) {
   }, [chart.ranges]);
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((d) => {
-      if (Array.isArray(d.Dataset?.conditions)) {
-        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return countExposedChartFilters(chart) > 0;
   };
 
   const _onAddFilter = (condition) => {

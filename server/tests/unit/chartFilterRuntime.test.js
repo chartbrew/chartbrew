@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 const {
   buildChartFilterRequest,
+  getExposedChartFilters,
   mergeChartFilters,
   removeChartCondition,
   shouldRunFilterRequest,
@@ -132,5 +133,67 @@ describe("chartFilterRuntime", () => {
       filters: [],
       variables: {},
     })).toBe(false);
+  });
+
+  it("collects exposed dataset and V2 question filters with runtime values", () => {
+    expect(getExposedChartFilters({
+      conditionsOptions: [{
+        dataset_id: 72,
+        conditions: [{
+          id: "dataset_status_filter",
+          field: "root[].status",
+          values: ["paid", "pending"],
+        }, {
+          id: "v2_question_type_filter",
+          field: "root[].type",
+          bindingId: "type_filter",
+          filterId: "type_filter",
+          values: ["api", "mysql"],
+        }],
+      }],
+      ChartDatasetConfigs: [{
+        id: "cdc_1",
+        dataset_id: 72,
+        vizConfig: {
+          filters: [{
+            id: "type_filter",
+            bindingId: "type_filter",
+            fieldId: "type",
+            operator: "is",
+            exposed: true,
+            valueSource: "chartFilter",
+          }],
+        },
+        Dataset: {
+          id: 72,
+          fieldsMetadata: [
+            { id: "status", legacyPath: "root[].status", type: "string", label: "Status" },
+            { id: "type", legacyPath: "root[].type", type: "string", label: "Type" },
+          ],
+          conditions: [{
+            id: "dataset_status_filter",
+            field: "root[].status",
+            operator: "is",
+            exposed: true,
+            values: ["paid", "pending"],
+          }],
+        },
+      }],
+    })).toEqual([
+      expect.objectContaining({
+        id: "dataset_status_filter",
+        field: "root[].status",
+        displayName: "Status",
+        values: ["paid", "pending"],
+      }),
+      expect.objectContaining({
+        id: "type_filter",
+        bindingId: "type_filter",
+        field: "root[].type",
+        source: "v2_question",
+        displayName: "Type",
+        values: ["api", "mysql"],
+      }),
+    ]);
   });
 });

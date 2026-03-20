@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
+import { LuChartColumn, LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
@@ -265,12 +265,29 @@ function Sidebar() {
           <Spacer y={4} />
 
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-4 flex flex-col items-start justify-center")}>
-            {_canAccess("teamAdmin", team.TeamRoles) && (
+            {_canAccess("projectEditor", team.TeamRoles) && (
               <>
                 <div className="text-sm text-gray-500">
                   {collapsed ? "" : "Quick actions"}
                 </div>
                 <Spacer y={2} />
+                <Tooltip content="Create a new chart" hidden={!collapsed} placement="right">
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    color="default"
+                    startContent={collapsed ? null : <LuChartColumn size={18} />}
+                    onPress={() => navigate("/charts/new")}
+                    isIconOnly={collapsed}
+                    fullWidth
+                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                  >
+                    {collapsed ? <LuChartColumn size={20} /> : "New chart"}
+                  </Button>
+                </Tooltip>
+                <Spacer y={1} />
+                {_canAccess("teamAdmin", team.TeamRoles) && (
+                  <>
                 <Tooltip content="Create a new dashboard" hidden={!collapsed} placement="right">
                   <Button
                     variant="flat"
@@ -330,6 +347,8 @@ function Sidebar() {
                     {collapsed ? <LuUserPlus size={20} /> : "Add team member"}
                   </Button>
                 </Tooltip>
+                  </>
+                )}
               </>
             )}
           </div>

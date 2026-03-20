@@ -604,7 +604,7 @@ class ProjectController {
     // Start with policy parameters if they exist
     if (sharePolicy?.params && Array.isArray(sharePolicy.params)) {
       sharePolicy.params.forEach((param) => {
-        if (param.key && param.value) {
+        if (param.key && param.value !== undefined && param.value !== null) {
           finalVariables[param.key] = param.value;
         }
       });

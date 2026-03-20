@@ -34,6 +34,28 @@ export const getChart = createAsyncThunk(
   }
 );
 
+export const getChartForAuthoring = createAsyncThunk(
+  "chart/getChartForAuthoring",
+  async ({ chart_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/chart/${chart_id}/authoring`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    const data = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(data.message || "Failed to fetch chart");
+    }
+
+    return data;
+  }
+);
+
 export const getProjectCharts = createAsyncThunk(
   "chart/getProjectCharts",
   async ({ project_id }) => {
@@ -80,6 +102,30 @@ export const createChart = createAsyncThunk(
   }
 );
 
+export const quickCreateChart = createAsyncThunk(
+  "chart/quickCreateChart",
+  async ({ project_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/quick-create`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    const responseJson = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(responseJson.message || "Failed to create chart");
+    }
+
+    return responseJson;
+  }
+);
+
 export const updateChart = createAsyncThunk(
   "chart/updateChart",
   async ({ project_id, chart_id, data, justUpdates }) => {
@@ -100,6 +146,33 @@ export const updateChart = createAsyncThunk(
 
     if (response.status >= 400) {
       throw new Error(responseJson.message);
+    }
+
+    return responseJson;
+  }
+);
+
+export const publishChart = createAsyncThunk(
+  "chart/publishChart",
+  async ({ chart_id, target_project_id, name }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/chart/${chart_id}/publish`;
+    const method = "POST";
+    const body = JSON.stringify({
+      target_project_id,
+      name,
+    });
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    const responseJson = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(responseJson.message || "Failed to publish chart");
     }
 
     return responseJson;
@@ -737,6 +810,27 @@ export const chartSlice = createSlice({
         });
       })
 
+      // getChartForAuthoring
+      .addCase(getChartForAuthoring.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getChartForAuthoring.fulfilled, (state, action) => {
+        state.loading = false;
+        const existingIndex = state.data.findIndex((chart) => chart.id === action.payload.id);
+        if (existingIndex === -1) {
+          state.data.push(action.payload);
+        } else {
+          state.data[existingIndex] = {
+            ...state.data[existingIndex],
+            ...action.payload,
+          };
+        }
+      })
+      .addCase(getChartForAuthoring.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
       // getProjectCharts
       .addCase(getProjectCharts.pending, (state) => {
         state.loading = true;
@@ -763,6 +857,19 @@ export const chartSlice = createSlice({
         state.error = action.error.message;
       })
 
+      // quickCreateChart
+      .addCase(quickCreateChart.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(quickCreateChart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data.push(action.payload);
+      })
+      .addCase(quickCreateChart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
       // updateChart
       .addCase(updateChart.pending, (state) => {
         state.loading = true;
@@ -780,6 +887,27 @@ export const chartSlice = createSlice({
         });
       })
       .addCase(updateChart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // publishChart
+      .addCase(publishChart.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(publishChart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (chart.id === action.payload.id) {
+            return {
+              ...chart,
+              ...action.payload,
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(publishChart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })

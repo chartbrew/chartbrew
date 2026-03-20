@@ -5,6 +5,7 @@ const {
   getActiveDateFilters,
   getChartIdentifiedConditions,
   getClearedVariableFilters,
+  getApplicableDashboardFiltersForChart,
   getDashboardVariables,
   getLegacyVariableConditions,
   getProjectFilters,
@@ -223,5 +224,47 @@ describe("dashboardFilterRuntime", () => {
         },
       ],
     });
+  });
+
+  it("normalizes dashboard filters bound to V2 question filters", () => {
+    const chart = {
+      id: 15,
+      ChartDatasetConfigs: [{
+        id: "cdc_bound_dashboard_filter",
+        dataset_id: 72,
+        Dataset: {
+          id: 72,
+          fieldsMetadata: [
+            { id: "status", legacyPath: "root[].status", type: "string" },
+          ],
+        },
+      }],
+    };
+
+    expect(getApplicableDashboardFiltersForChart([{
+      id: "dashboard_status_filter",
+      type: "field",
+      operator: "is",
+      value: "paid",
+      bindings: [{
+        chartId: 15,
+        cdcId: "cdc_bound_dashboard_filter",
+        datasetId: 72,
+        targetType: "questionFilter",
+        fieldId: "status",
+        legacyPath: "root[].status",
+        bindingId: "status_binding",
+        filterId: "status_question_filter",
+      }],
+    }], chart)).toEqual([expect.objectContaining({
+      id: "dashboard_status_filter",
+      type: "field",
+      targetType: "questionFilter",
+      fieldId: "status",
+      field: "root[].status",
+      bindingId: "status_binding",
+      filterId: "status_question_filter",
+      value: "paid",
+    })]);
   });
 });

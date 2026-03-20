@@ -21,9 +21,18 @@ function AddFilters(props) {
 
   const [filter, setFilter] = useState({
     id: uuid(),
+    selectedFieldKey: "",
+    fieldId: "",
     field: "",
+    fieldLabel: "",
     operator: "is",
     value: "",
+    dataType: "",
+    targetType: "field",
+    bindingId: "",
+    filterId: "",
+    bindings: [],
+    charts: [],
     projectId,
   });
   const [filterType, setFilterType] = useState("date");
@@ -47,21 +56,38 @@ function AddFilters(props) {
     onAddFilter({ ...filter, type: "field" });
     setFilter({
       id: uuid(),
+      selectedFieldKey: "",
+      fieldId: "",
       field: "",
+      fieldLabel: "",
       operator: "is",
       value: "",
+      dataType: "",
+      targetType: "field",
+      bindingId: "",
+      filterId: "",
+      bindings: [],
+      charts: [],
       projectId,
     });
   };
 
   const _onApplyFilter = () => {
     if (filterType === "date") {
+      if (!filter.selectedFieldKey) return;
+
       onAddFilter({
         id: uuid(),
+        selectedFieldKey: filter.selectedFieldKey,
+        fieldId: filter.fieldId,
+        field: filter.field,
+        fieldLabel: filter.fieldLabel,
+        dataType: filter.dataType,
         startDate: filter.startDate,
         endDate: filter.endDate,
         type: "date",
         charts: filter.charts || [],
+        bindings: filter.bindings || [],
       });
     } else if (filterType === "field") {
       _onAddFilter();
@@ -124,7 +150,7 @@ function AddFilters(props) {
               key="field"
               textValue="Matching field"
               startContent={<LuListTree />}
-              description="A filter that applies to all datasets that contain a specific field"
+              description="A filter that applies to matching dataset fields or exposed chart filters"
             >
               Matching field
             </SelectItem>
@@ -150,6 +176,7 @@ function AddFilters(props) {
 
           {filterType === "field" && (
             <EditFieldFilter
+              charts={charts}
               filter={filter}
               onChange={_handleFilterChange}
             />
@@ -160,7 +187,7 @@ function AddFilters(props) {
             Close
           </Button>
           {filterType === "date" && (
-            <Button color="primary" onPress={_onApplyFilter}>
+            <Button color="primary" onPress={_onApplyFilter} isDisabled={!filter.selectedFieldKey}>
               Add filter
             </Button>
           )}

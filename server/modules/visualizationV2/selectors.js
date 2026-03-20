@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 function toPlainObject(value) {
   if (!value || typeof value !== "object") {
     return value;
@@ -111,8 +113,103 @@ function resolveSelectorLegacyPath(selector, datasetOptions = {}) {
   return resolveSelector(selector, datasetOptions)?.legacyPath || null;
 }
 
+function parseLegacySelectorPath(selectorPath = "") {
+  if (!selectorPath) {
+    return null;
+  }
+
+  if (selectorPath.indexOf("root[]") > -1) {
+    return {
+      rawPath: selectorPath,
+      collectionPath: null,
+      fieldPath: selectorPath.replace("root[].", ""),
+      collectionAccessorPath: null,
+      isRootArray: true,
+    };
+  }
+
+  if (!selectorPath.includes("[]")) {
+    return {
+      rawPath: selectorPath,
+      collectionPath: null,
+      fieldPath: selectorPath.replace(/^root\./, ""),
+      collectionAccessorPath: null,
+      isRootArray: false,
+    };
+  }
+
+  const collectionPath = selectorPath.substring(0, selectorPath.indexOf("]") - 1).replace("root.", "");
+  const fieldPath = selectorPath.substring(selectorPath.indexOf("]") + 2);
+
+  return {
+    rawPath: selectorPath,
+    collectionPath,
+    fieldPath,
+    collectionAccessorPath: collectionPath,
+    isRootArray: false,
+  };
+}
+
+function compileSelector(selector, datasetOptions = {}) {
+  const resolvedSelector = resolveSelector(selector, datasetOptions);
+  if (!resolvedSelector?.legacyPath) {
+    return null;
+  }
+
+  const parsedPath = parseLegacySelectorPath(resolvedSelector.legacyPath);
+  if (!parsedPath) {
+    return null;
+  }
+
+  return {
+    ...resolvedSelector,
+    ...parsedPath,
+  };
+}
+
+function getSelectorCollectionItems(datasetData, compiledSelector) {
+  if (!compiledSelector) {
+    return null;
+  }
+
+  if (compiledSelector.isRootArray) {
+    return Array.isArray(datasetData) ? datasetData : null;
+  }
+
+  if (!compiledSelector.collectionAccessorPath) {
+    if (Array.isArray(datasetData)) {
+      return datasetData;
+    }
+
+    if (datasetData && typeof datasetData === "object") {
+      return [datasetData];
+    }
+
+    return null;
+  }
+
+  const items = _.get(datasetData, compiledSelector.collectionAccessorPath);
+  return Array.isArray(items) ? items : null;
+}
+
+function getSelectorValue(item, compiledSelector) {
+  if (!compiledSelector) {
+    return undefined;
+  }
+
+  if (!compiledSelector.fieldPath) {
+    return item;
+  }
+
+  return _.get(item, compiledSelector.fieldPath);
+}
+
 module.exports = {
   buildFieldIndex,
+  compileSelector,
+  getSelectorCollectionItems,
+  getSelectorValue,
+  parseLegacySelectorPath,
   resolveSelector,
   resolveSelectorLegacyPath,
   toPlainObject,

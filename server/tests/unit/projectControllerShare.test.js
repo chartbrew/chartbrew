@@ -139,4 +139,25 @@ describe("ProjectController public/share runtime inputs", () => {
     );
     expect(result.Charts).toEqual(updatedCharts);
   });
+
+  it("preserves falsey share-policy variables when URL params are merged", () => {
+    const controller = new ProjectController();
+
+    const result = controller._mergeVariablesWithPolicy({
+      region: "west",
+    }, {
+      allow_params: true,
+      params: [
+        { key: "include_zeroes", value: false },
+        { key: "page", value: 0 },
+        { key: "region", value: "emea" },
+      ],
+    });
+
+    expect(result).toEqual({
+      include_zeroes: false,
+      page: 0,
+      region: "west",
+    });
+  });
 });

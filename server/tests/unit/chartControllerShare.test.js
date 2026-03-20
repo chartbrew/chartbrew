@@ -118,6 +118,8 @@ describe("ChartController share/embed V2 parity", () => {
       region: "EMEA",
       theme: "dark",
       token: "ignored",
+      pass: "secret",
+      accessToken: "legacy-token",
       isSnapshot: false,
     });
 
@@ -165,6 +167,8 @@ describe("ChartController share/embed V2 parity", () => {
       params: [
         { key: "account_id", value: "123" },
         { key: "region", value: "EMEA" },
+        { key: "include_zeroes", value: false },
+        { key: "page", value: 0 },
       ],
       allow_params: true,
     });
@@ -186,6 +190,8 @@ describe("ChartController share/embed V2 parity", () => {
         variables: {
           account_id: "999",
           region: "EMEA",
+          include_zeroes: false,
+          page: 0,
         },
         getCache: false,
         skipSave: true,

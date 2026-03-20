@@ -184,6 +184,107 @@ describe("visualizationV2 runtime", () => {
     });
   });
 
+  it("falls back to row counts when a V2 chart has no explicit metric field", () => {
+    const fieldsMetadata = [
+      {
+        id: "name",
+        legacyPath: "root[].name",
+        type: "string",
+        label: "Name",
+      },
+      {
+        id: "email",
+        legacyPath: "root[].email",
+        type: "string",
+        label: "Email",
+      },
+      {
+        id: "createdAt",
+        legacyPath: "root[].createdAt",
+        type: "date",
+        label: "Created At",
+      },
+    ];
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 111,
+        type: "line",
+        mode: "chart",
+        includeZeros: true,
+        timeInterval: "day",
+        pointRadius: 0,
+        displayLegend: false,
+        ChartDatasetConfigs: [{
+          id: "cdc_runtime_count_fallback",
+          legend: "Row count",
+          datasetColor: "#2563eb",
+          fill: false,
+          pointRadius: 0,
+          vizVersion: 2,
+          vizConfig: {
+            version: 2,
+            dimensions: [{
+              id: "dimension_primary",
+              fieldId: "createdAt",
+              role: "x",
+              grain: "day",
+            }],
+            metrics: [],
+            filters: [],
+            sort: [],
+            limit: null,
+            postOperations: [],
+            options: {
+              includeEmptyBuckets: true,
+              visualization: {
+                type: "line",
+                dataMode: "series",
+                mode: "chart",
+                subType: "timeseries",
+              },
+              compatibility: {
+                legacyDateFieldId: "createdAt",
+                legacyDimensionFieldId: "createdAt",
+                legacyMetricFieldId: null,
+              },
+            },
+          },
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 61,
+          name: "Contacts dataset",
+          fieldsMetadata,
+          fieldsSchema: {
+            "root[].name": "string",
+            "root[].email": "string",
+            "root[].createdAt": "date",
+          },
+          conditions: [],
+        },
+        data: [
+          { name: "Ada", email: "ada@example.com", createdAt: "2026-03-01T10:00:00Z" },
+          { name: "Grace", email: "grace@example.com", createdAt: "2026-03-01T14:00:00Z" },
+          { name: "Linus", email: "linus@example.com", createdAt: "2026-03-02T09:00:00Z" },
+        ],
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.isTimeseries).toBe(true);
+    expect(result.configuration.data.labels).toEqual(["2026-03-01", "2026-03-02"]);
+    expect(result.configuration.data.datasets[0]).toMatchObject({
+      label: "Row count",
+      data: [2, 1],
+      borderColor: "#2563eb",
+    });
+  });
+
   it("runs migrated table charts through the V2 runtime and preserves table output shape", () => {
     const fieldsMetadata = [{
       id: "orders",
@@ -263,6 +364,212 @@ describe("visualizationV2 runtime", () => {
       "id",
       "total",
     ]);
+  });
+
+  it("ignores stale legacy dataset selectors when a V2 table uses a non-date dimension", () => {
+    const result = runVisualizationV2({
+      chart: {
+        id: 120,
+        type: "table",
+        mode: "chart",
+        startDate: "2026-03-01T00:00:00.000Z",
+        endDate: "2026-03-31T23:59:59.000Z",
+        ChartDatasetConfigs: [{
+          id: "cdc_runtime_table_stale_selectors",
+          legend: "Connection types",
+          vizVersion: 2,
+          vizConfig: {
+            version: 2,
+            dimensions: [{
+              id: "dimension_primary",
+              fieldId: "type",
+              role: "table",
+              grain: null,
+            }],
+            metrics: [],
+            filters: [],
+            sort: [],
+            limit: null,
+            postOperations: [],
+            options: {
+              includeEmptyBuckets: true,
+              visualization: {
+                type: "table",
+                dataMode: "table",
+                mode: "chart",
+                table: {
+                  collectionFieldId: "type",
+                },
+              },
+              compatibility: {
+                legacyDimensionFieldId: "type",
+                legacyDateFieldId: null,
+                legacyMetricFieldId: null,
+              },
+            },
+          },
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 59,
+          name: "Connection counts",
+          xAxis: "root[].createdAt",
+          yAxis: "root[].count",
+          dateField: "root[].createdAt",
+          fieldsMetadata: [
+            {
+              id: "type",
+              legacyPath: "root[].type",
+              type: "string",
+              label: "Type",
+            },
+            {
+              id: "count",
+              legacyPath: "root[].count",
+              type: "number",
+              label: "Count",
+            },
+            {
+              id: "createdAt",
+              legacyPath: "root[].createdAt",
+              type: "date",
+              label: "Created At",
+            },
+          ],
+          fieldsSchema: {
+            "root[].type": "string",
+            "root[].count": "number",
+            "root[].createdAt": "date",
+          },
+          conditions: [],
+        },
+        data: [
+          { type: "api", count: 554 },
+          { type: "mysql", count: 47 },
+          { type: "googleAnalytics", count: 28 },
+        ],
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration["Connection types"]).toBeDefined();
+    expect(result.configuration["Connection types"].data).toHaveLength(3);
+    expect(result.configuration["Connection types"].data[0]).toMatchObject({
+      type: "api",
+      count: 554,
+    });
+  });
+
+  it("ignores empty exposed dataset filter values for V2 table charts", () => {
+    const result = runVisualizationV2({
+      chart: {
+        id: 121,
+        type: "table",
+        mode: "chart",
+        ChartDatasetConfigs: [{
+          id: "cdc_runtime_table_empty_exposed_filter",
+          legend: "Connection types",
+          vizVersion: 2,
+          vizConfig: {
+            version: 2,
+            dimensions: [{
+              id: "dimension_primary",
+              fieldId: "root[].type",
+              role: "table",
+              grain: null,
+            }],
+            metrics: [],
+            filters: [],
+            sort: [],
+            limit: null,
+            postOperations: [],
+            options: {
+              includeEmptyBuckets: true,
+              visualization: {
+                type: "table",
+                dataMode: "table",
+                mode: "chart",
+                table: {
+                  collectionFieldId: "root[].type",
+                },
+              },
+              compatibility: {
+                legacyDimensionFieldId: "root[].type",
+                legacyDateFieldId: null,
+                legacyMetricFieldId: null,
+                preserveDatasetConditions: true,
+              },
+            },
+          },
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 60,
+          name: "Connection counts",
+          fieldsMetadata: [
+            {
+              id: "root[].type",
+              legacyPath: "root[].type",
+              type: "string",
+              label: "Type",
+            },
+            {
+              id: "root[].count",
+              legacyPath: "root[].count",
+              type: "number",
+              label: "Count",
+            },
+          ],
+          fieldsSchema: {
+            "root[].type": "string",
+            "root[].count": "number",
+          },
+          conditions: [{
+            id: "dataset_filter_type_empty",
+            field: "root[].type",
+            operator: "is",
+            value: "",
+            exposed: true,
+            type: "string",
+            values: ["api", "mysql", "googleAnalytics"],
+          }],
+        },
+        data: [
+          { type: "api", count: 554 },
+          { type: "mysql", count: 47 },
+          { type: "googleAnalytics", count: 28 },
+        ],
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration["Connection types"]).toBeDefined();
+    expect(result.configuration["Connection types"].data).toHaveLength(3);
+    expect(result.configuration["Connection types"].data.map((row) => row.type)).toEqual([
+      "api",
+      "mysql",
+      "googleAnalytics",
+    ]);
+    expect(result.conditionsOptions).toEqual([{
+      dataset_id: 60,
+      conditions: [{
+        id: "dataset_filter_type_empty",
+        field: "root[].type",
+        exposed: true,
+        source: null,
+        bindingId: null,
+        filterId: null,
+        values: ["api", "mysql", "googleAnalytics"],
+      }],
+    }]);
   });
 
   it("runs migrated matrix charts through the V2 runtime and preserves matrix output shape", () => {
@@ -606,6 +913,104 @@ describe("visualizationV2 runtime", () => {
 
     expect(result.configuration.data.labels).toEqual(["1", "3"]);
     expect(result.configuration.data.datasets[0].data).toEqual([10, 30]);
+  });
+
+  it("applies dataset VariableBindings default values through the V2 runtime", () => {
+    const fieldsMetadata = [
+      {
+        id: "step",
+        legacyPath: "root[].step",
+        type: "number",
+        label: "Step",
+      },
+      {
+        id: "status",
+        legacyPath: "root[].status",
+        type: "string",
+        label: "Status",
+      },
+      {
+        id: "value",
+        legacyPath: "root[].value",
+        type: "number",
+        label: "Value",
+      },
+    ];
+
+    const migration = legacyToVizConfig({
+      chart: {
+        id: 22,
+        type: "bar",
+        mode: "chart",
+      },
+      dataset: {
+        id: 61,
+        xAxis: "root[].step",
+        yAxis: "root[].value",
+        yAxisOperation: "sum",
+        fieldsMetadata,
+        conditions: [{
+          id: "dataset_binding_filter",
+          field: "root[].status",
+          operator: "is",
+          value: "{{selected_status}}",
+        }],
+      },
+      cdc: {
+        id: "cdc_dataset_variable_default_runtime",
+        legend: "Revenue",
+      },
+    });
+
+    const result = runVisualizationV2({
+      chart: {
+        id: 22,
+        type: "bar",
+        mode: "chart",
+        includeZeros: true,
+        ChartDatasetConfigs: [{
+          id: "cdc_dataset_variable_default_runtime",
+          legend: "Revenue",
+          vizVersion: 2,
+          vizConfig: migration.vizConfig,
+        }],
+      },
+      datasets: [{
+        options: {
+          id: 61,
+          name: "Variable dataset",
+          fieldsMetadata,
+          fieldsSchema: {
+            "root[].step": "number",
+            "root[].status": "string",
+            "root[].value": "number",
+          },
+          conditions: [{
+            id: "dataset_binding_filter",
+            field: "root[].status",
+            operator: "is",
+            value: "{{selected_status}}",
+          }],
+          VariableBindings: [{
+            name: "selected_status",
+            type: "string",
+            default_value: "pending",
+          }],
+        },
+        data: [
+          { step: 1, status: "paid", value: 10 },
+          { step: 2, status: "pending", value: 20 },
+          { step: 3, status: "paid", value: 30 },
+        ],
+      }],
+      filters: [],
+      variables: {},
+      timezone: "UTC",
+      skipParsing: false,
+    });
+
+    expect(result.configuration.data.labels).toEqual(["2"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([20]);
   });
 
   it("applies runtime fieldId filters through the V2 runtime", () => {

@@ -99,6 +99,7 @@ flowchart LR
 ### Reusability Rules
 - Reusing an existing dataset must remain the default and recommended path for both V1 and V2 charts.
 - V2 question semantics must live on `ChartDatasetConfig`, not on `Dataset`, so one dataset can power many different chart questions.
+- A V2 chart builder session must be able to author charts with multiple CDCs by letting the user add, switch, and remove datasets within the same chart.
 - Dataset picker/search flows should continue to show one dataset entry regardless of whether it is referenced by legacy charts, V2 charts, or both.
 - Dataset-level field metadata should improve reuse by helping users discover usable dimensions/metrics without redefining the dataset.
 - Field metadata must preserve a mapping between canonical V2 `fieldId` values and legacy traversal paths so old filters and new bindings can interoperate during migration.
@@ -390,6 +391,14 @@ Detailed screen-by-screen UX is specified in `FS-20260318-visualization-pipeline
 - Chart authoring should no longer require entering a dashboard first.
 - Add a global `New chart` CTA from the homepage/sidebar and keep `Create chart` entry points from datasets and relevant connection flows.
 - Dashboards should remain the publishing and layout container, but not the only way to begin chart creation.
+- The V2 authoring flow must preserve route context between chart and dataset editing:
+  - when a chart opens a dataset, keep the `chart_id` and destination dashboard context in the route/query state
+  - when the user finishes editing that dataset and clicks `Visualize`, return to the same chart instead of creating a second draft chart
+  - when the user is editing a standalone dataset with no chart context, `Visualize` may still create a new draft chart from that dataset
+- Breadcrumbs must reflect that authoring context:
+  - chart builder should let the user return to the destination dashboard when one is known
+  - dataset editor should always let the user return to the dataset list
+  - dataset editor should also show a chart breadcrumb when opened from a chart so the user can navigate back without losing authoring context
 
 Recommended journey after a connection already exists:
 
@@ -411,6 +420,8 @@ This keeps the user journey question-first while preserving datasets as reusable
   - Add `Fields` tab for metadata review and overrides.
   - Remove the expectation that a dataset has one permanent chart dimension/metric pair.
   - Treat dataset filters as reusable row filters, not as the chart question builder.
+  - `Open dataset` from the chart builder must open the existing dataset editor in-place for that chart, not a generic dataset browsing flow.
+  - If the dataset editor was opened from a chart, the primary completion action should behave as `Save & return to chart`.
 - Chart editor V2
   - Support draft authoring outside dashboard context.
   - Replace the current single-dataset/single-series flow with a question builder:
@@ -422,6 +433,17 @@ This keeps the user journey question-first while preserving datasets as reusable
   - `Visualize`
   - Exposed filters should have explicit control settings so chart widgets can be configured without mutating dataset-wide filter semantics accidentally.
   - When a chart reuses a dataset, chart-local question filters must be clearly separated from reusable dataset filters in the UI.
+  - The builder must support multi-dataset charts by:
+    - listing attached datasets / CDCs
+    - letting the user switch the active dataset being configured
+    - letting the user add another reusable dataset to the same chart
+    - letting the user remove a dataset from the chart when more than one CDC exists
+  - V2 authoring must preserve the existing chart-configuration capabilities that still live on `Chart` or `ChartDatasetConfig`, including:
+    - series colors / fill colors
+    - formula and goal configuration
+    - CDC-scoped variable overrides stored in `ChartDatasetConfig.configuration.variables`
+    - alerts attached to the chart dataset config
+  - Those settings may be presented as an advanced section in V2, but they must continue to use the same persistence model and runtime behavior as the existing chart editor until a dedicated V2 replacement exists.
   - The save step should assign the chart to a dashboard if it was started outside one.
 - Dashboard filter editor
   - Should offer explicit target binding for field, date, and variable filters.
@@ -462,9 +484,11 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Ship question-builder UI for new charts as the default authoring experience.
 - Ship explicit dashboard filter bindings and V2 chart filter widgets.
 - Add homepage/sidebar `New chart` CTA and out-of-dashboard draft flow.
-- Add `Migrate chart` entry points for legacy charts.
 - Keep dataset picker/list unified and reuse-oriented.
-- Exit criteria: new charts can be authored without touching legacy X/Y fields.
+- Preserve chart authoring continuity across breadcrumbs and chart-to-dataset-to-chart navigation.
+- Restore parity for existing chart configuration controls that remain CDC- or chart-backed, including colors, formulas, goals, alerts, and chart-scoped variable overrides.
+- Add multi-dataset authoring controls for V2 charts on top of the existing multi-CDC runtime.
+- Exit criteria: new charts can be authored without touching legacy X/Y fields, without losing dashboard/chart context during dataset editing, and with the ability to manage more than one dataset on the same chart.
 
 ### Phase 5: Production Migration
 - Add per-chart migration flow in UI where product needs it.
@@ -513,6 +537,34 @@ This keeps the user journey question-first while preserving datasets as reusable
 - Fixed embedded/shared chart filter widgets and auto-refresh to preserve the original URL/share variables on follow-up filter requests, so public chart filtering no longer drops the base share-context variables after the first interactive filter change.
 - Centralized dashboard filter request shaping into a shared client runtime helper and added regression coverage for active and cleared field/date/variable filters so authenticated and public dashboard filtering build the same runtime payloads.
 - Centralized chart widget filter request shaping into a shared client runtime helper and added regression coverage for inline filter upsert/remove behavior, dashboard-filter merging, chart-scoped date filters, and public/shared runtime variable preservation without adding a browser UI test stack.
+- Added Phase 3 variable-parity regressions for SQL and API request-time substitution plus embedded/public share variable flows, and fixed share-policy/runtime normalization so falsey values like `0` and `false` are preserved instead of being dropped by truthy checks.
+- Added controller-level snapshot verification for migrated V2 charts so `takeSnapshot()` is covered end to end through the snapshot-token handoff, including the missing-token rejection path.
+- Added a dedicated V1 to V2 migration contract doc describing what belongs on `DataRequest`, `Dataset`, and `ChartDatasetConfig`, with connector-specific `configuration` examples and the current OpenAPI alignment gaps called out explicitly.
+- Added an explicit V2 variable-resolution layer with stable precedence across runtime values, CDC defaults, dataset defaults, and data-request defaults, and wired both question filters and dataset variable-backed conditions through the same resolver.
+- Added compiled selector accessors plus a unified dataset execution plan so V2 now compiles dataset/question/runtime filters into one scoped plan per dataset, computes reusable filter metadata from that plan, and applies the final row predicate in a single in-memory pass.
+### 2026-03-20
+- Phase 4 authoring continuity now preserves chart context when moving between the V2 chart builder and dataset editor.
+- Added explicit V2 navigation helpers so chart routes can pass destination dashboard, dataset, and `chart_id` context without falling back to the legacy dashboard editor paths.
+- Updated breadcrumbs so:
+  - `/charts/new` and `/charts/:chartId/edit` can return to the destination dashboard when it is known
+  - `/datasets/:datasetId` continues to return to the datasets list
+  - `/datasets/:datasetId` also shows a return-to-chart breadcrumb when it was opened from V2 chart authoring
+- Updated the V2 dataset flow so editing a dataset from a chart no longer creates a second chart draft on `Visualize`; it refreshes the existing chart draft and returns the user to that chart instead.
+- Restored advanced V2 chart configuration parity for the existing CDC-backed settings by surfacing:
+  - dataset/series color and fill controls
+  - metric formulas
+  - goals
+  - chart-scoped variable overrides
+  - alerts
+- Kept those settings on the existing `ChartDatasetConfig` / `ChartDatasetConfig.configuration.variables` persistence model so runtime behavior stays aligned with the already-migrated chart inventory.
+- Added initial multi-dataset authoring controls in the V2 builder so charts can:
+  - show the attached datasets / CDCs
+  - switch which dataset is currently being configured
+  - add another reusable dataset to the chart
+  - remove a dataset from the chart when more than one CDC is present
+- Kept chart type global at the chart level while dataset-specific question state remains on each CDC.
+- Added explicit dashboard binding support for `field`, `questionFilter`, and `variable` targets while keeping the legacy no-bindings heuristics intact, and wired bound variable targets into request-time execution as the source pushdown hook for connectors that already support variable substitution.
+- Routed V2 chart rendering, export rows, table rendering, and reusable filter metadata through `VizFrame` adapters, and added regression coverage for both the new binding-aware V2 flow and the unchanged legacy `AxisChart` path.
 
 ## Master Checklist
 - [x] Add `Dataset.fieldsMetadata`.
@@ -524,20 +576,20 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [ ] Block mixed V1/V2 CDC versions inside the same chart during initial rollout.
 - [ ] Keep saved chart ownership single-dashboard in the initial V2 rollout.
 - [x] Add field metadata inference and overrides.
-- [ ] Add selector compiler for SQL/API/NoSQL field access.
+- [x] Add selector compiler for SQL/API/NoSQL field access.
 - [x] Add shared date/window helpers.
-- [ ] Add unified filter scope model for dataset, question, dashboard, and chart-control filters.
-- [ ] Add variable resolution model that supports dataset/request bindings and V2 question filters.
-- [ ] Add explicit dashboard filter bindings for field/date/variable targets.
-- [ ] Keep legacy dashboard filter heuristics as a compatibility path.
+- [x] Add unified filter scope model for dataset, question, dashboard, and chart-control filters.
+- [x] Add variable resolution model that supports dataset/request bindings and V2 question filters.
+- [x] Add explicit dashboard filter bindings for field/date/variable targets.
+- [x] Keep legacy dashboard filter heuristics as a compatibility path.
 - [x] Preserve canonical `fieldId` to legacy traversal-path mapping for migration and runtime interop.
-- [ ] Add single-pass filter pipeline.
-- [ ] Add request pushdown hooks where source connectors support filter/variable pushdown.
+- [x] Add single-pass filter pipeline.
+- [x] Add request pushdown hooks where source connectors support filter/variable pushdown.
 - [x] Add map-based bucket aggregation.
 - [x] Add `VizFrame` intermediate model.
-- [ ] Add Chart.js adapters that read `VizFrame`.
-- [ ] Add export adapter that reads `VizFrame`.
-- [ ] Add filter metadata adapter that reads `VizFrame`.
+- [x] Add Chart.js adapters that read `VizFrame`.
+- [x] Add export adapter that reads `VizFrame`.
+- [x] Add filter metadata adapter that reads `VizFrame`.
 - [x] Define and document V2 chartData compatibility contract for alerts/snapshots/embeds.
 - [x] Add `legacyToVizConfig()` for deterministic migration generation and validation.
 - [x] Extend deterministic migration generation to every current legacy chart type before any broad apply run.
@@ -546,18 +598,18 @@ This keeps the user journey question-first while preserving datasets as reusable
 - [ ] Add `Legacy` badge and migration entry points for legacy charts.
 - [x] Add conversion validation for unsupported legacy charts.
 - [x] Add apply-safe admin backfill tooling for approved migrations.
-- [ ] Add regression tests for legacy charts.
-- [ ] Add regression tests for V2 charts across SQL, API, Mongo/Firestore-style data.
+- [x] Add regression tests for legacy charts.
+- [x] Add regression tests for V2 charts across SQL, API, Mongo/Firestore-style data.
 - [x] Add export/filter parity tests.
 - [x] Add dataset filter parity tests.
 - [x] Add dashboard date/field/variable filter parity tests.
 - [x] Add chart filter widget parity tests.
-- [ ] Add variable binding tests for API/SQL/embed/share flows.
+- [x] Add variable binding tests for API/SQL/embed/share flows.
 - [ ] Add V1-to-V2 migration doc for dataset/CDC/request JSON contract mapping and keep OpenAPI schemas aligned.
 - [x] Add tests for dashboards where the same dataset is reused by multiple CDCs with different bindings.
 - [x] Add automated update parity tests through `updateChartData()`.
 - [x] Add alert parity tests or alert capability guards for V2 charts.
-- [ ] Add snapshot/embed rendering verification for V2 charts.
+- [x] Add snapshot/embed rendering verification for V2 charts.
 - [ ] Update AI orchestrator tool schemas for V2 chart creation and update.
 - [ ] Update AI semantic-layer serialization to include `fieldsMetadata`, `vizVersion`, and `vizConfig`.
 - [ ] Update AI tools to understand dashboard filter bindings, exposed filters, and variable-backed charts.

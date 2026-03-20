@@ -266,7 +266,12 @@ function inferAggregation(type, role, fieldPath) {
     return "none";
   }
 
-  if (type === "boolean" || normalizedFieldName.includes("count")) {
+  if (
+    type === "boolean"
+    || type === "string"
+    || type === "date"
+    || normalizedFieldName.includes("count")
+  ) {
     return "count";
   }
 

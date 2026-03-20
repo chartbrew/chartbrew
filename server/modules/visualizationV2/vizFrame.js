@@ -1,8 +1,17 @@
 const _ = require("lodash");
 
-const dataFilter = require("../../charts/dataFilter");
 const determineType = require("../determineType");
 const { getScopedRuntimeFilters } = require("./filterPlan");
+const {
+  buildVisualizationVariableContext,
+  extractVariableName,
+  resolveVisualizationVariableValue,
+} = require("./variableResolution");
+const {
+  compileSelector,
+  getSelectorCollectionItems,
+  getSelectorValue,
+} = require("./selectors");
 const {
   createFilledDateBuckets,
   formatDateBucket,
@@ -23,75 +32,19 @@ function containsMustache(value) {
   return typeof value === "string" && value.includes("{{");
 }
 
-function extractVariableName(value) {
-  const match = typeof value === "string" ? value.match(/\{\{(\w+)\}\}/) : null;
-  return match?.[1] || null;
+function shouldKeepConditionValue(condition = {}) {
+  return condition.operator === "isNull"
+    || condition.operator === "isNotNull"
+    || condition.value === 0
+    || condition.value === false
+    || Boolean(condition.value);
 }
 
-function getVariableValue(variables = {}, variableName) {
-  if (!variableName) {
-    return undefined;
-  }
-
-  const value = variables[variableName];
-  if (value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "value")) {
-    return value.value;
-  }
-
-  return value;
-}
-
-function parseSelectorPath(selectorPath = "") {
-  if (!selectorPath) {
-    throw new VizFrameCompatibilityError("Missing selector path for VizFrame execution.");
-  }
-
-  if (selectorPath.indexOf("root[]") > -1) {
-    return {
-      collectionPath: null,
-      fieldPath: selectorPath.replace("root[].", ""),
-      rawPath: selectorPath,
-    };
-  }
-
-  if (!selectorPath.includes("[]")) {
-    return {
-      collectionPath: null,
-      fieldPath: selectorPath.replace(/^root\./, ""),
-      rawPath: selectorPath,
-    };
-  }
-
-  return {
-    collectionPath: selectorPath.substring(0, selectorPath.indexOf("]") - 1).replace("root.", ""),
-    fieldPath: selectorPath.substring(selectorPath.indexOf("]") + 2),
-    rawPath: selectorPath,
-  };
-}
-
-function getCollectionAndField(datasetData, selectorPath) {
-  const parsedPath = parseSelectorPath(selectorPath);
-
-  if (!parsedPath.collectionPath) {
-    return {
-      items: Array.isArray(datasetData) ? datasetData : null,
-      fieldPath: parsedPath.fieldPath,
-      parsedPath,
-    };
-  }
-
-  return {
-    items: _.get(datasetData, parsedPath.collectionPath),
-    fieldPath: parsedPath.fieldPath,
-    parsedPath,
-  };
-}
-
-function buildVariableConditions(datasetOptions = {}, variables = {}) {
+function buildVariableConditions(datasetOptions = {}, variableContext = {}) {
   if (
     !Array.isArray(datasetOptions.conditions)
-    || !variables
-    || Object.keys(variables).length === 0
+    || !variableContext?.values
+    || Object.keys(variableContext.values).length === 0
   ) {
     return [];
   }
@@ -102,7 +55,7 @@ function buildVariableConditions(datasetOptions = {}, variables = {}) {
     const variableName = extractVariableName(condition.value);
 
     if (variableName) {
-      const variableValue = getVariableValue(variables, variableName);
+      const variableValue = resolveVisualizationVariableValue(variableContext, variableName);
       if (variableValue !== null && variableValue !== undefined && variableValue !== "") {
         variableConditions.push({
           ...condition,
@@ -114,7 +67,7 @@ function buildVariableConditions(datasetOptions = {}, variables = {}) {
 
   if (Array.isArray(datasetOptions.VariableBindings)) {
     datasetOptions.VariableBindings.forEach((binding) => {
-      const bindingValue = getVariableValue(variables, binding.name);
+      const bindingValue = resolveVisualizationVariableValue(variableContext, binding.name);
       if (bindingValue === null || bindingValue === undefined || bindingValue === "") {
         return;
       }
@@ -141,7 +94,228 @@ function buildVariableConditions(datasetOptions = {}, variables = {}) {
   return variableConditions;
 }
 
-function applyDatasetFilters({
+function getComparableValue(value, type, timezone = "") {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (type === "date") {
+    const momentValue = normalizeMomentValue(value, timezone);
+    return momentValue?.isValid() ? momentValue : null;
+  }
+
+  if (type === "number") {
+    if (typeof value === "number") {
+      return value;
+    }
+
+    if (/^-?\d+(\.\d+)?$/.test(`${value}`)) {
+      return Number(value);
+    }
+  }
+
+  if (type === "boolean") {
+    if (typeof value === "boolean") {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      if (value.toLowerCase() === "true") return true;
+      if (value.toLowerCase() === "false") return false;
+    }
+  }
+
+  return value;
+}
+
+function compareConditionValue({
+  fieldValue,
+  condition = {},
+  type,
+  timezone = "",
+  timeInterval = "day",
+}) {
+  if (condition.operator === "isNull") {
+    return fieldValue === null || fieldValue === undefined || fieldValue === "";
+  }
+
+  if (condition.operator === "isNotNull") {
+    return fieldValue !== null && fieldValue !== undefined && fieldValue !== "";
+  }
+
+  const conditionValue = getComparableValue(condition.value, type, timezone);
+  const comparableFieldValue = getComparableValue(fieldValue, type, timezone);
+
+  if (comparableFieldValue === null || comparableFieldValue === undefined) {
+    return false;
+  }
+
+  if (type === "date") {
+    if (!conditionValue || !comparableFieldValue?.isValid?.()) {
+      return false;
+    }
+
+    const fieldMoment = comparableFieldValue.clone();
+    const conditionMoment = conditionValue.clone ? conditionValue.clone() : conditionValue;
+    const dayGranular = timeInterval === "day"
+      || timeInterval === "week"
+      || timeInterval === "month"
+      || timeInterval === "year";
+
+    switch (condition.operator) {
+      case "is":
+        return dayGranular
+          ? fieldMoment.startOf("day").isSame(conditionMoment.startOf("day"))
+          : fieldMoment.isSame(conditionMoment, timeInterval);
+      case "isNot":
+        return dayGranular
+          ? !fieldMoment.startOf("day").isSame(conditionMoment.startOf("day"))
+          : !fieldMoment.isSame(conditionMoment, timeInterval);
+      case "greaterThan":
+        return dayGranular
+          ? fieldMoment.startOf("day").isAfter(conditionMoment.startOf("day"))
+          : fieldMoment.isAfter(conditionMoment, timeInterval);
+      case "greaterOrEqual":
+        return dayGranular
+          ? fieldMoment.startOf("day").isSameOrAfter(conditionMoment.startOf("day"))
+          : fieldMoment.isSameOrAfter(conditionMoment, timeInterval);
+      case "lessThan":
+        return dayGranular
+          ? fieldMoment.startOf("day").isBefore(conditionMoment.startOf("day"))
+          : fieldMoment.isBefore(conditionMoment, timeInterval);
+      case "lessOrEqual":
+        return dayGranular
+          ? fieldMoment.startOf("day").isSameOrBefore(conditionMoment.startOf("day"))
+          : fieldMoment.isSameOrBefore(conditionMoment, timeInterval);
+      default:
+        return false;
+    }
+  }
+
+  switch (condition.operator) {
+    case "is":
+      return comparableFieldValue === conditionValue;
+    case "isNot":
+      return comparableFieldValue !== conditionValue;
+    case "contains":
+      return `${comparableFieldValue}`.indexOf(conditionValue) > -1;
+    case "notContains":
+      return `${comparableFieldValue}`.indexOf(conditionValue) === -1;
+    case "greaterThan":
+      return comparableFieldValue > conditionValue;
+    case "greaterOrEqual":
+      return comparableFieldValue >= conditionValue;
+    case "lessThan":
+      return comparableFieldValue < conditionValue;
+    case "lessOrEqual":
+      return comparableFieldValue <= conditionValue;
+    default:
+      return false;
+  }
+}
+
+function createCompiledCondition(condition = {}, datasetOptions = {}, collectionSelector) {
+  const selector = compileSelector(condition.field, datasetOptions);
+  if (!selector) {
+    return null;
+  }
+
+  if ((selector.collectionPath || null) !== (collectionSelector.collectionPath || null)) {
+    return null;
+  }
+
+  return {
+    ...condition,
+    selector,
+  };
+}
+
+function buildConditionsOptions(items = [], conditions = []) {
+  return conditions.map((condition) => {
+    return {
+      id: condition.id,
+      field: condition.field,
+      exposed: condition.exposed,
+      source: condition.source || null,
+      bindingId: condition.bindingId || null,
+      filterId: condition.filterId || null,
+      values: _.uniq(items.map((item) => getSelectorValue(item, condition.selector))),
+    };
+  });
+}
+
+function applyCompiledConditionSet(items = [], compiledConditions = [], chart = {}, timezone = "") {
+  if (!Array.isArray(compiledConditions) || compiledConditions.length === 0) {
+    return items;
+  }
+
+  return items.filter((item) => {
+    return compiledConditions.every((condition) => {
+      const sampleValue = getSelectorValue(item, condition.selector);
+      const type = condition.selector.type || determineType(sampleValue);
+      return compareConditionValue({
+        fieldValue: sampleValue,
+        condition,
+        type,
+        timezone,
+        timeInterval: chart.timeInterval,
+      });
+    });
+  });
+}
+
+function replaceCollectionItems(datasetData, collectionSelector, items) {
+  if (collectionSelector.isRootArray) {
+    return items;
+  }
+
+  if (!collectionSelector.collectionAccessorPath) {
+    if (Array.isArray(datasetData)) {
+      return items;
+    }
+
+    return items[0] || datasetData;
+  }
+
+  const nextData = _.cloneDeep(datasetData);
+  _.set(nextData, collectionSelector.collectionAccessorPath, items);
+  return nextData;
+}
+
+function buildImplicitDateConditions({
+  chart,
+  datasetOptions,
+  scopedFilters = [],
+  timezone = "",
+}) {
+  const { startDate, endDate } = getResolvedChartDateWindow(chart, timezone);
+  const dateRangeFilter = scopedFilters.find((filter) => {
+    return filter.type === "date" && filter.startDate && filter.endDate;
+  });
+  const fieldFilters = scopedFilters.filter((filter) => filter.field && filter.type !== "date");
+
+  if (
+    !datasetOptions.dateField
+    || !((chart.startDate && chart.endDate) || dateRangeFilter)
+    || fieldFilters.some((filter) => filter.field === datasetOptions.dateField)
+  ) {
+    return [];
+  }
+
+  return [{
+    field: datasetOptions.dateField,
+    value: dateRangeFilter ? dateRangeFilter.startDate : startDate,
+    operator: "greaterOrEqual",
+    source: "v2_runtime",
+  }, {
+    field: datasetOptions.dateField,
+    value: dateRangeFilter ? dateRangeFilter.endDate : endDate,
+    operator: "lessOrEqual",
+    source: "v2_runtime",
+  }];
+}
+
+function buildDatasetExecution({
   chart,
   dataset,
   runtimeFilters = [],
@@ -149,98 +323,119 @@ function applyDatasetFilters({
   timezone = "",
 }) {
   const datasetOptions = dataset.options || {};
-  const resolvedVariables = dataset.runtimeVariables || variables;
-  const { xAxis } = datasetOptions;
-  const { startDate, endDate } = getResolvedChartDateWindow(chart, timezone);
-  const conditionsOptions = [];
+  const collectionSelector = compileSelector(
+    datasetOptions.xAxis || datasetOptions.dateField || "root[]",
+    datasetOptions,
+  );
 
-  let filteredData = dataset.data;
+  if (!collectionSelector) {
+    throw new VizFrameCompatibilityError("Missing selector path for VizFrame execution.");
+  }
 
-  const baseConditions = Array.isArray(datasetOptions.conditions)
-    ? datasetOptions.conditions.filter((condition) => !containsMustache(condition.value))
-    : [];
+  const collectionItems = getSelectorCollectionItems(dataset.data, collectionSelector);
+  if (!Array.isArray(collectionItems)) {
+    throw new VizFrameCompatibilityError("VizFrame requires array-backed dataset collections.");
+  }
 
-  if (baseConditions.length > 0) {
-    const filteredResult = dataFilter(
-      filteredData,
-      xAxis,
-      baseConditions,
-      timezone,
-      chart.timeInterval,
-    );
-    filteredData = filteredResult.data;
-
-    if (filteredResult.conditionsOptions) {
-      conditionsOptions.push({
-        dataset_id: datasetOptions.id,
-        conditions: filteredResult.conditionsOptions,
+  let resolvedVariableContext = dataset.runtimeVariableContext;
+  if (!resolvedVariableContext) {
+    if (dataset.runtimeVariables) {
+      resolvedVariableContext = {
+        values: dataset.runtimeVariables,
+      };
+    } else {
+      resolvedVariableContext = buildVisualizationVariableContext({
+        variables,
+        datasetOptions,
       });
     }
   }
 
+  const reusableConditions = Array.isArray(datasetOptions.conditions)
+    ? datasetOptions.conditions.filter((condition) => !containsMustache(condition?.value))
+    : [];
+  const activeReusableConditions = reusableConditions.filter((condition) => {
+    return shouldKeepConditionValue(condition);
+  });
+  const variableConditions = buildVariableConditions(datasetOptions, resolvedVariableContext);
   const scopedFilters = getScopedRuntimeFilters(runtimeFilters, chart, datasetOptions);
-  const dateRangeFilter = scopedFilters.find((filter) => {
-    return filter.type === "date" && filter.startDate && filter.endDate;
-  });
-  const fieldFilters = scopedFilters.filter((filter) => filter.field && filter.type !== "date");
-
-  if (
-    datasetOptions.dateField
-    && ((chart.startDate && chart.endDate) || dateRangeFilter)
-    && !fieldFilters.some((filter) => filter.field === datasetOptions.dateField)
-  ) {
-    const dateConditions = [{
-      field: datasetOptions.dateField,
-      value: dateRangeFilter ? dateRangeFilter.startDate : startDate,
-      operator: "greaterOrEqual",
-    }, {
-      field: datasetOptions.dateField,
-      value: dateRangeFilter ? dateRangeFilter.endDate : endDate,
-      operator: "lessOrEqual",
-    }];
-
-    filteredData = dataFilter(
-      filteredData,
-      datasetOptions.dateField,
-      dateConditions,
+  const runtimeConditions = [
+    ...scopedFilters.filter((filter) => filter.field && filter.type !== "date"),
+    ...buildImplicitDateConditions({
+      chart,
+      datasetOptions,
+      scopedFilters,
       timezone,
-      chart.timeInterval,
-    ).data;
-  }
+    }),
+    ...variableConditions,
+  ];
 
-  const fieldConditionsByField = new Map();
-  fieldFilters.forEach((filter) => {
-    if (!fieldConditionsByField.has(filter.field)) {
-      fieldConditionsByField.set(filter.field, []);
+  const compiledReusableConditions = reusableConditions
+    .map((condition) => createCompiledCondition(condition, datasetOptions, collectionSelector))
+    .filter(Boolean);
+  const compiledActiveReusableConditions = activeReusableConditions
+    .map((condition) => createCompiledCondition(condition, datasetOptions, collectionSelector))
+    .filter(Boolean);
+  const compiledRuntimeConditions = runtimeConditions
+    .map((condition) => createCompiledCondition(condition, datasetOptions, collectionSelector))
+    .filter(Boolean);
+  const compiledAllConditions = [
+    ...compiledActiveReusableConditions,
+    ...compiledRuntimeConditions,
+  ];
+
+  const conditionsOptions = [];
+  let metadataItems = collectionItems;
+  compiledReusableConditions.forEach((condition) => {
+    conditionsOptions.push(...buildConditionsOptions(metadataItems, [condition]));
+    if (shouldKeepConditionValue(condition)) {
+      metadataItems = applyCompiledConditionSet(metadataItems, [condition], chart, timezone);
     }
-
-    fieldConditionsByField.get(filter.field).push(filter);
   });
 
-  fieldConditionsByField.forEach((conditions, field) => {
-    filteredData = dataFilter(
-      filteredData,
-      field,
-      conditions,
-      timezone,
-      chart.timeInterval,
-    ).data;
-  });
+  const filteredItems = applyCompiledConditionSet(
+    collectionItems,
+    compiledAllConditions,
+    chart,
+    timezone,
+  );
 
-  const variableConditions = buildVariableConditions(datasetOptions, resolvedVariables);
-  variableConditions.forEach((condition) => {
-    filteredData = dataFilter(
-      filteredData,
-      condition.field,
-      [condition],
-      timezone,
-      chart.timeInterval,
-    ).data;
+  return {
+    datasetId: datasetOptions.id,
+    collectionSelector,
+    collectionItems,
+    filteredItems,
+    filteredData: replaceCollectionItems(dataset.data, collectionSelector, filteredItems),
+    reusableConditions,
+    runtimeConditions,
+    allConditions: compiledAllConditions,
+    conditionsOptions: [{
+      dataset_id: datasetOptions.id,
+      conditions: conditionsOptions,
+    }],
+  };
+}
+
+function applyDatasetFilters({
+  chart,
+  dataset,
+  runtimeFilters = [],
+  variables = {},
+  timezone = "",
+}) {
+  const execution = buildDatasetExecution({
+    chart,
+    dataset,
+    runtimeFilters,
+    variables,
+    timezone,
   });
 
   return {
-    filteredData,
-    conditionsOptions,
+    filteredData: execution.filteredData,
+    conditionsOptions: execution.conditionsOptions,
+    filteredItems: execution.filteredItems,
+    execution,
   };
 }
 
@@ -323,30 +518,32 @@ function buildSeriesFrame({
   chart,
   dataset,
   cdc,
-  filteredData,
+  datasetExecution,
   timezone = "",
 }) {
   const datasetOptions = dataset.options || {};
-  const xDescriptor = getCollectionAndField(filteredData, datasetOptions.xAxis);
-  const yDescriptor = getCollectionAndField(filteredData, datasetOptions.yAxis);
+  const xSelector = compileSelector(datasetOptions.xAxis, datasetOptions);
+  const ySelector = compileSelector(datasetOptions.yAxis, datasetOptions);
 
-  if (!xDescriptor.items || !yDescriptor.items) {
+  if (!xSelector || !ySelector) {
     throw new VizFrameCompatibilityError("VizFrame requires array-backed x/y selectors.");
   }
 
-  if (!Array.isArray(xDescriptor.items) || !Array.isArray(yDescriptor.items)) {
-    throw new VizFrameCompatibilityError("VizFrame requires array-backed x/y data.");
-  }
-
   if (
-    xDescriptor.items !== yDescriptor.items
-    && xDescriptor.items.length !== yDescriptor.items.length
+    (xSelector.collectionPath || null)
+      !== (datasetExecution.collectionSelector.collectionPath || null)
+    || (ySelector.collectionPath || null)
+      !== (datasetExecution.collectionSelector.collectionPath || null)
   ) {
     throw new VizFrameCompatibilityError("VizFrame requires aligned dataset collections.");
   }
 
-  const xValues = xDescriptor.items.map((item) => _.get(item, xDescriptor.fieldPath));
-  const yValues = yDescriptor.items.map((item) => _.get(item, yDescriptor.fieldPath));
+  if (!Array.isArray(datasetExecution.filteredItems)) {
+    throw new VizFrameCompatibilityError("VizFrame requires array-backed x/y data.");
+  }
+
+  const xValues = datasetExecution.filteredItems.map((item) => getSelectorValue(item, xSelector));
+  const yValues = datasetExecution.filteredItems.map((item) => getSelectorValue(item, ySelector));
   const xType = getSampleType(xValues, datasetOptions.fieldsSchema?.[datasetOptions.xAxis]);
   const yType = getSampleType(
     yValues,
@@ -506,8 +703,7 @@ function buildVizFrame({
   timezone = "",
 }) {
   const conditionsOptions = [];
-
-  const seriesFrames = datasets.map((dataset, index) => {
+  const datasetExecutions = datasets.map((dataset, index) => {
     const cdc = chart.ChartDatasetConfigs[index];
     const filteringResult = applyDatasetFilters({
       chart,
@@ -521,18 +717,31 @@ function buildVizFrame({
       conditionsOptions.push(conditionsOption);
     });
 
-    return buildSeriesFrame({
-      chart,
+    return {
+      cdcId: cdc.id,
+      label: cdc.legend || dataset?.options?.legend,
       dataset,
       cdc,
-      filteredData: filteringResult.filteredData,
+      ...filteringResult.execution,
+    };
+  });
+
+  const isTableMode = chart?.type === "table";
+  const seriesFrames = isTableMode ? [] : datasetExecutions.map((datasetExecution) => {
+    return buildSeriesFrame({
+      chart,
+      dataset: datasetExecution.dataset,
+      cdc: datasetExecution.cdc,
+      datasetExecution,
       timezone,
     });
   });
 
-  const unifiedLabels = buildUnifiedLabels(seriesFrames, chart, timezone);
+  const unifiedLabels = isTableMode
+    ? { labels: [], isTimeseries: false, dateFormat: null }
+    : buildUnifiedLabels(seriesFrames, chart, timezone);
 
-  const series = seriesFrames.map((seriesFrame) => {
+  const series = isTableMode ? [] : seriesFrames.map((seriesFrame) => {
     const data = unifiedLabels.labels.map((label) => {
       if (seriesFrame.aggregatedValues.has(label.key)) {
         return seriesFrame.aggregatedValues.get(label.key);
@@ -557,6 +766,7 @@ function buildVizFrame({
     isTimeseries: unifiedLabels.isTimeseries,
     dateFormat: unifiedLabels.dateFormat,
     series,
+    datasetExecutions,
     conditionsOptions,
   };
 }
@@ -564,5 +774,6 @@ function buildVizFrame({
 module.exports = {
   VizFrameCompatibilityError,
   applyDatasetFilters,
+  buildDatasetExecution,
   buildVizFrame,
 };

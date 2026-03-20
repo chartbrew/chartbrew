@@ -87,6 +87,17 @@ const router = createBrowserRouter([
         ]
       },
       {
+        path: "charts",
+        children: [
+          {
+            path: "new",
+          },
+          {
+            path: ":chartId/edit",
+          },
+        ],
+      },
+      {
         path: "chart/:chartId/embedded",
       },
       {

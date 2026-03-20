@@ -45,6 +45,7 @@ const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
+const ChartBuilderV2 = lazy(() => import("./ChartBuilderV2/ChartBuilderV2"));
 import FeedbackForm from "../components/FeedbackForm";
 import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
@@ -219,6 +220,8 @@ function Main(props) {
                 <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="datasets" element={<DatasetList />} />
                 <Route path="datasets/:datasetId" element={<Dataset />} />
+                <Route path="charts/new" element={<ChartBuilderV2 />} />
+                <Route path="charts/:chartId/edit" element={<ChartBuilderV2 />} />
                 {canAccess("teamAdmin", user.id, team?.TeamRoles) ? (
                   <>
                     <Route path="integrations" element={<Integrations />} />

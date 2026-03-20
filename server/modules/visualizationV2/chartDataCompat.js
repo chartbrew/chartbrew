@@ -5,6 +5,7 @@ const BarChart = require("../../charts/BarChart");
 const LineChart = require("../../charts/LineChart");
 const MatrixChart = require("../../charts/MatrixChart");
 const PieChart = require("../../charts/PieChart");
+const TableView = require("../../charts/TableView");
 const { VizFrameCompatibilityError } = require("./vizFrame");
 
 const parser = new FormulaParser();
@@ -316,6 +317,43 @@ function frameToChartData({
   };
 }
 
+function frameToFilterMetadata(frame = {}) {
+  return Array.isArray(frame.conditionsOptions) ? frame.conditionsOptions : [];
+}
+
+function frameToExportData({
+  frame,
+}) {
+  const exportData = {};
+
+  (frame.datasetExecutions || []).forEach((datasetExecution) => {
+    exportData[datasetExecution.label || `Dataset ${datasetExecution.datasetId}`] = datasetExecution.filteredItems;
+  });
+
+  return {
+    configuration: exportData,
+    conditionsOptions: frameToFilterMetadata(frame),
+  };
+}
+
+function frameToTableData({
+  chart,
+  datasets,
+  frame,
+  timezone = "",
+}) {
+  const tableView = new TableView();
+  const extractedData = frameToExportData({
+    chart,
+    frame,
+  });
+
+  return tableView.getTableData(extractedData, {
+    chart,
+    datasets,
+  }, timezone);
+}
+
 function createMatrixMoment(timezone = "") {
   if (timezone) {
     return (...args) => {
@@ -381,6 +419,9 @@ function frameToMatrixChartData({
 }
 
 module.exports = {
+  frameToExportData,
+  frameToFilterMetadata,
   frameToMatrixChartData,
+  frameToTableData,
   frameToChartData,
 };

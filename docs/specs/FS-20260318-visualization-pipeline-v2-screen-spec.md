@@ -56,6 +56,7 @@ Key UI:
 Behavior:
 - If the user starts from a dashboard, pass `project_id` as a preselected destination.
 - If the user starts from a dataset, pass `dataset_id` as a preselected source.
+- If the user starts from an existing chart and opens dataset editing from there, preserve `chart_id` and destination dashboard context in the route so the flow can return to the same chart.
 
 ### Screen 2: New Chart Start
 Purpose:
@@ -104,6 +105,7 @@ Secondary actions:
 Behavior:
 - Picking a dataset creates or resumes a draft chart and routes into the chart builder.
 - If the chart already has a dashboard destination, keep it attached through the flow.
+- If the user is editing an existing chart draft, reusing a dataset should resume that same chart when possible instead of creating a parallel draft.
 
 Notes:
 - This screen should reuse and extend the existing dataset picker work in `FS-20251222-dataset-picker-ui`.
@@ -140,6 +142,12 @@ Primary CTA:
 
 Secondary CTA:
 - `Save draft dataset`
+
+Navigation:
+- Breadcrumbs should let the user return to:
+  - `Datasets`
+  - the chart builder when the dataset was opened from a chart
+- `Visualize` should return to the existing chart when `chart_id` context is present.
 
 ### Screen 5: Dataset Fields, Reusable Filters, And Variables
 Purpose:
@@ -194,10 +202,20 @@ Rules:
 - Exposed chart filters must be clearly marked as controls, not permanent dataset edits.
 - Dashboard-bound filters must show target binding status.
 - If no dashboard is selected yet, show a draft banner such as `This chart is not published yet`.
+- The screen must also expose the existing advanced CDC-backed configuration without forcing the user into the legacy editor:
+  - series colors / fill colors
+  - formulas
+  - goals
+  - variable overrides
+  - alerts
 
 Additional dataset handling:
 - `Add dataset` can remain available for supported chart types.
 - Initial rollout should validate that all CDCs on the chart use the same engine version.
+- The builder should show the list of attached datasets and let the user:
+  - switch the active dataset they are configuring
+  - add another reusable dataset to the chart
+  - remove a dataset when more than one is attached
 
 Primary CTA:
 - `Save chart`
@@ -206,6 +224,12 @@ Secondary actions:
 - `Migrate chart` for legacy charts
 - `Add dataset`
 - `Open dataset`
+
+Navigation:
+- Breadcrumbs should be:
+  - `Dashboards > {dashboard} > {chart}` when a dashboard destination exists
+  - `Dashboards > New chart` when the chart is still an unattached draft
+- `Open dataset` must keep authoring context so dataset editing returns to the same chart instead of starting a new chart flow.
 
 ### Screen 7: Filter Configuration Surfaces
 Purpose:

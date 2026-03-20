@@ -13,21 +13,31 @@ import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
 import { getDatasetDisplayName } from "../modules/getDatasetDisplayName";
+import { selectProjects } from "../slices/project";
+import {
+  buildChartBuilderUrl,
+} from "../modules/chartAuthoringNavigation";
 
 function TopNav() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
+  const searchParams = new URLSearchParams(location.search);
 
   const collapsed = useSelector(selectSidebarCollapsed);
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
-  const chart = useSelector((state) => selectChart(state, params.chartId));
+  const projects = useSelector(selectProjects);
+  const chartId = params.chartId || searchParams.get("chart_id");
+  const chart = useSelector((state) => (chartId ? selectChart(state, chartId) : null));
   const connection = useSelector((state) => state.connection.data.find((c) => `${c.id}` === `${params.connectionId}`));
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const integrations = useSelector(selectIntegrations);
+  const requestedProjectId = searchParams.get("project_id") || searchParams.get("destination_project_id");
+  const requestedProject = projects.find((item) => `${item.id}` === `${requestedProjectId}`)
+    || projects.find((item) => `${item.id}` === `${chart?.project_id}`);
 
   useEffect(() => {
     try {
@@ -51,6 +61,10 @@ function TopNav() {
 
   const isOnDashboard = () => {
     return location.pathname.startsWith("/dashboard/");
+  };
+
+  const isOnCharts = () => {
+    return location.pathname.startsWith("/charts/");
   };
 
   const isOnConnections = () => {
@@ -131,6 +145,22 @@ function TopNav() {
             </Breadcrumbs>
           )}
 
+          {isOnCharts() && (
+            <Breadcrumbs>
+              <BreadcrumbItem onPress={() => navigate("/")}>
+                Dashboards
+              </BreadcrumbItem>
+              {requestedProject && (
+                <BreadcrumbItem onPress={() => navigate(`/dashboard/${requestedProject.id}`)}>
+                  {requestedProject.name}
+                </BreadcrumbItem>
+              )}
+              <BreadcrumbItem isCurrent={true}>
+                {params.chartId ? (chart?.name || "Edit chart") : "New chart"}
+              </BreadcrumbItem>
+            </Breadcrumbs>
+          )}
+
           {isOnConnections() && (
             <Breadcrumbs>
               <BreadcrumbItem onPress={() => navigate("/connections")}>
@@ -149,6 +179,14 @@ function TopNav() {
               <BreadcrumbItem onPress={() => navigate("/datasets")}>
                 Datasets
               </BreadcrumbItem>
+              {searchParams.get("chartFlow") === "v2" && searchParams.get("chart_id") && (
+                <BreadcrumbItem onPress={() => navigate(buildChartBuilderUrl(searchParams.get("chart_id"), {
+                  projectId: requestedProjectId || chart?.project_id || "",
+                  datasetId: params.datasetId || "",
+                }))}>
+                  {chart?.name || "Return to chart"}
+                </BreadcrumbItem>
+              )}
               {getDatasetDisplayName(dataset) && (
                 <BreadcrumbItem isCurrent={true}>{getDatasetDisplayName(dataset)}</BreadcrumbItem>
               )}

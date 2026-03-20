@@ -1,51 +1,11 @@
 const { resolveSelectorLegacyPath, toPlainObject } = require("./selectors");
-const { mergeCdcRuntimeVariables } = require("./runtimeVariables");
-
-function getRuntimeVariableValue(variables = {}, variableName) {
-  if (!variableName || !variables || typeof variables !== "object") {
-    return undefined;
-  }
-
-  const value = variables[variableName];
-  if (value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "value")) {
-    return value.value;
-  }
-
-  return value;
-}
-
-function extractVariableName(value) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const match = value.match(/\{\{\s*([^}]+?)\s*\}\}/);
-  return match?.[1] || null;
-}
-
-function matchesScope(target = {}, context = {}) {
-  const chartId = context.chart?.id;
-  const cdcId = context.cdc?.id;
-  const datasetId = context.datasetOptions?.id;
-
-  if (Array.isArray(target.charts) && target.charts.length > 0) {
-    return target.charts.some((id) => `${id}` === `${chartId}`);
-  }
-
-  if (target.chartId && `${target.chartId}` !== `${chartId}`) {
-    return false;
-  }
-
-  if (target.cdcId && `${target.cdcId}` !== `${cdcId}`) {
-    return false;
-  }
-
-  if (target.datasetId && `${target.datasetId}` !== `${datasetId}`) {
-    return false;
-  }
-
-  return true;
-}
+const {
+  buildVisualizationVariableContext,
+  collectScopedFilterVariables,
+  extractVariableName,
+  resolveVisualizationVariableValue,
+} = require("./variableResolution");
+const { matchesScope } = require("./scopeMatching");
 
 function buildFilterLookup(filters = []) {
   const lookup = new Map();
@@ -65,6 +25,59 @@ function buildFilterLookup(filters = []) {
   });
 
   return lookup;
+}
+
+function buildScopedTarget(baseFilter = {}, target = {}, context = {}) {
+  return {
+    ...baseFilter,
+    chartId: target.chartId || context.chart?.id || baseFilter.chartId || null,
+    cdcId: target.cdcId || context.cdc?.id || baseFilter.cdcId || null,
+    datasetId: target.datasetId || context.datasetOptions?.id || baseFilter.datasetId || null,
+  };
+}
+
+function expandRuntimeFilterBindings(filters = [], context = {}) {
+  const expandedFilters = [];
+
+  (filters || []).forEach((filter) => {
+    if (!Array.isArray(filter?.bindings) || filter.bindings.length === 0) {
+      expandedFilters.push(filter);
+      return;
+    }
+
+    filter.bindings.forEach((binding) => {
+      if (!matchesScope(binding, context)) {
+        return;
+      }
+
+      if (binding.targetType === "field") {
+        expandedFilters.push(buildScopedTarget({
+          ...filter,
+          fieldId: binding.fieldId || filter.fieldId || null,
+          operator: binding.operator || filter.operator || null,
+          bindingId: binding.bindingId || filter.bindingId || null,
+          filterId: filter.id || filter.filterId || null,
+          id: binding.id || filter.id || null,
+        }, binding, context));
+        return;
+      }
+
+      if (
+        binding.targetType === "questionFilter"
+        || binding.targetType === "datasetFilter"
+        || binding.targetType === "filter"
+      ) {
+        expandedFilters.push(buildScopedTarget({
+          ...filter,
+          id: binding.bindingId || binding.filterId || filter.id || null,
+          bindingId: binding.bindingId || filter.bindingId || filter.id || null,
+          filterId: binding.filterId || filter.id || null,
+        }, binding, context));
+      }
+    });
+  });
+
+  return expandedFilters;
 }
 
 function shouldKeepConditionValue(condition = {}) {
@@ -142,12 +155,12 @@ function createRangeConditions({
   return conditions;
 }
 
-function resolveQuestionFilterValue(filterDefinition = {}, filterLookup, variables = {}) {
+function resolveQuestionFilterValue(filterDefinition = {}, filterLookup, variableContext = {}) {
   const valueSource = filterDefinition.valueSource || null;
   const variableName = filterDefinition.variableName || extractVariableName(filterDefinition.value);
 
   if (valueSource === "variable" || variableName) {
-    return getRuntimeVariableValue(variables, variableName);
+    return resolveVisualizationVariableValue(variableContext, variableName);
   }
 
   if (valueSource === "dashboardFilter" || valueSource === "chartFilter") {
@@ -165,7 +178,7 @@ function resolveQuestionFilterValue(filterDefinition = {}, filterLookup, variabl
   return filterDefinition.value;
 }
 
-function compileQuestionFilter(filterDefinition = {}, context, filterLookup, variables = {}) {
+function compileQuestionFilter(filterDefinition = {}, context, filterLookup, variableContext = {}) {
   if (!filterDefinition || !matchesScope(filterDefinition, context)) {
     return [];
   }
@@ -175,7 +188,7 @@ function compileQuestionFilter(filterDefinition = {}, context, filterLookup, var
     return [];
   }
 
-  const resolvedValue = resolveQuestionFilterValue(filterDefinition, filterLookup, variables);
+  const resolvedValue = resolveQuestionFilterValue(filterDefinition, filterLookup, variableContext);
   const baseId = filterDefinition.id || filterDefinition.bindingId || field;
   const source = "v2_question";
 
@@ -303,14 +316,32 @@ function buildVisualizationFilterPlan({
   variables = {},
 }) {
   const plainChart = toPlainObject(chart) || {};
-  const filterLookup = buildFilterLookup(filters);
   const runtimeFilters = [];
 
   const runtimeDatasets = datasets.map((dataset, index) => {
     const plainDataset = toPlainObject(dataset) || {};
     const datasetOptions = toPlainObject(plainDataset.options) || {};
     const cdc = plainChart.ChartDatasetConfigs?.[index] || {};
-    const cdcVariables = mergeCdcRuntimeVariables(variables, cdc);
+    const expandedScopedFilters = expandRuntimeFilterBindings(filters, {
+      chart: plainChart,
+      cdc,
+      datasetOptions,
+    });
+    const filterLookup = buildFilterLookup([
+      ...filters,
+      ...expandedScopedFilters,
+    ]);
+    const scopedFilterVariables = collectScopedFilterVariables(filters, {
+      chart: plainChart,
+      cdc,
+      datasetOptions,
+    });
+    const variableContext = buildVisualizationVariableContext({
+      variables,
+      filterVariables: scopedFilterVariables,
+      cdc,
+      datasetOptions,
+    });
     const vizFilters = Array.isArray(cdc?.vizConfig?.filters) ? cdc.vizConfig.filters : [];
     const baseConditions = Array.isArray(datasetOptions.conditions)
       ? datasetOptions.conditions
@@ -320,11 +351,11 @@ function buildVisualizationFilterPlan({
         chart: plainChart,
         cdc,
         datasetOptions,
-      }, filterLookup, cdcVariables);
+      }, filterLookup, variableContext);
     });
 
     runtimeFilters.push(
-      ...filters.flatMap((filter) => normalizeRuntimeFilter(filter, {
+      ...expandedScopedFilters.flatMap((filter) => normalizeRuntimeFilter(filter, {
         chart: plainChart,
         cdc,
         datasetOptions,
@@ -333,7 +364,18 @@ function buildVisualizationFilterPlan({
 
     return {
       ...plainDataset,
-      runtimeVariables: cdcVariables,
+      runtimeVariableContext: variableContext,
+      runtimeVariables: variableContext.values,
+      runtimeFilterPlan: {
+        reusableConditions: [...baseConditions, ...questionConditions],
+        runtimeVariables: variableContext.values,
+        filterVariables: scopedFilterVariables,
+        explicitBindingFilters: expandedScopedFilters
+          .filter((filter) => Array.isArray(filter?.bindings)),
+        pushdown: {
+          variables: variableContext.values,
+        },
+      },
       options: {
         ...datasetOptions,
         conditions: [...baseConditions, ...questionConditions],
@@ -350,7 +392,7 @@ function buildVisualizationFilterPlan({
 
 module.exports = {
   buildVisualizationFilterPlan,
-  getRuntimeVariableValue,
+  expandRuntimeFilterBindings,
   getScopedRuntimeFilters,
   matchesScope,
 };

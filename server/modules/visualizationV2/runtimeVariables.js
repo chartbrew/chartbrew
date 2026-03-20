@@ -1,20 +1,21 @@
-function mergeCdcRuntimeVariables(variables = {}, cdc = {}) {
-  const mergedVariables = { ...(variables || {}) };
-  const configuredVariables = Array.isArray(cdc?.configuration?.variables)
-    ? cdc.configuration.variables
-    : [];
+const {
+  buildVisualizationVariableContext,
+  collectScopedFilterVariables,
+} = require("./variableResolution");
 
-  configuredVariables.forEach((configVar) => {
-    if (
-      mergedVariables[configVar.name] === undefined
-      || mergedVariables[configVar.name] === null
-      || mergedVariables[configVar.name] === ""
-    ) {
-      mergedVariables[configVar.name] = configVar.value;
-    }
+function mergeCdcRuntimeVariables(variables = {}, cdc = {}, options = {}) {
+  const filterVariables = collectScopedFilterVariables(options.filters, {
+    chart: options.chart || null,
+    cdc,
+    datasetOptions: options.datasetOptions || null,
   });
 
-  return mergedVariables;
+  return buildVisualizationVariableContext({
+    variables,
+    filterVariables,
+    cdc,
+    datasetOptions: options.datasetOptions || null,
+  }).values;
 }
 
 module.exports = {

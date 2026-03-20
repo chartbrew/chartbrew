@@ -597,7 +597,7 @@ function ProjectDashboard() {
     return filters?.[params.projectId]?.length > 0;
   };
 
-  const _onRefreshData = () => {
+const _onRefreshData = () => {
     const { projectId } = params;
 
     // Get current filters from state (which comes from localStorage)
@@ -610,7 +610,7 @@ function ProjectDashboard() {
     // Convert variable filters to the expected format { [variable_name]: variable_value }
     const variables = {};
     variableFilters.forEach((f) => {
-      if (f.variable && f.value) {
+      if (f.variable && (f.value === 0 || f.value === false || Boolean(f.value))) {
         variables[f.variable] = f.value;
       }
     });
@@ -1016,7 +1016,7 @@ function ProjectDashboard() {
                           variant="bordered"
                           className="bg-background"
                           size="sm"
-                          onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
+                          onPress={() => navigate(`/charts/new?project_id=${params.projectId}`)}
                           startContent={<LuGrid2X2Plus size={18} />}
                         >
                           {"Add widget"}
@@ -1026,7 +1026,7 @@ function ProjectDashboard() {
                         <DropdownItem
                           startContent={<LuChartPie />}
                           onPress={() => {
-                            navigate(`/dashboard/${params.projectId}/chart`);
+                            navigate(`/charts/new?project_id=${params.projectId}`);
                           }}
                         >
                           Add chart
@@ -1250,7 +1250,7 @@ function ProjectDashboard() {
                       endContent={<LuChartPie size={22} />}
                       size="lg"
                       color="primary"
-                      onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
+                      onPress={() => navigate(`/charts/new?project_id=${params.projectId}`)}
                     >
                       Create a chart
                     </Button>

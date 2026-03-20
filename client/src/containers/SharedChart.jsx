@@ -38,6 +38,7 @@ import GaugeChart from "./Chart/components/GaugeChart";
 import MatrixChart from "./Chart/components/MatrixChart";
 import { getAllSearchParams, getPublicChartRuntimeVariables } from "../modules/publicChartRuntime";
 import {
+  countExposedChartFilters,
   removeChartCondition,
   shouldRunFilterRequest,
   upsertChartCondition,
@@ -201,14 +202,7 @@ function SharedChart() {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return countExposedChartFilters(chart) > 0;
   };
 
   const _onPublicExport = (chart) => {

@@ -1,11 +1,17 @@
 const AxisChart = require("../../charts/AxisChart");
-const TableView = require("../../charts/TableView");
 const { getDatasetDisplayName } = require("../datasetIdentity");
 const { buildVisualizationFilterPlan } = require("./filterPlan");
 const { resolveSelectorLegacyPath, toPlainObject } = require("./selectors");
-const { frameToChartData, frameToMatrixChartData } = require("./chartDataCompat");
+const {
+  frameToChartData,
+  frameToExportData,
+  frameToMatrixChartData,
+  frameToTableData,
+} = require("./chartDataCompat");
 const { extractVisualizationRows } = require("./rowDataCompat");
 const { VizFrameCompatibilityError, buildVizFrame } = require("./vizFrame");
+
+const SYNTHETIC_COUNT_FIELD_ID = "__cb_row_count__";
 
 function normalizeAggregation(aggregation) {
   if (aggregation === "countUnique") {
@@ -29,6 +35,10 @@ function getPrimaryMetric(vizConfig = {}) {
   return metrics.find((metric) => metric?.enabled !== false)
     || metrics[0]
     || null;
+}
+
+function isSyntheticCountMetric(metric = null) {
+  return metric?.synthetic === "rowCount" || metric?.fieldId === SYNTHETIC_COUNT_FIELD_ID;
 }
 
 function resolveLegacyPath(fieldId, datasetOptions = {}) {
@@ -80,19 +90,29 @@ function buildRuntimeDatasetOptions(datasetOptions, runtimeCdc) {
   const compatibility = vizConfig.options?.compatibility || {};
   const primaryDimension = getPrimaryDimension(vizConfig);
   const primaryMetric = getPrimaryMetric(vizConfig);
-
+  const dimensionFieldId = primaryDimension?.fieldId || compatibility.legacyDimensionFieldId || null;
+  const metricFieldId = primaryMetric?.fieldId || compatibility.legacyMetricFieldId || null;
+  const dateFieldId = compatibility.legacyDateFieldId
+    || (primaryDimension?.grain ? primaryDimension.fieldId : null)
+    || null;
   const xAxis = resolveLegacyPath(
-    primaryDimension?.fieldId || compatibility.legacyDimensionFieldId,
+    dimensionFieldId,
     plainDatasetOptions,
-  ) || plainDatasetOptions.xAxis || null;
-  const yAxis = resolveLegacyPath(
-    primaryMetric?.fieldId || compatibility.legacyMetricFieldId,
-    plainDatasetOptions,
-  ) || plainDatasetOptions.yAxis || null;
+  ) || null;
+  const fallbackToCountMetric = isSyntheticCountMetric(primaryMetric)
+    || !metricFieldId;
+  const yAxis = fallbackToCountMetric
+    ? (xAxis || resolveLegacyPath(dateFieldId, plainDatasetOptions) || null)
+    : (
+      resolveLegacyPath(
+        metricFieldId,
+        plainDatasetOptions,
+      ) || null
+    );
   const dateField = resolveLegacyPath(
-    compatibility.legacyDateFieldId,
+    dateFieldId,
     plainDatasetOptions,
-  ) || plainDatasetOptions.dateField || null;
+  ) || null;
 
   return {
     ...plainDatasetOptions,
@@ -103,9 +123,11 @@ function buildRuntimeDatasetOptions(datasetOptions, runtimeCdc) {
       || getDatasetDisplayName(plainDatasetOptions),
     xAxis,
     yAxis,
-    yAxisOperation: primaryMetric
-      ? normalizeAggregation(primaryMetric.aggregation)
-      : (plainDatasetOptions.yAxisOperation || "none"),
+    yAxisOperation: fallbackToCountMetric
+      ? "count"
+      : (primaryMetric
+        ? normalizeAggregation(primaryMetric.aggregation)
+        : (plainDatasetOptions.yAxisOperation || "none")),
     dateField,
     dateFormat: compatibility.legacyDateFormat || plainDatasetOptions.dateFormat || null,
     excludedFields: runtimeCdc?.excludedFields || plainDatasetOptions.excludedFields || [],
@@ -152,7 +174,7 @@ function isVisualizationV2Chart(chart = {}) {
 }
 
 function canUseVizFrameRuntime(chart = {}) {
-  return chart?.type !== "table";
+  return Boolean(chart?.type);
 }
 
 function runVisualizationV2({
@@ -177,28 +199,6 @@ function runVisualizationV2({
   };
   const runtimeFilters = filterPlan.filters;
 
-  if (isExport) {
-    return extractVisualizationRows({
-      chart: runtimeData.chart,
-      datasets: runtimeData.datasets,
-      filters: runtimeFilters,
-      variables,
-      timezone,
-    });
-  }
-
-  if (runtimeData.chart?.type === "table") {
-    const extractedData = extractVisualizationRows({
-      chart: runtimeData.chart,
-      datasets: runtimeData.datasets,
-      filters: runtimeFilters,
-      variables,
-      timezone,
-    });
-    const tableView = new TableView();
-    return tableView.getTableData(extractedData, runtimeData, timezone);
-  }
-
   if (!skipParsing && canUseVizFrameRuntime(runtimeData.chart)) {
     try {
       const frame = buildVizFrame({
@@ -208,6 +208,22 @@ function runVisualizationV2({
         variables,
         timezone,
       });
+
+      if (isExport) {
+        return frameToExportData({
+          chart: runtimeData.chart,
+          frame,
+        });
+      }
+
+      if (runtimeData.chart?.type === "table") {
+        return frameToTableData({
+          chart: runtimeData.chart,
+          datasets: runtimeData.datasets,
+          frame,
+          timezone,
+        });
+      }
 
       if (runtimeData.chart?.type === "matrix") {
         return frameToMatrixChartData({
@@ -228,6 +244,51 @@ function runVisualizationV2({
         throw error;
       }
     }
+  }
+
+  if (isExport) {
+    return extractVisualizationRows({
+      chart: runtimeData.chart,
+      datasets: runtimeData.datasets,
+      filters: runtimeFilters,
+      variables,
+      timezone,
+    });
+  }
+
+  if (runtimeData.chart?.type === "table") {
+    return frameToTableData({
+      chart: runtimeData.chart,
+      datasets: runtimeData.datasets,
+      frame: {
+        datasetExecutions: runtimeData.datasets.map((dataset, index) => ({
+          datasetId: dataset?.options?.id || null,
+          label:
+            runtimeData.chart?.ChartDatasetConfigs?.[index]?.legend
+            || dataset?.options?.legend
+            || getDatasetDisplayName(dataset?.options || {}),
+          filteredItems: extractVisualizationRows({
+            chart: runtimeData.chart,
+            datasets: [dataset],
+            filters: runtimeFilters,
+            variables,
+            timezone,
+          }).configuration[
+            runtimeData.chart?.ChartDatasetConfigs?.[index]?.legend
+            || dataset?.options?.legend
+            || getDatasetDisplayName(dataset?.options || {})
+          ] || [],
+        })),
+        conditionsOptions: extractVisualizationRows({
+          chart: runtimeData.chart,
+          datasets: runtimeData.datasets,
+          filters: runtimeFilters,
+          variables,
+          timezone,
+        }).conditionsOptions,
+      },
+      timezone,
+    });
   }
 
   let shouldSkipParsing = skipParsing;

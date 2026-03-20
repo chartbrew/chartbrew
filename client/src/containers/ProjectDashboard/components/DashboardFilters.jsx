@@ -168,51 +168,19 @@ function DashboardFilters({
     }
   };
 
-  const _removeFromEveryone = async (filter) => {
+  const _removeFromEveryone = async (filterId) => {
     const response = await dispatch(deleteDashboardFilter({
       project_id: projectId,
-      dashboard_filter_id: filter.id,
+      dashboard_filter_id: filterId,
     }));
 
     if (response.error) {
       toast.error("Failed to remove the filter from everyone. Please try again.");
+      return false;
     } else {
       toast.success("Filter removed from everyone successfully.");
+      return true;
     }
-  };
-
-  const _getFieldOptions = () => {
-    const tempFieldOptions = [];
-    charts.map((chart) => {
-      if (chart.ChartDatasetConfigs) {
-        chart.ChartDatasetConfigs.forEach((cdc) => {
-          if (cdc.Dataset?.fieldsSchema) {
-            Object.keys(cdc.Dataset?.fieldsSchema).forEach((key) => {
-              const type = cdc.Dataset?.fieldsSchema[key];
-              if (tempFieldOptions.findIndex(f => f.key === key) !== -1) return;
-              tempFieldOptions.push({
-                key,
-                text: key && key.replace("root[].", "").replace("root.", ""),
-                value: key,
-                type,
-                chart_id: chart.id,
-                label: {
-                  content: type || "unknown",
-                  color: type === "date" ? "warning"
-                    : type === "number" ? "success"
-                      : type === "string" ? "primary"
-                        : type === "boolean" ? "warning"
-                          : "neutral"
-                },
-              });
-            });
-          }
-        });
-      }
-      return chart;
-    });
-
-    return tempFieldOptions;
   };
 
   const _getStateFilter = (filterId) => {
@@ -243,15 +211,19 @@ function DashboardFilters({
     }
   }
 
-  const _onRemoveFilter = (filterId, confirmed = false) => {
+  const _onRemoveFilter = async (filterId, confirmed = false) => {
     if (_getStateFilter(filterId) && !confirmed) {
       setFilterToRemove(filterId);
       return;
     } else if (_getStateFilter(filterId) && confirmed) {
-      _removeFromEveryone(filterId);
+      const removed = await _removeFromEveryone(filterId);
+      if (!removed) {
+        return;
+      }
     }
 
     onRemoveFilter(filterId);
+    setFilterToRemove(null);
   }
 
   const _canAccess = (role) => {
@@ -353,9 +325,9 @@ function DashboardFilters({
             )}
             {editingFilter && editingFilter.type === "field" && (
               <EditFieldFilter
+                charts={charts}
                 filter={editingFilter}
                 onChange={_handleFilterChange}
-                fieldOptions={_getFieldOptions()}
               />
             )}
           </ModalBody>

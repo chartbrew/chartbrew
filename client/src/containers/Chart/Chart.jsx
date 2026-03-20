@@ -47,8 +47,10 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
+import { isVisualizationV2Chart } from "../../modules/visualizationV2";
 import {
   buildChartFilterRequest,
+  countExposedChartFilters,
   removeChartCondition,
   shouldRunFilterRequest,
   upsertChartCondition,
@@ -113,13 +115,31 @@ function Chart(props) {
       storedFilters: projectId ? (getFiltersFromStorage(projectId) || []) : [],
       inlineFilters: chartFilters,
       chartId: chart.id,
+      chart: isVisualizationV2Chart(chart) ? chart : null,
     });
+  };
+
+  const _shouldRefreshSourceForFilters = (applicableFilters = []) => {
+    return (applicableFilters || []).some((filter) => filter?.type === "date");
   };
 
   useInterval(async () => {
     const { applicableFilters, variables } = _buildFilterRequest(params.projectId, conditions);
 
     if (shouldRunFilterRequest({ filters: applicableFilters, variables })) {
+      if (_shouldRefreshSourceForFilters(applicableFilters)) {
+        await dispatch(runQuery({
+          project_id: chart.project_id,
+          chart_id: chart.id,
+          filters: applicableFilters,
+          variables,
+          noSource: false,
+          skipParsing: false,
+          getCache: false,
+        }));
+        return;
+      }
+
       await _runFiltering(conditions, params.projectId);
     } else {
       await dispatch(getChart({
@@ -172,17 +192,17 @@ function Chart(props) {
   const _onGetChartData = () => {
     const { projectId } = params;
     const { applicableFilters, variables } = _buildFilterRequest(projectId, conditions);
-    const shouldRunFilteredQuery = shouldRunFilterRequest({ filters: applicableFilters, variables });
+    const shouldRunQuery = shouldRunFilterRequest({ filters: applicableFilters, variables });
 
     setChartLoading(true);
-    dispatch(shouldRunFilteredQuery ? runQueryWithFilters({
+    dispatch(runQuery({
       project_id: projectId,
       chart_id: chart.id,
-      filters: applicableFilters,
-      variables,
-    }) : runQuery({
-      project_id: projectId,
-      chart_id: chart.id,
+      filters: shouldRunQuery ? applicableFilters : undefined,
+      variables: shouldRunQuery ? variables : undefined,
+      noSource: false,
+      skipParsing: false,
+      getCache: false,
     }))
       .then(() => {
         setChartLoading(false);
@@ -204,6 +224,19 @@ function Chart(props) {
     const { applicableFilters, variables } = _buildFilterRequest(projectId, chartFilters);
 
     if (shouldRunFilterRequest({ filters: applicableFilters, variables }) || force) {
+      if (_shouldRefreshSourceForFilters(applicableFilters)) {
+        await dispatch(runQuery({
+          project_id: chart.project_id,
+          chart_id: chart.id,
+          filters: applicableFilters,
+          variables,
+          noSource: false,
+          skipParsing: false,
+          getCache: false,
+        }));
+        return;
+      }
+
       await dispatch(runQueryWithFilters({
         project_id: chart.project_id,
         chart_id: chart.id,
@@ -348,20 +381,19 @@ function Chart(props) {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    if (!chart.ChartDatasetConfigs) return false;
-
-    chart.ChartDatasetConfigs.forEach((d) => {
-      if (Array.isArray(d.Dataset?.conditions)) {
-        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return countExposedChartFilters(chart) > 0;
   };
 
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
+  };
+
+  const _getChartEditUrl = () => {
+    if (isVisualizationV2Chart(chart)) {
+      return `/charts/${chart.id}/edit`;
+    }
+
+    return `/dashboard/${params.projectId}/chart/${chart.id}/edit`;
   };
 
   const _onExport = () => {
@@ -483,7 +515,7 @@ function Chart(props) {
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
-                      <Link to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
+                      <Link to={_getChartEditUrl()}>
                         <div className={"text-foreground font-bold text-sm"}>{chart.name}</div>
                       </Link>
                     )}
@@ -610,7 +642,7 @@ function Chart(props) {
                     {_canAccess("projectEditor") && (
                       <DropdownItem
                         startContent={<LuSettings />}
-                        onPress={() => navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`)}
+                        onPress={() => navigate(_getChartEditUrl())}
                         textValue="Edit chart"
                       >
                         Edit chart

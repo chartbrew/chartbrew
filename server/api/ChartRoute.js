@@ -130,6 +130,63 @@ module.exports = (app) => {
     };
   };
 
+  const canAccessProject = (teamRole, project) => {
+    if (!teamRole?.role || !project) {
+      return false;
+    }
+
+    const permission = accessControl.can(teamRole.role).readOwn("chart");
+    if (!permission.granted) {
+      return false;
+    }
+
+    if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      return true;
+    }
+
+    if (teamRole?.projects?.length > 0) {
+      return teamRole.projects.some((projectId) => `${projectId}` === `${project.id}`) || project.ghost;
+    }
+
+    return false;
+  };
+
+  const checkChartPermissionsById = (actionType = "readOwn", entity = "chart") => {
+    return async (req, res, next) => {
+      const chart = await chartController.findById(req.params.chart_id);
+      if (!chart) {
+        return res.status(404).json({ message: "Chart not found" });
+      }
+
+      const project = await db.Project.findByPk(chart.project_id, {
+        attributes: ["id", "team_id", "ghost"],
+      });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
+      req.user.teamRole = teamRole;
+
+      if (!teamRole?.role) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const permission = accessControl.can(teamRole.role)[actionType](entity);
+      if (!permission.granted) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (!canAccessProject(teamRole, project)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      req.chart = chart;
+      req.project = project;
+      return next();
+    };
+  };
+
   const isPublicProjectFilterAllowed = async (project, chart, passwordInput) => {
     if (!project?.public) {
       return false;
@@ -387,6 +444,53 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to get a chart for the authenticated authoring flow
+  */
+  app.get("/chart/:chart_id/authoring", verifyToken, checkChartPermissionsById("readOwn"), (req, res) => {
+    return res.status(200).send(req.chart);
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to publish or move a draft chart to a dashboard
+  */
+  app.post("/chart/:chart_id/publish", verifyToken, checkChartPermissionsById("updateOwn"), async (req, res) => {
+    try {
+      const targetProject = await db.Project.findByPk(req.body?.target_project_id, {
+        attributes: ["id", "team_id", "ghost"],
+      });
+
+      if (!targetProject) {
+        return res.status(404).json({ message: "Target dashboard not found" });
+      }
+
+      if (`${targetProject.team_id}` !== `${req.project.team_id}`) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (!canAccessProject(req.user.teamRole, targetProject)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const chart = await chartController.publishDraftChart(
+        req.params.chart_id,
+        req.body.target_project_id,
+        req.user,
+        req.body,
+      );
+
+      return res.status(200).send(chart);
+    } catch (error) {
+      if (error.message && error.message.indexOf("406") > -1) {
+        return res.status(406).send(error);
+      }
+
+      return res.status(400).send({ message: error.message || "Could not publish chart" });
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to update a chart
   */
   app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
@@ -536,13 +640,22 @@ module.exports = (app) => {
   ** Route to filter the charts from the dashboard
   */
   app.post("/project/:project_id/chart/:chart_id/filter", apiLimiter(50), getUserFromToken, checkFilterAccess, (req, res) => {
-    if (!req.body?.filters) return res.status(400).send("No filters selected");
+    const hasFilters = Array.isArray(req.body?.filters) && req.body.filters.length > 0;
+    const hasVariables = Boolean(req.body?.variables) && Object.keys(req.body.variables).length > 0;
+    if (!hasFilters && !hasVariables) return res.status(400).send("No filters selected");
     let noSource = req.query.no_source === "true";
     let skipParsing = req.query.skip_parsing === "true";
     let getCache = true;
 
     // if it's a date range filter, we need to query the source and disable the cache
     if (req.body?.filters && req.body.filters.length === 1 && req.body.filters.find((f) => f.type === "date")) {
+      noSource = false;
+      skipParsing = false;
+      getCache = false;
+    }
+
+    // variable filters can affect source queries, so they must bypass cached filter-only runs
+    if (hasVariables) {
       noSource = false;
       skipParsing = false;
       getCache = false;

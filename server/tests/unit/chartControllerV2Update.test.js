@@ -182,6 +182,18 @@ describe("ChartController.updateChartData V2", () => {
     expect(result.chartData.data.labels).toEqual(["paid"]);
     expect(result.chartData.data.datasets[0].data).toEqual([9]);
     expect(result.getDataValue("isTimeseries")).toBe(false);
+    expect(result.getDataValue("conditionsOptions")).toEqual([{
+      dataset_id: 410,
+      conditions: [{
+        id: "dataset_status_filter",
+        field: "root[].status",
+        exposed: true,
+        source: null,
+        bindingId: null,
+        filterId: null,
+        values: ["paid", "pending"],
+      }],
+    }]);
   });
 
   it("returns filtered V2 chart data without persisting chartData or condition values", async () => {
@@ -406,5 +418,54 @@ describe("ChartController.updateChartData V2", () => {
       label: "Pending revenue",
       data: [5, 15],
     });
+  });
+
+  it("pushes explicit dashboard-bound variables into request execution before the V2 runtime", async () => {
+    const controller = new ChartController();
+    const { chart, datasetResponse } = createV2BarFixture();
+
+    vi.spyOn(controller, "findById")
+      .mockResolvedValueOnce(chart)
+      .mockResolvedValueOnce(chart);
+    vi.spyOn(controller, "update").mockImplementation(async (_id, data) => {
+      Object.assign(chart, data);
+      return chart;
+    });
+    vi.spyOn(controller.datasetController, "runRequest").mockResolvedValue(datasetResponse);
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 1, timezone: "UTC" });
+    vi.spyOn(db.Dataset, "update").mockResolvedValue([1]);
+
+    await controller.updateChartData(310, null, {
+      filters: [{
+        id: "dashboard_date_range",
+        type: "date",
+        startDate: "2026-03-01T00:00:00.000Z",
+        endDate: "2026-03-31T23:59:59.000Z",
+        bindings: [{
+          chartId: 310,
+          cdcId: "cdc_update_v2",
+          datasetId: 410,
+          targetType: "variable",
+          variableName: "startDate",
+          role: "start",
+        }, {
+          chartId: 310,
+          cdcId: "cdc_update_v2",
+          datasetId: 410,
+          targetType: "variable",
+          variableName: "endDate",
+          role: "end",
+        }],
+      }],
+    });
+
+    expect(controller.datasetController.runRequest).toHaveBeenCalledWith(expect.objectContaining({
+      dataset_id: 410,
+      chart_id: 310,
+      variables: {
+        startDate: "2026-03-01T00:00:00.000Z",
+        endDate: "2026-03-31T23:59:59.000Z",
+      },
+    }));
   });
 });

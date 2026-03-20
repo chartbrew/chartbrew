@@ -10,7 +10,8 @@ import {
 import { LuArrowRight, LuChartArea, LuCheck, LuLayers, LuPencil, LuSearch } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { createCdc, createChart, runQuery } from "../../slices/chart";
+import { createCdc, createChart, quickCreateChart, runQuery } from "../../slices/chart";
+import { getChartForAuthoring, selectChart } from "../../slices/chart";
 import { getDataset, runRequest, saveNewDataset, updateDataset } from "../../slices/dataset";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
@@ -25,6 +26,17 @@ import { getTeams, selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import DatasetFields from "./DatasetFields";
 import { getDatasetDisplayName } from "../../modules/getDatasetDisplayName";
+import DatasetReusableSettings from "./DatasetReusableSettings";
+import {
+  buildDefaultVizConfig,
+  getDefaultDimensionField,
+  getDefaultMetricField,
+  getDefaultTimeInterval,
+} from "../../modules/visualizationV2";
+import {
+  buildChartBuilderUrl,
+  buildDatasetEditorUrl,
+} from "../../modules/chartAuthoringNavigation";
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -36,7 +48,6 @@ function Dataset() {
   const [completeProjects, setCompleteProjects] = useState([]);
   const [projectSearch, setProjectSearch] = useState("");
   const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
-  const [fromChart, setFromChart] = useState("");
   const [shouldTagProjects, setShouldTagProjects] = useState(true);
 
   const params = useParams();
@@ -55,6 +66,14 @@ function Dataset() {
   const projects = useSelector(selectProjects);
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
+  const isV2ChartFlow = query?.get("chartFlow") === "v2";
+  const v2ReturnChartId = query?.get("chart_id") || "";
+  const legacyChartFlow = query?.has("chart_id") && query?.has("project_id")
+    ? (query.has("create") ? "create" : "edit")
+    : "";
+  const destinationProjectId = query?.get("destination_project_id") || query?.get("project_id") || "";
+  const shouldUseLegacyGhostPreview = !isV2ChartFlow && Boolean(legacyChartFlow);
+  const returnChart = useSelector((state) => (v2ReturnChartId ? selectChart(state, v2ReturnChartId) : null));
 
   useEffect(() => {
     async function fetchData() {
@@ -98,6 +117,18 @@ function Dataset() {
   }, [dataset]);
 
   useEffect(() => {
+    if (!isV2ChartFlow || !v2ReturnChartId || returnChart) {
+      return;
+    }
+
+    dispatch(getChartForAuthoring({ chart_id: v2ReturnChartId }))
+      .unwrap()
+      .catch(() => {
+        toast.error("Could not load the chart context for this dataset flow.");
+      });
+  }, [dispatch, isV2ChartFlow, returnChart, v2ReturnChartId]);
+
+  useEffect(() => {
     if (params.datasetId === "new" && !createInitRef.current) {
       createInitRef.current = true;
       dispatch(saveNewDataset({
@@ -124,7 +155,7 @@ function Dataset() {
   }, [params]);
 
   useEffect(() => {
-    if (ghostProject?.id && !chart && dataset?.id && !chartInitRef.current) {
+    if (ghostProject?.id && !chart && dataset?.id && shouldUseLegacyGhostPreview && !chartInitRef.current) {
       chartInitRef.current = true;
       dispatch(createChart({
         project_id: ghostProject.id,
@@ -152,7 +183,7 @@ function Dataset() {
           }))
         });
     }
-  }, [ghostProject, dataset]);
+  }, [ghostProject, dataset, shouldUseLegacyGhostPreview]);
 
   useEffect(() => {
     if ((datasetMenu === "configure" || datasetMenu === "fields") && dataset?.id && team?.id) {
@@ -177,17 +208,59 @@ function Dataset() {
 
   useEffect(() => {
     if (query) {
-      if (query.has("create") && query.has("chart_id") && query.has("project_id")) {
-        setFromChart("create");
-      }
-      if (!query.has("create") && query.has("chart_id") && query.has("project_id")) {
-        setFromChart("edit");
-      }
       if (query.has("editFilters")) {
         setDatasetMenu("configure");
       }
     }
   }, [query]);
+
+  const _buildV2DraftChartPayload = () => {
+    const dimensionField = getDefaultDimensionField(dataset);
+    const metricField = getDefaultMetricField(dataset);
+    const chartType = dimensionField?.type === "date" ? "line" : "bar";
+    const timeInterval = getDefaultTimeInterval(dataset);
+
+    return {
+      name: getDatasetDisplayName(dataset),
+      type: chartType,
+      subType: "timeseries",
+      timeInterval,
+      includeZeros: true,
+      draft: true,
+      chartDatasetConfigs: [{
+        dataset_id: dataset.id,
+        datasetColor: chartColors.blue.hex,
+        fill: false,
+        order: 1,
+        legend: getDatasetDisplayName(dataset),
+        vizVersion: 2,
+        vizConfig: buildDefaultVizConfig({
+          dataset,
+          chartType,
+          dimensionFieldId: dimensionField?.id,
+          metricFieldId: metricField?.id,
+          aggregation: metricField?.aggregation,
+          display: {
+            displayLegend: false,
+            includeZeros: true,
+            xLabelTicks: "default",
+            timeInterval,
+          },
+        }),
+      }],
+    };
+  };
+
+  const _getReturnToChartUrl = (targetChart = returnChart) => {
+    if (!targetChart?.id) {
+      return null;
+    }
+
+    return buildChartBuilderUrl(targetChart.id, {
+      projectId: destinationProjectId || (!targetChart.draft ? targetChart.project_id : ""),
+      datasetId: dataset?.id || "",
+    });
+  };
 
   const _onUpdateDataset = (data) => {
     return dispatch(updateDataset({
@@ -215,13 +288,89 @@ function Dataset() {
   };
 
   const _onSaveDataset = () => {
-    if (fromChart === "edit") {
+    if (isV2ChartFlow) {
+      _onVisualizeDataset();
+      return;
+    }
+
+    if (legacyChartFlow === "edit") {
       navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
       return;
     }
 
     setCompleteModal(true);
-  }
+  };
+
+  const _onVisualizeDataset = async () => {
+    if (!dataset?.id) {
+      toast.error("The temporary chart workspace is not ready yet.");
+      return;
+    }
+
+    setCompleteDatasetLoading(true);
+    try {
+      if (isV2ChartFlow && v2ReturnChartId) {
+        const targetChart = returnChart || await dispatch(getChartForAuthoring({
+          chart_id: v2ReturnChartId,
+        })).unwrap();
+
+        await dispatch(runQuery({
+          project_id: targetChart.project_id,
+          chart_id: targetChart.id,
+          noSource: false,
+          skipParsing: false,
+          getCache: false,
+        })).unwrap();
+
+        const returnUrl = _getReturnToChartUrl(targetChart);
+        navigate(returnUrl || buildChartBuilderUrl(targetChart.id, {
+          projectId: destinationProjectId,
+        }));
+        return;
+      }
+
+      if (!ghostProject?.id) {
+        toast.error("The temporary chart workspace is not ready yet.");
+        return;
+      }
+
+      const createdChart = await dispatch(quickCreateChart({
+        project_id: ghostProject.id,
+        data: _buildV2DraftChartPayload(),
+      })).unwrap();
+
+      try {
+        await dispatch(runQuery({
+          project_id: createdChart.project_id,
+          chart_id: createdChart.id,
+          noSource: false,
+          skipParsing: false,
+          getCache: false,
+        })).unwrap();
+      } catch (error) {
+        // The V2 builder can recover from an empty first preview.
+      }
+
+      navigate(buildChartBuilderUrl(createdChart.id, {
+        projectId: destinationProjectId,
+      }));
+    } catch (error) {
+      toast.error("Could not start the visualization flow.");
+    } finally {
+      setCompleteDatasetLoading(false);
+    }
+  };
+
+  const _onOpenVisualizeBuilder = () => {
+    if (!dataset?.id) {
+      return;
+    }
+
+    navigate(buildChartBuilderUrl(null, {
+      projectId: destinationProjectId,
+      datasetId: dataset.id,
+    }));
+  };
 
   const _onCompleteDataset = () => {
     setCompleteDatasetLoading(true);
@@ -244,7 +393,7 @@ function Dataset() {
     let cdcData = { ...dataset, ...ghostCdc, legend };
     delete cdcData.id;
 
-    if (fromChart === "create") {
+    if (legacyChartFlow === "create") {
       dispatch(createCdc({
         project_id: query.get("project_id"),
         chart_id: query.get("chart_id"),
@@ -423,15 +572,29 @@ function Dataset() {
             </Button>
           )}
           {(datasetMenu === "configure" || datasetMenu === "fields") && (
-            <Button
-              color="primary"
-              onPress={() => _onSaveDataset()}
-              endContent={<LuCheck />}
-              isDisabled={dataset?.DataRequests.length === 0}
-            >
-              {fromChart === "edit" && "Save & return to chart"}
-              {fromChart !== "edit" && "Complete dataset"}
-            </Button>
+            <div className="flex flex-row gap-2 flex-wrap">
+              {!legacyChartFlow && !isV2ChartFlow && (
+                <Button
+                  variant="bordered"
+                onPress={_onOpenVisualizeBuilder}
+                  endContent={<LuChartArea />}
+                  isDisabled={dataset?.DataRequests.length === 0}
+                >
+                  Visualize
+                </Button>
+              )}
+              <Button
+                color="primary"
+                onPress={() => _onSaveDataset()}
+                endContent={<LuCheck />}
+                isDisabled={dataset?.DataRequests.length === 0}
+              >
+                {legacyChartFlow === "edit" && "Save & return to chart"}
+                {legacyChartFlow !== "edit" && isV2ChartFlow && v2ReturnChartId && "Save & return to chart"}
+                {legacyChartFlow !== "edit" && isV2ChartFlow && !v2ReturnChartId && "Visualize"}
+                {legacyChartFlow !== "edit" && !isV2ChartFlow && "Complete dataset"}
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -440,10 +603,17 @@ function Dataset() {
         <DatasetQuery onUpdateDataset={_onUpdateDataset} />
       )}
 
-      {datasetMenu === "configure" && ghostChart && (
+      {datasetMenu === "configure" && shouldUseLegacyGhostPreview && ghostChart && (
         <DatasetBuilder
           chart={ghostChart}
           projectId={ghostProject?.id}
+        />
+      )}
+
+      {datasetMenu === "configure" && !shouldUseLegacyGhostPreview && dataset && (
+        <DatasetReusableSettings
+          dataset={dataset}
+          onUpdate={_onUpdateDataset}
         />
       )}
 
@@ -469,7 +639,7 @@ function Dataset() {
             />
             <Spacer y={1} />
 
-            {fromChart !== "create" && (
+            {legacyChartFlow && legacyChartFlow !== "create" && !isV2ChartFlow && (
               <>
                 <div>Want to add this chart to a dashboard?</div>
                 {projects.length > 5 && (
@@ -519,7 +689,7 @@ function Dataset() {
             >
               Close
             </Button>
-            {fromChart !== "create" && (
+            {legacyChartFlow !== "create" && (
               <Button
                 color="primary"
                 onPress={_onCompleteDataset}
@@ -529,7 +699,7 @@ function Dataset() {
                 {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
               </Button>
             )}
-            {fromChart === "create" && (
+            {legacyChartFlow === "create" && (
               <Button
                 color="primary"
                 onPress={_onCompleteDataset}

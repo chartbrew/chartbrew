@@ -8,7 +8,7 @@ import { LuInfo, LuRefreshCw, LuSave } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import { runRequest, updateDataset } from "../../slices/dataset";
-import { FIELD_AGGREGATION_OPTIONS, FIELD_ROLE_OPTIONS, getDefaultAggregation, getFieldTypeColor, normalizeEditableFieldsMetadata, sortDatasetFieldsMetadata } from "../../modules/datasetFieldMetadata";
+import { FIELD_ROLE_OPTIONS, getDefaultAggregation, getFieldTypeColor, getMetricAggregationOptions, normalizeEditableFieldsMetadata, sortDatasetFieldsMetadata } from "../../modules/datasetFieldMetadata";
 import { selectTeam } from "../../slices/team";
 
 function DatasetFields({ dataset }) {
@@ -41,7 +41,14 @@ function DatasetFields({ dataset }) {
 
       if (patch.role && patch.role !== "metric") {
         nextField.aggregation = "none";
-      } else if (patch.role === "metric" && (!nextField.aggregation || nextField.aggregation === "none")) {
+      } else if (
+        patch.role === "metric"
+        && (
+          !nextField.aggregation
+          || nextField.aggregation === "none"
+          || !getMetricAggregationOptions(nextField.type).some((option) => option.value === nextField.aggregation)
+        )
+      ) {
         nextField.aggregation = getDefaultAggregation("metric", nextField.type);
       }
 
@@ -176,13 +183,22 @@ function DatasetFields({ dataset }) {
                 </div>
                 <div className="text-xs text-default-500 break-all">{field.legacyPath || field.id}</div>
               </div>
-              <Switch
-                isSelected={field.enabled !== false}
-                onValueChange={(enabled) => _updateField(field.id, { enabled })}
-                size="sm"
-              >
-                Enabled
-              </Switch>
+              <div className="flex flex-row gap-4 flex-wrap">
+                <Switch
+                  isSelected={field.enabled !== false}
+                  onValueChange={(enabled) => _updateField(field.id, { enabled })}
+                  size="sm"
+                >
+                  Enabled
+                </Switch>
+                <Switch
+                  isSelected={field.excludeFromCharts !== true}
+                  onValueChange={(useInCharts) => _updateField(field.id, { excludeFromCharts: !useInCharts })}
+                  size="sm"
+                >
+                  Use in charts
+                </Switch>
+              </div>
             </div>
 
             <Spacer y={3} />
@@ -220,7 +236,7 @@ function DatasetFields({ dataset }) {
                   isDisabled={field.role !== "metric"}
                   onSelectionChange={(keys) => _updateField(field.id, { aggregation: keys.currentKey })}
                 >
-                  {FIELD_AGGREGATION_OPTIONS.map((option) => (
+                  {getMetricAggregationOptions(field.type).map((option) => (
                     <SelectItem key={option.value}>
                       {option.text}
                     </SelectItem>
@@ -255,7 +271,7 @@ function DatasetFields({ dataset }) {
             <div className="flex flex-row items-center gap-2 text-xs text-default-500">
               <LuInfo />
               <span>
-                Refresh preserves saved overrides for fields that still exist in the latest preview.
+                Refresh preserves saved overrides for fields that still exist in the latest preview. "Use in charts" controls whether the field appears in the V2 visualize builder.
               </span>
             </div>
           </div>

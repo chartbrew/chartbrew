@@ -13,6 +13,7 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
 import Row from "../../../components/Row";
+import { getExposedChartFilters } from "../../../modules/chartFilterRuntime";
 
 function ChartFilters(props) {
   const {
@@ -29,12 +30,10 @@ function ChartFilters(props) {
     setOptionFilter(filterOptions);
   }, [conditions]);
 
-  const _getDropdownOptions = (dataset, condition) => {
-    const conditionOpt = dataset.conditions.find((c) => c.field === condition.field);
+  const _getDropdownOptions = (condition) => {
+    if (!Array.isArray(condition?.values)) return [];
 
-    if (!conditionOpt || !conditionOpt.values) return [];
-
-    return conditionOpt.values.map((v) => {
+    return condition.values.map((v) => {
       const isBoolean = determineType(v) === "boolean";
       return {
         key: v,
@@ -54,17 +53,6 @@ function ChartFilters(props) {
     if (!condition) return null;
 
     return condition.value;
-  };
-
-  const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount;
   };
 
   const _getFilteredOptions = (filterOptions, cId) => {
@@ -88,32 +76,18 @@ function ChartFilters(props) {
     }
   };
 
-  const _getAllFilters = () => {
-    const filters = [];
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        cdc.Dataset.conditions.forEach((c) => {
-          if (c.exposed) {
-            filters.push({ ...c, Dataset: cdc.Dataset });
-          }
-        });
-      }
-    });
-
-    if (amount) return filters.slice(0, amount);
-
-    return filters;
-  };
+  const allFilters = getExposedChartFilters(chart);
+  const visibleFilters = amount ? allFilters.slice(0, amount) : allFilters;
 
   return (
     <div>
-      {!_checkIfFilters() && (
+      {allFilters.length === 0 && (
         <Row>
           <p>No filters available</p>
         </Row>
       )}
-      {chart && _getAllFilters().map((condition) => {
-        const filterOptions = _getDropdownOptions(condition.Dataset, condition);
+      {chart && visibleFilters.map((condition) => {
+        const filterOptions = _getDropdownOptions(condition);
         return (
           <Fragment key={condition.id}>
             <div className={`flex ${!inline ? "flex-col gap-1" : ""}`}>

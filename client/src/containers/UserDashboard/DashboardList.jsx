@@ -29,6 +29,7 @@ import {
 } from "@heroui/react";
 import React, { useEffect, useState } from "react";
 import {
+  LuChartColumn,
   LuChartNoAxesColumnIncreasing,
   LuEllipsis,
   LuLayoutGrid,
@@ -221,6 +222,7 @@ function DashboardList() {
   };
 
   const canManageDashboards = _canAccess("teamAdmin", team?.TeamRoles);
+  const canCreateCharts = _canAccess("projectEditor", team?.TeamRoles);
   const filteredProjects = _getFilteredProjects();
   const showWhatsNewRail = canManageDashboards && !whatsNewPanelCollapsed;
   const gridClassName = showWhatsNewRail
@@ -249,6 +251,16 @@ function DashboardList() {
             </div>
 
             <div className="flex flex-row items-center gap-2">
+              {canCreateCharts && (
+                <Button
+                  variant="bordered"
+                  onPress={() => navigate("/charts/new")}
+                  startContent={<LuChartColumn />}
+                >
+                  <span className="hidden md:block">New chart</span>
+                  <span className="md:hidden">Chart</span>
+                </Button>
+              )}
               {canManageDashboards && (
                 <Button
                   color="primary"

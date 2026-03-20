@@ -60,6 +60,82 @@ async function closeExternalSqlConnection(sqlConnection) {
   }
 }
 
+function attachRuntimeFilterMetadata(chart, chartData = {}) {
+  if (!chart || !chartData) {
+    return chart;
+  }
+
+  const conditionsOptions = Array.isArray(chartData.conditionsOptions)
+    ? chartData.conditionsOptions
+    : [];
+
+  if (typeof chart.setDataValue === "function") {
+    chart.setDataValue("conditionsOptions", conditionsOptions);
+    return chart;
+  }
+
+  return {
+    ...chart,
+    conditionsOptions,
+  };
+}
+
+function resolveCdcFilterFieldPath(filter = {}, dataset = {}) {
+  if (!filter?.fieldId) {
+    return null;
+  }
+
+  const metadata = Array.isArray(dataset?.fieldsMetadata) ? dataset.fieldsMetadata : [];
+  const matchedField = metadata.find((field) => {
+    return `${field?.id}` === `${filter.fieldId}` || `${field?.legacyPath}` === `${filter.fieldId}`;
+  });
+
+  return matchedField?.legacyPath || filter.fieldId;
+}
+
+function applyQuestionFilterMetadata(cdc = {}, conditionGroup = {}) {
+  const vizConfig = cdc?.vizConfig;
+  if (!vizConfig || !Array.isArray(vizConfig.filters)) {
+    return null;
+  }
+
+  let didChange = false;
+  const nextFilters = vizConfig.filters.map((filter) => {
+    const matchingCondition = (conditionGroup?.conditions || []).find((condition) => {
+      if (condition?.source !== "v2_question") {
+        return false;
+      }
+
+      const resolvedField = resolveCdcFilterFieldPath(filter, cdc?.Dataset || {});
+
+      return (
+        (condition?.filterId && `${condition.filterId}` === `${filter?.id}`)
+        || (condition?.bindingId && filter?.bindingId && `${condition.bindingId}` === `${filter.bindingId}`)
+        || (resolvedField && condition?.field && `${resolvedField}` === `${condition.field}`)
+      );
+    });
+
+    if (!matchingCondition) {
+      return filter;
+    }
+
+    didChange = true;
+    return {
+      ...filter,
+      values: Array.isArray(matchingCondition.values) ? matchingCondition.values.slice(0, 100) : [],
+    };
+  });
+
+  if (!didChange) {
+    return null;
+  }
+
+  return {
+    ...vizConfig,
+    filters: nextFilters,
+  };
+}
+
 function toAuditError(error, stage = "unknown") {
   if (error instanceof Error) {
     const wrappedError = error;
@@ -78,6 +154,43 @@ class ChartController {
     this.datasetController = new DatasetController();
     this.dataRequestController = new DataRequestController();
     this.chartCache = new ChartCacheController();
+  }
+
+  async assertCompatibleCdcVersion(chartId, targetVizVersion, ignoreCdcId = null) {
+    const chartCdcs = await db.ChartDatasetConfig.findAll({
+      where: { chart_id: chartId },
+      attributes: ["id", "vizVersion"],
+    });
+
+    const existingVersions = [
+      ...new Set(
+        chartCdcs
+          .filter((cdc) => !ignoreCdcId || `${cdc.id}` !== `${ignoreCdcId}`)
+          .map((cdc) => Number.parseInt(cdc.vizVersion, 10) || 1),
+      ),
+    ];
+
+    if (existingVersions.length > 1) {
+      return Promise.reject(new Error("Mixed V1/V2 CDC versions are not supported on the same chart."));
+    }
+
+    if (existingVersions.length === 1 && existingVersions[0] !== targetVizVersion) {
+      return Promise.reject(new Error("Mixed V1/V2 CDC versions are not supported on the same chart."));
+    }
+
+    return true;
+  }
+
+  async getNextDashboardOrder(projectId) {
+    const maxOrder = await db.Chart.max("dashboardOrder", {
+      where: { project_id: projectId },
+    });
+
+    if (!Number.isFinite(maxOrder)) {
+      return 0;
+    }
+
+    return maxOrder + 1;
   }
 
   create(data, user) {
@@ -400,7 +513,11 @@ class ChartController {
 
         const requestPromises = [];
         gChart.ChartDatasetConfigs.forEach((cdc) => {
-          const cdcVariables = mergeCdcRuntimeVariables(variables, cdc);
+          const cdcVariables = mergeCdcRuntimeVariables(variables, cdc, {
+            filters,
+            chart: gChart,
+            datasetOptions: cdc?.Dataset || null,
+          });
 
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
@@ -539,11 +656,12 @@ class ChartController {
 
           // update the datasets if needed
           const datasetsPromises = [];
+          const cdcPromises = [];
           if (chartData.conditionsOptions) {
             chartData.conditionsOptions.forEach((opt) => {
               if (opt.dataset_id) {
-                const cdc = gChart.ChartDatasetConfigs.find((d) => d.dataset_id === opt.dataset_id);
-                const dataset = cdc?.Dataset;
+                const scopedCdcs = gChart.ChartDatasetConfigs.filter((d) => d.dataset_id === opt.dataset_id);
+                const dataset = scopedCdcs[0]?.Dataset;
                 if (dataset?.conditions) {
                   const newConditions = dataset.conditions.map((c) => {
                     const optCondition = opt.conditions.find((o) => {
@@ -566,11 +684,30 @@ class ChartController {
                     )
                   );
                 }
+
+                scopedCdcs.forEach((cdc) => {
+                  const nextVizConfig = applyQuestionFilterMetadata(cdc, opt);
+                  if (!nextVizConfig) {
+                    return;
+                  }
+
+                  cdc.vizConfig = nextVizConfig;
+                  if (typeof cdc.setDataValue === "function") {
+                    cdc.setDataValue("vizConfig", nextVizConfig);
+                  }
+
+                  cdcPromises.push(
+                    db.ChartDatasetConfig.update(
+                      { vizConfig: nextVizConfig },
+                      { where: { id: cdc.id } }
+                    )
+                  );
+                });
               }
             });
           }
 
-          await Promise.all(datasetsPromises);
+          await Promise.all([...datasetsPromises, ...cdcPromises]);
 
           const updateData = { chartData: chartData.configuration };
           if (!getCache) {
@@ -623,14 +760,15 @@ class ChartController {
         if (!isExport) {
           if (skipSave) {
             // For skipSave, chart is a plain object, so we create a new object with properties
-            const chartWithTimeseries = {
+            const chartWithTimeseries = attachRuntimeFilterMetadata({
               ...chart,
               isTimeseries: gChartData.isTimeseries,
               dateFormat: gChartData.dateFormat,
-            };
+            }, gChartData);
             return chartWithTimeseries;
           } else {
             // For normal saves, chart is a Sequelize model
+            attachRuntimeFilterMetadata(chart, gChartData);
             chart.setDataValue("isTimeseries", gChartData.isTimeseries);
             chart.setDataValue("dateFormat", gChartData.dateFormat);
           }
@@ -1072,7 +1210,15 @@ class ChartController {
    */
   _extractVariablesFromQuery(queryParams) {
     const variables = {};
-    const specialParams = ["token", "theme", "isSnapshot", "snapshot"];
+    const specialParams = [
+      "token",
+      "theme",
+      "isSnapshot",
+      "snapshot",
+      "pass",
+      "password",
+      "accessToken",
+    ];
 
     if (queryParams && typeof queryParams === "object") {
       Object.keys(queryParams).forEach((key) => {
@@ -1097,7 +1243,7 @@ class ChartController {
     // Start with policy parameters if they exist
     if (sharePolicy?.params && Array.isArray(sharePolicy.params)) {
       sharePolicy.params.forEach((param) => {
-        if (param.key && param.value) {
+        if (param.key && param.value !== undefined && param.value !== null) {
           finalVariables[param.key] = param.value;
         }
       });
@@ -1218,6 +1364,9 @@ class ChartController {
       return Promise.reject("Dataset ID is required");
     }
 
+    const targetVizVersion = Number.parseInt(data.vizVersion, 10) || 1;
+    await this.assertCompatibleCdcVersion(chartId, targetVizVersion);
+
     const dataset = await db.Dataset.findByPk(data.dataset_id);
 
     return db.ChartDatasetConfig.create({
@@ -1233,7 +1382,15 @@ class ChartController {
       });
   }
 
-  updateChartDatasetConfig(id, data) {
+  async updateChartDatasetConfig(id, data) {
+    const existingCdc = await db.ChartDatasetConfig.findByPk(id);
+    if (!existingCdc) {
+      return Promise.reject(new Error("Chart dataset config not found."));
+    }
+
+    const targetVizVersion = Number.parseInt(data.vizVersion ?? existingCdc.vizVersion, 10) || 1;
+    await this.assertCompatibleCdcVersion(existingCdc.chart_id, targetVizVersion, id);
+
     return db.ChartDatasetConfig.update(data, { where: { id } })
       .then(() => {
         return db.ChartDatasetConfig.findByPk(id);
@@ -1248,6 +1405,79 @@ class ChartController {
       .catch((err) => {
         return Promise.reject(err);
       });
+  }
+
+  async publishDraftChart(id, targetProjectId, user, data = {}) {
+    const chart = await this.findById(id);
+    if (!chart) {
+      return Promise.reject(new Error("Chart not found"));
+    }
+
+    const currentProject = await db.Project.findByPk(chart.project_id);
+    const targetProject = await db.Project.findByPk(targetProjectId);
+
+    if (!currentProject || !targetProject) {
+      return Promise.reject(new Error("Project not found"));
+    }
+
+    if (`${currentProject.team_id}` !== `${targetProject.team_id}`) {
+      return Promise.reject(new Error("Target dashboard does not belong to the same team"));
+    }
+
+    if (targetProject.ghost) {
+      return Promise.reject(new Error("Draft charts cannot be published to a ghost project"));
+    }
+
+    const updateData = {
+      draft: false,
+      name: data.name || chart.name,
+    };
+
+    if (`${currentProject.id}` !== `${targetProject.id}` || currentProject.ghost) {
+      const existingCharts = await db.Chart.findAll({
+        where: { project_id: targetProject.id },
+        attributes: ["id", "layout"],
+      });
+
+      updateData.project_id = targetProject.id;
+      updateData.layout = ensureCompleteLayout(calculateChartLayout(existingCharts));
+      updateData.dashboardOrder = await this.getNextDashboardOrder(targetProject.id);
+    }
+
+    await db.Chart.update(updateData, { where: { id } });
+
+    const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
+      where: { chart_id: id },
+      include: [{ model: db.Dataset }],
+    });
+
+    await Promise.all(chartDatasetConfigs.map(async (cdc) => {
+      if (!cdc.Dataset) {
+        return;
+      }
+
+      const currentProjectIds = Array.isArray(cdc.Dataset.project_ids) ? cdc.Dataset.project_ids : [];
+      const nextProjectIds = currentProjectIds.includes(targetProject.id)
+        ? currentProjectIds
+        : [...currentProjectIds, targetProject.id];
+
+      await cdc.Dataset.update({
+        draft: false,
+        project_ids: nextProjectIds,
+      });
+    }));
+
+    if (user) {
+      this.chartCache.remove(user.id, id);
+    }
+
+    await this.updateChartData(id, user || null, {
+      noSource: false,
+      skipParsing: false,
+      getCache: false,
+    });
+
+    return this.findById(id);
   }
 
   async takeSnapshot(id) {

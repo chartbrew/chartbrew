@@ -325,6 +325,14 @@ class AxisChart {
           });
 
           // now the yAxis
+          if (!yAxis) {
+            if (yAxisOperation === "count") {
+              yAxis = xAxis;
+            } else {
+              throw new Error("Could not find data for yAxis");
+            }
+          }
+
           if (yAxis.indexOf("root[]") > -1) {
             yAxis = yAxis.replace("root[].", "");
             // and data stays the same

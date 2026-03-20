@@ -1,108 +1,81 @@
-import React, { useState, useEffect } from "react";
-import { findIndex } from "lodash";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Select, SelectItem, Input, DatePicker, Autocomplete, AutocompleteItem,
-  Chip, Divider,
+  Autocomplete,
+  AutocompleteItem,
+  Chip,
+  DatePicker,
+  Divider,
+  Input,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
+
 import { operators } from "../../../modules/filterOperations";
+import {
+  applyDashboardFieldOption,
+  findDashboardFieldOption,
+  getDashboardFieldOptions,
+} from "../../../modules/dashboardFilterBindings";
 import FieldFilter from "./FieldFilter";
-import { selectCharts } from "../../../slices/chart";
-import { useSelector } from "react-redux";
 
 function EditFieldFilter({
+  charts,
   filter,
   onChange,
 }) {
+  const fieldOptions = useMemo(() => getDashboardFieldOptions(charts), [charts]);
   const [fieldCondition, setFieldCondition] = useState({
+    selectedFieldKey: filter?.selectedFieldKey || "",
+    fieldId: filter?.fieldId || "",
     field: filter?.field || "",
+    fieldLabel: filter?.fieldLabel || "",
     operator: filter?.operator || "is",
     value: filter?.value || "",
     dataType: filter?.dataType || "",
+    bindings: Array.isArray(filter?.bindings) ? filter.bindings : [],
+    charts: Array.isArray(filter?.charts) ? filter.charts : [],
   });
-  const [fieldOptions, setFieldOptions] = useState([]);
-
-  const charts = useSelector(selectCharts);
 
   useEffect(() => {
+    const selectedOption = findDashboardFieldOption(fieldOptions, filter);
     setFieldCondition({
-      field: filter?.field || "",
+      selectedFieldKey: selectedOption?.key || filter?.selectedFieldKey || "",
+      fieldId: selectedOption?.fieldId || filter?.fieldId || "",
+      field: selectedOption?.field || filter?.field || "",
+      fieldLabel: selectedOption?.text || filter?.fieldLabel || "",
       operator: filter?.operator || "is",
       value: filter?.value || "",
-      dataType: filter?.dataType || "",
+      dataType: selectedOption?.type || filter?.dataType || "",
+      bindings: selectedOption?.bindings || (Array.isArray(filter?.bindings) ? filter.bindings : []),
+      charts: selectedOption?.chartIds || (Array.isArray(filter?.charts) ? filter.charts : []),
     });
-  }, [filter]);
+  }, [fieldOptions, filter]);
 
-  useEffect(() => {
-    if (charts) {
-      const tempFieldOptions = [];
-      charts.map((chart) => {
-        if (chart.ChartDatasetConfigs) {
-          chart.ChartDatasetConfigs.forEach((cdc) => {
-            if (cdc.Dataset?.fieldsSchema) {
-              Object.keys(cdc.Dataset?.fieldsSchema).forEach((key) => {
-                const type = cdc.Dataset?.fieldsSchema[key];
-                if (findIndex(tempFieldOptions, { key }) !== -1) return;
-                tempFieldOptions.push({
-                  key,
-                  text: key && key.replace("root[].", "").replace("root.", ""),
-                  value: key,
-                  type,
-                  chart_id: chart.id,
-                  label: {
-                    content: type || "unknown",
-                    color: type === "date" ? "warning"
-                      : type === "number" ? "success"
-                        : type === "string" ? "primary"
-                          : type === "boolean" ? "warning"
-                            : "neutral"
-                  },
-                });
-              });
-            }
-          });
-        }
-        return chart;
-      });
-
-      setFieldOptions(tempFieldOptions);
-    }
-  }, [charts]);
-
-  const _handleFieldChange = (key, value) => {
-    const newCondition = { ...fieldCondition, [key]: value };
-    if (key === "field") {
-      const selectedField = fieldOptions.find(f => f.value === value);
-      newCondition.dataType = selectedField?.type;
-    }
-    setFieldCondition(newCondition);
-    onChange({ ...filter, ...newCondition });
-  };
-
-  const selectedField = fieldOptions.find(f => f.value === fieldCondition.field);
+  const selectedField = findDashboardFieldOption(fieldOptions, fieldCondition);
   const isDateField = selectedField?.type === "date";
 
-  const _getChartsWithField = (field) => {
-    const chartsFound = [];
-    charts.map((chart) => {
-      let found = false;
-      if (chart.ChartDatasetConfigs) {
-        chart.ChartDatasetConfigs.forEach((cdc) => {
-          if (cdc.Dataset?.fieldsSchema) {
-            Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
-              if (key === field) found = true;
-            });
-          }
-        });
-      }
+  const _handleFieldChange = (key, value) => {
+    if (key === "selectedFieldKey") {
+      const selectedOption = fieldOptions.find((option) => option.key === value);
+      const nextCondition = applyDashboardFieldOption({
+        ...fieldCondition,
+        selectedFieldKey: value,
+      }, selectedOption);
+      setFieldCondition(nextCondition);
+      onChange({ ...filter, ...nextCondition });
+      return;
+    }
 
-      if (found) chartsFound.push(chart);
-      return chart;
-    });
+    const nextCondition = {
+      ...fieldCondition,
+      [key]: value,
+    };
 
-    return chartsFound;
+    setFieldCondition(nextCondition);
+    onChange({ ...filter, ...nextCondition });
   };
 
   return (
@@ -115,27 +88,25 @@ function EditFieldFilter({
         <div className="flex flex-row gap-2 items-center">
           <Autocomplete
             label="Select a field"
-            value={() => (
-              <span>{(fieldCondition.field && fieldCondition.field.substring(fieldCondition.field.lastIndexOf(".") + 1)) || "Select a field"}</span>
-            )}
-            selectedKey={fieldCondition.field}
-            onSelectionChange={(key) => _handleFieldChange("field", key)}
+            selectedKey={fieldCondition.selectedFieldKey || null}
+            onSelectionChange={(key) => _handleFieldChange("selectedFieldKey", key)}
             size="sm"
             variant="bordered"
             aria-label="Select a field"
             isClearable={false}
           >
-            {fieldOptions.map((field) => (
+            {fieldOptions.map((fieldOption) => (
               <AutocompleteItem
-                key={field.value}
+                key={fieldOption.key}
                 startContent={(
-                  <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px] text-center">
-                    {field.type}
+                  <Chip variant="flat" size="sm" color={fieldOption.label.color} className="min-w-[70px] text-center">
+                    {fieldOption.type}
                   </Chip>
                 )}
-                textValue={field.text}
+                textValue={fieldOption.text}
+                description={`${fieldOption.chartIds.length} chart${fieldOption.chartIds.length === 1 ? "" : "s"}`}
               >
-                {field.text}
+                {fieldOption.text}
               </AutocompleteItem>
             ))}
           </Autocomplete>
@@ -155,7 +126,7 @@ function EditFieldFilter({
             ))}
           </Select>
 
-          {fieldCondition.field && (
+          {selectedField && (
             isDateField ? (
               <DatePicker
                 label="Select a date"
@@ -180,13 +151,13 @@ function EditFieldFilter({
           )}
         </div>
 
-        {fieldCondition.field && (
+        {selectedField && (
           <div className="flex flex-col gap-1">
             <div className="text-sm font-medium">Affected charts:</div>
             <div className="flex flex-row flex-wrap gap-1">
-              {_getChartsWithField(fieldCondition.field).map((chart) => (
-                <Chip key={chart.id} color="primary" radius="sm" variant="flat">
-                  {chart.name}
+              {selectedField.chartNames.map((chartName) => (
+                <Chip key={chartName} color="primary" radius="sm" variant="flat">
+                  {chartName}
                 </Chip>
               ))}
             </div>
@@ -205,6 +176,7 @@ function EditFieldFilter({
 }
 
 EditFieldFilter.propTypes = {
+  charts: PropTypes.array.isRequired,
   filter: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
 };

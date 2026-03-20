@@ -22,6 +22,150 @@ function getFilterKey(filter = {}) {
   return filter.id || filter.variable || filter.field || null;
 }
 
+function getChartFieldTargets(chart = {}) {
+  const targets = [];
+
+  (chart?.ChartDatasetConfigs || []).forEach((cdc) => {
+    const dataset = cdc?.Dataset || {};
+
+    if (Array.isArray(dataset?.fieldsMetadata) && dataset.fieldsMetadata.length > 0) {
+      dataset.fieldsMetadata.forEach((field) => {
+        targets.push({
+          chartId: chart.id,
+          cdcId: cdc.id,
+          datasetId: dataset.id || cdc.dataset_id || null,
+          fieldId: field?.id || field?.legacyPath || null,
+          legacyPath: field?.legacyPath || field?.id || null,
+          type: field?.type || null,
+        });
+      });
+      return;
+    }
+
+    if (dataset?.fieldsSchema && typeof dataset.fieldsSchema === "object") {
+      Object.keys(dataset.fieldsSchema).forEach((fieldPath) => {
+        targets.push({
+          chartId: chart.id,
+          cdcId: cdc.id,
+          datasetId: dataset.id || cdc.dataset_id || null,
+          fieldId: fieldPath,
+          legacyPath: fieldPath,
+          type: dataset.fieldsSchema[fieldPath] || null,
+        });
+      });
+    }
+  });
+
+  return targets;
+}
+
+function matchesBindingScope(binding = {}, chart = {}) {
+  if (!binding || (binding?.targetType !== "field" && binding?.targetType !== "questionFilter")) {
+    return false;
+  }
+
+  if (binding.chartId && `${binding.chartId}` !== `${chart?.id}`) {
+    return false;
+  }
+
+  return true;
+}
+
+function getMatchingTargetBindings(filter = {}, chart = {}) {
+  if (!Array.isArray(filter?.bindings) || filter.bindings.length === 0) {
+    return [];
+  }
+
+  return filter.bindings.filter((binding) => matchesBindingScope(binding, chart));
+}
+
+function chartContainsFilterTarget(chart = {}, filter = {}) {
+  const chartFieldTargets = getChartFieldTargets(chart);
+
+  if (chartFieldTargets.some((target) => {
+    return (
+      (filter?.fieldId && `${target.fieldId}` === `${filter.fieldId}`)
+      || (filter?.field && `${target.legacyPath}` === `${filter.field}`)
+    );
+  })) {
+    return true;
+  }
+
+  return (chart?.ChartDatasetConfigs || []).some((cdc) => {
+    return (cdc?.Dataset?.conditions || []).some((condition) => {
+      return (
+        (filter?.fieldId && `${condition?.field}` === `${filter.fieldId}`)
+        || (filter?.field && `${condition?.field}` === `${filter.field}`)
+      );
+    });
+  });
+}
+
+function normalizeFilterForChart(filter = {}, chart = {}) {
+  const matchingBindings = getMatchingTargetBindings(filter, chart);
+
+  if (matchingBindings.length === 0) {
+    return filter;
+  }
+
+  const primaryBinding = matchingBindings[0];
+
+  return {
+    ...filter,
+    chartId: primaryBinding.chartId || chart?.id || null,
+    cdcId: primaryBinding.cdcId || filter?.cdcId || null,
+    datasetId: primaryBinding.datasetId || filter?.datasetId || null,
+    targetType: primaryBinding.targetType || filter?.targetType || "field",
+    fieldId: primaryBinding.fieldId || filter?.fieldId || null,
+    field: primaryBinding.legacyPath || filter?.field || null,
+    operator: primaryBinding.operator || filter?.operator || null,
+    bindingId: primaryBinding.bindingId || filter?.bindingId || null,
+    filterId: primaryBinding.filterId || filter?.filterId || filter?.id || null,
+  };
+}
+
+function filterAppliesToChart(filter = {}, chart = {}) {
+  if (!filter || filter?.type === "variable") {
+    return false;
+  }
+
+  const matchingBindings = getMatchingTargetBindings(filter, chart);
+  if (matchingBindings.length > 0) {
+    return true;
+  }
+
+  if (Array.isArray(filter?.bindings) && filter.bindings.length > 0) {
+    return false;
+  }
+
+  if (Array.isArray(filter?.charts) && filter.charts.length > 0) {
+    return filter.charts.includes(chart?.id);
+  }
+
+  if (filter?.fieldId || filter?.field) {
+    if (chartContainsFilterTarget(chart, filter)) {
+      return true;
+    }
+
+    return getChartFieldTargets(chart).length === 0;
+  }
+
+  return true;
+}
+
+function isBoundDateFilter(filter = {}) {
+  return filter?.type === "date" && (
+    Boolean(filter?.fieldId)
+    || Boolean(filter?.field)
+    || (
+      Array.isArray(filter?.bindings)
+      && filter.bindings.some((binding) => (
+        binding?.targetType === "field" || binding?.targetType === "questionFilter"
+      ))
+    )
+  );
+}
+
 function extractConditionVariables(condition = {}) {
   const variableNames = new Set();
 
@@ -154,6 +298,10 @@ export function getActiveDateFilters(currentFilters = [], previousFilters = []) 
       return false;
     }
 
+    if (isBoundDateFilter(filter)) {
+      return false;
+    }
+
     if (hasDateFilterValue(filter)) {
       return true;
     }
@@ -174,18 +322,35 @@ export function buildProcessedChartFilters({
       .filter(([key]) => Boolean(key))
   );
 
-  const fieldFilters = (currentFilters || []).filter((filter) => {
-    if (filter?.type !== "field") {
-      return false;
-    }
+  const fieldFilters = (currentFilters || [])
+    .filter((filter) => {
+      if (filter?.type !== "field" || !filterAppliesToChart(filter, chart)) {
+        return false;
+      }
 
-    if (hasFieldFilterValue(filter)) {
-      return true;
-    }
+      if (hasFieldFilterValue(filter)) {
+        return true;
+      }
 
-    const previousFilter = previousFilterLookup.get(getFilterKey(filter));
-    return hasFieldFilterValue(previousFilter);
-  });
+      const previousFilter = previousFilterLookup.get(getFilterKey(filter));
+      return hasFieldFilterValue(previousFilter);
+    })
+    .map((filter) => normalizeFilterForChart(filter, chart));
+
+  const boundDateFilters = (currentFilters || [])
+    .filter((filter) => {
+      if (filter?.type !== "date" || !isBoundDateFilter(filter) || !filterAppliesToChart(filter, chart)) {
+        return false;
+      }
+
+      if (hasDateFilterValue(filter)) {
+        return true;
+      }
+
+      const previousFilter = previousFilterLookup.get(getFilterKey(filter));
+      return hasDateFilterValue(previousFilter);
+    })
+    .map((filter) => normalizeFilterForChart(filter, chart));
 
   const identifiedConditions = getChartIdentifiedConditions(chart);
   const currentVariableFilters = (currentFilters || []).filter(
@@ -198,6 +363,13 @@ export function buildProcessedChartFilters({
   );
 
   return {
-    processedFilters: [...fieldFilters, ...legacyVariableConditions],
+    processedFilters: [...fieldFilters, ...boundDateFilters, ...legacyVariableConditions],
   };
+}
+
+export function getApplicableDashboardFiltersForChart(filters = [], chart = {}) {
+  return (filters || [])
+    .filter((filter) => filter?.type !== "variable")
+    .filter((filter) => filterAppliesToChart(filter, chart))
+    .map((filter) => normalizeFilterForChart(filter, chart));
 }

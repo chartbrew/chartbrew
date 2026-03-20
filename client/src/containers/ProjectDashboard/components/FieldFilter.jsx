@@ -14,7 +14,14 @@ function FieldFilter({
   className = "max-w-xs",
   onApply = () => {},
 }) {
-  const { field, operator, value, dataType } = filter;
+  const {
+    field,
+    fieldId,
+    fieldLabel,
+    operator,
+    value,
+    dataType,
+  } = filter;
   const [currentOperator, setCurrentOperator] = useState(operator);
   const [currentValue, setCurrentValue] = useState(value);
   const [textValue, setTextValue] = useState(value);
@@ -41,11 +48,16 @@ function FieldFilter({
   };
 
   const renderLabel = () => {
+    const labelText = fieldLabel
+      || fieldId
+      || field?.substring(field?.lastIndexOf(".") + 1)
+      || "Field";
+
     return (
       <Dropdown aria-label="Select an operator">
         <DropdownTrigger>
           <Chip variant="flat" radius="sm" size="sm" className="text-xs cursor-pointer">
-            {field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}
+            {labelText} {_getOperatorKey(currentOperator)}
           </Chip>
         </DropdownTrigger>
         <DropdownMenu

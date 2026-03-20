@@ -33,6 +33,7 @@ import MatrixChart from "./Chart/components/MatrixChart";
 import GaugeChart from "./Chart/components/GaugeChart";
 import { getAllSearchParams, getPublicChartRuntimeVariables } from "../modules/publicChartRuntime";
 import {
+  countExposedChartFilters,
   removeChartCondition,
   shouldRunFilterRequest,
   upsertChartCondition,
@@ -195,14 +196,7 @@ function EmbeddedChart() {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return countExposedChartFilters(chart) > 0;
   };
 
   if ((loading || !chart || !showChart) && !error) {
