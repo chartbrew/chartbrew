@@ -170,26 +170,15 @@ async function availableTools() {
     },
     {
       name: "create_dataset",
-      description: "Persist an SQL query as a Chartbrew dataset (before making a chart).",
+      description: "Persist a reusable Chartbrew dataset for query/data retrieval. Dataset names are canonical in Dataset.name; chart bindings belong on ChartDatasetConfig.",
       parameters: {
         type: "object",
         properties: {
           project_id: { type: "string", description: "Project ID where the dataset will be created" },
           connection_id: { type: "string", description: "Connection ID to use for data fetching (must be MySQL, PostgreSQL, or MongoDB)" },
-          name: { type: "string", description: "Dataset name/legend" },
-          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results, e.g. 'root[].month_start')" },
-          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results, e.g. 'root[].count')" },
-          yAxisOperation: {
-            type: "string",
-            enum: ["none", "sum", "avg", "min", "max", "count"],
-            default: "none",
-            description: "Y axis aggregation operation"
-          },
-          dateField: { type: "string", description: "Date field for filtering" },
-          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          name: { type: "string", description: "Canonical dataset name stored on Dataset.name" },
           query: { type: "string", description: "SQL query for the dataset" },
-          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
-          configuration: { type: "object", description: "Dialect-specific settings" },
+          configuration: { type: "object", description: "DataRequest dialect-specific settings" },
           variables: {
             type: "array",
             items: { type: "string" },
@@ -198,7 +187,7 @@ async function availableTools() {
           },
           transform: { type: "object", description: "Data transformation rules" }
         },
-        required: ["connection_id", "name", "xAxis", "yAxis", "query"]
+        required: ["connection_id", "name", "query"]
       }
       // returns: { dataset_id, data_request_id, name, dataset_url }
     },
@@ -211,7 +200,7 @@ async function availableTools() {
           project_id: { type: "string", description: "The EXACT project/dashboard ID specified by the user where the chart will be placed. Use this exact ID - never create charts in other projects for testing or validation." },
           dataset_id: { type: "string" },
           name: { type: "string", description: "Chart name/title" },
-          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
           type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
@@ -240,6 +229,20 @@ async function availableTools() {
             },
             description: "Gauge ranges [{min, max, label, color}]"
           },
+          xAxis: { type: "string", description: "ChartDatasetConfig x-axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          xAxisOperation: { type: "string", description: "ChartDatasetConfig x-axis operation" },
+          yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxisOperation: {
+            type: "string",
+            enum: ["none", "sum", "avg", "min", "max", "count"],
+            default: "none",
+            description: "ChartDatasetConfig y-axis aggregation operation"
+          },
+          dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
+          dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
+          conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
+          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
         required: ["project_id", "dataset_id", "name"]
@@ -248,24 +251,14 @@ async function availableTools() {
     },
     {
       name: "update_dataset",
-      description: "Update an existing dataset and its associated data request with new SQL query, mappings, or configuration.",
+      description: "Update an existing dataset and its associated data request with new reusable dataset metadata, SQL query, or data-request configuration. Do not use this tool for chart binding fields.",
       parameters: {
         type: "object",
         properties: {
           dataset_id: { type: "string", description: "The ID of the dataset to update" },
-          name: { type: "string", description: "New dataset name/legend" },
-          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results)" },
-          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results)" },
-          yAxisOperation: {
-            type: "string",
-            enum: ["none", "sum", "avg", "min", "max", "count"],
-            description: "Y axis aggregation operation"
-          },
-          dateField: { type: "string", description: "Date field for filtering" },
-          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          name: { type: "string", description: "New canonical dataset name stored on Dataset.name" },
           query: { type: "string", description: "New SQL query for the dataset" },
-          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
-          configuration: { type: "object", description: "Dialect-specific settings" },
+          configuration: { type: "object", description: "Updated DataRequest dialect-specific settings" },
           variables: { type: "array", items: { type: "string" }, description: "Query variables/parameters" },
           transform: { type: "object", description: "Data transformation rules" }
         },
@@ -275,14 +268,14 @@ async function availableTools() {
     },
     {
       name: "update_chart",
-      description: "Update an existing chart with new properties, styling, or dataset configuration.",
+      description: "Update an existing chart with new chart properties or ChartDatasetConfig series settings, including CDC-owned bindings like xAxis, yAxis, dateField, and conditions.",
       parameters: {
         type: "object",
         properties: {
           chart_id: { type: "string", description: "The ID of the chart to update" },
           dataset_id: { type: "string", description: "New dataset ID (if changing the dataset)" },
           name: { type: "string", description: "New chart name/title" },
-          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
           type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"], description: "Chart type" },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
@@ -311,6 +304,19 @@ async function availableTools() {
             },
             description: "Gauge ranges [{min, max, label, color}]"
           },
+          xAxis: { type: "string", description: "ChartDatasetConfig x-axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          xAxisOperation: { type: "string", description: "ChartDatasetConfig x-axis operation" },
+          yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          yAxisOperation: {
+            type: "string",
+            enum: ["none", "sum", "avg", "min", "max", "count"],
+            description: "ChartDatasetConfig y-axis aggregation operation"
+          },
+          dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
+          dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
+          conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
+          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           datasetColor: { type: "string", description: "Color for the dataset in this chart" },
           fillColor: { type: "string", description: "Fill color for area charts" },
           fill: { type: "boolean", description: "Fill area under line" },
@@ -328,13 +334,13 @@ async function availableTools() {
     },
     {
       name: "create_temporary_chart",
-      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'. The chart will be shown as a preview and can later be moved to a dashboard using move_chart_to_dashboard if the user requests it.",
+      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. This creates a reusable dataset plus a ChartDatasetConfig that owns the series bindings. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'.",
       parameters: {
         type: "object",
         properties: {
           connection_id: { type: "string", description: "Connection ID to use for data fetching (must be MySQL, PostgreSQL, or MongoDB)" },
           name: { type: "string", description: "Chart name/title" },
-          legend: { type: "string", description: "Short legend text for data points (max 20-30 chars, appears on hover)" },
+          legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
           type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
@@ -363,19 +369,20 @@ async function availableTools() {
             },
             description: "Gauge ranges [{min, max, label, color}]"
           },
-          xAxis: { type: "string", description: "X axis field using traversal syntax (use 'root[].field_name' for array results)" },
-          yAxis: { type: "string", description: "Y axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          xAxis: { type: "string", description: "ChartDatasetConfig x-axis field using traversal syntax (use 'root[].field_name' for array results)" },
+          xAxisOperation: { type: "string", description: "ChartDatasetConfig x-axis operation" },
+          yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
           yAxisOperation: {
             type: "string",
             enum: ["none", "sum", "avg", "min", "max", "count"],
             default: "none",
-            description: "Y axis aggregation operation"
+            description: "ChartDatasetConfig y-axis aggregation operation"
           },
-          dateField: { type: "string", description: "Date field for filtering" },
-          dateFormat: { type: "string", description: "Date format (e.g. YYYY-MM-DD)" },
+          dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
+          dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
           query: { type: "string", description: "SQL query for the dataset" },
-          conditions: { type: "array", items: { type: "object" }, description: "Database filtering conditions" },
-          configuration: { type: "object", description: "Dialect-specific settings" },
+          conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
+          configuration: { type: "object", description: "DataRequest dialect-specific settings for the reusable dataset" },
           variables: {
             type: "array",
             items: { type: "string" },
@@ -383,6 +390,8 @@ async function availableTools() {
             description: "Query variables/parameters"
           },
           transform: { type: "object", description: "Data transformation rules" },
+          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
         required: ["connection_id", "name", "xAxis", "yAxis", "query"]
@@ -503,9 +512,9 @@ ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `-
    - **MongoDB connections**: NoSQL databases with collections/documents
    - *API connections and other sources will be available in future updates*
 2. **DataRequests**: Define how to fetch data using SQL queries
-3. **Datasets**: Process and transform data from DataRequests for visualization
+3. **Datasets**: Reusable query/data definitions backed by DataRequests
 4. **Charts**: Visual representations of Datasets, placed in Projects (dashboards)
-5. **ChartDatasetConfigs**: Link Charts to Datasets with specific configurations
+5. **ChartDatasetConfigs**: Link Charts to Datasets with chart-specific bindings, filters, labels, and display settings
 
 ${ENTITY_CREATION_RULES}
 
@@ -873,10 +882,10 @@ async function buildSemanticLayer(teamId) {
     where: {
       team_id: teamId,
     },
-    attributes: ["id", "legend", "query", "xAxis", "yAxis", "yAxisOperation", "dateFormat"],
+    attributes: ["id", "name", "legend", "main_dr_id"],
     include: [{
       model: db.DataRequest,
-      attributes: ["id", "connection_id", "query", "conditions", "configuration"]
+      attributes: ["id", "connection_id", "query", "conditions", "configuration", "variables", "transform"]
     }]
   });
 

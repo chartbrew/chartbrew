@@ -8,17 +8,11 @@
 const ENTITY_CREATION_RULES = `## Entity Creation Rules
 
 **Dataset:**
-- Required: team_id, connection_id, name, dialect, query, xAxis, yAxis
+- Required: team_id, connection_id, name, query
 - Set draft=false (visible), project_ids=[] or [project_id]
 - After DataRequest created, update main_dr_id
-- xAxis: string - X axis field from query results (use 'root[].field_name' for arrays)
-- yAxis: string - Y axis field from query results (use 'root[].field_name' for arrays)
-- IMPORTANT: Always use 'root[].' prefix for database query results since they return arrays
-- Example: For results like [{"month_start": "2024-01", "count": 5}], use xAxis='root[].month_start', yAxis='root[].count'
-- yAxisOperation: string - none, sum, avg, min, max, count (default: none)
-- dateField: string - optional date field for filtering
-- dateFormat: string - optional date format (e.g. YYYY-MM-DD)
-- conditions: array - optional filtering conditions
+- name: string - canonical reusable dataset name
+- Datasets own query/data-shape concerns only. Do not store chart binding fields (xAxis, yAxis, dateField, conditions, formula, legend) on Dataset.
 
 **Supported Connection Types and Subtypes:**
 - MySQL: mysql, rdsMysql
@@ -64,7 +58,17 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 **ChartDatasetConfig:**
 - Required: chart_id, dataset_id
 - Set legend (short and concise, appears on hover), order=1, datasetColor="#4285F4" (all configurable)
-- IMPORTANT: Suggest a separate short legend for ChartDatasetConfig (different from chart name)
+- IMPORTANT: ChartDatasetConfig owns visualization binding fields. Put xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat, and conditions here, not on Dataset.
+- IMPORTANT: Suggest a separate short legend for ChartDatasetConfig (different from chart name). Default to dataset.name || dataset.legend when no custom legend is provided.
+- xAxis: string - X axis field from query results (use 'root[].field_name' for arrays)
+- yAxis: string - Y axis field from query results (use 'root[].field_name' for arrays)
+- IMPORTANT: Always use 'root[].' prefix for database query results since they return arrays
+- Example: For results like [{"month_start": "2024-01", "count": 5}], use xAxis='root[].month_start', yAxis='root[].count'
+- xAxisOperation: string - optional x-axis operation
+- yAxisOperation: string - none, sum, avg, min, max, count (default: none)
+- dateField: string - optional date field for filtering
+- dateFormat: string - optional date format (e.g. YYYY-MM-DD)
+- conditions: array - optional chart-specific filtering conditions
 - formula: string - transform values (e.g. "{val / 100}", "£{val}") (optional)
 - fillColor: string - area/line fill color, fillColor for bar charts (optional)
 - fill: boolean - enable area fill, fill for bar charts (default: false)
@@ -78,8 +82,8 @@ Note: Currently only MySQL, PostgreSQL, and MongoDB connections are supported. A
 - configuration: object - dataset settings (default: {})
 
 **Sequence:**
-1. Create Dataset with DataRequest using quick-create (team_id, connection_id, legend, query, xAxis, yAxis, draft=false, dataRequests array)
-2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array)
+1. Create Dataset with DataRequest using quick-create (team_id, connection_id, name, query, draft=false, dataRequests array)
+2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array including xAxis/yAxis/date bindings on the CDC)
 
 **CRITICAL RULES:**
 - Use the EXACT project specified by the user or context. Never create charts in different projects.
@@ -108,16 +112,13 @@ const SUPPORTED_CONNECTIONS = {
 // Field definitions for reference and validation
 const FIELD_SPECS = {
   Dataset: {
-    required: ["team_id", "connection_id", "name", "dialect", "query", "xAxis", "yAxis"],
+    required: ["team_id", "connection_id", "name", "query"],
     recommended: {
       draft: false,
       project_ids: [],
-      yAxisOperation: "none",
-      dateField: null,
-      dateFormat: null,
-      conditions: []
+      fieldsSchema: null
     },
-    description: "Process and transform data from DataRequests for visualization"
+    description: "Reusable query/data definition backed by DataRequests"
   },
 
   DataRequest: {
@@ -161,6 +162,13 @@ const FIELD_SPECS = {
     required: ["chart_id", "dataset_id"],
     recommended: {
       legend: null, // Use dataset name or chart title
+      xAxis: null,
+      xAxisOperation: null,
+      yAxis: null,
+      yAxisOperation: "none",
+      dateField: null,
+      dateFormat: null,
+      conditions: [],
       order: 1,
       datasetColor: "#4285F4",
       fill: false,
@@ -169,7 +177,7 @@ const FIELD_SPECS = {
       excludedFields: [],
       configuration: {}
     },
-    description: "Link Charts to Datasets with specific configurations"
+    description: "Link Charts to Datasets with chart-specific bindings and presentation settings"
   }
 };
 

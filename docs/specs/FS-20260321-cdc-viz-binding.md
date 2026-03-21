@@ -147,6 +147,70 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 - client callers that display dataset titles from `legend`
 - chart/dashboard filter consumers that currently read `cdc.Dataset.conditions`
 
+## Remaining Work
+
+The implementation is mostly complete. The remaining work is intentionally narrow and should not reopen the architecture.
+
+### 1. Orchestrator Compatibility
+
+The AI orchestrator still needs to be aligned with the new ownership model.
+
+Required outcomes:
+- dataset entities should use `name` as the canonical dataset label
+- chart-series / CDC creation should treat `legend` as chart-specific label text
+- dataset creation and update tools should stop treating dataset `legend` as the primary dataset name
+- chart creation tools should default CDC `legend` from `dataset.name || dataset.legend`
+- orchestrator prompts and tool schemas should describe binding fields as CDC-owned, not dataset-owned
+
+Files to review:
+- `server/modules/ai/orchestrator/orchestrator.js`
+- `server/modules/ai/orchestrator/entityCreationRules.js`
+- `server/modules/ai/orchestrator/tools/createDataset.js`
+- `server/modules/ai/orchestrator/tools/updateDataset.js`
+- `server/modules/ai/orchestrator/tools/createChart.js`
+- `server/modules/ai/orchestrator/tools/createTemporaryChart.js`
+
+Acceptance criteria:
+- AI-created datasets return `name` correctly populated
+- AI-updated datasets modify `name` instead of relying on `legend`
+- AI-created charts create CDCs with correct `legend` fallback and do not copy binding fields back onto `Dataset`
+- orchestrator-facing entity descriptions match the current runtime model
+
+### 2. Finish Dataset Name Migration In Remaining Callers
+
+Most active UI paths now prefer `dataset.name || dataset.legend`, but a few legacy or secondary callers still read `legend` directly as if it were the dataset name.
+
+This remaining pass should:
+- migrate display/search-only dataset name callers to `name || legend`
+- leave runtime series-label usages alone where `legend` is still the correct chart label key
+
+Important distinction:
+- keep `legend` where the code is referring to chart-series identity or chart-data lookup keys
+- migrate to `name || legend` where the code is rendering or searching for the reusable dataset itself
+
+Known remaining callers to review:
+- `client/src/containers/AddChart/components/Dataset.jsx`
+- any remaining dataset list / picker / breadcrumb / modal labels not yet updated
+- any server-side dataset labels returned to the UI that still prefer `legend`
+
+Acceptance criteria:
+- reusable dataset labels render consistently across the UI using `name || legend`
+- no chart runtime lookups break because of an over-eager `legend` replacement
+
+### 3. Reuse Verification
+
+This is a verification task, not a new implementation phase.
+
+Scenarios to verify:
+- the same dataset can be used by multiple charts with different `xAxis`, `yAxis`, `yAxisOperation`, `dateField`, and `conditions`
+- hiding a filter in one chart does not hide it in another chart using the same dataset
+- changing a chart-level condition in one CDC does not mutate the shared dataset or another CDC
+- chart creation from an existing dataset still produces a usable default series configuration
+
+Acceptance criteria:
+- CDC-owned bindings are isolated per chart
+- dataset reuse behaves as expected across at least two charts using the same underlying dataset
+
 ## Orchestrator Compatibility
 
 - Update orchestrator contracts so datasets use `name` as the entity name and CDC owns visualization binding fields.
@@ -174,11 +238,11 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 - [x] Add `Dataset.name` and backfill from `legend`.
 - [x] Add new CDC fields and model accessors.
 - [x] Add migration script to backfill CDC visualization fields from datasets.
-- [ ] Update dataset callers to prefer `name` over `legend`.
+- [~] Update dataset callers to prefer `name` over `legend`.
 - [x] Merge dataset + CDC binding at runtime in `ChartController`.
 - [x] Persist condition options to CDC instead of dataset.
 - [x] Move dataset builder writes from `updateDataset` to `updateCdc` for binding fields.
-- [ ] Update chart/dashboard filter consumers to read CDC conditions.
+- [x] Update chart/dashboard filter consumers to read CDC conditions.
 - [ ] Update orchestrator tool schemas, rules, and payloads to use `Dataset.name` and CDC-owned binding fields.
 - [ ] Verify reuse: same dataset used by multiple charts with different bindings and filters.
 
@@ -186,6 +250,7 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 
 - This pass intentionally avoids removing legacy dataset viz fields.
 - This pass intentionally avoids removing `Dataset.legend`; it becomes compatibility-only until callers are migrated.
+- `Dataset.legend` should now be treated as a compatibility field only. New product logic should not introduce additional dataset-name reads from `legend` unless there is a compatibility reason.
 - This pass intentionally avoids a new viz engine or payload redesign.
 - The client now treats the dataset page as query-only and moves per-series setup to chart-side `Data setup / Display / Automation` tabs.
 - Once stable, a follow-up spec can remove legacy dataset binding fields entirely.

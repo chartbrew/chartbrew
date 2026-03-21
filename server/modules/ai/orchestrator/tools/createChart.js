@@ -1,5 +1,6 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
+const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 
 const chartController = new ChartController();
 
@@ -11,6 +12,8 @@ async function createChart(payload) {
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
     xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
+    xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
+    conditions, formula, seriesConfiguration,
   } = payload;
 
   if (!project_id) {
@@ -100,12 +103,19 @@ async function createChart(payload) {
       layout: chartSpec.layout, // Will be auto-calculated if not provided
       chartDatasetConfigs: [{
         dataset_id,
-        formula: chartSpec.formula,
+        xAxis: xAxis ?? chartSpec.xAxis,
+        xAxisOperation: xAxisOperation ?? chartSpec.xAxisOperation,
+        yAxis: yAxis ?? chartSpec.yAxis,
+        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
+        dateField: dateField ?? chartSpec.dateField,
+        dateFormat: dateFormat ?? chartSpec.dateFormat,
+        conditions: conditions ?? chartSpec.conditions,
+        formula: formula ?? chartSpec.formula,
         datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
         fillColor: chartSpec.fillColor,
         fill: chartSpec.fill || false,
         multiFill: chartSpec.multiFill || false,
-        legend: legend || chartSpec.title || dataset.legend,
+        legend: legend ?? chartSpec.legend ?? getDatasetName(dataset),
         pointRadius: pointRadius || chartSpec.pointRadius || 0,
         excludedFields: chartSpec.excludedFields || [],
         sort: chartSpec.sort,
@@ -113,7 +123,7 @@ async function createChart(payload) {
         order: 1,
         maxRecords: chartSpec.maxRecords,
         goal: chartSpec.goal,
-        configuration: chartSpec.configuration || {}
+        configuration: seriesConfiguration ?? chartSpec.configuration ?? {}
       }]
     }, null); // No user for AI-created charts
 

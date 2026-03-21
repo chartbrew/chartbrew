@@ -7,6 +7,8 @@ async function updateChart(payload) {
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
     xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
+    xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
+    conditions, formula, seriesConfiguration,
     datasetColor, fillColor, fill, multiFill, excludedFields, sort, columnsOrder, maxRecords, goal
   } = payload;
 
@@ -133,12 +135,40 @@ async function updateChart(payload) {
     }
 
     // Find and update the chart dataset config (if dataset_id is provided)
-    if (
-      dataset_id
-      || legend || datasetColor || fillColor || fill || multiFill
-      || excludedFields || sort || columnsOrder || maxRecords || goal
-      || pointRadius !== undefined || chartSpec.pointRadius !== undefined
-    ) {
+    const shouldUpdateCdc = dataset_id !== undefined
+      || legend !== undefined
+      || xAxis !== undefined
+      || xAxisOperation !== undefined
+      || yAxis !== undefined
+      || yAxisOperation !== undefined
+      || dateField !== undefined
+      || dateFormat !== undefined
+      || conditions !== undefined
+      || formula !== undefined
+      || seriesConfiguration !== undefined
+      || datasetColor !== undefined
+      || fillColor !== undefined
+      || fill !== undefined
+      || multiFill !== undefined
+      || excludedFields !== undefined
+      || sort !== undefined
+      || columnsOrder !== undefined
+      || maxRecords !== undefined
+      || goal !== undefined
+      || pointRadius !== undefined
+      || chartSpec.pointRadius !== undefined
+      || chartSpec.legend !== undefined
+      || chartSpec.xAxis !== undefined
+      || chartSpec.xAxisOperation !== undefined
+      || chartSpec.yAxis !== undefined
+      || chartSpec.yAxisOperation !== undefined
+      || chartSpec.dateField !== undefined
+      || chartSpec.dateFormat !== undefined
+      || chartSpec.conditions !== undefined
+      || chartSpec.formula !== undefined
+      || chartSpec.configuration !== undefined;
+
+    if (shouldUpdateCdc) {
       const configWhere = { chart_id };
       if (dataset_id) {
         configWhere.dataset_id = dataset_id;
@@ -153,8 +183,50 @@ async function updateChart(payload) {
 
         if (legend !== undefined) {
           configUpdates.legend = legend;
-        } else if (chartSpec.title !== undefined) {
-          configUpdates.legend = chartSpec.title;
+        } else if (chartSpec.legend !== undefined) {
+          configUpdates.legend = chartSpec.legend;
+        }
+
+        if (xAxis !== undefined) {
+          configUpdates.xAxis = xAxis;
+        } else if (chartSpec.xAxis !== undefined) {
+          configUpdates.xAxis = chartSpec.xAxis;
+        }
+
+        if (xAxisOperation !== undefined) {
+          configUpdates.xAxisOperation = xAxisOperation;
+        } else if (chartSpec.xAxisOperation !== undefined) {
+          configUpdates.xAxisOperation = chartSpec.xAxisOperation;
+        }
+
+        if (yAxis !== undefined) {
+          configUpdates.yAxis = yAxis;
+        } else if (chartSpec.yAxis !== undefined) {
+          configUpdates.yAxis = chartSpec.yAxis;
+        }
+
+        if (yAxisOperation !== undefined) {
+          configUpdates.yAxisOperation = yAxisOperation;
+        } else if (chartSpec.yAxisOperation !== undefined) {
+          configUpdates.yAxisOperation = chartSpec.yAxisOperation;
+        }
+
+        if (dateField !== undefined) {
+          configUpdates.dateField = dateField;
+        } else if (chartSpec.dateField !== undefined) {
+          configUpdates.dateField = chartSpec.dateField;
+        }
+
+        if (dateFormat !== undefined) {
+          configUpdates.dateFormat = dateFormat;
+        } else if (chartSpec.dateFormat !== undefined) {
+          configUpdates.dateFormat = chartSpec.dateFormat;
+        }
+
+        if (conditions !== undefined) {
+          configUpdates.conditions = conditions;
+        } else if (chartSpec.conditions !== undefined) {
+          configUpdates.conditions = chartSpec.conditions;
         }
 
         if (datasetColor !== undefined) {
@@ -213,7 +285,9 @@ async function updateChart(payload) {
           configUpdates.goal = chartSpec.goal;
         }
 
-        if (chartSpec.formula !== undefined) {
+        if (formula !== undefined) {
+          configUpdates.formula = formula;
+        } else if (chartSpec.formula !== undefined) {
           configUpdates.formula = chartSpec.formula;
         }
 
@@ -221,6 +295,12 @@ async function updateChart(payload) {
           configUpdates.pointRadius = pointRadius;
         } else if (chartSpec.pointRadius !== undefined) {
           configUpdates.pointRadius = chartSpec.pointRadius;
+        }
+
+        if (seriesConfiguration !== undefined) {
+          configUpdates.configuration = seriesConfiguration;
+        } else if (chartSpec.configuration !== undefined) {
+          configUpdates.configuration = chartSpec.configuration;
         }
 
         if (Object.keys(configUpdates).length > 0) {
@@ -268,7 +348,7 @@ async function updateChart(payload) {
       snapshot,
       updated_fields: {
         chart: Object.keys(chartUpdates),
-        config: dataset_id || legend || datasetColor || fillColor || fill || multiFill || excludedFields || sort || columnsOrder || maxRecords || goal ? "chart_dataset_config" : null
+        config: shouldUpdateCdc ? "chart_dataset_config" : null
       }
     };
   } catch (error) {

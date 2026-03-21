@@ -749,9 +749,9 @@ class DatasetController {
 
     const cleanDatasetData = {};
     const allowedFields = [
-      "team_id", "project_ids", "draft", "xAxis", "xAxisOperation", "yAxis",
-      "yAxisOperation", "dateField", "dateFormat", "legend", "conditions",
-      "fieldsSchema"
+      "team_id", "project_ids", "draft", "name", "xAxis", "xAxisOperation",
+      "yAxis", "yAxisOperation", "dateField", "dateFormat", "legend",
+      "conditions", "fieldsSchema"
     ];
 
     allowedFields.forEach((field) => {

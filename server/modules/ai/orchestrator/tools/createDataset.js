@@ -8,8 +8,7 @@ const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_C
 async function createDataset(payload) {
   const {
     project_id, connection_id, name, team_id,
-    xAxis, yAxis, yAxisOperation = "none", dateField, dateFormat,
-    query, conditions = [], configuration = {}, variables = [], transform = null,
+    query, configuration = {}, variables = [], transform = null,
     variableBindings = []
   } = payload;
 
@@ -32,18 +31,11 @@ async function createDataset(payload) {
       team_id,
       project_ids: projectIds,
       draft: false,
-      legend: name || "AI Generated Dataset",
-      xAxis,
-      yAxis,
-      yAxisOperation,
-      dateField,
-      dateFormat,
-      conditions,
+      name: name || "AI Generated Dataset",
       variableBindings,
       dataRequests: [{
         connection_id,
         query,
-        conditions: conditions || [],
         configuration: configuration || {},
         variables: variables || [],
         transform: transform || null
@@ -59,7 +51,7 @@ async function createDataset(payload) {
     return {
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
-      name: dataset.legend,
+      name: dataset.name || dataset.legend,
       dataset_url: `${clientUrl}/datasets/${dataset.id}`,
     };
   } catch (error) {

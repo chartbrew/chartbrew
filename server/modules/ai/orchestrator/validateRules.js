@@ -24,10 +24,10 @@ const REQUIRED_SECTIONS = [
 ];
 
 const REQUIRED_KEYWORDS = {
-  Dataset: ["Required:", "draft", "main_dr_id", "xAxis", "yAxis"],
+  Dataset: ["Required:", "name", "query", "main_dr_id"],
   DataRequest: ["Required:", "query"],
   Chart: ["Required:", "draft", "type"],
-  ChartDatasetConfig: ["Required:", "chart_id", "dataset_id"]
+  ChartDatasetConfig: ["Required:", "chart_id", "dataset_id", "xAxis", "yAxis"]
 };
 
 function validateRules() {

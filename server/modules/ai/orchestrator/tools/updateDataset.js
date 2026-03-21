@@ -3,8 +3,7 @@ const db = require("../../../../models/models");
 async function updateDataset(payload) {
   const {
     dataset_id, name, team_id,
-    xAxis, yAxis, yAxisOperation, dateField, dateFormat,
-    query, conditions, configuration, variables, transform
+    query, configuration, variables, transform
   } = payload;
 
   if (!dataset_id) {
@@ -29,13 +28,7 @@ async function updateDataset(payload) {
 
     // Update dataset fields (only if provided)
     const datasetUpdates = {};
-    if (name !== undefined) datasetUpdates.legend = name;
-    if (xAxis !== undefined) datasetUpdates.xAxis = xAxis;
-    if (yAxis !== undefined) datasetUpdates.yAxis = yAxis;
-    if (yAxisOperation !== undefined) datasetUpdates.yAxisOperation = yAxisOperation;
-    if (dateField !== undefined) datasetUpdates.dateField = dateField;
-    if (dateFormat !== undefined) datasetUpdates.dateFormat = dateFormat;
-    if (conditions !== undefined) datasetUpdates.conditions = conditions;
+    if (name !== undefined) datasetUpdates.name = name;
 
     if (Object.keys(datasetUpdates).length > 0) {
       await db.Dataset.update(datasetUpdates, { where: { id: dataset_id } });
@@ -50,7 +43,6 @@ async function updateDataset(payload) {
     // Update data request fields (only if provided)
     const drUpdates = {};
     if (query !== undefined) drUpdates.query = query;
-    if (conditions !== undefined) drUpdates.conditions = conditions;
     if (configuration !== undefined) drUpdates.configuration = configuration;
     if (variables !== undefined) drUpdates.variables = variables;
     if (transform !== undefined) drUpdates.transform = transform;
@@ -70,7 +62,7 @@ async function updateDataset(payload) {
     return {
       dataset_id: updatedDataset.id,
       data_request_id: updatedDataset.main_dr_id,
-      name: updatedDataset.legend,
+      name: updatedDataset.name || updatedDataset.legend,
       dataset_url: `${global.clientUrl}/${team_id}/dataset/${updatedDataset.id}`,
       updated_fields: {
         dataset: Object.keys(datasetUpdates),
