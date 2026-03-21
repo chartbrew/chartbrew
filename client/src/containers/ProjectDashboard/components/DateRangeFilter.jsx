@@ -10,7 +10,7 @@ function DateRangeFilter({
   endDate,
   onChange,
   className = "",
-  variant = "bordered",
+  variant = "",
   size = "sm",
   isEdit = false,
 }) {
@@ -122,7 +122,8 @@ function DateRangeFilter({
 
   return (
     <DateRangePicker
-      variant={variant}
+      variant="faded"
+      color="primary"
       visibleMonths={2}
       value={currentValue}
       calendarProps={{
@@ -130,7 +131,6 @@ function DateRangeFilter({
         autoFocus: true,
       }}
       onChange={_handleDateRangeChange}
-      color="primary"
       aria-label="Select a date range"
       size={size}
       className={className}

@@ -307,7 +307,6 @@ function ChartSettings({ chart, onChange }) {
             size="sm"
             selectedKeys={[chart.timeInterval]}
             onSelectionChange={(keys) => onChange({ timeInterval: keys.currentKey })}
-            variant="bordered"
             renderValue={() => (
               <Text>{timeIntervalOptions.find((option) => option.value === chart.timeInterval).text}</Text>
             )}
@@ -434,7 +433,6 @@ function ChartSettings({ chart, onChange }) {
                 type="number"
                 value={max}
                 onChange={(e) => setMax(e.target.value)}
-                variant="bordered"
                 fullWidth
               />
               <div className="flex flex-row gap-1">
@@ -471,7 +469,6 @@ function ChartSettings({ chart, onChange }) {
                 type="number"
                 value={min}
                 onChange={(e) => setMin(e.target.value)}
-                variant="bordered"
                 fullWidth
               />
               <div className="flex flex-row gap-1">
@@ -510,7 +507,6 @@ function ChartSettings({ chart, onChange }) {
               label="Default rows per page"
               selectionMode="single"
               placeholder="Default rows per page"
-              variant="bordered"
               selectedKeys={[`${chart.defaultRowsPerPage}`]}
               onSelectionChange={(keys) => onChange({ defaultRowsPerPage: parseInt(keys.currentKey, 10) })}
             >
@@ -537,7 +533,6 @@ function ChartSettings({ chart, onChange }) {
             size="sm"
             selectedKeys={[ticksSelection]}
             onSelectionChange={(keys) => _onChangeTicks(keys.currentKey)}
-            variant="bordered"
             renderValue={() => (
               <Text>{xLabelOptions.find((option) => option.value === ticksSelection).text}</Text>
             )}
@@ -601,7 +596,6 @@ function ChartSettings({ chart, onChange }) {
                 initialValue={chart.dateVarsFormat}
                 value={datesFormat}
                 onChange={(e) => setDatesFormat(e.target.value)}
-                variant="bordered"
                 fullWidth
                 size="sm"
               />
