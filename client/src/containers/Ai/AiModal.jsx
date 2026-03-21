@@ -18,6 +18,7 @@ import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import isMac from "../../modules/isMac";
 import socketClient from "../../modules/socketClient";
+import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -104,7 +105,7 @@ function AiModal({ isOpen, onClose }) {
       case "connection":
         return `Connection: ${entity.name} (${entity.type})`;
       case "dataset":
-        return `Dataset: ${entity.legend || entity.name}`;
+        return `Dataset: ${getDatasetDisplayName(entity)}`;
       default:
         return entity.name;
     }
@@ -258,7 +259,7 @@ function AiModal({ isOpen, onClose }) {
       }
       if (datasetId && selectedContext?.multiSelect?.find(e => e.id === datasetId) === undefined) {
         const dataset = datasets.find(d => d.id === datasetId);
-        const datasetLabel = `Dataset: ${dataset?.legend || dataset?.name}`;
+        const datasetLabel = `Dataset: ${getDatasetDisplayName(dataset)}`;
         setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
       }
     }

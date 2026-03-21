@@ -4,17 +4,14 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
   Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
-  PopoverTrigger, ScrollShadow, Spacer, Spinner, Tooltip, commonColors,
+  PopoverTrigger, ScrollShadow, Spacer, Spinner, Tab, Tabs, Tooltip, commonColors,
 } from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";
-import { Link as LinkNext } from "react-router";
 import {
-  LuArrowDown01, LuArrowDown10, LuCheck, LuCircleCheck, LuInfo,
-  LuListFilter,
+  LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
   LuPlug,
-  LuSettings,
   LuWandSparkles, LuCircleX,
   LuVariable,
 } from "react-icons/lu";
@@ -32,6 +29,8 @@ import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import connectionImages from "../../../config/connectionImages";
 import { useTheme } from "../../../modules/ThemeContext";
+import ChartDatasetDataSetup from "./ChartDatasetDataSetup";
+import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 
 function ChartDatasetConfig(props) {
   const { chartId, cdcId, dataRequests, onRemove } = props;
@@ -45,10 +44,15 @@ function ChartDatasetConfig(props) {
   const [editConfirmation, setEditConfirmation] = useState(false);
   const [variables, setVariables] = useState([]);
   const [variableValues, setVariableValues] = useState({});
+  const [activeTab, setActiveTab] = useState("data-setup");
 
   const cdc = useSelector((state) => selectCdc(state, chartId, cdcId));
-  const drs = useSelector((state) => cdc?.dataset_id ? state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))?.DataRequests : []);
-
+  const dataset = useSelector((state) => (
+    cdc?.dataset_id
+      ? state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))
+      : null
+  ));
+  const drs = dataset?.DataRequests || [];
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -57,32 +61,21 @@ function ChartDatasetConfig(props) {
   const params = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  // removed initVars; variables are initialized per CDC change
 
   useEffect(() => {
-    if (cdc?.formula) {
-      setFormula(cdc.formula);
-    }
-    if (cdc?.legend) {
-      setLegend(cdc.legend);
-    }
-    if (cdc?.maxRecords) {
-      setMaxRecords(cdc.maxRecords);
-    }
-    if (cdc?.goal) {
-      setGoal(cdc.goal);
-    }
-  }, [cdc]);
+    setFormula(cdc?.formula || "");
+    setLegend(cdc?.legend || getDatasetDisplayName(dataset));
+    setMaxRecords(cdc?.maxRecords || "");
+    setGoal(cdc?.goal || "");
+  }, [cdc, dataset]);
 
   useEffect(() => {
-    // Build variables list from the dataset requests, but scope values per CDC
     let tempVariables = [];
     if (drs && Array.isArray(drs)) {
       const variableByName = {};
       drs.forEach((dr) => {
         if (dr?.VariableBindings && Array.isArray(dr.VariableBindings)) {
           dr.VariableBindings.forEach((vb) => {
-            // De-duplicate variables by name, keep the first occurrence
             if (vb?.name && !variableByName[vb.name]) {
               variableByName[vb.name] = vb;
             }
@@ -93,7 +86,6 @@ function ChartDatasetConfig(props) {
     }
     setVariables(tempVariables);
 
-    // Load existing variable values from CDC configuration
     const existingValues = {};
     if (cdc?.configuration?.variables) {
       cdc.configuration.variables.forEach((configVar) => {
@@ -101,7 +93,6 @@ function ChartDatasetConfig(props) {
       });
     }
 
-    // Initialize variable values with existing overrides or default values
     const initialValues = {};
     tempVariables.forEach((variable) => {
       initialValues[variable.name] = existingValues[variable.name] || variable.default_value || "";
@@ -112,12 +103,11 @@ function ChartDatasetConfig(props) {
 
   useEffect(() => {
     let tempDataItems;
-    if (cdc?.id && chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
-      // find the dataset in the chart data
+    if (cdc?.id && chart?.chartData?.data?.datasets) {
       let foundIndex;
       for (let i = 0; i < chart.ChartDatasetConfigs.length; i++) {
-        const d = chart.ChartDatasetConfigs[i];
-        if (d.id === cdc.id) {
+        const config = chart.ChartDatasetConfigs[i];
+        if (config.id === cdc.id) {
           foundIndex = i;
           break;
         }
@@ -127,7 +117,7 @@ function ChartDatasetConfig(props) {
         tempDataItems = chart.chartData.data.datasets[foundIndex];
         tempDataItems = {
           ...tempDataItems,
-          labels: chart.chartData.data && chart.chartData.data.labels
+          labels: chart.chartData.data.labels,
         };
 
         setDataItems(tempDataItems);
@@ -136,17 +126,16 @@ function ChartDatasetConfig(props) {
   }, [chart, cdc]);
 
   useEffect(() => {
-    // extract the table fields if table view is selected
-    if (cdc?.id && chart.type === "table" && chart.chartData && chart.chartData[cdc.legend]) {
+    if (cdc?.id && chart?.type === "table" && chart?.chartData && chart.chartData[cdc.legend]) {
       const datasetData = chart.chartData[cdc.legend];
-      const flatColumns = flatMap(datasetData.columns, (f) => {
-        if (f.columns) return [f, ...f.columns];
-        return f;
+      const flatColumns = flatMap(datasetData.columns, (field) => {
+        if (field.columns) return [field, ...field.columns];
+        return field;
       });
 
       setTableFields(flatColumns);
     }
-  }, [chart.chartData]);
+  }, [chart?.chartData, chart?.type, cdc?.id, cdc?.legend]);
 
   const _onRunQuery = (skipParsing = true) => {
     dispatch(runQuery({
@@ -155,34 +144,7 @@ function ChartDatasetConfig(props) {
       cdc_id: cdc.id,
       noSource: true,
       skipParsing: chart?.type === "matrix" ? false : skipParsing,
-      getCache: true
-    }));
-  };
-
-  const _onAddFormula = () => {
-    setFormula("{val}");
-  };
-
-  const _onExampleFormula = () => {
-    setFormula("${val / 100}");
-    _onUpdateCdc({ formula: "${val / 100}" });
-  };
-
-  const _onRemoveFormula = () => {
-    setFormula("");
-    _onUpdateCdc({ formula: "" });
-  };
-
-  const _onApplyFormula = () => {
-    _onUpdateCdc({ formula });
-  };
-
-  const _onSaveLegend = () => {
-    dispatch(updateCdc({
-      project_id: params.projectId,
-      chart_id: chartId,
-      cdc_id: cdc.id,
-      data: { legend },
+      getCache: true,
     }));
   };
 
@@ -190,7 +152,21 @@ function ChartDatasetConfig(props) {
     let skipParsing = true;
 
     Object.keys(data).forEach((key) => {
-      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal" || key === "configuration" || key === "variables") {
+      if (
+        key === "xAxis"
+        || key === "xAxisOperation"
+        || key === "yAxis"
+        || key === "yAxisOperation"
+        || key === "dateField"
+        || key === "dateFormat"
+        || key === "conditions"
+        || key === "formula"
+        || key === "sort"
+        || key === "maxRecords"
+        || key === "goal"
+        || key === "configuration"
+        || key === "variables"
+      ) {
         skipParsing = false;
       }
     });
@@ -204,6 +180,17 @@ function ChartDatasetConfig(props) {
       .then(() => {
         _onRunQuery(skipParsing);
       });
+  };
+
+  const _onSaveLegend = () => {
+    dispatch(updateCdc({
+      project_id: params.projectId,
+      chart_id: chartId,
+      cdc_id: cdc.id,
+      data: { legend },
+    })).then(() => {
+      _onRunQuery(true);
+    });
   };
 
   const _getDatasetColor = (datasetColor) => ({
@@ -239,15 +226,13 @@ function ChartDatasetConfig(props) {
         newFillColor = [...newFillColor];
       }
 
-      // Replace any null/undefined values with colors
-      newFillColor = newFillColor.map((color, i) => {
+      newFillColor = newFillColor.map((color, index) => {
         if (!color) {
-          return Object.values(chartColors)[i % Object.values(chartColors).length].hex;
+          return Object.values(chartColors)[index % Object.values(chartColors).length].hex;
         }
         return color;
       });
 
-      // Add additional colors if needed
       if (dataItems?.labels && newFillColor.length < dataItems.labels.length) {
         for (let i = newFillColor.length; i < dataItems.labels.length; i++) {
           newFillColor.push(Object.values(chartColors)[i % Object.values(chartColors).length].hex);
@@ -256,7 +241,7 @@ function ChartDatasetConfig(props) {
 
       _onUpdateCdc({ multiFill: true, fillColor: newFillColor });
     } else {
-      const firstValidColor = cdc.fillColor.find(c => c) || Object.values(chartColors)[0].hex;
+      const firstValidColor = cdc.fillColor.find((color) => color) || Object.values(chartColors)[0].hex;
       _onUpdateCdc({ multiFill: false, fillColor: firstValidColor });
     }
   };
@@ -271,7 +256,7 @@ function ChartDatasetConfig(props) {
     }));
 
     await dispatch(runQuery({
-      project_id: params.projectId,
+      project_id: chart.project_id,
       chart_id: chartId,
       noSource: false,
       skipParsing: false,
@@ -283,34 +268,46 @@ function ChartDatasetConfig(props) {
     _onUpdateCdc(data);
   };
 
+  const _onAddFormula = () => {
+    setFormula("{val}");
+  };
+
+  const _onExampleFormula = () => {
+    setFormula("${val / 100}");
+    _onUpdateCdc({ formula: "${val / 100}" });
+  };
+
+  const _onRemoveFormula = () => {
+    setFormula("");
+    _onUpdateCdc({ formula: "" });
+  };
+
+  const _onApplyFormula = () => {
+    _onUpdateCdc({ formula });
+  };
+
   const _onSaveVariableValue = (variableName, value) => {
-    // Get current configuration or initialize empty object
     const currentConfig = cdc.configuration || {};
     const currentVariables = currentConfig.variables || [];
-    
-    // Update or add the variable value
     const updatedVariables = [...currentVariables];
-    const existingIndex = updatedVariables.findIndex(v => v.name === variableName);
-    
+    const existingIndex = updatedVariables.findIndex((variable) => variable.name === variableName);
+
     if (existingIndex >= 0) {
       updatedVariables[existingIndex] = { name: variableName, value };
     } else {
       updatedVariables.push({ name: variableName, value });
     }
-    
-    // Update the configuration
+
     const updatedConfig = {
       ...currentConfig,
-      variables: updatedVariables
+      variables: updatedVariables,
     };
-    
-    // Save to CDC
+
     _onUpdateCdc({ configuration: updatedConfig });
-    
-    // Update local state
-    setVariableValues(prev => ({
+
+    setVariableValues((prev) => ({
       ...prev,
-      [variableName]: value
+      [variableName]: value,
     }));
   };
 
@@ -319,8 +316,7 @@ function ChartDatasetConfig(props) {
   };
 
   const _getVariableOriginalValue = (variable) => {
-    // Check if there's an override in CDC configuration
-    const overrideValue = cdc.configuration?.variables?.find(v => v.name === variable.name)?.value;
+    const overrideValue = cdc.configuration?.variables?.find((item) => item.name === variable.name)?.value;
     return overrideValue !== undefined ? overrideValue : (variable.default_value || "");
   };
 
@@ -331,28 +327,26 @@ function ChartDatasetConfig(props) {
   };
 
   const _onClearVariableOverride = (variableName) => {
-    // Get current configuration
     const currentConfig = cdc.configuration || {};
     const currentVariables = currentConfig.variables || [];
-    
-    // Remove the variable override
-    const updatedVariables = currentVariables.filter(v => v.name !== variableName);
-    
-    // Update the configuration
+    const updatedVariables = currentVariables.filter((variable) => variable.name !== variableName);
+
     const updatedConfig = {
       ...currentConfig,
-      variables: updatedVariables
+      variables: updatedVariables,
     };
-    
-    // Save to CDC
+
     _onUpdateCdc({ configuration: updatedConfig });
-    
-    // Reset local state to default value
-    const variable = variables.find(v => v.name === variableName);
-    setVariableValues(prev => ({
+
+    const variable = variables.find((item) => item.name === variableName);
+    setVariableValues((prev) => ({
       ...prev,
-      [variableName]: variable?.default_value || ""
+      [variableName]: variable?.default_value || "",
     }));
+  };
+
+  const _onEditDataset = () => {
+    setEditConfirmation(true);
   };
 
   if (!cdc?.id) {
@@ -363,416 +357,370 @@ function ChartDatasetConfig(props) {
     );
   }
 
+  const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled series";
+
   return (
     <div>
-      <Row align="center">
-        <Input
-          placeholder="Enter a name for your dataset"
-          label="Dataset name"
-          value={legend}
-          onChange={(e) => setLegend(e.target.value)}
-          variant="bordered"
-        />
-        {legend && legend !== cdc.legend && (
-          <>
-            <Spacer x={2} />
-            <Button
-              isIconOnly
-              color="primary"
-              isLoading={false}
-              size="sm"
-              onPress={_onSaveLegend}
-            >
-              <LuCheck />
-            </Button>
-          </>
-        )}
-      </Row>
+      <Tabs
+        selectedKey={activeTab}
+        onSelectionChange={(key) => setActiveTab(key)}
+        aria-label="Series configuration"
+        fullWidth
+      >
+        <Tab key="data-setup" title="Data setup">
+          <Spacer y={4} />
+          <ChartDatasetDataSetup
+            cdc={cdc}
+            dataset={dataset}
+            chart={chart}
+            teamId={team?.id}
+            legend={legend}
+            onSaveLegend={{
+              onChange: (event) => setLegend(event.target.value),
+              onSave: _onSaveLegend,
+            }}
+            onUpdateCdc={_onUpdateCdc}
+            onEditDataset={_onEditDataset}
+          />
+        </Tab>
 
-      {canAccess("teamAdmin", user.id, team.TeamRoles) && (
-        <>
-          <Spacer y={2} />
-          <div className="flex flex-row justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              endContent={<LuSettings size={18} />}
-              onPress={() => setEditConfirmation(true)}
-            >
-              Edit dataset
-            </Button>
+        <Tab key="display" title="Display">
+          <Spacer y={4} />
 
-            <div className="flex flex-row gap-2 items-center">
-              {dataRequests?.map((dr) => (
-                <Tooltip content={dr?.Connection?.name} key={dr.id}>
-                  <Avatar
-                    key={dr.id}
-                    src={connectionImages(isDark)[dr?.Connection?.subType]}
-                    isBordered
-                    size="sm"
-                  />
-                </Tooltip>
-              ))}
-              <div><LuPlug /></div>
-            </div>
-          </div>
-        </>
-      )}
+          {chart.type !== "table" && (
+            <>
+              <div className="chart-cdc-colors">
+                <div className="font-bold">{"Series colors"}</div>
+                <Spacer y={2} />
 
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={2} />
-
-      {chart.type !== "table" && (
-        <>
-          <div className="chart-cdc-colors">
-            <div className="font-bold">{"Dataset colors"}</div>
-            <Spacer y={2} />
-
-            <div className="flex flex-row justify-between items-center">
-              <div className="text-sm">Primary color</div>
-              <div>
-                <Popover>
-                  <PopoverTrigger>
-                    <Chip
-                      style={_getDatasetColor(cdc.datasetColor)}
-                      size="lg"
-                      radius="sm"
-                      className="pl-[100px]"
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="border-none bg-transparent shadow-none">
-                    <TwitterPicker
-                      triangle={"hide"}
-                      color={cdc.datasetColor}
-                      colors={Object.values(chartColors).map((c) => c.hex)}
-                      onChangeComplete={_onChangeDatasetColor}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <Spacer y={2} />
-
-            {chart.type !== "matrix" && (
-              <Row align={"center"} justify={"space-between"}>
-                <Row align={"center"}>
-                  <Checkbox
-                    isSelected={cdc.fill}
-                    onChange={() => _onUpdateCdc({ fill: !cdc.fill, fillColor: ["transparent"] })}
-                    isDisabled={cdc.multiFill}
-                    size="sm"
-                  >
-                    Fill Color
-                  </Checkbox>
-                </Row>
-                {cdc.fill && !cdc.multiFill && (
+                <div className="flex flex-row justify-between items-center">
+                  <div className="text-sm">Primary color</div>
                   <div>
                     <Popover>
                       <PopoverTrigger>
                         <Chip
-                          style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
+                          style={_getDatasetColor(cdc.datasetColor)}
                           size="lg"
                           radius="sm"
                           className="pl-[100px]"
                         />
                       </PopoverTrigger>
                       <PopoverContent className="border-none bg-transparent shadow-none">
-                        <SketchPicker
-                          color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
-                          presetColors={Object.values(chartColors).map((c) => c.hex)}
-                          onChangeComplete={(color) => _onChangeFillColor(color)}
+                        <TwitterPicker
+                          triangle={"hide"}
+                          color={cdc.datasetColor}
+                          colors={Object.values(chartColors).map((color) => color.hex)}
+                          onChangeComplete={_onChangeDatasetColor}
                         />
                       </PopoverContent>
                     </Popover>
                   </div>
-                )}
-              </Row>
-            )}
-            <Spacer y={2} />
-
-            {chart.type !== "line" && chart.type !== "matrix" && (
-              <Row>
-                <Checkbox
-                  isSelected={cdc.multiFill}
-                  onChange={() => _onChangeMultiFill()}
-                  size="sm"
-                >
-                  Multiple colors
-                </Checkbox>
-              </Row>
-            )}
-
-            {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
-              <>
+                </div>
                 <Spacer y={2} />
-                <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
-                  {dataItems?.labels?.map((label, index) => (
-                    <Row key={label} justify={"space-between"}>
-                      <Text size="sm">{label}</Text>
 
+                {chart.type !== "matrix" && (
+                  <Row align={"center"} justify={"space-between"}>
+                    <Row align={"center"}>
+                      <Checkbox
+                        isSelected={cdc.fill}
+                        onChange={() => _onUpdateCdc({ fill: !cdc.fill, fillColor: ["transparent"] })}
+                        isDisabled={cdc.multiFill}
+                        size="sm"
+                      >
+                        Fill Color
+                      </Checkbox>
+                    </Row>
+                    {cdc.fill && !cdc.multiFill && (
                       <div>
                         <Popover>
                           <PopoverTrigger>
                             <Chip
-                              style={_getDatasetColor(cdc.fillColor[index] || "white")}
+                              style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
+                              size="lg"
                               radius="sm"
+                              className="pl-[100px]"
                             />
                           </PopoverTrigger>
                           <PopoverContent className="border-none bg-transparent shadow-none">
-                            <TwitterPicker
-                              triangle={"hide"}
-                              color={cdc.fillColor[index] || "white"}
-                              colors={Object.values(chartColors).map((c) => c.hex)}
-                              onChangeComplete={(color) => _onChangeFillColor(color, index)}
+                            <SketchPicker
+                              color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
+                              presetColors={Object.values(chartColors).map((color) => color.hex)}
+                              onChangeComplete={(color) => _onChangeFillColor(color)}
                             />
                           </PopoverContent>
                         </Popover>
                       </div>
-                    </Row>
-                  ))}
-                </ScrollShadow>
-                <Spacer y={2} />
-              </>
-            )}
-          </div>
-
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-        </>
-      )}
-
-      {chart.type !== "table" && chart.type !== "matrix" && (
-        <>
-          <Row>
-            <Text b>{"Dataset settings"}</Text>
-          </Row>
-          <Spacer y={1} />
-          <Row align="center" justify={"space-between"}>
-            <div className="text-sm">Sort records</div>
-            <Row align="center">
-              <Tooltip content="Sort the dataset in ascending order">
-                <Button
-                  color={cdc.sort === "asc" ? "secondary" : "default"}
-                  variant={cdc.sort !== "asc" ? "bordered" : "solid"}
-                  onPress={() => {
-                    if (cdc.sort === "asc") {
-                      _onUpdateCdc({ sort: "" });
-                    } else {
-                      _onUpdateCdc({ sort: "asc" });
-                    }
-                  }}
-                  isIconOnly
-                >
-                  <LuArrowDown01 />
-                </Button>
-              </Tooltip>
-              <Spacer x={1} />
-              <Tooltip content="Sort the dataset in descending order">
-                <Button
-                  color={cdc.sort === "desc" ? "secondary" : "default"}
-                  variant={cdc.sort !== "desc" ? "bordered" : "solid"}
-                  onPress={() => {
-                    if (cdc.sort === "desc") {
-                      _onUpdateCdc({ sort: "" });
-                    } else {
-                      _onUpdateCdc({ sort: "desc" });
-                    }
-                  }}
-                  isIconOnly
-                >
-                  <LuArrowDown10 />
-                </Button>
-              </Tooltip>
-              {cdc.sort && (
-                <>
-                  <Spacer x={1} />
-                  <Tooltip content="Clear sorting">
-                    <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
-                      <LuCircleX className="text-danger" />
-                    </Link>
-                  </Tooltip>
-                </>
-              )}
-            </Row>
-          </Row>
-          <Spacer y={2} />
-
-          <Row align={"center"} justify={"space-between"}>
-            <div className="text-sm">Max records</div>
-            <Row align="center">
-              <Input
-                labelPlacement="outside"
-                placeholder="Max records"
-                value={maxRecords}
-                onChange={(e) => setMaxRecords(e.target.value)}
-                variant="bordered"
-                type="number"
-                min={1}
-              />
-              {maxRecords && (
-                <>
-                  <Spacer x={1} />
-                    {maxRecords !== cdc.maxRecords && (
-                      <>
-                        <Tooltip content="Save">
-                          <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords: maxRecords })}>
-                            <LuCircleCheck className="text-success" />
-                          </Link>
-                        </Tooltip>
-                        <Spacer x={1} />
-                      </>
                     )}
-                    <Tooltip content="Clear limit">
-                      <Link
-                        className="text-danger"
-                        onPress={() => {
-                          _onUpdateCdc({ maxRecords: null });
-                          setMaxRecords("");
-                        }}
-                      >
-                        <LuCircleX className="text-danger" />
-                      </Link>
-                    </Tooltip>
-                </>
-              )}
-            </Row>
-          </Row>
+                  </Row>
+                )}
+                <Spacer y={2} />
 
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-        </>
-      )}
+                {chart.type !== "line" && chart.type !== "matrix" && (
+                  <Row>
+                    <Checkbox
+                      isSelected={cdc.multiFill}
+                      onChange={() => _onChangeMultiFill()}
+                      size="sm"
+                    >
+                      Multiple colors
+                    </Checkbox>
+                  </Row>
+                )}
 
-      {chart.type === "table" && (
-        <TableConfiguration
-          dataset={cdc}
-          chartData={chart.chartData}
-          tableFields={tableFields}
-          onUpdate={(data) => _onUpdateTableConfig(data)}
-          loading={false}
-        />
-      )}
+                {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
+                  <>
+                    <Spacer y={2} />
+                    <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
+                      {dataItems?.labels?.map((label, index) => (
+                        <Row key={label} justify={"space-between"}>
+                          <Text size="sm">{label}</Text>
+                          <div>
+                            <Popover>
+                              <PopoverTrigger>
+                                <Chip
+                                  style={_getDatasetColor(cdc.fillColor[index] || "white")}
+                                  radius="sm"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className="border-none bg-transparent shadow-none">
+                                <TwitterPicker
+                                  triangle={"hide"}
+                                  color={cdc.fillColor[index] || "white"}
+                                  colors={Object.values(chartColors).map((color) => color.hex)}
+                                  onChangeComplete={(color) => _onChangeFillColor(color, index)}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </Row>
+                      ))}
+                    </ScrollShadow>
+                    <Spacer y={2} />
+                  </>
+                )}
+              </div>
 
-      {chart.type !== "table" && (
-        <>
-          <div>
-            {!formula && (
-              <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
-                <TbMathFunctionY size={24} />
-                <Spacer x={1} />
-                <div className="text-sm text-foreground">Apply formula on metrics</div>
-              </Link>
-            )}
-            {formula && (
-              <Row align={"center"} justify={"space-between"}>
-                <div className="flex flex-col">
-                  <Popover>
-                    <PopoverTrigger>
-                      <div className="flex flex-row gap-1 items-center">
-                        <div className="text-sm">
-                          {"Metric formula"}
-                        </div>
-                        <LuInfo size={18} />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <FormulaTips />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex flex-row gap-3 items-center w-full">
-                    <Input
-                      labelPlacement="outside"
-                      placeholder="Enter your formula here: {val}"
-                      value={formula}
-                      onChange={(e) => setFormula(e.target.value)}
-                      variant="bordered"
+              <Spacer y={4} />
+              <Divider />
+              <Spacer y={4} />
+            </>
+          )}
+
+          {chart.type !== "table" && chart.type !== "matrix" && (
+            <>
+              <Row>
+                <Text b>{"Series settings"}</Text>
+              </Row>
+              <Spacer y={1} />
+              <div className="flex flex-col gap-2">
+                <div className="text-sm">Sort records</div>
+                <div className="flex flex-row gap-2">
+                  <Tooltip content="Sort the dataset in ascending order">
+                    <Button
+                      color={cdc.sort === "asc" ? "secondary" : "default"}
+                      variant="flat"
+                      onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
+                      startContent={<LuArrowDown01 />}
                       fullWidth
-                    />
-                    {formula !== cdc.formula && (
-                      <Tooltip
-                        content={"Apply the formula"}
-                      >
-                        <Link onPress={_onApplyFormula}>
-                          <LuCircleCheck className={"text-success"} />
+                      size="sm"
+                    >
+                      Asc
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Sort the dataset in descending order">
+                    <Button
+                      color={cdc.sort === "desc" ? "secondary" : "default"}
+                      variant="flat"
+                      onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
+                      startContent={<LuArrowDown10 />}
+                      fullWidth
+                      size="sm"
+                    >
+                      Desc
+                    </Button>
+                  </Tooltip>
+                  {cdc.sort && (
+                    <>
+                      <Tooltip content="Clear sorting">
+                        <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
+                          <LuCircleX className="text-danger" />
                         </Link>
                       </Tooltip>
-                    )}
-                    <Tooltip content="Remove formula">
-                      <Link onPress={_onRemoveFormula}>
-                        <LuCircleX className="text-danger" />
-                      </Link>
-                    </Tooltip>
-                    <Tooltip content="Click for an example">
-                      <Link onPress={_onExampleFormula}>
-                        <LuWandSparkles className="text-primary" />
-                      </Link>
-                    </Tooltip>
-                  </div>
-                </div>
-              </Row>
-            )}
-          </div>
-
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-
-          <div>
-            {!goal && chart.type !== "table" && (
-              <div>
-                <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
-                  <TbProgressCheck size={24} />
-                  <Spacer x={1} />
-                  <div className="text-sm text-foreground">Set a goal</div>
-                </Link>
-              </div>
-            )}
-            {goal && chart.type !== "table" && (
-              <Row align={"center"} justify={"space-between"}>
-                <Row align="center">
-                  <div className="text-sm text-foreground">{"Goal"}</div>
-                  <Spacer x={1} />
-                  <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                    <div><LuInfo size={18} /></div>
-                  </Tooltip>
-                </Row>
-                <Row align="center" className={"gap-2"}>
-                  <Input
-                    placeholder="Enter your goal here"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    variant="bordered"
-                    labelPlacement="outside"
-                  />
-                  {goal !== cdc.goal && (
-                    <Tooltip
-                      content={"Save goal"}
-                    >
-                      <Link onPress={() => _onUpdateCdc({ goal })}>
-                        <LuCircleCheck className={"text-success"} />
-                      </Link>
-                    </Tooltip>
+                    </>
                   )}
-                  <Tooltip content="Remove goal">
-                    <Link onPress={() => {
-                      _onUpdateCdc({ goal: null });
-                      setGoal("");
-                    }}>
-                      <LuCircleX className="text-danger" />
-                    </Link>
-                  </Tooltip>
-                </Row>
-              </Row>
-            )}
-          </div>
+                </div>
+              </div>
+              <Spacer y={4} />
 
-          <Spacer y={4} />
-          <Divider />
+              <div className="flex flex-col gap-2">
+                <div className="text-sm">Max records</div>
+                <div className="flex flex-row gap-2">
+                  <Input
+                    labelPlacement="outside"
+                    placeholder="Max records"
+                    value={maxRecords}
+                    onChange={(event) => setMaxRecords(event.target.value)}
+                    type="number"
+                    min={1}
+                    fullWidth
+                    description="Limit the number of records shown"
+                  />
+                  {maxRecords && (
+                    <>
+                      {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
+                        <>
+                          <Tooltip content="Save">
+                            <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
+                              <LuCircleCheck className="text-success" />
+                            </Link>
+                          </Tooltip>
+                        </>
+                      )}
+                      <Tooltip content="Clear limit">
+                        <Link
+                          className="text-danger"
+                          onPress={() => {
+                            _onUpdateCdc({ maxRecords: null });
+                            setMaxRecords("");
+                          }}
+                        >
+                          <LuCircleX className="text-danger" />
+                        </Link>
+                      </Tooltip>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <Spacer y={4} />
+              <Divider />
+              <Spacer y={4} />
+            </>
+          )}
+
+          {chart.type === "table" && (
+            <TableConfiguration
+              dataset={cdc}
+              chartData={chart.chartData}
+              tableFields={tableFields}
+              onUpdate={_onUpdateTableConfig}
+              loading={false}
+            />
+          )}
+
+          {chart.type !== "table" && (
+            <>
+              <div>
+                {!formula && (
+                  <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
+                    <TbMathFunctionY size={24} />
+                    <Spacer x={1} />
+                    <div className="text-sm text-foreground">Apply formula on metrics</div>
+                  </Link>
+                )}
+                {formula && (
+                  <Row align={"center"} justify={"space-between"}>
+                    <div className="flex flex-col">
+                      <Popover>
+                        <PopoverTrigger>
+                          <div className="flex flex-row gap-1 items-center">
+                            <div className="text-sm">{"Metric formula"}</div>
+                            <LuInfo size={18} />
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <FormulaTips />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex flex-row gap-3 items-center w-full">
+                        <Input
+                          labelPlacement="outside"
+                          placeholder="Enter your formula here: {val}"
+                          value={formula}
+                          onChange={(event) => setFormula(event.target.value)}
+                          variant="bordered"
+                          fullWidth
+                        />
+                        {formula !== cdc.formula && (
+                          <Tooltip content={"Apply the formula"}>
+                            <Link onPress={_onApplyFormula}>
+                              <LuCircleCheck className={"text-success"} />
+                            </Link>
+                          </Tooltip>
+                        )}
+                        <Tooltip content="Remove formula">
+                          <Link onPress={_onRemoveFormula}>
+                            <LuCircleX className="text-danger" />
+                          </Link>
+                        </Tooltip>
+                        <Tooltip content="Click for an example">
+                          <Link onPress={_onExampleFormula}>
+                            <LuWandSparkles className="text-primary" />
+                          </Link>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </Row>
+                )}
+              </div>
+
+              <Spacer y={4} />
+              <Divider />
+              <Spacer y={4} />
+
+              <div>
+                {!goal && (
+                  <div>
+                    <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
+                      <TbProgressCheck size={24} />
+                      <Spacer x={1} />
+                      <div className="text-sm text-foreground">Set a goal</div>
+                    </Link>
+                  </div>
+                )}
+                {goal && (
+                  <Row align={"center"} justify={"space-between"}>
+                    <Row align="center">
+                      <div className="text-sm text-foreground">{"Goal"}</div>
+                      <Spacer x={1} />
+                      <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
+                        <div><LuInfo size={18} /></div>
+                      </Tooltip>
+                    </Row>
+                    <Row align="center" className={"gap-2"}>
+                      <Input
+                        placeholder="Enter your goal here"
+                        value={goal}
+                        onChange={(event) => setGoal(event.target.value)}
+                        variant="bordered"
+                        labelPlacement="outside"
+                      />
+                      {`${goal}` !== `${cdc.goal || ""}` && (
+                        <Tooltip content={"Save goal"}>
+                          <Link onPress={() => _onUpdateCdc({ goal })}>
+                            <LuCircleCheck className={"text-success"} />
+                          </Link>
+                        </Tooltip>
+                      )}
+                      <Tooltip content="Remove goal">
+                        <Link onPress={() => {
+                          _onUpdateCdc({ goal: null });
+                          setGoal("");
+                        }}>
+                          <LuCircleX className="text-danger" />
+                        </Link>
+                      </Tooltip>
+                    </Row>
+                  </Row>
+                )}
+              </div>
+            </>
+          )}
+        </Tab>
+
+        <Tab key="automation" title="Automation">
           <Spacer y={4} />
 
           <Row>
@@ -792,36 +740,24 @@ function ChartDatasetConfig(props) {
           <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
-          
-          <div>
-            <LinkNext to={`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}&editFilters=true`} className="flex items-center cursor-pointer chart-cdc-goal">
-              <LuListFilter size={24} className="text-primary" />
-              <Spacer x={1} />
-              <div className="text-sm text-foreground">Edit filters</div>
-            </LinkNext>
-          </div>
-
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
 
           <div className="flex flex-col gap-2">
             <div className="font-bold">{"Variables"}</div>
             {variables.map((variable) => (
               <div key={variable.id} className="flex flex-col gap-1">
                 <Input
-                  startContent={
+                  startContent={(
                     <div className="flex flex-row gap-1 items-center">
                       <LuVariable size={18} />
                       <div className="text-sm text-gray-400">{variable.name}</div>
                     </div>
-                  }
+                  )}
                   placeholder={`Default: ${variable.default_value || "No default"}`}
                   value={_getVariableCurrentValue(variable)}
-                  onChange={(e) => {
-                    setVariableValues(prev => ({
+                  onChange={(event) => {
+                    setVariableValues((prev) => ({
                       ...prev,
-                      [variable.name]: e.target.value
+                      [variable.name]: event.target.value,
                     }));
                   }}
                   variant="bordered"
@@ -829,7 +765,7 @@ function ChartDatasetConfig(props) {
                     _hasVariableChanged(variable) ? (
                       <div className="flex flex-row gap-1">
                         <Tooltip content="Save variable value">
-                          <Link 
+                          <Link
                             onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
                             className="text-success"
                           >
@@ -837,12 +773,12 @@ function ChartDatasetConfig(props) {
                           </Link>
                         </Tooltip>
                         <Tooltip content="Reset to saved value">
-                          <Link 
+                          <Link
                             onClick={() => {
                               const originalValue = _getVariableOriginalValue(variable);
-                              setVariableValues(prev => ({
+                              setVariableValues((prev) => ({
                                 ...prev,
-                                [variable.name]: originalValue
+                                [variable.name]: originalValue,
                               }));
                             }}
                             className="text-warning"
@@ -851,7 +787,7 @@ function ChartDatasetConfig(props) {
                           </Link>
                         </Tooltip>
                       </div>
-                    ) : cdc.configuration?.variables?.find(v => v.name === variable.name) && (
+                    ) : cdc.configuration?.variables?.find((item) => item.name === variable.name) && (
                       <div className="flex flex-row gap-1">
                         <Tooltip content="Remove override and use default value">
                           <Link onClick={() => _onClearVariableOverride(variable.name)}>
@@ -870,23 +806,38 @@ function ChartDatasetConfig(props) {
               </div>
             )}
           </div>
-        </>
-      )}
+        </Tab>
+      </Tabs>
 
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
 
-      <Row>
+      <div className="flex flex-row justify-between">
+        {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+          <div className="flex flex-row gap-2 items-center">
+            {dataRequests?.map((dr) => (
+              <Tooltip content={dr?.Connection?.name} key={dr.id}>
+                <Avatar
+                  src={connectionImages(isDark)[dr?.Connection?.subType]}
+                  isBordered
+                  size="sm"
+                />
+              </Tooltip>
+            ))}
+            {dataRequests?.length > 0 && <div><LuPlug /></div>}
+          </div>
+        )}
+
         <Button
           variant="faded"
           color="danger"
           size="sm"
           onPress={_onRemoveCdc}
         >
-          {`Remove ${cdc.legend}`}
+          {`Remove ${seriesLabel}`}
         </Button>
-      </Row>
+      </div>
 
       <Modal isOpen={editConfirmation} onClose={() => setEditConfirmation(false)}>
         <ModalContent>
@@ -922,7 +873,7 @@ function ChartDatasetConfig(props) {
 ChartDatasetConfig.propTypes = {
   chartId: PropTypes.number.isRequired,
   dataRequests: PropTypes.array,
-  cdcId: PropTypes.number.isRequired,
+  cdcId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onRemove: PropTypes.func.isRequired,
 };
 
@@ -930,4 +881,4 @@ ChartDatasetConfig.defaultProps = {
   dataRequests: [],
 };
 
-export default ChartDatasetConfig
+export default ChartDatasetConfig;

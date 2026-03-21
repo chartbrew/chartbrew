@@ -46,7 +46,8 @@ function resolveChartDatasetOptions(cdc, datasetOptions) {
 
   mergedOptions.id = plainCdc.id || mergedOptions.id;
   mergedOptions.cdc_id = plainCdc.id || mergedOptions.cdc_id || null;
-  mergedOptions.dataset_id = plainCdc.dataset_id || mergedOptions.dataset_id || plainDataset.id || null;
+  mergedOptions.dataset_id = plainCdc.dataset_id
+    || mergedOptions.dataset_id || plainDataset.id || null;
   mergedOptions.name = getDatasetName(plainDataset);
 
   if ((plainCdc.legend === undefined || plainCdc.legend === null) && !mergedOptions.legend) {

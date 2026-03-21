@@ -19,6 +19,7 @@ import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
 import { selectProjects } from "../../../slices/project";
+import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 
 function ChartDatasets(props) {
   const { chartId, user } = props;
@@ -52,7 +53,7 @@ function ChartDatasets(props) {
       initRef.current = true;
       const projectDatasets = datasets.filter((d) => (
         !d.draft
-        && d?.legend?.toLowerCase().includes(datasetSearch?.toLowerCase())
+        && getDatasetDisplayName(d)?.toLowerCase().includes(datasetSearch?.toLowerCase())
         && d.project_ids?.includes(chart.project_id)
       ));
       if (projectDatasets.length === 0) {
@@ -72,11 +73,11 @@ function ChartDatasets(props) {
     if (tag === "project") {
       return datasets.filter((d) => (
         !d.draft
-        && d?.legend?.toLowerCase().includes(datasetSearch.toLowerCase())
+        && getDatasetDisplayName(d)?.toLowerCase().includes(datasetSearch.toLowerCase())
         && d?.project_ids?.includes(chart.project_id)
       ));
     }
-    return datasets.filter((d) => !d.draft && d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
+    return datasets.filter((d) => !d.draft && getDatasetDisplayName(d)?.toLowerCase().includes(datasetSearch.toLowerCase()));
   };
 
   const _getDatasetTags = (dataset) => {
@@ -93,15 +94,18 @@ function ChartDatasets(props) {
   };
 
   const _onCreateCdc = (datasetId) => {
+    const selectedDataset = datasets.find((dataset) => dataset.id === datasetId);
     // find out the perfect color for the new cdc
     const existingColors = chart.ChartDatasetConfigs.map((cdc) => cdc.datasetColor.toLowerCase());
-    const newColor = Object.values(chartColors).find((color) => !existingColors.includes(color.hex.toLowerCase()) && !existingColors.includes(color.rgb));
+    const newColor = Object.values(chartColors).find((color) => !existingColors.includes(color.hex.toLowerCase()) && !existingColors.includes(color.rgb))
+      || chartColors.blue;
 
     dispatch(createCdc({
       project_id: chart.project_id,
       chart_id: chart.id,
       data: {
         dataset_id: datasetId,
+        legend: getDatasetDisplayName(selectedDataset),
         datasetColor: newColor.hex,
         fill: false,
         order: chart.ChartDatasetConfigs[chart.ChartDatasetConfigs.length - 1]?.order + 1 || 0,
@@ -113,7 +117,7 @@ function ChartDatasets(props) {
           project_id: chart.project_id,
           chart_id: chart.id,
           noSource: false,
-          skiParsing: false,
+          skipParsing: false,
           getCache: true,
         }));
       });
@@ -149,7 +153,7 @@ function ChartDatasets(props) {
       project_id: chart.project_id,
       chart_id: chart.id,
       noSource: false,
-      skiParsing: false,
+      skipParsing: false,
       getCache: true,
     }));
   };
@@ -157,27 +161,28 @@ function ChartDatasets(props) {
   return (
     <div>
       <div className="flex flex-row justify-between items-center">
-        <Text size="h4">Datasets</Text>
+        <div className="font-bold">Chart Series</div>
         <div className="flex flex-row gap-1 items-center">
-          {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+          {canAccess("teamAdmin", user.id, team?.TeamRoles) && addMode && (
             <Button
               size="sm"
               color="primary"
               onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             >
-              Create dataset
+              Create new dataset
             </Button>
           )}
 
           {datasets.length > 0 && chart?.ChartDatasetConfigs.length > 0 && (
             <Button
-              isIconOnly
+              isIconOnly={addMode}
               variant="faded"
               size="sm"
               onPress={() => setAddMode(!addMode)}
               className="chart-cdc-add"
+              startContent={!addMode ? <LuPlus /> : null}
             >
-              {!addMode && <LuPlus />}
+              {!addMode && "Add series"}
               {addMode && <LuMinus />}
             </Button>
           )}
@@ -194,7 +199,6 @@ function ChartDatasets(props) {
             value={datasetSearch}
             onChange={(e) => setDatasetSearch(e.target.value)}
             startContent={<LuSearch />}
-            variant="bordered"
           />
           <Spacer y={2} />
           <div className="flex flex-row gap-1 items-center">
@@ -238,7 +242,7 @@ function ChartDatasets(props) {
                     <div className={"flex flex-row justify-between gap-4 w-full"}>
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
                         <div className="flex flex-col gap-1 items-start">
-                          <Text b>{dataset.legend}</Text>
+                          <Text b>{getDatasetDisplayName(dataset)}</Text>
                           <div className="flex flex-wrap gap-1">
                             {_getDatasetTags(dataset).map((tag) => (
                               <Chip key={tag} size="sm" variant="flat" color="primary">
@@ -267,11 +271,11 @@ function ChartDatasets(props) {
                     <div className="w-full flex flex-row justify-between">
                       <div>
                         <Text b size="sm">Metric: </Text>
-                        <Text size="sm">{dataset.xAxis?.replace("root[].", "").replace("root.", "")}</Text>
+                        <Text size="sm">{dataset.yAxis?.replace("root[].", "").replace("root.", "") || "Not set"}</Text>
                       </div>
                       <div>
                         <Text b size="sm">Dimension: </Text>
-                        <Text size="sm">{dataset.xAxis?.replace("root[].", "").replace("root.", "")}</Text>
+                        <Text size="sm">{dataset.xAxis?.replace("root[].", "").replace("root.", "") || "Not set"}</Text>
                       </div>
                     </div>
                   </CardBody>
@@ -315,7 +319,7 @@ function ChartDatasets(props) {
             onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             fullWidth
           >
-            Create dataset
+            Create series
           </Button>
         </div>
       )}
@@ -332,7 +336,7 @@ function ChartDatasets(props) {
           renderItem={(cdc, { isDragging }) => (
             <Chip
               key={cdc.id}
-              title={`${cdc.legend}`}
+              title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
               radius="sm"
               color={activeCdc?.id === cdc.id ? "primary" : "default"}
               variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
@@ -341,7 +345,7 @@ function ChartDatasets(props) {
               size="lg"
               endContent={<LuGripVertical size={16} className="cursor-grab" />}
             >
-              {cdc.legend}
+              {cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}
             </Chip>
           )}
         />

@@ -36,6 +36,7 @@ import toast from "react-hot-toast";
 import { canExportChart, exportChartToExcel } from "../modules/exportChart";
 import GaugeChart from "./Chart/components/GaugeChart";
 import MatrixChart from "./Chart/components/MatrixChart";
+import { getExposedChartFilters } from "../modules/getChartDatasetConditions";
 
 const pageHeight = window.innerHeight;
 
@@ -217,14 +218,7 @@ function SharedChart() {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return getExposedChartFilters(chart).length > 0;
   };
 
   const _onPublicExport = (chart) => {

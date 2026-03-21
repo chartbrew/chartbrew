@@ -48,6 +48,7 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
+import { getExposedChartFilters } from "../../modules/getChartDatasetConditions";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -214,14 +215,6 @@ function Chart(props) {
 
   const _runFiltering = async (filters, projectId = params.projectId) => {
     if (!chart.ChartDatasetConfigs) return;
-
-    // Get all conditions from the chart's datasets
-    let identifiedConditions = [];
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-      }
-    });
 
     // If no filters are provided, get them from localStorage
     const allFilters = filters || getFiltersFromStorage(projectId) || [];
@@ -420,16 +413,7 @@ function Chart(props) {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    if (!chart.ChartDatasetConfigs) return false;
-
-    chart.ChartDatasetConfigs.forEach((d) => {
-      if (Array.isArray(d.Dataset?.conditions)) {
-        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return getExposedChartFilters(chart).length > 0;
   };
 
   const _canAccess = (role) => {

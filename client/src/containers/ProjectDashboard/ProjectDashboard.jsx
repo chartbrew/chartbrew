@@ -48,6 +48,7 @@ import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { completeTutorial, selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
+import { getChartIdentifiedConditions } from "../../modules/getChartDatasetConditions";
 import { exportMultipleChartsToExcel, canExportChart } from "../../modules/exportChart";
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
@@ -526,12 +527,7 @@ function ProjectDashboard() {
     
     chartsToProcess.forEach((chart) => {
       // Get all conditions from the chart's datasets to calculate the processed filters
-      let identifiedConditions = [];
-      chart.ChartDatasetConfigs.forEach((cdc) => {
-        if (Array.isArray(cdc.Dataset?.conditions)) {
-          identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-        }
-      });
+      const identifiedConditions = getChartIdentifiedConditions(chart);
 
       // Separate filters by type
       const variableFilters = currentFilters[projectId].filter(f => f.type === "variable" && f.value);

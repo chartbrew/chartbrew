@@ -14,6 +14,7 @@ import availableConnections from "../../../modules/availableConnections";
 import { selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
+import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 
 const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
   ...acc,
@@ -93,7 +94,7 @@ function ChartDescription(props) {
 
       const search = searchValue.trim().toLowerCase();
       const haystack = [
-        dataset.legend,
+        getDatasetDisplayName(dataset),
         ..._getDatasetTags(dataset),
         ..._getDatasetConnectionTypes(dataset),
       ]
@@ -165,7 +166,6 @@ function ChartDescription(props) {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             endContent={<LuSearch size={16} />}
-            variant="bordered"
             size="sm"
           />
         </div>
@@ -214,8 +214,8 @@ function ChartDescription(props) {
                 <TableRow key={dataset.id}>
                   <TableCell key="name">
                     <div className={cn(`min-w-0 ${isBusy && !isCreatingChart ? "opacity-60" : ""} cursor-pointer hover:underline`)}>
-                      <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
-                        {dataset.legend}
+                        <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
+                        {getDatasetDisplayName(dataset)}
                       </div>
                     </div>
                   </TableCell>
@@ -271,7 +271,7 @@ function ChartDescription(props) {
                         onPress={() => _onSelectDataset(dataset)}
                         isLoading={isCreatingChart}
                         isDisabled={isBusy && !isCreatingChart}
-                        aria-label={`Create chart from ${dataset.legend}`}
+                        aria-label={`Create chart from ${getDatasetDisplayName(dataset)}`}
                       >
                         {!isCreatingChart && <LuPlus size={16} />}
                       </Button>

@@ -31,6 +31,7 @@ import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
 import MatrixChart from "./Chart/components/MatrixChart";
 import GaugeChart from "./Chart/components/GaugeChart";
+import { getExposedChartFilters } from "../modules/getChartDatasetConditions";
 
 const pageHeight = window.innerHeight;
 
@@ -211,14 +212,7 @@ function EmbeddedChart() {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return getExposedChartFilters(chart).length > 0;
   };
 
   if ((loading || !chart || !showChart) && !error) {

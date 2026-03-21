@@ -50,6 +50,7 @@ import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
 import DashboardFilters from "../ProjectDashboard/components/DashboardFilters";
 import useInterval from "../../modules/useInterval";
+import { getChartIdentifiedConditions } from "../../modules/getChartDatasetConditions";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -413,12 +414,7 @@ function Report({ editMode = false }) {
         setFilterLoading(true);
         
         // Get all conditions from the chart's datasets
-        let identifiedConditions = [];
-        chart.ChartDatasetConfigs.forEach((cdc) => {
-          if (Array.isArray(cdc.Dataset?.conditions)) {
-            identifiedConditions = [...identifiedConditions, ...cdc.Dataset.conditions];
-          }
-        });
+        const identifiedConditions = getChartIdentifiedConditions(chart);
 
         // Separate filters by type
         const variableFilters = currentFilters[project.id].filter(f => f.type === "variable" && f.value);

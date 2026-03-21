@@ -12,6 +12,7 @@ import { selectTeam } from "../slices/team";
 import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
+import getDatasetDisplayName from "../modules/getDatasetDisplayName";
 
 function TopNav() {
   const dispatch = useDispatch();
@@ -148,8 +149,8 @@ function TopNav() {
               <BreadcrumbItem onPress={() => navigate("/datasets")}>
                 Datasets
               </BreadcrumbItem>
-              {dataset?.legend && (
-                <BreadcrumbItem isCurrent={true}>{dataset?.legend}</BreadcrumbItem>
+              {getDatasetDisplayName(dataset) && (
+                <BreadcrumbItem isCurrent={true}>{getDatasetDisplayName(dataset)}</BreadcrumbItem>
               )}
               {params.datasetId === "new" && (
                 <BreadcrumbItem isCurrent={true}>New dataset</BreadcrumbItem>

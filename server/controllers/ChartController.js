@@ -462,7 +462,9 @@ class ChartController {
           resolvingData.datasets = gCache.data.datasets.map((item) => {
             const tempItem = item;
             for (let i = 0; i < resolvedDatasets.length; i++) {
-              if (getRuntimeDatasetKey(item.options) === getRuntimeDatasetKey(resolvedDatasets[i].options)) {
+              if (getRuntimeDatasetKey(item.options)
+                === getRuntimeDatasetKey(resolvedDatasets[i].options)
+              ) {
                 tempItem.options = resolvedDatasets[i].options;
                 break;
               }

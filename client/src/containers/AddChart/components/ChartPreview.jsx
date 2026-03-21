@@ -30,6 +30,7 @@ import ChartFilters from "../../Chart/components/ChartFilters";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import GaugeChart from "../../Chart/components/GaugeChart";
+import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
 
 function ChartPreview(props) {
   const {
@@ -55,14 +56,7 @@ function ChartPreview(props) {
   }, [chart.ranges]);
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((d) => {
-      if (Array.isArray(d.Dataset?.conditions)) {
-        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount > 0;
+    return getExposedChartFilters(chart).length > 0;
   };
 
   const _onAddFilter = (condition) => {

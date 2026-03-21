@@ -2,73 +2,59 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Button, Link, Spacer, Input, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
-  Checkbox,
-  Tabs,
-  Tab,
+  Button, Chip, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@heroui/react";
-import { LuArrowRight, LuChartArea, LuCheck, LuLayers, LuPencil, LuSearch } from "react-icons/lu";
+import { LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { createCdc, createChart, runQuery } from "../../slices/chart";
-import { getDataset, runRequest, saveNewDataset, updateDataset } from "../../slices/dataset";
+import { createCdc, runQuery, updateChart } from "../../slices/chart";
+import { getDataset, saveNewDataset, updateDataset } from "../../slices/dataset";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
-import DatasetBuilder from "./DatasetBuilder";
-import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
-import getDashboardLayout from "../../modules/getDashboardLayout";
-import { placeNewWidget } from "../../modules/autoLayout";
 import useQuery from "../../modules/useQuery";
 import { selectUser } from "../../slices/user";
 import { getTeams, selectTeam } from "../../slices/team";
-import canAccess from "../../config/canAccess";
+import { getProjects, selectProjects } from "../../slices/project";
+import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 
 function Dataset() {
   const [error, setError] = useState(null);
-  const [legend, setLegend] = useState("");
-  const [editLegend, setEditLegend] = useState(false);
-  const [datasetMenu, setDatasetMenu] = useState("query");
-  const [chart, setChart] = useState(null);
-  const [completeModal, setCompleteModal] = useState(false);
-  const [completeProjects, setCompleteProjects] = useState([]);
-  const [projectSearch, setProjectSearch] = useState("");
-  const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
-  const [fromChart, setFromChart] = useState("");
-  const [shouldTagProjects, setShouldTagProjects] = useState(true);
+  const [datasetName, setDatasetName] = useState("");
+  const [editDatasetName, setEditDatasetName] = useState(false);
+  const [saveDatasetLoading, setSaveDatasetLoading] = useState(false);
+  const [fromChart, setFromChart] = useState(null);
+  const [draftSaveModalOpen, setDraftSaveModalOpen] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState([]);
 
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { search } = useLocation();
-  const initRef = useRef(null);
-  const datasetInitRef = useRef(null);
-  const chartInitRef = useRef(null);
   const createInitRef = useRef(null);
   const query = useQuery();
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
-  const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
-  const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
   const projects = useSelector(selectProjects);
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
 
   useEffect(() => {
     async function fetchData() {
-      dispatch(getDataset({
-        team_id: team.id,
-        dataset_id: params.datasetId,
-      }));
-      dispatch(getTeamConnections({ team_id: team.id }));
+      if (params.datasetId !== "new") {
+        dispatch(getDataset({
+          team_id: team.id,
+          dataset_id: params.datasetId,
+        }));
+      }
       dispatch(getProjects({ team_id: team.id }));
+      dispatch(getTeamConnections({ team_id: team.id }));
     }
 
-    if (team?.id && !initRef.current) {
-      initRef.current = true;
+    if (team?.id) {
       fetchData();
     }
-  }, [team]);
+  }, [dispatch, params.datasetId, team?.id]);
 
   useEffect(() => {
     if (user?.id && !team) {
@@ -77,30 +63,28 @@ function Dataset() {
   }, [user]);
 
   useEffect(() => {
-    if (user?.id && team?.id) {
-      if (!canAccess("projectAdmin", user.id, team.TeamRoles)) {
-        setDatasetMenu("configure");
+    if (dataset?.id) {
+      setDatasetName(getDatasetDisplayName(dataset));
+      const chartProjectId = query.get("project_id");
+      const datasetProjectIds = dataset.project_ids || [];
+
+      if (datasetProjectIds.length > 0) {
+        setSelectedProjectIds(datasetProjectIds);
+      } else if (chartProjectId && (fromChart === "create" || fromChart === "edit")) {
+        setSelectedProjectIds([parseInt(chartProjectId, 10)]);
+      } else {
+        setSelectedProjectIds([]);
       }
     }
-  }, [user, team]);
+  }, [dataset?.id, dataset?.project_ids, fromChart, query]);
 
   useEffect(() => {
-    if (!dataset) {
-      return;
-    }
-
-    if (!datasetInitRef.current) {
-      datasetInitRef.current = true;
-      setLegend(dataset.legend);
-    }
-  }, [dataset]);
-
-  useEffect(() => {
-    if (params.datasetId === "new" && !createInitRef.current) {
+    if (params.datasetId === "new" && team?.id && !createInitRef.current) {
       createInitRef.current = true;
       dispatch(saveNewDataset({
         team_id: team.id,
         data: {
+          name: "New dataset",
           legend: "New dataset",
           team_id: team.id,
           draft: true,
@@ -119,48 +103,7 @@ function Dataset() {
           }
         });
     }
-  }, [params]);
-
-  useEffect(() => {
-    if (ghostProject?.id && !chart && dataset?.id && !chartInitRef.current) {
-      chartInitRef.current = true;
-      dispatch(createChart({
-        project_id: ghostProject.id,
-        data: {
-          name: dataset.legend,
-          type: "line",
-          subType: "timeseries",
-        },
-      }))
-        .then((data) => {
-          setChart(data.payload);
-          const cdcData = {
-            ...dataset,
-            dataset_id: dataset.id,
-            datasetColor: chartColors.blue.hex,
-            fill: false,
-            order: 0,
-          };
-          delete cdcData.id;
-
-          dispatch(createCdc({
-            project_id: data.payload.project_id,
-            chart_id: data.payload.id,
-            data: cdcData,
-          }))
-        });
-    }
-  }, [ghostProject, dataset]);
-
-  useEffect(() => {
-    if (datasetMenu === "configure" && dataset?.id && team?.id) {
-      dispatch(runRequest({
-        team_id: team.id,
-        dataset_id: dataset.id,
-        getCache: true,
-      }));
-    }
-  }, [datasetMenu, team]);
+  }, [params, team?.id]);
 
   useEffect(() => {
     let message = error;
@@ -175,14 +118,12 @@ function Dataset() {
 
   useEffect(() => {
     if (query) {
-      if (query.has("create") && query.has("chart_id") && query.has("project_id")) {
+      if (query.has("chart_id") && query.has("project_id") && query.has("create")) {
         setFromChart("create");
-      }
-      if (!query.has("create") && query.has("chart_id") && query.has("project_id")) {
+      } else if (query.has("chart_id") && query.has("project_id")) {
         setFromChart("edit");
-      }
-      if (query.has("editFilters")) {
-        setDatasetMenu("configure");
+      } else {
+        setFromChart(null);
       }
     }
   }, [query]);
@@ -203,328 +144,194 @@ function Dataset() {
       });
   };
 
-  const _onSelectCompleteProject = (projectId) => {
-    setCompleteProjects((prev) => {
-      if (prev.includes(projectId)) {
-        return prev.filter((p) => p !== projectId);
-      }
-      return [...prev, projectId];
-    });
-  };
+  const _persistDataset = async (projectIds = dataset?.project_ids || []) => {
+    if (!dataset?.id || !team?.id) return false;
 
-  const _onSaveDataset = () => {
-    if (fromChart === "edit") {
-      navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
-      return;
-    }
+    const trimmedName = datasetName.trim() || getDatasetDisplayName(dataset) || "Untitled dataset";
+    setSaveDatasetLoading(true);
 
-    setCompleteModal(true);
-  }
-
-  const _onCompleteDataset = () => {
-    setCompleteDatasetLoading(true);
-    const datasetData = {
-      team_id: team.id,
-      dataset_id: dataset.id,
-      data: {
-        draft: false,
-        legend,
-      },
-    };
-
-    if (shouldTagProjects && completeProjects.length > 0) {
-      datasetData.data.project_ids = completeProjects;
-    }
-
-    dispatch(updateDataset(datasetData));
-
-    let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
-    let cdcData = { ...dataset, ...ghostCdc, legend };
-    delete cdcData.id;
-
-    if (fromChart === "create") {
-      dispatch(createCdc({
-        project_id: query.get("project_id"),
-        chart_id: query.get("chart_id"),
+    try {
+      await dispatch(updateDataset({
+        team_id: team.id,
+        dataset_id: dataset.id,
         data: {
-          ...cdcData,
-          dataset_id: dataset.id,
-          datasetColor: chartColors.blue.hex,
+          draft: false,
+          name: trimmedName,
+          legend: trimmedName,
+          project_ids: projectIds,
         },
-      }))
-        .then((cdcData) => {
-          navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);          
-          dispatch(runQuery({
-            project_id: query.get("project_id"),
-            chart_id: cdcData.payload.chart_id,
+      })).unwrap();
+
+      if (fromChart === "create") {
+        const chartId = query.get("chart_id");
+        const projectId = query.get("project_id");
+
+        await dispatch(updateChart({
+          project_id: projectId,
+          chart_id: chartId,
+          data: { name: trimmedName },
+        })).unwrap();
+
+        await dispatch(createCdc({
+          project_id: projectId,
+          chart_id: chartId,
+          data: {
+            dataset_id: dataset.id,
+            legend: trimmedName,
+            datasetColor: chartColors.blue.hex,
+            fill: false,
+            order: 0,
+          },
+        })).unwrap();
+
+        try {
+          await dispatch(runQuery({
+            project_id: projectId,
+            chart_id: chartId,
             noSource: false,
             skipParsing: false,
             getCache: true,
-          }));
-        });
+          })).unwrap();
+        } catch (queryError) {
+          // The chart editor can recover from a failed first run.
+        }
+
+        navigate(`/dashboard/${projectId}/chart/${chartId}/edit`);
+        return true;
+      }
+
+      if (fromChart === "edit") {
+        navigate(`/dashboard/${query.get("project_id")}/chart/${query.get("chart_id")}/edit`);
+        return true;
+      }
+
+      toast.success("Dataset saved");
+      setEditDatasetName(false);
+      return true;
+    } catch (saveError) {
+      setError(saveError);
+      toast.error("Could not save the dataset. Please try again.");
+      return false;
+    } finally {
+      setSaveDatasetLoading(false);
+    }
+  };
+
+  const _onSaveDataset = async () => {
+    if (dataset?.draft) {
+      setDraftSaveModalOpen(true);
       return;
     }
 
-    if (completeProjects.length === 0) {
-      navigate("/");
-      return;
-    }
+    await _persistDataset(selectedProjectIds);
+  };
 
-    let loadingCounter = 0;
-
-    completeProjects.forEach((projectId) => {
-      const currentProject = projects.find((p) => p.id === projectId);
-      // add chart at the end of the dashboard
-      const layouts = getDashboardLayout(currentProject.Charts);
-      const chartLayout = {};
-      Object.keys(layouts).map((bp) => {
-        const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-        const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
-        chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-        return bp;
-      });
-
-      const newChart = {
-        ...ghostChart,
-        name: legend,
-        draft: false,
-        id: null,
-        layout: chartLayout,
-      };
-
-      dispatch(createChart({
-        project_id: projectId,
-        data: newChart,
-      }))
-        .then((actionData) => {
-          dispatch(createCdc({
-            project_id: projectId,
-            chart_id: actionData.payload.id,
-            data: {
-              ...cdcData,
-              dataset_id: dataset.id,
-              datasetColor: chartColors.blue.hex,
-            },
-          }))
-            .then((cdcData) => {
-              dispatch(runQuery({
-                project_id: projectId,
-                chart_id: cdcData.payload.chart_id,
-                noSource: false,
-                skipParsing: false,
-                getCache: true,
-              }));
-            });
-
-          loadingCounter += 1;
-          if (loadingCounter === completeProjects.length) {
-            setCompleteDatasetLoading(false);
-            if (completeProjects.length === 1) {
-              navigate(`/dashboard/${completeProjects[0]}`);
-            } else {
-              navigate("/");
-            }
-          }
-        })
-        .catch(() => {
-          loadingCounter += 1;
-          if (loadingCounter === completeProjects.length) {
-            setCompleteDatasetLoading(false);
-            if (completeProjects.length === 1) {
-              toast.error("Could not create chart. Please try again");
-              setCompleteModal(false);
-            } else {
-              navigate("/");
-            }
-          }
-        });
-    });
+  const _toggleProjectTag = (projectId) => {
+    setSelectedProjectIds((prev) => (
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId]
+    ));
   };
 
   return (
     <div>
       <div className="flex flex-row justify-between flex-wrap gap-2 items-center bg-background px-4 rounded-lg border-1 border-divider py-2">
         <div className="flex flex-row gap-2 items-center">
-          {!editLegend && (
+          {!editDatasetName && (
             <>
-              <Link onClick={() => setEditLegend(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
-                <div className="font-tw font-bold text-foreground">{dataset?.legend}</div>
+              <Link onClick={() => setEditDatasetName(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
+                <div className="font-tw font-bold text-foreground">{getDatasetDisplayName(dataset)}</div>
                 <LuPencil size={16} className="text-secondary" />
               </Link>
             </>
           )}
 
-          {editLegend && (
+          {editDatasetName && (
             <>
               <Input
-                value={legend}
-                onChange={(e) => setLegend(e.target.value)}
+                value={datasetName}
+                onChange={(e) => setDatasetName(e.target.value)}
                 placeholder="Dataset name"
                 variant="bordered"
                 labelPlacement="outside"
               />
-              <Button
-                variant="ghost"
-                isIconOnly
-                color="primary"
-                onPress={() => {
-                  _onUpdateDataset({ legend });
-                  setEditLegend(false);
-                }}
-                size="sm"
-              >
-                <LuCheck />
-              </Button>
             </>
           )}
         </div>
 
         <div className="flex flex-row gap-2 flex-wrap">
-          <Tabs
-            selectedKey={datasetMenu}
-            onSelectionChange={(key) => setDatasetMenu(key)}
+          <Button
+            color="primary"
+            onPress={_onSaveDataset}
+            endContent={!saveDatasetLoading ? <LuCheck /> : null}
+            isLoading={saveDatasetLoading}
+            isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
           >
-            {canAccess("projectAdmin", user.id, team.TeamRoles) && (
-              <Tab key="query" title={(
-                <div className="flex flex-row items-center gap-2">
-                  <LuLayers size={18} />
-                  <span>1. Query</span>
-                </div>
-              )} />
-            )}
-            {canAccess("projectEditor", user.id, team.TeamRoles) && (
-              <Tab key="configure" title={(
-                <div className="flex flex-row items-center gap-2">
-                  <LuChartArea size={18} />
-                  <span>2. Configure</span>
-                </div>
-              )} />
-            )}
-          </Tabs>
-          {datasetMenu === "query" && (
-            <Button
-              color="primary"
-              // size="sm"
-              onPress={() => setDatasetMenu("configure")}
-              endContent={<LuArrowRight />}
-              isDisabled={dataset?.DataRequests.length === 0}
-            >
-              Configure dataset
-            </Button>
-          )}
-          {datasetMenu === "configure" && (
-            <Button
-              color="primary"
-              onPress={() => _onSaveDataset()}
-              endContent={<LuCheck />}
-              isDisabled={dataset?.DataRequests.length === 0}
-            >
-              {fromChart === "edit" && "Save & return to chart"}
-              {fromChart !== "edit" && "Complete dataset"}
-            </Button>
-          )}
+            {fromChart ? "Save & return to chart" : "Save dataset"}
+          </Button>
         </div>
       </div>
 
-      {datasetMenu === "query" && (
-        <DatasetQuery onUpdateDataset={_onUpdateDataset} />
-      )}
+      <DatasetQuery onUpdateDataset={_onUpdateDataset} />
 
-      {datasetMenu === "configure" && ghostChart && (
-        <DatasetBuilder
-          chart={ghostChart}
-          projectId={ghostProject?.id}
-        />
-      )}
-
-      <Modal
-        isOpen={completeModal}
-        onClose={() => setCompleteModal(false)}
-        size="2xl"
-      >
+      <Modal isOpen={draftSaveModalOpen} onClose={() => setDraftSaveModalOpen(false)} size="2xl">
         <ModalContent>
-          <ModalHeader>Complete your dataset</ModalHeader>
+          <ModalHeader>Save dataset</ModalHeader>
           <ModalBody>
-            <div>Enter a name for your dataset</div>
             <Input
+              value={datasetName}
+              onChange={(event) => setDatasetName(event.target.value)}
+              placeholder="Dataset name"
+              label="Dataset name"
               labelPlacement="outside"
-              value={legend}
-              onChange={(e) => setLegend(e.target.value)}
-              variant="bordered"
-              className="max-w-[300px]"
             />
-            <Spacer y={1} />
 
-            {fromChart !== "create" && (
-              <>
-                <div>Want to add this chart to a dashboard?</div>
-                {projects.length > 5 && (
-                  <Input
-                    labelPlacement="outside"
-                    placeholder="Search projects"
-                    startContent={<LuSearch />}
-                    variant="bordered"
-                    className="max-w-[300px]"
-                    onChange={(e) => setProjectSearch(e.target.value)}
-                    onClear={() => setProjectSearch("")}
-                    value={projectSearch}
-                    isClearable
-                  />
+            <Spacer y={2} />
+
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-foreground">Tags</div>
+              <div className="text-sm text-foreground-500">
+                Assign dashboard tags now, or leave this empty and add them later.
+              </div>
+              <div className="flex flex-row flex-wrap gap-2">
+                {projects.filter((project) => !project.ghost).map((project) => (
+                  <Chip
+                    key={project.id}
+                    radius="sm"
+                    color={selectedProjectIds.includes(project.id) ? "primary" : "default"}
+                    variant={selectedProjectIds.includes(project.id) ? "solid" : "bordered"}
+                    onClick={() => _toggleProjectTag(project.id)}
+                    className="cursor-pointer"
+                  >
+                    {project.name}
+                  </Chip>
+                ))}
+                {projects.filter((project) => !project.ghost).length === 0 && (
+                  <div className="text-sm text-foreground-400">No tags available yet.</div>
                 )}
-                <div className="flex flex-row flex-wrap gap-1">
-                  {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1 && !p.ghost).map((p) => (
-                    <Chip
-                      key={p.id}
-                      radius="sm"
-                      color={completeProjects.includes(p.id) ? "primary" : "default"}
-                      variant={completeProjects.includes(p.id) ? "solid" : "bordered"}
-                      onClick={() => _onSelectCompleteProject(p.id)}
-                      className="cursor-pointer hover:shadow-md hover:saturate-150 transition-shadow"
-                    >
-                      {p.name}
-                    </Chip>
-                  ))}
-                </div>
-              </>
-            )}
+              </div>
+            </div>
           </ModalBody>
           <ModalFooter>
-            {completeProjects.length > 0 && (
-              <Checkbox
-                isSelected={shouldTagProjects}
-                onValueChange={(selected) => setShouldTagProjects(selected)}
-                size="sm"
-              >
-                Tag dataset to projects
-              </Checkbox>
-            )}
             <Button
               variant="bordered"
-              onPress={() => setCompleteModal(false)}
-              size="sm"
+              onPress={() => setDraftSaveModalOpen(false)}
             >
-              Close
+              Cancel
             </Button>
-            {fromChart !== "create" && (
-              <Button
-                color="primary"
-                onPress={_onCompleteDataset}
-                isLoading={completeDatasetLoading}
-                size="sm"
-              >
-                {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
-              </Button>
-            )}
-            {fromChart === "create" && (
-              <Button
-                color="primary"
-                onPress={_onCompleteDataset}
-                isLoading={completeDatasetLoading}
-                size="sm"
-              >
-                Save & return to chart
-              </Button>
-            )}
+            <Button
+              color="primary"
+              isLoading={saveDatasetLoading}
+              onPress={async () => {
+                const success = await _persistDataset(selectedProjectIds);
+                if (success) {
+                  setDraftSaveModalOpen(false);
+                }
+              }}
+            >
+              {fromChart ? "Save & return to chart" : "Save dataset"}
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -236,11 +236,10 @@ function DatasetFilters(props) {
       {conditions && conditions.length === 0 && (
         <div className="datasetdata-filters-tut">
           <Button
-            variant="bordered"
             startContent={<LuListFilter />}
-            onClick={_onAddCondition}
-            auto
-            size={"sm"}
+            onPress={_onAddCondition}
+            variant="flat"
+            size="sm"
           >
             Add data filters
           </Button>
@@ -250,13 +249,12 @@ function DatasetFilters(props) {
         return (
           <Card key={condition.id} className="datasetdata-filters-tut shadow-none border-1 border-content3 border-solid rounded-lg">
             <CardHeader>
-              {index === 0 && (<Text>{"where "}</Text>)}
-              {index > 0 && (<Text>{"and "}</Text>)}
+              {index === 0 && (<div className="text-sm">{"where "}</div>)}
+              {index > 0 && (<div className="text-sm">{"and "}</div>)}
             </CardHeader>
             <Divider />
             <CardBody>
               <Autocomplete
-                variant="bordered"
                 placeholder="Field"
                 selectedKey={condition.field}
                 onSelectionChange={(key) => _updateCondition(condition.id, key, "field")}
@@ -288,7 +286,6 @@ function DatasetFilters(props) {
                         )
                         || "="
                       }
-                      variant="bordered"
                       labelPlacement="outside"
                       className="max-w-[100px]"
                       size="sm"
@@ -316,7 +313,6 @@ function DatasetFilters(props) {
                         onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         labelPlacement="outside"
-                        variant="bordered"
                         size="sm"
                         fullWidth
                       />
@@ -326,7 +322,6 @@ function DatasetFilters(props) {
                     && find(fieldOptions, { value: condition.field }).type === "date" && (
                       <I18nProvider locale="en-GB">
                         <DatePicker
-                          variant="bordered"
                           showMonthAndYearPickers
                           value={(
                             condition.value

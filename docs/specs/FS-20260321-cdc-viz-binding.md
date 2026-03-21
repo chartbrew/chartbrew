@@ -83,11 +83,60 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 ## UI Changes
 
 - Stop treating the dataset builder as the owner of chart-binding config.
-- Move dimension/metric/date/formula/filter editing to CDC-backed flows.
-- Keep the dataset page focused on query/data concerns.
+- Move dimension/metric/date/formula/filter editing to CDC-backed flows in the chart editor.
+- Keep the dataset page focused on query/data concerns only.
 - Extract reusable field-picker and filter UI from `DatasetBuilder.jsx` so it can be used by CDC configuration.
 - Update dataset-to-chart creation flow to initialize CDC binding values directly instead of copying the dataset object wholesale.
 - Update dataset naming UI to edit `name`, not `legend`, with fallback while older data is still present.
+
+## Dataset Page UX
+
+- Remove the `Configure` dataset step/menu entirely.
+- The dataset page becomes a data-definition screen:
+  - query / API request / join settings
+  - transforms
+  - sample response / field discovery
+- When saving a draft dataset, open a confirmation modal first so the user can:
+  - confirm or edit the dataset name
+  - assign dashboard tags before publishing the dataset
+- Main CTA rules:
+  - `Save dataset` when opened from the dataset list or other standalone dataset entry points
+  - `Save & return to chart` when opened from the chart editor flow
+- Keep the existing route/query-param behavior that already distinguishes chart-origin flows.
+
+## Chart Editor UX
+
+- The right-side dataset panel becomes the primary home for per-series configuration.
+- Rename the first CDC tab from `Binding` to `Data setup`.
+- Keep dataset/series tabs at the top so users can switch between `Signups`, `Active trials`, etc.
+- For the selected series, split the right panel into tabs:
+  - `Data setup`
+    - series name
+    - edit dataset CTA
+    - dimension (`xAxis`)
+    - metric (`yAxis`)
+    - operation (`yAxisOperation`)
+    - date field
+    - filters
+  - `Display`
+    - colors
+    - fill / multi-fill
+    - sort
+    - max records
+    - formula
+    - goal
+  - `Automation`
+    - variables
+    - alerts
+- `Chart Settings` stays outside the dataset panel as chart-global configuration.
+- This split should preserve all current CDC controls; the work is a reorganization, not a reduction of functionality.
+
+## Field Discovery & Suggestions
+
+- `Data setup` should auto-suggest optimal dimension / metric / operation / date field when the CDC does not have them yet.
+- Reuse the current dataset-preview request behavior used by `Dataset.jsx` / `DatasetBuilder.jsx` to fetch enough sample data to build field options.
+- Reuse `autoFieldSelector` logic where possible so default suggestions stay consistent with the current dataset flow.
+- Reuse `DatasetFilters.jsx` for CDC conditions if possible, but make it operate on CDC-backed data instead of dataset-backed data.
 
 ## Client Touchpoints
 
@@ -122,13 +171,13 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 
 ## Progress
 
-- [ ] Add `Dataset.name` and backfill from `legend`.
-- [ ] Add new CDC fields and model accessors.
-- [ ] Add migration script to backfill CDC visualization fields from datasets.
+- [x] Add `Dataset.name` and backfill from `legend`.
+- [x] Add new CDC fields and model accessors.
+- [x] Add migration script to backfill CDC visualization fields from datasets.
 - [ ] Update dataset callers to prefer `name` over `legend`.
-- [ ] Merge dataset + CDC binding at runtime in `ChartController`.
-- [ ] Persist condition options to CDC instead of dataset.
-- [ ] Move dataset builder writes from `updateDataset` to `updateCdc` for binding fields.
+- [x] Merge dataset + CDC binding at runtime in `ChartController`.
+- [x] Persist condition options to CDC instead of dataset.
+- [x] Move dataset builder writes from `updateDataset` to `updateCdc` for binding fields.
 - [ ] Update chart/dashboard filter consumers to read CDC conditions.
 - [ ] Update orchestrator tool schemas, rules, and payloads to use `Dataset.name` and CDC-owned binding fields.
 - [ ] Verify reuse: same dataset used by multiple charts with different bindings and filters.
@@ -138,4 +187,5 @@ This is a minimal pass, not a new visualization engine. The goal is to change ow
 - This pass intentionally avoids removing legacy dataset viz fields.
 - This pass intentionally avoids removing `Dataset.legend`; it becomes compatibility-only until callers are migrated.
 - This pass intentionally avoids a new viz engine or payload redesign.
+- The client now treats the dataset page as query-only and moves per-series setup to chart-side `Data setup / Display / Automation` tabs.
 - Once stable, a follow-up spec can remove legacy dataset binding fields entirely.

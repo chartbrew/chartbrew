@@ -13,6 +13,7 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
 import Row from "../../../components/Row";
+import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
 
 function ChartFilters(props) {
   const {
@@ -30,7 +31,10 @@ function ChartFilters(props) {
   }, [conditions]);
 
   const _getDropdownOptions = (dataset, condition) => {
-    const conditionOpt = dataset.conditions.find((c) => c.field === condition.field);
+    const conditionOpt = condition.sourceConditions?.find((c) => c.id === condition.id)
+      || condition.sourceConditions?.find((c) => c.field === condition.field)
+      || dataset?.conditions?.find((c) => c.id === condition.id)
+      || dataset?.conditions?.find((c) => c.field === condition.field);
 
     if (!conditionOpt || !conditionOpt.values) return [];
 
@@ -57,14 +61,7 @@ function ChartFilters(props) {
   };
 
   const _checkIfFilters = () => {
-    let filterCount = 0;
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
-      }
-    });
-
-    return filterCount;
+    return getExposedChartFilters(chart).length;
   };
 
   const _getFilteredOptions = (filterOptions, cId) => {
@@ -89,16 +86,7 @@ function ChartFilters(props) {
   };
 
   const _getAllFilters = () => {
-    const filters = [];
-    chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (Array.isArray(cdc.Dataset?.conditions)) {
-        cdc.Dataset.conditions.forEach((c) => {
-          if (c.exposed) {
-            filters.push({ ...c, Dataset: cdc.Dataset });
-          }
-        });
-      }
-    });
+    const filters = getExposedChartFilters(chart);
 
     if (amount) return filters.slice(0, amount);
 

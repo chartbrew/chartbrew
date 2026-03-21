@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     /*
     ** Active chart-binding fields.
-    ** Deprecated dataset-side binding fields have been moved off Dataset and do not have CDC equivalents here.
+    ** Deprecated dataset-side binding fields have been moved off Dataset
     */
     xAxis: {
       type: DataTypes.STRING,

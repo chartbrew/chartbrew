@@ -87,8 +87,12 @@ describe("ChartController CDC bindings", () => {
       .mockResolvedValue({
         options: dataset.toJSON(),
         data: [
-          { month: "Jan", count: 1, amount: 100, status: "paid" },
-          { month: "Feb", count: 2, amount: 200, status: "pending" },
+          {
+            month: "Jan", count: 1, amount: 100, status: "paid"
+          },
+          {
+            month: "Feb", count: 2, amount: 200, status: "pending"
+          },
         ],
       });
 

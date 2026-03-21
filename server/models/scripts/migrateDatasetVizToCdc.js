@@ -49,15 +49,33 @@ module.exports.up = async (queryInterface) => {
 
     const updates = {};
 
-    if (isBlank(cdc.xAxis) && !isBlank(dataset.xAxis)) updates.xAxis = dataset.xAxis;
-    if (isBlank(cdc.xAxisOperation) && !isBlank(dataset.xAxisOperation)) updates.xAxisOperation = dataset.xAxisOperation;
-    if (isBlank(cdc.yAxis) && !isBlank(dataset.yAxis)) updates.yAxis = dataset.yAxis;
-    if (isBlank(cdc.yAxisOperation) && !isBlank(dataset.yAxisOperation)) updates.yAxisOperation = dataset.yAxisOperation;
-    if (isBlank(cdc.dateField) && !isBlank(dataset.dateField)) updates.dateField = dataset.dateField;
-    if (isBlank(cdc.dateFormat) && !isBlank(dataset.dateFormat)) updates.dateFormat = dataset.dateFormat;
-    if (isBlank(cdc.conditions) && !isBlank(dataset.conditions)) updates.conditions = dataset.conditions;
-    if (isBlank(cdc.formula) && !isBlank(dataset.formula)) updates.formula = dataset.formula;
-    if (isBlank(cdc.legend) && !isBlank(dataset.legend)) updates.legend = dataset.legend;
+    if (isBlank(cdc.xAxis) && !isBlank(dataset.xAxis)) {
+      updates.xAxis = dataset.xAxis;
+    }
+    if (isBlank(cdc.xAxisOperation) && !isBlank(dataset.xAxisOperation)) {
+      updates.xAxisOperation = dataset.xAxisOperation;
+    }
+    if (isBlank(cdc.yAxis) && !isBlank(dataset.yAxis)) {
+      updates.yAxis = dataset.yAxis;
+    }
+    if (isBlank(cdc.yAxisOperation) && !isBlank(dataset.yAxisOperation)) {
+      updates.yAxisOperation = dataset.yAxisOperation;
+    }
+    if (isBlank(cdc.dateField) && !isBlank(dataset.dateField)) {
+      updates.dateField = dataset.dateField;
+    }
+    if (isBlank(cdc.dateFormat) && !isBlank(dataset.dateFormat)) {
+      updates.dateFormat = dataset.dateFormat;
+    }
+    if (isBlank(cdc.conditions) && !isBlank(dataset.conditions)) {
+      updates.conditions = dataset.conditions;
+    }
+    if (isBlank(cdc.formula) && !isBlank(dataset.formula)) {
+      updates.formula = dataset.formula;
+    }
+    if (isBlank(cdc.legend) && !isBlank(dataset.legend)) {
+      updates.legend = dataset.legend;
+    }
 
     if (Object.keys(updates).length > 0) {
       updatePromises.push(
