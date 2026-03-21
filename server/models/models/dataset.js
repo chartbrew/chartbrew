@@ -49,69 +49,9 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
       description: "Whether the dataset is a draft and should be hidden from dashboard viewers"
     },
-    /*
-    ** Traversal syntax for both x and y axes
-    ** root[].field when root is an array
-    ** root.field when root is an object
-    ** root.field[].field when root is an object and the field is an array
-    ** xAxis also known as the "dimension" field
-    ** yAxis also known as the "metric" field
-    */
-    xAxis: {
+    name: {
       type: DataTypes.STRING,
-      description: "X axis or metric field using traversal syntax - root[].field",
-    },
-    xAxisOperation: {
-      type: DataTypes.STRING,
-      description: "Not in use"
-    },
-    yAxis: {
-      type: DataTypes.STRING,
-      description: "Y axis or metric field using traversal syntax - root[].field",
-    },
-    yAxisOperation: {
-      type: DataTypes.STRING,
-      defaultValue: "none",
-      description: "Operation to perform on the y-axis - none, sum, avg, min, max, count"
-    },
-    dateField: {
-      type: DataTypes.STRING,
-      description: "Date field using traversal syntax. Specifies which field should be used for date filtering."
-    },
-    dateFormat: {
-      type: DataTypes.STRING,
-      description: "Date format to use for date filtering. e.g YYYY-MM-DD"
-    },
-    legend: {
-      type: DataTypes.STRING,
-      description: "Legend label (name) of the dataset"
-    },
-    /*
-    ** Conditions to apply to the dataset - used for filtering
-    ** Each condition is an object with the following properties:
-    ** id: string
-    ** field: string - using traversal syntax - root[].field
-    ** operator: string
-    ** value: string
-    ** displayValues: boolean - whether to display the values in the dropdown UI
-    */
-    conditions: {
-      type: DataTypes.TEXT("long"),
-      set(val) {
-        return this.setDataValue("conditions", JSON.stringify(val));
-      },
-      get() {
-        try {
-          return JSON.parse(this.getDataValue("conditions"));
-        } catch (e) {
-          return this.getDataValue("conditions");
-        }
-      },
-      description: "Conditions to apply to the dataset - used for filtering"
-    },
-    formula: {
-      type: DataTypes.TEXT,
-      description: "[Legacy] Formula to use for the dataset"
+      description: "Canonical name of the dataset"
     },
     fieldsSchema: {
       type: DataTypes.TEXT("long"),
@@ -167,7 +107,61 @@ module.exports = (sequelize, DataTypes) => {
     // ------------------------------------
 
     /*
-    ** LEGACY FIELDS
+    ** LEGACY / COMPATIBILITY FIELDS
+    ** These remain only so older charts and callers can keep working during the CDC migration.
+    */
+    /*
+    ** Legacy chart-binding fields
+    */
+    xAxis: {
+      type: DataTypes.STRING,
+      description: "[Legacy] X axis or metric field using traversal syntax - root[].field",
+    },
+    xAxisOperation: {
+      type: DataTypes.STRING,
+      description: "[Legacy] Not in use"
+    },
+    yAxis: {
+      type: DataTypes.STRING,
+      description: "[Legacy] Y axis or metric field using traversal syntax - root[].field",
+    },
+    yAxisOperation: {
+      type: DataTypes.STRING,
+      defaultValue: "none",
+      description: "[Legacy] Operation to perform on the y-axis - none, sum, avg, min, max, count"
+    },
+    dateField: {
+      type: DataTypes.STRING,
+      description: "[Legacy] Date field using traversal syntax. Specifies which field should be used for date filtering."
+    },
+    dateFormat: {
+      type: DataTypes.STRING,
+      description: "[Legacy] Date format to use for date filtering. e.g YYYY-MM-DD"
+    },
+    legend: {
+      type: DataTypes.STRING,
+      description: "[Legacy] Previous dataset name field"
+    },
+    conditions: {
+      type: DataTypes.TEXT("long"),
+      set(val) {
+        return this.setDataValue("conditions", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("conditions"));
+        } catch (e) {
+          return this.getDataValue("conditions");
+        }
+      },
+      description: "[Legacy] Conditions to apply to the dataset - used for filtering"
+    },
+    formula: {
+      type: DataTypes.TEXT,
+      description: "[Legacy] Formula to use for the dataset"
+    },
+    /*
+    ** Legacy chart-owned fields from the pre-CDC split
     */
     chart_id: {
       type: DataTypes.INTEGER,

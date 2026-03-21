@@ -23,6 +23,51 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    /*
+    ** Active chart-binding fields.
+    ** Deprecated dataset-side binding fields have been moved off Dataset and do not have CDC equivalents here.
+    */
+    xAxis: {
+      type: DataTypes.STRING,
+      description: "X axis field using traversal syntax - root[].field"
+    },
+    xAxisOperation: {
+      type: DataTypes.STRING,
+      description: "X axis operation"
+    },
+    yAxis: {
+      type: DataTypes.STRING,
+      description: "Y axis field using traversal syntax - root[].field"
+    },
+    yAxisOperation: {
+      type: DataTypes.STRING,
+      description: "Operation to perform on the y-axis - none, sum, avg, min, max, count"
+    },
+    dateField: {
+      type: DataTypes.STRING,
+      description: "Date field using traversal syntax. Specifies which field should be used for date filtering."
+    },
+    dateFormat: {
+      type: DataTypes.STRING,
+      description: "Date format to use for date filtering. e.g YYYY-MM-DD"
+    },
+    conditions: {
+      type: DataTypes.TEXT("long"),
+      set(val) {
+        return this.setDataValue("conditions", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("conditions"));
+        } catch (e) {
+          return this.getDataValue("conditions");
+        }
+      },
+      description: "Chart-specific conditions layered on top of the dataset"
+    },
+    /*
+    ** Active chart presentation fields.
+    */
     formula: {
       type: DataTypes.TEXT,
       description: "The formula (e.g {val / 100}) used transform the data points values. Can be used to pre-(a)pend, strings to numbers too £{val}"

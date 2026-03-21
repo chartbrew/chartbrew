@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const externalDbConnection = require("../modules/externalDbConnection");
 const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
 const validateMongoQuery = require("../modules/validateMongoQuery");
+const { getDatasetName, resolveChartDatasetOptions } = require("../modules/resolveChartDatasetOptions");
 
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
@@ -64,6 +65,10 @@ function toAuditError(error, stage = "unknown") {
   const wrappedError = new Error(String(error));
   wrappedError.auditStage = stage;
   return wrappedError;
+}
+
+function getRuntimeDatasetKey(options = {}) {
+  return options.dataset_id || options.id || null;
 }
 
 class ChartController {
@@ -439,18 +444,26 @@ class ChartController {
         return Promise.all(requestPromises);
       })
       .then(async (datasets) => {
+        const resolvedDatasets = datasets.map((dataset, index) => {
+          const cdc = gChart.ChartDatasetConfigs[index];
+          return {
+            ...dataset,
+            options: resolveChartDatasetOptions(cdc, dataset?.options),
+          };
+        });
+
         const resolvingData = {
           chart: gChart,
-          datasets,
+          datasets: resolvedDatasets,
         };
 
         // change the datasets data if the cache is called
         if (!skipCache && noSource === true && gCache && gCache.data && gCache.data.datasets) {
           resolvingData.datasets = gCache.data.datasets.map((item) => {
             const tempItem = item;
-            for (let i = 0; i < datasets.length; i++) {
-              if (item.options.id === datasets[i].options.id) {
-                tempItem.options = datasets[i].options;
+            for (let i = 0; i < resolvedDatasets.length; i++) {
+              if (getRuntimeDatasetKey(item.options) === getRuntimeDatasetKey(resolvedDatasets[i].options)) {
+                tempItem.options = resolvedDatasets[i].options;
                 break;
               }
             }
@@ -534,10 +547,14 @@ class ChartController {
           if (chartData.conditionsOptions) {
             chartData.conditionsOptions.forEach((opt) => {
               if (opt.dataset_id) {
-                const cdc = gChart.ChartDatasetConfigs.find((d) => d.dataset_id === opt.dataset_id);
-                const dataset = cdc?.Dataset;
-                if (dataset?.conditions) {
-                  const newConditions = dataset.conditions.map((c) => {
+                const cdc = gChart.ChartDatasetConfigs.find((d) => `${d.id}` === `${opt.dataset_id}`
+                  || `${d.dataset_id}` === `${opt.dataset_id}`);
+                const cdcConditions = cdc?.conditions !== undefined && cdc?.conditions !== null
+                  ? cdc.conditions
+                  : cdc?.Dataset?.conditions;
+
+                if (Array.isArray(cdcConditions)) {
+                  const newConditions = cdcConditions.map((c) => {
                     const optCondition = opt.conditions.find((o) => o.field === c.field);
                     let values = (optCondition && optCondition.values) || [];
                     values = optCondition?.hideValues ? [] : values.slice(0, 100);
@@ -546,9 +563,9 @@ class ChartController {
                   });
 
                   datasetsPromises.push(
-                    db.Dataset.update(
+                    db.ChartDatasetConfig.update(
                       { conditions: newConditions },
-                      { where: { id: opt.dataset_id } }
+                      { where: { id: cdc.id } }
                     )
                   );
                 }
@@ -1236,7 +1253,7 @@ class ChartController {
 
     return db.ChartDatasetConfig.create({
       ...data,
-      legend: dataset.legend,
+      legend: data.legend || getDatasetName(dataset),
       chart_id: chartId,
     })
       .then((chartDatasetConfig) => {
@@ -1360,7 +1377,7 @@ class ChartController {
           const cdcToCreate = {
             ...cdcRest,
             chart_id: chart.id,
-            legend: cdcData.legend || dataset?.legend || null
+            legend: cdcData.legend || getDatasetName(dataset) || null
           };
 
           return db.ChartDatasetConfig.create(cdcToCreate);
