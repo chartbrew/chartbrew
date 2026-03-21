@@ -14,6 +14,7 @@ import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
 import Text from "../../../components/Text";
+import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 
 const emptyColor = "rgba(0,0,0,0)";
 
@@ -48,12 +49,13 @@ function Dataset(props) {
   const [menuItem, setMenuItem] = useState("data");
   const [requestResult, setRequestResult] = useState(null);
   const [editDatasetName, setEditDatasetName] = useState(false);
-  const [datasetName, setDatasetName] = useState(dataset.legend);
+  const [datasetName, setDatasetName] = useState(getDatasetDisplayName(dataset));
   const [savingDatasetName, setSavingDatasetName] = useState(false);
 
   // update the dataset with the active one
   useEffect(() => {
     setNewDataset(dataset);
+    setDatasetName(getDatasetDisplayName(dataset));
   }, [dataset]);
 
   // update the dataset prop based on new changes
@@ -62,7 +64,7 @@ function Dataset(props) {
       return;
     }
 
-    if (dataset.legend !== newDataset.legend) {
+    if (dataset.name !== newDataset.name) {
       if (shouldSave === null) {
         setShouldSave(moment().add(2, "seconds"));
       } else if (moment().isAfter(shouldSave)) {
@@ -167,10 +169,10 @@ function Dataset(props) {
       });
   };
 
-  const _onChangeLegend = () => {
+  const _onChangeDatasetName = () => {
     if (datasetName) {
       setSavingDatasetName(true);
-      onUpdate({ ...newDataset, legend: datasetName })
+      onUpdate({ ...newDataset, name: datasetName })
         .then(() => {
           setSavingDatasetName(false);
           setEditDatasetName(false);
@@ -199,7 +201,7 @@ function Dataset(props) {
           <Spacer y={2} />
         </div>
         <div className="col-span-12 flex items-center">
-          <Text b size={"lg"}>{newDataset.legend}</Text>
+          <Text b size={"lg"}>{getDatasetDisplayName(newDataset)}</Text>
           <Spacer x={1} />
           <Button
             variant="light"
@@ -226,7 +228,7 @@ function Dataset(props) {
         {editDatasetName && (
           <div className="col-span-12 md:col-span-6">
             <Button
-              onClick={_onChangeLegend}
+              onClick={_onChangeDatasetName}
               isDisabled={!datasetName}
               isLoading={savingDatasetName}
               color="success"

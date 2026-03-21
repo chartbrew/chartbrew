@@ -85,7 +85,6 @@ function Dataset() {
         team_id: team.id,
         data: {
           name: "New dataset",
-          legend: "New dataset",
           team_id: team.id,
           draft: true,
         },
@@ -157,7 +156,6 @@ function Dataset() {
         data: {
           draft: false,
           name: trimmedName,
-          legend: trimmedName,
           project_ids: projectIds,
         },
       })).unwrap();
@@ -291,8 +289,8 @@ function Dataset() {
 
             <div className="flex flex-col gap-2">
               <div className="text-sm font-medium text-foreground">Tags</div>
-              <div className="text-sm text-foreground-500">
-                Assign dashboard tags now, or leave this empty and add them later.
+              <div className="text-xs text-foreground-500">
+                Assign dashboard tags now, or leave this empty and add them later. Dashboard tags make it easier to find this dataset in the future.
               </div>
               <div className="flex flex-row flex-wrap gap-2">
                 {projects.filter((project) => !project.ghost).map((project) => (
