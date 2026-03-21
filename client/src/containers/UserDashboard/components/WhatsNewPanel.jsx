@@ -72,7 +72,7 @@ function getWhatsNewContent({ navigate, dispatch }) {
             id: "scheduled-reports",
             type: "underusedCapability",
             title: "Scheduled reports",
-            body: "Send chart snapshots automatically to your inbox or your team.",
+            body: "Send chart snapshots automatically to your inbox.",
             icon: "calendar",
             colorScheme: "warning",
             ctaLabel: "Read tutorial",
