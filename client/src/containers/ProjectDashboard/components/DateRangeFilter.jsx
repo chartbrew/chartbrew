@@ -10,7 +10,6 @@ function DateRangeFilter({
   endDate,
   onChange,
   className = "",
-  variant = "",
   size = "sm",
   isEdit = false,
 }) {

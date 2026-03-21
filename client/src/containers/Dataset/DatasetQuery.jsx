@@ -486,8 +486,8 @@ function DatasetQuery(props) {
                       isHoverable
                       onPress={() => _onCreateNewRequest(c)}
                       fullWidth
-                      shadow="sm"
-                      className="h-full"
+                      shadow="none"
+                      className="h-full border-1 border-solid border-content3"
                     >
                       <CardBody className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">

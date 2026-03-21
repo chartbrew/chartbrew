@@ -12,22 +12,50 @@ function throttlePromises(promises, chunkSize, index) {
     .catch(() => throttlePromises(promises, chunkSize, index + chunkSize));
 }
 
-module.exports.up = async (queryInterface) => {
-  const dialect = queryInterface.sequelize.getDialect();
-  const tableNames = {
-    dataset: dialect === "postgres" ? "\"Dataset\"" : "Dataset",
-    cdc: dialect === "postgres" ? "\"ChartDatasetConfig\"" : "ChartDatasetConfig",
-  };
+function buildSelectQuery(queryInterface, tableName, columns) {
+  const queryGenerator = queryInterface.queryGenerator
+    || queryInterface.sequelize.getQueryInterface().queryGenerator;
+  const quotedTable = queryGenerator.quoteTable(tableName);
+  const quotedColumns = columns.map((column) => {
+    const quotedColumn = queryGenerator.quoteIdentifier(column);
+    return `${quotedColumn} AS ${quotedColumn}`;
+  });
 
+  return `SELECT ${quotedColumns.join(", ")} FROM ${quotedTable}`;
+}
+
+module.exports.up = async (queryInterface) => {
   const datasets = await queryInterface.sequelize.query(
-    `SELECT id, name, legend, xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat, conditions, formula
-     FROM ${tableNames.dataset}`,
+    buildSelectQuery(queryInterface, "Dataset", [
+      "id",
+      "name",
+      "legend",
+      "xAxis",
+      "xAxisOperation",
+      "yAxis",
+      "yAxisOperation",
+      "dateField",
+      "dateFormat",
+      "conditions",
+      "formula",
+    ]),
     { type: queryInterface.sequelize.QueryTypes.SELECT }
   );
 
   const cdcs = await queryInterface.sequelize.query(
-    `SELECT id, dataset_id, xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat, conditions, formula, legend
-     FROM ${tableNames.cdc}`,
+    buildSelectQuery(queryInterface, "ChartDatasetConfig", [
+      "id",
+      "dataset_id",
+      "xAxis",
+      "xAxisOperation",
+      "yAxis",
+      "yAxisOperation",
+      "dateField",
+      "dateFormat",
+      "conditions",
+      "formula",
+      "legend",
+    ]),
     { type: queryInterface.sequelize.QueryTypes.SELECT }
   );
 
