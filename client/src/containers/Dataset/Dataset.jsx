@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
+  Autocomplete, AutocompleteItem,
   Button, Chip, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@heroui/react";
-import { LuCheck, LuPencil } from "react-icons/lu";
+import { LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { createCdc, runQuery, updateChart } from "../../slices/chart";
+import { createChart, createCdc, getProjectCharts, runQuery, updateChart } from "../../slices/chart";
 import { getDataset, saveNewDataset, updateDataset } from "../../slices/dataset";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
@@ -17,6 +18,26 @@ import { selectUser } from "../../slices/user";
 import { getTeams, selectTeam } from "../../slices/team";
 import { getProjects, selectProjects } from "../../slices/project";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
+import getDashboardLayout from "../../modules/getDashboardLayout";
+import { placeNewWidget } from "../../modules/autoLayout";
+
+const defaultNewChart = {
+  type: "line",
+  subType: "lcTimeseries",
+};
+
+function getNewChartLayoutForProject(charts) {
+  const layouts = getDashboardLayout(charts);
+  const chartLayout = {};
+
+  Object.keys(layouts).forEach((bp) => {
+    const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
+    const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
+    chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
+  });
+
+  return chartLayout;
+}
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -25,7 +46,12 @@ function Dataset() {
   const [saveDatasetLoading, setSaveDatasetLoading] = useState(false);
   const [fromChart, setFromChart] = useState(null);
   const [draftSaveModalOpen, setDraftSaveModalOpen] = useState(false);
+  const [draftSaveIntent, setDraftSaveIntent] = useState("save");
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
+  const [createChartModalOpen, setCreateChartModalOpen] = useState(false);
+  const [createChartSelectedProjectKey, setCreateChartSelectedProjectKey] = useState(null);
+  const [createChartSubmitAttempted, setCreateChartSubmitAttempted] = useState(false);
+  const [createChartFromDatasetLoading, setCreateChartFromDatasetLoading] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -127,6 +153,21 @@ function Dataset() {
     }
   }, [query]);
 
+  useEffect(() => {
+    if (!createChartModalOpen) return;
+
+    const selectable = projects.filter((project) => !project.ghost);
+    if (selectedProjectIds.length === 1) {
+      const id = selectedProjectIds[0];
+      if (selectable.some((p) => p.id === id)) {
+        setCreateChartSelectedProjectKey(String(id));
+        return;
+      }
+    }
+    setCreateChartSelectedProjectKey(null);
+    // Prefill from dataset tags only when the modal opens, not when tags/projects change while it stays open.
+  }, [createChartModalOpen]);
+
   const _onUpdateDataset = (data) => {
     return dispatch(updateDataset({
       team_id: team.id,
@@ -143,7 +184,7 @@ function Dataset() {
       });
   };
 
-  const _persistDataset = async (projectIds = dataset?.project_ids || []) => {
+  const _persistDataset = async (projectIds = dataset?.project_ids || [], afterSave = "save") => {
     if (!dataset?.id || !team?.id) return false;
 
     const trimmedName = datasetName.trim() || getDatasetDisplayName(dataset) || "Untitled dataset";
@@ -203,6 +244,12 @@ function Dataset() {
         return true;
       }
 
+      if (afterSave === "createChart" && !fromChart) {
+        setCreateChartModalOpen(true);
+        setEditDatasetName(false);
+        return true;
+      }
+
       toast.success("Dataset saved");
       setEditDatasetName(false);
       return true;
@@ -215,13 +262,79 @@ function Dataset() {
     }
   };
 
-  const _onSaveDataset = async () => {
+  const _onSaveDataset = async (intent = "save") => {
     if (dataset?.draft) {
+      const continueToCreateChart = intent === "createChart" || (!fromChart && intent === "save");
+      setDraftSaveIntent(continueToCreateChart ? "createChart" : "save");
       setDraftSaveModalOpen(true);
       return;
     }
 
-    await _persistDataset(selectedProjectIds);
+    await _persistDataset(
+      selectedProjectIds,
+      intent === "createChart" ? "createChart" : "save",
+    );
+  };
+
+  const _onCreateChartFromDataset = async () => {
+    if (!createChartSelectedProjectKey) {
+      setCreateChartSubmitAttempted(true);
+      return;
+    }
+
+    const projectId = parseInt(String(createChartSelectedProjectKey), 10);
+    if (!dataset?.id || Number.isNaN(projectId)) return;
+
+    setCreateChartFromDatasetLoading(true);
+
+    try {
+      const charts = await dispatch(getProjectCharts({ project_id: projectId })).unwrap();
+      const chartLayout = getNewChartLayoutForProject(charts || []);
+      const trimmedName = datasetName.trim() || getDatasetDisplayName(dataset) || "Untitled dataset";
+
+      const chart = await dispatch(createChart({
+        project_id: projectId,
+        data: {
+          ...defaultNewChart,
+          name: trimmedName,
+          layout: chartLayout,
+        },
+      })).unwrap();
+
+      await dispatch(createCdc({
+        project_id: projectId,
+        chart_id: chart.id,
+        data: {
+          dataset_id: dataset.id,
+          legend: trimmedName,
+          datasetColor: chartColors.blue.hex,
+          fill: false,
+          order: 0,
+        },
+      })).unwrap();
+
+      try {
+        await dispatch(runQuery({
+          project_id: projectId,
+          chart_id: chart.id,
+          noSource: false,
+          skipParsing: false,
+          getCache: true,
+        })).unwrap();
+      } catch (queryError) {
+        // The chart editor can recover from a failed first run.
+      }
+
+      setCreateChartModalOpen(false);
+      setCreateChartSelectedProjectKey(null);
+      setCreateChartSubmitAttempted(false);
+      navigate(`/dashboard/${projectId}/chart/${chart.id}/edit`);
+    } catch (createError) {
+      setError(createError);
+      toast.error("Could not create the chart. Please try again.");
+    } finally {
+      setCreateChartFromDatasetLoading(false);
+    }
   };
 
   const _toggleProjectTag = (projectId) => {
@@ -239,8 +352,8 @@ function Dataset() {
           {!editDatasetName && (
             <>
               <Link onClick={() => setEditDatasetName(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
-                <div className="font-tw font-bold text-foreground">{getDatasetDisplayName(dataset)}</div>
-                <LuPencil size={16} className="text-secondary" />
+                <div className="font-tw font-bold text-foreground text-lg">{getDatasetDisplayName(dataset)}</div>
+                <LuPencil size={16} className="text-foreground-500" />
               </Link>
             </>
           )}
@@ -253,16 +366,37 @@ function Dataset() {
                 placeholder="Dataset name"
                 variant="bordered"
                 labelPlacement="outside"
+                endContent={
+                  <Button
+                    variant="flat"
+                    isIconOnly
+                    onPress={() => _onSaveDataset("save")}
+                    size="sm"
+                  >
+                    <LuCheck size={16} />
+                  </Button>
+                }
               />
             </>
           )}
         </div>
 
         <div className="flex flex-row gap-2 flex-wrap">
+          {!fromChart && (
+            <Button
+              color="default"
+              variant="ghost"
+              onPress={() => _onSaveDataset("createChart")}
+              isLoading={saveDatasetLoading}
+              isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
+              startContent={<LuChartColumn size={16} />}
+            >
+              Save & create chart
+            </Button>
+          )}
           <Button
             color="primary"
-            onPress={_onSaveDataset}
-            endContent={!saveDatasetLoading ? <LuCheck /> : null}
+            onPress={() => _onSaveDataset("save")}
             isLoading={saveDatasetLoading}
             isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
           >
@@ -273,7 +407,14 @@ function Dataset() {
 
       <DatasetQuery onUpdateDataset={_onUpdateDataset} />
 
-      <Modal isOpen={draftSaveModalOpen} onClose={() => setDraftSaveModalOpen(false)} size="2xl">
+      <Modal
+        isOpen={draftSaveModalOpen}
+        onClose={() => {
+          setDraftSaveModalOpen(false);
+          setDraftSaveIntent("save");
+        }}
+        size="2xl"
+      >
         <ModalContent>
           <ModalHeader>Save dataset</ModalHeader>
           <ModalBody>
@@ -314,7 +455,10 @@ function Dataset() {
           <ModalFooter>
             <Button
               variant="bordered"
-              onPress={() => setDraftSaveModalOpen(false)}
+              onPress={() => {
+                setDraftSaveModalOpen(false);
+                setDraftSaveIntent("save");
+              }}
             >
               Cancel
             </Button>
@@ -322,9 +466,13 @@ function Dataset() {
               color="primary"
               isLoading={saveDatasetLoading}
               onPress={async () => {
-                const success = await _persistDataset(selectedProjectIds);
+                const success = await _persistDataset(
+                  selectedProjectIds,
+                  draftSaveIntent === "createChart" ? "createChart" : "save",
+                );
                 if (success) {
                   setDraftSaveModalOpen(false);
+                  setDraftSaveIntent("save");
                 }
               }}
             >
@@ -333,6 +481,74 @@ function Dataset() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <Modal
+        isOpen={createChartModalOpen}
+        onClose={() => {
+          setCreateChartModalOpen(false);
+          setCreateChartSelectedProjectKey(null);
+          setCreateChartSubmitAttempted(false);
+        }}
+        size="2xl"
+      >
+        <ModalContent>
+          <ModalHeader>Create a chart from this dataset</ModalHeader>
+          <ModalBody>
+            <div className="text-sm text-foreground-500">
+              Pick the dashboard (project) where this chart should be added. A new chart will be created and linked to this dataset.
+            </div>
+            <Spacer y={2} />
+            <Autocomplete
+              label="Dashboard"
+              placeholder="Search or select a dashboard"
+              labelPlacement="outside"
+              isRequired
+              selectedKey={createChartSelectedProjectKey}
+              onSelectionChange={(key) => {
+                setCreateChartSelectedProjectKey(key);
+                setCreateChartSubmitAttempted(false);
+              }}
+              isInvalid={createChartSubmitAttempted && !createChartSelectedProjectKey}
+              errorMessage={
+                createChartSubmitAttempted && !createChartSelectedProjectKey
+                  ? "Select a dashboard to continue."
+                  : undefined
+              }
+              aria-label="Dashboard for new chart"
+            >
+              {projects.filter((project) => !project.ghost).map((project) => (
+                <AutocompleteItem key={String(project.id)} textValue={project.name}>
+                  {project.name}
+                </AutocompleteItem>
+              ))}
+            </Autocomplete>
+            {projects.filter((project) => !project.ghost).length === 0 && (
+              <div className="text-sm text-foreground-400 mt-2">No projects available yet.</div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onPress={() => {
+                setCreateChartModalOpen(false);
+                setCreateChartSelectedProjectKey(null);
+                setCreateChartSubmitAttempted(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              isLoading={createChartFromDatasetLoading}
+              isDisabled={projects.filter((project) => !project.ghost).length === 0}
+              onPress={_onCreateChartFromDataset}
+            >
+              Create chart
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
     </div>
   );
 }
