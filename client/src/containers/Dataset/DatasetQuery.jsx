@@ -363,13 +363,13 @@ function DatasetQuery(props) {
                       key={dr.id}
                       title={(
                         <div className="flex flex-row items-center gap-2">
-                          <Image
-                            src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
-                            alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                            width={20}
-                            height={20}
-                            className="rounded-sm border-1 border-divider"
-                          />
+                          <div className="w-6 h-6">
+                            <Image
+                              src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
+                              alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                              className="rounded-sm border-1 border-divider"
+                            />
+                          </div>
                           <span>{dr?.Connection?.name}</span>
                           {_renderDataRequestTabChip(dr)}
                         </div>

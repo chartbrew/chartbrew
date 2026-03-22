@@ -327,8 +327,6 @@ function SqlBuilder(props) {
             />
           </Tabs>
           <Spacer y={2} />
-          <Divider />
-          <Spacer y={4} />
           <>
             {activeTab === "visual" && (
               <div>
