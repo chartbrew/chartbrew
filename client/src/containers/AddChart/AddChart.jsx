@@ -15,8 +15,6 @@ import {
   createChart, createCdc, updateChart, runQuery, runQueryWithFilters, selectCharts,
 } from "../../slices/chart";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
@@ -443,18 +441,22 @@ function AddChart() {
   return (
     <div className="flex flex-col">
       <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-5 add-dataset-tut">
+          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full border-1 border-solid border-divider"}>
+            <ChartDatasets chartId={newChart.id} />
+          </div>
+        </div>
         <div className="col-span-12 md:col-span-7">
-          <Row align="center" wrap="wrap" justify="space-between">
-            <Row className="chart-name-tut">
+          <div className="flex items-center justify-between flex-wrap gap-2 py-4 px-4 border-1 border-divider bg-content1 rounded-lg">
+            <div className="flex items-center gap-2">
               {!editingTitle
                 && (
                   <Tooltip content="Edit the chart name">
-                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="foreground">
-                      <LuPencilLine className="text-primary" />
-                      <Spacer x={0.5} />
-                      <Text b>
+                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center gap-2 cursor-pointer" color="foreground">
+                      <div className="text-lg font-bold text-foreground">
                         {newChart.name}
-                      </Text>
+                      </div>
+                      <LuPencilLine size={18} className="text-foreground-500" />
                     </LinkNext>
                   </Tooltip>
                 )}
@@ -464,43 +466,40 @@ function AddChart() {
                   e.preventDefault();
                   _onSubmitNewName();
                 }}>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                  <div className="flex items-center gap-2">
                     <Input
                       placeholder="Enter a title"
                       value={chartName}
                       onChange={(e) => _onNameChange(e.target.value)}
-                      variant="bordered"
                       labelPlacement="outside"
+                      size="sm"
                     />
-                    <Spacer x={0.5} />
                     <Button
-                      color="success"
+                      color="primary"
                       type="submit"
-                      onClick={_onSubmitNewName}
+                      onPress={_onSubmitNewName}
                       size="sm"
                       isIconOnly
 
                     >
-                      <LuCheck />
+                      <LuCheck size={16} />
                     </Button>
                   </div>
                 </form>
               )}
-            </Row>
-            <Row className="chart-actions-tut" align="center" justify="flex-end">
-              <div style={{ display: "flex" }}>
+            </div>
+            <div className="flex items-center justify-end gap-4">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-foreground">Draft</div>
                 <Switch
                   isSelected={newChart.draft}
                   onChange={() => _onChangeChart({ draft: !newChart.draft })}
                   size="sm"
                 />
-                <Spacer x={0.5} />
-                <Text>Draft</Text>
               </div>
-              <Spacer x={4} />
               <Button
                 color={saveRequired ? "primary" : "success"}
-                onClick={() => _onChangeChart({})}
+                onPress={() => _onChangeChart({})}
                 isLoading={loading}
                 size="sm"
                 variant={saveRequired ? "solid" : "flat"}
@@ -508,10 +507,10 @@ function AddChart() {
                 {saveRequired && "Save chart"}
                 {!saveRequired && "Chart saved"}
               </Button>
-            </Row>
-          </Row>
+            </div>
+          </div>
           <Spacer y={2} />
-          <Row className="chart-type-tut bg-content1 rounded-lg border-1 border-solid border-content3">
+          <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
             <ChartPreview
               chart={newChart}
               onChange={_onChangeChart}
@@ -523,9 +522,9 @@ function AddChart() {
               useCache={useCache}
               changeCache={() => setUseCache(!useCache)}
             />
-          </Row>
+          </div>
           <Spacer y={4} />
-          <Row className="bg-content1 rounded-lg border-1 border-solid border-content3">
+          <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
             {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings
                 chart={newChart}
@@ -533,12 +532,6 @@ function AddChart() {
                 onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
               />
             )}
-          </Row>
-        </div>
-
-        <div className="col-span-12 md:col-span-5 add-dataset-tut">
-          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full border-1 border-solid border-content3"}>
-            <ChartDatasets chartId={newChart.id} />
           </div>
         </div>
       </div>

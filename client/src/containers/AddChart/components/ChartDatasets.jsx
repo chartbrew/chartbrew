@@ -7,9 +7,8 @@ import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
 import {
-  Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tooltip
+  Avatar, Button, Card, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tooltip
 } from "@heroui/react";
-import Text from "../../../components/Text";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -189,8 +188,6 @@ function ChartDatasets(props) {
         </div>
       </div>
       <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
 
       {(chart?.ChartDatasetConfigs?.length === 0 || addMode) && (
         <>
@@ -221,7 +218,7 @@ function ChartDatasets(props) {
               All
             </Chip>
             <Spacer x={1} />
-            <Text size="sm">{`${_filteredDatasets().length} datasets found`}</Text>
+            <div className="text-sm text-foreground-500">{`${_filteredDatasets().length} datasets found`}</div>
           </div>
           <Spacer y={4} />
 
@@ -242,7 +239,7 @@ function ChartDatasets(props) {
                     <div className={"flex flex-row justify-between gap-4 w-full"}>
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
                         <div className="flex flex-col gap-1 items-start">
-                          <Text b>{getDatasetDisplayName(dataset)}</Text>
+                          <div className="font-bold">{getDatasetDisplayName(dataset)}</div>
                           <div className="flex flex-wrap gap-1">
                             {_getDatasetTags(dataset).map((tag) => (
                               <Chip key={tag} size="sm" variant="flat" color="primary">
@@ -267,21 +264,8 @@ function ChartDatasets(props) {
                     </div>
                   </CardHeader>
                   <Divider />
-                  <CardBody className="p-2">
-                    <div className="w-full flex flex-row justify-between">
-                      <div>
-                        <Text b size="sm">Metric: </Text>
-                        <Text size="sm">{dataset.yAxis?.replace("root[].", "").replace("root.", "") || "Not set"}</Text>
-                      </div>
-                      <div>
-                        <Text b size="sm">Dimension: </Text>
-                        <Text size="sm">{dataset.xAxis?.replace("root[].", "").replace("root.", "") || "Not set"}</Text>
-                      </div>
-                    </div>
-                  </CardBody>
-                  <Divider />
                   <CardFooter className="justify-between">
-                    <Text className={"text-[12px]"}>{`Created ${moment(dataset.createdAt).calendar()}`}</Text>
+                    <div className="text-xs text-foreground-500">{`Created ${moment(dataset.createdAt).calendar()}`}</div>
                     {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
                       <div className="z-50">
                         <Button
@@ -290,7 +274,7 @@ function ChartDatasets(props) {
                           variant="ghost"
                           endContent={<LuExternalLink size={16} />}
                           as={Link}
-                          to={`/${team.id}/dataset/${dataset.id}`}
+                          to={`/datasets/${dataset.id}`}
                           target="_blank"
                         >
                           Edit
@@ -312,7 +296,7 @@ function ChartDatasets(props) {
           <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
-          <Text>No datasets found. Create a dataset to get started.</Text>
+          <div className="text-sm text-foreground-500">No datasets found. Create a dataset to get started.</div>
           <Spacer y={4} />
           <Button
             color="primary"
@@ -339,11 +323,15 @@ function ChartDatasets(props) {
               title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
               radius="sm"
               color={activeCdc?.id === cdc.id ? "primary" : "default"}
-              variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
+              // variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
+              variant="flat"
               onClick={() => setActiveCdc(cdc)}
               className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
               size="lg"
               endContent={<LuGripVertical size={16} className="cursor-grab" />}
+              startContent={(
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cdc.datasetColor }} />
+              )}
             >
               {cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}
             </Chip>

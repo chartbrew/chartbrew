@@ -619,13 +619,13 @@ function ChartDatasetConfig(props) {
                   </Link>
                 )}
                 {formula && (
-                  <Row align={"center"} justify={"space-between"}>
+                  <div className="flex flex-col gap-2">
                     <div className="flex flex-col">
                       <Popover>
                         <PopoverTrigger>
-                          <div className="flex flex-row gap-1 items-center">
+                          <div className="flex flex-row gap-1 items-center cursor-pointer">
                             <div className="text-sm">{"Metric formula"}</div>
-                            <LuInfo size={18} />
+                            <LuInfo size={16} />
                           </div>
                         </PopoverTrigger>
                         <PopoverContent>
@@ -662,7 +662,7 @@ function ChartDatasetConfig(props) {
                         </Tooltip>
                       </div>
                     </div>
-                  </Row>
+                  </div>
                 )}
               </div>
 
@@ -681,15 +681,14 @@ function ChartDatasetConfig(props) {
                   </div>
                 )}
                 {goal && (
-                  <Row align={"center"} justify={"space-between"}>
-                    <Row align="center">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-row gap-2 items-center">
                       <div className="text-sm text-foreground">{"Goal"}</div>
-                      <Spacer x={1} />
-                      <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                        <div><LuInfo size={18} /></div>
+                      <Tooltip className="max-w-sm" content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
+                        <div><LuInfo size={16} /></div>
                       </Tooltip>
-                    </Row>
-                    <Row align="center" className={"gap-2"}>
+                    </div>
+                    <div className="flex flex-row gap-2 items-center">
                       <Input
                         placeholder="Enter your goal here"
                         value={goal}
@@ -712,8 +711,8 @@ function ChartDatasetConfig(props) {
                           <LuCircleX className="text-danger" />
                         </Link>
                       </Tooltip>
-                    </Row>
-                  </Row>
+                    </div>
+                  </div>
                 )}
               </div>
             </>
