@@ -7,7 +7,7 @@ import {
   Tab,
   Image,
 } from "@heroui/react";
-import { LuBrainCircuit, LuGitMerge, LuPlug, LuPlus, LuSearch, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -39,10 +39,11 @@ import { selectTeam } from "../../slices/team";
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
 
-  const [selectedRequest, setSelectedRequest] = useState({ isSettings: true });
+  const [selectedRequest, setSelectedRequest] = useState({});
   const [createMode, setCreateMode] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
   const [connectionSearch, setConnectionSearch] = useState("");
+  const [selectedTab, setSelectedTab] = useState("queryBuilder");
 
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
@@ -68,10 +69,10 @@ function DatasetQuery(props) {
         .then((drs) => {
           if (drs.payload?.length > 1) {
             setDataRequests(drs.payload);
-            setSelectedRequest({ isSettings: true });
+            setSelectedRequest(drs.payload[0] || {});
           } else if (drs.payload?.length === 1) {
             setDataRequests(drs.payload);
-            setSelectedRequest(drs.payload[0]);
+            setSelectedRequest(drs.payload[0] || {});
             setCreateMode(false);
           }
 
@@ -220,14 +221,6 @@ function DatasetQuery(props) {
     }
   };
 
-  const _onSelectSettings = () => {
-    if (dataRequests.length === 0) {
-      toast.info("You need to create a data request first.");
-      return;
-    }
-    setSelectedRequest({ isSettings: true });
-  };
-
   const _filteredConnections = () => {
     if (connectionSearch.length > 0) {
       return connections.filter((c) => c?.name?.toLowerCase().includes(connectionSearch.toLowerCase()));
@@ -250,10 +243,6 @@ function DatasetQuery(props) {
   };
 
   const _getSelectedTab = () => {
-    if (selectedRequest?.isSettings) {
-      return dataRequests[0]?.id ?? "add";
-    }
-
     if (createMode) {
       return "add";
     }
@@ -265,62 +254,93 @@ function DatasetQuery(props) {
     return "add";
   };
 
+  const _getJoinSettingsJoinCount = () => dataset?.joinSettings?.joins?.length || 0;
+
+  const _hasJoinConfiguration = () => {
+    const joins = dataset?.joinSettings?.joins;
+    if (!joins?.length) return false;
+    return joins.some(
+      (j) => j.join_id != null && String(j.dr_field || "").trim() !== "" && String(j.join_field || "").trim() !== ""
+    );
+  };
+
+  const _isMainDataRequest = (dr) => {
+    if (dataset?.main_dr_id == null || !dr?.id) return false;
+    return `${dataset.main_dr_id}` === `${dr.id}`;
+  };
+
+  const _isDataRequestInJoin = (dr) => {
+    const joins = dataset?.joinSettings?.joins;
+    if (!joins?.length || dr?.id == null) return false;
+    return joins.some(
+      (j) =>
+        (j.dr_id != null && `${j.dr_id}` === `${dr.id}`) ||
+        (j.join_id != null && `${j.join_id}` === `${dr.id}`)
+    );
+  };
+
+  const _renderDataRequestTabChip = (dr) => {
+    if (_isMainDataRequest(dr)) {
+      return (
+        <Chip size="sm" variant="flat" color="primary" radius="sm">
+          main
+        </Chip>
+      );
+    }
+    if (_isDataRequestInJoin(dr)) {
+      return (
+        <Chip size="sm" variant="flat" color="success" radius="sm">
+          joined
+        </Chip>
+      );
+    }
+    return (
+      <Chip size="sm" variant="flat" color="warning" radius="sm">
+        needs config
+      </Chip>
+    );
+  };
+
   return (
     <>
       <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
-        <div className="flex flex-row items-center justify-start gap-2">
-          {dataRequests && dataRequests.length > 0 && (
-            <>
-              <Button
-                variant={selectedRequest?.isSettings ? "flat" : "bordered"}
-                color={selectedRequest?.isSettings ? "primary" : "default"}
-                className="h-9 min-w-unit-16"
-                onPress={() => _onSelectSettings()}
-                startContent={<LuGitMerge size={16} />}
-              >
-                Join settings
-              </Button>
-              <LuPlug />
-              <Tabs
-                key={`sources-${_getSelectedTab()}`}
-                defaultSelectedKey={_getSelectedTab()}
-                variant="bordered"
-              >
-                {dataRequests.map((dr) => (
-                  <Tab
-                    key={dr.id}
-                    title={(
-                      <div className="flex flex-row items-center gap-2">
-                        <Image
-                          src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
-                          alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                          width={16}
-                          height={16}
-                          className="rounded-sm"
-                        />
-                        <span>{dr?.Connection?.name}</span>
-                      </div>
-                    )}
-                    onPress={() => _onSelectDataRequest(dr)}
-                  />
-                ))}
-                <Tab
-                  key="add"
-                  title={(
-                    <div className="flex flex-row items-center gap-2">
-                      <LuPlus size={16} />
-                      <span>Add a new data source</span>
-                    </div>
+        <div className="flex flex-row items-center">
+          <Tabs
+            variant="solid"
+            selectedKey={selectedTab}
+            onSelectionChange={(key) => {
+              setSelectedTab(key);
+              setCreateMode(false);
+            }}
+          >
+            <Tab
+              key="queryBuilder"
+              title={(
+                <div className="flex flex-row items-center gap-2">
+                  <LuLayers size={16} />
+                  <span>Query builder</span>
+                </div>
+              )}
+            />
+            <Tab
+              key="joinSettings"
+              title={(
+                <div className="flex flex-row items-center gap-2">
+                  <LuGitMerge size={16} />
+                  <span>Join settings</span>
+                  {_hasJoinConfiguration() && (
+                    <Chip size="sm" variant="flat" radius="sm">
+                      {`${_getJoinSettingsJoinCount()} join${_getJoinSettingsJoinCount() === 1 ? "" : "s"}`}
+                    </Chip>
                   )}
-                  onPress={() => setCreateMode(true)}
-                />
-              </Tabs>
-            </>
-          )}
+                </div>
+              )}
+            />
+          </Tabs>
         </div>
       </div>
       <div className="grid grid-cols-12">
-        {!createMode && selectedRequest?.isSettings && (
+        {!createMode && selectedTab === "joinSettings" && (
           <div className="col-span-12">
             <DatarequestSettings
               dataset={dataset}
@@ -329,8 +349,48 @@ function DatasetQuery(props) {
             />
           </div>
         )}
-        {!createMode && selectedRequest && !selectedRequest.isSettings && (
+        {!createMode && selectedTab === "queryBuilder" && (
           <div className="col-span-12 bg-background rounded-lg border-1 border-divider p-4">
+            {dataRequests && dataRequests.length > 0 && (
+              <div className="bg-content2 rounded-lg p-2">
+                <Tabs
+                  key={`sources-${_getSelectedTab()}`}
+                  defaultSelectedKey={_getSelectedTab()}
+                  variant="light"
+                >
+                  {dataRequests.map((dr) => (
+                    <Tab
+                      key={dr.id}
+                      title={(
+                        <div className="flex flex-row items-center gap-2">
+                          <Image
+                            src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
+                            alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                            width={20}
+                            height={20}
+                            className="rounded-sm border-1 border-divider"
+                          />
+                          <span>{dr?.Connection?.name}</span>
+                          {_renderDataRequestTabChip(dr)}
+                        </div>
+                      )}
+                      onPress={() => _onSelectDataRequest(dr)}
+                    />
+                  ))}
+                  <Tab
+                    key="add"
+                    title={(
+                      <div className="flex flex-row items-center gap-2">
+                        <LuPlus size={16} />
+                        <span>Add data request</span>
+                      </div>
+                    )}
+                    onPress={() => setCreateMode(true)}
+                  />
+                </Tabs>
+              </div>
+            )}
+            <Spacer y={4} />
             {dataRequests.map((dr) => (
               <Fragment key={dr.id}>
                 {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
@@ -425,9 +485,14 @@ function DatasetQuery(props) {
           </div>
         )}
         {createMode && (
-          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20">
+          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20 bg-background rounded-lg border-1 border-divider p-4">
             <Spacer y={1} />
-            <div className="text-lg font-tw font-semibold">Select a connection</div>
+            <div className="flex flex-row items-center gap-2">
+              <Button variant="flat" isIconOnly onPress={() => setCreateMode(false)} size="sm">
+                <LuArrowLeft size={16} />
+              </Button>
+              <div className="text-lg font-tw font-semibold">Select a connection</div>
+            </div>
             <Spacer y={2} />
             {connections.length > 0 && (
               <div>
