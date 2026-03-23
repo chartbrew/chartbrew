@@ -14,7 +14,7 @@ import { cloneDeep, findIndex } from "lodash";
 import moment from "moment";
 import toast from "react-hot-toast";
 
-import { selectConnections } from "../../slices/connection";
+import { getTeamConnections, selectConnections } from "../../slices/connection";
 import {
   updateDataset, createDataRequest, updateDataRequest, deleteDataRequest,
   selectDataRequests,
@@ -35,6 +35,8 @@ import { useTheme } from "../../modules/ThemeContext";
 import Text from "../../components/Text";
 import { selectProjects } from "../../slices/project";
 import { selectTeam } from "../../slices/team";
+import canAccess from "../../config/canAccess";
+import { selectUser } from "../../slices/user";
 
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
@@ -44,6 +46,7 @@ function DatasetQuery(props) {
   const [dataRequests, setDataRequests] = useState([]);
   const [connectionSearch, setConnectionSearch] = useState("");
   const [selectedTab, setSelectedTab] = useState("queryBuilder");
+  const connectionListInitRef = useRef(false);
 
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
@@ -57,6 +60,7 @@ function DatasetQuery(props) {
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const projects = useSelector(selectProjects);
   const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     if (dataset?.id && team?.id && !initRef.current) {
@@ -110,6 +114,13 @@ function DatasetQuery(props) {
       });
     }
   }, [stateDataRequests]);
+
+  useEffect(() => {
+    if (!createMode || !team?.id || connectionListInitRef.current) return;
+
+    connectionListInitRef.current = true;
+    dispatch(getTeamConnections({ team_id: team.id }));
+  }, [createMode, dispatch, team?.id]);
 
   const _updateDataRequest = (newData) => {
     let newDr = newData;
@@ -301,6 +312,10 @@ function DatasetQuery(props) {
     );
   };
 
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
+
   return (
     <>
       <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
@@ -377,16 +392,18 @@ function DatasetQuery(props) {
                       onPress={() => _onSelectDataRequest(dr)}
                     />
                   ))}
-                  <Tab
-                    key="add"
-                    title={(
-                      <div className="flex flex-row items-center gap-2">
-                        <LuPlus size={16} />
-                        <span>Add data request</span>
-                      </div>
-                    )}
-                    onPress={() => setCreateMode(true)}
-                  />
+                  {_canAccess("teamAdmin") && (
+                    <Tab
+                      key="add"
+                      title={(
+                        <div className="flex flex-row items-center gap-2">
+                          <LuPlus size={16} />
+                          <span>Add data request</span>
+                        </div>
+                      )}
+                      onPress={() => setCreateMode(true)}
+                    />
+                  )}
                 </Tabs>
               </div>
             )}

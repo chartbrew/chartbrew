@@ -124,6 +124,29 @@ class RequestController {
       });
   }
 
+  async getBuilderMetadata(id, options = {}) {
+    const dataRequest = await this.findById(id);
+    if (!dataRequest?.Connection?.id) {
+      return Promise.reject(new Error(404));
+    }
+
+    switch (dataRequest.Connection.type) {
+      case "api":
+        return this.connectionController.getApiBuilderMetadata(dataRequest.Connection.id, options);
+      case "firestore":
+        return this.connectionController.getFirestoreBuilderMetadata(dataRequest.Connection.id);
+      case "realtimedb":
+        return this.connectionController.getRealtimeDbBuilderMetadata(dataRequest.Connection.id);
+      case "googleAnalytics":
+        return this.connectionController.getGoogleAnalyticsBuilderMetadata(
+          dataRequest.Connection.id,
+          options
+        );
+      default:
+        return Promise.resolve({ type: dataRequest.Connection.type });
+    }
+  }
+
   sendRequest(chartId) {
     let gDataRequest;
     return this.findByChart(chartId)

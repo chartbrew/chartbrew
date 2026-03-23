@@ -37,9 +37,15 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
-        const connections = await connectionController.findByProjects(team_id, projects);
-        if (!connections || connections.length === 0) {
-          return res.status(404).json({ message: "No connections found" });
+        const connection = await connectionController.findByIdAndTeam(
+          req.params.connection_id,
+          team_id
+        );
+        const hasProjectAccess = Array.isArray(connection?.project_ids)
+          && connection.project_ids.some((projectId) => projects.includes(projectId));
+
+        if (!hasProjectAccess) {
+          return res.status(403).json({ message: "Access denied" });
         }
 
         return next();

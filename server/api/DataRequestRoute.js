@@ -20,6 +20,10 @@ module.exports = (app) => {
   const connectionController = new ConnectionController();
 
   const root = "/team/:team_id/datasets/:dataset_id/dataRequests";
+  const hasProjectAccess = (projectIds = [], projects = []) => {
+    if (!Array.isArray(projectIds) || !Array.isArray(projects)) return false;
+    return projectIds.some((projectId) => projects.includes(projectId));
+  };
 
   const checkPermissions = async (req, res, next) => {
     const { team_id } = req.params;
@@ -32,9 +36,19 @@ module.exports = (app) => {
     }
 
     const { role, projects } = teamRole;
+    let currentDataRequest;
 
     // Handle permissions for teamOwner and teamAdmin
     if (["teamOwner", "teamAdmin"].includes(role)) {
+      req.user.canAccessSensitiveConnectionMetadata = true;
+
+      if (req.params.id) {
+        currentDataRequest = await dataRequestController.findById(req.params.id);
+        if (`${currentDataRequest.dataset_id}` !== `${req.params.dataset_id}`) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
       if (req?.body?.connection_id) {
         const connection = await connectionController.findById(req.body.connection_id);
         if (connection.team_id !== teamRole?.team_id) {
@@ -52,16 +66,29 @@ module.exports = (app) => {
       return next();
     }
 
-    if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
-      const datasets = await datasetController.findByProjects(team_id, projects);
-      if (!datasets || datasets.length === 0) {
-        return res.status(404).json({ message: "No datasets found" });
+    if (role === "projectAdmin") {
+      req.user.canAccessSensitiveConnectionMetadata = false;
+
+      const dataset = await datasetController.findByIdAndTeam(req.params.dataset_id, team_id);
+      if (!hasProjectAccess(dataset?.project_ids, projects)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (req.params.id) {
+        currentDataRequest = await dataRequestController.findById(req.params.id);
+        if (`${currentDataRequest.dataset_id}` !== `${req.params.dataset_id}`) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       if (req?.body?.connection_id) {
-        const connections = await connectionController.findByProjects(team_id, projects);
-        if (!connections || connections.length === 0) {
-          return res.status(404).json({ message: "No connections found" });
+        const connectionChanged = !currentDataRequest || `${currentDataRequest.connection_id}` !== `${req.body.connection_id}`;
+
+        if (connectionChanged) {
+          const connection = await connectionController.findById(req.body.connection_id);
+          if (`${connection.team_id}` !== `${team_id}` || !hasProjectAccess(connection?.project_ids, projects)) {
+            return res.status(403).json({ message: "Access denied" });
+          }
         }
       }
 
@@ -121,6 +148,27 @@ module.exports = (app) => {
         }
 
         return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to get builder metadata for a data request without exposing connection secrets
+  */
+  app.get(`${root}/:id/builder-metadata`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.getBuilderMetadata(req.params.id, {
+      propertyId: req.query.property_id,
+      includeSensitive: !!req.user.canAccessSensitiveConnectionMetadata,
+    })
+      .then((metadata) => {
+        return res.status(200).send(metadata);
+      })
+      .catch((error) => {
+        if (error && error.message === "404") {
+          return res.status(404).send(error);
+        }
+
+        return res.status(400).send(error?.message || error);
       });
   });
   // -------------------------------------------------

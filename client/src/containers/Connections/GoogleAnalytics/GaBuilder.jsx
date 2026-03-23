@@ -19,7 +19,7 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
+import { getDataRequestBuilderMetadata, runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import {
   testRequest, getConnection,
 } from "../../../slices/connection";
@@ -62,7 +62,7 @@ function GaBuilder(props) {
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
   const [invalidateCache, setInvalidateCache] = useState(false);
-  const [fullConnection, setFullConnection] = useState(false);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [showTransform, setShowTransform] = useState(false);
@@ -83,15 +83,36 @@ function GaBuilder(props) {
   }, [dataRequest]);
 
   useEffect(() => {
-    if (connection?.id && !fullConnection?.id && team?.id) {
+    setMetadataLoaded(false);
+  }, [connection?.id, dataRequest?.id]);
+
+  useEffect(() => {
+    if (connection?.id && !metadataLoaded && team?.id) {
+      if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
+        dispatch(getDataRequestBuilderMetadata({
+          team_id: team?.id,
+          dataset_id: dataRequest.dataset_id,
+          dataRequest_id: dataRequest.id,
+        }))
+          .then((data) => {
+            setAnalyticsData(data.payload?.accounts || []);
+            setMetadataLoaded(true);
+            _initRequest();
+          })
+          .catch(() => {
+            setMetadataLoaded(true);
+          });
+        return;
+      }
+
       dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
         .then((data) => {
-          setFullConnection(data.payload);
           _onFetchAccountData(data.payload);
+          setMetadataLoaded(true);
         })
         .catch(() => {});
     }
-  }, [connection, team]);
+  }, [connection, dataRequest?.dataset_id, dataRequest?.id, dispatch, metadataLoaded, params.datasetId, team]);
 
   useEffect(() => {
     if (accountOptions.length > 0
@@ -200,34 +221,54 @@ function GaBuilder(props) {
       }
 
       if (dataRequest?.configuration?.propertyId) {
-        _populateMetadata(connection, dataRequest.configuration.propertyId);
+        _populateMetadata(dataRequest.configuration.propertyId);
       }
     }
   };
 
-  const _populateMetadata = (conn = fullConnection, propertyId) => {
-    getMetadata(team?.id, conn.id, propertyId)
+  const _applyPropertyMetadata = (metadata) => {
+    if (!metadata) return;
+
+    const metrics = [];
+    const dimensions = [];
+    if (metadata?.metrics?.length > 0) {
+      metadata.metrics.forEach((m) => {
+        metrics.push({
+          ...m, text: m.uiName, key: m.apiName, value: m.apiName
+        });
+      });
+    }
+
+    if (metadata?.dimensions?.length > 0) {
+      metadata.dimensions.forEach((d) => {
+        dimensions.push({
+          ...d, text: d.uiName, key: d.apiName, value: d.apiName
+        });
+      });
+    }
+
+    setMetricsOptions(metrics);
+    setDimensionsOptions(dimensions);
+  };
+
+  const _populateMetadata = (propertyId) => {
+    if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
+      dispatch(getDataRequestBuilderMetadata({
+        team_id: team?.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+        property_id: propertyId,
+      }))
+        .then((data) => {
+          _applyPropertyMetadata(data.payload?.metadata);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    getMetadata(team?.id, connection.id, propertyId)
       .then((metadata) => {
-        const metrics = [];
-        const dimensions = [];
-        if (metadata?.metrics?.length > 0) {
-          metadata.metrics.forEach((m) => {
-            metrics.push({
-              ...m, text: m.uiName, key: m.apiName, value: m.apiName
-            });
-          });
-        }
-
-        if (metadata?.dimensions?.length > 0) {
-          metadata.dimensions.forEach((d) => {
-            dimensions.push({
-              ...d, text: d.uiName, key: d.apiName, value: d.apiName
-            });
-          });
-        }
-
-        setMetricsOptions(metrics);
-        setDimensionsOptions(dimensions);
+        _applyPropertyMetadata(metadata);
       });
   };
 
@@ -269,7 +310,7 @@ function GaBuilder(props) {
       });
   };
 
-  const _onFetchAccountData = (conn = fullConnection) => {
+  const _onFetchAccountData = (conn) => {
     setCollectionsLoading(true);
     return dispatch(testRequest({ team_id: team?.id, connection: conn }))
       .then((data) => {
@@ -322,7 +363,7 @@ function GaBuilder(props) {
   const _onPropertySelected = (value) => {
     if (value !== configuration.propertyId) {
       setConfiguration({ ...configuration, propertyId: value });
-      _populateMetadata(connection, value);
+      _populateMetadata(value);
     }
 
     setConfiguration({ ...configuration, propertyId: value });

@@ -291,6 +291,31 @@ export const runDataRequest = createAsyncThunk(
   }
 );
 
+export const getDataRequestBuilderMetadata = createAsyncThunk(
+  "dataset/getDataRequestBuilderMetadata",
+  async ({ team_id, dataset_id, dataRequest_id, property_id }) => {
+    const token = getAuthToken();
+    let url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}/builder-metadata`;
+    if (property_id) {
+      url += `?property_id=${encodeURIComponent(property_id)}`;
+    }
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch builder metadata");
+    }
+
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const getRelatedCharts = createAsyncThunk(
   "dataset/getRelatedCharts",
   async ({ team_id, dataset_id }) => {

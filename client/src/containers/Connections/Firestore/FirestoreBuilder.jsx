@@ -34,7 +34,13 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
+import {
+  getDataRequestBuilderMetadata,
+  runDataRequest,
+  selectDataRequests,
+  createVariableBinding,
+  updateVariableBinding,
+} from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
 import { selectTeam } from "../../../slices/team";
 
@@ -109,7 +115,6 @@ function FirestoreBuilder(props) {
   const [showSubUI, setShowSubUI] = useState(false);
   const [indexUrl, setIndexUrl] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
-  const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
   const [limit, setLimit] = useState(0);
   const [orderBy, setOrderBy] = useState("");
@@ -135,15 +140,19 @@ function FirestoreBuilder(props) {
   }, []);
 
   useEffect(() => {
-    if (connection?.id && !fullConnection?.id && team?.id) {
-      dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
-        .then((data) => {
-          setFullConnection(data.payload);
-          _onFetchCollections(data.payload);
-        })
-        .catch(() => {});
+    if (!connection?.id || !team?.id) return;
+
+    if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
+      _onFetchCollections();
+      return;
     }
-  }, [firestoreRequest, connection, team]);
+
+    dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
+      .then((data) => {
+        _onFetchCollections(data.payload);
+      })
+      .catch(() => {});
+  }, [connection?.id, dataRequest?.dataset_id, params.datasetId, team?.id]);
 
   useEffect(() => {
     if (dataRequest && dataRequest.configuration) {
@@ -347,8 +356,26 @@ function FirestoreBuilder(props) {
       });
   };
 
-  const _onFetchCollections = (conn = fullConnection) => {
+  const _onFetchCollections = (conn = null) => {
     setCollectionsLoading(true);
+
+    if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
+      return dispatch(getDataRequestBuilderMetadata({
+        team_id: team?.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+      }))
+        .then((data) => {
+          if (data.payload?.collections) {
+            setCollectionData(data.payload.collections);
+          }
+          setCollectionsLoading(false);
+        })
+        .catch(() => {
+          setCollectionsLoading(false);
+        });
+    }
+
     return dispatch(testRequest({ team_id: team?.id, connection: conn }))
       .then((data) => {
         if (data?.error) {

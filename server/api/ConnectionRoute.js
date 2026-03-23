@@ -85,11 +85,6 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectViewer" || role === "projectEditor") {
-        const connections = await connectionController.findByProjects(team_id, projects);
-        if (!connections || connections.length === 0) {
-          return res.status(404).json({ message: "No connections found" });
-        }
-
         // save the projects in the user object
         req.user.projects = projects;
         req.user.permittedFields = permission.attributes;
@@ -103,7 +98,20 @@ module.exports = (app) => {
 
   const ensureConnectionBelongsToTeam = async (req, res, next) => {
     try {
-      await connectionController.findByIdAndTeam(req.params.connection_id, req.params.team_id);
+      const connection = await connectionController.findByIdAndTeam(
+        req.params.connection_id,
+        req.params.team_id
+      );
+      if (req.user.projects?.length > 0) {
+        const hasProjectAccess = Array.isArray(connection?.project_ids)
+          && connection.project_ids.some((projectId) => req.user.projects.includes(projectId));
+
+        if (!hasProjectAccess) {
+          return res.status(403).send({ error: "Not authorized" });
+        }
+      }
+
+      req.connection = connection;
       return next();
     } catch (error) {
       if (error?.message === "404") {

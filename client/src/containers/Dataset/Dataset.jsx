@@ -10,7 +10,6 @@ import { useLocation, useNavigate, useParams } from "react-router";
 
 import { createChart, createCdc, getProjectCharts, runQuery, updateChart } from "../../slices/chart";
 import { getDataset, saveNewDataset, updateDataset } from "../../slices/dataset";
-import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
 import { chartColors } from "../../config/colors";
 import useQuery from "../../modules/useQuery";
@@ -74,7 +73,6 @@ function Dataset() {
         }));
       }
       dispatch(getProjects({ team_id: team.id }));
-      dispatch(getTeamConnections({ team_id: team.id }));
     }
 
     if (team?.id) {

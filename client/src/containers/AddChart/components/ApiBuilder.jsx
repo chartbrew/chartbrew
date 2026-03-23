@@ -24,7 +24,13 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
-import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
+import {
+  getDataRequestBuilderMetadata,
+  runDataRequest,
+  selectDataRequests,
+  createVariableBinding,
+  updateVariableBinding,
+} from "../../../slices/dataset";
 import {
   getConnection,
 } from "../../../slices/connection";
@@ -77,7 +83,11 @@ function ApiBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
-  const [fullConnection, setFullConnection] = useState({});
+  const [builderMetadata, setBuilderMetadata] = useState({
+    host: "",
+    globalHeaders: [],
+    hasGlobalHeaders: false,
+  });
   const [saveLoading, setSaveLoading] = useState(false);
   const [showTransform, setShowTransform] = useState(false);
   const [variableSettings, setVariableSettings] = useState(null);
@@ -101,7 +111,6 @@ function ApiBuilder(props) {
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(false);
-  const connectionInitRef = useRef(false);
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
   const team = useSelector(selectTeam);
@@ -109,6 +118,26 @@ function ApiBuilder(props) {
   const {
     dataRequest = null, onChangeRequest, connection, onSave, onDelete,
   } = props;
+
+  const _normalizeGlobalHeaders = (headers = [], includeSensitive = true) => {
+    if (!Array.isArray(headers)) return [];
+
+    return headers.map((header) => {
+      if (header?.key !== undefined) {
+        return {
+          key: header.key,
+          value: header.value || "",
+        };
+      }
+
+      const key = Object.keys(header || {})[0];
+      const value = key ? header[key] : "";
+      return {
+        key: key || "",
+        value: includeSensitive ? value : (value ? "Hidden" : ""),
+      };
+    });
+  };
 
   // on init effect
   useEffect(() => {
@@ -150,24 +179,60 @@ function ApiBuilder(props) {
 
   useEffect(() => {
     const newApiRequest = apiRequest;
+    const apiHost = builderMetadata.host || connection?.host || "";
 
-    // automate the pagination template here (to a possible extent)
-    if (connection && apiRequest && !apiRequest.template) {
-      if (connection?.host?.indexOf("api.stripe.com") > -1) {
-        newApiRequest.template = "stripe";
-        onChangeRequest(newApiRequest);
-      }
+    if (connection && apiRequest && !apiRequest.template && apiHost.indexOf("api.stripe.com") > -1) {
+      newApiRequest.template = "stripe";
+      onChangeRequest(newApiRequest);
     }
+  }, [apiRequest, builderMetadata.host, connection, onChangeRequest]);
 
-    if (connection && team?.id && !connectionInitRef.current) {
-      dispatch(getConnection({ team_id: team.id, connection_id: connection.id }))
+  useEffect(() => {
+    if (!connection?.id || !team?.id) return;
+
+    const isDatasetScopedRequest = !!params.datasetId && !!dataRequest?.dataset_id && !!dataRequest?.id;
+
+    if (isDatasetScopedRequest) {
+      dispatch(getDataRequestBuilderMetadata({
+        team_id: team.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+      }))
         .then((data) => {
-          setFullConnection(data.payload);
+          if (data.payload) {
+            setBuilderMetadata({
+              host: data.payload.host || connection?.host || "",
+              globalHeaders: _normalizeGlobalHeaders(data.payload.globalHeaders, false),
+              hasGlobalHeaders: !!data.payload.hasGlobalHeaders,
+            });
+          }
         })
-        .catch(() => {});
-      connectionInitRef.current = true;
+        .catch(() => {
+          setBuilderMetadata((prev) => ({
+            ...prev,
+            host: connection?.host || prev.host || "",
+          }));
+        });
+      return;
     }
-  }, [apiRequest, connection, team]);
+
+    dispatch(getConnection({ team_id: team.id, connection_id: connection.id }))
+      .then((data) => {
+        if (data.payload) {
+          setBuilderMetadata({
+            host: data.payload.host || connection?.host || "",
+            globalHeaders: _normalizeGlobalHeaders(data.payload.options, true),
+            hasGlobalHeaders: Array.isArray(data.payload.options) && data.payload.options.length > 0,
+          });
+        }
+      })
+      .catch(() => {
+        setBuilderMetadata((prev) => ({
+          ...prev,
+          host: connection?.host || prev.host || "",
+        }));
+      });
+  }, [connection?.id, dataRequest?.dataset_id, dataRequest?.id, dispatch, params.datasetId, team?.id]);
 
   useEffect(() => {
     if (stateDrs && stateDrs.length > 0) {
@@ -511,7 +576,7 @@ function ApiBuilder(props) {
               startContent={(
                 <div className="pointer-events-none flex items-center">
                   <span className="text-default-400 text-small">
-                    {`${fullConnection.host}`}
+                    {`${builderMetadata.host || connection?.host || ""}`}
                   </span>
                 </div>
               )}
@@ -532,7 +597,7 @@ function ApiBuilder(props) {
               <div className="text-sm font-bold">URL Preview:</div>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-default-600">
-                  {fullConnection.host}
+                  {builderMetadata.host || connection?.host || ""}
                   {_renderUrlVariables(apiRequest.route, _onVariableClick, "sm")}
                 </span>
               </div>
@@ -653,7 +718,7 @@ function ApiBuilder(props) {
 
           {activeMenu === "headers" && (
             <div className="apibuilder-headers-tut">
-              {fullConnection.options && fullConnection.options.length > 0 && (
+              {builderMetadata.hasGlobalHeaders && builderMetadata.globalHeaders.length > 0 && (
                 <>
                   <Row>
                     <Checkbox
@@ -668,18 +733,18 @@ function ApiBuilder(props) {
                   {apiRequest.useGlobalHeaders && (
                     <>
                       <Container className={"pl-0 pr-0"}>
-                        {fullConnection.options.map((header) => {
+                        {builderMetadata.globalHeaders.map((header) => {
                           return (
-                            <Row key={header}>
+                            <Row key={header.key}>
                               <Input
-                                value={Object.keys(header)[0]}
+                                value={header.key}
                                 variant="bordered"
                                 fullWidth
                                 disableAnimation
                               />
                               <Spacer x={1} />
                               <Input
-                                value={header[Object.keys(header)[0]]}
+                                value={header.value}
                                 variant="bordered"
                                 fullWidth
                                 disableAnimation

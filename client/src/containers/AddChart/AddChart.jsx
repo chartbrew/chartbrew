@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Spacer, Tooltip, Input, Button, CircularProgress, Switch,
+  Link as LinkNext, Spacer, Tooltip, Input, Button, CircularProgress, Switch, Alert,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
-import { LuCheck, LuPencilLine } from "react-icons/lu";
+import { LuArrowLeft, LuCheck, LuPencilLine } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router";
 
 import ChartPreview from "./components/ChartPreview";
@@ -21,6 +21,8 @@ import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import { placeNewWidget } from "../../modules/autoLayout";
 import { chartColors } from "../../config/colors";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
+import { selectTeam } from "../../slices/team";
+import { selectUser } from "../../slices/user";
 
 const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
 const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
@@ -88,10 +90,39 @@ function AddChart() {
 
   const charts = useSelector(selectCharts);
   const datasets = useSelector(selectDatasetsNoDrafts);
+  const datasetLoading = useSelector((state) => state.dataset.loading);
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
 
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const projectId = parseInt(params.projectId, 10);
+
+  const currentUserRole = team?.TeamRoles?.find((teamRole) => teamRole.user_id === user?.id);
+  const isProjectScopedEditor = ["projectAdmin", "projectEditor"].includes(currentUserRole?.role)
+    && currentUserRole?.projects?.includes(projectId);
+  const missingChartDatasets = _.uniqBy(
+    (newChart.ChartDatasetConfigs || []).filter((cdc) => (
+      cdc?.dataset_id && !datasets.some((dataset) => dataset.id === parseInt(cdc.dataset_id, 10))
+    )),
+    "dataset_id"
+  );
+  // Do not key this on local state that flips with datasetLoading — that remounted ChartDatasets
+  // (two branches) and reset its fetch ref, re-dispatching getDatasets in a loop.
+  const showMissingDatasetAlert = isProjectScopedEditor
+    && !datasetLoading
+    && missingChartDatasets.length > 0;
+  const missingSeriesLabels = missingChartDatasets
+    .map((cdc) => cdc.legend)
+    .filter(Boolean);
+  const missingDatasetDescription = "This chart uses datasets "
+    + "that your project role cannot access because "
+    + "they are not tagged with this dashboard. "
+    + "Ask a team owner or team admin to tag the dataset with this dashboard, then reload the editor."
+    + `${missingSeriesLabels.length > 0
+      ? ` Affected series: ${missingSeriesLabels.slice(0, 3).join(", ")}${missingSeriesLabels.length > 3 ? ", ..." : ""}.`
+      : ""}`;
 
   useEffect(() => {
     dispatch(clearAlerts());
@@ -430,16 +461,46 @@ function AddChart() {
     );
   }
 
-  if (datasets.length === 0 || newChart.ChartDatasetConfigs?.length === 0) {
+  if (newChart.ChartDatasetConfigs?.length === 0 || datasets.length === 0) {
     return (
-      <div className={"bg-content1 rounded-lg mx-auto p-4 mt-4 max-w-lg"}>
-        <ChartDatasets chartId={newChart.id} />
+      <div className="mt-4 max-w-xl mx-auto border-1 border-divider rounded-lg p-4 bg-content1">
+        <Button
+          onPress={() => navigate(`/dashboard/${params.projectId}`)}
+          variant="flat"
+          size="sm"
+          startContent={<LuArrowLeft size={16} />}
+        >
+          Back to dashboard
+        </Button>
+        <Spacer y={4} />
+        {showMissingDatasetAlert && (
+          <>
+            <Alert
+              color="warning"
+              variant="flat"
+              title="Dataset access required"
+              description={missingDatasetDescription}
+            />
+            <Spacer y={4} />
+          </>
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col">
+      {showMissingDatasetAlert && (
+        <>
+          <Alert
+            color="warning"
+            variant="solid"
+            title="Dataset access required"
+            description={missingDatasetDescription}
+          />
+          <Spacer y={4} />
+        </>
+      )}
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-5 add-dataset-tut">
           <div className={"bg-content1 rounded-lg mx-auto p-4 w-full border-1 border-solid border-divider"}>

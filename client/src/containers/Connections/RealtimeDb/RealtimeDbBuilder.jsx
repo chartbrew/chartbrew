@@ -19,7 +19,13 @@ import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
-import { runDataRequest, selectDataRequests, createVariableBinding, updateVariableBinding } from "../../../slices/dataset";
+import {
+  getDataRequestBuilderMetadata,
+  runDataRequest,
+  selectDataRequests,
+  createVariableBinding,
+  updateVariableBinding,
+} from "../../../slices/dataset";
 import DataTransform from "../../Dataset/DataTransform";
 import { selectTeam } from "../../../slices/team";
 
@@ -37,7 +43,7 @@ function RealtimeDbBuilder(props) {
   const [projectId, setProjectId] = useState("");
   const [limitValue, setLimitValue] = useState(100);
   const [invalidateCache, setInvalidateCache] = useState(false);
-  const [fullConnection, setFullConnection] = useState({});
+  const [connectionString, setConnectionString] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
   const [showTransform, setShowTransform] = useState(false);
   const [variableSettings, setVariableSettings] = useState(null);
@@ -143,9 +149,31 @@ function RealtimeDbBuilder(props) {
   useEffect(() => {
     const newRequest = firebaseRequest;
 
+    onChangeRequest(newRequest);
+  }, [firebaseRequest, connection, onChangeRequest]);
+
+  useEffect(() => {
+    if (!connection?.id || !team?.id) return;
+
+    if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
+      dispatch(getDataRequestBuilderMetadata({
+        team_id: team?.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+      }))
+        .then((data) => {
+          if (data.payload) {
+            setConnectionString(data.payload.connectionString || "");
+            setProjectId(data.payload.projectId || "");
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
     dispatch(getConnection({ team_id: team?.id, connection_id: connection.id }))
       .then((data) => {
-        setFullConnection(data.payload);
+        setConnectionString(data.payload?.connectionString || "");
         if (data?.payload && data.payload?.firebaseServiceAccount) {
           try {
             setProjectId(JSON.parse(data.payload.firebaseServiceAccount).project_id);
@@ -155,9 +183,7 @@ function RealtimeDbBuilder(props) {
         }
       })
       .catch(() => {});
-
-    onChangeRequest(newRequest);
-  }, [firebaseRequest, connection]);
+  }, [connection?.id, dataRequest?.dataset_id, dataRequest?.id, dispatch, params.datasetId, team?.id]);
 
   useEffect(() => {
     if (stateDrs && stateDrs.length > 0) {
@@ -307,7 +333,7 @@ function RealtimeDbBuilder(props) {
           <Spacer y={1} />
           <Row className="RealtimeDb-route-tut">
             <Input
-              value={fullConnection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
+              value={connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
               fullWidth
               className={"pointer-events-none"}
               labelPlacement="outside"

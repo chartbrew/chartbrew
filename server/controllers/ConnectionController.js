@@ -1591,6 +1591,84 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
+  async getApiBuilderMetadata(connectionId, { includeSensitive = false } = {}) {
+    const connection = await this.findById(connectionId);
+    let globalHeaders = connection.getHeaders(connection);
+
+    if (!Array.isArray(globalHeaders)) {
+      try {
+        globalHeaders = JSON.parse(globalHeaders);
+      } catch (error) {
+        globalHeaders = [];
+      }
+    }
+
+    return {
+      host: connection.getApiUrl(connection),
+      globalHeaders: globalHeaders.map((header) => {
+        const key = Object.keys(header || {})[0];
+        const value = key ? header[key] : "";
+        let serializedValue = value;
+        if (!includeSensitive) {
+          serializedValue = value ? "Hidden" : "";
+        }
+        return {
+          key: key || "",
+          value: serializedValue,
+        };
+      }),
+      hasGlobalHeaders: globalHeaders.length > 0,
+    };
+  }
+
+  async getFirestoreBuilderMetadata(connectionId) {
+    const connection = await this.findById(connectionId);
+    const firestore = new FirestoreConnection(connection, `builder_meta_${connectionId}`);
+    const collections = await firestore.listCollections();
+    return { collections };
+  }
+
+  async getRealtimeDbBuilderMetadata(connectionId) {
+    const connection = await this.findById(connectionId);
+    let projectId = "";
+
+    try {
+      if (connection.firebaseServiceAccount) {
+        const serviceAccount = typeof connection.firebaseServiceAccount === "string"
+          ? JSON.parse(connection.firebaseServiceAccount)
+          : connection.firebaseServiceAccount;
+        projectId = serviceAccount.project_id || "";
+      }
+    } catch (error) {
+      projectId = "";
+    }
+
+    return {
+      connectionString: connection.connectionString || "",
+      projectId,
+    };
+  }
+
+  async getGoogleAnalyticsBuilderMetadata(connectionId, { propertyId = null } = {}) {
+    const connection = await this.findById(connectionId);
+    const accounts = await this.testGoogleAnalytics(connection);
+    let metadata = null;
+
+    if (propertyId) {
+      const oauth = await oauthController.findById(connection.oauth_id);
+      if (!oauth) {
+        return Promise.reject(new Error("OAuth is not registered properly"));
+      }
+
+      metadata = await googleConnector.getMetadata(oauth.refreshToken, propertyId);
+    }
+
+    return {
+      accounts,
+      metadata,
+    };
+  }
+
   async runCustomerio(conn, dataRequest, getCache, auditContext = null) {
     let connection = conn;
     if (getCache) {

@@ -37,6 +37,7 @@ import { selectTeam } from "../../../slices/team";
 function SqlBuilder(props) {
   const {
     dataRequest, onChangeRequest, onSave,
+    connection: initialConnection,
     onDelete,
   } = props;
 
@@ -64,8 +65,9 @@ function SqlBuilder(props) {
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
-  const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
+  const storedConnection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
   const team = useSelector(selectTeam);
+  const connection = storedConnection?.id ? { ...initialConnection, ...storedConnection } : initialConnection;
 
   const schemaInitRef = useRef(false);
 
@@ -95,11 +97,11 @@ function SqlBuilder(props) {
   }, [requestError]);
 
   useEffect(() => {
-    if (connection?.id && !connection.schema && !schemaInitRef.current) {
+    if (storedConnection?.id && !storedConnection.schema && !schemaInitRef.current) {
       schemaInitRef.current = true;
       _onTest(dataRequest, true);
     }
-  }, [connection]);
+  }, [dataRequest, storedConnection]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);

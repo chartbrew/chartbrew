@@ -49,6 +49,7 @@ GROUP BY event_name;
 function ClickHouseBuilder(props) {
   const {
     dataRequest, onChangeRequest, onSave,
+    connection: initialConnection,
     onDelete,
   } = props;
 
@@ -75,8 +76,9 @@ function ClickHouseBuilder(props) {
   const params = useParams();
   const dispatch = useDispatch();
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
-  const connection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
+  const storedConnection = useSelector((state) => state.connection.data.find((c) => c.id === dataRequest?.connection_id));
   const team = useSelector(selectTeam);
+  const connection = storedConnection?.id ? { ...initialConnection, ...storedConnection } : initialConnection;
 
   const schemaInitRef = useRef(false);
 
@@ -106,8 +108,8 @@ function ClickHouseBuilder(props) {
   }, [requestError]);
 
   useEffect(() => {
-    if (connection?.id
-      && !connection.schema
+    if (storedConnection?.id
+      && !storedConnection.schema
       && !schemaInitRef.current
       && dataRequest?.query
       && dataRequest?.query !== initialQuery
@@ -115,7 +117,7 @@ function ClickHouseBuilder(props) {
       schemaInitRef.current = true;
       _onTest(dataRequest, true);
     }
-  }, [connection, dataRequest]);
+  }, [dataRequest, storedConnection]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);

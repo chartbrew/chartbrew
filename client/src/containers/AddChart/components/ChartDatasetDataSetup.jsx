@@ -15,6 +15,9 @@ import { getDatasetFieldOptionsFromResponse, getDatasetFieldOptionsFromSchema } 
 import { operations } from "../../../modules/filterOperations";
 import { runRequest as runDatasetRequest, updateDataset } from "../../../slices/dataset";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
+import canAccess from "../../../config/canAccess";
+import { selectUser } from "../../../slices/user";
+import { selectTeam } from "../../../slices/team";
 
 function ChartDatasetDataSetup({
   cdc,
@@ -33,6 +36,9 @@ function ChartDatasetDataSetup({
   const [fieldOptions, setFieldOptions] = useState([]);
   const [loadingFields, setLoadingFields] = useState(false);
   const autoSuggestedRef = useRef({});
+
+  const user = useSelector(selectUser);
+  const team = useSelector(selectTeam);
 
   useEffect(() => {
     if (!dataset?.id || !teamId || datasetResponse || loadingFields) return;
@@ -166,6 +172,10 @@ function ChartDatasetDataSetup({
 
   const getDateFieldOptions = () => fieldOptions.filter((field) => field.type === "date");
 
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
+
   return (
     <div>
       <Input
@@ -196,14 +206,16 @@ function ChartDatasetDataSetup({
 
       <Spacer y={2} />
 
-      <Button
-        variant="ghost"
-        fullWidth
-        endContent={<LuSettings size={18} />}
-        onPress={onEditDataset}
-      >
-        Edit dataset
-      </Button>
+      {_canAccess("projectAdmin") && (
+        <Button
+          variant="ghost"
+          fullWidth
+          endContent={<LuSettings size={18} />}
+          onPress={onEditDataset}
+        >
+          Edit dataset
+        </Button>
+      )}
 
       <Spacer y={4} />
       <Divider />

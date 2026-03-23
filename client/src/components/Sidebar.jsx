@@ -215,7 +215,7 @@ function Sidebar() {
                   </Tooltip>
                 </ListboxItem>
               )}
-              {_canAccess("projectEditor", team.TeamRoles) && (
+              {_canAccess("projectAdmin", team.TeamRoles) && (
                 <ListboxItem
                   key="datasets"
                   startContent={collapsed ? null : <LuLayers size={18} />}
