@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
-  Select, SelectItem, PopoverTrigger, PopoverContent, Code, Autocomplete, AutocompleteItem,
-  Badge,
+  Select, PopoverTrigger, PopoverContent, Code, Autocomplete,
+  Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -66,6 +66,7 @@ function GaBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [showTransform, setShowTransform] = useState(false);
+  const { contains } = useFilter({ sensitivity: "base" });
 
   const { isDark } = useTheme();
   const initRef = React.useRef(null);
@@ -480,39 +481,57 @@ function GaBuilder(props) {
             </div>
             <div className="col-span-12 sm:col-span-6 gabuilder-collections-tut">
               <Select
-                variant="bordered"
-                selectedKeys={[configuration.accountId]}
+                variant="secondary"
+                value={configuration.accountId || null}
                 placeholder="Select an account"
-                label="Account"
-                isLoading={collectionsLoading}
-                onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
+                isPending={collectionsLoading}
+                onChange={(value) => _onAccountSelected(value)}
                 selectionMode="single"
                 aria-label="Select an account"
               >
-                {accountOptions.map((account) => (
-                  <SelectItem key={account.value} textValue={account.text}>
-                    {account.text}
-                  </SelectItem>
-                ))}
+                <Label>Account</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {accountOptions.map((account) => (
+                      <ListBox.Item key={account.value} id={account.value} textValue={account.text}>
+                        {account.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <div className="col-span-12 sm:col-span-6">
               <Select
                 isDisabled={!configuration.accountId}
-                variant="bordered"
-                isLoading={collectionsLoading}
-                selectedKeys={[configuration.propertyId]}
+                variant="secondary"
+                isPending={collectionsLoading}
+                value={configuration.propertyId || null}
                 placeholder="Select a property"
-                label="Property"
-                onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
+                onChange={(value) => _onPropertySelected(value)}
                 selectionMode="single"
                 aria-label="Select a property"
               >
-                {propertyOptions.map((property) => (
-                  <SelectItem key={property.value} textValue={property.text}>
-                    {property.text}
-                  </SelectItem>
-                ))}
+                <Label>Property</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {propertyOptions.map((property) => (
+                      <ListBox.Item key={property.value} id={property.value} textValue={property.text}>
+                        {property.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <div className="col-span-12 gabuilder-query-tut">
@@ -531,63 +550,79 @@ function GaBuilder(props) {
               </div>
               <Autocomplete
                 isDisabled={!configuration.propertyId}
-                variant="bordered"
-                isLoading={collectionsLoading}
-                selectedKey={configuration.metrics}
+                variant="secondary"
+                isPending={collectionsLoading}
+                value={configuration.metrics || null}
                 placeholder="Select a metric"
-                labelPlacement="outside"
                 errorMessage={formErrors.metrics}
                 color={formErrors.metrics ? "danger" : "default"}
-                onSelectionChange={(key) => setConfiguration({ ...configuration, metrics: key })}
+                onChange={(value) => setConfiguration({ ...configuration, metrics: value })}
                 selectionMode="single"
                 aria-label="Select a metric"
               >
-                {metricsOptions.map((item) => {
-                  return (
-                    <AutocompleteItem
-                      key={item.key}
-                      endContent={<Chip size="sm" variant="flat">item.category</Chip>}
-                      description={item.description}
-                      textValue={item.text}
+                <Autocomplete.Trigger>
+                  <Autocomplete.Value />
+                  <Autocomplete.Indicator />
+                </Autocomplete.Trigger>
+                <Autocomplete.Popover>
+                  <Autocomplete.Filter>
+                    <SearchField placeholder="Search metrics..." />
+                    <ListBox
+                      items={metricsOptions}
+                      filter={contains}
+                      renderEmptyState={() => <EmptyState>No metrics found.</EmptyState>}
                     >
-                      <div>
-                        <Text b>{item.text}</Text>
-                        <Text small className={"text-default-400"}>
-                          {" - "}
-                          {item.key}
-                        </Text>
-                      </div>
-                    </AutocompleteItem>
-                  );
-                })}
+                      {(item) => (
+                        <ListBox.Item key={item.key} id={item.key} textValue={item.text}>
+                          <div>
+                            <Text b>{item.text}</Text>
+                            <Text small className={"text-default-400"}>
+                              {" - "}
+                              {item.key}
+                            </Text>
+                          </div>
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      )}
+                    </ListBox>
+                  </Autocomplete.Filter>
+                </Autocomplete.Popover>
               </Autocomplete>
             </div>
             <div className="col-span-12">
               <Text>Choose a dimension</Text>
               <Autocomplete
                 isDisabled={!configuration.propertyId}
-                variant="bordered"
-                selectedKey={configuration.dimensions}
-                onSelectionChange={(key) => setConfiguration({ ...configuration, dimensions: key })}
+                variant="secondary"
+                value={configuration.dimensions || null}
+                onChange={(value) => setConfiguration({ ...configuration, dimensions: value })}
                 selectionMode="single"
-                labelPlacement="outside"
                 placeholder="Select a dimension"
                 errorMessage={formErrors.dimensions}
                 color={formErrors.dimensions ? "danger" : "default"}
                 aria-label="Select a dimension"
               >
-                {dimensionsOptions.map((item) => {
-                  return (
-                    <AutocompleteItem
-                      key={item.key}
-                      endContent={<Chip size="sm" variant="flat">item.category</Chip>}
-                      description={item.description}
-                      textValue={item.text}
+                <Autocomplete.Trigger>
+                  <Autocomplete.Value />
+                  <Autocomplete.Indicator />
+                </Autocomplete.Trigger>
+                <Autocomplete.Popover>
+                  <Autocomplete.Filter>
+                    <SearchField placeholder="Search dimensions..." />
+                    <ListBox
+                      items={dimensionsOptions}
+                      filter={contains}
+                      renderEmptyState={() => <EmptyState>No dimensions found.</EmptyState>}
                     >
-                      <Text>{item.text}</Text>
-                    </AutocompleteItem>
-                  );
-                })}
+                      {(item) => (
+                        <ListBox.Item key={item.key} id={item.key} textValue={item.text}>
+                          <Text>{item.text}</Text>
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      )}
+                    </ListBox>
+                  </Autocomplete.Filter>
+                </Autocomplete.Popover>
               </Autocomplete>
             </div>
             <div className="col-span-12">

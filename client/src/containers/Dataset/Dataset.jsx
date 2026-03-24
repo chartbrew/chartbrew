@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, AutocompleteItem,
+  Autocomplete, EmptyState, Label, ListBox, SearchField, useFilter,
   Button, Chip, Input, Link, Modal, Spacer,
 } from "@heroui/react";
 import { LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
@@ -39,6 +39,7 @@ function getNewChartLayoutForProject(charts) {
 }
 
 function Dataset() {
+  const { contains } = useFilter({ sensitivity: "base" });
   const [error, setError] = useState(null);
   const [datasetName, setDatasetName] = useState("");
   const [editDatasetName, setEditDatasetName] = useState(false);
@@ -506,15 +507,15 @@ function Dataset() {
             </div>
             <Spacer y={2} />
             <Autocomplete
-              label="Dashboard"
               placeholder="Search or select a dashboard"
-              labelPlacement="outside"
+              selectionMode="single"
               isRequired
-              selectedKey={createChartSelectedProjectKey}
-              onSelectionChange={(key) => {
-                setCreateChartSelectedProjectKey(key);
+              value={createChartSelectedProjectKey}
+              onChange={(value) => {
+                setCreateChartSelectedProjectKey(value);
                 setCreateChartSubmitAttempted(false);
               }}
+              variant="secondary"
               isInvalid={createChartSubmitAttempted && !createChartSelectedProjectKey}
               errorMessage={
                 createChartSubmitAttempted && !createChartSelectedProjectKey
@@ -523,11 +524,31 @@ function Dataset() {
               }
               aria-label="Dashboard for new chart"
             >
-              {projects.filter((project) => !project.ghost).map((project) => (
-                <AutocompleteItem key={String(project.id)} textValue={project.name}>
-                  {project.name}
-                </AutocompleteItem>
-              ))}
+              <Label>Dashboard</Label>
+              <Autocomplete.Trigger>
+                <Autocomplete.Value />
+                <Autocomplete.ClearButton />
+                <Autocomplete.Indicator />
+              </Autocomplete.Trigger>
+              <Autocomplete.Popover>
+                <Autocomplete.Filter filter={contains}>
+                  <SearchField autoFocus name="dashboard-search" variant="secondary">
+                    <SearchField.Group>
+                      <SearchField.SearchIcon />
+                      <SearchField.Input placeholder="Search dashboards..." />
+                      <SearchField.ClearButton />
+                    </SearchField.Group>
+                  </SearchField>
+                  <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                    {projects.filter((project) => !project.ghost).map((project) => (
+                      <ListBox.Item key={String(project.id)} id={String(project.id)} textValue={project.name}>
+                        {project.name}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Autocomplete.Filter>
+              </Autocomplete.Popover>
             </Autocomplete>
             {projects.filter((project) => !project.ghost).length === 0 && (
               <div className="text-sm text-foreground-400 mt-2">No projects available yet.</div>

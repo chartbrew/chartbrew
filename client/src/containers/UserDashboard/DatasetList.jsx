@@ -1,4 +1,4 @@
-import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Pagination, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import { Autocomplete, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
 import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -18,6 +18,7 @@ import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 const DATASETS_PER_PAGE = 25;
 
 function DatasetList() {
+  const { contains } = useFilter({ sensitivity: "base" });
   const [modifyingDataset, setModifyingDataset] = useState(false);
   const [datasetToEdit, setDatasetToEdit] = useState(null);
   const [deletingDataset, setDeletingDataset] = useState(false);
@@ -311,70 +312,116 @@ function DatasetList() {
           </div>
           <div>
             <Autocomplete
-              label="Dashboard (Tags)"
               placeholder="Search by dashboard"
-              labelPlacement="outside"
-              onSelectionChange={(key) => setSearchFilter({ ...searchFilter, project_id: key })}
-              selectedKey={searchFilter.project_id}
+              onChange={(value) => setSearchFilter({ ...searchFilter, project_id: value })}
+              value={searchFilter.project_id || null}
+              selectionMode="single"
+              variant="secondary"
               aria-label="Search datasets by dashboard"
               size="sm"
             >
-              <AutocompleteItem
-                key="all"
-                textValue="All projects"
-              >
-                All projects
-              </AutocompleteItem>
-              {projects.filter((p) => !p.ghost).map((project) => (
-                <AutocompleteItem
-                  key={project.id}
-                  textValue={project.name}
-                >
-                  {project.name}
-                </AutocompleteItem>
-              ))}
+              <Label>Dashboard (Tags)</Label>
+              <Autocomplete.Trigger>
+                <Autocomplete.Value />
+                <Autocomplete.Indicator />
+              </Autocomplete.Trigger>
+              <Autocomplete.Popover>
+                <Autocomplete.Filter filter={contains}>
+                  <SearchField autoFocus name="dataset-project-search" variant="secondary">
+                    <SearchField.Group>
+                      <SearchField.SearchIcon />
+                      <SearchField.Input placeholder="Search dashboards..." />
+                      <SearchField.ClearButton />
+                    </SearchField.Group>
+                  </SearchField>
+                  <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                    <ListBox.Item id="all" textValue="All projects">
+                      All projects
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    {projects.filter((p) => !p.ghost).map((project) => (
+                      <ListBox.Item key={project.id} id={project.id} textValue={project.name}>
+                        {project.name}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Autocomplete.Filter>
+              </Autocomplete.Popover>
             </Autocomplete>
           </div>
           <div>
             <Autocomplete
-              label="Connection"
               placeholder="Search by connection"
-              labelPlacement="outside"
-              onSelectionChange={(key) => setSearchFilter({ ...searchFilter, connection_id: key })}
-              selectedKey={searchFilter.connection_id}
+              onChange={(value) => setSearchFilter({ ...searchFilter, connection_id: value })}
+              value={searchFilter.connection_id || null}
+              selectionMode="single"
+              variant="secondary"
               aria-label="Search datasets by connection"
               size="sm"
             >
-              <AutocompleteItem key="all" textValue="All connections">
-                All connections
-              </AutocompleteItem>
-              {connections.map((connection) => (
-                <AutocompleteItem key={connection.id} textValue={connection.name}>
-                  {connection.name}
-                </AutocompleteItem>
-              ))}
+              <Label>Connection</Label>
+              <Autocomplete.Trigger>
+                <Autocomplete.Value />
+                <Autocomplete.Indicator />
+              </Autocomplete.Trigger>
+              <Autocomplete.Popover>
+                <Autocomplete.Filter filter={contains}>
+                  <SearchField autoFocus name="dataset-connection-search" variant="secondary">
+                    <SearchField.Group>
+                      <SearchField.SearchIcon />
+                      <SearchField.Input placeholder="Search connections..." />
+                      <SearchField.ClearButton />
+                    </SearchField.Group>
+                  </SearchField>
+                  <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                    <ListBox.Item id="all" textValue="All connections">
+                      All connections
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    {connections.map((connection) => (
+                      <ListBox.Item key={connection.id} id={connection.id} textValue={connection.name}>
+                        {connection.name}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Autocomplete.Filter>
+              </Autocomplete.Popover>
             </Autocomplete>
           </div>
           <div>
             <Select
-              label="Status"
               placeholder="Select status"
-              labelPlacement="outside"
-              onSelectionChange={(keys) => setSearchFilter({ ...searchFilter, status: keys.currentKey })}
-              selectedKeys={[searchFilter.status]}
+              onChange={(value) => setSearchFilter({ ...searchFilter, status: value })}
+              value={searchFilter.status || null}
+              selectionMode="single"
+              variant="secondary"
               aria-label="Search datasets by status"
               size="sm"
               isClearable={false}
             >
-              <SelectItem key="all" textValue="All statuses">
-                All
-              </SelectItem>
-              <SelectItem key="published" textValue="Published">
-                Published
-              </SelectItem>
-              <SelectItem key="draft" textValue="Draft">
-                Draft
-              </SelectItem>
+              <Label>Status</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="all" textValue="All statuses">
+                    All
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  <ListBox.Item id="published" textValue="Published">
+                    Published
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  <ListBox.Item id="draft" textValue="Draft">
+                    Draft
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                </ListBox>
+              </Select.Popover>
             </Select>
           </div>
         </div>

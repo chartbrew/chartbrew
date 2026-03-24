@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
-  Alert,
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select,
+  Alert, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDispatch, useSelector } from "react-redux";
@@ -462,11 +462,10 @@ function PostgresConnectionForm(props) {
             <Spacer y={2} />
             <Row align="center">
               <Select
-                variant="bordered"
-                label="SSL Mode"
-                selectedKeys={[connection.sslMode]}
-                onSelectionChange={(keys) => {
-                  setConnection({ ...connection, sslMode: keys.currentKey });
+                variant="secondary"
+                value={connection.sslMode || null}
+                onChange={(value) => {
+                  setConnection({ ...connection, sslMode: value });
                 }}
                 className="w-full md:w-1/2 lg:w-1/3"
                 size="sm"
@@ -474,11 +473,35 @@ function PostgresConnectionForm(props) {
                 disallowEmptySelection
                 aria-label="Select an SSL mode"
               >
-                <SelectItem key="require" textValue="Require">{"Require"}</SelectItem>
-                <SelectItem key="disable" textValue="Disable">{"Disable"}</SelectItem>
-                <SelectItem key="prefer" textValue="Prefer">{"Prefer"}</SelectItem>
-                <SelectItem key="verify-ca" textValue="Verify CA">{"Verify CA"}</SelectItem>
-                <SelectItem key="verify-full" textValue="Verify Full">{"Verify Full"}</SelectItem>
+                <Label>SSL Mode</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="require" textValue="Require">
+                      {"Require"}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="disable" textValue="Disable">
+                      {"Disable"}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="prefer" textValue="Prefer">
+                      {"Prefer"}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="verify-ca" textValue="Verify CA">
+                      {"Verify CA"}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="verify-full" textValue="Verify Full">
+                      {"Verify Full"}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </Row>
             <Spacer y={2} />

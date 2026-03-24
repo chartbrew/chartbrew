@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Chip, Divider, Input, Modal,
+  Button, Checkbox, Chip, Description, Divider, Input, Label, ListBox, Modal,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Select, SelectItem, Spacer,
+  Select, Spacer,
 } from "@heroui/react";
 import { LuPlus, LuX } from "react-icons/lu";
 import { TwitterPicker } from "react-color";
@@ -232,37 +232,54 @@ function TableDataFormattingModal(props) {
         <Modal.Body>
           <div className="flex flex-row">
             <Select
-              label="Data type"
-              variant="bordered"
-              selectedKeys={[dataType]}
-              onSelectionChange={(keys) => setDataType(keys.currentKey)}
+              variant="secondary"
               selectionMode="single"
+              value={dataType}
+              onChange={(value) => setDataType(value)}
               aria-label="Select a data type"
-              disallowEmptySelection
             >
-              {dataTypes.map((d) => (
-                <SelectItem key={d.value} textValue={d.text}>
-                  {d.text}
-                </SelectItem>
-              ))}
+              <Label>Data type</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {dataTypes.map((d) => (
+                    <ListBox.Item key={d.value} id={d.value} textValue={d.text}>
+                      {d.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </div>
 
           {dataType === "date" && (
             <div className="flex flex-row items-center">
               <Select
-                label="Date format"
-                variant="bordered"
-                selectedKeys={[formatValue]}
-                onSelectionChange={(keys) => setFormatValue(keys.currentKey)}
+                variant="secondary"
                 selectionMode="single"
+                value={formatValue || null}
+                onChange={(value) => setFormatValue(value)}
                 aria-label="Select a date format"
               >
-                {dateFormats.map((d) => (
-                  <SelectItem key={d.value} textValue={d.text}>
-                    {d.text}
-                  </SelectItem>
-                ))}
+                <Label>Date format</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {dateFormats.map((d) => (
+                      <ListBox.Item key={d.value} id={d.value} textValue={d.text}>
+                        {d.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
 
               {formatValue === "custom" && (
@@ -343,19 +360,27 @@ function TableDataFormattingModal(props) {
 
           <Divider />
           <Select 
-            label="Display format"
-            variant="bordered"
-            selectedKeys={[displayFormat]}
-            onSelectionChange={(keys) => setDisplayFormat(keys.currentKey)}
+            variant="secondary"
             selectionMode="single"
+            value={displayFormat}
+            onChange={(value) => setDisplayFormat(value)}
             aria-label="Select a display format"
-            disallowEmptySelection
           >
-            {displayFormats.map((d) => (
-              <SelectItem key={d.value} textValue={d.text}>
-                {d.text}
-              </SelectItem>
-            ))}
+            <Label>Display format</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {displayFormats.map((d) => (
+                  <ListBox.Item key={d.value} id={d.value} textValue={d.text}>
+                    {d.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           {displayFormat === "mapping" && (
@@ -593,30 +618,36 @@ function TableDataFormattingModal(props) {
                 Image variant
               </div>
               <Select
-                variant="bordered"
-                selectedKeys={[imageSettings.variant]}
-                onSelectionChange={(keys) => setImageSettings({ ...imageSettings, variant: keys.currentKey })}
+                variant="secondary"
                 selectionMode="single"
+                value={imageSettings.variant}
+                onChange={(value) => setImageSettings({ ...imageSettings, variant: value })}
                 aria-label="Select a image variant"
-                disallowEmptySelection
                 className="max-w-sm"
               >
-                <SelectItem
-                  key="inline"
-                  textValue="Inline"
-                  description="The image will be displayed directly in the cell"
-                  classNames={{ description: "text-wrap" }}
-                >
-                  Inline
-                </SelectItem>
-                <SelectItem
-                  key="popup"
-                  textValue="Popup"
-                  description="The cell will display a button that opens the image in a popup"
-                  classNames={{ description: "text-wrap" }}
-                >
-                  Popup
-                </SelectItem>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="inline" textValue="Inline">
+                      <div className="flex flex-col">
+                        <span>Inline</span>
+                        <span className="text-wrap text-xs text-foreground-500">The image will be displayed directly in the cell</span>
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="popup" textValue="Popup">
+                      <div className="flex flex-col">
+                        <span>Popup</span>
+                        <span className="text-wrap text-xs text-foreground-500">The cell will display a button that opens the image in a popup</span>
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+                <Description>Choose how images render in the table cell</Description>
               </Select>
             </div>
           )}

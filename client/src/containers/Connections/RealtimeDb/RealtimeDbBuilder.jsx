@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
-  Code, Select, SelectItem, Switch,
+  Code, Label, ListBox, Select, Switch,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -691,17 +691,38 @@ function RealtimeDbBuilder(props) {
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
-                label="Select a type"
                 placeholder="Select a variable type"
                 fullWidth
-                selectedKeys={[variableSettings?.type]}
-                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
-                variant="bordered"
+                selectionMode="single"
+                value={variableSettings?.type || null}
+                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
+                variant="secondary"
               >
-                <SelectItem key="string">String</SelectItem>
-                <SelectItem key="number">Number</SelectItem>
-                <SelectItem key="boolean">Boolean</SelectItem>
-                <SelectItem key="date">Date</SelectItem>
+                <Label>Select a type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="string" textValue="String">
+                      String
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="number" textValue="Number">
+                      Number
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="boolean" textValue="Boolean">
+                      Boolean
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="date" textValue="Date">
+                      Date
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <Spacer y={1} />

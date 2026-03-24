@@ -2,8 +2,8 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem,
-  Alert,
+  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select,
+  Alert, Label, ListBox,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
@@ -252,19 +252,27 @@ function ApiConnectionForm(props) {
             <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
               <Row>
                 <Select
-                  label="Authentication type"
                   placeholder="Select an authentication type"
-                  defaultValue="no_auth"
-                  selectedKeys={[connection?.authentication?.type]}
-                  onSelectionChange={(keys) => _onChangeAuthParams("type", keys?.currentKey)}
+                  value={connection?.authentication?.type || null}
+                  onChange={(value) => _onChangeAuthParams("type", value)}
                   selectionMode="single"
-                  variant="bordered"
+                  variant="secondary"
                 >
-                  {authTypes.map((type) => (
-                    <SelectItem key={type.value} textValue={type.text}>
-                      {type.text}
-                    </SelectItem>
-                  ))}
+                  <Label>Authentication type</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {authTypes.map((type) => (
+                        <ListBox.Item key={type.value} id={type.value} textValue={type.text}>
+                          {type.text}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </Row>
             </div>

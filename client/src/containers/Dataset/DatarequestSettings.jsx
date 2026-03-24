@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
-  Select, SelectItem,
+  Label, ListBox, Select,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { nanoid } from "nanoid";
@@ -285,42 +285,44 @@ function DatarequestSettings(props) {
         <div className="col-span-12 md:col-span-7 pr-4 pb-20">
           <Row>
             <Select
-              variant="bordered"
               placeholder="Select main source"
-              label="Main source"
-              renderValue={() => (
-                <div className="flex flex-row items-center gap-2">
-                  <Text>{dataRequests.find((dr) => dr.id === dataset?.main_dr_id)?.Connection?.name || "Select main source"}</Text>
-                </div>
-              )}
-              startContent={dataset?.main_dr_id ? _renderIcon(dataset.main_dr_id, "sm") : null}
-              selectedKeys={[`${dataset?.main_dr_id}`]}
-              onSelectionChange={(keys) => _onChangeMainSource(keys.currentKey)}
+              variant="secondary"
               selectionMode="single"
+              value={dataset?.main_dr_id ? `${dataset.main_dr_id}` : null}
+              onChange={(value) => _onChangeMainSource(value)}
               aria-label="Select a main source"
-              disallowEmptySelection
             >
-              {dataRequests.map((request) => (
-                <SelectItem
-                  key={request.id}
-                  startContent={(
-                    (request.Connection?.type && (
-                      <Avatar
-                        radius="sm"
-                        src={
-                          connectionImages(isDark)[
-                            request.Connection.subType || request.Connection.type
-                          ]
-                        }
-                      />
-                    )) || null
-                  )}
-                  endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                  textValue={request.Connection?.name || ""}
-                >
-                  {request.Connection?.name || ""}
-                </SelectItem>
-              ))}
+              <Label>Main source</Label>
+              <Select.Trigger>
+                {dataset?.main_dr_id ? _renderIcon(dataset.main_dr_id, "sm") : null}
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {dataRequests.map((request) => (
+                    <ListBox.Item
+                      key={request.id}
+                      id={`${request.id}`}
+                      textValue={request.Connection?.name || ""}
+                    >
+                      {(request.Connection?.type && (
+                        <Avatar
+                          radius="sm"
+                          src={
+                            connectionImages(isDark)[
+                              request.Connection.subType || request.Connection.type
+                            ]
+                          }
+                        />
+                      )) || null}
+                      <span>{request.Connection?.name || ""}</span>
+                      <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Row>
           <Spacer y={2} />
@@ -332,39 +334,43 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5">
                   <Select
-                    variant="bordered"
                     placeholder="Select source"
-                    value={dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
-                    startContent={_renderIcon(join.dr_id, "sm")}
-                    endContent={
-                      <Chip variant={"flat"} size="sm" color="primary">
-                        {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
-                      </Chip>
-                    }
-                    selectedKeys={[`${join.dr_id}`]}
-                    onSelectionChange={(keys) => _onChangeJoin(join.key, { dr_id: parseInt(keys.currentKey, 10) })}
+                    variant="secondary"
                     selectionMode="single"
-                    color="primary"
+                    value={join.dr_id ? `${join.dr_id}` : null}
+                    onChange={(value) => _onChangeJoin(join.key, { dr_id: parseInt(value, 10) })}
                     aria-label="Select a source"
                     isDisabled={index === 0}
                   >
-                    {_getAllowedDataRequests(index).map((request) => (
-                      <SelectItem
-                        key={request.id}
-                        startContent={(
-                          <Avatar
-                            radius="sm"
-                            src={connectionImages(isDark)[
-                              request.Connection.subType || request.Connection.type
-                            ]}
-                          />
-                        )}
-                        endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                        textValue={request.Connection.name}
-                      >
-                        {request.Connection.name}
-                      </SelectItem>
-                    ))}
+                    <Select.Trigger>
+                      {_renderIcon(join.dr_id, "sm")}
+                      <Select.Value />
+                      <Chip variant={"flat"} size="sm" color="primary">
+                        {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
+                      </Chip>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {_getAllowedDataRequests(index).map((request) => (
+                          <ListBox.Item
+                            key={request.id}
+                            id={`${request.id}`}
+                            textValue={request.Connection.name}
+                          >
+                            <Avatar
+                              radius="sm"
+                              src={connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]}
+                            />
+                            <span>{request.Connection.name}</span>
+                            <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
                 <div className="col-span-6 md:col-span-1 flex justify-center items-center">
@@ -372,39 +378,42 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5">
                   <Select
-                    variant="bordered"
                     placeholder="Select source"
-                    value={dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
-                    startContent={_renderIcon(join.join_id, "sm")}
-                    endContent={
+                    variant="secondary"
+                    selectionMode="single"
+                    value={join.join_id ? `${join.join_id}` : null}
+                    onChange={(value) => _onChangeJoin(join.key, { join_id: parseInt(value, 10) })}
+                    aria-label="Select a source"
+                  >
+                    <Select.Trigger>
+                      {_renderIcon(join.join_id, "sm")}
+                      <Select.Value />
                       <Chip variant={"flat"} size="sm" color="secondary">
                         {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
                       </Chip>
-                    }
-                    selectedKeys={[`${join.join_id}`]}
-                    onSelectionChange={(keys) => _onChangeJoin(join.key, { join_id: parseInt(keys.currentKey, 10) })}
-                    selectionMode="single"
-                    color="secondary"
-                    aria-label="Select a source"
-                    disallowEmptySelection
-                  >
-                    {dataRequests.map((request) => (
-                      <SelectItem
-                        key={request.id}
-                        startContent={(
-                          <Avatar
-                            radius="sm"
-                            src={connectionImages(isDark)[
-                              request.Connection.subType || request.Connection.type
-                            ]}
-                          />
-                        )}
-                        endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                        textValue={request.Connection.name}
-                      >
-                        {request.Connection.name}
-                      </SelectItem>
-                    ))}
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {dataRequests.map((request) => (
+                          <ListBox.Item
+                            key={request.id}
+                            id={`${request.id}`}
+                            textValue={request.Connection.name}
+                          >
+                            <Avatar
+                              radius="sm"
+                              src={connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]}
+                            />
+                            <span>{request.Connection.name}</span>
+                            <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
                 <div className="col-span-12">
@@ -415,23 +424,27 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5" style={styles.fieldContainer}>
                   <Select
-                    size="sm"
-                    variant="bordered"
                     placeholder="Select field"
-                    renderValue={() => (
-                      <Text size="sm">{_renderHumanField(join.dr_field) || "Select field"}</Text>
-                    )}
-                    selectedKeys={[join.dr_field]}
-                    onSelectionChange={(keys) => _onChangeJoin(join.key, { dr_field: keys.currentKey })}
+                    variant="secondary"
                     selectionMode="single"
-                    color="primary"
+                    value={join.dr_field || null}
+                    onChange={(value) => _onChangeJoin(join.key, { dr_field: value })}
                     aria-label="Select a field"
                   >
-                    {_getFieldOptions(join.key, "dr_id").map((f) => (
-                      <SelectItem key={f.field} textValue={_renderHumanField(f.field)}>
-                        {_renderHumanField(f.field)}
-                      </SelectItem>
-                    ))}
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {_getFieldOptions(join.key, "dr_id").map((f) => (
+                          <ListBox.Item key={f.field} id={f.field} textValue={_renderHumanField(f.field)}>
+                            {_renderHumanField(f.field)}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
                 <div className="col-span-16 md:col-span-1 flex justify-center items-center">
@@ -439,23 +452,27 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-6 md:col-span-5" style={styles.fieldContainer}>
                   <Select
-                    size="sm"
-                    variant="bordered"
                     placeholder="Select field"
-                    renderValue={() => (
-                      <Text size="sm">{_renderHumanField(join.join_field) || "Select field"}</Text>
-                    )}
-                    selectedKeys={[join.join_field]}
-                    onSelectionChange={(keys) => _onChangeJoin(join.key, { join_field: keys.currentKey })}
+                    variant="secondary"
                     selectionMode="single"
-                    color="secondary"
+                    value={join.join_field || null}
+                    onChange={(value) => _onChangeJoin(join.key, { join_field: value })}
                     aria-label="Select a field"
                   >
-                    {_getFieldOptions(join.key, "join_id").map((f) => (
-                      <SelectItem key={f.field} textValue={_renderHumanField(f.field)}>
-                        {_renderHumanField(f.field)}
-                      </SelectItem>
-                    ))}
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {_getFieldOptions(join.key, "join_id").map((f) => (
+                          <ListBox.Item key={f.field} id={f.field} textValue={_renderHumanField(f.field)}>
+                            {_renderHumanField(f.field)}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
                 <div className="col-span-12">

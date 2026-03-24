@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
+  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -198,19 +198,6 @@ function MailgunTemplate(props) {
     setSelectedCharts([]);
   };
 
-  const _getConnectionName = () => (
-    availableConnections
-      && availableConnections.find(
-        (c) => c.value === parseInt(selectedConnection, 10)
-      )?.text
-  );
-
-  const _getCountryName = () => (
-    connection.domainLocation && countryOptions.find(
-      (c) => c.value === connection.domainLocation
-    )?.text
-  );
-
   return (
     <div style={styles.container}>
       <Row align="center">
@@ -232,20 +219,28 @@ function MailgunTemplate(props) {
           <Row className={"gap-2"}>
             <Select
               isDisabled={formVisible}
-              label="Select an existing connection"
               placeholder="Click to select a connection"
-              value={_getConnectionName()}
-              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
-              variant="bordered"
+              value={selectedConnection || null}
+              onChange={(value) => setSelectedConnection(value)}
+              variant="secondary"
               selectionMode="single"
-              selectedKeys={[selectedConnection]}
               aria-label="Select a connection"
             >
-              {availableConnections.map((connection) => (
-                <SelectItem key={connection.key} textValue={connection.text}>
-                  {connection.text}
-                </SelectItem>
-              ))}
+              <Label>Select an existing connection</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {availableConnections.map((connection) => (
+                    <ListBox.Item key={connection.key} id={connection.key} textValue={connection.text}>
+                      {connection.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
 
             <Input
@@ -298,21 +293,29 @@ function MailgunTemplate(props) {
           <Spacer y={2} />
           <Row align="center">
             <Select
-              variant="bordered"
-              label="Select your Mailgun domain location"
+              variant="secondary"
               placeholder="Domain location"
-              value={_getCountryName() || ""}
-              selectedKeys={[connection.domainLocation]}
-              onSelectionChange={(keys) => setConnection({ ...connection, domainLocation: keys.currentKey })}
+              value={connection.domainLocation || null}
+              onChange={(value) => setConnection({ ...connection, domainLocation: value })}
               selectionMode="single"
               className="max-w-[400px]"
               aria-label="Select a domain location"
             >
-              {countryOptions.map((location) => (
-                <SelectItem key={location.key} textValue={location.text}>
-                  {location.text}
-                </SelectItem>
-              ))}
+              <Label>Select your Mailgun domain location</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {countryOptions.map((location) => (
+                    <ListBox.Item key={location.key} id={location.key} textValue={location.text}>
+                      {location.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Row>
           <Spacer y={2} />

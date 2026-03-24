@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
-  Switch, Select, SelectItem,
+  Switch, Select, Label, ListBox,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -360,24 +360,28 @@ function DatasetAlerts(props) {
             <div>
               <Row align="center">
                 <Select
-                  variant="bordered"
+                  variant="secondary"
                   placeholder="Select an alert type"
-                  label="Alert type"
-                  renderValue={(
-                    <Text>
-                      {ruleTypes.find((r) => r.value === newAlert.type)?.label}
-                    </Text>
-                  )}
-                  selectedKeys={[newAlert.type]}
-                  onSelectionChange={(keys) => setNewAlert({ ...newAlert, type: keys.currentKey })}
+                  value={newAlert.type || null}
+                  onChange={(value) => setNewAlert({ ...newAlert, type: value })}
                   selectionMode="single"
                   aria-label="Select an alert type"
                 >
-                  {ruleTypes.map((rule) => (
-                    <SelectItem key={rule.value} textValue={rule.label}>
-                      {rule.label}
-                    </SelectItem>
-                  ))}
+                  <Label>Alert type</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {ruleTypes.map((rule) => (
+                        <ListBox.Item key={rule.value} id={rule.value} textValue={rule.label}>
+                          {rule.label}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </Row>
               <Spacer y={1} />
@@ -550,21 +554,27 @@ function DatasetAlerts(props) {
                     />
                     <Spacer x={1} />
                     <Select
-                      variant="bordered"
-                      label="Time unit"
-                      renderValue={(
-                        <Text>{timeoutUnit}</Text>
-                      )}
-                      selectedKeys={[timeoutUnit]}
-                      onSelectionChange={(keys) => setTimeoutUnit(keys.currentKey)}
+                      variant="secondary"
+                      value={timeoutUnit || null}
+                      onChange={(value) => setTimeoutUnit(value)}
                       selectionMode="single"
                       aria-label="Select a time unit"
                     >
-                      {timePeriods.map((period) => (
-                        <SelectItem key={period.value} textValue={period.label}>
-                          {period.label}
-                        </SelectItem>
-                      ))}
+                      <Label>Time unit</Label>
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {timePeriods.map((period) => (
+                            <ListBox.Item key={period.value} id={period.value} textValue={period.label}>
+                              {period.label}
+                              <ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
                     </Select>
                   </Row>
                 </>

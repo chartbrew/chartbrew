@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import {
   Autocomplete,
-  AutocompleteItem,
   Avatar,
-  Button, Checkbox, Chip, Divider, Modal, Spacer, Switch,
+  Button, Checkbox, Chip, Divider, EmptyState, ListBox, Modal, SearchField, Spacer, Switch, useFilter,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
@@ -21,6 +20,7 @@ import { useTheme } from "../../../modules/ThemeContext";
 
 
 function CustomTemplateForm(props) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const {
     template, onBack, projectId, onComplete, isAdmin, onDelete,
     onCreateProject,
@@ -170,24 +170,41 @@ function CustomTemplateForm(props) {
                 {template.model?.Connections?.map((connection) => (
                   <div key={connection.id} className="flex flex-col gap-1">
                     <Autocomplete
-                      selectedKey={`${customConnections[connection.id]}`}
-                      onSelectionChange={(key) => _onSelectCustomConnections(key, connection)}
-                      variant="bordered"
-                      labelPlacement="outside"
+                      value={`${customConnections[connection.id]}` || null}
+                      onChange={(value) => _onSelectCustomConnections(value, connection)}
+                      variant="secondary"
+                      selectionMode="single"
                       onKeyDown={(e) => e.continuePropagation()}
                       aria-label="Select connection"
                     >
-                      {connections.map((c) => (
-                        <AutocompleteItem
-                          key={`${c.id}`}
-                          textValue={c.name}
-                          startContent={(
-                            <Avatar src={connectionImages(isDark)[c.subType]} radius="sm" />
-                          )}
-                        >
-                          {c.name}
-                        </AutocompleteItem>
-                      ))}
+                      <Autocomplete.Trigger>
+                        <Autocomplete.Value />
+                        <Autocomplete.Indicator />
+                      </Autocomplete.Trigger>
+                      <Autocomplete.Popover>
+                        <Autocomplete.Filter filter={contains}>
+                          <SearchField autoFocus name={`custom-template-connection-${connection.id}`} variant="secondary">
+                            <SearchField.Group>
+                              <SearchField.SearchIcon />
+                              <SearchField.Input placeholder="Search connections..." />
+                              <SearchField.ClearButton />
+                            </SearchField.Group>
+                          </SearchField>
+                          <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                            {connections.map((c) => (
+                              <ListBox.Item
+                                key={`${c.id}`}
+                                id={`${c.id}`}
+                                textValue={c.name}
+                              >
+                                <Avatar src={connectionImages(isDark)[c.subType]} radius="sm" />
+                                {c.name}
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Autocomplete.Filter>
+                      </Autocomplete.Popover>
                     </Autocomplete>
                     {`${customConnections[connection.id]}` !== `${connection.id}` && (
                       <div className="flex items-center gap-1">

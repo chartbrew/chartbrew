@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Divider, Input, Spacer, Switch, Tooltip, Chip, SelectItem, Select,
+  Divider, Input, Spacer, Switch, Tooltip, Chip, Select, Label, ListBox,
 } from "@heroui/react";
 import { LuInfo } from "react-icons/lu";
 
@@ -92,19 +92,28 @@ function ApiPagination(props) {
       </div>
       <div className="col-span-12">
         <Select
-          variant="bordered"
-          onSelectionChange={(keys) => onPaginationChanged("template", keys.currentKey)}
-          selectedKeys={[template]}
+          variant="secondary"
+          onChange={(value) => onPaginationChanged("template", value)}
+          value={template || null}
           selectionMode="single"
-          label="Pagination type"
           isDisabled={!pagination}
           aria-label="Pagination type"
         >
-          {templates.map((t) => (
-            <SelectItem key={t.value} textValue={t.text}>
-              {t.text}
-            </SelectItem>
-          ))}
+          <Label>Pagination type</Label>
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {templates.map((t) => (
+                <ListBox.Item key={t.value} id={t.value} textValue={t.text}>
+                  {t.text}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
         </Select>
       </div>
 
@@ -185,20 +194,29 @@ function ApiPagination(props) {
             <Spacer y={1} />
             <div style={styles.rowDisplay}>
               <Select
-                variant="bordered"
-                onSelectionChange={(keys) => _onChangePaginationField(keys.currentKey)}
-                selectedKeys={[paginationField]}
+                variant="secondary"
+                onChange={(value) => _onChangePaginationField(value)}
+                value={paginationField || null}
                 selectionMode="single"
-                label="Select a field"
                 placeholder="Select a field"
                 isDisabled={!result || !pagination}
                 aria-label="Select a field"
               >
-                {fieldOptions.map((o) => (
-                  <SelectItem key={o.key} textValue={o.text}>
-                    {o.text}
-                  </SelectItem>
-                ))}
+                <Label>Select a field</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {fieldOptions.map((o) => (
+                      <ListBox.Item key={o.key} id={o.key} textValue={o.text}>
+                        {o.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
               {!result && (
                 <div className="text-sm">{" You will have to run a request before you can use this feature"}</div>

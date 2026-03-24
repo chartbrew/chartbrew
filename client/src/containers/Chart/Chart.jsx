@@ -5,10 +5,12 @@ import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
-  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, CardBody, Select, SelectItem,
+  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, CardBody, Select,
   Badge,
   Divider,
   Kbd,
+  Label,
+  ListBox,
 } from "@heroui/react";
 import {
   LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsis, LuFileDown,
@@ -1011,51 +1013,71 @@ function Chart(props) {
             <div>
               <Row align="center">
                 <Select
-                  label="Select a preset"
                   selectionMode="single"
-                  selectedKeys={[`${updateFrequency}`]}
-                  onSelectionChange={(key) => {
-                    setUpdateFrequency(parseInt(key[0].value));
+                  value={`${updateFrequency}` || null}
+                  onChange={(value) => {
+                    setUpdateFrequency(parseInt(value, 10));
                   }}
-                  variant="bordered"
+                  variant="secondary"
                   aria-label="Select a preset"
                 >
-                    <SelectItem key="0" onClick={() => setUpdateFrequency(0)} textValue="Don't auto update">
-                      {"Don't auto update"}
-                    </SelectItem>
-                    <SelectItem key="60" onClick={() => setUpdateFrequency(60)} textValue="Every minute">
-                      Every minute
-                    </SelectItem>
-                      <SelectItem key="300" onClick={() => setUpdateFrequency(300)} textValue="Every 5 minutes">
-                      Every 5 minutes
-                    </SelectItem>
-                    <SelectItem key="900" onClick={() => setUpdateFrequency(900)} textValue="Every 15 minutes">
-                      Every 15 minutes
-                    </SelectItem>
-                    <SelectItem key="1800" onClick={() => setUpdateFrequency(1800)} textValue="Every 30 minutes">
-                      Every 30 minutes
-                    </SelectItem>
-                    <SelectItem key="3600" onClick={() => setUpdateFrequency(3600)} textValue="Every hour">
-                      Every hour
-                    </SelectItem>
-                    <SelectItem key="10800" onClick={() => setUpdateFrequency(10800)} textValue="Every 3 hours">
-                      Every 3 hours
-                    </SelectItem>
-                    <SelectItem key="21600" onClick={() => setUpdateFrequency(21600)} textValue="Every 6 hours">
-                      Every 6 hours
-                    </SelectItem>
-                    <SelectItem key="43200" onClick={() => setUpdateFrequency(43200)} textValue="Every 12 hours">
-                      Every 12 hours
-                    </SelectItem>
-                    <SelectItem key="86400" onClick={() => setUpdateFrequency(86400)} textValue="Every day">
-                      Every day
-                    </SelectItem>
-                    <SelectItem key="604800" onClick={() => setUpdateFrequency(604800)} textValue="Every week">
-                      Every week
-                    </SelectItem>
-                    <SelectItem key="2592000" onClick={() => setUpdateFrequency(2592000)} textValue="Every month">
-                      Every month
-                    </SelectItem>
+                  <Label>Select a preset</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="0" textValue="Don't auto update">
+                        {"Don't auto update"}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="60" textValue="Every minute">
+                        Every minute
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="300" textValue="Every 5 minutes">
+                        Every 5 minutes
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="900" textValue="Every 15 minutes">
+                        Every 15 minutes
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="1800" textValue="Every 30 minutes">
+                        Every 30 minutes
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="3600" textValue="Every hour">
+                        Every hour
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="10800" textValue="Every 3 hours">
+                        Every 3 hours
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="21600" textValue="Every 6 hours">
+                        Every 6 hours
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="43200" textValue="Every 12 hours">
+                        Every 12 hours
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="86400" textValue="Every day">
+                        Every day
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="604800" textValue="Every week">
+                        Every week
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      <ListBox.Item id="2592000" textValue="Every month">
+                        Every month
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </Row>
               <Spacer y={4} />
@@ -1170,18 +1192,27 @@ function Chart(props) {
             <div className="text-sm">{"Select a dataset to set up alerts for"}</div>
             <Select
               selectionMode="single"
-              selectedKeys={[`${alertsDatasetId}`]}
-              onSelectionChange={(keys) => {
-                setAlertsDatasetId(keys.currentKey);
+              value={`${alertsDatasetId}` || null}
+              onChange={(value) => {
+                setAlertsDatasetId(value);
               }}
-              variant="bordered"
+              variant="secondary"
               aria-label="Select a dataset"
             >
-              {chart?.ChartDatasetConfigs?.map((config) => (
-                <SelectItem key={config.id} value={config.id} textValue={config.legend}>
-                  {config.legend}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {chart?.ChartDatasetConfigs?.map((config) => (
+                    <ListBox.Item key={config.id} id={config.id} textValue={config.legend}>
+                      {config.legend}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
 
             {alertsDatasetId && (

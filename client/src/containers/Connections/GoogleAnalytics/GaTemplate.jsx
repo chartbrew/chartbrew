@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Select, SelectItem, Spacer,
+  Button, Checkbox, Select, Spacer, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -265,14 +265,6 @@ function GaTemplate(props) {
     setSelectedCharts([]);
   };
 
-  const _getListName = (list, value, isInt) => (
-    list
-      && value
-      && list.find(
-        (c) => c.value === (isInt ? parseInt(value, 10) : value)
-      )?.text
-  );
-
   return (
     <div style={styles.container}>
       <Row align="center">
@@ -312,21 +304,29 @@ function GaTemplate(props) {
         <>
           <Row align="center" className={"gap-2"}>
             <Select
-              label="Select a connection"
               placeholder="Click to select a connection"
-              renderValue={_getListName(availableConnections, selectedConnection, true)}
-              selectedKeys={[selectedConnection]}
-              onSelectionChange={(keys) => _onSelectConnection(keys.currentKey)}
+              value={selectedConnection || null}
+              onChange={(value) => _onSelectConnection(value)}
               selectionMode="single"
-              variant="bordered"
+              variant="secondary"
               fullWidth
               aria-label="Select a connection"
             >
-              {availableConnections.map((connection) => (
-                <SelectItem key={connection.key} textValue={connection.text}>
-                  {connection.text}
-                </SelectItem>
-              ))}
+              <Label>Select a connection</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {availableConnections.map((connection) => (
+                    <ListBox.Item key={connection.key} id={connection.key} textValue={connection.text}>
+                      {connection.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             
             <Button
@@ -345,39 +345,55 @@ function GaTemplate(props) {
               <>
                 <div className="col-span-12 md:col-span-6">
                   <Select
-                    variant="bordered"
-                    label="Account"
+                    variant="secondary"
                     placeholder="Select an account"
-                    renderValue={_getListName(accountOptions, configuration.accountId)}
-                    selectedKeys={[configuration.accountId]}
-                    onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
+                    value={configuration.accountId || null}
+                    onChange={(value) => _onAccountSelected(value)}
                     selectionMode="single"
                     aria-label="Select an account"
                   >
-                    {accountOptions.map((option) => (
-                      <SelectItem key={option.key} textValue={option.text}>
-                        {option.text}
-                      </SelectItem>
-                    ))}
+                    <Label>Account</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {accountOptions.map((option) => (
+                          <ListBox.Item key={option.key} id={option.key} textValue={option.text}>
+                            {option.text}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
                 <div className="col-span-12 md:col-span-6">
                   <Select
                     isDisabled={!configuration.accountId}
-                    variant="bordered"
-                    label="Property"
+                    variant="secondary"
                     placeholder="Select a property"
-                    value={_getListName(propertyOptions, configuration.propertyId)}
-                    selectedKeys={[configuration.propertyId]}
-                    onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
+                    value={configuration.propertyId || null}
+                    onChange={(value) => _onPropertySelected(value)}
                     selectionMode="single"
                     aria-label="Select a property"
                   >
-                    {propertyOptions.map((option) => (
-                      <SelectItem key={option.key} textValue={option.text}>
-                        {option.text}
-                      </SelectItem>
-                    ))}
+                    <Label>Property</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {propertyOptions.map((option) => (
+                          <ListBox.Item key={option.key} id={option.key} textValue={option.text}>
+                            {option.text}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
               </>

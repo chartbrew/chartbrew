@@ -8,7 +8,7 @@ import { LuCircleCheck, LuInfo, LuWandSparkles, LuCircleX } from "react-icons/lu
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
-import { Autocomplete, AutocompleteItem, Chip, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Select, SelectItem, Spacer, Tooltip } from "@heroui/react";
+import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, PopoverContent, PopoverTrigger, SearchField, Select, Spacer, Tooltip, useFilter } from "@heroui/react";
 import Text from "../../components/Text";
 import autoFieldSelector from "../../modules/autoFieldSelector";
 import fieldFinder from "../../modules/fieldFinder";
@@ -23,6 +23,7 @@ import { updateCdc } from "../../slices/chart";
 
 function DatasetBuilder(props) {
   const { chart, projectId } = props;
+  const { contains } = useFilter({ sensitivity: "base" });
 
   const [fieldOptions, setFieldOptions] = useState([]);
   const [formula, setFormula] = useState("");
@@ -373,104 +374,144 @@ function DatasetBuilder(props) {
     <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4 mt-4">
       <div className="col-span-12 md:col-span-4 bg-content1 rounded-lg border-1 border-divider p-4">
         <Autocomplete
-          label="Dimension"
-          labelPlacement="outside"
-          variant="bordered"
+          selectionMode="single"
+          variant="secondary"
           placeholder="Select a dimension"
-          selectedKey={dataset.xAxis}
-          onSelectionChange={(key) => _onUpdateDataset({ xAxis: key })}
+          value={dataset.xAxis || null}
+          onChange={(value) => _onUpdateDataset({ xAxis: value })}
           isLoading={loadingFields}
           aria-label="Select a dimension"
         >
-          {_filterOptions("x").map((option) => (
-            <AutocompleteItem
-              key={option.value}
-              startContent={(
-                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-              )}
-              description={option.isObject ? "Key-Value visualization" : null}
-              textValue={option.text}
-            >
-              {option.text}
-            </AutocompleteItem>
-          ))}
+          <Label>Dimension</Label>
+          <Autocomplete.Trigger>
+            <Autocomplete.Value />
+            <Autocomplete.ClearButton />
+            <Autocomplete.Indicator />
+          </Autocomplete.Trigger>
+          <Autocomplete.Popover>
+            <Autocomplete.Filter filter={contains}>
+              <SearchField autoFocus name="dimension-search" variant="secondary">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search dimensions..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+              <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                {_filterOptions("x").map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                    <span>{option.text}</span>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Autocomplete.Filter>
+          </Autocomplete.Popover>
         </Autocomplete>
 
         <Spacer y={4} />
 
         <Autocomplete
-          label="Metric"
-          labelPlacement="outside"
-          variant="bordered"
+          selectionMode="single"
+          variant="secondary"
           placeholder="Select a metric"
-          selectedKey={dataset.yAxis}
-          onSelectionChange={(key) => _onUpdateDataset({ yAxis: key })}
+          value={dataset.yAxis || null}
+          onChange={(value) => _onUpdateDataset({ yAxis: value })}
           isLoading={loadingFields}
           aria-label="Select a metric"
         >
-          {_getYFieldOptions().map((option) => (
-            <AutocompleteItem
-              key={option.value}
-              startContent={(
-                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-              )}
-              description={option.isObject ? "Key-Value visualization" : null}
-              textValue={option.text}
-            >
-              {option.text}
-            </AutocompleteItem>
-          ))}
+          <Label>Metric</Label>
+          <Autocomplete.Trigger>
+            <Autocomplete.Value />
+            <Autocomplete.ClearButton />
+            <Autocomplete.Indicator />
+          </Autocomplete.Trigger>
+          <Autocomplete.Popover>
+            <Autocomplete.Filter filter={contains}>
+              <SearchField autoFocus name="metric-search" variant="secondary">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search metrics..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+              <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                {_getYFieldOptions().map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                    <span>{option.text}</span>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Autocomplete.Filter>
+          </Autocomplete.Popover>
         </Autocomplete>
 
         <Spacer y={2} />
         <Select
           placeholder="Select an operation"
-          labelPlacement="outside"
-          onSelectionChange={(keys) => _onUpdateDataset({ yAxisOperation: keys.currentKey })}
-          selectedKeys={[dataset.yAxisOperation]}
           selectionMode="single"
-          variant="bordered"
-          renderValue={(
-            <Text>
-              {(dataset.yAxisOperation
-                && operations.find((i) => i.value === dataset.yAxisOperation).text
-              )
-                || "Operation"}
-            </Text>
-          )}
+          value={dataset.yAxisOperation || null}
+          onChange={(value) => _onUpdateDataset({ yAxisOperation: value })}
+          variant="secondary"
           aria-label="Select an operation"
         >
-          {operations.map((option) => (
-            <SelectItem key={option.value} textValue={option.text}>
-              {option.text}
-            </SelectItem>
-          ))}
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {operations.map((option) => (
+                <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                  {option.text}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
         </Select>
         <Spacer y={4} />
         <Divider />
         <Spacer y={4} />
         <Row align="center" className={"justify-between"}>
           <Autocomplete
-            label="Select a date field used for filtering"
-            labelPlacement="outside"
-            variant="bordered"
+            selectionMode="single"
+            variant="secondary"
             placeholder="Select a field"
-            selectedKey={dataset.dateField}
-            onSelectionChange={(key) => _onUpdateDataset({ dateField: key })}
+            value={dataset.dateField || null}
+            onChange={(value) => _onUpdateDataset({ dateField: value })}
             isLoading={loadingFields}
             aria-label="Select a date field used for filtering"
           >
-            {_getDateFieldOptions().map((option) => (
-              <AutocompleteItem
-                key={option.value}
-                startContent={(
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                )}
-                textValue={option.text}
-              >
-                {option.text}
-              </AutocompleteItem>
-            ))}
+            <Label>Select a date field used for filtering</Label>
+            <Autocomplete.Trigger>
+              <Autocomplete.Value />
+              <Autocomplete.ClearButton />
+              <Autocomplete.Indicator />
+            </Autocomplete.Trigger>
+            <Autocomplete.Popover>
+              <Autocomplete.Filter filter={contains}>
+                <SearchField autoFocus name="date-field-search" variant="secondary">
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input placeholder="Search fields..." />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+                <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                  {_getDateFieldOptions().map((option) => (
+                    <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                      <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                      <span>{option.text}</span>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Autocomplete.Filter>
+            </Autocomplete.Popover>
           </Autocomplete>
         </Row>
 

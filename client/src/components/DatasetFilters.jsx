@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import {
-  Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader,
+  Autocomplete, Button, Card, CardBody, CardFooter, CardHeader,
   Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
-  DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, 
-  Modal, Select, SelectItem,
-  Spacer, Switch, Tooltip, Code,
+  DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
+  Modal, SearchField, Select,
+  Spacer, Switch, Tooltip, Code, useFilter,
 } from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
@@ -24,6 +24,7 @@ import { createDatasetVariableBinding, updateDatasetVariableBinding } from "../s
 
 function DatasetFilters(props) {
   const { onUpdate, fieldOptions, dataset } = props;
+  const { contains } = useFilter({ sensitivity: "base" });
 
   const [conditions, setConditions] = useState([]);
   const [selectedCondition, setSelectedCondition] = useState({});
@@ -255,23 +256,42 @@ function DatasetFilters(props) {
             <CardBody>
               <Autocomplete
                 placeholder="Field"
-                selectedKey={condition.field}
-                onSelectionChange={(key) => _updateCondition(condition.id, key, "field")}
-                labelPlacement="outside"
+                selectionMode="single"
+                value={condition.field || null}
+                onChange={(value) => _updateCondition(condition.id, value, "field")}
+                variant="secondary"
                 size="sm"
                 aria-label="Field"
               >
-                {fieldOptions.filter((f) => !f.isObject).map((field) => (
-                  <AutocompleteItem
-                    key={field.value}
-                    startContent={(
-                      <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={field.label.color}>{field.label.content}</Chip>
-                    )}
-                    textValue={field.text}
-                  >
-                    {field.text}
-                  </AutocompleteItem>
-                ))}
+                <Autocomplete.Trigger>
+                  <Autocomplete.Value />
+                  <Autocomplete.ClearButton />
+                  <Autocomplete.Indicator />
+                </Autocomplete.Trigger>
+                <Autocomplete.Popover>
+                  <Autocomplete.Filter filter={contains}>
+                    <SearchField autoFocus name={`field-search-${condition.id}`} variant="secondary">
+                      <SearchField.Group>
+                        <SearchField.SearchIcon />
+                        <SearchField.Input placeholder="Search fields..." />
+                        <SearchField.ClearButton />
+                      </SearchField.Group>
+                    </SearchField>
+                    <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                      {fieldOptions.filter((f) => !f.isObject).map((field) => (
+                        <ListBox.Item
+                          key={field.value}
+                          id={field.value}
+                          textValue={field.text}
+                        >
+                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={field.label.color}>{field.label.content}</Chip>
+                          <span>{field.text}</span>
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Autocomplete.Filter>
+                </Autocomplete.Popover>
               </Autocomplete>
               <Spacer y={1} />
               <Row warp="wrap" className={"flex gap-2"} align="center">
@@ -622,17 +642,38 @@ function DatasetFilters(props) {
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
-                label="Select a type"
                 placeholder="Select a variable type"
                 fullWidth
-                selectedKeys={[variableSettings?.type]}
-                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
-                variant="bordered"
+                selectionMode="single"
+                value={variableSettings?.type || null}
+                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
+                variant="secondary"
               >
-                <SelectItem key="string">String</SelectItem>
-                <SelectItem key="number">Number</SelectItem>
-                <SelectItem key="boolean">Boolean</SelectItem>
-                <SelectItem key="date">Date</SelectItem>
+                <Label>Select a type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="string" textValue="String">
+                      String
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="number" textValue="Number">
+                      Number
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="boolean" textValue="Boolean">
+                      Boolean
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="date" textValue="Date">
+                      Date
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <Spacer y={1} />

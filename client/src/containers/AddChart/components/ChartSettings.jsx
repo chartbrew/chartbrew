@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, Select, SelectItem,
-  Code,
+  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, Select,
+  Code, Label, ListBox,
 } from "@heroui/react";
 import moment from "moment";
 import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
@@ -305,19 +305,26 @@ function ChartSettings({ chart, onChange }) {
             selectionMode="single"
             placeholder="Select a time interval"
             size="sm"
-            selectedKeys={[chart.timeInterval]}
-            onSelectionChange={(keys) => onChange({ timeInterval: keys.currentKey })}
-            renderValue={() => (
-              <Text>{timeIntervalOptions.find((option) => option.value === chart.timeInterval).text}</Text>
-            )}
+            value={chart.timeInterval || null}
+            onChange={(value) => onChange({ timeInterval: value })}
+            variant="secondary"
             className="chart-settings-interval"
             aria-label="Select a time interval"
           >
-            {timeIntervalOptions.map((option) => (
-              <SelectItem key={option.value} textValue={option.text}>
-                {option.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {timeIntervalOptions.map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    {option.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </div>
         <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
@@ -504,17 +511,27 @@ function ChartSettings({ chart, onChange }) {
         {chart.type === "table" && (
           <>
             <Select
-              label="Default rows per page"
               selectionMode="single"
               placeholder="Default rows per page"
-              selectedKeys={[`${chart.defaultRowsPerPage}`]}
-              onSelectionChange={(keys) => onChange({ defaultRowsPerPage: parseInt(keys.currentKey, 10) })}
+              value={`${chart.defaultRowsPerPage}` || null}
+              onChange={(value) => onChange({ defaultRowsPerPage: parseInt(value, 10) })}
+              variant="secondary"
             >
-              {tableRowOptions.map((option) => (
-                <SelectItem key={option.value} textValue={option.text}>
-                  {option.text}
-                </SelectItem>
-              ))}
+              <Label>Default rows per page</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {tableRowOptions.map((option) => (
+                    <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                      {option.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </>
         )}
@@ -529,20 +546,27 @@ function ChartSettings({ chart, onChange }) {
           <Select
             selectionMode="single"
             placeholder="Select the number of labels"
-            label="Number of labels on the X Axis"
             size="sm"
-            selectedKeys={[ticksSelection]}
-            onSelectionChange={(keys) => _onChangeTicks(keys.currentKey)}
-            renderValue={() => (
-              <Text>{xLabelOptions.find((option) => option.value === ticksSelection).text}</Text>
-            )}
+            value={ticksSelection || null}
+            onChange={(value) => _onChangeTicks(value)}
+            variant="secondary"
             aria-label="Select the number of labels"
           >
-            {xLabelOptions.map((option) => (
-              <SelectItem key={option.value} textValue={option.text}>
-                {option.text}
-              </SelectItem>
-            ))}
+            <Label>Number of labels on the X Axis</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {xLabelOptions.map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    {option.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </div>
         {ticksSelection === "custom" && (

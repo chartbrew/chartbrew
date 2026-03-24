@@ -3,8 +3,9 @@ import PropTypes from "prop-types";
 import {
   Modal,
   Button,
+  Label,
+  ListBox,
   Select,
-  SelectItem,
   Switch,
   Accordion,
   AccordionItem,
@@ -72,10 +73,11 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
           </Modal.Header>
           <Modal.Body>
           <Select
-            label="Transformation type"
             placeholder="Select a transformation type"
-            onSelectionChange={(keys) => {
-              const type = keys.currentKey;
+            selectionMode="single"
+            value={transformConfig.type || null}
+            onChange={(value) => {
+              const type = value;
               const newConfig = {
                 enabled: true,
                 type,
@@ -88,14 +90,21 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
               setTransformConfig(newConfig);
               setEditorValue(JSON.stringify(newConfig, null, 2));
             }}
-            selectedKeys={transformConfig.type ? [transformConfig.type] : []}
-            selectionMode="single"
-            variant="bordered"
-            disallowEmptySelection
+            variant="secondary"
           >
-            <SelectItem key="flattenNested" textValue="Flatten nested array">
-              Flatten nested array
-            </SelectItem>
+            <Label>Transformation type</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="flattenNested" textValue="Flatten nested array">
+                  Flatten nested array
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           {transformConfig.type && (

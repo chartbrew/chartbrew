@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
+  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -200,22 +200,28 @@ function PlausibleTemplate(props) {
           <Row className={"gap-2"}>
             <Select
               isDisabled={formVisible}
-              variant="bordered"
-              label="Select an existing connection"
+              variant="secondary"
               placeholder="Click to select a connection"
-              value={
-                availableConnections.find((c) => c.value === selectedConnection)?.text
-              }
-              selectedKeys={[selectedConnection]}
+              value={selectedConnection || null}
               selectionMode="single"
-              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
+              onChange={(value) => setSelectedConnection(value)}
               aria-label="Select a connection"
             >
-              {availableConnections.map((connection) => (
-                <SelectItem key={connection.key} textValue={connection.text}>
-                  {connection.text}
-                </SelectItem>
-              ))}
+              <Label>Select an existing connection</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {availableConnections.map((connection) => (
+                    <ListBox.Item key={connection.key} id={connection.key} textValue={connection.text}>
+                      {connection.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input
               label="Enter your Plausible site ID"

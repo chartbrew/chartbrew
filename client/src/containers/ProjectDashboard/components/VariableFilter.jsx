@@ -4,10 +4,10 @@ import moment from "moment";
 import {
   Input,
   Select,
-  SelectItem,
   DatePicker,
   Chip,
   Link,
+  ListBox,
 } from "@heroui/react";
 import { LuArrowRight, LuVariable } from "react-icons/lu";
 import { parseDate, today } from "@internationalized/date";
@@ -107,9 +107,10 @@ function VariableFilter({
       case "binary":
         return (
           <Select
-            variant={allowValueChange ? "bordered" : "flat"}
-            selectedKeys={[value || ""]}
-            onSelectionChange={(keys) => onApply?.(keys.currentKey)}
+            variant={allowValueChange ? "secondary" : "flat"}
+            value={value || null}
+            onChange={(selectedValue) => onApply?.(selectedValue)}
+            selectionMode="single"
             size="sm"
             isDisabled={!allowValueChange}
             startContent={(
@@ -122,12 +123,22 @@ function VariableFilter({
             }}
             aria-label="Filter value"
           >
-            <SelectItem key="true" textValue="True">
-              True
-            </SelectItem>
-            <SelectItem key="false" textValue="False">
-              False
-            </SelectItem>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="true" textValue="True">
+                  True
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="false" textValue="False">
+                  False
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
           </Select>
         );
       default:

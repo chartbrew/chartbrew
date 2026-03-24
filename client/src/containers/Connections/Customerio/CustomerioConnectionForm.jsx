@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, Divider,
+  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, ListBox, Select, Divider,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
@@ -120,11 +120,6 @@ function CustomerioConnectionForm(props) {
     }
   };
 
-  const _getRegionText = (region) => {
-    const regionOption = regionOptions.find((option) => option.value === region);
-    return regionOption ? regionOption.text : "";
-  };
-
   return (
     <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
@@ -195,25 +190,28 @@ function CustomerioConnectionForm(props) {
         <Spacer y={4} />
         <Row align="flex-start" className={"max-w-[600px] items-center"}>
           <Select
-            variant="bordered"
+            variant="secondary"
             label="Where is your Customer.io data located?"
-            value={_getRegionText(connection.host)}
-            selectedKeys={[connection.host]}
             selectionMode="single"
-            onSelectionChange={(keys) => setConnection({ ...connection, host: keys.currentKey })}
-            renderValue={(items) => (
-              <div className="flex items-center gap-1">
-                <span>{regionOptions.find((r) => r.key === items[0].key).flag === "eu" ? "🇪🇺" : "🇺🇸"}</span>
-                <span>{items[0].textValue}</span>
-              </div>
-            )}
+            value={connection.host || null}
+            onChange={(value) => setConnection({ ...connection, host: value })}
             aria-label="Select a region"
           >
-            {regionOptions.map((option) => (
-              <SelectItem key={option.value} startContent={option.flag === "eu" ? "🇪🇺" : "🇺🇸"} textValue={option.text}>
-                {option.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {regionOptions.map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    <span>{option.flag === "eu" ? "🇪🇺" : "🇺🇸"}</span>
+                    <span>{option.text}</span>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
           <Spacer x={1} />
           <Link

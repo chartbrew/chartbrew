@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Input, Select, SelectItem, Checkbox, Spacer, Divider,
-  Chip, Autocomplete, AutocompleteItem, Button,
+  Input, Select, Checkbox, Spacer, Divider,
+  Chip, Autocomplete, Button, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { LuActivity, LuX, LuBox } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -122,6 +122,7 @@ function ActivitiesQuery({
   request = null,
   connectionId,
 }) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const [activityType, setActivityType] = useState("");
   const [eventName, setEventName] = useState("");
   const [deleted, setDeleted] = useState(false);
@@ -318,24 +319,41 @@ function ActivitiesQuery({
       <div className="flex flex-col gap-2">
         <div className="text-sm">Filter activities</div>
         <Autocomplete
-          label="Activity Type"
           placeholder="Select activity type"
-          selectedKey={activityType}
-          onSelectionChange={(key) => _handleActivityTypeChange(key)}
+          selectionMode="single"
+          value={activityType || null}
+          onChange={(value) => _handleActivityTypeChange(value)}
           fullWidth
-          variant="bordered"
+          variant="secondary"
           isLoading={loading}
           aria-label="Activity Type"
         >
-          {allActivityTypes.map((type) => (
-            <AutocompleteItem 
-              key={type.value} 
-              textValue={type.text}
-              startContent={_isObjectType(type.value) ? <LuBox /> : <LuActivity />}
-            >
-              {type.text}
-            </AutocompleteItem>
-          ))}
+          <Label>Activity Type</Label>
+          <Autocomplete.Trigger>
+            <Autocomplete.Value />
+            <Autocomplete.ClearButton />
+            <Autocomplete.Indicator />
+          </Autocomplete.Trigger>
+          <Autocomplete.Popover>
+            <Autocomplete.Filter filter={contains}>
+              <SearchField autoFocus name="activity-type-search" variant="secondary">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search activity types..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+              <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                {allActivityTypes.map((type) => (
+                  <ListBox.Item key={type.value} id={type.value} textValue={type.text}>
+                    {_isObjectType(type.value) ? <LuBox /> : <LuActivity />}
+                    <span>{type.text}</span>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Autocomplete.Filter>
+          </Autocomplete.Popover>
         </Autocomplete>
         <Input
           label="Event Name"
@@ -382,17 +400,27 @@ function ActivitiesQuery({
         />
         {customerId && (
           <Select
-            label="ID Type"
-            selectedKeys={[idType]}
-            onChange={(e) => _handleIdTypeChange(e.target.value)}
+            selectionMode="single"
+            value={idType || null}
+            onChange={(value) => _handleIdTypeChange(value)}
             fullWidth
-            variant="bordered"
+            variant="secondary"
           >
-            {idTypes.map((type) => (
-              <SelectItem key={type.value} textValue={type.text}>
-                {type.text}
-              </SelectItem>
-            ))}
+            <Label>ID Type</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {idTypes.map((type) => (
+                  <ListBox.Item key={type.value} id={type.value} textValue={type.text}>
+                    {type.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         )}
       </div>

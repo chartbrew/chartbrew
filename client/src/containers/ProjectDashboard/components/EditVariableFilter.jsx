@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Select, SelectItem, Input, DatePicker, Divider,
+  Select, Input, DatePicker, Divider, Label, ListBox,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
@@ -62,31 +62,44 @@ function EditVariableFilter({
 
         <div className="flex flex-row gap-2 items-center">
           <Select
-            label="Data type"
-            variant="bordered"
-            selectedKeys={[variableCondition.dataType]}
-            onSelectionChange={(keys) => {
-              if (keys.currentKey === "date") {
+            variant="secondary"
+            value={variableCondition.dataType || null}
+            onChange={(value) => {
+              if (value === "date") {
                 _handleVariableChange("value", today().toString());
-                _handleVariableChange("dataType", keys.currentKey);
+                _handleVariableChange("dataType", value);
               } else {
-                _handleVariableChange("dataType", keys.currentKey);
+                _handleVariableChange("dataType", value);
               }
             }}
+            selectionMode="single"
             size="sm"
           >
-            <SelectItem key="text" textValue="Text">
-              Text
-            </SelectItem>
-            <SelectItem key="number" textValue="Number">
-              Number
-            </SelectItem>
-            <SelectItem key="date" textValue="Date">
-              Date
-            </SelectItem>
-            <SelectItem key="binary" textValue="Binary">
-              Binary
-            </SelectItem>
+            <Label>Data type</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="text" textValue="Text">
+                  Text
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="number" textValue="Number">
+                  Number
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="date" textValue="Date">
+                  Date
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="binary" textValue="Binary">
+                  Binary
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           {variableCondition.dataType === "date" ? (
@@ -110,18 +123,29 @@ function EditVariableFilter({
             />
           ) : variableCondition.dataType === "binary" ? (
             <Select
-              label="Select value"
-              variant="bordered"
-              selectedKeys={[variableCondition.value]}
-              onSelectionChange={(keys) => _handleVariableChange("value", keys.currentKey)}
+              variant="secondary"
+              value={variableCondition.value || null}
+              onChange={(value) => _handleVariableChange("value", value)}
+              selectionMode="single"
               size="sm"
             >
-              <SelectItem key="true" textValue="True">
-                True
-              </SelectItem>
-              <SelectItem key="false" textValue="False">
-                False
-              </SelectItem>
+              <Label>Select value</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="true" textValue="True">
+                    True
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  <ListBox.Item id="false" textValue="False">
+                    False
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                </ListBox>
+              </Select.Popover>
             </Select>
           ) : (
             <Input

@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Spacer, Tooltip, Chip,
-  Tabs, Tab, Select, SelectItem, PopoverTrigger, Popover, PopoverContent,
+  Tabs, Tab, Select, PopoverTrigger, Popover, PopoverContent,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
-  Code, Switch,
+  Code, Switch, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
@@ -893,20 +893,29 @@ function ApiBuilder(props) {
         <div className="col-span-12 md:col-span-5">
           <div className="flex flex-row items-center gap-2 apibuilder-type-tut">
             <Select
-              variant="bordered"
+              variant="secondary"
               disableAnimation
-              onSelectionChange={(keys) => _changeMethod(keys.currentKey)}
-              selectedKeys={[apiRequest.method]}
+              onChange={(value) => _changeMethod(value)}
+              value={apiRequest.method || null}
               selectionMode="single"
               labelPlacement="ouside"
               aria-label="Select a method"
               size="sm"
             >
-              {methods.map((method) => (
-                <SelectItem key={method.value} textValue={method.text}>
-                  {method.text}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {methods.map((method) => (
+                    <ListBox.Item key={method.value} id={method.value} textValue={method.text}>
+                      {method.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Button
               endContent={<LuPlay size={16} />}
@@ -1038,17 +1047,38 @@ function ApiBuilder(props) {
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
-                label="Select a type"
                 placeholder="Select a variable type"
                 fullWidth
-                selectedKeys={[variableSettings?.type]}
-                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
-                variant="bordered"
+                selectionMode="single"
+                value={variableSettings?.type || null}
+                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
+                variant="secondary"
               >
-                <SelectItem key="string">String</SelectItem>
-                <SelectItem key="number">Number</SelectItem>
-                <SelectItem key="boolean">Boolean</SelectItem>
-                <SelectItem key="date">Date</SelectItem>
+                <Label>Select a type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="string" textValue="String">
+                      String
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="number" textValue="Number">
+                      Number
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="boolean" textValue="Boolean">
+                      Boolean
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="date" textValue="Date">
+                      Date
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <Spacer y={1} />

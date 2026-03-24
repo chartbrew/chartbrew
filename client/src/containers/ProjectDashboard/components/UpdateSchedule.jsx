@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
-import { Autocomplete, AutocompleteItem, Button, Divider, Input, Link, Modal, Select, SelectItem, TimeInput } from "@heroui/react";
+import { Autocomplete, Button, Divider, EmptyState, Input, Label, Link, ListBox, Modal, SearchField, Select, TimeInput, useFilter } from "@heroui/react";
 import timezones from "../../../modules/timezones";
 import { LuMapPin, LuMonitorUp } from "react-icons/lu";
 import { getProject, selectProject, updateProject } from "../../../slices/project";
@@ -22,6 +22,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [removingUpdates, setRemovingUpdates] = useState(false);
+  const { contains } = useFilter({ sensitivity: "base" });
   const dispatch = useDispatch();
   const initRef = useRef(null);
 
@@ -161,15 +162,25 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             <Select
               placeholder="Select update frequency"
               aria-label="Update frequency"
-              variant="bordered"
-              selectedKeys={[schedule.frequency]}
-              onSelectionChange={(keys) => setSchedule({ ...schedule, frequency: keys.currentKey })}
+              variant="secondary"
+              selectionMode="single"
+              value={schedule.frequency || null}
+              onChange={(value) => setSchedule({ ...schedule, frequency: value })}
             >
-              {frequencies.map((frequency) => (
-                <SelectItem key={frequency.value} textValue={frequency.label}>
-                  {frequency.label}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {frequencies.map((frequency) => (
+                    <ListBox.Item key={frequency.value} id={frequency.value} textValue={frequency.label}>
+                      {frequency.label}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
 
             {schedule.frequency === "weekly" && (
@@ -178,15 +189,25 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                 <Select
                   placeholder="Select day"
                   aria-label="Update day of week"
-                  variant="bordered"
-                  selectedKeys={[schedule.dayOfWeek]}
-                  onSelectionChange={(keys) => setSchedule({ ...schedule, dayOfWeek: keys.currentKey })}
+                  variant="secondary"
+                  selectionMode="single"
+                  value={schedule.dayOfWeek || null}
+                  onChange={(value) => setSchedule({ ...schedule, dayOfWeek: value })}
                 >
-                  {daysOfWeek.map((day) => (
-                    <SelectItem key={day.value} textValue={day.label}>
-                      {day.label}
-                    </SelectItem>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {daysOfWeek.map((day) => (
+                        <ListBox.Item key={day.value} id={day.value} textValue={day.label}>
+                          {day.label}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </>
             )}
@@ -221,20 +242,40 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             <div className="flex flex-row items-center gap-2">
               <Autocomplete
                 placeholder="Select a timezone"
-                variant="bordered"
-                onSelectionChange={(key) => {
-                  setSchedule({ ...schedule, timezone: key });
+                variant="secondary"
+                selectionMode="single"
+                value={schedule.timezone || null}
+                onChange={(value) => {
+                  setSchedule({ ...schedule, timezone: value || "" });
                 }}
-                selectedKey={schedule.timezone}
-                defaultValue={schedule.timezone}
                 fullWidth
                 aria-label="Timezone"
               >
-                {timezones.map((timezone) => (
-                  <AutocompleteItem key={timezone} textValue={timezone}>
-                    {timezone}
-                  </AutocompleteItem>
-                ))}
+                <Label>Timezone</Label>
+                <Autocomplete.Trigger>
+                  <Autocomplete.Value />
+                  <Autocomplete.ClearButton />
+                  <Autocomplete.Indicator />
+                </Autocomplete.Trigger>
+                <Autocomplete.Popover>
+                  <Autocomplete.Filter filter={contains}>
+                    <SearchField autoFocus name="timezone-search" variant="secondary">
+                      <SearchField.Group>
+                        <SearchField.SearchIcon />
+                        <SearchField.Input placeholder="Search timezones..." />
+                        <SearchField.ClearButton />
+                      </SearchField.Group>
+                    </SearchField>
+                    <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                      {timezones.map((timezone) => (
+                        <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
+                          {timezone}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Autocomplete.Filter>
+                </Autocomplete.Popover>
               </Autocomplete>
 
               <Button

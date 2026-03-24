@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Divider, Input, Popover, Spacer, Switch, Tooltip, Select,
-  SelectItem, Tabs, Tab, PopoverTrigger, PopoverContent,
+  ListBox, Tabs, Tab, PopoverTrigger, PopoverContent,
 } from "@heroui/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
@@ -344,27 +344,35 @@ function CampaignsQuery(props) {
     <div className={"w-full"}>
       <Row>
         <Select
-          variant="bordered"
+          variant="secondary"
           label="Choose one of your campaigns"
-          onSelectionChange={(keys) => _onSelectCampaign(keys.currentKey)}
-          selectedKeys={[config.campaignId]}
           selectionMode="single"
+          value={config.campaignId || null}
+          onChange={(value) => _onSelectCampaign(value)}
           isLoading={loading}
           aria-label="Select a campaign"
         >
-          {campaigns.map((campaign) => (
-            <SelectItem
-              key={campaign.key}
-              startContent={(
-                <Chip color={campaign.label.color} size="sm" className="min-w-[70px] text-center" variant="flat">
-                  {campaign.label.content}
-                </Chip>
-              )}
-              textValue={campaign.text}
-            >
-              {campaign.text}
-            </SelectItem>
-          ))}
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {campaigns.map((campaign) => (
+                <ListBox.Item
+                  key={campaign.key}
+                  id={campaign.key}
+                  textValue={campaign.text}
+                >
+                  <Chip color={campaign.label.color} size="sm" className="min-w-[70px] text-center" variant="flat">
+                    {campaign.label.content}
+                  </Chip>
+                  <span>{campaign.text}</span>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
         </Select>
       </Row>
       <Spacer y={2} />
@@ -392,19 +400,28 @@ function CampaignsQuery(props) {
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
         <Row>
           <Select
-            variant="bordered"
+            variant="secondary"
             label="Select an action to view the metrics"
             isLoading={actionsLoading}
-            onSelectionChange={(keys) => _onSelectAction(keys.currentKey)}
-            selectedKeys={[config.actionId]}
             selectionMode="single"
+            value={config.actionId || null}
+            onChange={(value) => _onSelectAction(value)}
             aria-label="Select an action"
           >
-            {availableActions.map((action) => (
-              <SelectItem key={action.key} textValue={action.text}>
-                {action.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {availableActions.map((action) => (
+                  <ListBox.Item key={action.key} id={action.key} textValue={action.text}>
+                    {action.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </Row>
       )}
@@ -459,66 +476,77 @@ function CampaignsQuery(props) {
           <Spacer y={2} />
           <div className="flex flex-row gap-2 w-full">
             <Select
-              variant="bordered"
+              variant="secondary"
               label="Choose the period"
-              onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
-              selectedKeys={[config.period]}
               selectionMode="single"
+              value={config.period || null}
+              onChange={(value) => _onChangePeriod(value)}
               aria-label="Select a period"
             >
-              {periodOptions.map((period) => (
-                <SelectItem key={period.key} textValue={period.text}>
-                  {period.text}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {periodOptions.map((period) => (
+                    <ListBox.Item key={period.key} id={period.key} textValue={period.text}>
+                      {period.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Select
-              variant="bordered"
+              variant="secondary"
               label="Max number of steps"
-              onSelectionChange={(keys) => _onChangeSteps(keys.currentKey)}
-              selectedKeys={[config.steps]}
               selectionMode="single"
+              value={config.steps || null}
+              onChange={(value) => _onChangeSteps(value)}
               aria-label="Select the number of steps"
             >
-              {stepsOptions.map((steps) => (
-                <SelectItem key={steps.key} textValue={steps.text}>
-                  {steps.text}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {stepsOptions.map((steps) => (
+                    <ListBox.Item key={steps.key} id={steps.key} textValue={steps.text}>
+                      {steps.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </div>
         
           {(config.series || config.actionId) && (
             <div className="mt-2">
               <Select
-                variant="bordered"
+                variant="secondary"
                 label="Message types"
-                renderValue={(items) => (
-                  <div className="flex flex-wrap gap-2">
-                    {items.map((item) => (
-                      <Chip key={item.key} variant="flat" size="sm">
-                        {item.textValue}
-                      </Chip>
-                    ))}
-                  </div>
-                )}
-                onSelectionChange={(keys) => {
-                  // add to the list if not already in it
-                  if (!config.type || !config.type.includes(keys.currentKey)) {
-                    _onChangeMessageTypes(!config.type ? [keys.currentKey] : [...config.type, keys.currentKey]);
-                  } else {
-                    setConfig({ ...config, type: [...keys] });
-                  }
-                }}
-                selectedKeys={config.type || []}
                 selectionMode="multiple"
+                value={config.type || []}
+                onChange={(value) => _onChangeMessageTypes(value || [])}
                 aria-label="Select message types"
               >
-                {messageOptions.map((message) => (
-                  <SelectItem key={message.key} textValue={message.text}>
-                    {message.text}
-                  </SelectItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox selectionMode="multiple">
+                    {messageOptions.map((message) => (
+                      <ListBox.Item key={message.key} id={message.key} textValue={message.text}>
+                        {message.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
           )}
@@ -567,19 +595,28 @@ function CampaignsQuery(props) {
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-12 md:col-span-9">
                         <Select
-                          variant="bordered"
+                          variant="secondary"
                           placeholder="Select a link"
                           isLoading={linksLoading}
-                          onSelectionChange={(keys) => setConfig({ ...config, selectedLink: keys.currentKey })}
-                          selectedKeys={[config.selectedLink]}
                           selectionMode="single"
+                          value={config.selectedLink || null}
+                          onChange={(value) => setConfig({ ...config, selectedLink: value })}
                           aria-label="Select a link"
                         >
-                          {availableLinks.map((link) => (
-                            <SelectItem key={link.key} textValue={link.text}>
-                              {link.text}
-                            </SelectItem>
-                          ))}
+                          <Select.Trigger>
+                            <Select.Value />
+                            <Select.Indicator />
+                          </Select.Trigger>
+                          <Select.Popover>
+                            <ListBox>
+                              {availableLinks.map((link) => (
+                                <ListBox.Item key={link.key} id={link.key} textValue={link.text}>
+                                  {link.text}
+                                  <ListBox.ItemIndicator />
+                                </ListBox.Item>
+                              ))}
+                            </ListBox>
+                          </Select.Popover>
                         </Select>
                       </div>
                       <div className="col-span-12 md:col-span-3 flex items-center">
@@ -636,51 +673,53 @@ function CampaignsQuery(props) {
             </Popover>
             <Spacer x={1} />
             <Select
-              variant="bordered"
+              variant="secondary"
               label="Select the period"
-              onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
-              selectedKeys={[config.period]}
               selectionMode="single"
+              value={config.period || null}
+              onChange={(value) => _onChangePeriod(value)}
               aria-label="Select a period"
             >
-              {periodOptions.map((period) => (
-                <SelectItem key={period.value} textValue={period.text}>
-                  {period.text}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {periodOptions.map((period) => (
+                    <ListBox.Item key={period.value} id={period.value} textValue={period.text}>
+                      {period.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Row>
           <Spacer y={2} />
           <Row>
             <Select
-              variant="bordered"
+              variant="secondary"
               label="Message types"
-              renderValue={(items) => (
-                <div className="flex flex-wrap gap-2">
-                  {items.map((item) => (
-                    <Chip key={item.key} variant="flat" size="sm">
-                      {item.textValue}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-              onSelectionChange={(keys) => {
-                // add to the list if not already in it
-                if (!config.type || !config.type.includes(keys.currentKey)) {
-                  _onChangeMessageTypes(!config.type ? [keys.currentKey] : [...config.type, keys.currentKey]);
-                } else {
-                  setConfig({ ...config, type: [...keys] });
-                }
-              }}
-              selectedKeys={config.type || []}
               selectionMode="multiple"
+              value={config.type || []}
+              onChange={(value) => _onChangeMessageTypes(value || [])}
               aria-label="Select message types"
             >
-              {messageOptions.map((message) => (
-                <SelectItem key={message.key} textValue={message.text}>
-                  {message.text}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox selectionMode="multiple">
+                  {messageOptions.map((message) => (
+                    <ListBox.Item key={message.key} id={message.key} textValue={message.text}>
+                      {message.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Row>
         </>

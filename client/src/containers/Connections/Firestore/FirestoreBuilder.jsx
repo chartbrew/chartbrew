@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
-  Select, SelectItem, PopoverTrigger, PopoverContent,
+  Label, ListBox, Select, PopoverTrigger, PopoverContent,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
   Code,
 } from "@heroui/react";
@@ -757,20 +757,30 @@ function FirestoreBuilder(props) {
             />
             <Spacer x={0.5} />
             <Select
-              variant="bordered"
-              onSelectionChange={(keys) => setOrderByDirection(keys.currentKey)}
-              selectedKeys={[orderByDirection]}
+              variant="secondary"
+              onChange={(value) => setOrderByDirection(value)}
+              value={orderByDirection || null}
               selectionMode="single"
               label="Direction"
               size="sm"
               aria-label="Select a direction"
             >
-              <SelectItem key="desc" textValue="Descending">
-                Descending
-              </SelectItem>
-              <SelectItem key="asc" textValue="Ascending">
-                Ascending
-              </SelectItem>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="desc" textValue="Descending">
+                    Descending
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  <ListBox.Item id="asc" textValue="Ascending">
+                    Ascending
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Row>
           <Spacer y={2} />
@@ -1021,17 +1031,38 @@ function FirestoreBuilder(props) {
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
-                label="Select a type"
                 placeholder="Select a variable type"
                 fullWidth
-                selectedKeys={[variableSettings?.type]}
-                onSelectionChange={(keys) => setVariableSettings({ ...variableSettings, type: keys.currentKey })}
-                variant="bordered"
+                selectionMode="single"
+                value={variableSettings?.type || null}
+                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
+                variant="secondary"
               >
-                <SelectItem key="string">String</SelectItem>
-                <SelectItem key="number">Number</SelectItem>
-                <SelectItem key="boolean">Boolean</SelectItem>
-                <SelectItem key="date">Date</SelectItem>
+                <Label>Select a type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="string" textValue="String">
+                      String
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="number" textValue="Number">
+                      Number
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="boolean" textValue="Boolean">
+                      Boolean
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="date" textValue="Date">
+                      Date
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <Spacer y={1} />
@@ -1123,44 +1154,62 @@ function Conditions(props) {
                 </Tooltip>
               )}
               <Select
-                variant="bordered"
-                selectedKeys={[condition.field]}
+                variant="secondary"
+                value={condition.field || null}
                 selectionMode="single"
-                onSelectionChange={(keys) => updateCondition(condition.id, keys.currentKey, "field")}
+                onChange={(value) => updateCondition(condition.id, value, "field")}
                 label="Field"
                 placeholder="Select a field"
                 aria-label="Select a field"
               >
-                {fieldOptions.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    textValue={condition?.field?.substring(condition.field.lastIndexOf(".") + 1)}
-                  >
-                    <Row className={"gap-2"}>
-                      <Chip color={option.label.color} className="min-w-[70px] text-center" variant="flat" size="sm">
-                        {option.label.content}
-                      </Chip>
-                      <Text>{option.text}</Text>
-                    </Row>
-                  </SelectItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {fieldOptions.map((option) => (
+                      <ListBox.Item
+                        key={option.value}
+                        id={option.value}
+                        textValue={condition?.field?.substring(condition.field.lastIndexOf(".") + 1)}
+                      >
+                        <Row className={"gap-2"}>
+                          <Chip color={option.label.color} className="min-w-[70px] text-center" variant="flat" size="sm">
+                            {option.label.content}
+                          </Chip>
+                          <Text>{option.text}</Text>
+                        </Row>
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
 
               <Select
-                variant="bordered"
-                selectedKeys={[condition.operator]}
-                onSelectionChange={(keys) => updateCondition(condition.id, keys.currentKey, "operator")}
+                variant="secondary"
+                value={condition.operator || null}
+                onChange={(value) => updateCondition(condition.id, value, "operator")}
                 selectionMode="single"
                 label="Operator"
                 placeholder="Select an operator"
                 aria-label="Select an operator"
               >
-                {operators.map((option) => (
-                  <SelectItem key={option.value} textValue={option.key}>
-                    {option.text}
-                  </SelectItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {operators.map((option) => (
+                      <ListBox.Item key={option.value} id={option.value} textValue={option.key}>
+                        {option.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
               {(!condition.field
                 || (_.find(fieldOptions, { value: condition.field })

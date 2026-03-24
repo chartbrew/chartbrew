@@ -3,8 +3,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Autocomplete,
-  AutocompleteItem,
-  Button, CircularProgress, Divider, Input, Modal, Spacer,
+  Button, CircularProgress, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, Spacer, useFilter,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -38,6 +37,7 @@ function ProjectSettings(props) {
   const [removeError, setRemoveError] = useState(false);
   const [projectTimezone, setProjectTimezone] = useState("");
   const [loadingTimezone, setLoadingTimezone] = useState(false);
+  const { contains } = useFilter({ sensitivity: "base" });
 
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
@@ -166,21 +166,42 @@ function ProjectSettings(props) {
 
       <Row align="center" wrap={"wrap"}>
         <Autocomplete
-          label="Dashboard timezone"
           placeholder="Select a timezone"
-          variant="bordered"
-          onSelectionChange={(key) => {
-            setProjectTimezone(key);
+          selectionMode="single"
+          variant="secondary"
+          value={projectTimezone || project.timezone || null}
+          onChange={(value) => {
+            setProjectTimezone(value || "");
           }}
-          selectedKey={projectTimezone || project.timezone}
           className="max-w-md"
           aria-label="Timezone"
+          fullWidth
         >
-          {timezones.map((timezone) => (
-            <AutocompleteItem key={timezone} textValue={timezone}>
-              {timezone}
-            </AutocompleteItem>
-          ))}
+          <Label>Dashboard timezone</Label>
+          <Autocomplete.Trigger>
+            <Autocomplete.Value />
+            <Autocomplete.ClearButton />
+            <Autocomplete.Indicator />
+          </Autocomplete.Trigger>
+          <Autocomplete.Popover>
+            <Autocomplete.Filter filter={contains}>
+              <SearchField autoFocus name="timezone-search" variant="secondary">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search timezones..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+              <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                {timezones.map((timezone) => (
+                  <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
+                    {timezone}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Autocomplete.Filter>
+          </Autocomplete.Popover>
         </Autocomplete>
         <Spacer x={1} />
         <Button

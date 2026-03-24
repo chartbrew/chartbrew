@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Chip, Checkbox, Divider,
-  CircularProgress, Select, SelectItem,
+  CircularProgress, ListBox, Select,
 } from "@heroui/react";
 import { isEqual } from "lodash";
 import { LuCheck, LuCloud, LuFolder, LuUser, LuWrench, LuX } from "react-icons/lu";
@@ -12,7 +12,6 @@ import { runHelperMethod } from "../../../slices/connection";
 import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
-import Text from "../../../components/Text";
 import { selectTeam } from "../../../slices/team";
 
 const customerOperations = [
@@ -240,18 +239,27 @@ function CustomerQuery(props) {
       ) && (
         <Row>
           <Select
-            variant="bordered"
+            variant="secondary"
             placeholder="Select an operation"
-            onSelectionChange={(keys) => _onChangeOperation(keys.currentKey)}
-            selectedKeys={[mainOperation]}
             selectionMode="single"
+            value={mainOperation}
+            onChange={(value) => _onChangeOperation(value)}
             aria-label="Select an operation"
           >
-            {customerOperations.map((operation) => (
-              <SelectItem key={operation.key} textValue={operation.text}>
-                {operation.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {customerOperations.map((operation) => (
+                  <ListBox.Item key={operation.key} id={operation.key} textValue={operation.text}>
+                    {operation.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </Row>
       )}
@@ -437,50 +445,61 @@ function CustomerQuery(props) {
       {segmentConfig && (
         <Row align={"center"}>
           <Select
-            variant="bordered"
+            variant="secondary"
             placeholder="Select an operation"
-            onSelectionChange={(keys) => setSegmentConfig({ ...segmentConfig, operation: keys.currentKey })}
-            selectedKeys={[segmentConfig.operation || "in"]}
             selectionMode="single"
-            defaultSelectedKeys={["in"]}
+            value={segmentConfig.operation || "in"}
+            onChange={(value) => setSegmentConfig({ ...segmentConfig, operation: value })}
             aria-label="Select an operation"
           >
-            {filterOperations.map((operation) => (
-              <SelectItem key={operation.value} textValue={operation.text}>
-                {operation.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {filterOperations.map((operation) => (
+                  <ListBox.Item key={operation.value} id={operation.value} textValue={operation.text}>
+                    {operation.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
           <Spacer x={1} />
           <Select
-            variant="bordered"
+            variant="secondary"
             placeholder="Select segments"
-            onSelectionChange={(keys) => {
+            selectionMode="multiple"
+            value={segmentConfig.ids || []}
+            onChange={(value) => {
               setSegmentConfig({
                 ...segmentConfig,
-                ids: [...keys],
+                ids: value || [],
               });
             }}
-            selectedKeys={segmentConfig.ids || []}
-            selectionMode="multiple"
-            renderValue={(items) => (
-              <div className="flex flex-row flex-wrap gap-2">
-                <Chip size="sm" variant="flat">
-                  {items.length === 1 ? `${items[0].textValue}` : `${items.length} selected`}
-                </Chip>
-              </div>
-            )}
             aria-label="Select segments"
           >
-            {segments.map((segment) => (
-              <SelectItem
-                key={segment.key}
-                startContent={segment.icon}
-                textValue={segment.text}
-              >
-                {segment.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox selectionMode="multiple">
+                {segments.map((segment) => (
+                  <ListBox.Item
+                    key={segment.key}
+                    id={segment.key}
+                    textValue={segment.text}
+                  >
+                    {segment.icon}
+                    <span>{segment.text}</span>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
           <Spacer x={2} />
           <Button
@@ -516,27 +535,28 @@ function CustomerQuery(props) {
           />
           <Spacer x={1} />
           <Select
-            variant="bordered"
+            variant="secondary"
             placeholder="Select an operation"
-            onSelectionChange={(keys) => setAttributeConfig({ ...attributeConfig, operator: keys.currentKey })}
-            selectedKeys={[attributeConfig.operator]}
             selectionMode="single"
-            renderValue={(
-              <Text>
-                {(attributeConfig.operator
-                  && attributeOperations.find((op) => op.value === attributeConfig.operator)?.text)
-                || "Select operation"}
-              </Text>
-            )}
-            defaultSelectedKeys={["eq"]}
+            value={attributeConfig.operator || "eq"}
+            onChange={(value) => setAttributeConfig({ ...attributeConfig, operator: value })}
             labelPlacement="outsite"
             aria-label="Select an operation"
           >
-            {attributeOperations.map((operation) => (
-              <SelectItem key={operation.value} textValue={operation.text}>
-                {operation.text}
-              </SelectItem>
-            ))}
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {attributeOperations.map((operation) => (
+                  <ListBox.Item key={operation.value} id={operation.value} textValue={operation.text}>
+                    {operation.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
           {(attributeConfig.operator === "eq" || attributeConfig.operator === "not,eq") && (
             <>

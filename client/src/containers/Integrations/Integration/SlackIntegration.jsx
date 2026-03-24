@@ -3,9 +3,11 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   Button,
   Chip,
+  Description,
   Input,
+  Label,
+  ListBox,
   Select,
-  SelectItem,
   Spacer,
   Divider,
   Modal,
@@ -219,29 +221,35 @@ function SlackIntegration({ integration }) {
           <div className="flex flex-col gap-2">
             <div className="font-semibold">Allowed Channels</div>
             <Select
-              label="Select allowed channels"
               placeholder="Select allowed channels"
               selectionMode="multiple"
-              selectedKeys={selectedChannels}
-              onSelectionChange={(keys) => {
-                // Convert Set to array if needed
-                const selectedArray = keys instanceof Set ? Array.from(keys) : keys
-                setSelectedChannels(selectedArray)
+              value={selectedChannels}
+              onChange={(value) => {
+                setSelectedChannels(value || [])
               }}
-              variant="bordered"
-              description="Chartbrew can only be used in these channels. To see private channels in the list, add the app to the channel in Slack first."
+              variant="secondary"
               isLoading={channelsLoading}
             >
-              {channels.map((c) => (
-                <SelectItem
-                  key={c.id}
-                  textValue={c.name}
-                  startContent={<LuHash />}
-                  endContent={c.is_private ? <Chip size="sm" color="primary" variant="flat">Private</Chip> : null}
-                >
-                  {c.name}
-                </SelectItem>
-              ))}
+              <Label>Select allowed channels</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Description>Chartbrew can only be used in these channels. To see private channels in the list, add the app to the channel in Slack first.</Description>
+              <Select.Popover>
+                <ListBox selectionMode="multiple">
+                  {channels.map((c) => (
+                    <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
+                      <div className="flex flex-row items-center gap-2">
+                        <LuHash />
+                        <span>{c.name}</span>
+                        {c.is_private ? <Chip size="sm" color="primary" variant="flat">Private</Chip> : null}
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </div>
         )}

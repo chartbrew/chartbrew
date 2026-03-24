@@ -553,11 +553,282 @@ Notes:
   - `npm run lint` passes
   - `rg -l 'ModalContent|ModalHeader|ModalBody|ModalFooter' client/src` returns no matches
 
+### Batch 18: Select Compound First Pass
+
+Files migrated:
+- `src/containers/Dataset/DataTransform.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/Integrations/Integration/SlackIntegration.jsx`
+- `src/containers/AddChart/components/TableDataFormattingModal.jsx`
+
+Notes:
+- Started the direct v3 picker rewrite on smaller local files before moving into the larger dashboard and autocomplete-heavy screens.
+- Replaced `SelectItem` usage in these files with direct v3 `Select` composition:
+  - `Label`
+  - `Select.Trigger`
+  - `Select.Value`
+  - `Select.Indicator`
+  - `Select.Popover`
+  - `ListBox`
+  - `ListBox.Item`
+  - `ListBox.ItemIndicator`
+- Kept the surrounding component logic in place and only adjusted the touched picker props to the v3 shape:
+  - `selectedKeys` / `onSelectionChange` -> `value` / `onChange`
+  - `variant="bordered"` -> `variant="secondary"` on migrated selects
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 19: Select Compound Follow-Up
+
+Files migrated:
+- `src/containers/ProjectDashboard/components/AddFilters.jsx`
+- `src/containers/Dataset/DatarequestSettings.jsx`
+
+Notes:
+- Continued the select-family rewrite in files that still used only direct select surfaces and did not require the autocomplete migration yet.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Kept the existing dataset/join/filter logic intact and only changed the picker surface and its immediate value handlers:
+  - `selectedKeys` / `onSelectionChange` -> `value` / `onChange`
+  - `renderValue`, `startContent`, and `endContent` usage moved into explicit `Select.Trigger` composition where needed
+  - `variant="bordered"` -> `variant="secondary"` on migrated selects
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 20: Picker Contract Correction + Mixed Picker Pass
+
+Files migrated:
+- `src/containers/Dataset/DataTransform.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/Integrations/Integration/SlackIntegration.jsx`
+- `src/containers/AddChart/components/TableDataFormattingModal.jsx`
+- `src/containers/ProjectDashboard/components/AddFilters.jsx`
+- `src/containers/Dataset/DatarequestSettings.jsx`
+- `src/containers/ProjectSettings.jsx`
+- `src/containers/ProjectDashboard/components/UpdateSchedule.jsx`
+- `src/containers/ProjectDashboard/components/SnapshotSchedule.jsx`
+
+Notes:
+- Corrected the earlier select rewrites to preserve the explicit v3 picker contract:
+  - every migrated `Select` now keeps `selectionMode`
+  - `onChange` now treats single-select values as `Key` and multi-select values as `Key[]`
+- Continued into the next mixed picker files and replaced both `SelectItem` and `AutocompleteItem` usage with direct v3 compound structure where touched.
+- Replaced the timezone autocomplete surfaces in the dashboard settings and schedule screens with:
+  - `Label`
+  - `Autocomplete.Trigger`
+  - `Autocomplete.Value`
+  - `Autocomplete.ClearButton`
+  - `Autocomplete.Indicator`
+  - `Autocomplete.Popover`
+  - `Autocomplete.Filter`
+  - `SearchField`
+  - `ListBox.Item`
+  - `ListBox.ItemIndicator`
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 21: Dataset Picker Follow-Up
+
+Files migrated:
+- `src/components/DatasetFilters.jsx`
+- `src/containers/Dataset/Dataset.jsx`
+
+Notes:
+- Continued the mixed picker migration in dataset-focused screens.
+- Replaced the remaining `AutocompleteItem` usage in these files with direct v3 autocomplete composition:
+  - `Label`
+  - `Autocomplete.Trigger`
+  - `Autocomplete.Value`
+  - `Autocomplete.ClearButton`
+  - `Autocomplete.Indicator`
+  - `Autocomplete.Popover`
+  - `Autocomplete.Filter`
+  - `SearchField`
+  - `ListBox.Item`
+  - `ListBox.ItemIndicator`
+- Replaced the remaining `SelectItem` usage in `DatasetFilters.jsx` with direct v3 `Select` + `ListBox.Item` composition.
+- Kept the corrected picker contract from Batch 20:
+  - explicit `selectionMode` on migrated pickers
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 22: Builder / Query Picker Follow-Up
+
+Files migrated:
+- `src/containers/Dataset/DatasetBuilder.jsx`
+- `src/containers/Connections/Customerio/ActivitiesQuery.jsx`
+
+Notes:
+- Continued the direct picker migration in the dataset builder and Customer.io query UI.
+- Replaced the remaining `AutocompleteItem` usage in these files with direct v3 autocomplete composition.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 23: Customer.io Picker Follow-Up
+
+Files migrated:
+- `src/containers/Connections/Customerio/CustomerQuery.jsx`
+- `src/containers/Connections/Customerio/CampaignsQuery.jsx`
+
+Notes:
+- Continued the direct picker migration in the remaining Customer.io query screens touched this turn.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 24: Connection Picker Follow-Up
+
+Files migrated:
+- `src/containers/Connections/Customerio/CustomerioConnectionForm.jsx`
+- `src/containers/Connections/RealtimeDb/RealtimeDbBuilder.jsx`
+- `src/containers/Connections/Firestore/FirestoreBuilder.jsx`
+
+Notes:
+- Continued the direct picker migration in connection forms and connection-side builders.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 25: Analytics / API Picker Follow-Up
+
+Files migrated:
+- `src/containers/Connections/GoogleAnalytics/GaBuilder.jsx`
+- `src/containers/Connections/GoogleAnalytics/GaTemplate.jsx`
+- `src/containers/Connections/SimpleAnalytics/SimpleAnalyticsTemplate.jsx`
+- `src/containers/AddChart/components/ChartSettings.jsx`
+- `src/containers/AddChart/components/ApiBuilder.jsx`
+- `src/containers/AddChart/components/ApiPagination.jsx`
+
+Notes:
+- Continued the direct picker migration in Google Analytics flows, Simple Analytics template setup, and API/chart builder screens.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Replaced the remaining `AutocompleteItem` usage in `GaBuilder.jsx` with direct v3 autocomplete composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Kept the edits local to the picker surfaces and their immediate imports/state wiring without broader formatting or structural rewrites.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 26: Analytics Template Picker Follow-Up
+
+Files migrated:
+- `src/containers/Connections/Plausible/PlausibleTemplate.jsx`
+- `src/containers/Connections/Mailgun/MailgunTemplate.jsx`
+- `src/containers/Connections/ChartMogul/ChartMogulTemplate.jsx`
+
+Notes:
+- Continued the direct picker migration in the remaining analytics/community template setup screens.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Removed now-unused display helpers that only existed to feed old v2 select value props.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 27: Dashboard Filter Editor Picker Follow-Up
+
+Files migrated:
+- `src/containers/ProjectDashboard/components/VariableFilter.jsx`
+- `src/containers/ProjectDashboard/components/EditFieldFilter.jsx`
+- `src/containers/ProjectDashboard/components/EditVariableFilter.jsx`
+
+Notes:
+- Continued the direct picker migration in the dashboard filter editor screens.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Replaced the remaining `AutocompleteItem` usage in `EditFieldFilter.jsx` with direct v3 autocomplete composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Left `src/containers/Chart/components/ChartFilters.jsx` for a focused follow-up because it still mixes option selection with typed custom values and should be migrated carefully rather than mechanically.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 28: Connection Form Picker Follow-Up
+
+Files migrated:
+- `src/containers/Connections/components/ApiConnectionForm.jsx`
+- `src/containers/Connections/components/MysqlConnectionForm.jsx`
+- `src/containers/Connections/components/PostgresConnectionForm.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseConnectionForm.jsx`
+
+Notes:
+- Continued the direct picker migration in the remaining connection form screens.
+- Replaced the remaining `SelectItem` usage in these files with direct v3 `Select` + `ListBox.Item` composition.
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- Kept the edits local to authentication and SSL mode selects only.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'SelectItem|AutocompleteItem'` on the migrated files returns no matches
+
+### Batch 29: Final Picker Family Completion
+
+Files migrated:
+- `src/containers/Integrations/Auth/SlackAuth.jsx`
+- `src/containers/AddChart/components/MongoQueryBuilder.jsx`
+- `src/containers/AddChart/components/SqlBuilder.jsx`
+- `src/containers/AddChart/components/DatasetAlerts.jsx`
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/AddChart/components/ChartDatasetDataSetup.jsx`
+- `src/containers/Connections/CustomTemplates/CustomTemplateForm.jsx`
+- `src/containers/UserDashboard/DatasetList.jsx`
+- `src/containers/AddChart/components/DatasetData.jsx`
+- `src/containers/Chart/components/ChartFilters.jsx`
+- `src/containers/AddChart/components/VisualSQL.jsx`
+
+Notes:
+- Finished the direct picker migration across the remaining client files.
+- Replaced the last `SelectItem` and `AutocompleteItem` usage with direct v3 compound structure:
+  - `Label`
+  - `Select.Trigger`
+  - `Select.Value`
+  - `Select.Indicator`
+  - `Select.Popover`
+  - `Autocomplete.Trigger`
+  - `Autocomplete.Value`
+  - `Autocomplete.Indicator`
+  - `Autocomplete.ClearButton`
+  - `Autocomplete.Popover`
+  - `Autocomplete.Filter`
+  - `SearchField`
+  - `ListBox.Item`
+  - `ListBox.ItemIndicator`
+- Preserved the corrected picker contract from Batch 20:
+  - explicit `selectionMode`
+  - `onChange` uses `Key` for single selection and `Key[]` for multiple selection
+- `ChartFilters.jsx` was migrated with a direct v3 autocomplete compound structure while keeping the existing typed-value flow local to the component.
+- Verification:
+  - `npm run lint` passes
+  - `rg -l 'SelectItem|AutocompleteItem' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
 - `ModalContent`: 0 files
-- `SelectItem` / `AutocompleteItem`: 45 files
+- `SelectItem` / `AutocompleteItem`: 0 files
 - `Spacer`: about 103 files
 - `Code`: about 21 files
 - `CardBody`: about 14 files
@@ -576,10 +847,10 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Replace the remaining 45 `SelectItem` / `AutocompleteItem` call sites with direct v3 composition
-2. Remove `Spacer` usage and replace with layout `gap` / margin utilities
-3. Replace removed `Code`, `Image`, and `User` usages with plain elements or direct v3 composition
-4. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
+1. Remove `Spacer` usage and replace with layout `gap` / margin utilities
+2. Replace removed `Code`, `Image`, and `User` usages with plain elements or direct v3 composition
+3. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
+4. Audit remaining non-picker v2 surfaces file-by-file after the picker family completion
 
 ## Notes
 

@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, AutocompleteItem, Button, Chip, Code, Input, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@heroui/react"
+import { Alert, Autocomplete, Button, Chip, Code, EmptyState, Input, Label, ListBox, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, SearchField, Select, useFilter } from "@heroui/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuVariable, LuX } from "react-icons/lu"
@@ -170,6 +170,7 @@ const restoreVariablesInQuery = (query, variables) => {
 };
 
 function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const [ast, setAst] = useState(null);
   const [viewJoin, setViewJoin] = useState(false);
   const [viewAddColumn, setViewAddColumn] = useState(false);
@@ -799,22 +800,38 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
     return (
       <Container className={"flex flex-col gap-4"}>
         <Autocomplete
-          label="Select a table to get started"
           size="sm"
-          variant="bordered"
-          selectedKey={""}
+          variant="secondary"
+          value={null}
+          selectionMode="single"
           aria-label="Select main database table"
-          onSelectionChange={(key) => _onChangeMainTable(key)}
+          onChange={(value) => _onChangeMainTable(value)}
           className="max-w-[300px]"
         >
-          {schema?.tables.map((table) => (
-            <AutocompleteItem
-              key={table}
-              textValue={table}
-            >
-              {table}
-            </AutocompleteItem>
-          ))}
+          <Label>Select a table to get started</Label>
+          <Autocomplete.Trigger>
+            <Autocomplete.Value />
+            <Autocomplete.Indicator />
+          </Autocomplete.Trigger>
+          <Autocomplete.Popover>
+            <Autocomplete.Filter filter={contains}>
+              <SearchField autoFocus name="visual-sql-start-table" variant="secondary">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search tables..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+              <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                {schema?.tables.map((table) => (
+                  <ListBox.Item key={table} id={table} textValue={table}>
+                    {table}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Autocomplete.Filter>
+          </Autocomplete.Popover>
         </Autocomplete>
       </Container>
     );
@@ -849,23 +866,29 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
       {!ast?.from && (
         <div className="flex flex-col gap-2">
           <Select
-            label="Select a table to get started"
             size="sm"
-            variant="bordered"
-            selectedKeys={[]}
+            variant="secondary"
+            value={null}
             selectionMode="single"
             aria-label="Select main database table"
-            onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
+            onChange={(value) => _onChangeMainTable(value)}
             className="max-w-[300px]"
           >
-            {schema?.tables.map((table) => (
-              <SelectItem
-                key={table}
-                textValue={table}
-              >
-                {table}
-              </SelectItem>
-            ))}
+            <Label>Select a table to get started</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {schema?.tables.map((table) => (
+                  <ListBox.Item key={table} id={table} textValue={table}>
+                    {table}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </div>
       )}
@@ -878,20 +901,26 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               size="sm"
               color="primary"
               variant="flat"
-              selectedKeys={fromItem.table ? [fromItem.table] : []}
+              value={fromItem.table || null}
               selectionMode="single"
               aria-label="Select main database table"
-              onSelectionChange={(keys) => _onChangeMainTable(keys.currentKey)}
+              onChange={(value) => _onChangeMainTable(value)}
               className="max-w-[300px]"
             >
-              {schema?.tables.map((table) => (
-                <SelectItem
-                  key={table}
-                  textValue={table}
-                >
-                  {table}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {schema?.tables.map((table) => (
+                    <ListBox.Item key={table} id={table} textValue={table}>
+                      {table}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           )}
           {fromItem.joinTable && (
@@ -1105,23 +1134,29 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
             <div className="flex flex-col gap-4">
               <div>
                 <Select
-                  label="Select a table to join"
-                  variant="bordered"
-                  selectedKeys={viewJoin?.joinTable ? [viewJoin.joinTable] : []}
+                  variant="secondary"
+                  value={viewJoin?.joinTable || null}
                   selectionMode="single"
                   aria-label="Select table to join"
                   autoFocus
                   placeholder="Click to select a table"
-                  onSelectionChange={(keys) => setViewJoin({ ...viewJoin, joinTable: keys.currentKey })}
+                  onChange={(value) => setViewJoin({ ...viewJoin, joinTable: value })}
                 >
-                  {schema?.tables.map((table) => (
-                    <SelectItem
-                      key={table}
-                      textValue={table}
-                    >
-                      {table}
-                    </SelectItem>
-                  ))}
+                  <Label>Select a table to join</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {schema?.tables.map((table) => (
+                        <ListBox.Item key={table} id={table} textValue={table}>
+                          {table}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </div>
 
@@ -1130,44 +1165,64 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                   <div>On</div>
                   <Select
                     placeholder="Select column"
-                    variant="bordered"
-                    selectedKeys={[_getColumnName(viewJoin.on?.left)]}
+                    variant="secondary"
+                    value={_getColumnName(viewJoin.on?.left) || null}
                     aria-label="Select column to join on"
-                    onSelectionChange={(keys) => setViewJoin({ ...viewJoin, on: { ...viewJoin.on, left: keys.currentKey } })}
+                    onChange={(value) => setViewJoin({ ...viewJoin, on: { ...viewJoin.on, left: value } })}
                     selectionMode="single"
                     size="sm"
                     disallowEmptySelection
                   >
-                    {Object.keys(schema?.description?.[viewJoin.joinTable] || {}).map((column) => (
-                      <SelectItem
-                        key={column}
-                        textValue={column}
-                        startContent={<Chip size="sm" variant="flat">{viewJoin.joinTable}</Chip>}
-                      >
-                        {column}
-                      </SelectItem>
-                    ))}
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {Object.keys(schema?.description?.[viewJoin.joinTable] || {}).map((column) => (
+                          <ListBox.Item
+                            key={column}
+                            id={column}
+                            textValue={column}
+                          >
+                            <Chip size="sm" variant="flat">{viewJoin.joinTable}</Chip>
+                            {column}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                   <div>=</div>
                   <Select
                     placeholder="Select column"
-                    variant="bordered"
-                    selectedKeys={[_getColumnName(viewJoin?.on?.right, viewJoin.mainTable)]}
+                    variant="secondary"
+                    value={_getColumnName(viewJoin?.on?.right, viewJoin.mainTable) || null}
                     aria-label="Select table to join"
-                    onSelectionChange={(keys) => _onSelectJoinTable(keys.currentKey)}
+                    onChange={(value) => _onSelectJoinTable(value)}
                     selectionMode="single"
                     size="sm"
                     disallowEmptySelection
                   >
-                    {_getJoinColumns(viewJoin.joinTable).map((column) => (
-                      <SelectItem
-                        key={`${column.table}.${column.column}`}
-                        textValue={column.column}
-                        startContent={<Chip size="sm" variant="flat">{column.table}</Chip>}
-                      >
-                        {column.column}
-                      </SelectItem>
-                    ))}
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {_getJoinColumns(viewJoin.joinTable).map((column) => (
+                          <ListBox.Item
+                            key={`${column.table}.${column.column}`}
+                            id={`${column.table}.${column.column}`}
+                            textValue={column.column}
+                          >
+                            <Chip size="sm" variant="flat">{column.table}</Chip>
+                            {column.column}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
               )}
@@ -1199,21 +1254,31 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <Modal.Body>
             <Select
               placeholder="Select column"
-              variant="bordered"
-              selectedKeys={selectedColumns}
+              variant="secondary"
+              value={selectedColumns}
               aria-label="Select column to join on"
-              onSelectionChange={(keys) => setSelectedColumns(keys)}
+              onChange={(keys) => setSelectedColumns(keys || [])}
               disallowEmptySelection
               selectionMode="multiple"
             >
-              {_getAvailableColumns().map((column) => (
-                <SelectItem
-                  key={column}
-                  textValue={column}
-                >
-                  {column}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox selectionMode="multiple">
+                  {_getAvailableColumns().map((column) => (
+                    <ListBox.Item
+                      key={column}
+                      id={column}
+                      textValue={column}
+                    >
+                      {column}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="flex flex-row gap-1">
               <Button
@@ -1257,41 +1322,63 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           </Modal.Header>
           <Modal.Body className="flex flex-col gap-2">
             <Select
-              label="Column"
               placeholder="Select column"
-              variant="bordered"
-              selectedKeys={[newFilter.column?.name || ""]}
+              variant="secondary"
+              value={newFilter.column?.name || null}
               aria-label="Select column to filter on"
-              onSelectionChange={(keys) => {
-                const selectedColumn = _getColumnsForFilter().find(col => col.name === keys.currentKey);
+              selectionMode="single"
+              onChange={(value) => {
+                const selectedColumn = _getColumnsForFilter().find(col => col.name === value);
                 setNewFilter({ ...newFilter, column: selectedColumn });
               }}
             >
-              {_getColumnsForFilter().map((column) => (
-                <SelectItem
-                  key={column.name}
-                  textValue={column.name}
-                >
-                  {column.name}
-                </SelectItem>
-              ))}
+              <Label>Column</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {_getColumnsForFilter().map((column) => (
+                    <ListBox.Item
+                      key={column.name}
+                      id={column.name}
+                      textValue={column.name}
+                    >
+                      {column.name}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Select
-              label="Operator"
               placeholder="Select operator"
-              variant="bordered"
-              selectedKeys={[newFilter.operator]}
+              variant="secondary"
+              value={newFilter.operator || null}
               aria-label="Select operator"
-              onSelectionChange={(keys) => setNewFilter({ ...newFilter, operator: keys.currentKey })}
+              selectionMode="single"
+              onChange={(value) => setNewFilter({ ...newFilter, operator: value })}
             >
-              {_filterOperations().map((operation) => (
-                <SelectItem
-                  key={operation.operator}
-                  textValue={operation.name}
-                >
-                  {operation.name}
-                </SelectItem>
-              ))}
+              <Label>Operator</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {_filterOperations().map((operation) => (
+                    <ListBox.Item
+                      key={operation.operator}
+                      id={operation.operator}
+                      textValue={operation.name}
+                    >
+                      {operation.name}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input
               label="Value"
@@ -1329,20 +1416,30 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <Modal.Body>
             <Select
               placeholder="Select column"
-              variant="bordered"
-              selectedKeys={[groupByColumn?.name || ""]}
+              variant="secondary"
+              value={groupByColumn?.name || null}
               aria-label="Select column to group by"
-              onSelectionChange={(keys) => setGroupByColumn(_getColumnsForFilter().find(col => col.name === keys.currentKey))}
+              onChange={(value) => setGroupByColumn(_getColumnsForFilter().find(col => col.name === value))}
               selectionMode="single"
             >
-              {_getColumnsForFilter().map((column) => (
-                <SelectItem
-                  key={column.name}
-                  textValue={column.name}
-                >
-                  {column.name}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {_getColumnsForFilter().map((column) => (
+                    <ListBox.Item
+                      key={column.name}
+                      id={column.name}
+                      textValue={column.name}
+                    >
+                      {column.name}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Modal.Body>
           <Modal.Footer>
@@ -1371,20 +1468,30 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <Modal.Body>
             <Select
               placeholder="Select column"
-              variant="bordered"
-              selectedKeys={[orderByColumn?.name || ""]}
+              variant="secondary"
+              value={orderByColumn?.name || null}
               selectionMode="single"
-              onSelectionChange={(keys) => setOrderByColumn(_getColumnsForFilter().find(col => col.name === keys.currentKey))}
+              onChange={(value) => setOrderByColumn(_getColumnsForFilter().find(col => col.name === value))}
               aria-label="Select column to order by"
             >
-              {_getColumnsForFilter().map((column) => (
-                <SelectItem
-                  key={column.name}
-                  textValue={column.name}
-                >
-                  {column.name}
-                </SelectItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {_getColumnsForFilter().map((column) => (
+                    <ListBox.Item
+                      key={column.name}
+                      id={column.name}
+                      textValue={column.name}
+                    >
+                      {column.name}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <RadioGroup
               label="Order"

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Spacer, Input, Autocomplete, AutocompleteItem, DatePicker,
+  Button, Spacer, Input, Autocomplete, DatePicker, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { I18nProvider } from "@react-aria/i18n";
 import { LuX } from "react-icons/lu";
@@ -16,6 +16,7 @@ import Row from "../../../components/Row";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
 
 function ChartFilters(props) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const {
     chart, onAddFilter, onClearFilter, conditions, inline, size, amount,
   } = props;
@@ -108,7 +109,6 @@ function ChartFilters(props) {
               {condition.type !== "date" && !condition.hideValues && (
                 <>
                   <Autocomplete
-                    label={!inline ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}` : null}
                     variant="bordered"
                     selectedKey={_getConditionValue(condition.id)}
                     onSelectionChange={(key) => {
@@ -127,11 +127,35 @@ function ChartFilters(props) {
                     size={size}
                     aria-label="Filter"
                   >
-                    {_getFilteredOptions(filterOptions, condition.id).slice(0, 50).map((opt) => (
-                      <AutocompleteItem key={opt.value} textValue={opt.text}>
-                        {opt.text}
-                      </AutocompleteItem>
-                    ))}
+                    {!inline && (
+                      <Label>
+                        {`${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
+                      </Label>
+                    )}
+                    <Autocomplete.Trigger>
+                      <Autocomplete.Value />
+                      <Autocomplete.ClearButton />
+                      <Autocomplete.Indicator />
+                    </Autocomplete.Trigger>
+                    <Autocomplete.Popover>
+                      <Autocomplete.Filter filter={contains}>
+                        <SearchField autoFocus name={`chart-filter-${condition.id}`} variant="secondary">
+                          <SearchField.Group>
+                            <SearchField.SearchIcon />
+                            <SearchField.Input placeholder="Search here" />
+                            <SearchField.ClearButton />
+                          </SearchField.Group>
+                        </SearchField>
+                        <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                          {_getFilteredOptions(filterOptions, condition.id).slice(0, 50).map((opt) => (
+                            <ListBox.Item key={opt.value} id={opt.value} textValue={opt.text}>
+                              {opt.text}
+                              <ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Autocomplete.Filter>
+                    </Autocomplete.Popover>
                   </Autocomplete>
                   <Spacer y={1} />
                 </>

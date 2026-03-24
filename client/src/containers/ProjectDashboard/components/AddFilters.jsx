@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { v4 as uuid } from "uuid";
 import {
   Button, Divider, Drawer, DrawerFooter,
-  DrawerContent, DrawerHeader, DrawerBody, Select, SelectItem,
+  DrawerContent, DrawerHeader, DrawerBody, Label, ListBox, Select,
 } from "@heroui/react";
 import { LuCalendarDays, LuListTree, LuPlus, LuVariable } from "react-icons/lu";
 import { toast } from "react-hot-toast";
@@ -99,35 +99,50 @@ function AddFilters(props) {
         </DrawerHeader>
         <DrawerBody>
           <Select
-            label="Select a filter type"
-            variant="bordered"
-            selectedKeys={[filterType]}
-            onSelectionChange={(keys) => setFilterType(keys.currentKey)}
+            variant="secondary"
+            selectionMode="single"
+            value={filterType}
+            onChange={(value) => setFilterType(value)}
           >
-            <SelectItem
-              key="date"
-              textValue="Date"
-              startContent={<LuCalendarDays />}
-              description="A filter that targets dataset date fields and {{start_date}} and {{end_date}} variables"
-            >
-              Date range
-            </SelectItem>
-            <SelectItem
-              key="variables"
-              textValue="Variables"
-              startContent={<LuVariable />}
-              description="A filter that targets dataset variables"
-            >
-              Variables
-            </SelectItem>
-            <SelectItem
-              key="field"
-              textValue="Matching field"
-              startContent={<LuListTree />}
-              description="A filter that applies to all datasets that contain a specific field"
-            >
-              Matching field
-            </SelectItem>
+            <Label>Select a filter type</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="date" textValue="Date">
+                  <div className="flex flex-row items-start gap-2">
+                    <LuCalendarDays className="mt-0.5" />
+                    <div className="flex flex-col">
+                      <span>Date range</span>
+                      <span className="text-xs text-foreground-500">A filter that targets dataset date fields and {"{{start_date}}"} and {"{{end_date}}"} variables</span>
+                    </div>
+                  </div>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="variables" textValue="Variables">
+                  <div className="flex flex-row items-start gap-2">
+                    <LuVariable className="mt-0.5" />
+                    <div className="flex flex-col">
+                      <span>Variables</span>
+                      <span className="text-xs text-foreground-500">A filter that targets dataset variables</span>
+                    </div>
+                  </div>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="field" textValue="Matching field">
+                  <div className="flex flex-row items-start gap-2">
+                    <LuListTree className="mt-0.5" />
+                    <div className="flex flex-col">
+                      <span>Matching field</span>
+                      <span className="text-xs text-foreground-500">A filter that applies to all datasets that contain a specific field</span>
+                    </div>
+                  </div>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           <Divider />

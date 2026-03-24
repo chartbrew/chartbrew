@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { findIndex } from "lodash";
 import PropTypes from "prop-types";
 import {
-  Select, SelectItem, Input, DatePicker, Autocomplete, AutocompleteItem,
-  Chip, Divider,
+  Select, Input, DatePicker, Autocomplete,
+  Chip, Divider, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
@@ -16,6 +16,7 @@ function EditFieldFilter({
   filter,
   onChange,
 }) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const [fieldCondition, setFieldCondition] = useState({
     field: filter?.field || "",
     operator: filter?.operator || "is",
@@ -114,45 +115,69 @@ function EditFieldFilter({
       <div className="flex flex-col gap-4">
         <div className="flex flex-row gap-2 items-center">
           <Autocomplete
-            label="Select a field"
-            value={() => (
-              <span>{(fieldCondition.field && fieldCondition.field.substring(fieldCondition.field.lastIndexOf(".") + 1)) || "Select a field"}</span>
-            )}
-            selectedKey={fieldCondition.field}
-            onSelectionChange={(key) => _handleFieldChange("field", key)}
+            value={fieldCondition.field || null}
+            onChange={(value) => _handleFieldChange("field", value)}
+            selectionMode="single"
             size="sm"
-            variant="bordered"
+            variant="secondary"
             aria-label="Select a field"
-            isClearable={false}
           >
-            {fieldOptions.map((field) => (
-              <AutocompleteItem
-                key={field.value}
-                startContent={(
-                  <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px] text-center">
-                    {field.type}
-                  </Chip>
-                )}
-                textValue={field.text}
-              >
-                {field.text}
-              </AutocompleteItem>
-            ))}
+            <Label>Select a field</Label>
+            <Autocomplete.Trigger>
+              <Autocomplete.Value />
+              <Autocomplete.Indicator />
+            </Autocomplete.Trigger>
+            <Autocomplete.Popover>
+              <Autocomplete.Filter filter={contains}>
+                <SearchField autoFocus name="field-filter-search" variant="secondary">
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input placeholder="Search fields..." />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+                <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                  {fieldOptions.map((field) => (
+                    <ListBox.Item
+                      key={field.value}
+                      id={field.value}
+                      textValue={field.text}
+                    >
+                      <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px] text-center">
+                        {field.type}
+                      </Chip>
+                      {field.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Autocomplete.Filter>
+            </Autocomplete.Popover>
           </Autocomplete>
 
           <Select
-            label="Select an operator"
-            variant="bordered"
-            selectedKeys={[fieldCondition.operator]}
-            onSelectionChange={(keys) => _handleFieldChange("operator", keys.currentKey)}
+            variant="secondary"
+            value={fieldCondition.operator || null}
+            onChange={(value) => _handleFieldChange("operator", value)}
+            selectionMode="single"
             size="sm"
             aria-label="Select an operator"
           >
-            {operators.map((op) => (
-              <SelectItem key={op.value} textValue={op.text}>
-                {op.text}
-              </SelectItem>
-            ))}
+            <Label>Select an operator</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {operators.map((op) => (
+                  <ListBox.Item key={op.value} id={op.value} textValue={op.text}>
+                    {op.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           {fieldCondition.field && (

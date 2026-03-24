@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, AutocompleteItem, Button, Chip, Divider, Input, Select, SelectItem, Spacer, Tooltip,
+  Autocomplete, Button, Chip, Divider, EmptyState, Input, Label, ListBox, SearchField, Select, Spacer, Tooltip, useFilter,
 } from "@heroui/react";
 import { LuCheck, LuInfo, LuSettings } from "react-icons/lu";
 
@@ -29,6 +29,7 @@ function ChartDatasetDataSetup({
   onUpdateCdc,
   onEditDataset,
 }) {
+  const { contains } = useFilter({ sensitivity: "base" });
   const dispatch = useDispatch();
   const datasetResponse = useSelector((state) => state.dataset.responses
     .find((response) => response.dataset_id === dataset?.id)?.data);
@@ -225,96 +226,145 @@ function ChartDatasetDataSetup({
       <Spacer y={2} />
 
       <Autocomplete
-        label="Dimension (X-axis)"
-        labelPlacement="outside"
         placeholder="Select dimension"
-        selectedKey={cdc.xAxis || ""}
-        onSelectionChange={(key) => onUpdateCdc({ xAxis: key })}
-        isLoading={loadingFields}
+        value={cdc.xAxis || null}
+        onChange={(value) => onUpdateCdc({ xAxis: value })}
+        isPending={loadingFields}
+        selectionMode="single"
+        variant="secondary"
         aria-label="Select a dimension"
         description="The field to group data by (typically time)"
       >
-        {filterOptions("x").map((option) => (
-          <AutocompleteItem
-            key={option.value}
-            startContent={(
-              <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-            )}
-            description={option.isObject ? "Key-Value visualization" : null}
-            textValue={option.text}
-          >
-            {option.text}
-          </AutocompleteItem>
-        ))}
+        <Label>Dimension (X-axis)</Label>
+        <Autocomplete.Trigger>
+          <Autocomplete.Value />
+          <Autocomplete.Indicator />
+        </Autocomplete.Trigger>
+        <Autocomplete.Popover>
+          <Autocomplete.Filter filter={contains}>
+            <SearchField autoFocus name="cdc-dimension-search" variant="secondary">
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder="Search dimensions..." />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
+            <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+              {filterOptions("x").map((option) => (
+                <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  {option.text}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Autocomplete.Filter>
+        </Autocomplete.Popover>
       </Autocomplete>
 
       <Spacer y={4} />
 
       <Autocomplete
-        label="Metric (Y-axis)"
-        labelPlacement="outside"
         placeholder="Select metric"
-        selectedKey={cdc.yAxis || ""}
-        onSelectionChange={(key) => onUpdateCdc({ yAxis: key })}
-        isLoading={loadingFields}
+        value={cdc.yAxis || null}
+        onChange={(value) => onUpdateCdc({ yAxis: value })}
+        isPending={loadingFields}
+        selectionMode="single"
+        variant="secondary"
         aria-label="Select a metric"
         description="The field to measure or count"
       >
-        {fieldOptions.map((option) => (
-          <AutocompleteItem
-            key={option.value}
-            startContent={(
-              <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-            )}
-            description={option.isObject ? "Key-Value visualization" : null}
-            textValue={option.text}
-          >
-            {option.text}
-          </AutocompleteItem>
-        ))}
+        <Label>Metric (Y-axis)</Label>
+        <Autocomplete.Trigger>
+          <Autocomplete.Value />
+          <Autocomplete.Indicator />
+        </Autocomplete.Trigger>
+        <Autocomplete.Popover>
+          <Autocomplete.Filter filter={contains}>
+            <SearchField autoFocus name="cdc-metric-search" variant="secondary">
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder="Search metrics..." />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
+            <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+              {fieldOptions.map((option) => (
+                <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  {option.text}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Autocomplete.Filter>
+        </Autocomplete.Popover>
       </Autocomplete>
 
       <Spacer y={2} />
 
       <Select
-        label="Operation"
         placeholder="Select operation"
-        labelPlacement="outside"
-        onSelectionChange={(keys) => onUpdateCdc({ yAxisOperation: keys.currentKey })}
-        selectedKeys={[cdc.yAxisOperation || ""]}
+        onChange={(value) => onUpdateCdc({ yAxisOperation: value })}
+        value={cdc.yAxisOperation || null}
         selectionMode="single"
+        variant="secondary"
         aria-label="Select an operation"
       >
-        {operations.map((option) => (
-          <SelectItem key={option.value} textValue={option.text}>
-            {option.text}
-          </SelectItem>
-        ))}
+        <Label>Operation</Label>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {operations.map((option) => (
+              <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                {option.text}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
       </Select>
 
       <Spacer y={4} />
 
       <Autocomplete
-        label="Date field"
-        labelPlacement="outside"
         placeholder="Select a field"
-        selectedKey={cdc.dateField || ""}
-        onSelectionChange={(key) => onUpdateCdc({ dateField: key })}
-        isLoading={loadingFields}
+        value={cdc.dateField || null}
+        onChange={(value) => onUpdateCdc({ dateField: value })}
+        isPending={loadingFields}
+        selectionMode="single"
+        variant="secondary"
         aria-label="Select a date field used for filtering"
         description="Used for time-based filtering"
       >
-        {getDateFieldOptions().map((option) => (
-          <AutocompleteItem
-            key={option.value}
-            startContent={(
-              <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-            )}
-            textValue={option.text}
-          >
-            {option.text}
-          </AutocompleteItem>
-        ))}
+        <Label>Date field</Label>
+        <Autocomplete.Trigger>
+          <Autocomplete.Value />
+          <Autocomplete.Indicator />
+        </Autocomplete.Trigger>
+        <Autocomplete.Popover>
+          <Autocomplete.Filter filter={contains}>
+            <SearchField autoFocus name="cdc-date-field-search" variant="secondary">
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder="Search fields..." />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
+            <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+              {getDateFieldOptions().map((option) => (
+                <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  {option.text}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Autocomplete.Filter>
+        </Autocomplete.Popover>
       </Autocomplete>
 
       <Spacer y={4} />

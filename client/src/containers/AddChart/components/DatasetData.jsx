@@ -14,7 +14,7 @@ import update from "immutability-helper";
 import {
   Button, Accordion, Dropdown, Input, Link, Popover, Spacer, Tooltip, Divider,
   Chip, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem,
-  PopoverTrigger, PopoverContent, AccordionItem, Select, Listbox, ListboxItem, SelectItem, ScrollShadow,
+  PopoverTrigger, PopoverContent, AccordionItem, Select, Label, ListBox, Listbox, ListboxItem, ScrollShadow,
 } from "@heroui/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
@@ -826,25 +826,27 @@ function DatasetData(props) {
                 <Select
                   placeholder="Operation"
                   size="sm"
-                  onSelectionChange={(keys) => _selectYOp(keys.currentKey)}
-                  selectedKeys={[dataset.yAxisOperation]}
+                  onChange={(value) => _selectYOp(value)}
+                  value={dataset.yAxisOperation || null}
                   selectionMode="single"
-                  variant="bordered"
-                  renderValue={(
-                    <Text>
-                      {(dataset.yAxisOperation
-                        && operations.find((i) => i.value === dataset.yAxisOperation).text
-                      )
-                      || "Operation"}
-                    </Text>
-                  )}
+                  variant="secondary"
                   aria-label="Select an operation"
                 >
-                  {operations.map((option) => (
-                    <SelectItem key={option.value} textValue={option.text}>
-                      {option.text}
-                    </SelectItem>
-                  ))}
+                  <Label>Operation</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {operations.map((option) => (
+                        <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                          {option.text}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Alert, Button, Select, SelectItem, Spacer } from "@heroui/react"
+import { Alert, Button, Label, ListBox, Select, Spacer } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
@@ -87,19 +87,30 @@ function SlackAuth() {
       {_getAdminTeams().length > 0 && (
         <>
           <Select
-            label="Select a team to connect to Slack"
             placeholder="Click to select a team"
-            selectedKeys={[`${selectedTeam?.id}`]}
-            onSelectionChange={(keys) => setSelectedTeam(teams.find((team) => team.id == keys.currentKey))}
+            value={`${selectedTeam?.id}` || null}
+            onChange={(value) => setSelectedTeam(teams.find((team) => `${team.id}` === `${value}`))}
             selectionMode="single"
             className="p-0"
             aria-label="Select a team option"
             size="lg"
             description="Only the teams you are an admin of will be shown"
           >
-            {_getAdminTeams().map((team) => (
-              <SelectItem key={team.id} textValue={team.name}>{team.name}</SelectItem>
-            ))}
+            <Label>Select a team to connect to Slack</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {_getAdminTeams().map((team) => (
+                  <ListBox.Item key={team.id} id={team.id} textValue={team.name}>
+                    {team.name}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
 
           <Spacer y={4} />
