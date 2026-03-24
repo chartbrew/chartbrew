@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Chip, Checkbox,
-  Select, PopoverTrigger, PopoverContent, Code, Autocomplete,
+  Select, PopoverTrigger, PopoverContent, Autocomplete,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -734,11 +734,11 @@ function GaBuilder(props) {
                 >
                   <Row className={"gap-1"}>
                     <Text>{"You can use relative dates such as "}</Text>
-                    <Code color="primary">today</Code>
+                    <code className="rounded-md bg-accent/20 px-1.5 py-0.5 text-base text-accent-600">today</code>
                     <Text>{", "}</Text>
-                    <Code color="primary">yesterday</Code>
+                    <code className="rounded-md bg-accent/20 px-1.5 py-0.5 text-base text-accent-600">yesterday</code>
                     <Text>{", and "}</Text>
-                    <Code color="primary">NdaysAgo</Code>
+                    <code className="rounded-md bg-accent/20 px-1.5 py-0.5 text-base text-accent-600">NdaysAgo</code>
                   </Row>
                   <Row>
                     <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>

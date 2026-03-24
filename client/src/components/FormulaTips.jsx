@@ -1,5 +1,4 @@
 import React from "react"
-import { Code } from "@heroui/react";
 import { LuChevronRight, LuExternalLink } from "react-icons/lu";
 
 function FormulaTips() {
@@ -9,13 +8,13 @@ function FormulaTips() {
       <div className="h-1" />
       <div className="flex items-center gap-2">
         <div className="text-sm text-foreground">{"Example for"}</div>
-        <Code>{"val = 12345"}</Code>
+        <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"val = 12345"}</code>
       </div>
       <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
-          <Code>{"{val}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"{val}"}</code>
           {" => 12345"}
         </span>
       </div>
@@ -23,7 +22,7 @@ function FormulaTips() {
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
-          <Code>{"{val / 100}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"{val / 100}"}</code>
           {" => 123.45"}
         </span>
       </div>
@@ -31,7 +30,7 @@ function FormulaTips() {
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
-          <Code>{"$ {val / 100}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"$ {val / 100}"}</code>
           {" => $ 123.45"}
         </span>
       </div>
@@ -39,7 +38,7 @@ function FormulaTips() {
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
-          <Code>{"{val / 100} USD"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"{val / 100} USD"}</code>
           {" => 123.45 USD"}
         </span>
       </div>
@@ -47,7 +46,7 @@ function FormulaTips() {
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
-          <Code>{"{ROUND(val / 100, 0)}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{"{ROUND(val / 100, 0)}"}</code>
           {" => 123"}
         </span>
       </div>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Divider, Chip, Checkbox, Tooltip,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
-  Code, Label, ListBox, Select, Switch,
+  Label, ListBox, Select, Switch,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -674,9 +674,9 @@ function RealtimeDbBuilder(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
-              </Code>
+              </code>
             </div>
           </DrawerHeader>
           <DrawerBody>

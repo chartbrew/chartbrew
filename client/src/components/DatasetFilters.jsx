@@ -6,7 +6,7 @@ import {
   Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
   DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
   Modal, SearchField, Select,
-  Switch, Tooltip, Code, useFilter,
+  Switch, Tooltip, useFilter,
 } from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
@@ -363,14 +363,12 @@ function DatasetFilters(props) {
                     <div className="flex flex-row gap-1 items-center flex-wrap">
                       {_renderValueWithVariables(condition.value).filter(part => part.type === "variable").map((part, index) => (
                         <div key={index}>
-                          <Code
-                            size="sm"
-                            className="cursor-pointer hover:bg-primary-100 transition-colors duration-200"
-                            variant="flat"
+                          <code
+                            className="cursor-pointer rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700 transition-colors duration-200 hover:bg-default/60"
                             onClick={() => _onVariableClick(part)}
                           >
                             {part.variable}
-                          </Code>
+                          </code>
                         </div>
                       ))}
                     </div>
@@ -626,9 +624,9 @@ function DatasetFilters(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
-              </Code>
+              </code>
             </div>
           </DrawerHeader>
           <DrawerBody>

@@ -5,7 +5,7 @@ import {
   Button, Checkbox, Divider, Input, Tooltip, Chip,
   Tabs, Tab, Select, PopoverTrigger, Popover, PopoverContent,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
-  Code, Switch, Label, ListBox,
+  Switch, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
@@ -1031,9 +1031,9 @@ function ApiBuilder(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <Code color="primary" radius="sm" variant="flat" className="text-sm">
+              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
-              </Code>
+              </code>
             </div>
           </DrawerHeader>
           <DrawerBody>

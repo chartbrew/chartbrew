@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
-  DropdownTrigger, Code,
+  DropdownTrigger,
   Input,
 } from "@heroui/react";
 import _ from "lodash";
@@ -429,7 +429,7 @@ function TeamMembers(props) {
                     <div>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</div>
                     <div className="flex flex-wrap items-center gap-1">
                       <div>{"You are currently giving"}</div>
-                      <Code>{`${projectAccess[changedMember.id].role}`}</Code>
+                      <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{`${projectAccess[changedMember.id].role}`}</code>
                       <div>{`access to ${changedMember.name}`}</div>
                       <div>{"for the following projects:"}</div>
                     </div>

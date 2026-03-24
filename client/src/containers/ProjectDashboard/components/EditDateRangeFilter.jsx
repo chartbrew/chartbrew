@@ -4,7 +4,6 @@ import {
   Button,
   Chip,
   Link as LinkNext,
-  Code,
 } from "@heroui/react";
 import { LuSquareCheck, LuX } from "react-icons/lu";
 import DateRangeFilter from "./DateRangeFilter";
@@ -106,9 +105,9 @@ function EditDateRangeFilter({
       <div className="flex flex-row">
         <span className="text-sm">
           {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-          <Code size="sm" className="text-sm">{"{{start_date}}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{start_date}}"}</code>
           {" and "}
-          <Code size="sm" className="text-sm">{"{{end_date}}"}</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{end_date}}"}</code>
           {" variables in the queries."}
         </span>
       </div>

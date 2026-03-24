@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Alert, Code, Spinner } from "@heroui/react"
+import { Alert, Spinner } from "@heroui/react"
 import toast from "react-hot-toast";
 
 import { API_HOST } from "../../../config/settings";
@@ -78,7 +78,7 @@ function SlackCallback() {
               DM Chartbrew in Slack to get started and finish the setup:
             </div>
             <div className="text-center">
-              <Code>/chartbrew connect</Code>
+              <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">/chartbrew connect</code>
             </div>
           </div>
         )}

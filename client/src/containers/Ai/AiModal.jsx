@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -811,9 +811,9 @@ function AiModal({ isOpen, onClose }) {
                     <PopoverContent className="max-w-md">
                       <div className="p-2">
                         <div className="text-xs font-semibold mb-2">Arguments:</div>
-                        <Code className="text-xs whitespace-pre-wrap">
+                        <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
                           {JSON.stringify(tool.args, null, 2)}
-                        </Code>
+                        </code>
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -844,9 +844,9 @@ function AiModal({ isOpen, onClose }) {
                 </PopoverTrigger>
                 <PopoverContent className="max-w-2xl">
                   <div className="p-2">
-                    <Code className="text-xs whitespace-pre-wrap">
+                    <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
                       {JSON.stringify(parsed.content, null, 2)}
-                    </Code>
+                    </code>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -1160,9 +1160,9 @@ function AiModal({ isOpen, onClose }) {
                               <div className="text-xs font-semibold mb-2">
                                 {op.type === "call" ? "Arguments:" : "Result:"}
                               </div>
-                              <Code className="text-xs whitespace-pre-wrap max-h-96 overflow-auto">
+                              <code className="block max-h-96 overflow-auto rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
                                 {JSON.stringify(op.data, null, 2)}
-                              </Code>
+                              </code>
                             </div>
                           </PopoverContent>
                         </Popover>

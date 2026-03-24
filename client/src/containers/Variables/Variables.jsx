@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { Button, Code, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
+import { Button, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createVariable, deleteVariable, selectProject } from "../../slices/project"
@@ -95,7 +95,7 @@ function Variables() {
           {project?.Variables?.map((variable) => (
             <TableRow key={variable.id}>
               <TableCell key="name">
-                <Code>{variable.name}</Code>
+                <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{variable.name}</code>
               </TableCell>
               <TableCell key="createdAt">{new Date(variable.createdAt).toLocaleDateString()}</TableCell>
               <TableCell key="actions" align="end" className="flex justify-end">

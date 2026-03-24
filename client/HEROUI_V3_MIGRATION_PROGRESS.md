@@ -918,13 +918,46 @@ Notes:
   - `npm run lint` passes
   - `rg -n '\\bSpacer\\b'` on the migrated files returns no matches
 
+### Phase 3: Code Component Removal
+
+Files migrated:
+- `src/components/FormulaTips.jsx`
+- `src/components/DatasetFilters.jsx`
+- `src/containers/Ai/AiModal.jsx`
+- `src/containers/Settings/TeamMembers.jsx`
+- `src/containers/Variables/Variables.jsx`
+- `src/containers/AddChart/components/ChartSettings.jsx`
+- `src/containers/AddChart/components/VisualSQL.jsx`
+- `src/containers/AddChart/components/ApiBuilder.jsx`
+- `src/containers/AddChart/components/SqlBuilder.jsx`
+- `src/containers/AddChart/components/MongoQueryBuilder.jsx`
+- `src/containers/ProjectDashboard/components/EditDateRangeFilter.jsx`
+- `src/containers/Integrations/components/SlackIntegrationsList.jsx`
+- `src/containers/Integrations/Auth/SlackCallback.jsx`
+- `src/containers/Connections/GoogleAnalytics/GaBuilder.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/Connections/Firestore/FirestoreBuilder.jsx`
+- `src/containers/Connections/RealtimeDb/RealtimeDbBuilder.jsx`
+
+Notes:
+- Replaced HeroUI `Code` with plain HTML `<code>` tags only.
+- Applied the agreed Tailwind mapping directly:
+  - default: `bg-default/40 text-default-700`
+  - primary: `bg-accent/20 text-accent-600`
+  - `size="sm"` -> `text-sm`
+  - `radius="sm"` -> `rounded-sm`
+- Kept the changes local to the old `Code` call sites and preserved surrounding structure.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n 'import .*\\bCode\\b|<Code\\b' chartbrew-os/client/src` returns only a commented-out example in `src/containers/Chart/TextWidget.jsx`
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
 - `ModalContent`: 0 files
 - `SelectItem` / `AutocompleteItem`: 0 files
-- `Spacer`: about 37 files
-- `Code`: about 21 files
+- `Spacer`: 0 files
+- `Code`: 0 active files
 - `CardBody`: about 14 files
 - `Image`: about 10 files
 - `Listbox` / `ListboxItem`: 5 files

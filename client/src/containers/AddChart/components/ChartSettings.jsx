@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Checkbox, Divider, Input, Tooltip, Modal, Select,
-  Code, Label, ListBox,
+  Label, ListBox,
 } from "@heroui/react";
 import moment from "moment";
 import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
@@ -608,11 +608,11 @@ function ChartSettings({ chart, onChange }) {
             <div className="text-sm">
               {"Chartbrew will use this format when injecting the dates as variables in your queries. The variables are"}
               {" "}
-              <Code size="sm">{"{{start_date}}"}</Code>
+              <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{start_date}}"}</code>
               {" "}
               {"and"}
               {" "}
-              <Code size="sm">{"{{end_date}}"}</Code>
+              <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{end_date}}"}</code>
               {"."}
             </div>
             <div>

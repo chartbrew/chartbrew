@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, Code, Separator, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Chip, Separator, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuPlus, LuSettings, LuSlack } from "react-icons/lu";
@@ -114,13 +114,13 @@ function SlackIntegrations() {
                 <a href={`${API_HOST}/apps/slack/oauth/start`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
               </div>
               <div>
-                2. Once installed, you can use the <Code size="sm">/chartbrew</Code> command in your Slack workspace to start using Chartbrew.
+                2. Once installed, you can use the <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew</code> command in your Slack workspace to start using Chartbrew.
               </div>
               <div>
-                3. Use <Code size="sm">/chartbrew connect</Code> to connect your Slack workspace to a Chartbrew team.
+                3. Use <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew connect</code> to connect your Slack workspace to a Chartbrew team.
               </div>
               <div>
-                4. Mention <Code size="sm">@Chartbrew</Code> in a channel and ask any question about your data.
+                4. Mention <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">@Chartbrew</code> in a channel and ask any question about your data.
               </div>
                 </Modal.Body>
           )}

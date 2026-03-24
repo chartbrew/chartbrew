@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, Button, Chip, Code, EmptyState, Input, Label, ListBox, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, SearchField, Select, useFilter } from "@heroui/react"
+import { Alert, Autocomplete, Button, Chip, EmptyState, Input, Label, ListBox, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, SearchField, Select, useFilter } from "@heroui/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuVariable, LuX } from "react-icons/lu"
@@ -849,15 +849,13 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <div className="flex gap-1 items-center mt-2">
             <span className="text-sm flex flex-wrap gap-1">
               {variables.map((v) => (
-                <Code
-                  size="sm"
-                  className="cursor-pointer hover:bg-primary-100 transition-colors duration-200"
-                  variant="flat"
+                <code
+                  className="cursor-pointer rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700 transition-colors duration-200 hover:bg-default/60"
                   key={v.variable}
                   onClick={() => onVariableClick(v)}
                 >
                   {v.variable}
-                </Code>
+                </code>
               ))}
             </span>
           </div>
@@ -894,8 +892,8 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
       )}
       {ast?.from && flattenFrom(ast.from).map((fromItem, index) => (
         <div key={index} className="flex gap-1 items-center">
-          {fromItem.type === "main" && <Code variant="flat">Get data from</Code>}
-          {fromItem.type === "join" && <Code variant="flat">Join</Code>}
+          {fromItem.type === "main" && <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Get data from</code>}
+          {fromItem.type === "join" && <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Join</code>}
           {fromItem.table && (
             <Select
               size="sm"
@@ -947,7 +945,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
       ))}
       {ast?.columns && (
         <div className="flex flex-wrap gap-1 items-center">
-          <Code variant="flat">Select columns</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Select columns</code>
           {ast.columns.map((col) => (
             <Popover key={typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column}>
               <PopoverTrigger>
@@ -986,7 +984,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
         </div>
       )}
       <div className="flex gap-1 items-center">
-        <Code variant="flat">Filter</Code>
+        <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Filter</code>
         <Button
           isIconOnly
           size="sm"
@@ -1044,7 +1042,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
 
       {ast?.groupby?.columns && ast.groupby.columns.map((group) => (
         <div key={`${group?.table?.value}.${group.column}`} className="flex flex-wrap gap-1 items-center">
-          <Code variant="flat">Group by</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Group by</code>
           <Button
             size="sm"
             color="primary"
@@ -1065,7 +1063,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
 
       {ast?.orderby && ast.orderby.map((order) => (
         <div key={`${order.expr?.table?.value}.${order.expr.column}`} className="flex gap-1 items-center">
-          <Code variant="flat">Order by</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Order by</code>
           <Button
             size="sm"
             color="primary"
@@ -1086,7 +1084,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
 
       {ast?.limit && ast.limit?.value?.[0]?.value && (
         <div className="flex gap-1 items-center">
-          <Code variant="flat">Limit</Code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Limit</code>
           <Button
             size="sm"
             color="primary"
