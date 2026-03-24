@@ -4,7 +4,6 @@ import {
   createBrowserRouter, RouterProvider,
 } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
-import { HeroUIProvider } from "@heroui/react";
 import { HelmetProvider } from "react-helmet-async";
 
 import Main from "./containers/Main";
@@ -128,9 +127,7 @@ export default function App() {
     <Provider store={store}>
       <HelmetProvider>
         <ThemeProvider>
-          <HeroUIProvider locale="en-GB">
-            <RouterProvider router={router} />
-          </HeroUIProvider>
+          <RouterProvider router={router} />
         </ThemeProvider>
       </HelmetProvider>
     </Provider>

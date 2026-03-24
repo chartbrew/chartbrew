@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Checkbox, Separator, Input, Link, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -177,7 +176,7 @@ function WebhookIntegrations({ teamId }) {
         {"Create webhooks to send alerts and reports to external services"}
       </div>
       <Spacer y={2} />
-      <Divider />
+      <Separator />
       <Spacer y={2} />
       <div>
         <div className="text-sm">
@@ -247,15 +246,17 @@ function WebhookIntegrations({ teamId }) {
         </TableBody>
       </Table>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={createOpen} onOpenChange={setCreateOpen}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-xl">
+              <Modal.Header>
             <div className="font-bold">
               {!newIntegration.id && "Create a new webhook integration"}
               {newIntegration.id && "Update the webhook"}
             </div>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <div>
               <Input
                 label="A name to recognize this integration"
@@ -304,8 +305,8 @@ function WebhookIntegrations({ teamId }) {
                 There was an error creating the integration. Please try again.
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button
               auto
               onPress={() => setCreateOpen(false)}
@@ -322,24 +323,28 @@ function WebhookIntegrations({ teamId }) {
               {!newIntegration.id && "Create"}
               {newIntegration.id && "Update"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} size="3xl">
-      <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={!!integrationToDelete} onOpenChange={(nextOpen) => { if (!nextOpen) setIntegrationToDelete(false); }}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-3xl">
+              <Modal.Header>
             <div className="font-bold">Are you sure you want to delete this integration?</div>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <div>
               All alerts that are configured to use this integration will be disabled.
             </div>
             {deleteError && (
               <div className="text-danger text-sm">There was an error deleting the integration. Please try again.</div>
             )}
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button
               auto
               onPress={() => setIntegrationToDelete(false)}
@@ -355,16 +360,20 @@ function WebhookIntegrations({ teamId }) {
             >
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={slackModalOpen} size="5xl" onClose={() => setSlackModalOpen(false)}>
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={slackModalOpen} onOpenChange={setSlackModalOpen}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-5xl">
+              <Modal.Header>
             <div className="font-bold">How to set up Slack alerts</div>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <div
               className="relative pb-[56.25%] min-h-full"
             >
@@ -380,8 +389,8 @@ function WebhookIntegrations({ teamId }) {
                 }}
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button
               auto
               onPress={() => setSlackModalOpen(false)}
@@ -389,8 +398,10 @@ function WebhookIntegrations({ teamId }) {
             >
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

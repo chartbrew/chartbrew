@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
+  Popover, Link, Spacer, ProgressCircle, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
   cn,
@@ -283,7 +283,7 @@ function EmbeddedChart() {
               )}
               {dataLoading && !isSnapshot && (
                 <>
-                  <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
+                  <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
                   <Spacer x={1} />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>

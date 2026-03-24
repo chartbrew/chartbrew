@@ -1,5 +1,5 @@
 import {
-  Button, Card, CardBody, CardFooter, CardHeader, Divider, Image, Tooltip,
+  Button, Card, CardBody, CardFooter, CardHeader, Separator, Image, Tooltip,
 } from "@heroui/react";
 import React, { useState } from "react"
 import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
@@ -33,7 +33,7 @@ function NoticeBoard() {
               </span>
             </Tooltip>
           </CardHeader>
-          <Divider />
+          <Separator />
           <CardBody>
             <div className="relative pb-[60.25%] h-0 mb-4">
               <Image
@@ -68,13 +68,13 @@ function NoticeBoard() {
               </span>
             </Tooltip>
           </CardHeader>
-          <Divider />
+          <Separator />
           <CardBody>
             <p>
               {"Protect your account by enabling two-factor authentication. It's easy and only takes a few moments."}
             </p>
           </CardBody>
-          <Divider />
+          <Separator />
           <CardFooter>
             <Link to="/user/profile" className="w-full">
               <Button

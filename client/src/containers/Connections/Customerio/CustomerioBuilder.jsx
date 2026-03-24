@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Spacer, Checkbox, Tooltip, Divider, Tabs, Tab,
+  Button, Spacer, Checkbox, Tooltip, Separator, Tabs, Tab,
   Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -266,7 +266,7 @@ function CustomerioBuilder(props) {
             </Row>
             <Spacer y={2} />
             <Row>
-              <Divider />
+              <Separator />
             </Row>
             <Spacer y={4} />
             <Row align="center" wrap="wrap">

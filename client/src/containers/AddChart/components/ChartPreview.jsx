@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, CircularProgress, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
+  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
@@ -299,7 +299,7 @@ function ChartPreview(props) {
             )}
             <Spacer y={2} />
             <Row>
-              <Divider />
+              <Separator />
             </Row>
             <Spacer y={2} />
             <div className="h-[300px] w-full">
@@ -536,7 +536,7 @@ function ChartPreview(props) {
             {chartLoading && (
               <>
                 <Row>
-                  <CircularProgress size="lg" aria-label="Loading chart data" />
+                  <ProgressCircle size="lg" aria-label="Loading chart data" />
                 </Row>
                 <Row>
                   <Text b>Loading chart data...</Text>

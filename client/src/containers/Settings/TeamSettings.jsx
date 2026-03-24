@@ -1,13 +1,9 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Spacer, Button, CircularProgress,
-  Divider, Switch, Tooltip,
+  Input, Spacer, Button, ProgressCircle,
+  Separator, Switch, Tooltip,
   Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
@@ -98,7 +94,7 @@ function TeamSettings() {
   if (!team) {
     return (
       <div className="pt-60 flex justify-center items-center">
-        <CircularProgress aria-label="Loading" size="lg" />
+        <ProgressCircle aria-label="Loading" size="lg" />
       </div>
     );
   }
@@ -137,7 +133,7 @@ function TeamSettings() {
       </div>
 
       <Spacer y={4} />
-      <Divider />
+      <Separator />
       <Spacer y={4} />
 
       <div className="flex flex-col gap-4">
@@ -187,7 +183,7 @@ function TeamSettings() {
       {canAccess("teamOwner", user.id, team.TeamRoles) && (
         <>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div className="flex flex-row items-center gap-2">
             <Button
@@ -208,44 +204,49 @@ function TeamSettings() {
         </>
       )}
 
-      <Modal isOpen={deleteConfirm} onClose={() => setDeleteConfirm(false)} size="lg">
-        <ModalContent>
-          <ModalHeader className="font-bold">
-            Are you sure you want to delete this team?
-          </ModalHeader>
-          <ModalBody>
-            <div>
-              This action is irreversible. All data associated with this team will be deleted and we will not be able to restore it.
-            </div>
-            <div>
-              <Input
-                label="Type the team name to confirm"
-                placeholder={team.name}
-                name="deleteConfirmChecked"
-                value={deleteConfirmChecked}
-                onChange={(e) => setDeleteConfirmChecked(e.target.value)}
-                variant="bordered"
-                color={deleteConfirmChecked === team.name ? "success" : "default"}
-                description={`Type "${team.name}" to confirm`}
-                endContent={deleteConfirmChecked === team.name && <LuCircleCheck size={18} className="text-success" />}
-              />
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={() => setDeleteConfirm(false)} size="sm">
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              onPress={_onDeleteTeam}
-              isLoading={deleting}
-              size="sm"
-              isDisabled={deleteConfirmChecked !== team.name}
-            >
-              Delete team
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={deleteConfirm} onOpenChange={setDeleteConfirm}>
+          <Modal.Container size="lg">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Are you sure you want to delete this team?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>
+                  This action is irreversible. All data associated with this team will be deleted and we will not be able to restore it.
+                </div>
+                <div>
+                  <Input
+                    label="Type the team name to confirm"
+                    placeholder={team.name}
+                    name="deleteConfirmChecked"
+                    value={deleteConfirmChecked}
+                    onChange={(e) => setDeleteConfirmChecked(e.target.value)}
+                    variant="secondary"
+                    description={`Type "${team.name}" to confirm`}
+                    endContent={deleteConfirmChecked === team.name && <LuCircleCheck size={18} className="text-success" />}
+                  />
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" slot="close" size="sm">
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  onPress={_onDeleteTeam}
+                  isPending={deleting}
+                  size="sm"
+                  isDisabled={deleteConfirmChecked !== team.name}
+                >
+                  Delete team
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

@@ -12,7 +12,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { semanticColors } from "@heroui/react";
+import { semanticColors } from "../../../lib/themeTokens";
 import { cloneDeep } from "lodash";
 import { tooltipPlugin } from "./ChartTooltip";
 

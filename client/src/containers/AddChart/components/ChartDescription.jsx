@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import moment from "moment";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, CircularProgress, Input, Pagination, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
+  Button, Chip, ProgressCircle, Input, Pagination, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
 } from "@heroui/react";
 import {
   LuLayers, LuPlus, LuSearch,
@@ -196,7 +196,7 @@ function ChartDescription(props) {
           <TableBody
             emptyContent={datasetLoading ? (
               <div className="flex min-h-40 items-center justify-center">
-                <CircularProgress aria-label="Loading datasets" />
+                <ProgressCircle aria-label="Loading datasets" />
               </div>
             ) : (
               <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">

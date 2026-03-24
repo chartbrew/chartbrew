@@ -1,23 +1,18 @@
 import React from "react";
-import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
-
-const container = tv({
-  base: "container mx-auto flex flex-col",
-})
+import { Surface } from "@heroui/react";
 
 function Container(props) {
-  const { children, size = "md", className = "" } = props;
+  const { children, className = "" } = props;
   return (
-    <div className={`${container({ size })} ${className}`}>
+    <Surface className={`container mx-auto flex flex-col ${className}`}>
       {children}
-    </div>
+    </Surface>
   )
 }
 
 Container.propTypes = {
   children: PropTypes.node.isRequired,
-  size: PropTypes.oneOf(["sm", "md", "lg", "xl", "fluid"]),
   className: PropTypes.string,
 };
 

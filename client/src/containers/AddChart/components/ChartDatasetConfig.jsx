@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
-  Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
+  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, PopoverContent,
   PopoverTrigger, ScrollShadow, Spacer, Spinner, Tab, Tabs, Tooltip, commonColors,
 } from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
@@ -501,7 +501,7 @@ function ChartDatasetConfig(props) {
               </div>
 
               <Spacer y={4} />
-              <Divider />
+              <Separator />
               <Spacer y={4} />
             </>
           )}
@@ -593,7 +593,7 @@ function ChartDatasetConfig(props) {
               </div>
 
               <Spacer y={4} />
-              <Divider />
+              <Separator />
               <Spacer y={4} />
             </>
           )}
@@ -667,7 +667,7 @@ function ChartDatasetConfig(props) {
               </div>
 
               <Spacer y={4} />
-              <Divider />
+              <Separator />
               <Spacer y={4} />
 
               <div>
@@ -737,7 +737,7 @@ function ChartDatasetConfig(props) {
           </Row>
 
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
 
           <div className="flex flex-col gap-2">
@@ -809,7 +809,7 @@ function ChartDatasetConfig(props) {
       </Tabs>
 
       <Spacer y={4} />
-      <Divider />
+      <Separator />
       <Spacer y={4} />
 
       <div className="flex flex-row justify-between">
@@ -838,32 +838,38 @@ function ChartDatasetConfig(props) {
         </Button>
       </div>
 
-      <Modal isOpen={editConfirmation} onClose={() => setEditConfirmation(false)}>
-        <ModalContent>
-          <ModalHeader>Edit dataset?</ModalHeader>
-          <ModalBody>
-            <Text>
-              {"You are about to edit the dataset. This will affect all charts that use this dataset. Are you sure you want to continue?"}
-            </Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setEditConfirmation(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={() => {
-                setEditConfirmation(false);
-                navigate(`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);
-              }}
-            >
-              Continue
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={editConfirmation} onOpenChange={setEditConfirmation}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Edit dataset?</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Text>
+                  {"You are about to edit the dataset. This will affect all charts that use this dataset. Are you sure you want to continue?"}
+                </Text>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="bordered"
+                  slot="close"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={() => {
+                    setEditConfirmation(false);
+                    navigate(`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);
+                  }}
+                >
+                  Continue
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

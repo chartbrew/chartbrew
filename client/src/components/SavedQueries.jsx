@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
+  Button, Input, ProgressCircle, Modal, Spacer, Tooltip, Separator,
 } from "@heroui/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
 
@@ -95,9 +95,9 @@ function SavedQueries(props) {
   return (
     <div style={{ ...styles.container, ...style }}>
       {loading && (
-        <CircularProgress aria-label="loading">
+        <ProgressCircle aria-label="loading">
           Loading queries
-        </CircularProgress>
+        </ProgressCircle>
       )}
 
       {error && (
@@ -126,9 +126,9 @@ function SavedQueries(props) {
                     <Tooltip content="Use this query">
                       <Button
                         isIconOnly
-                        onClick={() => onSelectQuery(query)}
+                        onPress={() => onSelectQuery(query)}
                         size="sm"
-                        variant="faded"
+                        variant="secondary"
                       >
                         <LuCheck />
                       </Button>
@@ -137,10 +137,10 @@ function SavedQueries(props) {
                       <Button
                         isIconOnly
                         isDisabled={editQuery && editQuery.id === query.id}
-                        onClick={() => _onEditQueryConfirmation(query)}
+                        onPress={() => _onEditQueryConfirmation(query)}
                         size="sm"
-                        isLoading={editLoading}
-                        variant="faded"
+                        isPending={editLoading}
+                        variant="secondary"
                       >
                         <LuPencilLine />
                       </Button>
@@ -148,9 +148,9 @@ function SavedQueries(props) {
                     <Tooltip content="Remove the saved query">
                       <Button
                         isIconOnly
-                        onClick={() => _onRemoveQueryConfirmation(query.id)}
+                        onPress={() => _onRemoveQueryConfirmation(query.id)}
                         size="sm"
-                        variant="faded"
+                        variant="secondary"
                       >
                         <LuX />
                       </Button>
@@ -158,7 +158,7 @@ function SavedQueries(props) {
                   </div>
                 </Row>
                 <Spacer y={1} />
-                <Divider />
+                <Separator />
                 <Spacer y={1} />
               </Fragment>
             );
@@ -169,67 +169,81 @@ function SavedQueries(props) {
         && <p><i>{"The project doesn't have any saved queries yet"}</i></p>}
 
       {/* Update query modal */}
-      <Modal isOpen={!!editQuery} onClose={() => setEditQuery(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text b>Edit the query</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              label="Edit the description of the query"
-              placeholder="Type a summary here"
-              value={savedQuerySummary ? savedQuerySummary
-                : editQuery ? editQuery.summary : ""}
-              onChange={(e) => setSavedQuerySummary(e.target.value)}
-              variant="bordered"
-              fullWidth
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onClick={() => setEditQuery(null)}
-            >
-              Close
-            </Button>
-            <Button
-              isDisabled={!savedQuerySummary}
-              onClick={_onEditQuery}
-              color="primary"
-              isLoading={editLoading}
-            >
-              Save the query
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Modal.Backdrop
+        isOpen={!!editQuery}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setEditQuery(null);
+        }}
+      >
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Edit the query</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <Input
+                label="Edit the description of the query"
+                placeholder="Type a summary here"
+                value={savedQuerySummary ? savedQuerySummary
+                  : editQuery ? editQuery.summary : ""}
+                onChange={(e) => setSavedQuerySummary(e.target.value)}
+                variant="bordered"
+                fullWidth
+              />
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                onPress={() => setEditQuery(null)}
+                variant="secondary"
+              >
+                Close
+              </Button>
+              <Button
+                isDisabled={!savedQuerySummary}
+                isPending={editLoading}
+                onPress={_onEditQuery}
+                variant="primary"
+              >
+                Save the query
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {/* Update query modal */}
-      <Modal isOpen={!!removeQuery} onClose={() => setRemoveQuery(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text b>Are you sure you want to remove the query?</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Text>{"This action will be permanent."}</Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onClick={() => setRemoveQuery(null)}
-            >
-              Close
-            </Button>
-            <Button
-              color="danger"
-              onClick={_onRemoveQuery}
-              isLoading={removeLoading}
-            >
-              Remove the query
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Modal.Backdrop
+        isOpen={!!removeQuery}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setRemoveQuery(null);
+        }}
+      >
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Are you sure you want to remove the query?</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <Text>{"This action will be permanent."}</Text>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                onPress={() => setRemoveQuery(null)}
+                variant="secondary"
+              >
+                Close
+              </Button>
+              <Button
+                isPending={removeLoading}
+                onPress={_onRemoveQuery}
+                variant="danger"
+              >
+                Remove the query
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

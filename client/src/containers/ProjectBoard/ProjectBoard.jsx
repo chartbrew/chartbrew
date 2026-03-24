@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useParams } from "react-router";
 import {
-  CircularProgress,
+  ProgressCircle,
   Spacer,
 } from "@heroui/react";
 
@@ -87,7 +87,7 @@ function ProjectBoard() {
       <Container style={styles.container}>
         <Spacer y={10} />
         <Row align="center" justify="center">
-          <CircularProgress color="primary" size="xl" aria-label="Loading the dashboard" />
+          <ProgressCircle color="primary" size="xl" aria-label="Loading the dashboard" />
         </Row>
         <Spacer y={3} />
         <Row align="center" justify="center">

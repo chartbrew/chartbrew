@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Divider,
+  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Separator,
 } from "@heroui/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -540,7 +540,7 @@ function MongoConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div>
             <Row align="center">

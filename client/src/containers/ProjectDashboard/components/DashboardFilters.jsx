@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
-import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spacer } from "@heroui/react"
+import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, Button, Spacer } from "@heroui/react"
 import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import toast from "react-hot-toast"
@@ -331,12 +331,14 @@ function DashboardFilters({
         </div>
       </div>
 
-      <Modal isOpen={!!editingFilter} onClose={() => setEditingFilter(null)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={!!editingFilter} onOpenChange={(nextOpen) => { if (!nextOpen) setEditingFilter(null); }}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-2xl">
+              <Modal.Header>
             <span className="font-bold text-lg">Edit filter</span>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             {editingFilter && editingFilter.type === "date" && (
               <EditDateRangeFilter
                 charts={charts.filter(c => c.type !== "markdown")}
@@ -358,32 +360,38 @@ function DashboardFilters({
                 fieldOptions={_getFieldOptions()}
               />
             )}
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button variant="bordered" onPress={() => setEditingFilter(null)}>
               Cancel
             </Button>
             <Button color="primary" onPress={_handleSaveFilter}>
               Save changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={!!filterToRemove} onClose={() => setFilterToRemove(null)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={!!filterToRemove} onOpenChange={(nextOpen) => { if (!nextOpen) setFilterToRemove(null); }}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-2xl">
+              <Modal.Header>
             <span className="font-bold">Remove filter</span>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <p>{"Removing this filter will remove it from everyone's dashboard."}</p>
             <p>{"If you want to remove it from your dashboard only, you can clear the filter value instead."}</p>
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button variant="bordered" onPress={() => setFilterToRemove(null)}>Cancel</Button>
             <Button color="danger" onPress={() => _onRemoveFilter(filterToRemove, true)}>Remove from everyone</Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </>
   )

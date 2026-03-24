@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, ModalContent, ModalBody, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Divider, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, CircularProgress, Listbox, ListboxItem } from "@heroui/react"
+import { Modal, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -897,7 +897,7 @@ function AiModal({ isOpen, onClose }) {
                     <div className={`border ${
                       parsed.type === "chart_created" ? "border-success-200" : "border-warning-200"
                     } rounded-lg p-8`}>
-                      <CircularProgress aria-label="Loading chart" />
+                      <ProgressCircle aria-label="Loading chart" />
                       <div className="text-sm mt-2">Loading chart...</div>
                     </div>
                   )}
@@ -975,7 +975,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   ) : (
                     <div className="border border-primary-200 rounded-lg p-8">
-                      <CircularProgress aria-label="Loading chart" />
+                      <ProgressCircle aria-label="Loading chart" />
                       <div className="text-sm mt-2">Loading chart...</div>
                     </div>
                   )}
@@ -1241,16 +1241,17 @@ function AiModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal
-      classNames={{ wrapper: conversation ? "sm:mt-4" : "" }}
-      isOpen={isOpen}
-      onClose={onClose}
-      size={conversation ? "6xl" : "xl"}
-      scrollBehavior="outside"
-    >
-      <ModalContent>
+    <Modal>
+      <Modal.Backdrop
+        isOpen={isOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) onClose();
+        }}
+      >
+        <Modal.Container className={conversation ? "sm:mt-4" : ""} scroll="outside">
+          <Modal.Dialog className={conversation ? "sm:max-w-6xl" : "sm:max-w-xl"}>
         {!conversation && (
-          <ModalBody className="pt-8">
+          <Modal.Body className="pt-8">
             <div className="flex flex-col gap-2 items-center justify-center">
               <Avatar
                 icon={<LuBrainCircuit size={24} className="text-background" />}
@@ -1431,7 +1432,7 @@ function AiModal({ isOpen, onClose }) {
                 </>
               )}
             </div>
-            <Divider />
+            <Separator />
             <Accordion variant="light">
               <AccordionItem
                 key="previous_conversations"
@@ -1483,15 +1484,15 @@ function AiModal({ isOpen, onClose }) {
               </AccordionItem>
             </Accordion>
 
-            <Divider />
+            <Separator />
             <div className="text-xs text-foreground-500 mb-2">
               <span className="font-medium">Note:</span> We are still in beta. Some features may not work as expected. Please let us know if you encounter any issues or have any feedback at <a href="mailto:support@chartbrew.com" className="text-primary-500 hover:text-primary-600">support@chartbrew.com</a>
             </div>
-          </ModalBody>
+          </Modal.Body>
         )}
 
         {conversation && (
-          <ModalBody className="p-0">
+          <Modal.Body className="p-0">
             <div className="flex flex-row">
               <div className="flex-none w-60">
                 <div className="flex flex-col relative h-full bg-content2 rounded-tl-2xl rounded-bl-2xl">
@@ -1516,7 +1517,7 @@ function AiModal({ isOpen, onClose }) {
                       New Conversation
                     </Button>
                     <Spacer y={4} />
-                    <Divider />
+                    <Separator />
                   </div>
                   <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
                     {conversations.map((c) => (
@@ -1822,9 +1823,11 @@ function AiModal({ isOpen, onClose }) {
                 </div>
               </div>
             </div>
-          </ModalBody>
+          </Modal.Body>
         )}
-      </ModalContent>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   )
 }

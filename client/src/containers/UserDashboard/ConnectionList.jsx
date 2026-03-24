@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Spacer, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -292,152 +292,170 @@ function ConnectionList() {
       )}
 
       <Spacer y={4} />
-      <Modal isOpen={connectionToDelete?.id} onClose={() => setConnectionToDelete(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Are you sure you want to delete this connection?</div>
-          </ModalHeader>
-          <ModalBody>
-            <div>
-              {"Just a heads-up that all the datasets and charts that use this connection will stop working. This action cannot be undone."}
-            </div>
-            {_getRelatedDatasets(connectionToDelete?.id).length === 0 && (
-              <div className="flex flex-row items-center">
-                <div className="italic">No related datasets found</div>
-              </div>
-            )}
-            {_getRelatedDatasets(connectionToDelete?.id).length > 0 && (
-              <div className="flex flex-row items-center">
-                <div>Related datasets:</div>
-              </div>
-            )}
-            <div className="flex flex-row flex-wrap items-center gap-1">
-              {_getRelatedDatasets(connectionToDelete?.id).slice(0, 10).map((dataset) => (
-                <Chip
-                  key={dataset.id}
+      <Modal>
+        <Modal.Backdrop isOpen={!!connectionToDelete?.id} onOpenChange={(nextOpen) => { if (!nextOpen) setConnectionToDelete(null); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Are you sure you want to delete this connection?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>
+                  {"Just a heads-up that all the datasets and charts that use this connection will stop working. This action cannot be undone."}
+                </div>
+                {_getRelatedDatasets(connectionToDelete?.id).length === 0 && (
+                  <div className="flex flex-row items-center">
+                    <div className="italic">No related datasets found</div>
+                  </div>
+                )}
+                {_getRelatedDatasets(connectionToDelete?.id).length > 0 && (
+                  <div className="flex flex-row items-center">
+                    <div>Related datasets:</div>
+                  </div>
+                )}
+                <div className="flex flex-row flex-wrap items-center gap-1">
+                  {_getRelatedDatasets(connectionToDelete?.id).slice(0, 10).map((dataset) => (
+                    <Chip
+                      key={dataset.id}
+                      size="sm"
+                      variant="flat"
+                      color="primary"
+                    >
+                      {getDatasetDisplayName(dataset)}
+                    </Chip>
+                  ))}
+                  {_getRelatedDatasets(connectionToDelete?.id).length > 10 && (
+                    <span className="text-xs">{`+${_getRelatedDatasets(connectionToDelete?.id).length - 10} more`}</span>
+                  )}
+                </div>
+              </Modal.Body>
+              <Modal.Footer className="justify-between">
+                <Checkbox
+                  onChange={() => setDeleteRelatedDatasets(!deleteRelatedDatasets)}
+                  isSelected={deleteRelatedDatasets}
                   size="sm"
-                  variant="flat"
-                  color="primary"
                 >
-                  {getDatasetDisplayName(dataset)}
-                </Chip>
-              ))}
-              {_getRelatedDatasets(connectionToDelete?.id).length > 10 && (
-                <span className="text-xs">{`+${_getRelatedDatasets(connectionToDelete?.id).length - 10} more`}</span>
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter className="justify-between">
-            <Checkbox
-              onChange={() => setDeleteRelatedDatasets(!deleteRelatedDatasets)}
-              isSelected={deleteRelatedDatasets}
-              size="sm"
-            >
-              Delete related datasets
-            </Checkbox>
-            <div className="flex flex-row items-center gap-1">
-              <Button
-                variant="bordered"
-                onPress={() => setConnectionToDelete(null)}
-                size="sm"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                color="danger"
-                endContent={<LuTrash />}
-                onPress={() => _onDeleteConnection()}
-                isLoading={deletingConnection}
-              >
-                Delete
-              </Button>
-            </div>
-          </ModalFooter>
-        </ModalContent>
+                  Delete related datasets
+                </Checkbox>
+                <div className="flex flex-row items-center gap-1">
+                  <Button
+                    slot="close"
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onPress={() => _onDeleteConnection()}
+                    isPending={deletingConnection}
+                  >
+                    Delete
+                    <LuTrash />
+                  </Button>
+                </div>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
-      <Modal isOpen={!!connectionToEdit} onClose={() => setConnectionToEdit(null)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Edit tags</div>
-          </ModalHeader>
-          <ModalBody>
-            <div className="flex flex-row flex-wrap items-center gap-2">
-              {projects.filter((p) => !p.ghost).map((project) => (
-                <Chip
-                  key={project.id}
-                  radius="sm"
-                  variant={connectionToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
-                  color="primary"
-                  className="cursor-pointer"
-                  onClick={() => {
-                    if (connectionToEdit?.project_ids?.includes(project.id)) {
-                      setConnectionToEdit({ ...connectionToEdit, project_ids: connectionToEdit?.project_ids?.filter((p) => p !== project.id) });
-                    }
-                    else {
-                      setConnectionToEdit({ ...connectionToEdit, project_ids: [...(connectionToEdit?.project_ids || []), project.id] });
-                    }
-                  }}
+      <Modal>
+        <Modal.Backdrop isOpen={!!connectionToEdit} onOpenChange={(nextOpen) => { if (!nextOpen) setConnectionToEdit(null); }}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-xl">
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Edit tags
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  {projects.filter((p) => !p.ghost).map((project) => (
+                    <Chip
+                      key={project.id}
+                      radius="sm"
+                      variant={connectionToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
+                      color="primary"
+                      className="cursor-pointer"
+                      onClick={() => {
+                        if (connectionToEdit?.project_ids?.includes(project.id)) {
+                          setConnectionToEdit({ ...connectionToEdit, project_ids: connectionToEdit?.project_ids?.filter((p) => p !== project.id) });
+                        }
+                        else {
+                          setConnectionToEdit({ ...connectionToEdit, project_ids: [...(connectionToEdit?.project_ids || []), project.id] });
+                        }
+                      }}
+                    >
+                      {project.name}
+                    </Chip>
+                  ))}
+                </div>
+                <Spacer y={1} />
+                <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+                  <div>
+                    <LuInfo />
+                  </div>
+                  {"Use tags to grant dashboard members access to these connections. Tagged connections can be used by members to create their own datasets within the associated dashboards."}
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
                 >
-                  {project.name}
-                </Chip>
-              ))}
-            </div>
-            <Spacer y={1} />
-            <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
-              <div>
-                <LuInfo />
-              </div>
-              {"Use tags to grant dashboard members access to these connections. Tagged connections can be used by members to create their own datasets within the associated dashboards."}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setConnectionToEdit(null)}
-            >
-              Close
-            </Button>
-            <Button
-              color="primary"
-              onPress={() => _onEditConnectionTags()}
-              isLoading={modifyingConnection}
-            >
-              Save
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={() => _onEditConnectionTags()}
+                  isPending={modifyingConnection}
+                >
+                  Save
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={!!viewingDuplicateModal} onClose={() => setViewingDuplicateModal(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Duplicate connection</div>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              placeholder="New connection name"
-              value={duplicateName}
-              onChange={(e) => setDuplicateName(e.target.value)}
-              variant="bordered"
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setViewingDuplicateModal(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={() => _onDuplicateConnection(viewingDuplicateModal)}
-              isLoading={duplicateLoading}
-            >
-              Duplicate
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!viewingDuplicateModal} onOpenChange={(nextOpen) => { if (!nextOpen) setViewingDuplicateModal(null); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Duplicate connection
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Input
+                  placeholder="New connection name"
+                  value={duplicateName}
+                  onChange={(e) => setDuplicateName(e.target.value)}
+                  variant="secondary"
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={() => _onDuplicateConnection(viewingDuplicateModal)}
+                  isPending={duplicateLoading}
+                >
+                  Duplicate
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, Code, Divider, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Chip, Code, Separator, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuPlus, LuSettings, LuSlack } from "react-icons/lu";
@@ -49,7 +48,7 @@ function SlackIntegrations() {
         {"Add Chartbrew's AI assistant to your Slack workspaces"}
       </div>
       <Spacer y={2} />
-      <Divider />
+      <Separator />
       <Spacer y={2} />
       <Table shadow={"none"} aria-label="Slack integrations" className="border-1 border-divider rounded-lg">
         <TableHeader>
@@ -99,13 +98,15 @@ function SlackIntegrations() {
         </TableBody>
       </Table>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
-        <ModalContent>
-          <ModalHeader className="font-bold">
+      <Modal>
+        <Modal.Backdrop isOpen={createOpen} onOpenChange={setCreateOpen}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-xl">
+              <Modal.Header className="font-bold">
             {"Install Chartbrew in your Slack workspace"}
-          </ModalHeader>
+              </Modal.Header>
           {SLACK_CLIENT_ID && (
-            <ModalBody>
+                <Modal.Body>
               <div>
                 1. Click the install button below to install Chartbrew in your Slack workspace.
               </div>
@@ -121,20 +122,22 @@ function SlackIntegrations() {
               <div>
                 4. Mention <Code size="sm">@Chartbrew</Code> in a channel and ask any question about your data.
               </div>
-            </ModalBody>
+                </Modal.Body>
           )}
           {!SLACK_CLIENT_ID && (
-            <ModalBody>
+                <Modal.Body>
               <div>
                 No Slack client ID found. Have a look at our docs to learn how to set up the Slack integration.
               </div>
               <a href="https://docs.chartbrew.com/integrations/slack" target="_blank" rel="noopener noreferrer" className="font-bold underline">Set up the Slack integration</a>
-            </ModalBody>
+                </Modal.Body>
           )}
-          <ModalFooter>
-            <Button onPress={() => setCreateOpen(false)} variant="bordered" size="sm">Close</Button>
-          </ModalFooter>
-        </ModalContent>
+              <Modal.Footer>
+                <Button onPress={() => setCreateOpen(false)} variant="bordered" size="sm">Close</Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

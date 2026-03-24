@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Card, Spacer, CircularProgress, CardHeader, CardBody, CardFooter, Divider,
+  Button, Card, Spacer, ProgressCircle, CardHeader, CardBody, CardFooter, Separator,
 } from "@heroui/react";
 import moment from "moment";
 import { LuChartColumn } from "react-icons/lu";
@@ -44,9 +44,9 @@ function CustomTemplates(props) {
 
   if (loading) {
     return (
-      <CircularProgress aria-label="Loading">
+      <ProgressCircle aria-label="Loading">
         Loading templates...
-      </CircularProgress>
+      </ProgressCircle>
     );
   }
 
@@ -109,7 +109,7 @@ function CustomTemplates(props) {
             <CardHeader>
               <Text b>{template.name}</Text>
             </CardHeader>
-            <Divider />
+            <Separator />
             <CardBody className="flex flex-col align-middle justify-center">
               <Row>
                 <LuChartColumn />
@@ -117,7 +117,7 @@ function CustomTemplates(props) {
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>
             </CardBody>
-            <Divider />
+            <Separator />
             <CardFooter>
               <span className="text-sm">{`Updated ${_getUpdatedTime(template.updatedAt)}`}</span>
             </CardFooter>

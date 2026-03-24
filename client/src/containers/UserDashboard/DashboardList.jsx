@@ -12,10 +12,6 @@ import {
   DropdownTrigger,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Spacer,
   Tab,
   Table,
@@ -529,68 +525,79 @@ function DashboardList() {
         </div>
       )}
 
-      <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Rename your dashboard</div>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              label="Dashboard name"
-              placeholder="Enter the dashboard name"
-              value={projectToEdit?.name || ""}
-              onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
-              variant="bordered"
-              fullWidth
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setProjectToEdit(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={() => _onEditProjectSubmit()}
-              disabled={!projectToEdit?.name || modifyingProject}
-              isLoading={modifyingProject}
-            >
-              Save
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!projectToEdit} onOpenChange={(nextOpen) => { if (!nextOpen) setProjectToEdit(null); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Rename your dashboard
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Input
+                  label="Dashboard name"
+                  placeholder="Enter the dashboard name"
+                  value={projectToEdit?.name || ""}
+                  onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                  variant="secondary"
+                  fullWidth
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={() => _onEditProjectSubmit()}
+                  isDisabled={!projectToEdit?.name || modifyingProject}
+                  isPending={modifyingProject}
+                >
+                  Save
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Are you sure you want to delete the dashboard?</div>
-          </ModalHeader>
-          <ModalBody>
-            <p>
-              {"Deleting a dashboard will delete all the charts and make the report unavailable. This action cannot be undone."}
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setProjectToDelete(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              auto
-              color="danger"
-              endContent={<LuTrash />}
-              onPress={() => _onDeleteProjectSubmit()}
-              isLoading={modifyingProject}
-            >
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!projectToDelete} onOpenChange={(nextOpen) => { if (!nextOpen) setProjectToDelete(null); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Are you sure you want to delete the dashboard?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p>
+                  {"Deleting a dashboard will delete all the charts and make the report unavailable. This action cannot be undone."}
+                </p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  onPress={() => _onDeleteProjectSubmit()}
+                  isPending={modifyingProject}
+                >
+                  Delete
+                  <LuTrash />
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

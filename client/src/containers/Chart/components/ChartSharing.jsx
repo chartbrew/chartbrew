@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import {
-  Button, Checkbox, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, 
+  Button, Checkbox, Input, Modal,
   Radio, RadioGroup, Spinner, Switch, Tooltip, Listbox, ListboxItem,
   Spacer,
   Chip,
@@ -608,90 +608,96 @@ function ChartSharing({ chart, isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="5xl" scrollBehavior="inside">
-      <ModalContent>
-        <ModalHeader className="flex flex-row justify-between items-center">
-          <div className="font-bold">Embed & share your chart</div>
-          <Switch
-            isSelected={chart.shareable}
-            onChange={_onToggleShareable}
-            size="sm"
-            className="mr-4"
-          >
-            Enable sharing
-          </Switch>
-        </ModalHeader>
-        <ModalBody>
-          {shareLoading && (
-            <div className="flex items-center justify-center py-4">
-              <Spinner size="sm" aria-label="Loading" />
-            </div>
-          )}
+    <Modal>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-5xl">
+            <Modal.Header className="flex flex-row items-center justify-between">
+              <Modal.Heading className="font-bold">
+                Embed & share your chart
+              </Modal.Heading>
+              <Switch
+                isSelected={chart.shareable}
+                onChange={_onToggleShareable}
+                size="sm"
+                className="mr-4"
+              >
+                Enable sharing
+              </Switch>
+            </Modal.Header>
+            <Modal.Body>
+              {shareLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <Spinner size="sm" aria-label="Loading" />
+                </div>
+              )}
 
-          {/* Enable/Disable Sharing Toggle */}
-          <div>
-            {chart.public && !chart.shareable && (
-              <div className="text-primary text-sm mt-2">
-                The chart is public. A public chart can be shared even if the sharing toggle is disabled.
+              {/* Enable/Disable Sharing Toggle */}
+              <div>
+                {chart.public && !chart.shareable && (
+                  <div className="text-primary text-sm mt-2">
+                    The chart is public. A public chart can be shared even if the sharing toggle is disabled.
+                  </div>
+                )}
+                {!chart.public && !chart.shareable && (
+                  <div className="text-primary text-sm mt-2">
+                    The chart is private. Enable sharing to allow others outside your team to see the chart.
+                  </div>
+                )}
               </div>
-            )}
-            {!chart.public && !chart.shareable && (
-              <div className="text-primary text-sm mt-2">
-                The chart is private. Enable sharing to allow others outside your team to see the chart.
-              </div>
-            )}
-          </div>
 
-          {/* Create sharing string button if needed */}
-          {(chart.public || chart.shareable) && (!chart.Chartshares || chart.Chartshares.length === 0) && (!chart.SharePolicies || chart.SharePolicies.length === 0) && (
-            <div className="mb-6">
+              {/* Create sharing string button if needed */}
+              {(chart.public || chart.shareable) && (!chart.Chartshares || chart.Chartshares.length === 0) && (!chart.SharePolicies || chart.SharePolicies.length === 0) && (
+                <div className="mb-6">
+                  <Button
+                    onPress={_onCreateSharingString}
+                    variant="primary"
+                    size="sm"
+                  >
+                    Create a sharing code
+                    <LuPlus />
+                  </Button>
+                </div>
+              )}
+
+              {/* Two-panel layout */}
+              {(chart.shareable || chart.public) && ((chart.Chartshares && chart.Chartshares.length > 0) || (chart.SharePolicies && chart.SharePolicies.length > 0)) && !shareLoading && (
+                <div className="grid grid-cols-12 gap-2 h-96">
+                  {/* Left panel - Share policies list */}
+                  <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r pr-4 overflow-y-auto max-h-96">
+                    {_renderPolicyList()}
+                  </div>
+
+                  {/* Right panel - Selected policy details */}
+                  <div className="col-span-12 md:col-span-8 pl-4 overflow-y-auto max-h-96">
+                    {_renderPolicyDetails()}
+                  </div>
+                </div>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              {_hasUnsavedChanges() && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={_onUpdatePolicy}
+                  isPending={isUpdating}
+                >
+                  <LuRefreshCcw size={16} />
+                  Regenerate link
+                </Button>
+              )}
               <Button
-                endContent={<LuPlus />}
-                onPress={_onCreateSharingString}
-                color="primary"
+                slot="close"
+                variant="secondary"
                 size="sm"
               >
-                Create a sharing code
+                Close
               </Button>
-            </div>
-          )}
-
-          {/* Two-panel layout */}
-          {(chart.shareable || chart.public) && ((chart.Chartshares && chart.Chartshares.length > 0) || (chart.SharePolicies && chart.SharePolicies.length > 0)) && !shareLoading && (
-            <div className="grid grid-cols-12 gap-2 h-96">
-              {/* Left panel - Share policies list */}
-              <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r pr-4 overflow-y-auto max-h-96">
-                {_renderPolicyList()}
-              </div>
-              
-              {/* Right panel - Selected policy details */}
-              <div className="col-span-12 md:col-span-8 pl-4 overflow-y-auto max-h-96">
-                {_renderPolicyDetails()}
-              </div>
-            </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          {_hasUnsavedChanges() && (
-            <Button
-              size="sm"
-              color="primary"
-              onPress={_onUpdatePolicy}
-              isLoading={isUpdating}
-              startContent={<LuRefreshCcw size={16} />}
-            >
-              Regenerate link
-            </Button>
-          )}
-          <Button
-            variant="bordered"
-            onPress={onClose}
-            size="sm"
-          >
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   )
 }

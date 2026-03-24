@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Doughnut } from "react-chartjs-2";
-import { semanticColors } from "@heroui/react";
+import { semanticColors } from "../../../lib/themeTokens";
 import {
   Chart as ChartJS,
   CategoryScale,

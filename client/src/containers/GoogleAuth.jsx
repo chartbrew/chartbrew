@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Spacer, Button, CircularProgress,
+  Spacer, Button, ProgressCircle,
 } from "@heroui/react";
 import cookie from "react-cookies";
 import { LuArrowRight } from "react-icons/lu";
@@ -80,7 +80,7 @@ function GoogleAuth() {
     >
       {loading && (
         <Row>
-          <CircularProgress aria-label="Authenticating with Google">Authenticating with Google...</CircularProgress>
+          <ProgressCircle aria-label="Authenticating with Google">Authenticating with Google...</ProgressCircle>
         </Row>
       )}
 

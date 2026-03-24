@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import {
-  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
+  Button, Input, Spacer, Link, Modal, Separator,
 } from "@heroui/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 import { useNavigate } from "react-router";
@@ -191,18 +191,18 @@ function LoginForm() {
             <Row justify="center" align="center">
               <Button
                 onPress={loginUser}
-                endContent={<LuChevronRight />}
                 size="lg"
-                color="primary"
-                isLoading={loading}
+                isPending={loading}
                 type="submit"
                 fullWidth
+                variant="primary"
               >
-                {"Login"}
+                Login
+                <LuChevronRight />
               </Button>
             </Row>
             <Spacer y={4} />
-            <Divider />
+            <Separator />
             <Spacer y={2} />
             <Row justify="center" align="center">
               <Link
@@ -239,60 +239,67 @@ function LoginForm() {
           <div>
             <Button
               onPress={_onValidateToken}
-              endContent={<LuChevronRight />}
               size="lg"
-              color="primary"
-              isLoading={loading}
+              isPending={loading}
               type="submit"
               fullWidth
               isDisabled={!otpToken}
+              variant="primary"
             >
-              {"Login"}
+              Login
+              <LuChevronRight />
             </Button>
           </div>
         </form>
       )}
 
-      <Modal isOpen={forgotModal} onClose={() => setForgotModal(false)} closeButton>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">Reset your password</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              label="Enter your email here"
-              fullWidth
-              onChange={(e) => setResetEmail(e.target.value)}
-              contentRight={<LuMail />}
-              variant="bordered"
-            />
-            {resetDone && (
-            <Row>
-              <Text color="green">{"We will send further instructions over email if the address is registered with Chartbrew."}</Text>
-            </Row>
-            )}
-            {resetError && (
-            <Row>
-              <Text color={negative}>{resetError}</Text>
-            </Row>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button onPress={() => setForgotModal(false)} variant="bordered">
-              Close
-            </Button>
-            <Button
-              isDisabled={resetDone}
-              onPress={_onSendResetRequest}
-              isLoading={resetLoading}
-              color="primary"
-              variant={resetDone ? "flat" : "solid"}
-            >
-              {resetDone ? "Request received" : "Send password reset email"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Modal.Backdrop
+        isOpen={forgotModal}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setForgotModal(false);
+        }}
+      >
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>Reset your password</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <Input
+                label="Enter your email here"
+                fullWidth
+                onChange={(e) => setResetEmail(e.target.value)}
+                contentRight={<LuMail />}
+                variant="bordered"
+              />
+              {resetDone && (
+              <Row>
+                <Text color="green">{"We will send further instructions over email if the address is registered with Chartbrew."}</Text>
+              </Row>
+              )}
+              {resetError && (
+              <Row>
+                <Text color={negative}>{resetError}</Text>
+              </Row>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onPress={() => setForgotModal(false)} variant="secondary">
+                Close
+              </Button>
+              <Button
+                isDisabled={resetDone}
+                isPending={resetLoading}
+                onPress={_onSendResetRequest}
+                variant={resetDone ? "tertiary" : "primary"}
+              >
+                {resetDone ? "Request received" : "Send password reset email"}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

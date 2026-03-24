@@ -2,7 +2,7 @@ import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
-import { semanticColors } from "@heroui/theme";
+import { semanticColors } from "../lib/themeTokens";
 import { Helmet } from "react-helmet-async";
 
 import SuspenseLoader from "../components/SuspenseLoader";
@@ -32,7 +32,7 @@ import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
 import SharedChart from "./SharedChart";
 import Report from "./PublicDashboard/Report";
-import { Button, Modal, ModalBody, ModalContent, ModalFooter } from "@heroui/react";
+import { Button, Modal } from "@heroui/react";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -284,25 +284,28 @@ function Main(props) {
         </div>
       </div>
 
-      <Modal
+      <Modal.Backdrop
         isOpen={feedbackModal}
-        onClose={() => dispatch(hideFeedbackModal())}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) dispatch(hideFeedbackModal());
+        }}
       >
-        <ModalContent>
-          <ModalBody>
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Body>
             <FeedbackForm />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              color="warning"
-              onPress={() => dispatch(hideFeedbackModal())}
-            >
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                onPress={() => dispatch(hideFeedbackModal())}
+                variant="tertiary"
+              >
+                Cancel
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
         <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />

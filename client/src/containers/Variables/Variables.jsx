@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { Button, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
+import { Button, Code, Input, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createVariable, deleteVariable, selectProject } from "../../slices/project"
@@ -108,65 +108,77 @@ function Variables() {
         </TableBody>
       </Table>
 
-      <Modal isOpen={createModal} onClose={() => setCreateModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="text-lg font-bold">Create Variable</div>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              variant="bordered"
-              label="Variable name"
-              placeholder="Enter a variable name"
-              description="Cannot contain spaces or start with numbers"
-              errorMessage={saveError}
-              onChange={(e) => setVariableName(e.target.value)}
-              value={variableName}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onClick={() => setCreateModal(false)}
-            >
-              Close
-            </Button>
-            <Button
-              color="primary"
-              isLoading={saveLoading}
-              onClick={_onSubmitVariable}
-            >
-              Create
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={createModal} onOpenChange={setCreateModal}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-lg font-bold">
+                  Create Variable
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Input
+                  variant="secondary"
+                  label="Variable name"
+                  placeholder="Enter a variable name"
+                  description="Cannot contain spaces or start with numbers"
+                  errorMessage={saveError}
+                  onChange={(e) => setVariableName(e.target.value)}
+                  value={variableName}
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="secondary"
+                  slot="close"
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  isPending={saveLoading}
+                  onPress={_onSubmitVariable}
+                >
+                  Create
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={deleteModal} onClose={() => setDeleteModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="text-lg font-bold">Delete Variable</div>
-          </ModalHeader>
-          <ModalBody>
-            <div>{"Are you sure you want to delete this variable? This variable will stop working if you use it in your project."}</div>
-            {deleteError && <div className="text-red-500">{"An error occurred while deleting the variable."}</div>}
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onClick={() => setDeleteModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              isLoading={deleteLoading}
-              onClick={() => _onDeleteVariableConfirm(deleteModal)}
-            >
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={deleteModal} onOpenChange={setDeleteModal}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-lg font-bold">
+                  Delete Variable
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>{"Are you sure you want to delete this variable? This variable will stop working if you use it in your project."}</div>
+                {deleteError && <div className="text-red-500">{"An error occurred while deleting the variable."}</div>}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="secondary"
+                  slot="close"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  isPending={deleteLoading}
+                  onPress={() => _onDeleteVariableConfirm(deleteModal)}
+                >
+                  Delete
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </Segment>
   )

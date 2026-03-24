@@ -1,63 +1,5 @@
 import React from "react";
-import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
-
-const text = tv({
-  base: "text-base",
-  variants: {
-    small: {
-      true: "text-sm",
-    },
-    h4: {
-      true: "text-lg",
-    },
-    h3: {
-      true: "text-xl",
-    },
-    h2: {
-      true: "text-2xl"
-    },
-    h1: {
-      true: "text-3xl",
-    },
-    b: {
-      true: "font-bold",
-    },
-    i: {
-      true: "italic",
-    },
-    size: {
-      xs: "text-xs",
-      sm: "text-sm",
-      md: "text-md",
-      lg: "text-lg",
-      xl: "text-xl",
-      h5: "text-md font-bold",
-      h4: "text-lg font-bold",
-      h3: "text-xl font-bold",
-      h2: "text-2xl font-bold",
-      h1: "text-3xl font-bold",
-    },
-    variant: {
-      b: "font-bold",
-      i: "italic",
-      small: "text-sm",
-    },
-    color: {
-      primary: "text-primary",
-      secondary: "text-secondary",
-      success: "text-success",
-      warning: "text-warning",
-      danger: "text-danger",
-      default: "text-foreground",
-      gray: "text-default-500",
-    }
-  },
-  defaultVariants: {
-    size: "md",
-    color: "default",
-  }
-})
 
 function Text(props) {
   const {
@@ -73,8 +15,32 @@ function Text(props) {
     variant = "",
     className = "",
   } = props;
+  const sizeClass = {
+    xs: "text-xs",
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+    xl: "text-xl",
+    h5: "text-base font-bold",
+    h4: "text-lg font-bold",
+    h3: "text-xl font-bold",
+    h2: "text-2xl font-bold",
+    h1: "text-3xl font-bold",
+  }[size] || "text-base";
+  const colorClass = {
+    primary: "text-primary",
+    secondary: "text-secondary",
+    success: "text-success",
+    warning: "text-warning",
+    danger: "text-danger",
+    default: "text-foreground",
+    gray: "text-default-500",
+  }[color] || "text-foreground";
+
   return (
-    <span className={`${text({ size, color, h1, h2, h3, h4, small, b, variant })} ${className}`}>
+    <span
+      className={`${sizeClass} ${colorClass} ${h1 ? "text-3xl" : ""} ${h2 ? "text-2xl" : ""} ${h3 ? "text-xl" : ""} ${h4 ? "text-lg" : ""} ${small ? "text-sm" : ""} ${b || variant === "b" ? "font-bold" : ""} ${variant === "i" ? "italic" : ""} ${variant === "small" ? "text-sm" : ""} ${className}`}
+    >
       {children}
     </span>
   );

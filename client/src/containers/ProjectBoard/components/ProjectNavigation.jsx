@@ -4,8 +4,7 @@ import { useWindowSize } from "react-use";
 import { Link, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
-  Link as LinkNext, Tooltip, Spacer, Button, Modal, ModalHeader, ModalBody,ModalFooter,
-  ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
+  Link as LinkNext, Tooltip, Spacer, Button, Modal, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
@@ -18,7 +17,6 @@ import {
   dark, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
-import Text from "../../../components/Text";
 import { selectProject, selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 
@@ -348,36 +346,39 @@ function ProjectNavigation(props) {
         </div>
       </nav>
 
-      <Modal isOpen={showUpdate} closeButton onClose={() => setShowUpdate(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">{`${update.tag_name} is available`}</Text>
-          </ModalHeader>
-          <ModalBody>
-            <ReactMarkdown>{update.body}</ReactMarkdown>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              color="warning"
-              auto
-              onPress={() => setShowUpdate(false)}
-            >
-              Close
-            </Button>
-            <LinkNext
-              href={`https://github.com/chartbrew/chartbrew/releases/tag/${update.tag_name}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Button
-                auto
-              >
-                Check the release
-              </Button>
-            </LinkNext>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={showUpdate} onOpenChange={(nextOpen) => { if (!nextOpen) setShowUpdate(false); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.CloseTrigger />
+              <Modal.Header>
+                <Modal.Heading className="text-xl font-semibold">
+                  {`${update.tag_name} is available`}
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <ReactMarkdown>{update.body}</ReactMarkdown>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="tertiary"
+                >
+                  Close
+                </Button>
+                <LinkNext
+                  href={`https://github.com/chartbrew/chartbrew/releases/tag/${update.tag_name}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button variant="primary">
+                    Check the release
+                  </Button>
+                </LinkNext>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

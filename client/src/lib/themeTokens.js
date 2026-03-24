@@ -1,0 +1,190 @@
+export const commonColors = {
+  zinc: {
+    50: "#fafafa",
+    100: "#f4f4f5",
+    200: "#e4e4e7",
+    300: "#d4d4d8",
+    400: "#a1a1aa",
+    500: "#71717a",
+    600: "#52525b",
+    700: "#3f3f46",
+    800: "#27272a",
+    900: "#18181b",
+  },
+};
+
+const primary = {
+  100: "#CBEAFD",
+  200: "#98E7FB",
+  300: "#64CFF5",
+  400: "#3DA8EB",
+  500: "#048BDE",
+  600: "#0276BE",
+  700: "#02639F",
+  800: "#014F80",
+  900: "#00416A",
+  DEFAULT: "#048BDE",
+};
+
+const secondary = {
+  100: "#FEEDD9",
+  200: "#FDD6B3",
+  300: "#FAB98C",
+  400: "#F69C6F",
+  500: "#F17041",
+  600: "#CF4F2F",
+  700: "#AD3220",
+  800: "#8B1B14",
+  900: "#730C0D",
+  DEFAULT: "#F17041",
+};
+
+const success = {
+  100: "#dcfce7",
+  200: "#bbf7d0",
+  300: "#86efac",
+  400: "#4ade80",
+  500: "#22c55e",
+  600: "#16a34a",
+  700: "#15803d",
+  800: "#166534",
+  900: "#14532d",
+  DEFAULT: "#22c55e",
+};
+
+const warning = {
+  100: "#fef3c7",
+  200: "#fde68a",
+  300: "#fcd34d",
+  400: "#fbbf24",
+  500: "#f59e0b",
+  600: "#d97706",
+  700: "#b45309",
+  800: "#92400e",
+  900: "#78350f",
+  DEFAULT: "#f59e0b",
+};
+
+const danger = {
+  100: "#fee2e2",
+  200: "#fecaca",
+  300: "#fca5a5",
+  400: "#f87171",
+  500: "#ef4444",
+  600: "#dc2626",
+  700: "#b91c1c",
+  800: "#991b1b",
+  900: "#7f1d1d",
+  DEFAULT: "#ef4444",
+};
+
+export const semanticColors = {
+  light: {
+    primary,
+    secondary,
+    success,
+    warning,
+    danger,
+    default: {
+      50: "#fafafa",
+      100: "#f4f4f5",
+      200: "#e4e4e7",
+      300: "#d4d4d8",
+      400: "#a1a1aa",
+      500: "#71717a",
+      600: "#52525b",
+      700: "#3f3f46",
+      800: "#27272a",
+      900: "#18181b",
+      DEFAULT: "#f4f4f5",
+      foreground: "#11181C",
+    },
+    foreground: {
+      50: "#fafafa",
+      100: "#f4f4f5",
+      200: "#e4e4e7",
+      300: "#d4d4d8",
+      400: "#a1a1aa",
+      500: "#71717a",
+      600: "#52525b",
+      700: "#3f3f46",
+      800: "#27272a",
+      900: "#18181b",
+      DEFAULT: "#11181C",
+    },
+    content1: {
+      DEFAULT: "#FFFFFF",
+      foreground: "#11181C",
+    },
+    content2: {
+      DEFAULT: "#f7f7f7",
+      foreground: "#27272a",
+    },
+    content3: {
+      DEFAULT: "#e4e4e7",
+      foreground: "#3f3f46",
+    },
+    content4: {
+      DEFAULT: "#d4d4d8",
+      foreground: "#52525b",
+    },
+    background: {
+      DEFAULT: "#F2F6FB",
+      foreground: "#11181C",
+    },
+  },
+  dark: {
+    primary,
+    secondary,
+    success,
+    warning,
+    danger,
+    default: {
+      50: "#18181b",
+      100: "#27272a",
+      200: "#3f3f46",
+      300: "#52525b",
+      400: "#71717a",
+      500: "#a1a1aa",
+      600: "#d4d4d8",
+      700: "#e4e4e7",
+      800: "#f4f4f5",
+      900: "#fafafa",
+      DEFAULT: "#27272a",
+      foreground: "#ECEDEE",
+    },
+    foreground: {
+      50: "#18181b",
+      100: "#27272a",
+      200: "#3f3f46",
+      300: "#52525b",
+      400: "#71717a",
+      500: "#a1a1aa",
+      600: "#d4d4d8",
+      700: "#e4e4e7",
+      800: "#f4f4f5",
+      900: "#fafafa",
+      DEFAULT: "#ECEDEE",
+    },
+    content1: {
+      DEFAULT: "#050f14",
+      foreground: "#fafafa",
+    },
+    content2: {
+      DEFAULT: "#070d13",
+      foreground: "#f4f4f5",
+    },
+    content3: {
+      DEFAULT: "#3f3f46",
+      foreground: "#e4e4e7",
+    },
+    content4: {
+      DEFAULT: "#52525b",
+      foreground: "#d4d4d8",
+    },
+    background: {
+      DEFAULT: "#03070a",
+      foreground: "#ECEDEE",
+    },
+  },
+};

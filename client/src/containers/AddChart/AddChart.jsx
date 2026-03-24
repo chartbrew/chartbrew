@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Spacer, Tooltip, Input, Button, CircularProgress, Switch, Alert,
+  Link as LinkNext, Spacer, Tooltip, Input, Button, ProgressCircle, Switch, Alert,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
@@ -456,7 +456,7 @@ function AddChart() {
   if (params.chartId && !newChart?.id) {
     return (
       <div className="flex min-h-[240px] items-center justify-center">
-        <CircularProgress aria-label="Loading chart" />
+        <ProgressCircle aria-label="Loading chart" />
       </div>
     );
   }

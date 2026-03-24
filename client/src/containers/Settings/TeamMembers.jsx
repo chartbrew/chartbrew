@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
+  Chip, Button, Checkbox, Separator, Dropdown, Modal, Spacer, Table, Tooltip, ProgressCircle,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
-  DropdownTrigger, ModalHeader, ModalBody, ModalFooter, ModalContent, Code,
+  DropdownTrigger, Code,
   Input,
 } from "@heroui/react";
 import _ from "lodash";
@@ -187,7 +187,7 @@ function TeamMembers(props) {
   if (!team) {
     return (
       <div>
-        <CircularProgress size="lg" aria-label="Loading team" />
+        <ProgressCircle size="lg" aria-label="Loading team" />
       </div>
     );
   }
@@ -380,136 +380,153 @@ function TeamMembers(props) {
       </div>
 
       {/* Remove user modal */}
-      <Modal isOpen={!!deleteMember} backdrop="blur" onClose={() => setDeleteMember(false)}>
-        <ModalContent>
-          <ModalHeader>
-            Are you sure you want to remove the user from the team?
-          </ModalHeader>
-          <ModalBody>
-            <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setDeleteMember(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              isLoading={loading}
-              onPress={() => _onDeleteTeamMember(deleteMember)}
-              endContent={<LuX />}
-            >
-              Remove
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop variant="blur" isOpen={!!deleteMember} onOpenChange={(nextOpen) => { if (!nextOpen) setDeleteMember(false); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-xl font-semibold">
+                  Are you sure you want to remove the user from the team?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  isPending={loading}
+                  onPress={() => _onDeleteTeamMember(deleteMember)}
+                >
+                  Remove
+                  <LuX />
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {/* Project access modal */}
-      <Modal isOpen={projectModal} onClose={() => setProjectModal(false)} size="4xl">
-        <ModalContent>
-          <ModalHeader>
-            Assign project access
-          </ModalHeader>
-          <ModalBody>
-            {changedMember && projectAccess[changedMember.id] && (
-              <>
-                <div>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</div>
-                <div className="flex flex-wrap items-center gap-1">
-                  <div>{"You are currently giving"}</div>
-                  <Code>{`${projectAccess[changedMember.id].role}`}</Code>
-                  <div>{`access to ${changedMember.name}`}</div>
-                  <div>{"for the following projects:"}</div>
-                </div>
-                <Spacer y={1} />
+      <Modal>
+        <Modal.Backdrop isOpen={projectModal} onOpenChange={setProjectModal}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-4xl">
+              <Modal.Header>
+                <Modal.Heading className="text-xl font-semibold">
+                  Assign project access
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                {changedMember && projectAccess[changedMember.id] && (
+                  <>
+                    <div>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <div>{"You are currently giving"}</div>
+                      <Code>{`${projectAccess[changedMember.id].role}`}</Code>
+                      <div>{`access to ${changedMember.name}`}</div>
+                      <div>{"for the following projects:"}</div>
+                    </div>
+                    <Spacer y={1} />
 
-                <div className="grid grid-cols-12 gap-1">
-                  {projects && projects.filter((p) => !p.ghost).map((project) => (
-                    <div className="col-span-12 sm:col-span-6 md:col-span-4" key={project.id}>
-                      <Checkbox
-                        isSelected={
-                          _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
-                        }
-                        onChange={() => _onChangeProjectAccess(project.id)}
+                    <div className="grid grid-cols-12 gap-1">
+                      {projects && projects.filter((p) => !p.ghost).map((project) => (
+                        <div className="col-span-12 sm:col-span-6 md:col-span-4" key={project.id}>
+                          <Checkbox
+                            isSelected={
+                              _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
+                            }
+                            onChange={() => _onChangeProjectAccess(project.id)}
+                          >
+                            {project.name}
+                          </Checkbox>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Spacer y={1} />
+                    <Separator />
+                    <Spacer y={1} />
+
+                    <div className="flex flex-row items-center gap-1">
+                      <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>
+                      <Tooltip
+                        content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
                       >
-                        {project.name}
+                        <div><LuInfo /></div>
+                      </Tooltip>
+                    </div>
+                    <div>
+                      <Checkbox
+                        isSelected={changedRole.canExport}
+                        onChange={_onChangeExport}
+                      >
+                        Allow data export
                       </Checkbox>
                     </div>
-                  ))}
-                </div>
-
-                <Spacer y={1} />
-                <Divider />
-                <Spacer y={1} />
-
-                <div className="flex flex-row items-center gap-1">
-                  <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>
-                  <Tooltip
-                    content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-                  >
-                    <div><LuInfo /></div>
-                  </Tooltip>
-                </div>
-                <div>
-                  <Checkbox
-                    isSelected={changedRole.canExport}
-                    onChange={_onChangeExport}
-                  >
-                    Allow data export
-                  </Checkbox>
-                </div>
-              </>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setProjectModal(false)}
-            >
-              Done
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+                  </>
+                )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Done
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {/* Transfer ownership modal */}
-      <Modal isOpen={!!transferOwnershipMember} onClose={() => setTransferOwnershipMember(null)} size="lg">
-        <ModalContent>
-          <ModalHeader className="font-bold">
-            Are you sure you want to transfer ownership?
-          </ModalHeader>
-          <ModalBody>
-            <div>
-              {`You are about to transfer ownership of the team to ${transferOwnershipMember?.name}.`}
-            </div>
-            <div>
-              {`This action will make ${transferOwnershipMember?.name} the new owner of the team. They will have full access to the team and all its resources, while you will become an admin.`}
-            </div>
-            <div>
-              <Input
-                label={<div>Type <span className="font-bold">transfer</span> to confirm</div>}
-                value={transferConfirmation}
-                onChange={(e) => setTransferConfirmation(e.target.value)}
-                variant="bordered"
-                color={transferConfirmation === "transfer" ? "success" : "default"}
-                endContent={transferConfirmation === "transfer" && <LuCircleCheck size={18} className="text-success" />}
-              />
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={() => setTransferOwnershipMember(null)}>Cancel</Button>
-            <Button
-              color="primary"
-              isLoading={transfering}
-              onPress={_onTransferOwnership}
-              isDisabled={transferConfirmation !== "transfer"}
-            >
-              Transfer ownership
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!transferOwnershipMember} onOpenChange={(nextOpen) => { if (!nextOpen) setTransferOwnershipMember(null); }}>
+          <Modal.Container size="lg">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="font-bold">
+                  Are you sure you want to transfer ownership?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>
+                  {`You are about to transfer ownership of the team to ${transferOwnershipMember?.name}.`}
+                </div>
+                <div>
+                  {`This action will make ${transferOwnershipMember?.name} the new owner of the team. They will have full access to the team and all its resources, while you will become an admin.`}
+                </div>
+                <div>
+                  <Input
+                    label={<div>Type <span className="font-bold">transfer</span> to confirm</div>}
+                    value={transferConfirmation}
+                    onChange={(e) => setTransferConfirmation(e.target.value)}
+                    variant="secondary"
+                    endContent={transferConfirmation === "transfer" && <LuCircleCheck size={18} className="text-success" />}
+                  />
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button slot="close" variant="secondary">Cancel</Button>
+                <Button
+                  variant="primary"
+                  isPending={transfering}
+                  onPress={_onTransferOwnership}
+                  isDisabled={transferConfirmation !== "transfer"}
+                >
+                  Transfer ownership
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

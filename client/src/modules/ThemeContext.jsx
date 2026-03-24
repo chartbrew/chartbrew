@@ -52,6 +52,15 @@ export const ThemeProvider = ({ children }) => { // eslint-disable-line
     }
   }, [theme]);
 
+  useEffect(() => {
+    const nextTheme = isDark ? "dark" : "light";
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.body.classList.remove("light", "dark");
+    document.body.classList.add(nextTheme);
+  }, [isDark]);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
       {children}

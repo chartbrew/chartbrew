@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, Spacer, CircularProgress, PopoverTrigger, PopoverContent,
+  Popover, Link, Spacer, ProgressCircle, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
   Dropdown,
@@ -311,7 +311,7 @@ function SharedChart() {
               )}
               {dataLoading && !isSnapshot && (
                 <>
-                  <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
+                  <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
                   <Spacer x={1} />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>
@@ -363,7 +363,7 @@ function SharedChart() {
               </DropdownTrigger>
               <DropdownMenu>
                 <DropdownItem
-                  startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                  startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                   onClick={() => _onPublicExport(chart)}
                   textValue="Export to Excel"
                 >

@@ -1,52 +1,5 @@
 import React from "react";
-import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
-
-const row = tv({
-  base: "flex flex-row",
-  variants: {
-    align: {
-      start: "items-start",
-      center: "items-center",
-      end: "items-end",
-      stretch: "items-stretch",
-      baseline: "items-baseline",
-    },
-    justify: {
-      "flex-start": "justify-start",
-      "center": "justify-center",
-      "flex-end": "justify-end",
-      "flex-between": "justify-between",
-      "flex-around": "justify-around",
-      "flex-evenly": "justify-evenly",
-      "start": "justify-start",
-      "end": "justify-end",
-      "space-between": "justify-between",
-      "space-around": "justify-around",
-      "space-evenly": "justify-evenly",
-    },
-    content: {
-      start: "content-start",
-      center: "content-center",
-      end: "content-end",
-      between: "content-between",
-      around: "content-around",
-      evenly: "content-evenly",
-      stretch: "content-stretch",
-    },
-    wrap: {
-      none: "flex-nowrap",
-      reverse: "flex-wrap-reverse",
-      wrap: "flex-wrap",
-    },
-  },
-  defaultVariants: {
-    align: "start",
-    justify: "start",
-    content: "start",
-    wrap: "none",
-  },
-});
 
 function Row(props) {
   const {
@@ -57,8 +10,43 @@ function Row(props) {
     wrap = "none",
     className = ""
   } = props;
+  const alignClass = {
+    start: "items-start",
+    center: "items-center",
+    end: "items-end",
+    stretch: "items-stretch",
+    baseline: "items-baseline",
+  }[align] || "items-start";
+  const justifyClass = {
+    "flex-start": "justify-start",
+    center: "justify-center",
+    "flex-end": "justify-end",
+    "flex-between": "justify-between",
+    "flex-around": "justify-around",
+    "flex-evenly": "justify-evenly",
+    start: "justify-start",
+    end: "justify-end",
+    "space-between": "justify-between",
+    "space-around": "justify-around",
+    "space-evenly": "justify-evenly",
+  }[justify] || "justify-start";
+  const contentClass = {
+    start: "content-start",
+    center: "content-center",
+    end: "content-end",
+    between: "content-between",
+    around: "content-around",
+    evenly: "content-evenly",
+    stretch: "content-stretch",
+  }[content] || "content-start";
+  const wrapClass = {
+    none: "flex-nowrap",
+    reverse: "flex-wrap-reverse",
+    wrap: "flex-wrap",
+  }[wrap] || "flex-nowrap";
+
   return (
-    <div className={`${row({ align, justify, content, wrap })} ${className}`}>
+    <div className={`flex flex-row ${alignClass} ${justifyClass} ${contentClass} ${wrapClass} ${className}`}>
       {children}
     </div>
   )

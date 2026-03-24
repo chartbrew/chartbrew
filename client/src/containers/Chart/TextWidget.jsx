@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import PropTypes from "prop-types"
 import {
-  Card, CardBody, Textarea, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Link as LinkNext,
-  Kbd, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+  Card, CardBody, TextArea, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Link as LinkNext,
+  Kbd, Modal, Button,
   ButtonGroup,
   CardFooter,
   Tooltip,
@@ -338,7 +338,7 @@ function TextWidget({
                     </div>
                     <Spacer y={2} />
                     <div className="flex flex-col h-full">
-                      <Textarea
+                      <TextArea
                         value={content}
                         onChange={(e) => _onEditContent(e.target.value)}
                         placeholder="Enter markdown text here..."
@@ -471,17 +471,19 @@ function TextWidget({
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal isOpen={deleteModal} onClose={() => setDeleteModal(false)} backdrop="blur">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={deleteModal} onOpenChange={setDeleteModal} variant="blur">
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
             <div className="font-bold">Remove the widget?</div>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <div className="text-sm">
               {"The widget will be removed from the dashboard and you won't be able to see it anymore."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button
               variant="bordered"
               onPress={() => setDeleteModal(false)}
@@ -497,8 +499,10 @@ function TextWidget({
             >
               Remove completely
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </motion.div>
   );

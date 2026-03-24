@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, Spacer, Textarea,
+  Button, Input, Spacer, TextArea,
 } from "@heroui/react";
 
 import { selectUser, sendFeedback } from "../slices/user";
@@ -60,7 +60,7 @@ function FeedbackForm() {
       </Row>
       <Spacer y={1} />
       <Row>
-        <Textarea
+        <TextArea
           onChange={(e) => setFeedback(e.target.value)}
           name="feedback"
           label="Your Comments"

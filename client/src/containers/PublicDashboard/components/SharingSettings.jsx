@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Divider, Input, Spacer, Switch, Textarea, Tooltip, RadioGroup, Radio,
+  Button, Separator, Input, Spacer, Switch, TextArea, Tooltip, RadioGroup, Radio,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
   Alert,
 } from "@heroui/react";
@@ -378,7 +378,7 @@ function SharingSettings(props) {
               <Spacer y={2} />
               <div className="text-sm font-medium">Embedding Code</div>
               <div>
-                <Textarea
+                <TextArea
                   value={_getSignedEmbedString()}
                   fullWidth
                   readOnly
@@ -636,7 +636,7 @@ function SharingSettings(props) {
             </>
           )}
 
-          <Divider />
+          <Separator />
 
           <div className="font-medium text-gray-500">Customize your Report URL</div>
           <Input
@@ -667,7 +667,7 @@ function SharingSettings(props) {
             </Button>
           </Row>
 
-          <Divider />
+          <Separator />
 
           <div className="flex flex-col gap-2">
             <div className="font-medium text-gray-500">Share Links</div>
@@ -739,7 +739,7 @@ function SharingSettings(props) {
                     </div>
 
                     <Spacer y={4} />
-                    <Divider />
+                    <Separator />
                     <Spacer y={4} />
 
                     {_renderPolicyDetails()}
@@ -779,7 +779,7 @@ function SharingSettings(props) {
             </div>
           )}
 
-          <Divider />
+          <Separator />
           
           <Row align="center">
             <Switch

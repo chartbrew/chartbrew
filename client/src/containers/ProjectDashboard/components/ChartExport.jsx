@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Divider, Spacer, Tooltip, Link as LinkNext,
+  Button, Checkbox, Separator, Spacer, Tooltip, Link as LinkNext,
 } from "@heroui/react";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
 
@@ -93,7 +93,7 @@ function ChartExport(props) {
 
       {showDisabled && (
         <>
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           {charts && charts.filter((c) => c.disabledExport).length > 0 && (
             <div>

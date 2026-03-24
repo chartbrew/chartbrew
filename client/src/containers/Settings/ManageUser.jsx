@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Button, Separator, Input, ProgressCircle, Modal, Spacer, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Alert,
 } from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -205,7 +205,7 @@ function ManageUser() {
   if (!user.name) {
     return (
       <div>
-        <CircularProgress aria-label="Loading" size="lg" />
+        <ProgressCircle aria-label="Loading" size="lg" />
       </div>
     );
   }
@@ -291,7 +291,7 @@ function ManageUser() {
       </div>
 
       <Spacer y={4} />
-      <Divider />
+      <Separator />
       <Spacer y={4} />
 
       <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
@@ -406,7 +406,7 @@ function ManageUser() {
       )}
 
       <Spacer y={4} />
-      <Divider />
+      <Separator />
       <Spacer y={4} />
 
       <div className="text-lg font-semibold font-tw">Danger zone</div>
@@ -424,68 +424,80 @@ function ManageUser() {
 
       <Spacer y={4} />
 
-      <Modal backdrop="blur" isOpen={openDeleteModal} size="xl" onClose={() => setOpenDeleteModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="text-lg font-semibold font-tw">Delete Account</div>
-          </ModalHeader>
-          <ModalBody>
-            <div>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</div>
-            <div>{"We cannot reverse this action as all the content is deleted immediately."}</div>
-            <div>{"We recommend you to transfer the ownership of your team to another user before deleting your account."}</div>
-            <div className="flex flex-col gap-1">
-              <Input
-                label="Confirm your email"
-                placeholder={`Enter ${userProp.email} to confirm`}
-                variant="bordered"
-                onChange={(e) => setConfirmationText(e.target.value)}
-                fullWidth
-                description={confirmationText ? userProp.email : ""}
-              />
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              onPress={() => setOpenDeleteModal(false)}
-              variant="bordered"
-            >
-              {"Go back"}
-            </Button>
-            <Button
-              color="danger"
-              onPress={_onDeleteUser}
-              isLoading={loading}
-              isDisabled={confirmationText !== userProp.email}
-            >
-              {"Delete forever"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop variant="blur" isOpen={openDeleteModal} onOpenChange={setOpenDeleteModal}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-xl">
+              <Modal.Header>
+                <Modal.Heading className="text-lg font-semibold font-tw">
+                  Delete Account
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</div>
+                <div>{"We cannot reverse this action as all the content is deleted immediately."}</div>
+                <div>{"We recommend you to transfer the ownership of your team to another user before deleting your account."}</div>
+                <div className="flex flex-col gap-1">
+                  <Input
+                    label="Confirm your email"
+                    placeholder={`Enter ${userProp.email} to confirm`}
+                    variant="secondary"
+                    onChange={(e) => setConfirmationText(e.target.value)}
+                    fullWidth
+                    description={confirmationText ? userProp.email : ""}
+                  />
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  {"Go back"}
+                </Button>
+                <Button
+                  variant="danger"
+                  onPress={_onDeleteUser}
+                  isPending={loading}
+                  isDisabled={confirmationText !== userProp.email}
+                >
+                  {"Delete forever"}
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={!!updateEmailToken}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="text-lg font-semibold font-tw">Update email</div>
-          </ModalHeader>
-          <ModalBody>
-            <div>Are you sure you want to update your email?</div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setUpdateEmailToken("")}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={_onUpdateEmailConfirm}
-            >
-              Confirm
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!updateEmailToken} onOpenChange={(nextOpen) => { if (!nextOpen) setUpdateEmailToken(""); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-lg font-semibold font-tw">
+                  Update email
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>Are you sure you want to update your email?</div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={_onUpdateEmailConfirm}
+                >
+                  Confirm
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {deleteUserError && (
@@ -498,42 +510,48 @@ function ManageUser() {
         </div>
       )}
 
-      <Modal isOpen={!!removeMethod} onClose={() => setRemoveMethod(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="text-lg font-semibold font-tw">Remove 2FA method</div>
-          </ModalHeader>
-          <ModalBody>
-            <div>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</div>
-            <div>To proceed with the deletion, please confirm your Chartbrew password.</div>
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              variant="bordered"
-              onChange={(e) => setRemovePassword(e.target.value)}
-              fullWidth
-              type="password"
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={() => setRemoveMethod(null)}
-              size="sm"
-            >
-              Close
-            </Button>
-            <Button
-              color="danger"
-              isDisabled={!removePassword}
-              onPress={_onRemove2fa}
-              isLoading={removeLoading}
-              size="sm"
-            >
-              Remove 2FA
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={!!removeMethod} onOpenChange={(nextOpen) => { if (!nextOpen) setRemoveMethod(null); }}>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-lg font-semibold font-tw">
+                  Remove 2FA method
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <div>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</div>
+                <div>To proceed with the deletion, please confirm your Chartbrew password.</div>
+                <Input
+                  label="Password"
+                  placeholder="Enter your password"
+                  variant="secondary"
+                  onChange={(e) => setRemovePassword(e.target.value)}
+                  fullWidth
+                  type="password"
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  slot="close"
+                  variant="tertiary"
+                  size="sm"
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="danger"
+                  isDisabled={!removePassword}
+                  onPress={_onRemove2fa}
+                  isPending={removeLoading}
+                  size="sm"
+                >
+                  Remove 2FA
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Toaster

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import PropTypes from "prop-types";
-import { Spacer, Textarea, Button, Alert } from "@heroui/react";
+import { Spacer, TextArea, Button, Alert } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuBrainCircuit, LuSend } from "react-icons/lu";
@@ -125,7 +125,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
       <Spacer y={4} />
 
       <div className="flex flex-row items-center gap-2">
-        <Textarea
+        <TextArea
           placeholder={
             _getLastUserMessage() || "What data do you want to see? (e.g. 'Top 10 users by number of orders')"
           }

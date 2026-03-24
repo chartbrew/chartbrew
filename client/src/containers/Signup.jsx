@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Button, Spacer, Input, Divider, Alert,
+  Button, Spacer, Input, Separator, Alert,
 } from "@heroui/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
@@ -216,7 +216,7 @@ function Signup() {
             <a href="https://chartbrew.com/legal/privacy-policy" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
           </Text>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div>
             <Text size="sm">

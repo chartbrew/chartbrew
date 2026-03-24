@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Chip, Divider,
+  Button, Input, Spacer, Chip, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -240,7 +240,7 @@ function GaConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div>
             <Row align="center">

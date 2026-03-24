@@ -1,51 +1,26 @@
-import { styled } from "@heroui/react";
+import React from "react";
+import PropTypes from "prop-types";
 
-// Badge component will be available as part of the core library soon
-const Badge = styled("span", {
-  display: "inline-flex",
-  textTransform: "uppercase",
-  padding: "$2 $3",
-  margin: "0 2px",
-  fontSize: "10px",
-  fontWeight: "$bold",
-  borderRadius: "14px",
-  letterSpacing: "0.6px",
-  lineHeight: 1,
-  boxShadow: "1px 2px 5px 0px rgb(0 0 0 / 5%)",
-  alignItems: "center",
-  alignSelf: "center",
-  color: "$white",
-  variants: {
-    type: {
-      success: {
-        bg: "$successLight",
-        color: "$successLightContrast"
-      },
-      error: {
-        bg: "$errorLight",
-        color: "$errorLightContrast"
-      },
-      warning: {
-        bg: "$warningLight",
-        color: "$warningLightContrast"
-      },
-      primary: {
-        bg: "$primaryLight",
-        color: "$primaryLightContrast",
-      },
-      secondary: {
-        bg: "$secondaryLight",
-        color: "$secondaryLightContrast",
-      },
-      neutral: {
-        bg: "$accents4",
-        color: "$accents9",
-      },
-    }
-  },
-  defaultVariants: {
-    type: "neutral"
-  }
-});
+function Badge({ children, type = "neutral" }) {
+  const typeClass = {
+    success: "bg-success/15 text-success",
+    error: "bg-danger/15 text-danger",
+    warning: "bg-warning/15 text-warning",
+    primary: "bg-primary/15 text-primary",
+    secondary: "bg-secondary/15 text-secondary",
+    neutral: "bg-content3 text-default-800",
+  }[type] || "bg-content3 text-default-800";
+
+  return (
+    <span className={`mx-0.5 inline-flex items-center self-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.6px] shadow-sm ${typeClass}`}>
+      {children}
+    </span>
+  );
+}
+
+Badge.propTypes = {
+  children: PropTypes.node.isRequired,
+  type: PropTypes.oneOf(["success", "error", "warning", "primary", "secondary", "neutral"]),
+};
 
 export default Badge;

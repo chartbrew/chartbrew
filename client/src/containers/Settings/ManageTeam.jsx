@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Route, Routes, useNavigate } from "react-router";
 import {
-  CircularProgress, Spacer,
+  ProgressCircle, Spacer,
   Tabs,
   Tab,
 } from "@heroui/react";
@@ -44,7 +44,7 @@ function ManageTeam() {
     return (
       <Container size="sm" justify="center" style={{ paddingTop: 100 }}>
         <Row justify="center" align="center">
-          <CircularProgress aria-label="Loading your team" size="lg">Loading your team</CircularProgress>
+          <ProgressCircle aria-label="Loading your team" size="lg">Loading your team</ProgressCircle>
         </Row>
       </Container>
     );

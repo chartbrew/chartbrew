@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Accordion, AccordionItem, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Spacer } from "@heroui/react";
+import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Spacer } from "@heroui/react";
 import { LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX, LuChevronDown } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -242,7 +242,7 @@ function TableConfiguration(props) {
                 ))}
             </div>
             <Spacer y={2} />
-            <Divider />
+            <Separator />
             <Spacer y={2} />
             <div className="flex flex-row">
               <Button

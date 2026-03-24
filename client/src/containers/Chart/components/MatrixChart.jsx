@@ -6,7 +6,7 @@ import {
 } from "chart.js";
 import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 import "chartjs-adapter-date-fns";
-import { semanticColors } from "@heroui/react";
+import { semanticColors } from "../../../lib/themeTokens";
 import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
@@ -224,4 +224,3 @@ MatrixChart.propTypes = {
 };
 
 export default MatrixChart;
-

@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, semanticColors, Accordion, AccordionItem, Divider,
+  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -19,6 +19,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
+import { semanticColors } from "../../../lib/themeTokens";
 import { testRequest } from "../../../slices/connection";
 import { selectTeam } from "../../../slices/team";
 
@@ -340,7 +341,7 @@ function FirestoreConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div>
             <Row align="center">

@@ -4,7 +4,7 @@ import {
   CardBody,
   CardHeader,
   Chip,
-  Divider,
+  Separator,
 } from "@heroui/react";
 import PropTypes from "prop-types";
 import React from "react";
@@ -256,7 +256,7 @@ function WhatsNewPanel({ onCollapse }) {
             <LuX size={16} />
           </Button>
         </CardHeader>
-        <Divider />
+        <Separator />
         <CardBody className="flex flex-col gap-4 px-4 py-5">
           {groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-3">
@@ -274,7 +274,7 @@ function WhatsNewPanel({ onCollapse }) {
 
           {tip && (
             <>
-              <Divider />
+              <Separator />
               <section className="flex flex-col gap-3">
                 <WhatsNewItemCard item={tip} onAction={handleAction} />
               </section>

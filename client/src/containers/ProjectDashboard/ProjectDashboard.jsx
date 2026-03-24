@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Tooltip, Modal, Chip,
-  ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
-  PopoverContent, Listbox, ListboxItem, Divider, Dropdown, DropdownTrigger,
+  AvatarGroup, Avatar, Popover, PopoverTrigger,
+  PopoverContent, Listbox, ListboxItem, Separator, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
   Tabs,
   Tab,
@@ -1000,7 +1000,7 @@ function ProjectDashboard() {
                                   </Button>
                                 </Link>
                                 <Spacer y={2} />
-                                <Divider />
+                                <Separator />
                                 <Spacer y={2} />
                               </div>
                             )}
@@ -1373,12 +1373,14 @@ function ProjectDashboard() {
         filters={filters}
       />
 
-      <Modal isOpen={viewExport} onClose={() => setViewExport(false)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={viewExport} onOpenChange={setViewExport}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-2xl">
+              <Modal.Header>
             <div className="font-bold">Export to Excel (.xlsx)</div>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <ChartExport
               charts={charts}
               onExport={_onExport}
@@ -1387,8 +1389,10 @@ function ProjectDashboard() {
               onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
               showDisabled={_canAccess("projectEditor")}
             />
-          </ModalBody>
-        </ModalContent>
+              </Modal.Body>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <UpdateSchedule
@@ -1446,7 +1450,7 @@ function ProjectDashboard() {
                 </Tabs>
               </div>
 
-              <Divider orientation="vertical" className="h-8" />
+              <Separator orientation="vertical" className="h-8" />
 
               <div className="flex gap-2 items-center">
                 <Dropdown>
@@ -1464,7 +1468,7 @@ function ProjectDashboard() {
                 </Dropdown>
               </div>
 
-              <Divider orientation="vertical" className="h-8" />
+              <Separator orientation="vertical" className="h-8" />
 
               <div className="flex gap-2">
                 <Button

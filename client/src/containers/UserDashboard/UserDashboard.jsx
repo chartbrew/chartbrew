@@ -4,7 +4,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router";
 import { useWindowSize } from "react-use";
 import {
-  Spacer, CircularProgress, Spinner,
+  Spacer, ProgressCircle, Spinner,
 } from "@heroui/react";
 
 import { relog } from "../../slices/user";
@@ -115,7 +115,7 @@ function UserDashboard(props) {
       <div style={styles.container(height)}>
         <Container sm>
           <Row justify="center" align="center">
-            <CircularProgress aria-label="Loading" size="xl" />
+            <ProgressCircle aria-label="Loading" size="xl" />
           </Row>
         </Container>
       </div>

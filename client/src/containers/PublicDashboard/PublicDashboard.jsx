@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import {
-  Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
-  Link, Image, CircularProgress, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarBrand,
+  Button, Input, Spacer, Navbar, Tooltip, Popover, Separator, Modal,
+  Link, Image, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
   Spinner,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
@@ -526,7 +526,7 @@ function PublicDashboard() {
         <div style={styles.container} className="items-center">
           <Spacer y={4} />
           <Row align="center" justify="center">
-            <CircularProgress size="lg" aria-label="Loading" />
+            <ProgressCircle size="lg" aria-label="Loading" />
           </Row>
         </div>
       </>
@@ -688,7 +688,7 @@ function PublicDashboard() {
                 </Tooltip>
               </div>
 
-              <Divider />
+              <Separator />
 
               <div>
                 <Tooltip content="Preview dashboard" placement="right-end">
@@ -738,7 +738,7 @@ function PublicDashboard() {
                           </Row>
 
                           <Spacer y={2} />
-                          <Divider />
+                          <Separator />
                           <Spacer y={2} />
 
                           <Row>
@@ -902,7 +902,7 @@ function PublicDashboard() {
               <Container style={styles.container}>
                 <Spacer y={4} />
                 <Row align="center" justify="center">
-                  <CircularProgress size="lg" aria-label="Loading" />
+                  <ProgressCircle size="lg" aria-label="Loading" />
                 </Row>
               </Container>
             )}
@@ -994,12 +994,14 @@ function PublicDashboard() {
         )}
       </div>
 
-      <Modal isOpen={editingTitle} onClose={() => setEditingTitle(false)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Modal>
+        <Modal.Backdrop isOpen={editingTitle} onOpenChange={setEditingTitle}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-2xl">
+              <Modal.Header>
             <Text size="h4">Edit the title and description</Text>
-          </ModalHeader>
-          <ModalBody>
+              </Modal.Header>
+              <Modal.Body>
             <Row>
               <Input
                 label="Dashboard title"
@@ -1037,7 +1039,7 @@ function PublicDashboard() {
               />
             </Row>
             <Spacer y={1} />
-            <Divider />
+            <Separator />
             <Spacer y={1} />
             <Row>
               <Text b>Custom CSS</Text>
@@ -1072,16 +1074,18 @@ function PublicDashboard() {
                 />
               </div>
             </Row>
-          </ModalBody>
-          <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
             <Button
               color="primary"
               onPress={() => setEditingTitle(false)}
             >
               Preview changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {project && (

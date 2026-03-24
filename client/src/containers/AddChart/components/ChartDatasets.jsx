@@ -7,7 +7,7 @@ import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
 import {
-  Avatar, Button, Card, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tooltip
+  Avatar, Button, Card, CardFooter, CardHeader, Chip, Separator, Input, ScrollShadow, Spacer, Tooltip
 } from "@heroui/react";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
@@ -263,7 +263,7 @@ function ChartDatasets(props) {
                       </div>                      
                     </div>
                   </CardHeader>
-                  <Divider />
+                  <Separator />
                   <CardFooter className="justify-between">
                     <div className="text-xs text-foreground-500">{`Created ${moment(dataset.createdAt).calendar()}`}</div>
                     {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
@@ -294,7 +294,7 @@ function ChartDatasets(props) {
       {datasets.length === 0 && canAccess("teamAdmin", user.id, team?.TeamRoles) && (
         <div>
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
           <div className="text-sm text-foreground-500">No datasets found. Create a dataset to get started.</div>
           <Spacer y={4} />
@@ -340,7 +340,7 @@ function ChartDatasets(props) {
       )}
 
       <Spacer y={4} />
-      <Divider />
+      <Separator />
       <Spacer y={4} />
 
       {activeCdc?.id && (

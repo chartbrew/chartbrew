@@ -5,8 +5,8 @@ import _ from "lodash";
 import toast from "react-hot-toast";
 import {
   Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card,
-  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody,
-  CardFooter, ModalContent, Spinner,
+  ProgressCircle, CardBody,
+  CardFooter, Spinner,
 } from "@heroui/react";
 import moment from "moment";
 import { LuLink2, LuMonitorX, LuPlus } from "react-icons/lu";
@@ -240,26 +240,27 @@ function DatarequestModal(props) {
   };
 
   return (
-    <Modal
-      isOpen={open}
-      size="full"
-      onClose={_onClose}
-      closeButton
-      isDismissable={false}
-      scrollBehavior="inside"
-      shouldBlockScroll={false}
-    >
-      <ModalContent>
-        <ModalHeader className="flex justify-start">
+    <Modal>
+      <Modal.Backdrop
+        isOpen={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) _onClose();
+        }}
+        isDismissable={false}
+      >
+        <Modal.Container size="full" scroll="inside">
+          <Modal.Dialog>
+            <Modal.CloseTrigger />
+            <Modal.Header className="flex justify-start">
           <Text size="h4">{"Configure your dataset"}</Text>
           {initialising && (
             <>
               <Spacer x={1} />
-              <CircularProgress size="xl" aria-label="Loading dataset data" />
+              <ProgressCircle size="xl" aria-label="Loading dataset data" />
             </>
           )}
-        </ModalHeader>
-        <ModalBody>
+            </Modal.Header>
+            <Modal.Body>
           <div className="grid grid-cols-12">
             <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r-1 md:border-solid md:border-content3 gap-2">
               {selectedRequest && (
@@ -461,8 +462,8 @@ function DatarequestModal(props) {
               </div>
             )}
           </div>
-        </ModalBody>
-        <ModalFooter className="bg-content1">
+            </Modal.Body>
+            <Modal.Footer className="bg-content1">
           <Button
             auto
             onClick={() => onClose()}
@@ -478,8 +479,10 @@ function DatarequestModal(props) {
           >
             {"Build the chart"}
           </Button>
-        </ModalFooter>
-      </ModalContent>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

@@ -4,8 +4,7 @@ import { connect } from "react-redux";
 import _ from "lodash";
 import moment from "moment";
 import {
-  Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
-  ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Tooltip, Button, Spacer, Input, Modal, Separator, Tabs, Tab,
 } from "@heroui/react";
 import { LuCloudDownload, LuPencilLine } from "react-icons/lu";
 
@@ -197,7 +196,7 @@ function Dataset(props) {
       <div className="grid grid-cols-12 gap-2">
         <div className="col-span-12">
           <Spacer y={2} />
-          <Divider />
+          <Separator />
           <Spacer y={2} />
         </div>
         <div className="col-span-12 flex items-center">
@@ -261,7 +260,7 @@ function Dataset(props) {
         </div>
         <div className="col-span-12">
           <Spacer y={4} />
-          <Divider />
+          <Separator />
           <Spacer y={4} />
         </div>
         <div className="col-span-12">
@@ -306,35 +305,41 @@ function Dataset(props) {
       />
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal isOpen={deleteModal} size="sm" onClose={() => setDeleteModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">{"Are you sure you want to remove this dataset?"}</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Text>
-              {"This action cannot be reversed."}
-            </Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              color="warning"
-              onClick={() => setDeleteModal(false)}
-              auto
-            >
-              Go back
-            </Button>
-            <Button
-              color="danger"
-              isLoading={deleteLoading}
-              onClick={_onDeleteDataset}
-              auto
-            >
-              {"Remove dataset"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={deleteModal} onOpenChange={setDeleteModal}>
+          <Modal.Container size="sm">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading className="text-2xl font-semibold">
+                  {"Are you sure you want to remove this dataset?"}
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Text>
+                  {"This action cannot be reversed."}
+                </Text>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="flat"
+                  color="warning"
+                  slot="close"
+                  auto
+                >
+                  Go back
+                </Button>
+                <Button
+                  color="danger"
+                  isLoading={deleteLoading}
+                  onClick={_onDeleteDataset}
+                  auto
+                >
+                  {"Remove dataset"}
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

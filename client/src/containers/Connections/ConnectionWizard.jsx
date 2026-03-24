@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react";
+import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Separator, Image, Input, Modal, Spacer, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -453,64 +453,68 @@ function ConnectionWizard() {
         </aside>
       </div>
 
-      <Modal
-        isOpen={completionModal}
-        backdrop="blur"
-        onClose={() => setCompletionModal(false)}
-        size="lg"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-row items-center gap-2">
-            <LuPartyPopper className="text-success" size={24} />
-            <span className="font-semibold">Your connection was saved!</span>
-          </ModalHeader>
-          <ModalBody>
-            {connections.length > 1 && (
-              <div>What would you like to do next?</div>
-            )}
-            {connections.length < 2 && (
-              <div>Create your first dataset to start visualizing your data</div>
-            )}
-          </ModalBody>
-          <ModalFooter className="flex flex-col gap-2">
-            <div className="flex flex-row gap-2">
-              {connections.length > 1 && (
-                <Button
-                  variant="flat"
-                  fullWidth
-                  onPress={() => navigate("/")}
-                  startContent={<LuLayoutDashboard />}
-                >
-                  Return to dashboard
-                </Button>
-              )}
-              <Button
-                color="primary"
-                fullWidth
-                onPress={() => navigate("/datasets/new")}
-                startContent={<LuChartArea />}
-              >
-                Create dataset
-              </Button>
-            </div>
-            {_canAccess("teamAdmin", team?.TeamRoles) && (
-              <>
-                <div className="flex flex-row gap-2 py-2">
-                  <Divider />
+      <Modal>
+        <Modal.Backdrop
+          variant="blur"
+          isOpen={completionModal}
+          onOpenChange={(nextOpen) => { if (!nextOpen) setCompletionModal(false); }}
+        >
+          <Modal.Container size="lg">
+            <Modal.Dialog>
+              <Modal.Header className="flex flex-row items-center gap-2">
+                <LuPartyPopper className="text-success" size={24} />
+                <Modal.Heading className="font-semibold">
+                  Your connection was saved!
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                {connections.length > 1 && (
+                  <div>What would you like to do next?</div>
+                )}
+                {connections.length < 2 && (
+                  <div>Create your first dataset to start visualizing your data</div>
+                )}
+              </Modal.Body>
+              <Modal.Footer className="flex flex-col gap-2">
+                <div className="flex w-full flex-row gap-2">
+                  {connections.length > 1 && (
+                    <Button
+                      className="w-full"
+                      variant="tertiary"
+                      onPress={() => navigate("/")}
+                    >
+                      <LuLayoutDashboard />
+                      Return to dashboard
+                    </Button>
+                  )}
+                  <Button
+                    className="w-full"
+                    variant="primary"
+                    onPress={() => navigate("/datasets/new")}
+                  >
+                    <LuChartArea />
+                    Create dataset
+                  </Button>
                 </div>
-                <Button
-                  color="primary"
-                  variant="flat"
-                  fullWidth
-                  onPress={() => _onAskAi()}
-                  startContent={<LuBrainCircuit />}
-                >
-                  Create with Chartbrew AI
-                </Button>
-              </>
-            )}
-          </ModalFooter>
-        </ModalContent>
+                {_canAccess("teamAdmin", team?.TeamRoles) && (
+                  <>
+                    <div className="flex w-full flex-row gap-2 py-2">
+                      <Separator />
+                    </div>
+                    <Button
+                      className="w-full"
+                      variant="tertiary"
+                      onPress={() => _onAskAi()}
+                    >
+                      <LuBrainCircuit />
+                      Create with Chartbrew AI
+                    </Button>
+                  </>
+                )}
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   )

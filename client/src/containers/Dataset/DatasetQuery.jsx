@@ -2,7 +2,7 @@ import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
   Button, Spacer, Avatar, Card, CardBody,
-  CardFooter, Input, Divider, Chip,
+  CardFooter, Input, Separator, Chip,
   Tabs,
   Tab,
   Image,
@@ -594,7 +594,7 @@ function DatasetQuery(props) {
                           </span>
                         </div>
                       </CardBody>
-                      <Divider />
+                      <Separator />
                       {_getConnectionTags(c.project_ids).length > 0 && (
                         <>
                           <CardBody>
@@ -606,7 +606,7 @@ function DatasetQuery(props) {
                               ))}
                             </div>
                           </CardBody>
-                          <Divider />
+                          <Separator />
                         </>
                       )}
                       <CardFooter>
