@@ -24,6 +24,16 @@ Goals:
 - DO NOT CHANGE CODE THAT IS NOT DIRECTLY RELATED TO THE HEROUI V3 MIGRATION.
 - JUST REPLACE V2 COMPONENTS WITH V3 COMPONENTS AND MAKE SURE THE CODE IS CORRECT.
 - DON'T WRITE CLEVER ADAPTERS TO WIRE OLD V2 CODE TO WORK IN V3
+- Treat this progress file as the source of truth for migration scope and constraints.
+- Continue only with direct v2 -> v3 component migrations.
+- Keep edits surgical and local to the component being migrated.
+- No adapters, no compatibility layers, no helper shims, and no migration-through-abstraction.
+- No repo-wide rewrite scripts, codemods, or bulk formatting passes.
+- No formatting churn: preserve existing code style, spacing, and line structure as much as possible.
+- No unrelated refactors, cleanup, renames, or style rewrites while migrating a HeroUI component.
+- Change only what is required to make the specific v3 component migration correct.
+- Prefer file-by-file manual edits for each component family so the eventual merge into `chartbrew-cloud` stays manageable.
+- Keep logging the exact migrated files in this document after each batch.
 
 ## Current Strategy
 
@@ -37,6 +47,16 @@ Goals:
    - ListBox
    - Card
    - Progress / loader states
+
+## Revalidation Audit
+
+- 2026-03-24: Revalidated the tree after a reverted/bad migration attempt in another thread.
+- Current real blocker counts after audit:
+  - `0` files still use old modal wrappers (`ModalContent`, `ModalHeader`, `ModalBody`, `ModalFooter`)
+  - `45` files still use old `SelectItem` / `AutocompleteItem` patterns
+- Any earlier batch notes that claimed modal completion should be treated as historical work, not as the current tree state.
+- Any earlier batch notes that claimed `SelectItem` / `AutocompleteItem` completion should also be treated as historical work from the reverted migration attempt, not as the current tree state.
+- Reverted files must be migrated again manually, with the same no-shims / no-format-churn rules above.
 
 ## Completed
 
@@ -444,11 +464,101 @@ Notes:
   - `npm run lint` passes
   - `rg -n '\\b(SelectItem|AutocompleteItem)\\b' client/src` returns no matches
 
+### Batch 14: App Shell Revalidation After Revert
+
+Files migrated:
+- `src/components/AccountNav.jsx`
+- `src/components/Navbar.jsx`
+- `src/components/Sidebar.jsx`
+
+Notes:
+- Re-migrated the reverted app-shell files manually after a bad migration attempt in another thread.
+- Removed reverted v2 surfaces in these files and replaced them with direct v3 or plain markup where HeroUI v3 removed the old component:
+  - old modal wrappers -> `Modal.Backdrop` / `Modal.Container` / `Modal.Dialog`
+  - removed `Navbar` -> plain header layout
+  - removed `User` / `Image` / `Spacer` -> plain markup or direct `Avatar` composition
+  - old dropdown trigger/menu/item imports -> direct `Dropdown.*` composition
+  - `CircularProgress` -> `ProgressCircle`
+- Verification:
+  - `npm run lint` passes
+
+### Batch 15: Modal Wrapper Revalidation Follow-Up
+
+Files migrated:
+- `src/components/DatasetFilters.jsx`
+- `src/containers/ProjectSettings.jsx`
+- `src/containers/ProjectDashboard/components/UpdateSchedule.jsx`
+- `src/containers/ProjectDashboard/components/SnapshotSchedule.jsx`
+
+Notes:
+- Continued the direct modal-family revalidation pass on files that were still using `ModalContent`, `ModalHeader`, `ModalBody`, and `ModalFooter`.
+- Replaced only the modal wrapper surface in these files with:
+  - `Modal.Backdrop`
+  - `Modal.Container`
+  - `Modal.Dialog`
+  - `Modal.Header`
+  - `Modal.Heading`
+  - `Modal.Body`
+  - `Modal.Footer`
+- Normalized touched modal-local button loading/close props where the wrapper rewrite already touched those buttons:
+  - `isLoading` -> `isPending`
+  - `variant="bordered"` -> `variant="outline"` where touched in modal footers
+- Verification:
+  - `npm run lint` passes
+
+### Batch 16: Add Chart Modal Wrapper Follow-Up
+
+Files migrated:
+- `src/containers/AddChart/components/MongoQueryBuilder.jsx`
+- `src/containers/AddChart/components/ChartSettings.jsx`
+- `src/containers/AddChart/components/SqlBuilder.jsx`
+
+Notes:
+- Continued the modal-only cleanup in smaller Add Chart files that still had the reverted `ModalContent` / `ModalHeader` / `ModalBody` / `ModalFooter` structure.
+- Replaced those wrappers with direct v3 modal compounds while keeping the surrounding file structure intact.
+- Normalized touched modal footer props where needed:
+  - `variant="bordered"` -> `variant="outline"`
+  - `disabled` -> `isDisabled` on touched HeroUI buttons
+- Verification:
+  - `npm run lint` passes
+
+### Batch 17: Final Modal Wrapper Completion
+
+Files migrated:
+- `src/containers/Dataset/DataTransform.jsx`
+- `src/containers/Dataset/Dataset.jsx`
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/AddChart/components/DatasetAlerts.jsx`
+- `src/containers/Connections/CustomTemplates/CustomTemplateForm.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/AddChart/components/TableDataFormattingModal.jsx`
+- `src/containers/Integrations/Integration/SlackIntegration.jsx`
+
+Notes:
+- Completed the remaining direct modal-family migration without touching unrelated file structure.
+- Replaced the last `ModalContent` / `ModalHeader` / `ModalBody` / `ModalFooter` usage with:
+  - `Modal.Backdrop`
+  - `Modal.Container`
+  - `Modal.Dialog`
+  - `Modal.Header`
+  - `Modal.Heading`
+  - `Modal.Body`
+  - `Modal.Footer`
+- Kept the changes local to the modal sections and normalized only the touched modal footer buttons where needed:
+  - `variant="bordered"` -> `variant="secondary"`
+  - `variant="flat"` -> `variant="tertiary"`
+  - `isLoading` -> `isPending`
+  - `disabled` -> `isDisabled` on touched HeroUI buttons
+- Verification:
+  - `npm run lint` passes
+  - `rg -l 'ModalContent|ModalHeader|ModalBody|ModalFooter' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
-Direct import-surface audit against installed `@heroui/react` still shows these invalid or shim-dependent surfaces:
-- `Spacer`: about 103 files
+Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
 - `ModalContent`: 0 files
+- `SelectItem` / `AutocompleteItem`: 45 files
+- `Spacer`: about 103 files
 - `Code`: about 21 files
 - `CardBody`: about 14 files
 - `Image`: about 10 files
@@ -466,11 +576,10 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Remove `Spacer` usage and replace with layout `gap` / margin utilities
-2. Replace removed `Code`, `Image`, and `User` usages with plain elements or direct v3 composition
-3. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
-4. Re-audit the shared picker wrapper and touched screens for places where direct v3 composition is now preferable over the temporary adapter surface
-5. Re-run import-surface audits after each family pass until the remaining invalid exports are gone
+1. Replace the remaining 45 `SelectItem` / `AutocompleteItem` call sites with direct v3 composition
+2. Remove `Spacer` usage and replace with layout `gap` / margin utilities
+3. Replace removed `Code`, `Image`, and `User` usages with plain elements or direct v3 composition
+4. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
 
 ## Notes
 

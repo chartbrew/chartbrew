@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
-import { Autocomplete, AutocompleteItem, Button, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, TimeInput } from "@heroui/react";
+import { Autocomplete, AutocompleteItem, Button, Divider, Input, Link, Modal, Select, SelectItem, TimeInput } from "@heroui/react";
 import timezones from "../../../modules/timezones";
 import { LuMapPin, LuMonitorUp } from "react-icons/lu";
 import { getProject, selectProject, updateProject } from "../../../slices/project";
@@ -141,15 +141,22 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
-      <ModalContent>
-        <ModalHeader className="flex flex-col">
+    <Modal.Backdrop
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <Modal.Container>
+        <Modal.Dialog className="sm:max-w-2xl">
+        <Modal.Header className="flex flex-col">
+          <Modal.Heading>Schedule dashboard updates</Modal.Heading>
           <div className="text-lg font-bold">Schedule dashboard updates</div>
           <div className="text-sm text-gray-500">
             {"All the charts in this dashboard will be updated at the appointed time"}
           </div>
-        </ModalHeader>
-        <ModalBody>
+        </Modal.Header>
+        <Modal.Body>
           <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
             <Select
               placeholder="Select update frequency"
@@ -246,34 +253,33 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             <LuMonitorUp />
             <span>Get your reports delivered to your inbox, slack, and more.</span>
           </Link>
-        </ModalBody>
-        <ModalFooter>
+        </Modal.Body>
+        <Modal.Footer>
           {_areChartsUpdating() && (
             <Button
-              variant="light"
-              color="primary"
-              isLoading={removingUpdates}
+              variant="secondary"
+              isPending={removingUpdates}
               onPress={_disableIndividualChartUpdates}
             >
               Disable individual chart updates
             </Button>
           )}
           {project.updateSchedule?.frequency && (
-            <Button variant="flat" onPress={_disableAutomaticUpdates}>
+            <Button variant="danger" onPress={_disableAutomaticUpdates}>
               {"Disable the schedule"}
             </Button>
           )}
           <Button
             onPress={_onSave}
-            color="primary"
-            isLoading={isLoading}
+            isPending={isLoading}
             isDisabled={!_canSave()}
           >
             {"Save"}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   )
 }
 

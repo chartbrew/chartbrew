@@ -5,8 +5,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Avatar,
-  Button, Checkbox, Chip, Divider, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Spacer, Switch,
+  Button, Checkbox, Chip, Divider, Modal, Spacer, Switch,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
@@ -312,21 +311,19 @@ function CustomTemplateForm(props) {
       </Row>
 
       {isAdmin && (
-        <Modal
-          isOpen={deleteConfirmation}
-          closeButton
-          onClose={() => setDeleteConfimation(false)}
-        >
-          <ModalContent>
-            <ModalHeader>
-              <Text size="h4">Are you sure you want to delete this template?</Text>
-            </ModalHeader>
-            <ModalBody>
+        <Modal.Backdrop isOpen={deleteConfirmation} onOpenChange={setDeleteConfimation}>
+          <Modal.Container>
+            <Modal.Dialog>
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>Are you sure you want to delete this template?</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
               {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
-            </ModalBody>
-            <ModalFooter>
+            </Modal.Body>
+            <Modal.Footer>
               <Button
-                variant="flat"
+                variant="tertiary"
                 color="warning"
                 onClick={() => setDeleteConfimation(false)}
               >
@@ -339,13 +336,14 @@ function CustomTemplateForm(props) {
                   setDeleteLoading(true);
                   onDelete(template.id);
                 }}
-                isLoading={deleteLoading}
+                isPending={deleteLoading}
               >
                 Delete template
               </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+            </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       )}
     </div>
   );

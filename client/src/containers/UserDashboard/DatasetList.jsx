@@ -1,4 +1,4 @@
-import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import { Autocomplete, AutocompleteItem, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Pagination, Select, SelectItem, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -635,12 +635,15 @@ function DatasetList() {
           </div>
         </>
       )}
-      <Modal isOpen={datasetToDelete?.id} onClose={() => setDatasetToDelete(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Are you sure you want to delete this dataset?</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={!!datasetToDelete?.id} onOpenChange={(open) => {
+        if (!open) setDatasetToDelete(null);
+      }}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Are you sure you want to delete this dataset?</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               {"Just a heads-up that all the charts that use this dataset will stop working. This action cannot be undone."}
             </div>
@@ -675,33 +678,35 @@ function DatasetList() {
                 <span className="text-xs">{`+${relatedCharts.length - 10} more`}</span>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setDatasetToDelete(null)}
-              auto
             >
               Cancel
             </Button>
             <Button
-              auto
-              color="danger"
-              endContent={<LuTrash />}
+              variant="danger"
               onPress={() => _onDeleteDataset()}
-              isLoading={deletingDataset}
+              isPending={deletingDataset}
             >
+              <LuTrash size={18} />
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={!!datasetToEdit} onClose={() => setDatasetToEdit(null)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Edit tags</div>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+      <Modal.Backdrop isOpen={!!datasetToEdit} onOpenChange={(open) => {
+        if (!open) setDatasetToEdit(null);
+      }}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Edit tags</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div className="flex flex-row flex-wrap items-center gap-2">
               {projects.filter((p) => !p.ghost).map((project) => (
                 <Chip
@@ -729,31 +734,34 @@ function DatasetList() {
               </div>
               {"Assign tags to datasets to control which dashboards can use them. Members can create charts from these datasets within dashboards associated with the selected tags."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setDatasetToEdit(null)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onEditDatasetTags()}
-              isLoading={modifyingDataset}
+              isPending={modifyingDataset}
             >
               Save
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={!!datasetToDuplicate} onClose={() => setDatasetToDuplicate(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Duplicate dataset</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={!!datasetToDuplicate} onOpenChange={(open) => {
+        if (!open) setDatasetToDuplicate(null);
+      }}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Duplicate dataset</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Input
               label="New dataset name"
               placeholder="Dataset name"
@@ -761,86 +769,90 @@ function DatasetList() {
               onChange={(e) => setDuplicateDatasetName(e.target.value)}
               variant="bordered"
             />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
               onPress={() => setDatasetToDuplicate(null)}
-              variant="bordered"
+              variant="outline"
             >
               Cancel
             </Button>
             <Button
               onPress={() => _onDuplicateDataset()}
-              isLoading={duplicateDatasetLoading}
-              color="primary"
+              isPending={duplicateDatasetLoading}
             >
               Duplicate
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={showDeleteAllDrafts} onClose={() => setShowDeleteAllDrafts(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Delete draft datasets</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={showDeleteAllDrafts} onOpenChange={setShowDeleteAllDrafts}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Delete draft datasets</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               {"Are you sure you want to delete draft datasets?"}
             </div>
             <div>
               {"This action cannot be undone."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setShowDeleteAllDrafts(false)}
             >
               Cancel
             </Button>
             <Button
-              color="danger"
+              variant="danger"
               onPress={() => _onDeleteDrafts()}
-              isLoading={deletingDatasets}
+              isPending={deletingDatasets}
             >
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={showDeleteDatasets} onClose={() => setShowDeleteDatasets(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Delete selected datasets</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={showDeleteDatasets} onOpenChange={setShowDeleteDatasets}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Delete selected datasets</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               {"Are you sure you want to delete selected datasets?"}
             </div>
             <div>
               {"If the datasets are used in any charts, they will stop working."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setShowDeleteDatasets(false)}
             >
               Cancel
             </Button>
             <Button
-              color="danger"
+              variant="danger"
               onPress={() => _onDeleteDatasets()}
-              isLoading={deletingDatasets}
+              isPending={deletingDatasets}
             >
               Delete selected
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

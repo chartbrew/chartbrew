@@ -5,7 +5,7 @@ import {
   Autocomplete, AutocompleteItem, Button, Card, CardBody, CardFooter, CardHeader,
   Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
   DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, 
-  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem,
+  Modal, Select, SelectItem,
   Spacer, Switch, Tooltip, Code,
 } from "@heroui/react";
 import {
@@ -19,7 +19,6 @@ import { I18nProvider } from "@react-aria/i18n";
 import toast from "react-hot-toast";
 
 import Row from "./Row";
-import Text from "./Text";
 import { operators } from "../modules/filterOperations";
 import { createDatasetVariableBinding, updateDatasetVariableBinding } from "../slices/dataset";
 
@@ -506,12 +505,13 @@ function DatasetFilters(props) {
         </div>
       )}
 
-      <Modal isOpen={conditionModal} size="lg" onClose={() => setConditionModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Filter settings</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={conditionModal} onOpenChange={setConditionModal}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-lg">
+          <Modal.Header>
+            <Modal.Heading>Filter settings</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Row>
               <Input
                 label="The name of the filter as it appears to viewers"
@@ -557,26 +557,25 @@ function DatasetFilters(props) {
                 Hide existing values from the filter dropdown
               </Checkbox>
             </Row>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              onClick={() => setConditionModal(false)}
-              color="warning"
-              variant="flat"
+              onPress={() => setConditionModal(false)}
+              variant="tertiary"
             >
               Close
             </Button>
             <Button
               onClick={_onConfirmConditionSettings}
-              color="primary"
               isDisabled={selectedCondition.variable && !_isVariableValid(selectedCondition.variable)}
-              isLoading={isLoading}
+              isPending={isLoading}
             >
               Save settings
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {/* Variable Settings Drawer */}
       <Drawer

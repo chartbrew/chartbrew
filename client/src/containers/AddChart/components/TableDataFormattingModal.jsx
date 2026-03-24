@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
+  Button, Checkbox, Chip, Divider, Input, Modal,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -217,13 +217,19 @@ function TableDataFormattingModal(props) {
   };
 
   return (
-    <Modal isOpen={open} size="xl" onClose={onClose}>
-      <ModalContent>
-        <ModalHeader className="flex flex-col">
-          <div>Column formatting</div>
+    <Modal.Backdrop
+      isOpen={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <Modal.Container size="xl">
+        <Modal.Dialog>
+        <Modal.Header className="flex flex-col">
+          <Modal.Heading>Column formatting</Modal.Heading>
           <div className="text-sm text-gray-500 font-normal">Change the data format for this column</div>
-        </ModalHeader>
-        <ModalBody>
+        </Modal.Header>
+        <Modal.Body>
           <div className="flex flex-row">
             <Select
               label="Data type"
@@ -614,10 +620,10 @@ function TableDataFormattingModal(props) {
               </Select>
             </div>
           )}
-        </ModalBody>
-        <ModalFooter>
+        </Modal.Body>
+        <Modal.Footer>
           <Button
-            variant="bordered"
+            variant="secondary"
             onPress={onClose}
             size="sm"
           >
@@ -627,14 +633,14 @@ function TableDataFormattingModal(props) {
             onPress={_onSave}
             size="sm"
             isDisabled={(dataType === "date" && !formatValue)}
-            isLoading={loading}
-            color="primary"
+            isPending={loading}
           >
             Save
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }
 

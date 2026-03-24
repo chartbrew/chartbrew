@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Image, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip } from "@heroui/react"
+import { Avatar, Button, Chip, Dropdown, Input, Modal, Separator, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
 import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
@@ -30,6 +30,8 @@ function Sidebar() {
   const user = useSelector((state) => state.user);
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
+  const teamInitials = team?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "T";
+  const userInitials = user?.data?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -113,84 +115,85 @@ function Sidebar() {
         <div className="flex flex-col">
           <Link to="/" className="flex items-center justify-start h-16 px-4">
             {collapsed ? (
-              <Image src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={40} radius="none" />
+              <img src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={40} />
             ) : (
-              <Image src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={120} radius="none" />
+              <img src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={120} />
             )}
           </Link>
 
-          {collapsed && <Divider className="mb-4" />}
+          {collapsed && <Separator className="mb-4" />}
 
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <div className={cn(collapsed ? "" : "px-2")}>
-              <Dropdown aria-label="Select a team option">
-                <DropdownTrigger>
+              <Dropdown>
+                <Dropdown.Trigger>
                   {collapsed ? (
-                    <Avatar
-                      name={team?.name}
-                      radius="md"
-                      className="cursor-pointer"
-                      size="sm"
-                      isBordered
-                      showFallback={<LuUsers size={18} />}
-                      color="primary"
-                    />
+                    <Avatar size="sm" className="cursor-pointer rounded-md" color="accent">
+                      <Avatar.Fallback>{teamInitials || <LuUsers size={18} />}</Avatar.Fallback>
+                    </Avatar>
                   ) : (
                     <Button
-                      variant="bordered"
+                      variant="outline"
                       className="justify-between border-1"
-                      endContent={<LuChevronDown />}
                       fullWidth
                     >
-                      {team?.name}
+                      <span>{team?.name}</span>
+                      <LuChevronDown />
                     </Button>
                   )}
-                </DropdownTrigger>
-                <DropdownMenu
-                  selectedKeys={[`${team.id}`]}
-                  onSelectionChange={(keys) => {
-                    _onChangeTeam(keys.currentKey);
-                  }}
-                  selectionMode="single"
-                >
-                  {teams.map((t, index) => (
-                    <DropdownItem
+                </Dropdown.Trigger>
+                <Dropdown.Popover>
+                  <Dropdown.Menu
+                    onAction={(key) => {
+                      if (key === "createTeam") {
+                        setCreateTeamModal(true);
+                        return;
+                      }
+
+                      _onChangeTeam(key);
+                    }}
+                  >
+                  {teams.map((t) => (
+                    <Dropdown.Item
+                      id={`${t.id}`}
                       key={t.id}
                       textValue={t.name}
-                      endContent={(
-                        <Chip size="sm" variant="flat" color="primary">
+                    >
+                      <div className="flex w-full flex-row items-center justify-between gap-2">
+                        <span>{t.name}</span>
+                        <Chip size="sm" variant="secondary">
                           {_getTeamRole(t.TeamRoles)}
                         </Chip>
-                      )}
-                      showDivider={index === teams.length - 1}
-                    >
-                      {t.name}
-                    </DropdownItem>
+                      </div>
+                    </Dropdown.Item>
                   ))}
-                  <DropdownItem
+                  <Dropdown.Item
+                    id="createTeam"
                     key="createTeam"
                     textValue="Add new team"
-                    onClick={() => setCreateTeamModal(true)}
-                    color="primary"
-                    endContent={<LuPlus size={18} />}
                   >
-                    Add new team
-                  </DropdownItem>
-                </DropdownMenu>
+                    <div className="flex w-full flex-row items-center justify-between gap-2">
+                      <span>Add new team</span>
+                      <LuPlus size={18} />
+                    </div>
+                  </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
               </Dropdown>
             </div>
 
-            <Spacer y={4} />
-            <Divider />
-            <Spacer y={2} />
+            <div className="h-4" />
+            <Separator />
+            <div className="h-2" />
 
-            <Listbox aria-label="Actions" variant="flat" classNames={{ list: "flex flex-col items-center" }}>
-              <ListboxItem
-                key="projects"
-                startContent={collapsed ? null : <LuLayoutGrid size={18} />}
-                textValue="Dashboards"
-                color={_getActiveMenu() === "" || window.location.pathname.indexOf("dashboard") > -1 ? "primary" : "default"}
-                className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "" || window.location.pathname.indexOf("dashboard") > -1 ? "bg-content2 text-primary" : "text-foreground")}
+            <div className={cn("flex flex-col gap-1", collapsed && "items-center")}>
+              <button
+                type="button"
+                className={cn(
+                  "w-full rounded-large px-3 py-2 text-left",
+                  collapsed && "max-w-min text-center",
+                  _getActiveMenu() === "" || window.location.pathname.indexOf("dashboard") > -1 ? "bg-content2 text-primary" : "text-foreground"
+                )}
                 onClick={() => navigate("/")}
               >
                 <Tooltip content="Dashboards" hidden={!collapsed} placement="right">
@@ -198,14 +201,15 @@ function Sidebar() {
                     {collapsed ? <LuLayoutGrid size={20} /> : <span className="text-sm">Dashboards</span>}
                   </div>
                 </Tooltip>
-              </ListboxItem>
+              </button>
               {_canAccess("teamAdmin", team.TeamRoles) && (
-                <ListboxItem
-                  key="connections"
-                  startContent={collapsed ? null : <LuPlug size={18} />}
-                  textValue="Connections"
-                  color={_getActiveMenu() === "connections" ? "primary" : "default"}
-                  className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial")}
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full rounded-large px-3 py-2 text-left",
+                    collapsed && "max-w-min text-center",
+                    _getActiveMenu() === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial"
+                  )}
                   onClick={() => navigate("/connections")}
                 >
                   <Tooltip content="Connections" hidden={!collapsed} placement="right">
@@ -213,15 +217,16 @@ function Sidebar() {
                       {collapsed ? <LuPlug size={20} /> : <span className="text-sm">Connections</span>}
                     </div>
                   </Tooltip>
-                </ListboxItem>
+                </button>
               )}
               {_canAccess("projectAdmin", team.TeamRoles) && (
-                <ListboxItem
-                  key="datasets"
-                  startContent={collapsed ? null : <LuLayers size={18} />}
-                  textValue="Datasets"
-                  color={_getActiveMenu() === "datasets" ? "primary" : "default"}
-                  className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial")}
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full rounded-large px-3 py-2 text-left",
+                    collapsed && "max-w-min text-center",
+                    _getActiveMenu() === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"
+                  )}
                   onClick={() => navigate("/datasets")}
                 >
                   <Tooltip content="Datasets" hidden={!collapsed} placement="right">
@@ -229,15 +234,16 @@ function Sidebar() {
                       {collapsed ? <LuLayers size={20} /> : <span className="text-sm">Datasets</span>}
                     </div>
                   </Tooltip>
-                </ListboxItem>
+                </button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
-                <ListboxItem
-                  key="integrations"
-                  startContent={collapsed ? null : <LuPuzzle size={18} />}
-                  textValue="Integrations"
-                  color={_getActiveMenu() === "integrations" ? "primary" : "default"}
-                  className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial")}
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full rounded-large px-3 py-2 text-left",
+                    collapsed && "max-w-min text-center",
+                    _getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"
+                  )}
                   onClick={() => navigate("/integrations")}
                 >
                   <Tooltip content="Integrations" hidden={!collapsed} placement="right">
@@ -245,24 +251,25 @@ function Sidebar() {
                       {collapsed ? <LuPuzzle size={20} /> : <span className="text-sm">Integrations</span>}
                     </div>
                   </Tooltip>
-                </ListboxItem>
+                </button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
-                <ListboxItem
-                  key="teamSettings"
-                  startContent={collapsed ? null : <LuSettings size={18} />}
-                  textValue="Settings"
-                  color={_getActiveMenu() === "settings" ? "primary" : "default"}
-                  className={cn(collapsed && "max-w-min text-center", _getActiveMenu() === "settings" ? "bg-content2 text-primary team-settings-tutorial" : "text-foreground team-settings-tutorial")}
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full rounded-large px-3 py-2 text-left",
+                    collapsed && "max-w-min text-center",
+                    _getActiveMenu() === "settings" ? "bg-content2 text-primary team-settings-tutorial" : "text-foreground team-settings-tutorial"
+                  )}
                   onClick={() => navigate("/settings/members")}
                 >
                   {collapsed ? <LuSettings size={20} /> : <span className="text-sm">Settings</span>}
-                </ListboxItem>
+                </button>
               )}
-            </Listbox>
+            </div>
           </div>
 
-          <Spacer y={4} />
+          <div className="h-4" />
 
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-4 flex flex-col items-start justify-center")}>
             {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -270,64 +277,56 @@ function Sidebar() {
                 <div className="text-sm text-gray-500">
                   {collapsed ? "" : "Quick actions"}
                 </div>
-                <Spacer y={2} />
+                <div className="h-2" />
                 <Tooltip content="Create a new dashboard" hidden={!collapsed} placement="right">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
-                    color="default"
-                    startContent={collapsed ? null : <LuGrid2X2Plus size={18} />}
                     onPress={() => navigate("/?create=dashboard")}
                     isIconOnly={collapsed}
                     fullWidth
                     className={cn(collapsed ? "justify-center" : "justify-start")}
                   >
-                    {collapsed ? <LuGrid2X2Plus size={20} /> : "New dashboard"}
+                    {collapsed ? <LuGrid2X2Plus size={20} /> : <><LuGrid2X2Plus size={18} />New dashboard</>}
                   </Button>
                 </Tooltip>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <Tooltip content="Create a new dataset" hidden={!collapsed} placement="right">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
-                    color="default"
-                    startContent={collapsed ? null : <LuLayers2 size={18} />}
                     onPress={() => navigate("/datasets/new")}
                     isIconOnly={collapsed}
                     fullWidth
                     className={cn(collapsed ? "justify-center" : "justify-start")}
                   >
-                    {collapsed ? <LuLayers2 size={20} /> : "New dataset"}
+                    {collapsed ? <LuLayers2 size={20} /> : <><LuLayers2 size={18} />New dataset</>}
                   </Button>
                 </Tooltip>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <Tooltip content="Create a new connection" hidden={!collapsed} placement="right">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
-                    color="default"
-                    startContent={collapsed ? null : <LuUnplug size={18} />}
                     onPress={() => navigate("/connections/new")}
                     isIconOnly={collapsed}
                     fullWidth
                     className={cn(collapsed ? "justify-center" : "justify-start")}
                   >
-                    {collapsed ? <LuUnplug size={20} /> : "New connection"}
+                    {collapsed ? <LuUnplug size={20} /> : <><LuUnplug size={18} />New connection</>}
                   </Button>
                 </Tooltip>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <Tooltip content="Add a team member" hidden={!collapsed} placement="right">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
-                    color="default"
-                    startContent={collapsed ? null : <LuUserPlus size={18} />}
                     onPress={() => navigate("/settings/members")}
                     isIconOnly={collapsed}
                     fullWidth
                     className={cn(collapsed ? "justify-center" : "justify-start")}
                   >
-                    {collapsed ? <LuUserPlus size={20} /> : "Add team member"}
+                    {collapsed ? <LuUserPlus size={20} /> : <><LuUserPlus size={18} />Add team member</>}
                   </Button>
                 </Tooltip>
               </>
@@ -339,30 +338,25 @@ function Sidebar() {
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <Tooltip content="Change theme" hidden={!collapsed} placement="right">
               <Button
-                variant="light"
-                startContent={collapsed? null : _getTheme().icon}
+                variant="tertiary"
                 onPress={() => _onCycleTheme()}
                 fullWidth
                 className={cn(collapsed ? "justify-center" : "justify-start")}
                 isIconOnly={collapsed}
               >
-                {collapsed ? _getTheme().icon : _getTheme().name}
+                {collapsed ? _getTheme().icon : <>{_getTheme().icon}{_getTheme().name}</>}
               </Button>
             </Tooltip>
           </div>
-          <Spacer y={2} />
-          <Divider />
-          <Spacer y={2} />
-          <Dropdown aria-label="Select a user option">
-            <DropdownTrigger>
+          <div className="h-2" />
+          <Separator />
+          <div className="h-2" />
+          <Dropdown>
+            <Dropdown.Trigger>
               <div className={cn("flex flex-row items-center gap-1 justify-start cursor-pointer", collapsed ? "px-0 justify-center" : "px-4")}>
-                <Avatar
-                  name={user?.data?.name}
-                  size="sm"
-                  isBordered
-                  showFallback={<LuUser />}
-                  className="cursor-pointer"
-                />
+                <Avatar size="sm">
+                  <Avatar.Fallback>{userInitials || <LuUser />}</Avatar.Fallback>
+                </Avatar>
                 {collapsed ? null : (
                   <div className="flex flex-col items-start pl-2">
                     <div className="text-sm text-foreground">
@@ -374,54 +368,70 @@ function Sidebar() {
                   </div>
                 )}
               </div>
-            </DropdownTrigger>
-            <DropdownMenu variant="faded">
-              <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
-                <Link to="/settings/profile">
-                  <div className="w-full text-foreground">
-                    Profile
-                  </div>
-                </Link>
-              </DropdownItem>
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu
+                onAction={(key) => {
+                  if (key === "profile") {
+                    navigate("/settings/profile");
+                    return;
+                  }
 
-              <DropdownItem startContent={<LuLogOut />} onClick={() => dispatch(logout())} textValue="Sign out">
-                Sign out
-              </DropdownItem>
-            </DropdownMenu>
+                  if (key === "logout") {
+                    dispatch(logout());
+                  }
+                }}
+              >
+                <Dropdown.Item id="profile" textValue="Profile">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuUser size={18} />
+                    <span>Profile</span>
+                  </div>
+                </Dropdown.Item>
+
+                <Dropdown.Item id="logout" textValue="Sign out" variant="danger">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuLogOut size={18} />
+                    <span>Sign out</span>
+                  </div>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
-          <Spacer y={2} />
+          <div className="h-2" />
         </div>
       </div>
 
-      <Modal isOpen={createTeamModal} onClose={() => setCreateTeamModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <span className="font-bold">Create a new team</span>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={createTeamModal} onOpenChange={setCreateTeamModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Create a new team</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
             <Input
               label="Team name"
               placeholder="Enter your new team name"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              variant="bordered"
+              variant="secondary"
             />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={() => setCreateTeamModal(false)}>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="outline" onPress={() => setCreateTeamModal(false)}>
               Close
             </Button>
             <Button
-              color="primary"
-              isLoading={creatingTeam}
+              isPending={creatingTeam}
               onPress={_onCreateTeam}
               isDisabled={!teamName}
             >
               Create team
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </aside>
   );
 }

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
-  ModalHeader, ModalBody, ModalFooter, ModalContent, Tabs, Tab,
+  Tabs, Tab,
   CircularProgress,
   Badge,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
@@ -479,13 +479,14 @@ function ClickHouseBuilder(props) {
       </div>
 
       {/* Save query modal */}
-      <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-        <ModalContent>
-          <ModalHeader className="flex flex-col">
-            <div className="font-bold">{"Save your query for later"}</div>
+      <Modal.Backdrop isOpen={saveQueryModal} onOpenChange={setSaveQueryModal}>
+        <Modal.Container size="sm">
+          <Modal.Dialog>
+          <Modal.Header className="flex flex-col">
+            <Modal.Heading>Save your query for later</Modal.Heading>
             <div className="text-sm font-normal">{"You can then re-use this query for other datasets"}</div>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Header>
+          <Modal.Body>
             <Input
               label="Write a short description for your query"
               placeholder="Type a summary here"
@@ -493,25 +494,25 @@ function ClickHouseBuilder(props) {
               onChange={(e) => setSavedQuerySummary(e.target.value)}
               variant="bordered"
             />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="secondary"
               onPress={() => setSaveQueryModal(false)}
             >
               Close
             </Button>
             <Button
-              disabled={!savedQuerySummary}
+              isDisabled={!savedQuerySummary}
               endContent={<LuCheck />}
               onPress={_onSaveQuery}
-              color="primary"
             >
               Save the query
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       <DataTransform
         isOpen={showTransform}

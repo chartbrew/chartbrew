@@ -5,8 +5,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
-  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader,
-  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
+  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, CardBody, Select, SelectItem,
   Badge,
   Divider,
   Kbd,
@@ -936,22 +935,22 @@ function Chart(props) {
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal isOpen={deleteModal} onClose={() => setDeleteModal(false)} backdrop="blur">
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Are you sure you want to remove this chart?</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop variant="blur" isOpen={deleteModal} onOpenChange={setDeleteModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Are you sure you want to remove this chart?</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Text>
               {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
             </Text>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               color="warning"
               onClick={() => setDeleteModal(false)}
-              auto
             >
               Go back
             </Button>
@@ -959,53 +958,56 @@ function Chart(props) {
               color="danger"
               endContent={<LuTrash />}
               onClick={_onDeleteChart}
-              isLoading={chartLoading}
+              isPending={chartLoading}
             >
               Remove completely
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {/* MAKE CHART PUBLIC MODAL */}
-      <Modal onClose={() => setPublicModal(false)} isOpen={publicModal}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Are you sure you want to make your chart public?</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={publicModal} onOpenChange={setPublicModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Are you sure you want to make your chart public?</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Text>
               {"Public charts will show in your Public Dashboard page and it can be viewed by everyone with access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
             </Text>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               color="warning"
-              auto
               onClick={() => setPublicModal(false)}
             >
               Go back
             </Button>
             <Button
-              isLoading={publicLoading}
+              isPending={publicLoading}
               color="primary"
               endContent={<LuLockOpen />}
               onClick={_onPublic}
             >
               Make the chart public
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {/* AUTO-UPDATE MODAL */}
-      <Modal isOpen={updateModal} className="w-[500px]" onClose={() => setUpdateModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Set up auto-update for your chart</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={updateModal} onOpenChange={setUpdateModal}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[500px]">
+          <Modal.Header>
+            <Modal.Heading>Set up auto-update for your chart</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               <Row align="center">
                 <Select
@@ -1110,10 +1112,10 @@ function Chart(props) {
                 </>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               color={"warning"}
               onClick={() => setUpdateModal(false)}
               size="sm"
@@ -1122,9 +1124,9 @@ function Chart(props) {
             </Button>
             <Button
               endContent={<LuX />}
-              variant="flat"
+              variant="tertiary"
               color="danger"
-              isLoading={autoUpdateLoading}
+              isPending={autoUpdateLoading}
               onClick={() => {
                 setUpdateFrequency(0);
                 _onChangeAutoUpdate(0);
@@ -1136,15 +1138,16 @@ function Chart(props) {
             <Button
               endContent={<LuCheck />}
               color="primary"
-              isLoading={autoUpdateLoading}
+              isPending={autoUpdateLoading}
               onClick={() => _onChangeAutoUpdate()}
               size="sm"
             >
               Save
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {/* EMBED CHART MODAL */}
       {chart && (
@@ -1157,12 +1160,13 @@ function Chart(props) {
 
 
       {/* ALERTS MODAL */}
-      <Modal isOpen={alertsModal} onClose={() => setAlertsModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">{"Alerts"}</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={alertsModal} onOpenChange={setAlertsModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Alerts</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div className="text-sm">{"Select a dataset to set up alerts for"}</div>
             <Select
               selectionMode="single"
@@ -1196,18 +1200,18 @@ function Chart(props) {
                 />
               </>
             )}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="secondary"
               onClick={() => setAlertsModal(false)}
-              auto
             >
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </motion.div>
   );
 }

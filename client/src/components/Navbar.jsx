@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
-  Modal, Spacer, Dropdown, Button, Navbar, Card,
-  ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
-  DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar, Breadcrumbs, BreadcrumbItem,
+  Avatar, Button, Dropdown, Modal, ProgressCircle,
 } from "@heroui/react";
 import {
   LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
@@ -18,9 +16,6 @@ import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_blue.png";
 import cbLogoInverted from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
-import Container from "./Container";
-import Row from "./Row";
-import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
 import { selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
 import { useTheme } from "../modules/ThemeContext";
@@ -44,6 +39,7 @@ function NavbarContainer() {
   const aiModalOpen = useSelector(selectAiModalOpen);
 
   const { theme, setTheme, isDark } = useTheme();
+  const userInitials = user?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -150,21 +146,28 @@ function NavbarContainer() {
 
   if (!team?.id && !teams) {
     return (
-      <Modal open blur>
-        <ModalBody>
-          <Container md>
-            <Row justify="center" align="center">
-              <CircularProgress aria-label="Loading" size="lg" />
-            </Row>
-          </Container>
-        </ModalBody>
-      </Modal>
+      <Modal.Backdrop isOpen variant="blur" isDismissable={false} isKeyboardDismissDisabled>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[320px]">
+            <Modal.Body>
+              <div className="flex justify-center py-6">
+                <ProgressCircle aria-label="Loading" isIndeterminate size="lg">
+                  <ProgressCircle.Track>
+                    <ProgressCircle.TrackCircle />
+                    <ProgressCircle.FillCircle />
+                  </ProgressCircle.Track>
+                </ProgressCircle>
+              </div>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     );
   }
   return (
     <>
-      <Navbar isBordered maxWidth="full" height={"3rem"} style={{ zIndex: 999 }} classNames={{ wrapper: "px-4" }}>
-        <NavbarBrand>
+      <header className="sticky top-0 z-[999] flex h-12 items-center justify-between border-b border-divider bg-content1 px-4">
+        <div className="flex items-center">
           {params.teamId && (
             <Link to="/">
               <img src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
@@ -180,30 +183,27 @@ function NavbarContainer() {
               </Link>
             </>
           )}
-          <Spacer x={4} />
-          <Row align="center" className={"gap-1 hidden sm:flex"}>
-            {params.teamId && (
-              <Breadcrumbs variant="solid">
-                {params.teamId && (
-                  <BreadcrumbItem key="team" onClick={() => navigate("/")} isCurrent={!params.projectId}>
-                    {team.name}
-                  </BreadcrumbItem>
-                )}
-                {params.projectId && (
-                  <BreadcrumbItem
-                    key="project"
-                    isCurrent={!!params.projectId}
+          {params.teamId && (
+            <div className="ml-4 hidden items-center gap-2 sm:flex">
+              <button type="button" className="text-sm text-foreground" onClick={() => navigate("/")}>
+                {team.name}
+              </button>
+              {params.projectId && (
+                <>
+                  <span className="text-sm text-foreground/50">/</span>
+                  <button
+                    type="button"
+                    className="text-sm text-foreground"
                     onClick={() => navigate(`/${params.teamId}/${params.projectId}/dashboard`)}
                   >
                     {project.name}
-                  </BreadcrumbItem>
-                )}
-              </Breadcrumbs>
-            )}
-          </Row>
-        </NavbarBrand>
-        <NavbarContent justify="end">
-          <NavbarItem>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
             <div
               className="changelog-trigger flex flex-row items-center text-foreground cursor-pointer"
               title="Changelog"
@@ -213,193 +213,188 @@ function NavbarContainer() {
               </span>
               <div className={"hidden sm:block text-sm"}>Updates</div>
             </div>
-          </NavbarItem>
-          <Dropdown aria-label="Select a help option">
-            <NavbarItem>
-              <DropdownTrigger>
+          <Dropdown>
+              <Dropdown.Trigger>
                 <Button
-                  variant="light"
-                  disableRipple
-                  className="p-0 bg-transparent data-[hover=true]:bg-transparent"
-                  startContent={<LuHeartHandshake size={18} />}
-                  radius="sm"
+                  variant="tertiary"
+                  className="px-2"
                 >
+                  <LuHeartHandshake size={18} />
                   Resources
                 </Button>
-              </DropdownTrigger>
-            </NavbarItem>
-            <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
-              <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
-                <Text>{"Join our Discord"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuSquareKanban />} key="roadmap" textValue="Roadmap">
-                <Text>{"Roadmap"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">
-                <Text>{"Blog tutorials"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuBookOpenText />} key="documentation" textValue="Documentation">
-                <Text>{"Documentation"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuFileCode2 />} key="api" textValue="API Reference">
-                <Text>{"API Reference"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuGithub />} key="github" textValue="GitHub">
-                <Text>{"GitHub"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuSmile />} key="feedback" textValue="Feedback">
-                <Text>{"Feedback"}</Text>
-              </DropdownItem>
-            </DropdownMenu>
+              </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu onAction={(key) => _onDropdownAction(key)}>
+                <Dropdown.Item id="discord" textValue="Join our Discord">
+                  <div className="flex flex-row items-center gap-2">
+                    <TbBrandDiscord />
+                    <span>Join our Discord</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="roadmap" textValue="Roadmap">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSquareKanban size={18} />
+                    <span>Roadmap</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="tutorials" textValue="Blog tutorials">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuBook size={18} />
+                    <span>Blog tutorials</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="documentation" textValue="Documentation">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuBookOpenText size={18} />
+                    <span>Documentation</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="api" textValue="API Reference">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuFileCode2 size={18} />
+                    <span>API Reference</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="github" textValue="GitHub">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuGithub size={18} />
+                    <span>GitHub</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="feedback" textValue="Feedback">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSmile size={18} />
+                    <span>Feedback</span>
+                  </div>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
           
           {_canAccess("teamAdmin", team) && (
-            <NavbarItem>
               <Button
-                variant="solid"
+                variant="primary"
                 onPress={() => dispatch(toggleAiModal())}
-                startContent={<LuBrainCircuit size={18} />}
                 size="sm"
                 className="from-primary-300 via-violet-200 to-secondary-300 dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500 bg-gradient-to-tr hover:bg-gradient-to-br transition-all duration-300 shadow-md"
               >
+                <LuBrainCircuit size={18} />
                 Ask Chartbrew AI
               </Button>
-            </NavbarItem>
           )}
 
-          <Dropdown aria-label="Select a user option">
-            <NavbarItem>
-              <DropdownTrigger>
-                <div>
-                  <Row className={"gap-1"} align={"center"}>
-                    <Avatar
-                      name={user.name}
-                      size="sm"
-                      isBordered
-                      showFallback={<LuUser />}
-                      className="cursor-pointer"
-                    />
-                  </Row>
+          <Dropdown>
+              <Dropdown.Trigger>
+                <div className="cursor-pointer">
+                  <Avatar size="sm">
+                    <Avatar.Fallback>{userInitials || <LuUser />}</Avatar.Fallback>
+                  </Avatar>
                 </div>
-              </DropdownTrigger>
-            </NavbarItem>
-            <DropdownMenu variant="faded">
-              <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
-                <Link to="/user/profile">
-                  <div className="w-full text-foreground">
-                    Profile
-                  </div>
-                </Link>
-              </DropdownItem>
+              </Dropdown.Trigger>
+            <Dropdown.Popover>
+            <Dropdown.Menu
+              onAction={(key) => {
+                if (key === "logout") {
+                  dispatch(logout());
+                  return;
+                }
+
+                _onDropdownAction(key);
+              }}
+            >
+              <Dropdown.Item id="profile" textValue="Profile">
+                <div className="flex flex-row items-center gap-2">
+                  <LuUser size={18} />
+                  <span>Profile</span>
+                </div>
+              </Dropdown.Item>
               {_canAccess("teamAdmin", teamOwned) && (
-                <DropdownItem startContent={<LuSettings />} key="account" textValue="Team settings">
-                  <Link to={`/manage/${team?.id || teamOwned.id}/settings`}>
-                    <div className="w-full text-foreground">
-                      Team settings
-                    </div>
-                  </Link>
-                </DropdownItem>
+                <Dropdown.Item id="account" textValue="Team settings">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSettings size={18} />
+                    <span>Team settings</span>
+                  </div>
+                </Dropdown.Item>
               )}
 
-              <DropdownItem
-                startContent={<LuWallpaper />}
-                showDivider
-                key="theme"
-                onClick={() => setShowAppearance(true)}
-                textValue="UI Theme"
-              >
-                <div className="w-full text-foreground">
-                  UI Theme
+              <Dropdown.Item id="theme" textValue="UI Theme">
+                <div className="flex flex-row items-center gap-2">
+                  <LuWallpaper size={18} />
+                  <span>UI Theme</span>
                 </div>
-              </DropdownItem>
+              </Dropdown.Item>
 
-              <DropdownItem startContent={<LuLogOut />} onClick={() => dispatch(logout())} textValue="Sign out">
-                Sign out
-              </DropdownItem>
-            </DropdownMenu>
+              <Dropdown.Item id="logout" textValue="Sign out" variant="danger">
+                <div className="flex flex-row items-center gap-2">
+                  <LuLogOut size={18} />
+                  <span>Sign out</span>
+                </div>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
-        </NavbarContent>
-      </Navbar>
+        </div>
+      </header>
 
-      <Modal
-        isOpen={feedbackModal}
-        onClose={() => setFeedbackModal(false)}
-      >
-        <ModalContent>
-          <ModalBody>
+      <Modal.Backdrop isOpen={feedbackModal} onOpenChange={setFeedbackModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Body>
             <FeedbackForm />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" color="warning" onClick={() => setFeedbackModal(false)} auto>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onPress={() => setFeedbackModal(false)}>
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={showAppearance} onClose={() => setShowAppearance(false)} width="500px">
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Chartbrew UI Appearance</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={showAppearance} onOpenChange={setShowAppearance}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[500px]">
+            <Modal.Header>
+              <Modal.Heading>Chartbrew UI Appearance</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
             <div className="flex flex-row justify-between gap-2">
-              <Card
-                isPressable
-                borderWeight={theme === "light" ? "extrabold" : "normal"}
+              <button
+                type="button"
                 onClick={() => setTheme("light")}
-                className={`bg-white ${theme === "light" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
-                variant={"bordered"}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "light" ? "border-secondary" : "border-content3"} bg-white`}
               >
-                <CardBody>
-                  <LuSun size={24} color="black" />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text className={"text-black!"}>Light</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuSun size={24} color="black" />
+                <div className="mt-2 text-black">Light</div>
+              </button>
 
-              <Card
-                isPressable
-                className={`bg-black ${theme === "dark" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
-                borderWeight={theme === "dark" ? "extrabold" : "normal"}
+              <button
+                type="button"
                 onClick={() => setTheme("dark")}
-                variant={"bordered"}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "dark" ? "border-secondary" : "border-content3"} bg-black`}
               >
-                <CardBody>
-                  <LuMoon size={24} color="white" />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text className="text-[#FFFFFF]!">Dark</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuMoon size={24} color="white" />
+                <div className="mt-2 text-white">Dark</div>
+              </button>
 
-              <Card
-                isPressable
-                variant={"bordered"}
+              <button
+                type="button"
                 onClick={() => setTheme("system")}
-                borderWeight={theme === "system" ? "extrabold" : "normal"}
-                className={`bg-content3 ${theme === "system" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "system" ? "border-secondary" : "border-content3"} bg-content3`}
               >
-                <CardBody>
-                  <LuContrast size={24} color={isDark ? "white" : "black"} />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text h5 className={isDark ? "text-white" : "text-black"}>System</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuContrast size={24} color={isDark ? "white" : "black"} />
+                <div className={isDark ? "mt-2 text-white" : "mt-2 text-black"}>System</div>
+              </button>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onClick={() => setShowAppearance(false)}
-            >
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="outline" onPress={() => setShowAppearance(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       {_canAccess("teamAdmin", team) && (
         <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />

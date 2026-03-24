@@ -4,7 +4,7 @@ import { PropTypes } from "prop-types";
 import {
   Autocomplete,
   AutocompleteItem,
-  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
+  Button, CircularProgress, Divider, Input, Modal, Spacer,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -252,37 +252,39 @@ function ProjectSettings(props) {
         </>
       )}
 
-      <Modal isOpen={removeModal} backdrop="blur" onClose={() => setRemoveModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">Are you sure you want to remove this project?</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={removeModal} onOpenChange={setRemoveModal} variant="blur">
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-lg">
+            <Modal.Header>
+              <Modal.Heading>Are you sure you want to remove this project?</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
             <div>
               {"This action will be PERMANENT. All the charts this project will be deleted as well."}
             </div>
             <div>
               {"The connections and datasets used in these charts will not be deleted."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+            </Modal.Body>
+            <Modal.Footer>
             <Button
-              variant="bordered"
-              onClick={() => setRemoveModal(false)}
+              variant="outline"
+              onPress={() => setRemoveModal(false)}
             >
               Go back
             </Button>
             <Button
-              color="danger"
-              disabled={removeLoading}
-              endContent={<LuTrash />}
-              onClick={_onRemove}
+              variant="danger"
+              isDisabled={removeLoading}
+              onPress={_onRemove}
             >
+              <LuTrash size={18} />
               Remove completely
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Segment>
   );
 }

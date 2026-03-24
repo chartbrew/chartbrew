@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
   Autocomplete, AutocompleteItem,
-  Button, Chip, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
+  Button, Chip, Input, Link, Modal, Spacer,
 } from "@heroui/react";
 import { LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -405,17 +405,21 @@ function Dataset() {
 
       <DatasetQuery onUpdateDataset={_onUpdateDataset} />
 
-      <Modal
+      <Modal.Backdrop
         isOpen={draftSaveModalOpen}
-        onClose={() => {
-          setDraftSaveModalOpen(false);
-          setDraftSaveIntent("save");
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setDraftSaveModalOpen(false);
+            setDraftSaveIntent("save");
+          }
         }}
-        size="2xl"
       >
-        <ModalContent>
-          <ModalHeader>Save dataset</ModalHeader>
-          <ModalBody>
+        <Modal.Container size="2xl">
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Save dataset</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Input
               value={datasetName}
               onChange={(event) => setDatasetName(event.target.value)}
@@ -449,10 +453,10 @@ function Dataset() {
                 )}
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="secondary"
               onPress={() => {
                 setDraftSaveModalOpen(false);
                 setDraftSaveIntent("save");
@@ -476,22 +480,27 @@ function Dataset() {
             >
               {fromChart ? "Save & return to chart" : "Save dataset"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal
+      <Modal.Backdrop
         isOpen={createChartModalOpen}
-        onClose={() => {
-          setCreateChartModalOpen(false);
-          setCreateChartSelectedProjectKey(null);
-          setCreateChartSubmitAttempted(false);
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setCreateChartModalOpen(false);
+            setCreateChartSelectedProjectKey(null);
+            setCreateChartSubmitAttempted(false);
+          }
         }}
-        size="2xl"
       >
-        <ModalContent>
-          <ModalHeader>Create a chart from this dataset</ModalHeader>
-          <ModalBody>
+        <Modal.Container size="2xl">
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Create a chart from this dataset</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div className="text-sm text-foreground-500">
               Pick the dashboard (project) where this chart should be added. A new chart will be created and linked to this dataset.
             </div>
@@ -523,10 +532,10 @@ function Dataset() {
             {projects.filter((project) => !project.ghost).length === 0 && (
               <div className="text-sm text-foreground-400 mt-2">No projects available yet.</div>
             )}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="secondary"
               onPress={() => {
                 setCreateChartModalOpen(false);
                 setCreateChartSelectedProjectKey(null);
@@ -543,9 +552,10 @@ function Dataset() {
             >
               Create chart
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
     </div>
   );

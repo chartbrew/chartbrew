@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
-  Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
+  Switch, Select, SelectItem,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -350,14 +350,13 @@ function DatasetAlerts(props) {
           </div>
         )}
       </Container>
-      <Modal isOpen={open} onClose={() => setOpen(false)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">
-              {newAlert.id ? "Edit alert" : "Set up a new alert"}
-            </Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={open} onOpenChange={setOpen}>
+        <Modal.Container size="2xl">
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>{newAlert.id ? "Edit alert" : "Set up a new alert"}</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               <Row align="center">
                 <Select
@@ -613,8 +612,8 @@ function DatasetAlerts(props) {
                 </>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Switch
               isSelected={newAlert.active}
               onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
@@ -625,31 +624,30 @@ function DatasetAlerts(props) {
             <Spacer x={1} />
             {newAlert.id && (
               <Button
-                auto
                 color="danger"
                 endContent={<LuTrash />}
                 variant="light"
                 onClick={() => _onDelete()}
-                isLoading={deleteLoading}
+                isPending={deleteLoading}
               >
                 Delete alert
               </Button>
             )}
-            <Button onClick={() => setOpen(false)} variant="bordered">
+            <Button onClick={() => setOpen(false)} variant="secondary">
               Close
             </Button>
             <Button
-              auto
               onClick={() => _onSaveAlert()}
               color="primary"
               disabled={newAlert.mediums.length === 0 || !newAlert.type}
-              isLoading={loading}
+              isPending={loading}
             >
               {newAlert.id ? "Update alert" : "Create alert"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

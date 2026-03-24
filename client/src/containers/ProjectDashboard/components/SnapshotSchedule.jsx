@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import {
-  Autocomplete, AutocompleteItem, Button, Input, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Select, SelectItem, TimeInput, Spacer, Image, Textarea, ButtonGroup, Tooltip,
+  Autocomplete, AutocompleteItem, Button, Input, Modal, Select, SelectItem, TimeInput, Spacer, Image, Textarea, ButtonGroup, Tooltip,
   Tabs, Tab,
   Checkbox,
 } from "@heroui/react";
@@ -269,15 +268,22 @@ function SnapshotSchedule({ isOpen, onClose }) {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader className="flex flex-col">
+      <Modal.Backdrop
+        isOpen={isOpen}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <Modal.Container scroll="inside">
+        <Modal.Dialog className="sm:max-w-3xl">
+          <Modal.Header className="flex flex-col">
+            <Modal.Heading>Schedule snapshot deliveries</Modal.Heading>
             <div className="text-lg font-bold">Schedule snapshot deliveries</div>
             <div className="text-sm text-gray-500">
               {"Snapshots of your dashboards sent over multiple channels"}
             </div>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Header>
+          <Modal.Body>
             <div className="flex flex-col gap-2 w-full pb-6">
               <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
                 <Select
@@ -585,27 +591,28 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </Checkbox>
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter className="items-center">
+          </Modal.Body>
+          <Modal.Footer className="items-center">
             {!project?.snapshotSchedule?.frequency && (
               <div className="text-sm text-gray-500">
                 {"Schedule is not set yet"}
               </div>
             )}
-            <Button variant="bordered" onPress={onClose}>
+            <Button variant="outline" onPress={onClose}>
               Close
             </Button>
             {project?.snapshotSchedule?.frequency && (
-              <Button variant="flat" onPress={_onRemoveSchedule} color="danger">
+              <Button variant="danger" onPress={_onRemoveSchedule}>
                 Remove schedule
               </Button>
             )}
-            <Button onPress={_onSave} color="primary" isLoading={isLoading} isDisabled={!_canSave()}>
+            <Button onPress={_onSave} isPending={isLoading} isDisabled={!_canSave()}>
               {project?.snapshotSchedule?.frequency ? "Update" : "Set schedule"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+      </Modal.Backdrop>
     </>
   )
 }

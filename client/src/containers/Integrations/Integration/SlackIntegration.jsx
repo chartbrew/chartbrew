@@ -9,10 +9,6 @@ import {
   Spacer,
   Divider,
   Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Switch,
 } from "@heroui/react"
 import { LuHash, LuTrash } from "react-icons/lu"
@@ -264,12 +260,13 @@ function SlackIntegration({ integration }) {
         </div>
       </div>
 
-      <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Are you sure you want to delete this integration?</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <Modal.Container size="xl">
+          <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>Are you sure you want to delete this integration?</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div>
               All alerts that are configured to use this integration will be disabled.
             </div>
@@ -279,11 +276,11 @@ function SlackIntegration({ integration }) {
                 <div className="text-danger text-sm">There was an error deleting the integration. Please try again.</div>
               </>
             )}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
               onPress={() => setDeleteModalOpen(false)}
-              variant="bordered"
+              variant="secondary"
               size="sm"
             >
               Close
@@ -291,14 +288,15 @@ function SlackIntegration({ integration }) {
             <Button
               onPress={handleDelete}
               color="danger"
-              isLoading={deleteLoading}
+              isPending={deleteLoading}
               size="sm"
             >
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   )
 }

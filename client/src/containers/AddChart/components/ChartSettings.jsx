@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Select, SelectItem,
+  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, Select, SelectItem,
   Code,
 } from "@heroui/react";
 import moment from "moment";
@@ -574,12 +574,13 @@ function ChartSettings({ chart, onChange }) {
         )}
       </div>
 
-      <Modal isOpen={dateFormattingModal} onClose={() => setDateFormattingModal(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            Set a custom format for your dates
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={dateFormattingModal} onOpenChange={setDateFormattingModal}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Set a custom format for your dates</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div className="text-sm">
               {"Chartbrew will use this format when injecting the dates as variables in your queries. The variables are"}
               {" "}
@@ -645,24 +646,24 @@ function ChartSettings({ chart, onChange }) {
               </a>
               {" for how to format dates."}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setDateFormattingModal(false)}
             >
               Cancel
             </Button>
             <Button
-              endContent={<LuCheck />}
               onPress={_onChangeDateFormat}
-              color="primary"
             >
+              <LuCheck size={18} />
               Apply date format
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

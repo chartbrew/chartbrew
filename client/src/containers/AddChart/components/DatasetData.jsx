@@ -14,8 +14,7 @@ import update from "immutability-helper";
 import {
   Button, Accordion, Dropdown, Input, Link, Popover, Spacer, Tooltip, Divider,
   Chip, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem,
-  PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
-  ModalContent, Select, Listbox, ListboxItem, SelectItem, ScrollShadow,
+  PopoverTrigger, PopoverContent, AccordionItem, Select, Listbox, ListboxItem, SelectItem, ScrollShadow,
 } from "@heroui/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
@@ -1454,12 +1453,13 @@ function DatasetData(props) {
         )}
       </div>
 
-      <Modal isOpen={conditionModal} size="lg" onClose={() => setConditionModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Condition settings</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={conditionModal} onOpenChange={setConditionModal}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-lg">
+          <Modal.Header>
+            <Modal.Heading>Condition settings</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Row>
               <Input
                 label="The name of the filter as it appears to viewers"
@@ -1491,24 +1491,23 @@ function DatasetData(props) {
                 Hide existing values from the filter dropdown
               </Checkbox>
             </Row>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              onClick={() => setConditionModal(false)}
-              color="warning"
-              variant="flat"
+              onPress={() => setConditionModal(false)}
+              variant="tertiary"
             >
               Close
             </Button>
             <Button
-              onClick={_onConfirmConditionSettings}
-              color="primary"
+              onPress={_onConfirmConditionSettings}
             >
               Save settings
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       <TableDataFormattingModal
         config={fieldFormatConfig}

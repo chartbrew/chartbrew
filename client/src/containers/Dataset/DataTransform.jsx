@@ -2,10 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
   Select,
   SelectItem,
@@ -60,15 +56,21 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
-      <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          <div className="text-lg">Transform data</div>
-          <div className="text-sm text-default-500">
-            {"Configure the transformation to apply to the data after it's fetched from the connection."}
-          </div>
-        </ModalHeader>
-        <ModalBody>
+    <Modal.Backdrop
+      isOpen={isOpen}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <Modal.Container size="4xl" scroll="inside">
+        <Modal.Dialog>
+          <Modal.Header className="flex flex-col gap-1">
+            <Modal.Heading>Transform data</Modal.Heading>
+            <div className="text-sm text-default-500">
+              {"Configure the transformation to apply to the data after it's fetched from the connection."}
+            </div>
+          </Modal.Header>
+          <Modal.Body>
           <Select
             label="Transformation type"
             placeholder="Select a transformation type"
@@ -206,12 +208,11 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
               </Accordion>
             </div>
           )}
-        </ModalBody>
-        <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
           <Button
             onPress={onClose}
-            color="default"
-            variant="bordered"
+            variant="secondary"
           >
             Close
           </Button>
@@ -227,13 +228,13 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
                 console.error("Invalid JSON configuration");
               }
             }}
-            color="primary"
           >
             Save
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }
 

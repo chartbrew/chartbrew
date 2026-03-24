@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
-  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent,
-  ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
+  Button, Checkbox, Divider, Input, Link, Modal, Popover, PopoverContent, PopoverTrigger, Spacer,
   Tab, Tabs, Tooltip, Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
   DrawerContent, Code, Switch, Select, SelectItem,
 } from "@heroui/react";
@@ -523,12 +522,13 @@ function MongoQueryBuilder(props) {
       </div>
 
       {/* Save query modal */}
-      <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text b>{"Save your query and use it later in this project"}</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={saveQueryModal} onOpenChange={setSaveQueryModal}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-md">
+            <Modal.Header>
+              <Modal.Heading>Save your query and use it later in this project</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
             <Input
               label="Write a short description for your query"
               placeholder="Type a summary here"
@@ -537,25 +537,25 @@ function MongoQueryBuilder(props) {
               size="lg"
               variant="bordered"
             />
-          </ModalBody>
-          <ModalFooter>
+            </Modal.Body>
+            <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setSaveQueryModal(false)}
             >
               Close
             </Button>
             <Button
-              disabled={!savedQuerySummary}
-              endContent={<LuCheck />}
+              isDisabled={!savedQuerySummary}
               onPress={_onSaveQuery}
-              color="primary"
             >
+              <LuCheck size={18} />
               Save the query
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       <DataTransform
         isOpen={showTransform}

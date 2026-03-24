@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, AutocompleteItem, Button, Chip, Code, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@heroui/react"
+import { Alert, Autocomplete, AutocompleteItem, Button, Chip, Code, Input, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem } from "@heroui/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuVariable, LuX } from "react-icons/lu"
@@ -1093,12 +1093,15 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
         </Button>
       </div>
 
-      <Modal isOpen={viewJoin} onClose={() => setViewJoin(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Join data</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={!!viewJoin} onOpenChange={(open) => {
+        if (!open) setViewJoin(false);
+      }}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Join data</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <div className="flex flex-col gap-4">
               <div>
                 <Select
@@ -1169,30 +1172,31 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                 </div>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewJoin(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onChangeJoin(viewJoin)}
             >
               Save
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={viewAddColumn} onClose={() => setViewAddColumn(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Add column</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={viewAddColumn} onOpenChange={setViewAddColumn}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Add column</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Select
               placeholder="Select column"
               variant="bordered"
@@ -1227,30 +1231,31 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                 Select none
               </Button>
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewAddColumn(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onAddColumn()}
             >
               Add
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={viewFilter} onClose={() => setViewFilter(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Filter data</div>
-          </ModalHeader>
-          <ModalBody className="flex flex-col gap-2">
+      <Modal.Backdrop isOpen={viewFilter} onOpenChange={setViewFilter}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Filter data</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body className="flex flex-col gap-2">
             <Select
               label="Column"
               placeholder="Select column"
@@ -1296,31 +1301,32 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value })}
               description="You can use variables like {{variable_name}} as values"
             />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewFilter(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onAddFilter(newFilter)}
               isDisabled={!newFilter.column || !newFilter.operator || !newFilter.value}
             >
               Add
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={viewGroupBy} onClose={() => setViewGroupBy(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Group by</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={viewGroupBy} onOpenChange={setViewGroupBy}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Group by</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Select
               placeholder="Select column"
               variant="bordered"
@@ -1338,30 +1344,31 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                 </SelectItem>
               ))}
             </Select>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewGroupBy(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onAddGroupBy()}
             >
               Add
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={viewOrderBy} onClose={() => setViewOrderBy(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Order by</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={viewOrderBy} onOpenChange={setViewOrderBy}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Order by</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Select
               placeholder="Select column"
               variant="bordered"
@@ -1387,30 +1394,31 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               <Radio value="ASC">Ascending</Radio>
               <Radio value="DESC">Descending</Radio>
             </RadioGroup>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewOrderBy(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onAddOrderBy()}
             >
               Add
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={viewLimit} onClose={() => setViewLimit(false)} size="xl">
-        <ModalContent>
-          <ModalHeader>
-            <div className="font-bold">Limit</div>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={viewLimit} onOpenChange={setViewLimit}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Header>
+            <Modal.Heading>Limit</Modal.Heading>
+          </Modal.Header>
+          <Modal.Body>
             <Input
               type="number"
               label="Limit"
@@ -1419,23 +1427,23 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
             />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="outline"
               onPress={() => setViewLimit(false)}
             >
               Close
             </Button>
             <Button
-              color="primary"
               onPress={() => _onAddLimit()}
             >
               Save limit
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Container>
   )
 }

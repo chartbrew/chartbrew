@@ -1,15 +1,13 @@
-import { Button, Card, CardBody, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, User } from "@heroui/react"
+import { Avatar, Button, Chip, Dropdown, Modal } from "@heroui/react"
 import React, { useEffect, useState } from "react"
 import { LuBook, LuBookOpenText, LuChevronRight, LuConstruction, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuLogOut, LuMoon, LuSettings, LuSmile, LuSquareKanban, LuSun, LuUser, LuWallpaper } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router"
+import { useNavigate } from "react-router"
 import { TbBrandDiscord } from "react-icons/tb"
 
 import { logout, selectUser } from "../slices/user"
 import { selectTeam, selectTeams } from "../slices/team"
 import canAccess from "../config/canAccess"
-import Row from "./Row"
-import Text from "./Text"
 import FeedbackForm from "./FeedbackForm"
 import { useTheme } from "../modules/ThemeContext"
 
@@ -25,6 +23,7 @@ function AccountNav() {
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
   const { theme, setTheme, isDark } = useTheme();
+  const userInitials = user?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
 
   useEffect(() => {
     setTimeout(() => {
@@ -108,184 +107,192 @@ function AccountNav() {
   
   return (
     <div className="flex flex-col items-start w-full">
-      <Listbox aria-label="Account actions" variant="flat">
-        <ListboxItem
-          startContent={<LuHeartHandshake size={18} />}
-          onPress={() => _onDropdownAction("resources")}
-          fullWidth
-        >
-          <Dropdown aria-label="Select a help option" placement="right-end">
-            <DropdownTrigger>
-              <div className="flex flex-row justify-start w-full">Resources</div>
-            </DropdownTrigger>
-            <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
-              <DropdownItem startContent={<TbBrandDiscord />} key="discord" textValue="Join our Discord">
-                Join our Discord
-              </DropdownItem>
-              <DropdownItem startContent={<LuSquareKanban />} key="roadmap" textValue="Roadmap" endContent={<Chip variant="flat" color="secondary" size="sm" radius="sm">New</Chip>}>
-                Roadmap
-              </DropdownItem>
-              <DropdownItem startContent={<LuBook />} key="tutorials" textValue="Blog tutorials">
-                Blog tutorials
-              </DropdownItem>
-              <DropdownItem startContent={<LuBookOpenText />} key="documentation" textValue="Documentation">
-                Documentation
-              </DropdownItem>
-              <DropdownItem startContent={<LuFileCode2 />} key="api" textValue="API Reference">
-                API Reference
-              </DropdownItem>
-              <DropdownItem startContent={<LuGithub />} key="github" textValue="GitHub">
-                GitHub
-              </DropdownItem>
-              <DropdownItem startContent={<LuSmile />} key="feedback" textValue="Feedback">
-                Feedback
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </ListboxItem>
-        <ListboxItem
-          className="changelog-trigger max-h-8"
-          startContent={<LuConstruction size={18} />}
-          endContent={
-            <span className={`changelog-badge ${changelogPadding ? "p-4" : "p-0 w-6"}`} />
-          }
-          fullWidth
-        >
-          <div className={"hidden sm:block text-sm"}>Updates</div>
-        </ListboxItem>
-      </Listbox>
-      <Dropdown aria-label="Select a user option" placement="right-end" className="justify-start">
-        <DropdownTrigger className="flex flex-row justify-start">
-          <div className="flex flex-row justify-between items-center cursor-pointer hover:bg-content2 rounded-lg w-full p-2">
-            <User
-              avatarProps={{
-                name: user.name,
-                showFallback: <LuUser />,
-                size: "sm",
-              }}
-              name={user.name}
-              className="justify-start"
-            />
+      <div className="flex w-full flex-col gap-1">
+        <Dropdown>
+          <Dropdown.Trigger className="w-full rounded-lg">
+            <div className="flex flex-row items-center justify-between rounded-lg px-2 py-2 hover:bg-content2">
+              <div className="flex flex-row items-center gap-2">
+                <LuHeartHandshake size={18} />
+                <div className="text-sm text-foreground">Resources</div>
+              </div>
+              <LuChevronRight size={18} />
+            </div>
+          </Dropdown.Trigger>
+          <Dropdown.Popover placement="right end">
+            <Dropdown.Menu onAction={(key) => _onDropdownAction(key)}>
+              <Dropdown.Item id="discord" textValue="Join our Discord">
+                <div className="flex flex-row items-center gap-2">
+                  <TbBrandDiscord />
+                  <span>Join our Discord</span>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="roadmap" textValue="Roadmap">
+                <div className="flex w-full flex-row items-center justify-between gap-2">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSquareKanban size={18} />
+                    <span>Roadmap</span>
+                  </div>
+                  <Chip size="sm" variant="secondary" radius="sm">New</Chip>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="tutorials" textValue="Blog tutorials">
+                <div className="flex flex-row items-center gap-2">
+                  <LuBook size={18} />
+                  <span>Blog tutorials</span>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="documentation" textValue="Documentation">
+                <div className="flex flex-row items-center gap-2">
+                  <LuBookOpenText size={18} />
+                  <span>Documentation</span>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="api" textValue="API Reference">
+                <div className="flex flex-row items-center gap-2">
+                  <LuFileCode2 size={18} />
+                  <span>API Reference</span>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="github" textValue="GitHub">
+                <div className="flex flex-row items-center gap-2">
+                  <LuGithub size={18} />
+                  <span>GitHub</span>
+                </div>
+              </Dropdown.Item>
+              <Dropdown.Item id="feedback" textValue="Feedback">
+                <div className="flex flex-row items-center gap-2">
+                  <LuSmile size={18} />
+                  <span>Feedback</span>
+                </div>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
+
+        <div className="changelog-trigger flex max-h-8 w-full flex-row items-center justify-between rounded-lg px-2 py-2 hover:bg-content2">
+          <div className="flex flex-row items-center gap-2">
+            <LuConstruction size={18} />
+            <div className="hidden sm:block text-sm">Updates</div>
+          </div>
+          <span className={`changelog-badge ${changelogPadding ? "p-4" : "p-0 w-6"}`} />
+        </div>
+      </div>
+
+      <Dropdown className="justify-start">
+        <Dropdown.Trigger className="flex w-full flex-row justify-start rounded-lg">
+          <div className="flex w-full flex-row items-center justify-between rounded-lg p-2 hover:bg-content2">
+            <div className="flex flex-row items-center gap-3">
+              <Avatar size="sm">
+                <Avatar.Fallback>{userInitials || <LuUser />}</Avatar.Fallback>
+              </Avatar>
+              <div className="text-sm text-foreground">{user.name}</div>
+            </div>
             <div className="text-sm text-foreground">
               <LuChevronRight size={18} />
             </div>
           </div>
-        </DropdownTrigger>
-        <DropdownMenu variant="faded">
-          <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
-            <Link to="/user/profile">
-              <div className="w-full text-foreground">
-                Profile
+        </Dropdown.Trigger>
+        <Dropdown.Popover placement="right end">
+          <Dropdown.Menu
+            onAction={(key) => {
+              if (key === "logout") {
+                dispatch(logout());
+                return;
+              }
+
+              _onDropdownAction(key);
+            }}
+          >
+            <Dropdown.Item id="profile" textValue="Profile">
+              <div className="flex flex-row items-center gap-2">
+                <LuUser size={18} />
+                <span>Profile</span>
               </div>
-            </Link>
-          </DropdownItem>
+            </Dropdown.Item>
           {_canAccess("teamAdmin", teamOwned) && (
-            <DropdownItem startContent={<LuSettings />} key="account" textValue="Team settings">
-              <Link to={`/manage/${team?.id || teamOwned.id}/settings`}>
-                <div className="w-full text-foreground">
-                  Team settings
-                </div>
-              </Link>
-            </DropdownItem>
+            <Dropdown.Item id="account" textValue="Team settings">
+              <div className="flex flex-row items-center gap-2">
+                <LuSettings size={18} />
+                <span>Team settings</span>
+              </div>
+            </Dropdown.Item>
           )}
 
-          <DropdownItem
-            startContent={<LuWallpaper />}
-            showDivider
-            key="theme"
-            onPress={() => setShowAppearance(true)}
-            textValue="UI Theme"
-          >
-            <div className="w-full text-foreground">
-              UI Theme
-            </div>
-          </DropdownItem>
-
-          <DropdownItem startContent={<LuLogOut />} onPress={() => dispatch(logout())} textValue="Sign out">
-            Sign out
-          </DropdownItem>
-        </DropdownMenu>
+            <Dropdown.Item id="theme" textValue="UI Theme">
+              <div className="flex flex-row items-center gap-2">
+                <LuWallpaper size={18} />
+                <span>UI Theme</span>
+              </div>
+            </Dropdown.Item>
+            <Dropdown.Item id="logout" textValue="Sign out" variant="danger">
+              <div className="flex flex-row items-center gap-2">
+                <LuLogOut size={18} />
+                <span>Sign out</span>
+              </div>
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown.Popover>
       </Dropdown>
 
-      <Modal
-        isOpen={feedbackModal}
-        onClose={() => setFeedbackModal(false)}
-      >
-        <ModalContent>
-          <ModalBody>
+      <Modal.Backdrop isOpen={feedbackModal} onOpenChange={setFeedbackModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.Body>
             <FeedbackForm />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" color="warning" onPress={() => setFeedbackModal(false)} auto>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onPress={() => setFeedbackModal(false)}>
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
-      <Modal isOpen={showAppearance} onClose={() => setShowAppearance(false)} width="500px">
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h4">Chartbrew UI Appearance</Text>
-          </ModalHeader>
-          <ModalBody>
+      <Modal.Backdrop isOpen={showAppearance} onOpenChange={setShowAppearance}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[500px]">
+            <Modal.Header>
+              <Modal.Heading>Chartbrew UI Appearance</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
             <div className="flex flex-row justify-between gap-2">
-              <Card
-                isPressable
-                borderWeight={theme === "light" ? "extrabold" : "normal"}
-                onPress={() => setTheme("light")}
-                className={`bg-white ${theme === "light" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
-                variant={"bordered"}
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "light" ? "border-secondary" : "border-content3"} bg-white`}
               >
-                <CardBody>
-                  <LuSun size={24} color="black" />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text className={"text-black!"}>Light</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuSun size={24} color="black" />
+                <div className="mt-2 text-black">Light</div>
+              </button>
 
-              <Card
-                isPressable
-                className={`bg-black ${theme === "dark" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
-                borderWeight={theme === "dark" ? "extrabold" : "normal"}
-                onPress={() => setTheme("dark")}
-                variant={"bordered"}
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "dark" ? "border-secondary" : "border-content3"} bg-black`}
               >
-                <CardBody>
-                  <LuMoon size={24} color="white" />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text className="text-[#FFFFFF]!">Dark</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuMoon size={24} color="white" />
+                <div className="mt-2 text-white">Dark</div>
+              </button>
 
-              <Card
-                isPressable
-                variant={"bordered"}
-                onPress={() => setTheme("system")}
-                borderWeight={theme === "system" ? "extrabold" : "normal"}
-                className={`bg-content3 ${theme === "system" ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
+              <button
+                type="button"
+                onClick={() => setTheme("system")}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "system" ? "border-secondary" : "border-content3"} bg-content3`}
               >
-                <CardBody>
-                  <LuContrast size={24} color={isDark ? "white" : "black"} />
-                  <Row align={"center"} className={"gap-2"}>
-                    <Text h5 className={isDark ? "text-white" : "text-black"}>System</Text>
-                  </Row>
-                </CardBody>
-              </Card>
+                <LuContrast size={24} color={isDark ? "white" : "black"} />
+                <div className={isDark ? "mt-2 text-white" : "mt-2 text-black"}>System</div>
+              </button>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="bordered"
-              onPress={() => setShowAppearance(false)}
-            >
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="outline" onPress={() => setShowAppearance(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   )
 }
