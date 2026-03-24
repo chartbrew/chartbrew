@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Tooltip, Modal, Chip,
+  Button, Tooltip, Modal, Chip,
   AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Separator, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
@@ -999,9 +999,9 @@ function ProjectDashboard() {
                                     Edit access
                                   </Button>
                                 </Link>
-                                <Spacer y={2} />
+                                <div className="h-2" />
                                 <Separator />
-                                <Spacer y={2} />
+                                <div className="h-2" />
                               </div>
                             )}
                             <Text>
@@ -1025,9 +1025,9 @@ function ProjectDashboard() {
                             </Listbox>
                           </PopoverContent>
                         </Popover>
-                        <Spacer x={3} />
+                        <div className="w-3" />
                       </div>
-                      <Spacer x={0.5} />
+                      <div className="w-0.5" />
                     </>
                   )}
                   <Tooltip content="Add dashboard filters" placement="bottom">
@@ -1269,7 +1269,7 @@ function ProjectDashboard() {
                 Welcome to your dashboard
               </span>
             </Row>
-            <Spacer y={1} />
+            <div className="h-1" />
             {_canAccess("projectAdmin") && (
               <>
                 <Row justify="center" align="center">
@@ -1277,7 +1277,7 @@ function ProjectDashboard() {
                     {"It looks empty over here. Let's get you started!"}
                   </span>
                 </Row>
-                <Spacer y={4} />
+                <div className="h-4" />
                 <div className="flex flex-row justify-center gap-2">
                   <Button
                     endContent={<LuPlug size={22} />}

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Spacer,
 } from "@heroui/react";
 
 
@@ -38,13 +37,13 @@ function Integrations() {
         </div>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
         <WebhookIntegrationsList
           teamId={team?.id}
         />
-        <Spacer y={4} />
+        <div className="h-4" />
         <SlackIntegrationsList
           teamId={team?.id}
         />

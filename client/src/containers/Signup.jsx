@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Button, Spacer, Input, Separator, Alert,
+  Button, Input, Separator, Alert,
 } from "@heroui/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
@@ -102,7 +102,7 @@ function Signup() {
               </div>
             </div>
           </div>
-          <Spacer y={8} />
+          <div className="h-8" />
 
           <form onSubmit={(e) => {
             e.preventDefault();
@@ -131,7 +131,7 @@ function Signup() {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row>
               <Input
                 variant="bordered"
@@ -155,7 +155,7 @@ function Signup() {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row>
               <Input
                 variant="bordered"
@@ -177,7 +177,7 @@ function Signup() {
                 {errors.password}
               </div>
             )}
-            <Spacer y={4} />
+            <div className="h-4" />
             <Row>
               <Button
                 onPress={submitUser}
@@ -208,16 +208,16 @@ function Signup() {
             )}
           </form>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Text size="sm">
             {"By signing up for a Chartbrew account, you agree to our "}
             <a href="https://chartbrew.com/legal/terms" rel="noopener noreferrer" target="_blank">Terms of Service</a>
             {" and "}
             <a href="https://chartbrew.com/legal/privacy-policy" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
           </Text>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-4" />
           <div>
             <Text size="sm">
               {" "}

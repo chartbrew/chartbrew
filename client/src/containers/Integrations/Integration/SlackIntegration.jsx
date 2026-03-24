@@ -8,7 +8,6 @@ import {
   Label,
   ListBox,
   Select,
-  Spacer,
   Divider,
   Modal,
   Switch,
@@ -164,7 +163,7 @@ function SlackIntegration({ integration }) {
         </Button>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider gap-4">
         <div className="flex flex-col gap-2">
@@ -254,7 +253,7 @@ function SlackIntegration({ integration }) {
           </div>
         )}
 
-        <Spacer y={2} />
+        <div className="h-2" />
 
         <div className="flex flex-row justify-end">
           <Button
@@ -280,7 +279,7 @@ function SlackIntegration({ integration }) {
             </div>
             {deleteError && (
               <>
-                <Spacer y={2} />
+                <div className="h-2" />
                 <div className="text-danger text-sm">There was an error deleting the integration. Please try again.</div>
               </>
             )}

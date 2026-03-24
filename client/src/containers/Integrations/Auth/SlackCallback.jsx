@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Alert, Code, Spacer, Spinner } from "@heroui/react"
+import { Alert, Code, Spinner } from "@heroui/react"
 import toast from "react-hot-toast";
 
 import { API_HOST } from "../../../config/settings";
@@ -54,7 +54,7 @@ function SlackCallback() {
         {"Add Chartbrew to your Slack workspace to start using it"}
       </div>
 
-      <Spacer y={2} />
+      <div className="h-2" />
 
       <div className="bg-content1 p-4 rounded-lg border border-divider">
         {loading && (

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, Button, Chip, Divider, EmptyState, Input, Label, ListBox, SearchField, Select, Spacer, Tooltip, useFilter,
+  Autocomplete, Button, Chip, Divider, EmptyState, Input, Label, ListBox, SearchField, Select, Tooltip, useFilter,
 } from "@heroui/react";
 import { LuCheck, LuInfo, LuSettings } from "react-icons/lu";
 
@@ -204,8 +204,7 @@ function ChartDatasetDataSetup({
           </Row>
         )}
       />
-
-      <Spacer y={2} />
+      <div className="h-4" />
 
       {_canAccess("projectAdmin") && (
         <Button
@@ -218,12 +217,12 @@ function ChartDatasetDataSetup({
         </Button>
       )}
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <Text b>Data setup</Text>
-      <Spacer y={2} />
+      <div className="h-4" />
 
       <Autocomplete
         placeholder="Select dimension"
@@ -262,7 +261,7 @@ function ChartDatasetDataSetup({
         </Autocomplete.Popover>
       </Autocomplete>
 
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <Autocomplete
         placeholder="Select metric"
@@ -301,7 +300,7 @@ function ChartDatasetDataSetup({
         </Autocomplete.Popover>
       </Autocomplete>
 
-      <Spacer y={2} />
+      <div className="h-4" />
 
       <Select
         placeholder="Select operation"
@@ -328,7 +327,7 @@ function ChartDatasetDataSetup({
         </Select.Popover>
       </Select>
 
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <Autocomplete
         placeholder="Select a field"
@@ -367,12 +366,12 @@ function ChartDatasetDataSetup({
         </Autocomplete.Popover>
       </Autocomplete>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="font-bold">Filters</div>
-      <Spacer y={2} />
+      <div className="h-4" />
 
       <DatasetFilters
         onUpdate={onUpdateCdc}

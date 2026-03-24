@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
-  Button, ProgressCircle, Input, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, ProgressCircle, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
@@ -105,7 +105,7 @@ function ApiKeys() {
     <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
       <div className="text-lg font-semibold font-tw">Developer settings</div>
       <div className="text-sm text-gray-500">Manage your API keys and create new ones.</div>
-      <Spacer y={4} />
+      <div className="h-4" />
       {loading && (
         <div className="flex justify-center">
           <ProgressCircle aria-label="Loading keys">Loading keys...</ProgressCircle>
@@ -120,7 +120,7 @@ function ApiKeys() {
           Create a new API Key
         </Button>
       </div>
-      <Spacer y={2} />
+      <div className="h-2" />
 
       <Table shadow={"none"} aria-label="API keys" isStriped>
         <TableHeader>
@@ -175,7 +175,7 @@ function ApiKeys() {
               <Modal.Body>
                 <div className="text-success">{"Congrats! your new API key has been created."}</div>
                 <div className="text-gray-500">{"This is the only time we show you the code, so please copy it before closing this window."}</div>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <div>
                   <Input
                     label="Your new API Key"
@@ -215,7 +215,7 @@ function ApiKeys() {
               </Modal.Header>
               <Modal.Body>
                 <div className="text-gray-500">{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</div>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <div>
                   <Input
                     label="Enter a name to remember it later"

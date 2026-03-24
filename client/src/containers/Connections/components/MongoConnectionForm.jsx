@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Separator,
+  Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Separator,
 } from "@heroui/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -223,20 +223,20 @@ function MongoConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to a MongoDB database"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center" style={styles.formStyle}>
           <Tabs selectedKey={formStyle} onSelectionChange={(key) => setFormStyle(key)}>
             <Tab key="string" title="Connection string" />
             <Tab key="form" title="Connection form" />
           </Tabs>
         </Row>
-        <Spacer y={2} />
+        <div className="h-4" />
         {formStyle === "string" && (
           <>
             <Row align="center">
@@ -259,7 +259,7 @@ function MongoConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Input
                 label="Enter your MongoDB connection string"
@@ -280,7 +280,7 @@ function MongoConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <div className="h-1" />
           </>
         )}
 
@@ -411,7 +411,7 @@ function MongoConnectionForm(props) {
                         placeholder="Value"
                         fullWidth
                       />
-                      <Spacer x={2} />
+                      <div className="w-4" />
                       <Button
                         isIconOnly
                         onClick={() => _removeOption(option.id)}
@@ -441,7 +441,7 @@ function MongoConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={8} />
+        <div className="h-16" />
         <Row>
           <div className={"bg-primary-50 rounded-md p-5"}>
             <Row>
@@ -457,10 +457,10 @@ function MongoConnectionForm(props) {
             </Row>
           </div>
         </Row>
-        <Spacer y={8} />
+        <div className="h-16" />
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             target="_blank"
             rel="noopener noreferrer"
@@ -468,12 +468,12 @@ function MongoConnectionForm(props) {
           >
             <Text>Find out more about MongoDB connection strings</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
             target="_blank"
@@ -481,17 +481,17 @@ function MongoConnectionForm(props) {
           >
             <Text>Find out how to get your MongoDB Atlas connection string</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link onClick={() => setShowIp(!showIp)}>
             <Text>Front-end and back-end on different servers?</Text>
           </Link>
         </Row>
-        <Spacer y={2} />
+        <div className="h-4" />
         {showIp && (
           <Row>
             <Container className={"bg-primary-50"}>
@@ -516,7 +516,7 @@ function MongoConnectionForm(props) {
             </Container>
           </Row>
         )}
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -526,7 +526,7 @@ function MongoConnectionForm(props) {
           >
             Test connection
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -539,15 +539,15 @@ function MongoConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
                 {"Test Result "}
               </Text>
-              <Spacer x={2} />
+              <div className="w-4" />
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
@@ -556,7 +556,7 @@ function MongoConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

@@ -7,7 +7,7 @@ import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
 import {
-  Avatar, Button, Card, CardFooter, CardHeader, Chip, Separator, Input, ScrollShadow, Spacer, Tooltip
+  Avatar, Button, Card, CardFooter, CardHeader, Chip, Separator, Input, ScrollShadow, Tooltip
 } from "@heroui/react";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
@@ -187,7 +187,7 @@ function ChartDatasets(props) {
           )}
         </div>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
 
       {(chart?.ChartDatasetConfigs?.length === 0 || addMode) && (
         <>
@@ -197,7 +197,7 @@ function ChartDatasets(props) {
             onChange={(e) => setDatasetSearch(e.target.value)}
             startContent={<LuSearch />}
           />
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row gap-1 items-center">
             <Chip
               color={tag === "project" ? "primary" : "default"}
@@ -217,10 +217,10 @@ function ChartDatasets(props) {
             >
               All
             </Chip>
-            <Spacer x={1} />
+            <div className="w-2" />
             <div className="text-sm text-foreground-500">{`${_filteredDatasets().length} datasets found`}</div>
           </div>
-          <Spacer y={4} />
+          <div className="h-8" />
 
           {datasets.length === 0 && (
             <div>No datasets available.</div>
@@ -283,21 +283,21 @@ function ChartDatasets(props) {
                     )}
                   </CardFooter>
                 </Card>
-                <Spacer y={2} />
+                <div className="h-4" />
               </Fragment>
             ))}
           </ScrollShadow>
-          <Spacer y={8} />
+          <div className="h-16" />
         </>
       )}
 
       {datasets.length === 0 && canAccess("teamAdmin", user.id, team?.TeamRoles) && (
         <div>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div className="text-sm text-foreground-500">No datasets found. Create a dataset to get started.</div>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Button
             color="primary"
             onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
@@ -339,9 +339,9 @@ function ChartDatasets(props) {
         />
       )}
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Separator />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       {activeCdc?.id && (
         <ChartDatasetConfig

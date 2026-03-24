@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Chip, Divider, Switch, Select,
+  Button, Input, Chip, Divider, Switch, Select,
   CircularProgress, Label, ListBox,
 } from "@heroui/react";
 import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
@@ -199,7 +199,7 @@ function ClickHouseConnectionForm(props) {
           {!editConnection && "Add a new ClickHouse connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <div className="flex flex-col gap-2">
           <Input
@@ -279,7 +279,7 @@ function ClickHouseConnectionForm(props) {
           />
         </div>
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <div className="flex items-center gap-2">
           <Switch
             label="SSL"
@@ -293,7 +293,7 @@ function ClickHouseConnectionForm(props) {
         </div>
         {connection.ssl && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="flex items-center gap-2">
               <Select
                 variant="secondary"
@@ -340,7 +340,7 @@ function ClickHouseConnectionForm(props) {
 
             {(connection.sslMode === "verify-full" || connection.sslMode === "verify-ca") && (
               <>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
@@ -355,7 +355,7 @@ function ClickHouseConnectionForm(props) {
                   >
                     {"Certificate authority"}
                   </Button>
-                  <Spacer x={2} />
+                  <div className="w-4" />
                   {sslCerts.sslCa && (
                     <span className="text-sm">{sslCerts.sslCa.name}</span>
                   )}
@@ -368,7 +368,7 @@ function ClickHouseConnectionForm(props) {
                     <LuCircleCheck className="text-success" size={20} />
                   )}
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
@@ -383,7 +383,7 @@ function ClickHouseConnectionForm(props) {
                   >
                     {"SSL certificate"}
                   </Button>
-                  <Spacer x={2} />
+                  <div className="w-4" />
                   {sslCerts.sslCert && (
                     <span className="text-sm">{sslCerts.sslCert.name}</span>
                   )}
@@ -396,7 +396,7 @@ function ClickHouseConnectionForm(props) {
                     <LuCircleCheck className="text-success" size={20} />
                   )}
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
@@ -411,7 +411,7 @@ function ClickHouseConnectionForm(props) {
                   >
                     {"SSL key"}
                   </Button>
-                  <Spacer x={2} />
+                  <div className="w-4" />
                   {sslCerts.sslKey && (
                     <span className="text-sm">{sslCerts.sslKey.name}</span>
                   )}
@@ -424,7 +424,7 @@ function ClickHouseConnectionForm(props) {
                     <LuCircleCheck className="text-success" size={20} />
                   )}
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex items-center gap-2">
                   <span className="text-sm">
                     {"Certificates are accepted in .crt, .pem, and .key formats"}
@@ -435,7 +435,7 @@ function ClickHouseConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <FormGuides />
 
         {addError && (
@@ -451,7 +451,7 @@ function ClickHouseConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -461,7 +461,7 @@ function ClickHouseConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onPress={_onCreateConnection}
@@ -474,15 +474,15 @@ function ClickHouseConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <div className="font-bold text-sm">
                 {"Test Result "}
               </div>
-              <Spacer x={2} />
+              <div className="w-4" />
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
@@ -492,7 +492,7 @@ function ClickHouseConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -517,12 +517,12 @@ function FormGuides() {
     <>
       <Row align="center">
         <RiArrowRightSLine />
-        <Spacer x={1} />
+        <div className="w-2" />
         <div>
           {"You can add our IP address to the allow list to allow remote connections: "}
           <span className="font-bold">{"89.39.106.86"}</span>
         </div>
-        <Spacer x={1} />
+        <div className="w-2" />
         <Button
           variant="light"
           size="sm"

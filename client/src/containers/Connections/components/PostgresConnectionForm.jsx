@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select,
+  Button, Input, Link, Chip, Tabs, Tab, Divider, Switch, Select,
   Alert, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -295,7 +295,7 @@ function PostgresConnectionForm(props) {
           {!editConnection && "Add a new connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Tabs
             aria-label="Connection options"
@@ -306,7 +306,7 @@ function PostgresConnectionForm(props) {
             <Tab key="form" value="form" title="Connection form" />
           </Tabs>
         </Row>
-        <Spacer y={2} />
+        <div className="h-4" />
 
         {formStyle === "string" && (
           <>
@@ -330,7 +330,7 @@ function PostgresConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Input
                 label="Enter your Postgres connection string"
@@ -351,7 +351,7 @@ function PostgresConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
           </>
         )}
 
@@ -445,7 +445,7 @@ function PostgresConnectionForm(props) {
             </div>
           </Row>
         )}
-        <Spacer y={2} />
+        <div className="h-4" />
         <Row align="center">
           <Switch
             label="SSL"
@@ -459,7 +459,7 @@ function PostgresConnectionForm(props) {
         </Row>
         {connection.ssl && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Select
                 variant="secondary"
@@ -504,7 +504,7 @@ function PostgresConnectionForm(props) {
                 </Select.Popover>
               </Select>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -519,7 +519,7 @@ function PostgresConnectionForm(props) {
               >
                 {"Certificate authority"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslCa && (
                 <span className="text-sm">{sslCerts.sslCa.name}</span>
               )}
@@ -532,7 +532,7 @@ function PostgresConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -547,7 +547,7 @@ function PostgresConnectionForm(props) {
               >
                 {"SSL certificate"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslCert && (
                 <span className="text-sm">{sslCerts.sslCert.name}</span>
               )}
@@ -560,7 +560,7 @@ function PostgresConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -575,7 +575,7 @@ function PostgresConnectionForm(props) {
               >
                 {"SSL key"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslKey && (
                 <span className="text-sm">{sslCerts.sslKey.name}</span>
               )}
@@ -588,7 +588,7 @@ function PostgresConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <span className="text-sm">
                 {"Certificates are accepted in .crt, .pem, and .key formats"}
@@ -597,7 +597,7 @@ function PostgresConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Switch
             label="SSH Tunnel"
@@ -614,7 +614,7 @@ function PostgresConnectionForm(props) {
         </Row>
         {connection.useSsh && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
                 <Input
@@ -672,7 +672,7 @@ function PostgresConnectionForm(props) {
                 />
               </div>
             </div>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -687,7 +687,7 @@ function PostgresConnectionForm(props) {
               >
                 {"SSH Private Key"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sshFiles.sshPrivateKey && (
                 <span className="text-sm">{sshFiles.sshPrivateKey.name}</span>
               )}
@@ -700,7 +700,7 @@ function PostgresConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Input
                 type="password"
@@ -714,7 +714,7 @@ function PostgresConnectionForm(props) {
                 className="w-full md:w-1/2"
               />
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
                 <Input
@@ -741,7 +741,7 @@ function PostgresConnectionForm(props) {
                 />
               </div>
             </div>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div>
               <Alert
                 title="Something not working?"
@@ -769,7 +769,7 @@ function PostgresConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <div>
           <FormGuides subType={subType} />
         </div>
@@ -787,7 +787,7 @@ function PostgresConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -797,7 +797,7 @@ function PostgresConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -810,9 +810,9 @@ function PostgresConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
@@ -824,7 +824,7 @@ function PostgresConnectionForm(props) {
                 </Chip>
               </Text>
             </Row>
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -863,7 +863,7 @@ function FormGuides({ subType }) {
       <>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             href="https://docs.timescale.com/timescaledb/latest/how-to-guides/connecting/about-connecting/#find-connection-details-in-timescale-cloud"
             target="_blank"
@@ -871,7 +871,7 @@ function FormGuides({ subType }) {
           >
             <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <LuExternalLink />
         </Row>
       </>
@@ -883,7 +883,7 @@ function FormGuides({ subType }) {
       <>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             target="_blank"
             rel="noopener"
@@ -891,7 +891,7 @@ function FormGuides({ subType }) {
           >
             <Text>{"For security reasons, connect to your Supabase database with read-only credentials"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <LuExternalLink />
         </Row>
       </>
@@ -903,7 +903,7 @@ function FormGuides({ subType }) {
       <>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             target="_blank"
             rel="noopener noreferrer"
@@ -911,12 +911,12 @@ function FormGuides({ subType }) {
           >
             <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <LuExternalLink />
         </Row>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
             target="_blank"
@@ -924,7 +924,7 @@ function FormGuides({ subType }) {
           >
             <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <LuExternalLink />
         </Row>
       </>
@@ -935,7 +935,7 @@ function FormGuides({ subType }) {
     <>
       <Row align="center">
         <LuChevronRight />
-        <Spacer x={1} />
+        <div className="w-2" />
         <Link
           target="_blank"
           rel="noopener noreferrer"
@@ -943,12 +943,12 @@ function FormGuides({ subType }) {
         >
           <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
         </Link>
-        <Spacer x={1} />
+        <div className="w-2" />
         <LuExternalLink />
       </Row>
       <Row align="center">
         <LuChevronRight />
-        <Spacer x={1} />
+        <div className="w-2" />
         <Link
           href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
           target="_blank"
@@ -956,7 +956,7 @@ function FormGuides({ subType }) {
         >
           <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
         </Link>
-        <Spacer x={1} />
+        <div className="w-2" />
         <LuExternalLink />
       </Row>
     </>

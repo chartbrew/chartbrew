@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
+  Button, Tooltip, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
@@ -94,9 +94,9 @@ function InviteMembersForm(props) {
       <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
       {!selectedProjects && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <div className="font-bold">{"Select a role"}</div>
-          <Spacer y={2} />
+          <div className="h-2" />
           <div>
             <RadioGroup size="sm" defaultValue="teamAdmin" value={role} onValueChange={(option) => setRole(option)}>
               <Radio
@@ -125,7 +125,7 @@ function InviteMembersForm(props) {
               </Radio>
             </RadioGroup>
           </div>
-          <Spacer y={4} />
+          <div className="h-4" />
 
           {role !== "teamAdmin" && (
             <div>
@@ -146,7 +146,7 @@ function InviteMembersForm(props) {
                       >
                         Select all
                       </Button>
-                      <Spacer x={1} />
+                      <div className="w-1" />
                       <Button
                         size="sm"
                         variant="ghost"
@@ -178,19 +178,19 @@ function InviteMembersForm(props) {
 
       {role !== "teamAdmin" && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <div className="flex flex-row items-center gap-1">
             <div className="font-bold">
               {"Data export permissions "}
             </div>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Tooltip
               content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
             >
               <div><LuInfo /></div>
             </Tooltip>
           </div>
-          <Spacer y={1} />
+          <div className="h-1" />
           <div>
             <Checkbox
               isSelected={exportAllowed}
@@ -202,7 +202,7 @@ function InviteMembersForm(props) {
         </>
       )}
 
-      <Spacer y={4} />
+      <div className="h-4" />
       <div>
         <Button
           isLoading={loading}
@@ -216,7 +216,7 @@ function InviteMembersForm(props) {
 
       {inviteUrl && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <div>
             <Input
               label="Share this link with your team"
@@ -238,18 +238,18 @@ function InviteMembersForm(props) {
               className="max-w-md"
             />
           </div>
-          <Spacer y={2} />
+          <div className="h-2" />
           <div className="flex flex-wrap items-center gap-1">
             <Chip color="warning" variant={"flat"} size="sm">
               {`${role} role`}
             </Chip>
             {role !== "teamAdmin" && (
               <>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Chip color="primary" variant={"flat"} size="sm">
                   {`Access to ${projectAccess.length} dashboard${projectAccess.length !== 1 ? "s" : ""}`}
                 </Chip>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Chip color="success" variant={"flat"} size="sm">
                   {exportAllowed ? "Data export allowed" : "Data export not allowed"}
                 </Chip>

@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, ProgressCircle, Modal, Spacer, Tooltip, Separator,
+  Button, Input, ProgressCircle, Modal, Tooltip, Separator,
 } from "@heroui/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
 
@@ -119,7 +119,7 @@ function SavedQueries(props) {
                 >
                   <div>
                     <Text size="sm" b>{query.summary}</Text>
-                    <Spacer y={0.2} />
+                    <div className="h-0.5" />
                     <Text size="sm">{`created by ${query.User.name}`}</Text>
                   </div>
                   <div className="flex flex-row justify-end gap-2">
@@ -157,9 +157,9 @@ function SavedQueries(props) {
                     </Tooltip>
                   </div>
                 </Row>
-                <Spacer y={1} />
+                <div className="h-1" />
                 <Separator />
-                <Spacer y={1} />
+                <div className="h-1" />
               </Fragment>
             );
           })}

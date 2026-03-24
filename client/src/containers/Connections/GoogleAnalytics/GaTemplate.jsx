@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Select, Spacer, Label, ListBox,
+  Button, Checkbox, Select, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -267,7 +267,7 @@ function GaTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Row align="center">
+      <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
           variant="flat"
@@ -276,10 +276,9 @@ function GaTemplate(props) {
         >
           <LuArrowLeft />
         </Button>
-        <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
-      <Spacer y={4} />
+      <div className="h-4" />
       {!availableConnections || availableConnections.length === 0 && (
         <>
           <Row align="center">
@@ -287,7 +286,7 @@ function GaTemplate(props) {
               {"You don't have any Google Analytics connections. Please create one first"}
             </Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Button
               color="primary"
@@ -338,7 +337,7 @@ function GaTemplate(props) {
               {"Or create new"}
             </Button>
           </Row>
-          <Spacer y={4} />
+          <div className="h-4" />
 
           <div className="grid grid-cols-12 gap-2">
             {selectedConnection && (
@@ -404,11 +403,11 @@ function GaTemplate(props) {
 
       {configuration && (
         <>  
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <div className="grid grid-cols-12 gap-2">
               {configuration.Charts && configuration.Charts.map((chart) => (
@@ -427,7 +426,7 @@ function GaTemplate(props) {
             </div>
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Button
               variant="ghost"
@@ -437,7 +436,7 @@ function GaTemplate(props) {
             >
               Select all
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Button
               variant="ghost"
               startContent={<LuX />}
@@ -452,7 +451,7 @@ function GaTemplate(props) {
 
       {addError && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className={"bg-danger-50 rounded-md p-5"}>
               <Row>
@@ -466,7 +465,7 @@ function GaTemplate(props) {
         </>
       )}
 
-      <Spacer y={8} />
+      <div className="h-8" />
       <Row>
         <Button
           isDisabled={

@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useParams } from "react-router";
 import {
   ProgressCircle,
-  Spacer,
 } from "@heroui/react";
 
 import { getProject, changeActiveProject, selectProject, getProjects } from "../../slices/project";
@@ -85,11 +84,11 @@ function ProjectBoard() {
   if (!project && loading) {
     return (
       <Container style={styles.container}>
-        <Spacer y={10} />
+        <div className="h-10" />
         <Row align="center" justify="center">
           <ProgressCircle color="primary" size="xl" aria-label="Loading the dashboard" />
         </Row>
-        <Spacer y={3} />
+        <div className="h-3" />
         <Row align="center" justify="center">
           <Text size="xl" className="text-gray-400">Loading the dashboard</Text>
         </Row>

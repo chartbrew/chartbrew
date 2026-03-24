@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Spacer, Button, ProgressCircle,
+  Button, ProgressCircle,
 } from "@heroui/react";
 import cookie from "react-cookies";
 import { LuArrowRight } from "react-icons/lu";
@@ -91,7 +91,7 @@ function GoogleAuth() {
               Authentication successful!
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row>
             <Link to="/connections">
               <Button
@@ -117,7 +117,7 @@ function GoogleAuth() {
               Please try refreshing the page or get in touch for help.
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row>
             <Link to="/connections">
               <Button

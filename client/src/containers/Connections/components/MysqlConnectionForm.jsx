@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select,
+  Button, Input, Link, Chip, Tabs, Tab, Divider, Switch, Select,
   CircularProgress, Alert, Label, ListBox,
 } from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -286,7 +286,7 @@ function MysqlConnectionForm(props) {
           {!editConnection && "Add a new MySQL connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center" style={styles.formStyle}>
           <Tabs
             selectedKey={formStyle}
@@ -296,7 +296,7 @@ function MysqlConnectionForm(props) {
             <Tab key="form" title="Connection form" />
           </Tabs>
         </Row>
-        <Spacer y={2} />
+        <div className="h-4" />
 
         {formStyle === "string" && (
           <>
@@ -320,7 +320,7 @@ function MysqlConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Input
                 label="Enter your MySQL connection string"
@@ -341,7 +341,7 @@ function MysqlConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
           </>
         )}
 
@@ -436,7 +436,7 @@ function MysqlConnectionForm(props) {
             </div>
           </Row>
         )}
-        <Spacer y={2} />
+        <div className="h-4" />
         <Row align="center">
           <Switch
             label="SSL"
@@ -450,7 +450,7 @@ function MysqlConnectionForm(props) {
         </Row>
         {connection.ssl && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Select
                 variant="secondary"
@@ -494,7 +494,7 @@ function MysqlConnectionForm(props) {
                 </Select.Popover>
               </Select>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -509,7 +509,7 @@ function MysqlConnectionForm(props) {
               >
                 {"Certificate authority"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslCa && (
                 <span className="text-sm">{sslCerts.sslCa.name}</span>
               )}
@@ -522,7 +522,7 @@ function MysqlConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -537,7 +537,7 @@ function MysqlConnectionForm(props) {
               >
                 {"SSL certificate"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslCert && (
                 <span className="text-sm">{sslCerts.sslCert.name}</span>
               )}
@@ -550,7 +550,7 @@ function MysqlConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -565,7 +565,7 @@ function MysqlConnectionForm(props) {
               >
                 {"SSL key"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sslCerts.sslKey && (
                 <span className="text-sm">{sslCerts.sslKey.name}</span>
               )}
@@ -578,7 +578,7 @@ function MysqlConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <span className="text-sm">
                 {"Certificates are accepted in .crt, .pem, and .key formats"}
@@ -587,7 +587,7 @@ function MysqlConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Switch
             label="SSH Tunnel"
@@ -604,7 +604,7 @@ function MysqlConnectionForm(props) {
         </Row>
         {connection.useSsh && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
                 <Input
@@ -662,7 +662,7 @@ function MysqlConnectionForm(props) {
                 />
               </div>
             </div>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <input
                 type="file"
@@ -677,7 +677,7 @@ function MysqlConnectionForm(props) {
               >
                 {"SSH Private Key"}
               </Button>
-              <Spacer x={2} />
+              <div className="w-4" />
               {sshFiles.sshPrivateKey && (
                 <span className="text-sm">{sshFiles.sshPrivateKey.name}</span>
               )}
@@ -690,7 +690,7 @@ function MysqlConnectionForm(props) {
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Input
                 type="password"
@@ -704,7 +704,7 @@ function MysqlConnectionForm(props) {
                 className="w-full md:w-1/2"
               />
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
                 <Input
@@ -731,7 +731,7 @@ function MysqlConnectionForm(props) {
                 />
               </div>
             </div>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div>
               <Alert
                 title="Something not working?"
@@ -759,7 +759,7 @@ function MysqlConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <FormGuides subType={subType} />
 
         {addError && (
@@ -775,7 +775,7 @@ function MysqlConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -785,7 +785,7 @@ function MysqlConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -798,15 +798,15 @@ function MysqlConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
                 {"Test Result "}
               </Text>
-              <Spacer x={2} />
+              <div className="w-4" />
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
@@ -814,7 +814,7 @@ function MysqlConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -839,7 +839,7 @@ function FormGuides({ subType }) {
       <>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             target="_blank"
             rel="noopener noreferrer"
@@ -847,12 +847,12 @@ function FormGuides({ subType }) {
           >
             <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <LuChevronRight />
-          <Spacer x={1} />
+          <div className="w-2" />
           <Link
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
             target="_blank"
@@ -860,7 +860,7 @@ function FormGuides({ subType }) {
           >
             <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
           </Link>
-          <Spacer x={1} />
+          <div className="w-2" />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
       </>
@@ -871,7 +871,7 @@ function FormGuides({ subType }) {
     <>
       <Row align="center">
         <LuChevronRight />
-        <Spacer x={1} />
+        <div className="w-2" />
         <Link
           target="_blank"
           rel="noopener noreferrer"
@@ -879,12 +879,12 @@ function FormGuides({ subType }) {
         >
           <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
         </Link>
-        <Spacer x={1} />
+        <div className="w-2" />
         <FaExternalLinkSquareAlt size={12} />
       </Row>
       <Row align="center">
         <LuChevronRight />
-        <Spacer x={1} />
+        <div className="w-2" />
         <Link
           href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
           target="_blank"
@@ -892,7 +892,7 @@ function FormGuides({ subType }) {
         >
           <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
         </Link>
-        <Spacer x={1} />
+        <div className="w-2" />
         <FaExternalLinkSquareAlt size={12} />
       </Row>
     </>

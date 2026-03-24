@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Spacer, Tooltip, Input, Button, ProgressCircle, Switch, Alert,
+  Link as LinkNext, Tooltip, Input, Button, ProgressCircle, Switch, Alert,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
@@ -448,7 +448,7 @@ function AddChart() {
           onCreateFromDataset={_onCreateFromDataset}
           onCreateDataset={_onCreateDataset}
         />
-        <Spacer y={2} />
+        <div className="h-2" />
       </div>
     );
   }
@@ -472,7 +472,7 @@ function AddChart() {
         >
           Back to dashboard
         </Button>
-        <Spacer y={4} />
+        <div className="h-4" />
         {showMissingDatasetAlert && (
           <>
             <Alert
@@ -481,7 +481,7 @@ function AddChart() {
               title="Dataset access required"
               description={missingDatasetDescription}
             />
-            <Spacer y={4} />
+            <div className="h-4" />
           </>
         )}
       </div>
@@ -498,7 +498,7 @@ function AddChart() {
             title="Dataset access required"
             description={missingDatasetDescription}
           />
-          <Spacer y={4} />
+          <div className="h-4" />
         </>
       )}
       <div className="grid grid-cols-12 gap-4">
@@ -570,7 +570,7 @@ function AddChart() {
               </Button>
             </div>
           </div>
-          <Spacer y={2} />
+          <div className="h-2" />
           <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
             <ChartPreview
               chart={newChart}
@@ -584,7 +584,7 @@ function AddChart() {
               changeCache={() => setUseCache(!useCache)}
             />
           </div>
-          <Spacer y={4} />
+          <div className="h-4" />
           <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
             {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings

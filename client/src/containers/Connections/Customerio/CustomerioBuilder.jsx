@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Spacer, Checkbox, Tooltip, Separator, Tabs, Tab,
+  Button, Checkbox, Tooltip, Separator, Tabs, Tab,
   Badge,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -264,11 +264,11 @@ function CustomerioBuilder(props) {
                 </Tooltip>
               </div>
             </Row>
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row>
               <Separator />
             </Row>
-            <Spacer y={4} />
+            <div className="h-4" />
             <Row align="center" wrap="wrap">
               <Tabs
                 selectedKey={entity}
@@ -317,7 +317,7 @@ function CustomerioBuilder(props) {
                 <Text className={"italic"}>Select which type of data you want to get started with</Text>
               </div>
             )}
-            <Spacer y={2} />
+            <div className="h-2" />
 
             {entity === "customers" && (
               <Row>
@@ -378,7 +378,7 @@ function CustomerioBuilder(props) {
                 Make the request
               </Button>
             </Row>
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row align="center">
               <Checkbox
                 isSelected={!invalidateCache}
@@ -387,7 +387,7 @@ function CustomerioBuilder(props) {
               >
                 {"Use cache"}
               </Checkbox>
-              <Spacer x={1} />
+              <div className="w-1" />
               <Tooltip
                 content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
                 placement="left-start"
@@ -396,7 +396,7 @@ function CustomerioBuilder(props) {
                 <div><LuInfo /></div>
               </Tooltip>
             </Row>
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -413,10 +413,10 @@ function CustomerioBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={1} />
+            <div className="h-1" />
             <Row align="center">
               <LuInfo />
-              <Spacer x={1} />
+              <div className="w-1" />
               <Text size="sm">
                 {"To keep the interface fast, not all the data might show up here."}
               </Text>

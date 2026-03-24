@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Spacer, Button, ProgressCircle,
+  Input, Button, ProgressCircle,
   Separator, Switch, Tooltip,
   Modal,
 } from "@heroui/react";
@@ -103,7 +103,7 @@ function TeamSettings() {
     <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
       <div className="text-lg font-semibold font-tw">Team settings</div>
       <div className="text-sm text-gray-500">Manage your team settings and controls</div>
-      <Spacer y={4} />
+      <div className="h-8" />
       <div className="flex flex-col gap-2">
         <Input
           label="Team name"
@@ -132,9 +132,9 @@ function TeamSettings() {
         </div>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Separator />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-row items-center gap-2">
@@ -182,9 +182,9 @@ function TeamSettings() {
 
       {canAccess("teamOwner", user.id, team.TeamRoles) && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div className="flex flex-row items-center gap-2">
             <Button
               color="danger"

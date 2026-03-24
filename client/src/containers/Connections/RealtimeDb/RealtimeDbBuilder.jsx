@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
+  Button, Input, Divider, Chip, Checkbox, Tooltip,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
   Code, Label, ListBox, Select, Switch,
 } from "@heroui/react";
@@ -315,22 +315,22 @@ function RealtimeDbBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Divider />
           </Row>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text>
               {"Enter the data path"}
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div className="text-xs italic text-default-500 flex items-center gap-1">
             <div><LuVariable size={16} /></div>
             {"You can add {{variable_name}} in the data path. Click on the variable icon to configure them."}
           </div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row className="RealtimeDb-route-tut">
             <Input
               value={connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
@@ -338,7 +338,7 @@ function RealtimeDbBuilder(props) {
               className={"pointer-events-none"}
               labelPlacement="outside"
             />
-            <Spacer x={1} />
+            <div className="w-2" />
             <Input
               placeholder={"Enter the data path"}
               autoFocus
@@ -365,7 +365,7 @@ function RealtimeDbBuilder(props) {
           </Row>
           {(requestSuccess || requestError) && (
             <>
-              <Spacer y={2} />
+              <div className="h-4" />
               <div className="flex flex-row items-center gap-1">
                 {requestSuccess && requestSuccess.statusCode < 300 && (
                   <>
@@ -383,16 +383,16 @@ function RealtimeDbBuilder(props) {
             </>
           )}
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
 
           <Row>
             <Text b>
               Order By
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row align="center" className={"gap-1"}>
             <Button
               variant={"bordered"}
@@ -444,7 +444,6 @@ function RealtimeDbBuilder(props) {
             </Button>
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
               <>
-                <Spacer x={0.1} />
                 <Button
                   color="danger"
                   variant="light"
@@ -465,7 +464,7 @@ function RealtimeDbBuilder(props) {
               </>
             )}
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           {firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "child" && (
             <Row>
               <Input
@@ -487,14 +486,14 @@ function RealtimeDbBuilder(props) {
             </Row>
           )}
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
 
           <Row>
             <Text b>Limit results</Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
 
           <Row align="center" className={"gap-1"}>
             <Button
@@ -563,7 +562,7 @@ function RealtimeDbBuilder(props) {
                 </Button>
               )}
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Input
               placeholder="How many records should return?"
@@ -596,7 +595,7 @@ function RealtimeDbBuilder(props) {
               Make the request
             </Button>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -605,7 +604,7 @@ function RealtimeDbBuilder(props) {
             >
               Use cache
             </Checkbox>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Tooltip
               content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
               className="max-w-[600px]"
@@ -613,7 +612,7 @@ function RealtimeDbBuilder(props) {
               <div><LuInfo /></div>
             </Tooltip>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <div className="w-full">
               <AceEditor
@@ -629,10 +628,10 @@ function RealtimeDbBuilder(props) {
               />
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <LuInfo />
-            <Spacer x={1} />
+            <div className="w-2" />
             <Text size="sm">
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}
             </Text>
@@ -687,7 +686,7 @@ function RealtimeDbBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -725,7 +724,7 @@ function RealtimeDbBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -737,7 +736,7 @@ function RealtimeDbBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

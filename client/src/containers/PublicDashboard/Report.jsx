@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Navbar, Tooltip, Popover, Separator, Modal,
+  Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
   Link, Image, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
   Spinner,
   Form,
@@ -528,7 +528,7 @@ function Report({ editMode = false }) {
           </style>
         </Helmet>
         <div style={styles.container} className="items-center">
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row align="center" justify="center">
             <ProgressCircle size="lg" aria-label="Loading" />
           </Row>
@@ -568,7 +568,7 @@ function Report({ editMode = false }) {
                 Please enter the password to access this report
               </h3>
             </div>
-            <Spacer y={2} />
+            <div className="h-2" />
 
             <Form
               onSubmit={(e) => {
@@ -609,13 +609,13 @@ function Report({ editMode = false }) {
               {"This report does not contain any charts"}
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-1" />
           <Row justify="center">
             <Text b>
               {"Head back to your dashboard and add charts to the report from the individual chart settings menu."}
             </Text>
           </Row>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row justify="center">
             <Button
               onPress={() => window.history.back()}
@@ -626,7 +626,7 @@ function Report({ editMode = false }) {
               Go back
             </Button>
           </Row>
-          <Spacer y={1} />
+          <div className="h-1" />
           <Row justify="center">
             <Image
               src={instructionDashboard}
@@ -646,11 +646,11 @@ function Report({ editMode = false }) {
         <div className="container mx-auto pt-16">
           <div className="flex flex-col items-center justify-center">
             <Image src={logo} height={50} width={50} radius="none" alt="Chartbrew logo" />
-            <Spacer y={2} />
+            <div className="h-2" />
             <h3 className="text-xl font-bold font-tw">{"This report is not available"}</h3>
             <p className="text-sm">{"This report is not available because it has no charts or it is not public."}</p>
           </div>
-          <Spacer y={2} />
+          <div className="h-2" />
         </div>
       </div>
     );
@@ -731,7 +731,7 @@ function Report({ editMode = false }) {
                           <Row>
                             <Text b>Change background</Text>
                           </Row>
-                          <Spacer y={1} />
+                          <div className="h-1" />
                           <Row>
                             <div>
                               <TwitterPicker
@@ -746,14 +746,14 @@ function Report({ editMode = false }) {
                             </div>
                           </Row>
 
-                          <Spacer y={2} />
+                          <div className="h-2" />
                           <Separator />
-                          <Spacer y={2} />
+                          <div className="h-2" />
 
                           <Row>
                             <Text b>Change text color</Text>
                           </Row>
-                          <Spacer y={1} />
+                          <div className="h-1" />
                           <Row>
                             <TwitterPicker
                               color={newChanges.titleColor}
@@ -909,7 +909,7 @@ function Report({ editMode = false }) {
           <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
             {loading && charts.length === 0 && (
               <Container style={styles.container}>
-                <Spacer y={4} />
+                <div className="h-4" />
                 <Row align="center" justify="center">
                   <ProgressCircle size="lg" aria-label="Loading" />
                 </Row>
@@ -989,7 +989,7 @@ function Report({ editMode = false }) {
                   <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     {"Powered by "}
                   </span> 
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     <strong>{"Chart"}</strong>
                   </span>
@@ -1047,9 +1047,9 @@ function Report({ editMode = false }) {
                 fullWidth
               />
             </Row>
-            <Spacer y={1} />
+            <div className="h-1" />
             <Separator />
-            <Spacer y={1} />
+            <div className="h-1" />
             <Row>
               <Text b>Custom CSS</Text>
             </Row>

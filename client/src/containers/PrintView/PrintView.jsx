@@ -4,7 +4,7 @@ import React, {
 import PropTypes from "prop-types";
 import { connect, useSelector } from "react-redux";
 import {
-  Button, Input, Spacer, Tooltip,
+  Button, Input, Tooltip,
 } from "@heroui/react";
 import { Helmet } from "react-helmet-async";
 import { v4 as uuid } from "uuid";
@@ -120,7 +120,7 @@ function PrintView(props) {
             >
               <LuCircleChevronLeft />
             </Button>
-            <Spacer x={0.5} />
+            <div className="w-0.5" />
             <Button
               startContent={<LuRedo />}
               variant="bordered"
@@ -129,7 +129,7 @@ function PrintView(props) {
             >
               {orientation === "portrait" ? "Switch to Landscape" : "Switch to Portrait"}
             </Button>
-            <Spacer x={0.5} />
+            <div className="w-0.5" />
             <Button
               startContent={<LuPrinter />}
               onClick={_onStartPrint}
@@ -159,7 +159,7 @@ function PrintView(props) {
                   onChange={(e) => setPrintTitle(e.target.value)}
                   variant="bordered"
                 />
-                <Spacer x={0.2} />
+                <div className="w-0.5" />
                 <Button
                   color="secondary"
                   startContent={<LuCheck />}

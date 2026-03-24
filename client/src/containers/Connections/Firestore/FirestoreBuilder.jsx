@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
+  Button,Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Label, ListBox, Select, PopoverTrigger, PopoverContent,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
   Code,
@@ -651,15 +651,15 @@ function FirestoreBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Divider />
           </Row>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text>Select one of your collections:</Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row wrap="wrap" className="pl-0 firestorebuilder-collections-tut gap-1">
             {collectionData?.length > 0 && collectionData?.map((collection) => (
               <Fragment key={collection._queryOptions.collectionId}>
@@ -679,7 +679,7 @@ function FirestoreBuilder(props) {
               <span className="text-sm italic">No collections found</span>
             )}
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Button
               size="sm"
@@ -693,29 +693,29 @@ function FirestoreBuilder(props) {
             </Button>
           </Row>
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
 
           <Row align="center">
             <Text>
               {"Filter the collection "}
             </Text>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Tooltip
               content="These filters are applied on the main collection only."
             >
               <div><LuInfo size={16} /></div>
             </Tooltip>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           {conditions.length > 0 && (
             <div className="text-xs italic text-default-500 flex items-center gap-1">
               <div><LuVariable size={16} /></div>
               {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
             </div>
           )}
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row className="firestorebuilder-query-tut">
             <Conditions
               conditions={
@@ -736,15 +736,15 @@ function FirestoreBuilder(props) {
               onVariableClick={_onVariableClick}
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row className="firestorebuilder-query-tut">
             <Text>
               {"Order and limit"}
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Order by"
@@ -755,7 +755,7 @@ function FirestoreBuilder(props) {
               size="sm"
               fullWidth
             />
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Select
               variant="secondary"
               onChange={(value) => setOrderByDirection(value)}
@@ -783,7 +783,7 @@ function FirestoreBuilder(props) {
               </Select.Popover>
             </Select>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Input
               label="Limit (leave empty or 0 for unlimited)"
@@ -796,14 +796,14 @@ function FirestoreBuilder(props) {
             />
           </Row>
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
 
           <Row>
             <Text>{"Data settings"}</Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row className="firestorebuilder-settings-tut" align="flex-start">
             <Switch
               onChange={_toggleSubCollections}
@@ -819,11 +819,11 @@ function FirestoreBuilder(props) {
           {showSubUI && dataRequest && dataRequest.configuration && (
             <div className="mt-4">
               <Divider />
-              <Spacer y={2} />
+              <div className="h-4" />
               <Row>
                 <Text>Fetch sub-collection data only</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
               <Row wrap="wrap" className={"gap-1 items-center"}>
                 {dataRequest.configuration.subCollections.map((subCollection) => (
                   <Fragment key={subCollection}>
@@ -851,9 +851,9 @@ function FirestoreBuilder(props) {
                 </Button>
               </Row>
 
-              <Spacer y={1} />
+              <div className="h-2" />
               <Divider />
-              <Spacer y={1} />
+              <div className="h-2" />
 
               {dataRequest.configuration.selectedSubCollection && (
                 <>
@@ -861,19 +861,19 @@ function FirestoreBuilder(props) {
                     <Text>
                       {"Filter the sub-collection "}
                     </Text>
-                    <Spacer x={0.5} />
+                    <div className="w-1" />
                     <Tooltip
                       content="These filters are applied on the sub-collection only."
                     >
                       <div><LuInfo /></div>
                     </Tooltip>
                   </Row>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <div className="text-sm italic text-default-500 flex items-center gap-1">
                     <div><LuVariable /></div>
                     {"You can add {{variable_name}} in filter values. Click on the variable icon to configure them."}
                   </div>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <Row>
                     <Conditions
                       conditions={
@@ -900,9 +900,9 @@ function FirestoreBuilder(props) {
                   </Row>
                   {indexUrl && (
                     <>
-                      <Spacer y={1} />
+                      <div className="h-2" />
                       <Divider />
-                      <Spacer y={1} />
+                      <div className="h-2" />
                       <Row>
                         <Container className={"bg-blue-50 p-10 rounded-xs border-2 border-blue-300 border-solid"}>
                           <Row>
@@ -926,7 +926,7 @@ function FirestoreBuilder(props) {
             </div>
           )}
 
-          <Spacer y={20} />
+          <div className="h-40" />
         </div>
         <div className={"col-span-12 md:col-span-5"}>
           <Container>
@@ -942,7 +942,7 @@ function FirestoreBuilder(props) {
                 Get Firestore data
               </Button>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row align="center">
               <Checkbox
                 isSelected={!invalidateCache}
@@ -951,7 +951,7 @@ function FirestoreBuilder(props) {
               >
                 Use cached data
               </Checkbox>
-              <Spacer x={1} />
+              <div className="w-2" />
               <Tooltip
                 content="Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings."
                 className="max-w-[500px]"
@@ -959,7 +959,7 @@ function FirestoreBuilder(props) {
                 <div><LuInfo /></div>
               </Tooltip>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row className="firestorebuilder-result-tut">
               <div className="w-full">
                 <AceEditor
@@ -972,7 +972,7 @@ function FirestoreBuilder(props) {
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
-                  className="rounded-md border-1 border-solid border-content3"
+                  className="rounded-md border border-solid border-content3"
                 />
               </div>
             </Row>
@@ -1001,7 +1001,7 @@ function FirestoreBuilder(props) {
       >
         <DrawerContent>
           <DrawerHeader
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
               <Button
@@ -1027,7 +1027,7 @@ function FirestoreBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -1065,7 +1065,7 @@ function FirestoreBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -1077,7 +1077,7 @@ function FirestoreBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
@@ -1289,7 +1289,7 @@ function Conditions(props) {
                         )}
                       />
                     </form>
-                    <Spacer y={1} />
+                    <div className="h-2" />
                     <div className="flex flex-row flex-wrap gap-1">
                       {condition.values && condition.values.map((v) => (
                         <Chip

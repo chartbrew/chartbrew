@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Spacer, Input, Autocomplete, DatePicker, EmptyState, Label, ListBox, SearchField, useFilter,
+  Button, Input, Autocomplete, DatePicker, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { I18nProvider } from "@react-aria/i18n";
 import { LuX } from "react-icons/lu";
@@ -157,7 +157,7 @@ function ChartFilters(props) {
                       </Autocomplete.Filter>
                     </Autocomplete.Popover>
                   </Autocomplete>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                 </>
               )}
               {condition.type !== "date" && condition.hideValues && (
@@ -180,7 +180,7 @@ function ChartFilters(props) {
                     size={size}
                     classNames={{ input: "placeholder:text-xs" }}
                   />
-                  <Spacer y={1} />
+                  <div className="h-2" />
                 </>
               )}
               {condition.type === "date" && !inline && (
@@ -212,7 +212,7 @@ function ChartFilters(props) {
                       </Button>
                     )}
                   </div>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                 </>
               )}
               {condition.type === "date" && inline && (

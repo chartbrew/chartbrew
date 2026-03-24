@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
-  Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
+  Button, Popover, Divider, Input, Tooltip, Chip, Checkbox,
   Select, PopoverTrigger, PopoverContent, Code, Autocomplete,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
@@ -539,7 +539,7 @@ function GaBuilder(props) {
                 <Text>
                   {"Choose a metric "}
                 </Text>
-                <Spacer x={1} />
+                <div className="w-2" />
                 <Tooltip
                   content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
                   className="max-w-[500px]"
@@ -639,7 +639,7 @@ function GaBuilder(props) {
                 variant="bordered"
                 fullWidth
               />
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
                   variant="flat"
@@ -690,7 +690,7 @@ function GaBuilder(props) {
                 variant="bordered"
                 fullWidth
               />
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
                   variant="flat"
@@ -762,7 +762,7 @@ function GaBuilder(props) {
               Get analytics data
             </Button>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -771,7 +771,7 @@ function GaBuilder(props) {
             >
               {"Use cache"}
             </Checkbox>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Tooltip
               content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
               className="max-w-[500px]"
@@ -779,7 +779,7 @@ function GaBuilder(props) {
               <div><LuInfo /></div>
             </Tooltip>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row className="gabuilder-result-tut">
             <div className="w-full">
               <AceEditor
@@ -795,10 +795,10 @@ function GaBuilder(props) {
               />
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <LuInfo />
-            <Spacer x={1} />
+            <div className="w-2" />
             <Text size="sm">
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}
             </Text>

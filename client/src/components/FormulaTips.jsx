@@ -1,17 +1,17 @@
 import React from "react"
-import { Code, Spacer } from "@heroui/react";
+import { Code } from "@heroui/react";
 import { LuChevronRight, LuExternalLink } from "react-icons/lu";
 
 function FormulaTips() {
   return (
     <div className={"p-4"}>
       <div className="font-bold">{"Formulas allow you to manipulate your final Metric results"}</div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <div className="text-sm text-foreground">{"Example for"}</div>
         <Code>{"val = 12345"}</Code>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
@@ -19,7 +19,7 @@ function FormulaTips() {
           {" => 12345"}
         </span>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
@@ -27,7 +27,7 @@ function FormulaTips() {
           {" => 123.45"}
         </span>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
@@ -35,7 +35,7 @@ function FormulaTips() {
           {" => $ 123.45"}
         </span>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
@@ -43,7 +43,7 @@ function FormulaTips() {
           {" => 123.45 USD"}
         </span>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div className="flex items-center gap-2">
         <LuChevronRight />
         <span>
@@ -51,7 +51,7 @@ function FormulaTips() {
           {" => 123"}
         </span>
       </div>
-      <Spacer y={2} />
+      <div className="h-2" />
       <div className="flex items-center gap-2">
         <div>
           {"For a full list of formulas, "}

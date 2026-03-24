@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
+  Button, Modal, Input, Tooltip, Checkbox, Divider,
   Tabs, Tab,
   CircularProgress, Badge, Drawer, DrawerHeader, DrawerBody,
   Select, DrawerFooter, DrawerContent, Code, Switch, Label, ListBox,
@@ -311,9 +311,9 @@ function SqlBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-4" />
           <Tabs variant="light" selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key)}>
             <Tab
               title="SQL Query"
@@ -328,7 +328,7 @@ function SqlBuilder(props) {
               key="visual"
             />
           </Tabs>
-          <Spacer y={2} />
+          <div className="h-4" />
           <>
             {activeTab === "visual" && (
               <div>
@@ -339,9 +339,9 @@ function SqlBuilder(props) {
                   type={connection.type}
                   onVariableClick={_onVariableClick}
                 />
-                <Spacer y={4} />
+                <div className="h-8" />
                 <Divider />
-                <Spacer y={2} />
+                <div className="h-4" />
               </div>
             )}
             {activeTab === "sql" && (
@@ -364,7 +364,7 @@ function SqlBuilder(props) {
               </div>
             )}
           </>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
             <Button
               color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
@@ -376,7 +376,7 @@ function SqlBuilder(props) {
               Run query
             </Button>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -385,7 +385,7 @@ function SqlBuilder(props) {
             >
               {"Use cached data"}
             </Checkbox>
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Tooltip
               content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings."}
               className="max-w-[400px]"
@@ -404,13 +404,13 @@ function SqlBuilder(props) {
             </div>
           )}
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text b>Saved queries</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
               endContent={<LuPlus />}
@@ -437,7 +437,7 @@ function SqlBuilder(props) {
               </>
             )}
           </div>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row className="sqlbuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
@@ -449,14 +449,14 @@ function SqlBuilder(props) {
               style={styles.savedQueriesContainer}
             />
           </Row>
-          <Spacer y={8} />
+          <div className="h-16" />
         </div>
         <div className="col-span-12 sm:col-span-6 md:col-span-7">
           <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
             <Tab title="Table" key="table" />
             <Tab title="JSON" key="json" />
           </Tabs>
-          <Spacer y={2} />
+          <div className="h-4" />
 
           {activeResultsTab === "table" && (
             <div className="w-full">
@@ -477,12 +477,12 @@ function SqlBuilder(props) {
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
-                  className="sqlbuilder-result-tut rounded-md border-1 border-solid border-content3"
+                  className="sqlbuilder-result-tut rounded-md border border-solid border-content3"
                 />
               </div>
             </div>
           )}
-          <Spacer y={2} />
+          <div className="h-4" />
           {result && (
             <Row>
               <Text size="sm">This is a sample response and might not show all the data.</Text>
@@ -548,7 +548,7 @@ function SqlBuilder(props) {
       >
         <DrawerContent>
           <DrawerHeader
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
               <Button
@@ -574,7 +574,7 @@ function SqlBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -612,7 +612,7 @@ function SqlBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -624,7 +624,7 @@ function SqlBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

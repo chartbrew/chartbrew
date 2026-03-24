@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/react";
 import React from "react"
 import { useParams } from "react-router";
 import SlackAuth from "./SlackAuth";
@@ -19,7 +18,7 @@ function Auth() {
         </div>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
         {integrationType === "slack" && <SlackAuth />}

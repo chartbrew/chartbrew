@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import _ from "lodash";
 import toast from "react-hot-toast";
 import {
-  Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card,
+  Button, Link, Modal, Avatar, Badge, Tooltip, Card,
   ProgressCircle, CardBody,
   CardFooter, Spinner,
 } from "@heroui/react";
@@ -255,14 +255,14 @@ function DatarequestModal(props) {
           <Text size="h4">{"Configure your dataset"}</Text>
           {initialising && (
             <>
-              <Spacer x={1} />
+              <div className="w-2" />
               <ProgressCircle size="xl" aria-label="Loading dataset data" />
             </>
           )}
             </Modal.Header>
             <Modal.Body>
           <div className="grid grid-cols-12">
-            <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r-1 md:border-solid md:border-content3 gap-2">
+            <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r md:border-solid md:border-content3 gap-2">
               {selectedRequest && (
                 <>
                   <Row>
@@ -280,7 +280,7 @@ function DatarequestModal(props) {
                       </Link>
                     </Tooltip>
                   </Row>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                 </>
               )}
               {dataRequests.map((dr, index) => (
@@ -310,10 +310,10 @@ function DatarequestModal(props) {
                       />
                     </Badge>
                   </Row>
-                  <Spacer y={0.6} />
+                  <div className="h-1" />
                 </Fragment>
               ))}
-              <Spacer y={1.5} />
+              <div className="h-3" />
               <Row>
                 <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
                   <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
@@ -410,9 +410,9 @@ function DatarequestModal(props) {
             )}
             {createMode && (
               <div className="col-span-12 md:col-span-11 container mx-auto">
-                <Spacer y={1} />
+                <div className="h-2" />
                 <Text size="h4">Select a connection</Text>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="grid grid-cols-12 gap-4">
                   {connections.map((c) => {
                     return (
@@ -427,7 +427,7 @@ function DatarequestModal(props) {
                           <CardBody className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">
                               <Text size="h4">{c.name}</Text>
-                              <Spacer x={0.5} />
+                              <div className="w-1" />
                               <Avatar
                                 radius="sm"
                                 src={connectionImages(theme === "dark")[c.subType || c.type]}

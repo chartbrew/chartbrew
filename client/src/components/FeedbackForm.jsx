@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, Spacer, TextArea,
+  Button, Input, TextArea,
 } from "@heroui/react";
 
 import { selectUser, sendFeedback } from "../slices/user";
@@ -43,11 +43,11 @@ function FeedbackForm() {
       <Row>
         <Text size="h4">{"Feedback & Suggestions"}</Text>
       </Row>
-      <Spacer y={1} />
+      <div className="h-1" />
       <Row>
         <Text>We would appreciate any feedback you may have</Text>
       </Row>
-      <Spacer y={1} />
+      <div className="h-1" />
       <Row>
         <Input
           onChange={(e) => setName(e.target.value)}
@@ -58,7 +58,7 @@ function FeedbackForm() {
           variant="bordered"
         />
       </Row>
-      <Spacer y={1} />
+      <div className="h-1" />
       <Row>
         <TextArea
           onChange={(e) => setFeedback(e.target.value)}
@@ -69,14 +69,14 @@ function FeedbackForm() {
           variant="bordered"
         />
       </Row>
-      {(success || submitError) && <Spacer y={0.5} />}
+      {(success || submitError) && <div className="h-0.5" />}
       <Row>
         {success
             && <Text color="success">{"We received your feedback and will work on it! Thank you."}</Text>}
         {submitError
             && <Text color="danger">{"Something went wront, please try again or email us directly on support@chartbrew.com"}</Text>}
       </Row>
-      <Spacer y={1} />
+      <div className="h-1" />
       <Row>
         <Button
           disabled={!feedback}

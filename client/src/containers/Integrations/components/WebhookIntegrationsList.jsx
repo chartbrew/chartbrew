@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Separator, Input, Link, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Checkbox, Separator, Input, Link, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -155,10 +155,10 @@ function WebhookIntegrations({ teamId }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <LuWebhook size={24} />
-          <Spacer x={1} />
+          <div className="w-1" />
           <div className="text-lg font-semibold">Webhooks</div>
         </div>
-        <Spacer x={2} />
+        <div className="w-2" />
         <Button
           auto
           onPress={() => {
@@ -175,29 +175,29 @@ function WebhookIntegrations({ teamId }) {
       <div className="text-sm text-foreground-500">
         {"Create webhooks to send alerts and reports to external services"}
       </div>
-      <Spacer y={2} />
+      <div className="h-2" />
       <Separator />
-      <Spacer y={2} />
+      <div className="h-2" />
       <div>
         <div className="text-sm">
           <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
             <LuInfo size={16} />
-            <Spacer x={1} />
+            <div className="w-1" />
             {"Click to see what Chartbrew sends over the webhook"}
           </Link>
         </div>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       <div>
         <div className="text-sm">
           <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
             <LuSlack size={16} />
-            <Spacer x={1} />
+            <div className="w-1" />
             {"Want to send events to Slack? Check out how to do it here"}
           </Link>
         </div>
       </div>
-      <Spacer y={2} />
+      <div className="h-2" />
       <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
         <TableHeader>
           <TableColumn key="name">Name</TableColumn>
@@ -293,10 +293,10 @@ function WebhookIntegrations({ teamId }) {
               >
                 {"This is a Slack webhook"}
               </Checkbox>
-              <Spacer x={3} />
+              <div className="w-3" />
               <Link onPress={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
                 <LuInfo size={16} />
-                <Spacer x={1} />
+                <div className="w-1" />
                 {"What is this?"}
               </Link>
             </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
+  Avatar, Chip, Button, Checkbox, Divider, Input, Tooltip,
   Label, ListBox, Select,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -139,7 +139,7 @@ function DatarequestSettings(props) {
   const _renderIcon = (drId, size = "md") => {
     const dr = dataRequests.find((o) => o.id === drId);
     if (dr?.Connection?.type) {
-      return (
+          return (
         <>
           <Avatar
             radius="sm"
@@ -148,7 +148,7 @@ function DatarequestSettings(props) {
             ]}
             size={size}
           />
-          <Spacer x={0.6} />
+          <div className="w-1" />
         </>
       );
     }
@@ -325,7 +325,7 @@ function DatarequestSettings(props) {
               </Select.Popover>
             </Select>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <div className="flex flex-col gap-2">
             {joins.map((join, index) => (
               <div className="grid grid-cols-12" key={join.key}>
@@ -417,7 +417,7 @@ function DatarequestSettings(props) {
                   </Select>
                 </div>
                 <div className="col-span-12">
-                  <Spacer y={1} />
+                  <div className="h-1" />
                 </div>
                 <div className="col-span-6 md:col-span-1 flex items-center">
                   <Text size="sm">where</Text>
@@ -476,7 +476,7 @@ function DatarequestSettings(props) {
                   </Select>
                 </div>
                 <div className="col-span-12">
-                  <Spacer y={1} />
+                  <div className="h-1" />
                 </div>
                 <div className="col-span-12 md:col-span-1 flex items-center">
                   <Text size="sm">Alias</Text>
@@ -492,9 +492,9 @@ function DatarequestSettings(props) {
                   />
                 </div>
                 <div className="col-span-12">
-                  <Spacer y={4} />
+                  <div className="h-4" />
                   <Divider />
-                  <Spacer y={4} />
+                  <div className="h-4" />
                 </div>
               </div>
             ))}
@@ -523,9 +523,9 @@ function DatarequestSettings(props) {
             )}
           </Row>
           <>
-            <Spacer y={4} />
+            <div className="h-4" />
             <Divider />
-            <Spacer y={2} />
+            <div className="h-2" />
           </>
           <Row>
             <Button
@@ -540,7 +540,7 @@ function DatarequestSettings(props) {
               {!isSaved && "Save"}
               {isSaved && "Saved"}
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             {!isSaved && (
               <Button
                 auto
@@ -575,7 +575,7 @@ function DatarequestSettings(props) {
               >
                 Use cache
               </Checkbox>
-              <Spacer x={0.5} />
+              <div className="w-0.5" />
               <Tooltip
                 content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
                 placement="leftStart"
@@ -601,7 +601,7 @@ function DatarequestSettings(props) {
             </Row>
             <Row align="center">
               <LuInfo />
-              <Spacer x={1} />
+              <div className="w-1" />
               <Text size="sm">
                 {"To keep the interface fast, not all the data might show up here."}
               </Text>

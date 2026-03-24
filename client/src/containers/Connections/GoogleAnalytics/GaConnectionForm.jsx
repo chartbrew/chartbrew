@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Chip, Separator,
+  Button, Input, Chip, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -135,7 +135,7 @@ function GaConnectionForm(props) {
           {!editConnection && "Connect to Google Analytics"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -151,7 +151,7 @@ function GaConnectionForm(props) {
             className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           {!editConnection && (
             <Button
@@ -185,7 +185,7 @@ function GaConnectionForm(props) {
         </Row>
         {editConnection && connection.OAuth && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row>
               <Chip variant="flat">
                 {`Authenticated as ${connection.OAuth.email}`}
@@ -198,7 +198,7 @@ function GaConnectionForm(props) {
             <Text className="textdanger">{errors.auth}</Text>
           </Row>
         )}
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {addError && (
           <Row>
@@ -212,7 +212,7 @@ function GaConnectionForm(props) {
             </Container>
           </Row>
         )}
-        <Spacer y={1} />
+        <div className="h-2" />
         {editConnection && (
           <Row>
             <Button
@@ -224,7 +224,7 @@ function GaConnectionForm(props) {
             >
               {"Test connection"}
             </Button>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Button
               disabled={!connection.oauth_id}
               isLoading={loading}
@@ -239,9 +239,9 @@ function GaConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
@@ -253,7 +253,7 @@ function GaConnectionForm(props) {
                 </Chip>
               </Text>
             </Row>
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

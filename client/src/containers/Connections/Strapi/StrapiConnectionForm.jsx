@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer,
+  Button, Input,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import { LuCirclePlus, LuCircleX } from "react-icons/lu";
@@ -170,13 +170,13 @@ function StrapiConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Strapi"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <div style={styles.formStyle}>
           <Row>
             <Input
@@ -200,7 +200,7 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row>
             <Input
               label="Strapi API URL"
@@ -223,7 +223,7 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Input
               label="Strapi API token"
@@ -244,7 +244,7 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text b>
               Global headers to send with the requests
@@ -255,7 +255,7 @@ function StrapiConnectionForm(props) {
               {"These headers are optional and will be included with all the data requests that go to Strapi"}
             </Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-col gap-2">
             {connection.optionsArray && connection.optionsArray.map((option) => {
               return (
@@ -288,7 +288,7 @@ function StrapiConnectionForm(props) {
               );
             })}
           </div>
-          {connection.optionsArray?.length > 0 && (<Spacer y={2} />)}
+          {connection.optionsArray?.length > 0 && (<div className="h-4" />)}
           <Button
             size="sm"
             startContent={<LuCirclePlus />}
@@ -302,7 +302,7 @@ function StrapiConnectionForm(props) {
 
         {addError && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row>
               <Text b color="danger">{"Server error while trying to save your connection"}</Text>
               <br />
@@ -311,7 +311,7 @@ function StrapiConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={8} />
+        <div className="h-16" />
         <Row align="center">
           {!editConnection && (
             <Button
@@ -333,7 +333,7 @@ function StrapiConnectionForm(props) {
           )}
         </Row>
       </div>
-      <Spacer y={2} />
+      <div className="h-4" />
     </div>
   );
 }

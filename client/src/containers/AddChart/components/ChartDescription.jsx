@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import moment from "moment";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, ProgressCircle, Input, Pagination, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
+  Button, Chip, ProgressCircle, Input, Pagination, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
 } from "@heroui/react";
 import {
   LuLayers, LuPlus, LuSearch,
@@ -144,7 +144,7 @@ function ChartDescription(props) {
           Select an existing dataset or create a new one to build your chart
         </div>
       </div>
-      <Spacer y={6} />
+      <div className="h-12" />
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
@@ -170,14 +170,14 @@ function ChartDescription(props) {
           />
         </div>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="text-sm text-foreground-500">
         {`Showing ${filteredDatasets.length} of ${datasets.length} datasets`}
       </div>
-      <Spacer y={3} />
+      <div className="h-6" />
 
-      <div className="rounded-lg border-1 border-solid border-content3">
+      <div className="rounded-lg border border-solid border-content3">
         <Table
           shadow="none"
           radius="sm"
@@ -286,7 +286,7 @@ function ChartDescription(props) {
 
       {filteredDatasets.length > DATASETS_PER_PAGE && (
         <>
-          <Spacer y={3} />
+          <div className="h-6" />
           <div className="flex justify-center">
             <Pagination
               total={totalPages}
@@ -299,7 +299,7 @@ function ChartDescription(props) {
         </>
       )}
 
-      <Spacer y={1} />
+      <div className="h-2" />
     </div>
   );
 }

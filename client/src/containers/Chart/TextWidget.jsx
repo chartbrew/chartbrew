@@ -7,7 +7,6 @@ import {
   ButtonGroup,
   CardFooter,
   Tooltip,
-  Spacer,
   Link,
 } from "@heroui/react"
 import ReactMarkdown from "react-markdown"
@@ -336,7 +335,7 @@ function TextWidget({
                         </div>
                       </Tooltip>
                     </div>
-                    <Spacer y={2} />
+                    <div className="h-2" />
                     <div className="flex flex-col h-full">
                       <TextArea
                         value={content}

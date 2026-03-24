@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
   Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, PopoverContent,
-  PopoverTrigger, ScrollShadow, Spacer, Spinner, Tab, Tabs, Tooltip, commonColors,
+  PopoverTrigger, ScrollShadow, Spinner, Tab, Tabs, Tooltip, commonColors,
 } from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
@@ -368,7 +368,7 @@ function ChartDatasetConfig(props) {
         fullWidth
       >
         <Tab key="data-setup" title="Data setup">
-          <Spacer y={4} />
+          <div className="h-8" />
           <ChartDatasetDataSetup
             cdc={cdc}
             dataset={dataset}
@@ -385,13 +385,13 @@ function ChartDatasetConfig(props) {
         </Tab>
 
         <Tab key="display" title="Display">
-          <Spacer y={4} />
+          <div className="h-8" />
 
           {chart.type !== "table" && (
             <>
               <div className="chart-cdc-colors">
                 <div className="font-bold">{"Series colors"}</div>
-                <Spacer y={2} />
+                <div className="h-4" />
 
                 <div className="flex flex-row justify-between items-center">
                   <div className="text-sm">Primary color</div>
@@ -416,7 +416,7 @@ function ChartDatasetConfig(props) {
                     </Popover>
                   </div>
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
 
                 {chart.type !== "matrix" && (
                   <Row align={"center"} justify={"space-between"}>
@@ -453,7 +453,7 @@ function ChartDatasetConfig(props) {
                     )}
                   </Row>
                 )}
-                <Spacer y={2} />
+                <div className="h-4" />
 
                 {chart.type !== "line" && chart.type !== "matrix" && (
                   <Row>
@@ -469,7 +469,7 @@ function ChartDatasetConfig(props) {
 
                 {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
                   <>
-                    <Spacer y={2} />
+                    <div className="h-4" />
                     <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
                       {dataItems?.labels?.map((label, index) => (
                         <Row key={label} justify={"space-between"}>
@@ -495,14 +495,14 @@ function ChartDatasetConfig(props) {
                         </Row>
                       ))}
                     </ScrollShadow>
-                    <Spacer y={2} />
+                    <div className="h-4" />
                   </>
                 )}
               </div>
 
-              <Spacer y={4} />
+              <div className="h-8" />
               <Separator />
-              <Spacer y={4} />
+              <div className="h-8" />
             </>
           )}
 
@@ -511,7 +511,7 @@ function ChartDatasetConfig(props) {
               <Row>
                 <Text b>{"Series settings"}</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="flex flex-col gap-2">
                 <div className="text-sm">Sort records</div>
                 <div className="flex flex-row gap-2">
@@ -550,7 +550,7 @@ function ChartDatasetConfig(props) {
                   )}
                 </div>
               </div>
-              <Spacer y={4} />
+              <div className="h-8" />
 
               <div className="flex flex-col gap-2">
                 <div className="text-sm">Max records</div>
@@ -592,9 +592,9 @@ function ChartDatasetConfig(props) {
                 </div>
               </div>
 
-              <Spacer y={4} />
+              <div className="h-8" />
               <Separator />
-              <Spacer y={4} />
+              <div className="h-8" />
             </>
           )}
 
@@ -614,7 +614,7 @@ function ChartDatasetConfig(props) {
                 {!formula && (
                   <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
                     <TbMathFunctionY size={24} />
-                    <Spacer x={1} />
+                    <div className="w-2" />
                     <div className="text-sm text-foreground">Apply formula on metrics</div>
                   </Link>
                 )}
@@ -666,16 +666,16 @@ function ChartDatasetConfig(props) {
                 )}
               </div>
 
-              <Spacer y={4} />
+              <div className="h-8" />
               <Separator />
-              <Spacer y={4} />
+              <div className="h-8" />
 
               <div>
                 {!goal && (
                   <div>
                     <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
                       <TbProgressCheck size={24} />
-                      <Spacer x={1} />
+                      <div className="w-2" />
                       <div className="text-sm text-foreground">Set a goal</div>
                     </Link>
                   </div>
@@ -720,7 +720,7 @@ function ChartDatasetConfig(props) {
         </Tab>
 
         <Tab key="automation" title="Automation">
-          <Spacer y={4} />
+          <div className="h-8" />
 
           <Row>
             <DatasetAlerts
@@ -736,9 +736,9 @@ function ChartDatasetConfig(props) {
             />
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
 
           <div className="flex flex-col gap-2">
             <div className="font-bold">{"Variables"}</div>
@@ -808,9 +808,9 @@ function ChartDatasetConfig(props) {
         </Tab>
       </Tabs>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Separator />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="flex flex-row justify-between">
         {canAccess("teamAdmin", user.id, team?.TeamRoles) && (

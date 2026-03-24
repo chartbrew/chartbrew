@@ -824,12 +824,106 @@ Notes:
   - `npm run lint` passes
   - `rg -l 'SelectItem|AutocompleteItem' client/src` returns no matches
 
+### Phase 1: Spacer Removal Foundation
+
+Files migrated:
+- `src/containers/Integrations/Auth/SlackAuth.jsx`
+- `src/containers/Connections/GoogleAnalytics/GaTemplate.jsx`
+- `src/containers/Connections/SimpleAnalytics/SimpleAnalyticsTemplate.jsx`
+- `src/containers/Connections/Plausible/PlausibleTemplate.jsx`
+- `src/containers/Connections/Mailgun/MailgunTemplate.jsx`
+- `src/containers/Connections/ChartMogul/ChartMogulTemplate.jsx`
+- `src/components/FeedbackForm.jsx`
+- `src/components/InviteMembersForm.jsx`
+- `src/containers/PasswordReset.jsx`
+- `src/containers/Login.jsx`
+- `src/components/SavedQueries.jsx`
+- `src/containers/ProjectRedirect.jsx`
+- `src/containers/PrintView/PrintView.jsx`
+- `src/components/DatasetFilters.jsx`
+- `src/components/FormulaTips.jsx`
+- `src/components/ProjectForm.jsx`
+- `src/components/Callout.jsx`
+- `src/components/HelpBanner.jsx`
+- `src/components/TableConfiguration.jsx`
+- `src/containers/ProjectBoard/components/ProjectNavigation.jsx`
+- `src/containers/UserDashboard/DashboardList.jsx`
+- `src/components/LoginForm.jsx`
+- `src/containers/SharedChart.jsx`
+- `src/containers/UserInvite.jsx`
+- `src/containers/ApiKeys/ApiKeys.jsx`
+- `src/containers/Variables/Variables.jsx`
+
+Notes:
+- Consolidated the early `Spacer` removal work into a single phase to keep this tracker shorter.
+- This phase focused on low-risk templates, shared components, utility screens, auth screens, and admin/public views.
+- Replaced `Spacer` usage in these files with local `gap-*`, `h-*`, and `w-*` utilities only.
+- Kept the edits surgical and avoided broader refactors in files that still contain other old HeroUI surfaces.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n '\\bSpacer\\b'` on the migrated files returns no matches
+
+### Phase 2: Spacer Removal Medium Screen Sweep
+
+Files migrated:
+- `src/containers/Signup.jsx`
+- `src/containers/ProjectBoard/ProjectBoard.jsx`
+- `src/containers/PublicDashboard/components/SharingSettings.jsx`
+- `src/containers/PublicDashboard/Report.jsx`
+- `src/containers/Dataset/Dataset.jsx`
+- `src/containers/Dataset/AiQuery.jsx`
+- `src/containers/Dataset/DatarequestSettings.jsx`
+- `src/containers/AddChart/AddChart.jsx`
+- `src/containers/ProjectDashboard/ProjectDashboard.jsx`
+- `src/containers/UserDashboard/UserDashboard.jsx`
+- `src/containers/UserDashboard/ConnectionList.jsx`
+- `src/containers/UserDashboard/DatasetList.jsx`
+- `src/containers/Ai/AiModal.jsx`
+- `src/containers/Integrations/Integrations.jsx`
+- `src/containers/Integrations/components/SlackIntegrationsList.jsx`
+- `src/containers/Integrations/components/WebhookIntegrationsList.jsx`
+- `src/containers/Integrations/Integration/SlackIntegration.jsx`
+- `src/containers/Integrations/Auth/Auth.jsx`
+- `src/containers/Integrations/Auth/SlackCallback.jsx`
+- `src/containers/Connections/Customerio/ActivitiesQuery.jsx`
+- `src/containers/Connections/Customerio/CustomerQuery.jsx`
+- `src/containers/Connections/Customerio/CampaignsQuery.jsx`
+- `src/containers/Connections/Customerio/CustomerioBuilder.jsx`
+- `src/containers/Connections/Customerio/CustomerioConnectionForm.jsx`
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/Chart/TextWidget.jsx`
+- `src/containers/AddChart/components/ChartDatasetDataSetup.jsx`
+- `src/containers/ProjectDashboard/components/DashboardFilters.jsx`
+- `src/containers/EmbeddedChart.jsx`
+- `src/containers/Chart/components/ChartFilters.jsx`
+- `src/containers/ProjectDashboard/components/ChartExport.jsx`
+- `src/containers/AddChart/components/DatasetAppearance.jsx`
+- `src/containers/AddChart/components/ChartPreview.jsx`
+- `src/containers/PublicDashboard/PublicDashboard.jsx`
+- `src/containers/ProjectSettings.jsx`
+- `src/containers/Chart/components/ChartSharing.jsx`
+- `src/containers/Settings/TeamSettings.jsx`
+- `src/containers/Settings/ManageUser.jsx`
+- `src/containers/Settings/TeamMembers.jsx`
+- `src/containers/ProjectDashboard/components/SnapshotSchedule.jsx`
+
+Notes:
+- Continued the `Spacer` removal into medium-complexity dataset, public dashboard, and shell screens.
+- Expanded this phase into dashboard, add-chart, AI, public report, user dashboard, integrations, Customer.io, and chart screens to reduce the remaining `Spacer` surface faster.
+- Extended the same phase into add-chart setup, chart filter/export, embedded chart, and public dashboard surfaces instead of splitting the tracker into more micro-batches.
+- Continued folding in settings and sharing files under the same spacer phase so the tracker stays compact while the remaining count drops.
+- Replaced `Spacer` usage in these files with local `h-*` and `w-*` spacing utilities only.
+- Kept the changes local to spacing and avoided touching unrelated v2 surfaces in the same files.
+- Verification:
+  - `npm run lint` passes
+  - `rg -n '\\bSpacer\\b'` on the migrated files returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
 - `ModalContent`: 0 files
 - `SelectItem` / `AutocompleteItem`: 0 files
-- `Spacer`: about 103 files
+- `Spacer`: about 37 files
 - `Code`: about 21 files
 - `CardBody`: about 14 files
 - `Image`: about 10 files
@@ -848,7 +942,7 @@ Important:
 
 Priority order:
 1. Remove `Spacer` usage and replace with layout `gap` / margin utilities
-2. Replace removed `Code`, `Image`, and `User` usages with plain elements or direct v3 composition
+2. Replace removed `Code`, `Image`, and `User` usages with plain elements with tailwind classes or direct v3 composition
 3. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
 4. Audit remaining non-picker v2 surfaces file-by-file after the picker family completion
 

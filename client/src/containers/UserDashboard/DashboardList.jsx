@@ -12,7 +12,6 @@ import {
   DropdownTrigger,
   Input,
   Modal,
-  Spacer,
   Tab,
   Table,
   TableBody,
@@ -273,7 +272,7 @@ function DashboardList() {
             </div>
           </div>
 
-          <Spacer y={2} />
+          <div className="h-2" />
 
           <div className="flex flex-row items-center gap-2">
             <Input
@@ -291,7 +290,7 @@ function DashboardList() {
             </Tabs>
           </div>
 
-          <Spacer y={4} />
+          <div className="h-4" />
 
           {projects && viewMode === "grid" && (
             <div className={gridClassName}>

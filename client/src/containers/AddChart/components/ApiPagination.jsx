@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Divider, Input, Spacer, Switch, Tooltip, Chip, Select, Label, ListBox,
+  Divider, Input, Switch, Tooltip, Chip, Select, Label, ListBox,
 } from "@heroui/react";
 import { LuInfo } from "react-icons/lu";
 
@@ -118,9 +118,9 @@ function ApiPagination(props) {
       </div>
 
       <div className="col-span-12">
-        <Spacer y={2} />
+        <div className="h-4" />
         <Divider />
-        <Spacer y={1} />
+        <div className="h-2" />
       </div>
 
       {/* CUSTOM */}
@@ -134,7 +134,7 @@ function ApiPagination(props) {
               <Text>
                 {"Items per page"}
               </Text>
-              <Spacer x={0.5} />
+              <div className="w-1" />
               <LuInfo />
             </div>
           </Tooltip>
@@ -157,7 +157,7 @@ function ApiPagination(props) {
           >
             <div style={styles.rowDisplay}>
               <Text>{"Offset"}</Text>
-              <Spacer x={0.5} />
+              <div className="w-1" />
               <LuInfo />
             </div>
           </Tooltip>
@@ -191,7 +191,7 @@ function ApiPagination(props) {
         <>
           <div className="col-span-12">
             <div className="text-sm">{"Click here to select a field that contains the pagination URL"}</div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div style={styles.rowDisplay}>
               <Select
                 variant="secondary"
@@ -225,7 +225,7 @@ function ApiPagination(props) {
           </div>
           <div className="col-span-12">
             <div className="text-sm">Or enter the object path manually here</div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <Input
               placeholder="pagination.next"
               labelPlacement="outside"
@@ -255,7 +255,7 @@ function ApiPagination(props) {
           >
             <div style={styles.rowDisplay}>
               <div className="text-sm">{"Cursor query parameter"}</div>
-              <Spacer x={0.5} />
+              <div className="w-1" />
               <LuInfo />
             </div>
           </Tooltip>
@@ -278,7 +278,7 @@ function ApiPagination(props) {
           >
             <div style={styles.rowDisplay}>
               <div className="text-sm">{"Next cursor field name"}</div>
-              <Spacer x={0.5} />
+              <div className="w-1" />
               <LuInfo />
             </div>
           </Tooltip>
@@ -301,7 +301,7 @@ function ApiPagination(props) {
         >
           <div style={styles.rowDisplay}>
             <div className="text-sm">{"Maximum number of items (0 = unlimited)"}</div>
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <LuInfo />
           </div>
         </Tooltip>
@@ -318,29 +318,29 @@ function ApiPagination(props) {
       </div>
 
       <div className="col-span-12">
-        <Spacer y={1} />
+        <div className="h-2" />
       </div>
 
       {pagination && template === "custom" && (
         <div className="col-span-12">
           <div className="text-sm">{"You should include these query parameters: "}</div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div style={styles.rowDisplay}>
             <Chip size="sm" radius="sm" variant="flat">
               {`${items}=<xxx>&${offset}=<xxx> `}
             </Chip>
-            <Spacer x={1} />
+            <div className="w-2" />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
                 <Chip color="success" size="sm" radius="sm" variant="flat">
                   {`${items} was found`}
                 </Chip>
-                <Spacer x={0.5} />
+                <div className="w-1" />
               </>
             )}
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
-                <Spacer x={0.5} />
+                <div className="w-1" />
                 <Chip color="warning" size="sm" radius="sm" variant="flat">
                   {`${items} not found in route`}
                 </Chip>
@@ -348,7 +348,7 @@ function ApiPagination(props) {
             )}
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
-                <Spacer x={0.5} />
+                <div className="w-1" />
                 <Chip color="success" size="sm" radius="sm" variant="flat">
                   {`${offset} was found`}
                 </Chip>
@@ -356,19 +356,19 @@ function ApiPagination(props) {
             )}
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
-                <Spacer x={0.5} />
+                <div className="w-1" />
                 <Chip color="warning" size="sm" radius="sm" variant="flat">
                   {`${offset} not found in route`}
                 </Chip>
               </>
             )}
           </div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div style={styles.rowDisplay}>
             <div className="text-sm">
               {"The maximum amount of item that you're going to get is: "}
             </div>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Chip size="sm" radius="sm" variant="flat">
               {itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}
             </Chip>

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Chip, Checkbox, Divider,
+  Button, Input, Chip, Checkbox, Divider,
   CircularProgress, ListBox, Select,
 } from "@heroui/react";
 import { isEqual } from "lodash";
@@ -263,7 +263,7 @@ function CustomerQuery(props) {
           </Select>
         </Row>
       )}
-      <Spacer y={2} />
+      <div className="h-2" />
 
       <Row wrap="wrap" align="center" className={"gap-1"}>
         {conditions[mainOperation] && conditions[mainOperation].map((condition) => {
@@ -412,13 +412,13 @@ function CustomerQuery(props) {
 
       {conditions[mainOperation]?.length > 0 &&(
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={2} />
+          <div className="h-2" />
         </>
       )}
 
-      <Spacer y={2} />
+      <div className="h-2" />
       {!segmentConfig && !attributeConfig && (
         <Row align="center">
           <Button
@@ -430,7 +430,7 @@ function CustomerQuery(props) {
           >
             Add segment condition
           </Button>
-          <Spacer x={0.5} />
+          <div className="w-0.5" />
           <Button
             size="sm"
             startContent={<LuUser />}
@@ -467,7 +467,7 @@ function CustomerQuery(props) {
               </ListBox>
             </Select.Popover>
           </Select>
-          <Spacer x={1} />
+          <div className="w-1" />
           <Select
             variant="secondary"
             placeholder="Select segments"
@@ -501,7 +501,7 @@ function CustomerQuery(props) {
               </ListBox>
             </Select.Popover>
           </Select>
-          <Spacer x={2} />
+          <div className="w-2" />
           <Button
             isIconOnly
             onClick={_onAddSegmentCondition}
@@ -511,7 +511,7 @@ function CustomerQuery(props) {
           >
             <LuCheck />
           </Button>
-          <Spacer x={1} />
+          <div className="w-1" />
           <Button
             isIconOnly
             color="danger"
@@ -533,7 +533,7 @@ function CustomerQuery(props) {
             }}
             variant="bordered"
           />
-          <Spacer x={1} />
+          <div className="w-1" />
           <Select
             variant="secondary"
             placeholder="Select an operation"
@@ -560,7 +560,7 @@ function CustomerQuery(props) {
           </Select>
           {(attributeConfig.operator === "eq" || attributeConfig.operator === "not,eq") && (
             <>
-              <Spacer x={1} />
+              <div className="w-1" />
               <Input
                 placeholder="Value"
                 value={attributeConfig.value}
@@ -571,7 +571,7 @@ function CustomerQuery(props) {
               />
             </>
           )}
-          <Spacer x={2} />
+          <div className="w-2" />
           <Button
             isIconOnly
             onClick={_onAddAttributeCondition}
@@ -581,7 +581,7 @@ function CustomerQuery(props) {
           >
             <LuCheck />
           </Button>
-          <Spacer x={1} />
+          <div className="w-1" />
           <Button
             isIconOnly
             onClick={() => setAttributeConfig(null)}
@@ -594,9 +594,9 @@ function CustomerQuery(props) {
         </Row>
       )}
 
-      <Spacer y={4} />
+      <div className="h-4" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <Row>
         <Checkbox
@@ -607,7 +607,7 @@ function CustomerQuery(props) {
           {"Get customers' attributes"}
         </Checkbox>
       </Row>
-      <Spacer y={2} />
+      <div className="h-2" />
       <Row>
         <Input
           label="Maximum number of results (0 = unlimited)"

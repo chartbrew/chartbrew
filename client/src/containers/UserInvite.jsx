@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
-  Button, Spacer,
+  Button,
 } from "@heroui/react";
 import { useNavigate } from "react-router";
 
@@ -55,7 +55,7 @@ function UserInvite() {
         <Row justify="center" align="center">
           <Text className={"font-semibold text-default"}>Please select an option below</Text>
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row justify="center" align="center" wrap="wrap">
           <Button
             color="secondary"
@@ -64,7 +64,7 @@ function UserInvite() {
           >
             Login with an existing account
           </Button>
-          <Spacer x={2} />
+          <div className="w-2" />
           <Button
             onClick={() => redirectUser("signup")}
             color="primary"

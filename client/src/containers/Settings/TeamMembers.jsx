@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Chip, Button, Checkbox, Separator, Dropdown, Modal, Spacer, Table, Tooltip, ProgressCircle,
+  Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
   DropdownTrigger, Code,
   Input,
@@ -200,12 +200,12 @@ function TeamMembers(props) {
         </div>
       )}
 
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="bg-content1 p-4 rounded-lg border border-divider">
         <div className="text-lg font-semibold font-tw">{"Team members"}</div>
         <div className="text-sm text-gray-500">{"Manage your team members and their roles"}</div>
-        <Spacer y={2} />
+        <div className="h-4" />
 
         {_canAccess("teamAdmin") && (
           <Table shadow="none" isStriped aria-label="Team members">
@@ -433,7 +433,7 @@ function TeamMembers(props) {
                       <div>{`access to ${changedMember.name}`}</div>
                       <div>{"for the following projects:"}</div>
                     </div>
-                    <Spacer y={1} />
+                    <div className="h-2" />
 
                     <div className="grid grid-cols-12 gap-1">
                       {projects && projects.filter((p) => !p.ghost).map((project) => (
@@ -450,9 +450,9 @@ function TeamMembers(props) {
                       ))}
                     </div>
 
-                    <Spacer y={1} />
+                    <div className="h-2" />
                     <Separator />
-                    <Spacer y={1} />
+                    <div className="h-2" />
 
                     <div className="flex flex-row items-center gap-1">
                       <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>

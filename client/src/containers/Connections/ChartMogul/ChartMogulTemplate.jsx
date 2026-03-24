@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
+  Button, Checkbox, Divider, Input, Link, Select, Label, ListBox,
 } from "@heroui/react";
 import cookie from "react-cookies";
 import _ from "lodash";
@@ -173,7 +173,7 @@ function ChartMogulTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Row align="center">
+      <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
           variant="flat"
@@ -182,13 +182,12 @@ function ChartMogulTemplate(props) {
         >
           <LuArrowLeft />
         </Button>
-        <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
 
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Select
               isDisabled={formVisible}
@@ -217,7 +216,7 @@ function ChartMogulTemplate(props) {
               </Select.Popover>
             </Select>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             {!formVisible && (
               <Button
@@ -242,7 +241,7 @@ function ChartMogulTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={2} />
+      <div className="h-2" />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -250,7 +249,7 @@ function ChartMogulTemplate(props) {
               <Divider />
             </Row>
           )}
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your ChartMogul API key"
@@ -265,7 +264,7 @@ function ChartMogulTemplate(props) {
               fullWidth
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Link
               href="https://chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
@@ -276,7 +275,7 @@ function ChartMogulTemplate(props) {
               <span className={"text-sm text-secondary"}>
                 {"Click here to learn how to find your ChartMogul API key"}
               </span>
-              <Spacer x={1} />
+              <div className="w-1" />
               <LuLink size={16} />
             </Link>
           </Row>
@@ -285,11 +284,11 @@ function ChartMogulTemplate(props) {
 
       {configuration && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <div className="grid grid-cols-12 gap-2">
               {configuration.Charts && configuration.Charts.map((chart) => (
@@ -308,7 +307,7 @@ function ChartMogulTemplate(props) {
             </div>
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Button
               variant="bordered"
@@ -319,7 +318,7 @@ function ChartMogulTemplate(props) {
             >
               Select all
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Button
               variant="bordered"
               startContent={<LuX />}
@@ -335,7 +334,7 @@ function ChartMogulTemplate(props) {
 
       {addError && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -351,7 +350,7 @@ function ChartMogulTemplate(props) {
 
       {testError && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -363,7 +362,7 @@ function ChartMogulTemplate(props) {
               <Row align="center">
                 <Link href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <LuLink />
                 </Link>
               </Row>
@@ -372,7 +371,7 @@ function ChartMogulTemplate(props) {
         </>
       )}
 
-      <Spacer y={4} />
+      <div className="h-4" />
       <Row>
         <Button
           isDisabled={

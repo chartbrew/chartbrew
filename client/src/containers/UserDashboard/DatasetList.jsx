@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
 import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -272,7 +272,7 @@ function DatasetList() {
           </Button>
         )}
       </div>
-      <Spacer y={8} />
+      <div className="h-8" />
 
       <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
         <div className="flex flex-row items-center gap-2">
@@ -296,7 +296,7 @@ function DatasetList() {
             </Button>
           )}
         </div>
-        <Spacer y={4} />
+        <div className="h-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <div>
             <Input
@@ -426,7 +426,7 @@ function DatasetList() {
           </div>
         </div>
 
-        <Spacer y={4} />
+        <div className="h-4" />
         <div className="flex flex-row items-center justify-between">
           <div className="text-sm text-foreground-500">
             {`Showing ${pageStart}-${pageEnd} of ${filteredDatasets.length} datasets`}
@@ -446,7 +446,7 @@ function DatasetList() {
         </div>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
 
       {selectedDatasets.length > 0 && (
         <div>
@@ -459,7 +459,7 @@ function DatasetList() {
           >
             Delete selected
           </Button>
-          <Spacer y={4} />
+          <div className="h-4" />
         </div>
       )}
 
@@ -519,7 +519,7 @@ function DatasetList() {
                 <div className="flex flex-col items-center gap-1">
                   <LuLayers size={24} />
                   <span>You need to create a connection to get started</span>
-                  <Spacer y={1} />
+                  <div className="h-1" />
                   <Button
                     onPress={() => navigate("/connections/new")}
                     color="primary"
@@ -670,7 +670,7 @@ function DatasetList() {
       </div>
       {filteredDatasets.length > DATASETS_PER_PAGE && (
         <>
-          <Spacer y={3} />
+          <div className="h-3" />
           <div className="flex justify-start px-4 py-2 border-1 border-solid border-content3 rounded-lg bg-content1">
             <Pagination
               total={totalPages}
@@ -774,7 +774,7 @@ function DatasetList() {
                 </Chip>
               ))}
             </div>
-            <Spacer y={1} />
+            <div className="h-1" />
             <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
               <div>
                 <LuInfo />

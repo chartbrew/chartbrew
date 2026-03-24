@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Spacer, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -152,7 +152,7 @@ function ConnectionList() {
           </Button>
         )}
       </div>
-      <Spacer y={2} />
+      <div className="h-2" />
       <div className={"flex flex-row items-center gap-4"}>
         <Input
           type="text"
@@ -164,7 +164,7 @@ function ConnectionList() {
           onChange={(e) => setConnectionSearch(e.target.value)}
         />
       </div>
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {_getFilteredConnections()?.map((connection) => (
@@ -226,7 +226,7 @@ function ConnectionList() {
                 >
                   View connection
                 </Button>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
@@ -279,7 +279,7 @@ function ConnectionList() {
         <div className="flex flex-col items-center justify-center h-full gap-1">
           <LuPlug size={24} />
           <span className="text-foreground-500 text-sm">No connections found</span>
-          <Spacer y={1} />
+          <div className="h-1" />
           {connections?.length === 0 && _canAccess("teamAdmin", team.TeamRoles) && (
             <Button
               color="primary"
@@ -291,7 +291,7 @@ function ConnectionList() {
         </div>
       )}
 
-      <Spacer y={4} />
+      <div className="h-4" />
       <Modal>
         <Modal.Backdrop isOpen={!!connectionToDelete?.id} onOpenChange={(nextOpen) => { if (!nextOpen) setConnectionToDelete(null); }}>
           <Modal.Container>
@@ -389,11 +389,11 @@ function ConnectionList() {
                         }
                       }}
                     >
-                      {project.name}
-                    </Chip>
-                  ))}
-                </div>
-                <Spacer y={1} />
+                  {project.name}
+                </Chip>
+              ))}
+            </div>
+                <div className="h-1" />
                 <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
                   <div>
                     <LuInfo />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
+  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
@@ -239,7 +239,7 @@ function ChartPreview(props) {
                 >
                   {"Refresh chart"}
                 </Button>
-                <Spacer />
+                <div className="w-2" />
                 <Checkbox
                   isSelected={useCache}
                   onValueChange={changeCache}
@@ -274,7 +274,7 @@ function ChartPreview(props) {
             </Row>
             {chart.ChartDatasetConfigs && conditions.length > 0 && (
               <>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex items-center gap-1">
                   {chart.ChartDatasetConfigs && conditions.map((c) => (
                     <Chip
@@ -297,11 +297,11 @@ function ChartPreview(props) {
                 </div>
               </>
             )}
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row>
               <Separator />
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <div className="h-[300px] w-full">
               {chart.type === "line"
                 && (
@@ -389,8 +389,8 @@ function ChartPreview(props) {
               )}
             </div>
           </div>
-          <Spacer y={2} />
-          <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl chart-preview-types">
+          <div className="h-4" />
+          <div className="border-solid border border-content3 px-3 py-2 rounded-2xl chart-preview-types">
             <div className="flex flex-row gap-4 justify-around flex-wrap">
               <div className="flex flex-row gap-1">
                 <Tooltip
@@ -541,19 +541,19 @@ function ChartPreview(props) {
                 <Row>
                   <Text b>Loading chart data...</Text>
                 </Row>
-                <Spacer y={2} />
+                <div className="h-4" />
               </>
             )}
             {!chartLoading && (
               <>
                 <div className={"container mx-auto"}>
                   <Text className={"text-foreground-500 text-[20px]"}>{"Configure the dataset to get started"}</Text>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <Skeleton className="rounded-lg">
                     <div className="h-5 rounded-lg bg-default-300"></div>
                   </Skeleton>
                 </div>
-                <Spacer y={0.5} />
+                <div className="h-1" />
               </>
             )}
           </>
@@ -588,7 +588,7 @@ function ChartPreview(props) {
               Invert growth
             </Checkbox>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
         </div>
       )}
 
@@ -659,7 +659,7 @@ function ChartPreview(props) {
                 )}
               </div>
             ))}
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-row gap-2 items-center">
               <Button
                 onPress={_onAddRange}

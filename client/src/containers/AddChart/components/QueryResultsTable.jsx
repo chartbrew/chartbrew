@@ -12,7 +12,6 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  Spacer,
 } from "@heroui/react";
 
 function QueryResultsTable({ result }) {
@@ -110,7 +109,7 @@ function QueryResultsTable({ result }) {
           </TableBody>
         </Table>
       </div>
-      <Spacer y={2} />
+      <div className="h-4" />
       <div>
         <Pagination
           total={getResultBodyRows().length > 0 ? Math.ceil(getResultBodyRows().length / 10) : 1}

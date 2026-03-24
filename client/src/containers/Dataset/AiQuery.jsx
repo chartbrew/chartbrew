@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import PropTypes from "prop-types";
-import { Spacer, TextArea, Button, Alert } from "@heroui/react";
+import { TextArea, Button, Alert } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuBrainCircuit, LuSend } from "react-icons/lu";
@@ -89,7 +89,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
 
   return (
     <div>
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="max-h-[300px] overflow-y-auto">
         {askAiLoading ? (
@@ -122,7 +122,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
         )}
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="flex flex-row items-center gap-2">
         <TextArea

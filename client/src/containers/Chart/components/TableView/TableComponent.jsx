@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Dropdown, Spacer, Link as LinkNext, Table, Popover, Pagination, Chip,
+  Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, PopoverTrigger,
   PopoverContent,
   DropdownTrigger,
@@ -248,7 +248,7 @@ function TableComponent({
                     size="sm"
                     aria-label="Pagination"
                   />
-                  <Spacer x={0.5} />
+                  <div className="w-1" />
                   <Dropdown aria-label="Select a page size">
                     <DropdownTrigger>
                       <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
@@ -289,7 +289,7 @@ function TableComponent({
                           : (<LuCircleChevronUp size={16} />)
                         : ""}
 
-                      {(column.isSorted || column.isSortedDesc) && <Spacer x={1} />}
+                      {(column.isSorted || column.isSortedDesc) && <div className="w-2" />}
                       <LinkNext
                         className="text-sm cursor-pointer hover:text-secondary"
                         onClick={(e) => {

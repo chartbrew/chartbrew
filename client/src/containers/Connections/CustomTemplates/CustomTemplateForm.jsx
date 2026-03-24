@@ -4,7 +4,7 @@ import _ from "lodash";
 import {
   Autocomplete,
   Avatar,
-  Button, Checkbox, Chip, Divider, EmptyState, ListBox, Modal, SearchField, Spacer, Switch, useFilter,
+  Button, Checkbox, Chip, Divider, EmptyState, ListBox, Modal, SearchField, Switch, useFilter,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
@@ -153,19 +153,19 @@ function CustomTemplateForm(props) {
           {template.name}
         </Text>
       </Row>
-      <Spacer y={2} />
+      <div className="h-4" />
       <Divider />
-      <Spacer y={2} />
+      <div className="h-4" />
 
       {template && template.model && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           {template.model?.Connections && template.model?.Datasets && (
             <>
               <Row>
                 <Text b>{"Template connections"}</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="flex flex-col gap-2">
                 {template.model?.Connections?.map((connection) => (
                   <div key={connection.id} className="flex flex-col gap-1">
@@ -218,15 +218,15 @@ function CustomTemplateForm(props) {
                         </Chip>
                       </div>
                     )}
-                    <Spacer y={1} />
+                    <div className="h-2" />
                   </div>
                 ))}
               </div>
-              <Spacer y={3} />
+              <div className="h-6" />
               <Row>
                 <Text b>{"Datasets"}</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
               <Row>
                 <Switch
                   isSelected={newDatasets}
@@ -244,7 +244,7 @@ function CustomTemplateForm(props) {
                   </span>
                 </Row>
               )}
-              <Spacer y={4} />
+              <div className="h-8" />
             </>
           )}
           {!template.model?.Datasets?.length && (
@@ -255,13 +255,13 @@ function CustomTemplateForm(props) {
               <span className="text-sm">
                 {"This template does not support custom connections and datasets. You can re-create the template to enable this feature."}
               </span>
-              <Spacer y={2} />
+              <div className="h-4" />
             </div>
           )}
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div className="grid grid-cols-12 gap-2">
             {template.model.Charts && template.model.Charts.map((chart) => (
               <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4 xl:col-span-3" key={chart.tid}>
@@ -280,7 +280,7 @@ function CustomTemplateForm(props) {
             ))}
           </div>
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Button
               endContent={<LuCheckCheck />}
@@ -290,7 +290,7 @@ function CustomTemplateForm(props) {
             >
               Select all
             </Button>
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Button
               endContent={<LuX />}
               variant="ghost"
@@ -303,7 +303,7 @@ function CustomTemplateForm(props) {
         </>
       )}
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Row justify="flex-end">
         {isAdmin && (
           <Button
@@ -315,7 +315,7 @@ function CustomTemplateForm(props) {
             Delete template
           </Button>
         )}
-        <Spacer x={0.5} />
+        <div className="w-1" />
         <Button
           color="primary"
           onClick={_generateTemplate}

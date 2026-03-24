@@ -4,7 +4,7 @@ import { useWindowSize } from "react-use";
 import { Link, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
-  Link as LinkNext, Tooltip, Spacer, Button, Modal, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
+  Link as LinkNext, Tooltip, Button, Modal, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
@@ -143,7 +143,7 @@ function ProjectNavigation(props) {
             </Popover>
           </div>
 
-          <Spacer y={4} />
+          <div className="h-4" />
 
           <Listbox
             aria-label="Project navigation"
@@ -274,7 +274,7 @@ function ProjectNavigation(props) {
               </Tooltip>
             </div>
           )}
-          <Spacer y={4} />
+          <div className="h-4" />
           <div style={styles.absoluteLogo} className="flex justify-center items-center">
             {menuSize !== "small" && (
               <LinkNext

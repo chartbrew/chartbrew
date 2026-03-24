@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import {
-  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeInput, Spacer, Image, Textarea, ButtonGroup, Tooltip, useFilter,
+  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeInput, Image, Textarea, ButtonGroup, Tooltip, useFilter,
   Tabs, Tab,
   Checkbox,
 } from "@heroui/react";
@@ -417,7 +417,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </div>
               )}
 
-              <Spacer y={2} />
+              <div className="h-4" />
 
               <div className="font-medium">
                 {"Where should we send the snapshots?"}
@@ -507,7 +507,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </>
               )}
 
-              <Spacer y={2} />
+              <div className="h-4" />
 
               <div className="flex flex-row items-center justify-between">
                 <div className="font-medium">
@@ -557,7 +557,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   >
                     Take snapshot
                   </Button>
-                  <Spacer x={2} />
+                  <div className="w-4" />
                   <Tabs
                     selectedKey={schedule.theme}
                     onSelectionChange={(key) => setSchedule({ ...schedule, theme: key })}

@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { Button, Code, Input, Modal, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
+import { Button, Code, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createVariable, deleteVariable, selectProject } from "../../slices/project"
@@ -78,13 +78,13 @@ function Variables() {
           Create variable
         </Button>
       </div>
-      <Spacer y={4} />
+      <div className="h-4" />
 
       <div className="text-sm text-gray-500">
         Variables are used to create dashboard filters that interact with your charts. First, make sure your chart filters have variables defined, then you can variable filters from your dashboard.
       </div>
 
-      <Spacer y={4} />
+      <div className="h-4" />
       <Table shadow="none" className="border-1 border-divider rounded-lg" aria-label="Variables">
         <TableHeader>
           <TableColumn key="name">Name</TableColumn>

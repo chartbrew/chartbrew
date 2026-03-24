@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
+  Button, Checkbox, Divider, Input, Link, Select, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -200,7 +200,7 @@ function MailgunTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Row align="center">
+      <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
           variant="flat"
@@ -209,13 +209,12 @@ function MailgunTemplate(props) {
         >
           <LuArrowLeft />
         </Button>
-        <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
 
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row className={"gap-2"}>
             <Select
               isDisabled={formVisible}
@@ -257,7 +256,7 @@ function MailgunTemplate(props) {
               isDisabled={formVisible}
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             {!formVisible && (
               <Button
@@ -282,7 +281,7 @@ function MailgunTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={2} />
+      <div className="h-2" />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -290,7 +289,7 @@ function MailgunTemplate(props) {
               <Divider />
             </Row>
           )}
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Select
               variant="secondary"
@@ -318,7 +317,7 @@ function MailgunTemplate(props) {
               </Select.Popover>
             </Select>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your Mailgun domain"
@@ -333,7 +332,7 @@ function MailgunTemplate(props) {
               className="max-w-[400px]"
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your Mailgun Private API Key"
@@ -348,7 +347,7 @@ function MailgunTemplate(props) {
               className="max-w-[400px]"
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Link
               href="https://app.mailgun.com/app/account/security/api_keys"
@@ -359,7 +358,7 @@ function MailgunTemplate(props) {
               <Text size="sm" className={"text-secondary"}>
                 {"Get your Private API Key from here"}
               </Text>
-              <Spacer x={1} />
+              <div className="w-1" />
               <LuExternalLink />
             </Link>
           </Row>
@@ -368,11 +367,11 @@ function MailgunTemplate(props) {
 
       {configuration && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <div className="grid grid-cols-12 gap-2">
               {configuration.Charts && configuration.Charts.map((chart) => (
@@ -391,7 +390,7 @@ function MailgunTemplate(props) {
             </div>
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Button
               variant="ghost"
@@ -402,7 +401,7 @@ function MailgunTemplate(props) {
             >
               Select all
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Button
               variant="ghost"
               startContent={<LuX />}
@@ -417,7 +416,7 @@ function MailgunTemplate(props) {
 
       {addError && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -433,7 +432,7 @@ function MailgunTemplate(props) {
 
       {testError && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -445,7 +444,7 @@ function MailgunTemplate(props) {
               <Row align="center">
                 <Link href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <LuExternalLink />
                 </Link>
               </Row>
@@ -454,7 +453,7 @@ function MailgunTemplate(props) {
         </>
       )}
 
-      <Spacer y={8} />
+      <div className="h-8" />
       <Row>
         <Button
           isDisabled={

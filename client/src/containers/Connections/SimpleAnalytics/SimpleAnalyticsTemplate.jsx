@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
+  Button, Checkbox, Divider, Input, Link, Select, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -178,7 +178,7 @@ function SimpleAnalyticsTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Row align="center">
+      <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
           variant="flat"
@@ -187,12 +187,11 @@ function SimpleAnalyticsTemplate(props) {
         >
           <LuArrowLeft />
         </Button>
-        <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row className={"gap-2"}>
             <Select
               isDisabled={formVisible}
@@ -233,7 +232,7 @@ function SimpleAnalyticsTemplate(props) {
               disabled={formVisible}
             />
           </Row>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row align="center">
             {!formVisible && (
               <Button
@@ -257,7 +256,7 @@ function SimpleAnalyticsTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={4} />
+      <div className="h-4" />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -265,7 +264,7 @@ function SimpleAnalyticsTemplate(props) {
               <Divider />
             </Row>
           )}
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your Simple Analytics website"
@@ -280,7 +279,7 @@ function SimpleAnalyticsTemplate(props) {
               fullWidth
             />
           </Row>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row align="center">
             <Input
               label="Enter your Simple Analytics API key (if the website is private)."
@@ -293,11 +292,11 @@ function SimpleAnalyticsTemplate(props) {
               fullWidth
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Link href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
               <Text className={"text-secondary"}>{"Get your API key here "}</Text>
-              <Spacer x={1} />
+              <div className="w-1" />
               <LuExternalLink />
             </Link>
           </Row>
@@ -306,11 +305,11 @@ function SimpleAnalyticsTemplate(props) {
 
       {configuration && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <div className="grid grid-cols-12 gap-2">
               {configuration.Charts && configuration.Charts.map((chart) => (
@@ -329,7 +328,7 @@ function SimpleAnalyticsTemplate(props) {
             </div>
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Button
               variant="bordered"
@@ -339,7 +338,7 @@ function SimpleAnalyticsTemplate(props) {
             >
               Select all
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Button
               variant="bordered"
               startContent={<LuX />}
@@ -367,7 +366,7 @@ function SimpleAnalyticsTemplate(props) {
 
       {notPublic && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -378,7 +377,7 @@ function SimpleAnalyticsTemplate(props) {
               </Row>
               <Row align="center">
                 <LuChevronRight />
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Link
                   target="_blank"
                   rel="noopener noreferrer"
@@ -386,12 +385,12 @@ function SimpleAnalyticsTemplate(props) {
                 >
                   <Text>Click here to get your API key and enter it in the field above.</Text>
                 </Link>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <LuExternalLink size={12} />
               </Row>
               <Row align="center">
                 <LuChevronRight />
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Link
                   href={`https://simpleanalytics.com/${connection.website}/settings#visibility`}
                   target="_blank"
@@ -399,7 +398,7 @@ function SimpleAnalyticsTemplate(props) {
                 >
                   <Text>{"Alternatively, go to this page and make your website analytics public."}</Text>
                 </Link>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <LuExternalLink size={12} />
               </Row>
             </div>
@@ -409,7 +408,7 @@ function SimpleAnalyticsTemplate(props) {
 
       {notFound && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
@@ -421,7 +420,7 @@ function SimpleAnalyticsTemplate(props) {
               <Row align="center">
                 <Link href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
                   <Text>{"Click here to see if your website is registered with Simple Analytics"}</Text>
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <LuExternalLink />
                 </Link>
               </Row>
@@ -430,7 +429,7 @@ function SimpleAnalyticsTemplate(props) {
         </>
       )}
 
-      <Spacer y={8} />
+      <div className="h-8" />
       <Row>
         <Button
           isDisabled={

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import {
-  Button, Input, Spacer, Navbar, Tooltip, Popover, Separator, Modal,
+  Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
   Link, Image, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
   Spinner,
 } from "@heroui/react";
@@ -524,7 +524,7 @@ function PublicDashboard() {
           </style>
         </Helmet>
         <div style={styles.container} className="items-center">
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row align="center" justify="center">
             <ProgressCircle size="lg" aria-label="Loading" />
           </Row>
@@ -564,7 +564,7 @@ function PublicDashboard() {
                 Please enter the password to access this report
               </Text>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
 
             <Row>
               <Input
@@ -577,7 +577,7 @@ function PublicDashboard() {
                 variant="bordered"
               />
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Row>
               <Button
                 color="primary"
@@ -603,13 +603,13 @@ function PublicDashboard() {
               {"This report does not contain any charts"}
             </Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row justify="center">
             <Text b>
               {"Head back to your dashboard and add charts to the report from the individual chart settings menu."}
             </Text>
           </Row>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row justify="center">
             <Button
               onPress={() => window.history.back()}
@@ -620,7 +620,7 @@ function PublicDashboard() {
               Go back
             </Button>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row justify="center">
             <Image
               src={instructionDashboard}
@@ -641,7 +641,7 @@ function PublicDashboard() {
           <Row justify="center">
             <Text size="h3">{"This dashboard does not contain any public charts"}</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
         </div>
       </div>
     );
@@ -722,7 +722,7 @@ function PublicDashboard() {
                           <Row>
                             <Text b>Change background</Text>
                           </Row>
-                          <Spacer y={1} />
+                          <div className="h-2" />
                           <Row>
                             <div>
                               <TwitterPicker
@@ -737,14 +737,14 @@ function PublicDashboard() {
                             </div>
                           </Row>
 
-                          <Spacer y={2} />
+                          <div className="h-4" />
                           <Separator />
-                          <Spacer y={2} />
+                          <div className="h-4" />
 
                           <Row>
                             <Text b>Change text color</Text>
                           </Row>
-                          <Spacer y={1} />
+                          <div className="h-2" />
                           <Row>
                             <TwitterPicker
                               color={newChanges.titleColor}
@@ -900,7 +900,7 @@ function PublicDashboard() {
           <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
             {loading && charts.length === 0 && (
               <Container style={styles.container}>
-                <Spacer y={4} />
+                <div className="h-8" />
                 <Row align="center" justify="center">
                   <ProgressCircle size="lg" aria-label="Loading" />
                 </Row>
@@ -980,7 +980,7 @@ function PublicDashboard() {
                   <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     {"Powered by "}
                   </span> 
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <span className="text-sm" style={{ color: removeStyling ? "#000000" : (newChanges.titleColor || project.titleColor || "#000000") }}>
                     <strong>{"Chart"}</strong>
                   </span>
@@ -1038,9 +1038,9 @@ function PublicDashboard() {
                 fullWidth
               />
             </Row>
-            <Spacer y={1} />
+            <div className="h-2" />
             <Separator />
-            <Spacer y={1} />
+            <div className="h-2" />
             <Row>
               <Text b>Custom CSS</Text>
             </Row>

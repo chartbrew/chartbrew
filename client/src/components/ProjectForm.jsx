@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, Spacer, Modal, Tabs, Tab, Card, CardBody, Image, CardFooter
+  Input, Button, Modal, Tabs, Tab, Card, CardBody, Image, CardFooter
 } from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -86,7 +86,7 @@ function ProjectForm(props) {
                 _onCreateProject();
               }}>
                 <div>
-                  <Spacer y={2} />
+                  <div className="h-2" />
                   {!hideType && (
                     <Row align="center" justify="center">
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
@@ -96,7 +96,7 @@ function ProjectForm(props) {
                       </Tabs>
                     </Row>
                   )}
-                  <Spacer y={4} />
+                  <div className="h-4" />
                   <Row align="center">
                     <Input
                       onChange={(e) => setNewProject({
@@ -120,10 +120,10 @@ function ProjectForm(props) {
                       </p>
                     </Row>
                   )}
-                  <Spacer y={4} />
+                  <div className="h-4" />
                   {activeMenu === "empty" && (
                     <>
-                      <Spacer y={4} />
+                      <div className="h-4" />
                       <Row align="center" justify="center">
                         <Button
                           isDisabled={!newProject.name}
@@ -169,7 +169,7 @@ function ProjectForm(props) {
                           </div>
                         ))}
                       </div>
-                      <Spacer y={4} />
+                      <div className="h-4" />
                     </>
                   )}
 
@@ -234,7 +234,7 @@ function ProjectForm(props) {
                   />
                 </>
               )}
-              <Spacer y={1} />
+              <div className="h-1" />
             </Modal.Body>
           </Modal.Dialog>
         </Modal.Container>

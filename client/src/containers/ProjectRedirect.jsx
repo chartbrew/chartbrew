@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
-  Spacer, ProgressCircle
+  ProgressCircle
 } from "@heroui/react";
 import { useNavigate, useParams } from "react-router";
 import { useDispatch } from "react-redux";
@@ -36,11 +36,11 @@ function ProjectRedirect() {
 
   return (
     <Container>
-      <Spacer y={4} />
+      <div className="h-4" />
       <Row align="center" justify="center">
         <ProgressCircle color="default" size="xl" aria-label="Loading" />
       </Row>
-      <Spacer y={1} />
+      <div className="h-1" />
       <Row align="center" justify="center">
         <Text size="lg" color="gray">Loading the dashboard...</Text>
       </Row>

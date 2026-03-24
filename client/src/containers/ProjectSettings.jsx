@@ -3,7 +3,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Autocomplete,
-  Button, CircularProgress, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, Spacer, useFilter,
+  Button, CircularProgress, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -122,13 +122,13 @@ function ProjectSettings(props) {
       <Row>
         <span className="text-lg font-bold">Dashboard settings</span>
       </Row>
-      <Spacer y={4} />
+      <div className="h-8" />
       {!project.id && (
         <>
           <Row>
             <CircularProgress aria-label="Loading" />
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
         </>
       )}
       <Row>
@@ -147,7 +147,7 @@ function ProjectSettings(props) {
             description={nameError ? "Dashboard name is required" : ""}
             className="max-w-md"
           />
-          <Spacer y={2} />
+          <div className="h-4" />
           <Button
             type="submit"
             color={success ? "success" : error ? "danger" : "primary"}
@@ -160,9 +160,9 @@ function ProjectSettings(props) {
         </form>
       </Row>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <Row align="center" wrap={"wrap"}>
         <Autocomplete
@@ -203,7 +203,7 @@ function ProjectSettings(props) {
             </Autocomplete.Filter>
           </Autocomplete.Popover>
         </Autocomplete>
-        <Spacer x={1} />
+        <div className="w-2" />
         <Button
           color="primary"
           variant="light"
@@ -216,7 +216,7 @@ function ProjectSettings(props) {
           </Text>
         </Button>
       </Row>
-      <Spacer y={2} />
+      <div className="h-4" />
       <Row>
         <Button
           isDisabled={!_canAccess("projectEditor") || !projectTimezone || projectTimezone === project.timezone}
@@ -226,7 +226,7 @@ function ProjectSettings(props) {
         >
           Save
         </Button>
-        <Spacer x={0.5} />
+        <div className="w-1" />
         {project.timezone && (
           <Button
             color="warning"
@@ -242,9 +242,9 @@ function ProjectSettings(props) {
 
       {_canAccess("teamAdmin") && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
 
           <Row>
             <Button
@@ -262,7 +262,7 @@ function ProjectSettings(props) {
 
       {removeError && (
         <>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row>
             <Callout
               title="Oh snap! There was a problem with the request"

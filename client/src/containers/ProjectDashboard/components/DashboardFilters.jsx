@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
-import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, Button, Spacer } from "@heroui/react"
+import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, Button } from "@heroui/react"
 import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import toast from "react-hot-toast"
@@ -325,7 +325,7 @@ function DashboardFilters({
                   </DropdownMenu>
                 </Dropdown>
               )}
-              <Spacer x={1} />
+              <div className="w-2" />
             </div>
           ))}
         </div>

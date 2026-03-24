@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Separator, Input, Spacer, Switch, TextArea, Tooltip, RadioGroup, Radio,
+  Button, Separator, Input, Switch, TextArea, Tooltip, RadioGroup, Radio,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
   Alert,
 } from "@heroui/react";
@@ -375,7 +375,7 @@ function SharingSettings(props) {
                   }
                 />
               </div>
-              <Spacer y={2} />
+              <div className="h-2" />
               <div className="text-sm font-medium">Embedding Code</div>
               <div>
                 <TextArea
@@ -574,12 +574,12 @@ function SharingSettings(props) {
               >
                 Allow sharing
               </Switch>
-              <Spacer x={1} />
+              <div className="w-1" />
               <Tooltip
                 content={(
                   <>
                     <p>{"Allow sharing the report with anyone with or without a Chartbrew account."}</p>
-                    <Spacer y={2} />
+                    <div className="h-2" />
                     <p>{"When disabled, the report can only be seen by members of your team if logged in."}</p>
                   </>
                 )}
@@ -597,7 +597,7 @@ function SharingSettings(props) {
               >
                 Require password to view
               </Switch>
-              <Spacer x={1} />
+              <div className="w-1" />
               <Tooltip
                 content="When enabled, the report will require the viewers outside of your team to enter a password before viewing"
                 className="max-w-xs"
@@ -738,9 +738,9 @@ function SharingSettings(props) {
                       <div className="text-sm">Back to all links</div>
                     </div>
 
-                    <Spacer y={4} />
+                    <div className="h-4" />
                     <Separator />
-                    <Spacer y={4} />
+                    <div className="h-4" />
 
                     {_renderPolicyDetails()}
 

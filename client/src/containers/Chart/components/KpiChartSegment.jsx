@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import {
   Chip,
-  Spacer, Tooltip,
+  Tooltip,
 } from "@heroui/react";
 
 import Row from "../../../components/Row";
@@ -44,7 +44,7 @@ function KpiChartSegment(props) {
                 <div className="text-xl text-default-800 font-bold font-tw">
                   {`${c.value?.toLocaleString()}`}
                 </div>
-                <Spacer x={2} />
+                <div className="w-4" />
                 {chart.showGrowth && (
                   <Tooltip content={`compared to last ${chart.timeInterval}`}>
                     <div>

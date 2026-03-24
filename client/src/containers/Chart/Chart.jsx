@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
-  Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
+  Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
   PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, CardBody, Select,
   Badge,
@@ -571,7 +571,7 @@ function Chart(props) {
                     {(chartLoading || chart.loading) && (
                       <>
                         <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
-                        <Spacer x={1} />
+                        <div className="w-1" />
                         <span className="text-[10px] text-default-500">{"Updating..."}</span>
                       </>
                     )}
@@ -1080,7 +1080,7 @@ function Chart(props) {
                   </Select.Popover>
                 </Select>
               </Row>
-              <Spacer y={4} />
+              <div className="h-4" />
               <Row>
                 <Text>Or enter a custom frequency:</Text>
               </Row>
@@ -1127,7 +1127,7 @@ function Chart(props) {
               </Row>
               {autoUpdateError && (
                 <>
-                  <Spacer y={2} />
+                  <div className="h-2" />
                   <Row>
                     <Text color="danger">{autoUpdateError}</Text>
                   </Row>

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Button, Checkbox, Input, Link, Modal, Spacer,
+  Chip, Button, Checkbox, Input, Link, Modal,
   Switch, Select, Label, ListBox,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
@@ -312,7 +312,7 @@ function DatasetAlerts(props) {
           {alerts.length === 0 && (
             <Link onClick={_onOpen} className="flex items-center cursor-pointer">
               <LuBellPlus size={24} />
-              <Spacer x={1} />
+              <div className="w-2" />
               <div className="text-sm text-foreground">Set up alerts</div>
             </Link>
           )}
@@ -384,7 +384,7 @@ function DatasetAlerts(props) {
                   </Select.Popover>
                 </Select>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
 
               {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
                 && (
@@ -422,7 +422,7 @@ function DatasetAlerts(props) {
                       });
                     }}
                   />
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <Input
                     placeholder="Enter a threshold"
                     label="Upper threshold"
@@ -446,13 +446,13 @@ function DatasetAlerts(props) {
                 </div>
               )}
 
-              <Spacer y={4} />
+              <div className="h-8" />
               {newAlert.type && (
                 <>
                   <Row>
                     <Text b>Where should we send the alerts?</Text>
                   </Row>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       auto
@@ -508,11 +508,11 @@ function DatasetAlerts(props) {
                   </div>
                   {newAlert.mediums.email?.enabled && (
                   <>
-                    <Spacer y={4} />
+                    <div className="h-8" />
                     <Row>
                       <Text b>Email alerts - Who should receive them?</Text>
                     </Row>
-                    <Spacer y={1} />
+                    <div className="h-2" />
                     <Row wrap="wrap" className={"gap-2"}>
                       {_filterTeamMembers().map((member) => (
                         <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
@@ -535,14 +535,14 @@ function DatasetAlerts(props) {
 
               {newAlert.type && (
                 <>
-                  <Spacer y={8} />
+                  <div className="h-16" />
                   <Row>
                     <Text b>Add a timeout between alerts of the same type</Text>
                   </Row>
                   <Row>
                     <Text size="sm">By default, data is checked after each automatic chart update</Text>
                   </Row>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <Row>
                     <Input
                       label="Enter a timeout"
@@ -552,7 +552,7 @@ function DatasetAlerts(props) {
                       value={displayTimeout}
                       onChange={(e) => setDisplayTimeout(e.target.value)}
                     />
-                    <Spacer x={1} />
+                    <div className="w-2" />
                     <Select
                       variant="secondary"
                       value={timeoutUnit || null}
@@ -582,7 +582,7 @@ function DatasetAlerts(props) {
 
               {newAlert.type && newAlert.type !== "milestone" && (
                 <>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <Row>
                     <Checkbox
                       isSelected={newAlert.oneTime}
@@ -596,13 +596,13 @@ function DatasetAlerts(props) {
 
               {chart && !chart?.autoUpdate && !project?.updateSchedule && (
                 <>
-                  <Spacer y={4} />
+                  <div className="h-8" />
                   <Row>
                     <Container className={"border-2 border-primary p-5 rounded-md"}>
                       <Row>
                         <div className="text-sm">
                           {"In order for the alert to trigger, you must enable automatic dashboard or chart updates."}
-                          <Spacer y={0.5} />
+                          <div className="h-1" />
                           <Link onClick={_toggleAutoUpdate} className="text-sm">
                             {showAutoUpdate ? "Hide picture" : "Show how to do it"}
                           </Link>
@@ -615,7 +615,7 @@ function DatasetAlerts(props) {
 
               {showAutoUpdate && (
                 <>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <Row justify="center">
                     <img width="100%" src={autoUpdatePicture} alt="Auto update tutorial" />
                   </Row>
@@ -631,7 +631,7 @@ function DatasetAlerts(props) {
             >
               <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
             </Switch>
-            <Spacer x={1} />
+            <div className="w-2" />
             {newAlert.id && (
               <Button
                 color="danger"

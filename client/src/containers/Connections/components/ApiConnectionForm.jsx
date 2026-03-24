@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select,
+  Button, Divider, Input, Chip, Tabs, Tab, Select,
   Alert, Label, ListBox,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
@@ -197,7 +197,7 @@ function ApiConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg pb-10">
+    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg pb-10">
       <div>
         <div className="flex items-center">
           <p className="font-semibold">
@@ -205,7 +205,7 @@ function ApiConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </p>
         </div>
-        <Spacer y={4} />
+        <div className="h-8" />
         <div className="flex items-center">
           <Input
             label="Enter a name for your connection"
@@ -221,7 +221,7 @@ function ApiConnectionForm(props) {
             className="max-w-md"
           />
         </div>
-        <Spacer y={4} />
+        <div className="h-8" />
         <div className="flex items-center">
           <Input
             label="The hostname of your API"
@@ -237,15 +237,15 @@ function ApiConnectionForm(props) {
             className="max-w-md"
           />
         </div>
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
           <Tab key="authentication" title="Authentication" />
           <Tab key="headers" title="Headers" />
         </Tabs>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Divider />
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {menuType === "authentication" && (
           <div className="grid grid-cols-12 gap-4">
@@ -288,7 +288,7 @@ function ApiConnectionForm(props) {
                     variant="bordered"
                   />
                 </Row>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <Row align="center">
                   <Input
                     type={passwordVisible ? "text" : "password"}
@@ -331,7 +331,7 @@ function ApiConnectionForm(props) {
             )}
           </div>
         )}
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {menuType === "headers" && (
           <>
@@ -345,7 +345,7 @@ function ApiConnectionForm(props) {
                 {"These headers will be included with all the future requests"}
               </Text>
             </Row>
-            <Spacer y={2} />
+            <div className="h-4" />
           </>
         )}
 
@@ -379,14 +379,14 @@ function ApiConnectionForm(props) {
                   <LuX />
                 </Button>
               </div>
-              <Spacer y={2} />
+              <div className="h-4" />
             </Fragment>
           );
         })}
 
         {menuType === "headers" && (
           <>
-            <Spacer y={2} />
+            <div className="h-4" />
             <Button
               endContent={<LuPlus size={16} />}
               onPress={_addOption}
@@ -395,13 +395,13 @@ function ApiConnectionForm(props) {
             >
               Add a header
             </Button>
-            <Spacer y={4} />
+            <div className="h-8" />
           </>
         )}
 
         {addError && (
           <>
-            <Spacer y={4} />
+            <div className="h-8" />
             <Row>
               <Text b className="text-danger">{"Server error while trying to save your connection"}</Text>
               <br />
@@ -411,7 +411,7 @@ function ApiConnectionForm(props) {
         )}
 
         <Divider />
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Button
             variant="ghost"
@@ -421,7 +421,7 @@ function ApiConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           {!editConnection && (
             <Button
               isLoading={loading}
@@ -445,9 +445,9 @@ function ApiConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <div className="flex items-center justify-between">
               <div className="text-sm">
@@ -465,7 +465,7 @@ function ApiConnectionForm(props) {
             </div>
             {testResult.status >= 400 && (
               <>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <Alert
                   variant="bordered"
                   title="Connection info"
@@ -473,7 +473,7 @@ function ApiConnectionForm(props) {
                 />
               </>
             )}
-            <Spacer y={4} />
+            <div className="h-8" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -484,7 +484,7 @@ function ApiConnectionForm(props) {
               name="queryEditor"
               editorProps={{ $blockScrolling: true }}
             />
-            <Spacer y={2} />
+            <div className="h-4" />
           </div>
         </>
       )}

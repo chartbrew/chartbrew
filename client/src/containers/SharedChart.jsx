@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, Spacer, ProgressCircle, PopoverTrigger, PopoverContent,
+  Popover, Link, ProgressCircle, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
   Dropdown,
@@ -312,7 +312,7 @@ function SharedChart() {
               {dataLoading && !isSnapshot && (
                 <>
                   <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>
               )}
@@ -374,7 +374,7 @@ function SharedChart() {
           )}
         </div>
       </div>
-      <Spacer y={1} />
+      <div className="h-1" />
       {chart && (
         <div className="h-[calc(100vh-100px)]">
           {chart.type === "line" && (
@@ -442,7 +442,7 @@ function SharedChart() {
           )}
         </div>
       )}
-      <Spacer y={2} />
+      <div className="h-2" />
     </div>
   );
 }

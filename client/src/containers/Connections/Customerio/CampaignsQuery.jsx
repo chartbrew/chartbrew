@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Button, Divider, Input, Popover, Spacer, Switch, Tooltip, Select,
+  Chip, Button, Divider, Input, Popover, Switch, Tooltip, Select,
   ListBox, Tabs, Tab, PopoverTrigger, PopoverContent,
 } from "@heroui/react";
 import {
@@ -375,7 +375,7 @@ function CampaignsQuery(props) {
           </Select.Popover>
         </Select>
       </Row>
-      <Spacer y={2} />
+      <div className="h-2" />
       {config.campaignId && (
         <Row wrap="wrap">
           <Tabs
@@ -393,9 +393,9 @@ function CampaignsQuery(props) {
         </Row>
       )}
 
-      <Spacer y={2} />
+      <div className="h-2" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-4" />
 
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
         <Row>
@@ -431,11 +431,11 @@ function CampaignsQuery(props) {
           || config.requestRoute === "journey_metrics")
         && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <Text>What would you like this dataset to show?</Text>
           </Row>
-          <Spacer y={1} />
+          <div className="h-1" />
           <Row wrap="wrap">
             <MessageTypeLabels
               selected={config.series}
@@ -444,13 +444,13 @@ function CampaignsQuery(props) {
               showPrimary={config.requestRoute !== "journey_metrics"}
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
             <>
               <Row>
                 <Text>Or show the campaign link metrics</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-1" />
               <Row>
                 <Chip
                   onClick={_onShowCampaingLinkMetrics}
@@ -461,7 +461,7 @@ function CampaignsQuery(props) {
                   {`Show ${config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"} link metrics`}
                 </Chip>
               </Row>
-              <Spacer y={2} />
+              <div className="h-2" />
             </>
           )}
         </>
@@ -473,7 +473,7 @@ function CampaignsQuery(props) {
         )
         && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <div className="flex flex-row gap-2 w-full">
             <Select
               variant="secondary"
@@ -552,7 +552,7 @@ function CampaignsQuery(props) {
           )}
           {config.requestRoute.indexOf("links") > -1 && (
             <>
-              <Spacer y={2} />
+              <div className="h-2" />
               <Row>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
                   <div>
@@ -566,7 +566,7 @@ function CampaignsQuery(props) {
                       >
                         Total clicks
                       </Button>
-                      <Spacer x={1} />
+                      <div className="w-1" />
                       <Button
                         onClick={() => _onSelectClickTimeseries()}
                         variant={config.linksMode !== "links" ? "bordered" : "solid"}
@@ -590,7 +590,7 @@ function CampaignsQuery(props) {
               </Row>
               {config.linksMode === "links" && (
                 <>
-                  <Spacer y={2} />
+                  <div className="h-2" />
                   <Row align="center">
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-12 md:col-span-9">
@@ -626,7 +626,7 @@ function CampaignsQuery(props) {
                         >
                           Refresh links
                         </Button>
-                        <Spacer x={1} />
+                        <div className="w-1" />
                         <Tooltip
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
                           className="max-w-[500px]"
@@ -645,7 +645,7 @@ function CampaignsQuery(props) {
 
       {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <Popover>
               <PopoverTrigger>
@@ -671,7 +671,7 @@ function CampaignsQuery(props) {
                 />
               </PopoverContent>
             </Popover>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Select
               variant="secondary"
               label="Select the period"
@@ -696,7 +696,7 @@ function CampaignsQuery(props) {
               </Select.Popover>
             </Select>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <Select
               variant="secondary"
@@ -731,7 +731,7 @@ function CampaignsQuery(props) {
         || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
       ) && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Text>
             Looking good! You can now press the
             <strong className="text-primary">{" \"Make the request\" "}</strong>

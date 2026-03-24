@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
-  Button, Checkbox, Divider, Input, Link, Modal, Popover, PopoverContent, PopoverTrigger, Spacer,
+  Button, Checkbox, Divider, Input, Link, Modal, Popover, PopoverContent, PopoverTrigger,
   Tab, Tabs, Tooltip, Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
   DrawerContent, Code, Switch, Select, Label, ListBox,
 } from "@heroui/react";
@@ -284,16 +284,16 @@ function MongoQueryBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Divider />
           </Row>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row align="center">
             <Text b>
               {"Enter your mongodb query here"}
             </Text>
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Tooltip
               content={(
                 <>
@@ -311,7 +311,7 @@ function MongoQueryBuilder(props) {
               <div><LuInfo /></div>
             </Tooltip>
           </Row>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Row>
             <SqlAceEditor
               mode="javascript"
@@ -327,7 +327,7 @@ function MongoQueryBuilder(props) {
               className="mongobuilder-query-tut"
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="mongobuilder-buttons-tut flex flex-row items-center">
             <Button
               color={testSuccess ? "success" : testError ? "danger" : "primary"}
@@ -339,7 +339,7 @@ function MongoQueryBuilder(props) {
               Run query
             </Button>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row items-center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -348,7 +348,7 @@ function MongoQueryBuilder(props) {
             >
               {"Use cached data"}
             </Checkbox>
-            <Spacer x={1} />
+            <div className="w-2" />
             <Tooltip
               content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
               className="max-w-[400px]"
@@ -366,13 +366,13 @@ function MongoQueryBuilder(props) {
             />
           </div>
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text b>Saved queries</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
               endContent={<LuPlus />}
@@ -399,7 +399,7 @@ function MongoQueryBuilder(props) {
               </>
             )}
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row className="mongobuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
@@ -411,14 +411,14 @@ function MongoQueryBuilder(props) {
               style={styles.savedQueriesContainer}
             />
           </Row>
-          <Spacer y={8} />
+          <div className="h-16" />
         </div>
         <div className="col-span-12 sm:col-span-6">
           <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
             <Tab title="Table" key="table" />
             <Tab title="JSON" key="json" />
           </Tabs>
-          <Spacer y={2} />
+          <div className="h-4" />
 
           {activeResultsTab === "json" && (
             <div className="w-full">
@@ -431,7 +431,7 @@ function MongoQueryBuilder(props) {
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="mongobuilder-result-tut rounded-md border-1 border-solid border-content3"
+                className="mongobuilder-result-tut rounded-md border border-solid border-content3"
               />
             </div>
           )}
@@ -442,13 +442,13 @@ function MongoQueryBuilder(props) {
             </div>
           )}
 
-          <Spacer y={1} />
+          <div className="h-2" />
           {result && (
             <>
               <Row>
                 <Text size="sm">This is a sample response and might not show all the data.</Text>
               </Row>
-              <Spacer y={1} />
+              <div className="h-2" />
             </>
           )}
 
@@ -467,7 +467,7 @@ function MongoQueryBuilder(props) {
                   <Row>
                     <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
                   </Row>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <Row>
                     <Link
                       href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
@@ -476,14 +476,14 @@ function MongoQueryBuilder(props) {
                       className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
-                      <Spacer x={0.5} />
+                      <div className="w-1" />
                       <Text color="primary">
                         {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
                       </Text>
                     </Link>
                   </Row>
-                  <Spacer y={1} />
-                  <Row>
+                  <div className="h-2" />
+                  <div className="flex flex-row items-center gap-1">
                     <Link
                       as="a"
                       href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
@@ -492,13 +492,12 @@ function MongoQueryBuilder(props) {
                       className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
-                      <Spacer x={0.2} />
                       <Text color="primary">
                         {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
                       </Text>
                     </Link>
-                  </Row>
-                  <Spacer y={1} />
+                  </div>
+                  <div className="h-2" />
                   <Row>
                     <Link
                       as="a"
@@ -508,7 +507,7 @@ function MongoQueryBuilder(props) {
                       className="flex items-start"
                     >
                       <div><LuChevronRight /></div>
-                      <Spacer x={1} />
+                      <div className="w-2" />
                       <Text color="primary">
                         {"If you store files encoded in base64, make sure you exclude them using the method above"}
                       </Text>
@@ -578,7 +577,7 @@ function MongoQueryBuilder(props) {
       >
         <DrawerContent>
           <DrawerHeader
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
               <Button
@@ -604,7 +603,7 @@ function MongoQueryBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -642,7 +641,7 @@ function MongoQueryBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -654,7 +653,7 @@ function MongoQueryBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

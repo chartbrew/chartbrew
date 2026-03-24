@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Spacer, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Code, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -1271,7 +1271,7 @@ function AiModal({ isOpen, onClose }) {
                 </div>
               </div>
             </div>
-            <Spacer y={2} />
+            <div className="h-2" />
             <form onSubmit={_onAskAi} id="ai-form">
               <Input
                 placeholder="Ask me a question"
@@ -1516,7 +1516,7 @@ function AiModal({ isOpen, onClose }) {
                     >
                       New Conversation
                     </Button>
-                    <Spacer y={4} />
+                    <div className="h-4" />
                     <Separator />
                   </div>
                   <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">

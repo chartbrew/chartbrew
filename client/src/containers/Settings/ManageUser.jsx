@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Separator, Input, ProgressCircle, Modal, Spacer, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Button, Separator, Input, ProgressCircle, Modal, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Alert,
 } from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -220,7 +220,7 @@ function ManageUser() {
           Manage your profile settings
         </div>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
       <Input
         label="Name"
         name="name"
@@ -232,7 +232,7 @@ function ManageUser() {
         fullWidth
         className="max-w-md"
       />
-      <Spacer y={2} />
+      <div className="h-4" />
       {submitError && (
         <>
           <Alert
@@ -240,7 +240,7 @@ function ManageUser() {
             title="There was an error updating your account"
             description="Please try saving again."
           />
-          <Spacer y={2} />
+          <div className="h-4" />
         </>
       )}
       <div>
@@ -256,7 +256,7 @@ function ManageUser() {
         </Button>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
 
 
       <Input
@@ -272,11 +272,11 @@ function ManageUser() {
       />
       {userEmail !== userProp.email && (
         <>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div>{"We will send you an email to confirm your new email address."}</div>
         </>
       )}
-      <Spacer y={2} />
+      <div className="h-4" />
       <div>
         <Button
           isDisabled={!userEmail || userEmail === userProp.email}
@@ -290,12 +290,12 @@ function ManageUser() {
         </Button>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Separator />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
-      <Spacer y={1} />
+      <div className="h-2" />
 
       {!qrCode && authMethods?.length === 0 && (
         <div>
@@ -350,7 +350,7 @@ function ManageUser() {
       {backupCodes && (
         <>
           <div>{"Save these backup codes in a safe place as we only show them once. You can use them to access your account if you lose access to your authenticator app."}</div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div className="flex flex-row flex-wrap gap-1">
             {backupCodes?.map((code) => (
               <Chip key={code} variant="flat" radius="sm">
@@ -358,7 +358,7 @@ function ManageUser() {
               </Chip>
             ))}
           </div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <div>
             <Button
               variant="bordered"
@@ -368,7 +368,7 @@ function ManageUser() {
               {codesCopied ? "Copied" : "Copy codes"}
             </Button>
           </div>
-          <Spacer y={1} />
+          <div className="h-2" />
         </>
       )}
 
@@ -405,12 +405,12 @@ function ManageUser() {
         </Table>
       )}
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Separator />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="text-lg font-semibold font-tw">Danger zone</div>
-      <Spacer y={1} />
+      <div className="h-2" />
 
       <div>
         <Button
@@ -422,7 +422,7 @@ function ManageUser() {
         </Button>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <Modal>
         <Modal.Backdrop variant="blur" isOpen={openDeleteModal} onOpenChange={setOpenDeleteModal}>

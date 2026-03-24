@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Image, Chip, Accordion, AccordionItem, Separator,
+  Button, Input, Link, Image, Chip, Accordion, AccordionItem, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -120,7 +120,7 @@ function RealtimeDbConnectionForm(props) {
           <input {...getInputProps()} />
           <Link css={{ ai: "center", color: "$primary" }}>
             <LuFileCode2 size={24} />
-            <Spacer x={0.2} />
+            <div className="w-1" />
             {" Drag and drop your JSON authentication file here"}
           </Link>
         </div>
@@ -201,13 +201,13 @@ function RealtimeDbConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Realtime Database"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -222,7 +222,7 @@ function RealtimeDbConnectionForm(props) {
             fullWidth
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Input
             label="Database URL"
@@ -237,11 +237,11 @@ function RealtimeDbConnectionForm(props) {
             fullWidth
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <StyledDropzone />
         </Row>
-        <Spacer y={2} />
+        <div className="h-4" />
 
         {!jsonVisible && (
           <Row>
@@ -279,7 +279,7 @@ function RealtimeDbConnectionForm(props) {
             </Row>
           </>
         )}
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <Row align="center">
           <Accordion variant="bordered" className="max-w-[600px]">
@@ -292,21 +292,21 @@ function RealtimeDbConnectionForm(props) {
                   className="align-middle text-primary"
                 >
                   <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <LuExternalLink size={18} />
                 </Link>
               </Row>
               <Row align="center">
                 <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
               </Row>
-              <Spacer y={2} />
+              <div className="h-4" />
               <Row>
                 <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
               </Row>
               <Row>
                 <Text>{"This will start a download with a JSON file on your computer."}</Text>
               </Row>
-              <Spacer y={2} />
+              <div className="h-4" />
               <Row>
                 <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
               </Row>
@@ -324,21 +324,21 @@ function RealtimeDbConnectionForm(props) {
                     className="align-middle text-primary"
                   >
                     <Text b>{"1. Select your project from here "}</Text>
-                    <Spacer x={1} />
+                    <div className="w-2" />
                     <LuExternalLink size={18} />
                   </Link>
                 </Row>
                 <Row align="center">
                   <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
                 </Row>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <Row>
                   <Text b>{"2. Once you select a project, navigate to 'Realtime Database'"}</Text>
                 </Row>
                 <Row>
                   <Text>{"You can find this option in the side menu of your Firebase dashboard."}</Text>
                 </Row>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <Row>
                   <Text b>{"3. Copy the database URL and paste it in the field above"}</Text>
                 </Row>
@@ -352,7 +352,7 @@ function RealtimeDbConnectionForm(props) {
             </AccordionItem>
           </Accordion>
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {addError && (
           <Row>
@@ -367,7 +367,7 @@ function RealtimeDbConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -377,7 +377,7 @@ function RealtimeDbConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -390,9 +390,9 @@ function RealtimeDbConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
@@ -402,7 +402,7 @@ function RealtimeDbConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <Spacer y={1} />
+            <div className="h-2" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

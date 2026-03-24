@@ -6,7 +6,7 @@ import {
   Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
   DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
   Modal, SearchField, Select,
-  Spacer, Switch, Tooltip, Code, useFilter,
+  Switch, Tooltip, Code, useFilter,
 } from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
@@ -293,7 +293,7 @@ function DatasetFilters(props) {
                   </Autocomplete.Filter>
                 </Autocomplete.Popover>
               </Autocomplete>
-              <Spacer y={1} />
+              <div className="h-1" />
               <Row warp="wrap" className={"flex gap-2"} align="center">
                 <Dropdown aria-label="Select an operator">
                   <DropdownTrigger>
@@ -489,13 +489,13 @@ function DatasetFilters(props) {
           >
             Add a new filter
           </Button>
-          <Spacer y={2} />
+          <div className="h-2" />
         </div>
       )}
       {conditions.filter((c) => c.exposed).length > 0 && (
         <div>
           <div>{"Exposed filters on the chart"}</div>
-          <Spacer y={1} />
+          <div className="h-1" />
           <div className="flex gap-1">
             {conditions.filter((c) => c.exposed).map((condition) => {
               return (
@@ -638,7 +638,7 @@ function DatasetFilters(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-1" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -676,7 +676,7 @@ function DatasetFilters(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-1" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -688,7 +688,7 @@ function DatasetFilters(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The filter will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-1" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

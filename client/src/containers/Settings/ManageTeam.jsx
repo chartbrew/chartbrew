@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Route, Routes, useNavigate } from "react-router";
 import {
-  ProgressCircle, Spacer,
+  ProgressCircle,
   Tabs,
   Tab,
 } from "@heroui/react";
@@ -60,7 +60,7 @@ function ManageTeam() {
           Manage your account and team settings
         </div>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
       <Tabs
         onSelectionChange={_onMenuChange}
         classNames={{ tabList: "border-1 border-divider" }}

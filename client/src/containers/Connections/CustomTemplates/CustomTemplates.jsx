@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Card, Spacer, ProgressCircle, CardHeader, CardBody, CardFooter, Separator,
+  Button, Card, ProgressCircle, CardHeader, CardBody, CardFooter, Separator,
 } from "@heroui/react";
 import moment from "moment";
 import { LuChartColumn } from "react-icons/lu";
@@ -59,7 +59,7 @@ function CustomTemplates(props) {
         <Row>
           <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
         </Row>
-        <Spacer y={1} />
+        <div className="h-2" />
         {projectId && (
           <Row>
             <Button
@@ -113,7 +113,7 @@ function CustomTemplates(props) {
             <CardBody className="flex flex-col align-middle justify-center">
               <Row>
                 <LuChartColumn />
-                <Spacer x={0.5} />
+                <div className="w-1" />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>
             </CardBody>

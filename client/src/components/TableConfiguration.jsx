@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Spacer } from "@heroui/react";
+import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link } from "@heroui/react";
 import { LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX, LuChevronDown } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -214,7 +214,7 @@ function TableConfiguration(props) {
               && dataset.excludedFields
               && dataset.excludedFields.length > 0
               && (
-                <Spacer y={1} />
+                <div className="h-1" />
               )}
 
             {dataset.excludedFields && dataset.excludedFields?.length > 0 && (
@@ -241,9 +241,9 @@ function TableConfiguration(props) {
                   </Chip>
                 ))}
             </div>
-            <Spacer y={2} />
+            <div className="h-2" />
             <Separator />
-            <Spacer y={2} />
+            <div className="h-2" />
             <div className="flex flex-row">
               <Button
                 color={isDragState ? "success" : "primary"}
@@ -257,7 +257,7 @@ function TableConfiguration(props) {
               </Button>
               {isDragState && (
                 <>
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <Button
                     isIconOnly
                     variant="light"

@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Card, CardBody, CardFooter, CardHeader, Separator, Link, Spacer,
+  Card, CardBody, CardFooter, CardHeader, Separator, Link,
 } from "@heroui/react";
 import { LuGraduationCap } from "react-icons/lu";
 
@@ -144,7 +144,7 @@ function HelpBanner(props) {
       <CardFooter>
         <Row align="center">
           <LuGraduationCap size={24} />
-          <Spacer x={1} />
+          <div className="w-1" />
           <div className="text-sm text-gray-500">
             {bannerData[type].info}
           </div>

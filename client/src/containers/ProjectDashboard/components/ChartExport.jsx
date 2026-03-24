@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Separator, Spacer, Tooltip, Link as LinkNext,
+  Button, Checkbox, Separator, Tooltip, Link as LinkNext,
 } from "@heroui/react";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
 
@@ -43,7 +43,7 @@ function ChartExport(props) {
       <div>
         Select which charts you want to export
       </div>
-      <Spacer y={2} />
+      <div className="h-4" />
       <div className="flex flex-row flex-wrap gap-2">
         <Button
           variant="ghost"
@@ -62,7 +62,7 @@ function ChartExport(props) {
           Deselect all
         </Button>
       </div>
-      <Spacer y={2} />
+      <div className="h-4" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
           return (
@@ -89,18 +89,18 @@ function ChartExport(props) {
           );
         })}
       </div>
-      <Spacer y={2} />
+      <div className="h-4" />
 
       {showDisabled && (
         <>
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           {charts && charts.filter((c) => c.disabledExport).length > 0 && (
             <div>
               Charts disabled for export
             </div>
           )}
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row flex-wrap gap-2">
             {charts && charts.filter((c) => c.disabledExport).map((chart) => {
               return (
@@ -115,10 +115,10 @@ function ChartExport(props) {
               );
             })}
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
         </>
       )}
-      <Spacer y={4} />
+      <div className="h-8" />
       <div>
         <Button
           onPress={() => onExport(selectedIds)}
@@ -130,7 +130,7 @@ function ChartExport(props) {
           {"Export"}
         </Button>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
       {error && (
         <div color="text-danger italic">{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</div>
       )}

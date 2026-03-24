@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Alert, Button, Label, ListBox, Select, Spacer } from "@heroui/react"
+import { Alert, Button, Label, ListBox, Select } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
@@ -65,16 +65,13 @@ function SlackAuth() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <div className="text-lg font-semibold font-tw">
         Authenticate Slack
       </div>
       <div className="text-sm text-foreground-500">
         {"Connect your Slack workspace to your Chartbrew team"}
       </div>
-
-      <Spacer y={2} />
-
       {_getAdminTeams().length === 0 && (
         <Alert
           color="warning"
@@ -112,9 +109,6 @@ function SlackAuth() {
               </ListBox>
             </Select.Popover>
           </Select>
-
-          <Spacer y={4} />
-
           <Button
             color="primary"
             onPress={() => _onConnectSlack()}

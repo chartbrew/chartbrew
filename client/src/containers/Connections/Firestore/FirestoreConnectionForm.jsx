@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Separator,
+  Button, Input, Link, Chip, Accordion, AccordionItem, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -118,7 +118,7 @@ function FirestoreConnectionForm(props) {
           <input {...getInputProps()} />
           <a className={"text-primary flex items-center"}>
             <LuFileCode2 size={24} />
-            <Spacer x={2} />
+            <div className="w-4" />
             {" Drag and drop your JSON authentication file here"}
           </a>
         </div>
@@ -205,7 +205,7 @@ function FirestoreConnectionForm(props) {
           {!editConnection && "Connect to Firestore"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -220,13 +220,13 @@ function FirestoreConnectionForm(props) {
             fullWidth
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <Row align="center">
           <StyledDropzone />
         </Row>
 
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {!jsonVisible && (
           <Row>
@@ -266,7 +266,7 @@ function FirestoreConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center">
           <Accordion variant="bordered" className="max-w-[600px]">
             <AccordionItem title={<Text b>How to authenticate</Text>}>
@@ -278,21 +278,21 @@ function FirestoreConnectionForm(props) {
                   className="align-middle text-primary"
                 >
                   <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <LuExternalLink size={18} />
                 </Link>
               </Row>
               <Row align="center">
                 <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
               </Row>
-              <Spacer y={2} />
+              <div className="h-4" />
               <Row>
                 <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
               </Row>
               <Row>
                 <Text>{"This will start a download with a JSON file on your computer."}</Text>
               </Row>
-              <Spacer y={2} />
+              <div className="h-4" />
               <Row>
                 <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
               </Row>
@@ -302,7 +302,7 @@ function FirestoreConnectionForm(props) {
             </AccordionItem>
           </Accordion>
         </Row>
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {addError && (
           <Row>
@@ -317,7 +317,7 @@ function FirestoreConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row>
           <Button
             variant="ghost"
@@ -327,7 +327,7 @@ function FirestoreConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-2" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -340,9 +340,9 @@ function FirestoreConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Separator />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row align="center">
               <Text>
@@ -352,7 +352,7 @@ function FirestoreConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <Spacer y={1} />
+            <div className="h-2" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
+  Button, Modal, Input, Tooltip, Checkbox, Divider,
   Tabs, Tab,
   CircularProgress,
   Badge,
@@ -333,9 +333,9 @@ function ClickHouseBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <div>
             <Row>
               <SqlAceEditor
@@ -353,7 +353,7 @@ function ClickHouseBuilder(props) {
               />
             </Row>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
             <Button
               color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
@@ -365,7 +365,7 @@ function ClickHouseBuilder(props) {
               Run query
             </Button>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row align="center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -374,7 +374,7 @@ function ClickHouseBuilder(props) {
             >
               {"Use cached data"}
             </Checkbox>
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Tooltip
               content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings."}
               className="max-w-[400px]"
@@ -391,13 +391,13 @@ function ClickHouseBuilder(props) {
             />
           </div>
 
-          <Spacer y={4} />
+          <div className="h-8" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row>
             <Text b>Saved queries</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
               endContent={<LuPlus />}
@@ -424,7 +424,7 @@ function ClickHouseBuilder(props) {
               </>
             )}
           </div>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row className="sqlbuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
@@ -436,14 +436,14 @@ function ClickHouseBuilder(props) {
               style={styles.savedQueriesContainer}
             />
           </Row>
-          <Spacer y={8} />
+          <div className="h-16" />
         </div>
         <div className="col-span-12 sm:col-span-6 md:col-span-7">
           <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
             <Tab title="Table" key="table" />
             <Tab title="JSON" key="json" />
           </Tabs>
-          <Spacer y={2} />
+          <div className="h-4" />
 
           {activeResultsTab === "table" && (
             <div className="w-full">
@@ -469,7 +469,7 @@ function ClickHouseBuilder(props) {
               </div>
             </div>
           )}
-          <Spacer y={2} />
+          <div className="h-4" />
           {result && (
             <Row>
               <Text size="sm">This is a sample response and might not show all the data.</Text>
@@ -561,7 +561,7 @@ function ClickHouseBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -599,7 +599,7 @@ function ClickHouseBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -611,7 +611,7 @@ function ClickHouseBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

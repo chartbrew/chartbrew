@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, Spacer, ProgressCircle, PopoverTrigger, PopoverContent,
+  Popover, Link, ProgressCircle, PopoverTrigger, PopoverContent,
   Spinner,
   Alert,
   cn,
@@ -284,7 +284,7 @@ function EmbeddedChart() {
               {dataLoading && !isSnapshot && (
                 <>
                   <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>
               )}
@@ -327,7 +327,7 @@ function EmbeddedChart() {
           )}
         </Row>
       </div>
-      <Spacer y={1} />
+      <div className="h-2" />
       {chart && (
         <div className={cn("h-[calc(100vh-100px)]", isSnapshot && "bg-background")}>
           {chart.type === "line" && (
@@ -395,7 +395,7 @@ function EmbeddedChart() {
           )}
         </div>
       )}
-      <Spacer y={2} />
+      <div className="h-4" />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Select, Spacer,
+  Select,
 } from "@heroui/react";
 import { LuPlus, LuX } from "react-icons/lu";
 import { TwitterPicker } from "react-color";
@@ -284,7 +284,7 @@ function TableDataFormattingModal(props) {
 
               {formatValue === "custom" && (
                 <>
-                  <Spacer x={1} />
+                  <div className="w-2" />
                   <Input
                     variant="bordered"
                     value={customDateFormat}
@@ -407,7 +407,7 @@ function TableDataFormattingModal(props) {
                         size="sm"
                         variant="light"
                         onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : "rgba(0,0,0,0)" } : r)))}
-                        className="pl-10 border-1 border-solid border-content3"
+                        className="pl-10 border border-solid border-content3"
                         radius="sm"
                         style={{
                           backgroundColor: r.color || "transparent",
@@ -580,7 +580,7 @@ function TableDataFormattingModal(props) {
                   content=" "
                 />
               </div>
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="text-sm text-gray-500">
                 Button text:
               </div>
@@ -613,7 +613,7 @@ function TableDataFormattingModal(props) {
                 <div className="text-sm text-gray-500">px</div>
               </div>
 
-              <Spacer y={1} />
+              <div className="h-2" />
               <div className="text-sm text-gray-500">
                 Image variant
               </div>

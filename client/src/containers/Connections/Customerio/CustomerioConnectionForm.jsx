@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, ListBox, Select, Divider,
+  Button, Input, Link, Chip, Accordion, AccordionItem, ListBox, Select, Divider,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
@@ -127,7 +127,7 @@ function CustomerioConnectionForm(props) {
           {!editConnection && "Connect to Customer.io"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -143,7 +143,7 @@ function CustomerioConnectionForm(props) {
             className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row align="center">
           <Input
             type="password"
@@ -160,7 +160,7 @@ function CustomerioConnectionForm(props) {
             className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={2} />
+        <div className="h-2" />
         <Row align="center">
           <Accordion variant="bordered" className={"max-w-[600px]"}>
             <AccordionItem title={<Text>How to get the API key</Text>}>
@@ -172,22 +172,22 @@ function CustomerioConnectionForm(props) {
                   className="align-middle text-primary"
                 >
                   <Text className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
-                  <Spacer x={1} />
+                  <div className="w-1" />
                   <LuExternalLink size={14} />
                 </Link>
               </Row>
-              <Spacer y={2} />
+              <div className="h-2" />
               <Row>
                 <Text>{"2. (Optional) Add your server's IP address to the allowlist"}</Text>
               </Row>
-              <Spacer y={2} />
+              <div className="h-2" />
               <Row>
                 <Text>{"3. Copy and paste the API Key here"}</Text>
               </Row>
             </AccordionItem>
           </Accordion>
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row align="flex-start" className={"max-w-[600px] items-center"}>
           <Select
             variant="secondary"
@@ -213,7 +213,7 @@ function CustomerioConnectionForm(props) {
               </ListBox>
             </Select.Popover>
           </Select>
-          <Spacer x={1} />
+          <div className="w-1" />
           <Link
             href="https://fly.customer.io/settings/privacy"
             target="_blank"
@@ -225,7 +225,7 @@ function CustomerioConnectionForm(props) {
           </Link>
         </Row>
 
-        <Spacer y={4} />
+        <div className="h-4" />
 
         {addError && (
           <Row>
@@ -240,7 +240,7 @@ function CustomerioConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row>
           <Button
             variant="ghost"
@@ -250,7 +250,7 @@ function CustomerioConnectionForm(props) {
           >
             {"Test connection"}
           </Button>
-          <Spacer x={1} />
+          <div className="w-1" />
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
@@ -263,9 +263,9 @@ function CustomerioConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Divider />
-          <Spacer y={4} />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <Text>
@@ -277,7 +277,7 @@ function CustomerioConnectionForm(props) {
                 </Chip>
               </Text>
             </Row>
-            <Spacer y={4} />
+            <div className="h-4" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

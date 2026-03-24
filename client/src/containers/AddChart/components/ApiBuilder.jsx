@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Spacer, Tooltip, Chip,
+  Button, Checkbox, Divider, Input, Tooltip, Chip,
   Tabs, Tab, Select, PopoverTrigger, Popover, PopoverContent,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
   Code, Switch, Label, ListBox,
@@ -566,11 +566,11 @@ function ApiBuilder(props) {
               </Tooltip>
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Divider />
           </Row>
-          <Spacer y={4} />
+          <div className="h-8" />
           <Row align="center" className="apibuilder-route-tut">
             <Input
               startContent={(
@@ -603,17 +603,17 @@ function ApiBuilder(props) {
               </div>
             </div>
           )}
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="text-sm italic text-default-500 flex items-center gap-1">
             <div><LuVariable /></div>
             {"You can add {{variable_name}} in URL, headers, or body. Click on variables to configure them."}
           </div>
-          <Spacer y={4} />
+          <div className="h-8" />
           {apiRequest?.route && (apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
             <>
-              <div className="border-1 border-content3 rounded-lg px-4 py-2">
+              <div className="border border-content3 rounded-lg px-4 py-2">
                 <p>Configure variables</p>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div className="flex flex-row items-center gap-2">
                   <Popover placement="bottom">
                     <PopoverTrigger>
@@ -659,7 +659,7 @@ function ApiBuilder(props) {
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div>
                   <Input
                     label="Date format"
@@ -683,7 +683,7 @@ function ApiBuilder(props) {
                     )}
                   />
                 </div>
-                <Spacer y={2} />
+                <div className="h-4" />
                 <div>
                   <Button
                     color={isEqual(variables, apiRequest.variables) ? "success" : "primary"}
@@ -695,7 +695,7 @@ function ApiBuilder(props) {
                   </Button>
                 </div>
               </div>
-              <Spacer y={4} />
+              <div className="h-8" />
             </>
           )}
           <Row className="apibuilder-menu-tut">
@@ -710,11 +710,11 @@ function ApiBuilder(props) {
             </Tabs>
           </Row>
 
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <Divider />
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
 
           {activeMenu === "headers" && (
             <div className="apibuilder-headers-tut">
@@ -729,7 +729,7 @@ function ApiBuilder(props) {
                       Include connection headers
                     </Checkbox>
                   </Row>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   {apiRequest.useGlobalHeaders && (
                     <>
                       <Container className={"pl-0 pr-0"}>
@@ -742,7 +742,7 @@ function ApiBuilder(props) {
                                 fullWidth
                                 disableAnimation
                               />
-                              <Spacer x={1} />
+                              <div className="w-2" />
                               <Input
                                 value={header.value}
                                 variant="bordered"
@@ -753,9 +753,9 @@ function ApiBuilder(props) {
                           );
                         })}
                       </Container>
-                      <Spacer y={2} />
+                      <div className="h-4" />
                       <Divider />
-                      <Spacer y={1} />
+                      <div className="h-2" />
                     </>
                   )}
                 </>
@@ -787,7 +787,7 @@ function ApiBuilder(props) {
                             </Tooltip>
                           )}
                         />
-                        <Spacer x={1} />
+                        <div className="w-2" />
                         <Input
                           placeholder="Value"
                           labelPlacement="outside"
@@ -810,7 +810,7 @@ function ApiBuilder(props) {
                             </Tooltip>
                           )}
                         />
-                        <Spacer x={1} />
+                        <div className="w-2" />
                         <Button
                           isIconOnly
                           onPress={() => _removeHeader(header.id)}
@@ -820,13 +820,13 @@ function ApiBuilder(props) {
                           <LuCircleX />
                         </Button>
                       </Row>
-                      <Spacer y={1} />
+                      <div className="h-2" />
                     </div>
                   );
                 })}
               </Container>
 
-              <Spacer y={2} />
+              <div className="h-4" />
               <Button
                 endContent={<LuPlus />}
                 size="sm"
@@ -852,7 +852,7 @@ function ApiBuilder(props) {
                     }}
                     name="queryEditor"
                     editorProps={{ $blockScrolling: true }}
-                    className="rounded-md border-1 border-solid border-content3"
+                    className="rounded-md border border-solid border-content3"
                   />
                 </div>
               </Row>
@@ -929,7 +929,7 @@ function ApiBuilder(props) {
               {"Send the request"}
             </Button>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex flex-row justify-between items-center">
             <div className="flex flex-row gap-2 items-center">
               <Checkbox
@@ -972,7 +972,7 @@ function ApiBuilder(props) {
               )}
             </div>
           </div>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Row>
             <div className="w-full">
               <AceEditor
@@ -985,11 +985,11 @@ function ApiBuilder(props) {
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="apibuilder-result-tut rounded-md border-1 border-solid border-content3"
+                className="apibuilder-result-tut rounded-md border border-solid border-content3"
               />
             </div>
           </Row>
-          <Spacer y={2} />
+          <div className="h-4" />
           <div className="flex items-center gap-1 text-sm text-default-500">
             <div><LuInfo /></div>
             {"This is a preview and it might not show all data in order to keep things fast in the UI."}
@@ -1017,7 +1017,7 @@ function ApiBuilder(props) {
       >
         <DrawerContent>
           <DrawerHeader
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
               <Button
@@ -1043,7 +1043,7 @@ function ApiBuilder(props) {
                 {variableSettings?.name}
               </pre>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable type</div>
               <Select
@@ -1081,7 +1081,7 @@ function ApiBuilder(props) {
                 </Select.Popover>
               </Select>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
               <Input
@@ -1093,7 +1093,7 @@ function ApiBuilder(props) {
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
               />
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch

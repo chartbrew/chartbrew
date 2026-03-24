@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Spacer, Tab, Tabs,
+  Tab, Tabs,
 } from "@heroui/react";
 
 import TableComponent from "./TableComponent";
@@ -65,7 +65,7 @@ function TableContainer(props) {
         {activeDataset?.configuration?.sum && (
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <Text>{`Total ${activeDataset.configuration.sum}:`}</Text>
-            <Spacer x={0.6} />
+            <div className="w-1" />
             <Text b>{totalValue?.toLocaleString()}</Text>
           </div>
         )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Spacer, Input, Tooltip, Modal, Select,
+  Button, Checkbox, Divider, Input, Tooltip, Modal, Select,
   Code, Label, ListBox,
 } from "@heroui/react";
 import moment from "moment";
@@ -195,12 +195,12 @@ function ChartSettings({ chart, onChange }) {
         <Text b>Chart Settings</Text>
       </Row>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="text-sm text-gray-500">Date settings</div>
-      <Spacer y={1} />
+      <div className="h-2" />
       <div className="flex flex-col gap-2">
         <div className="flex flex-row items-center gap-2 flex-wrap">
           <div>
@@ -255,11 +255,11 @@ function ChartSettings({ chart, onChange }) {
                   <Text>
                     {"When this is enabled, the date range will be preserved but shifted to the present date."}
                   </Text>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <Text>
                     {"This option takes into account the date interval as well."}
                   </Text>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <ul>
                     <li>
                       <Text b>
@@ -285,7 +285,7 @@ function ChartSettings({ chart, onChange }) {
               </div>
             </Tooltip>
           </div>
-          <Spacer y={1} />
+          <div className="h-2" />
           <Checkbox
             isSelected={chart.fixedStartDate}
             isDisabled={!chart.currentEndDate}
@@ -298,7 +298,7 @@ function ChartSettings({ chart, onChange }) {
           </Checkbox>
         </div>
       </div>
-      <Spacer y={4} />
+      <div className="h-8" />
       <div className="grid grid-cols-12 gap-2">
         <div className="col-span-12 md:col-span-6 lg:col-span-6">
           <Select
@@ -338,9 +338,9 @@ function ChartSettings({ chart, onChange }) {
         </div>
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {chart.type === "line" && (
@@ -426,9 +426,9 @@ function ChartSettings({ chart, onChange }) {
         )}
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="flex flex-col gap-2">
         {chart.type !== "table" && (
@@ -537,9 +537,9 @@ function ChartSettings({ chart, onChange }) {
         )}
       </div>
 
-      <Spacer y={4} />
+      <div className="h-8" />
       <Divider />
-      <Spacer y={4} />
+      <div className="h-8" />
 
       <div className="grid grid-cols-12 gap-1">
         <div className="col-span-12">

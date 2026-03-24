@@ -3,7 +3,7 @@ import { connect, useDispatch } from "react-redux";
 import { PropTypes } from "prop-types";
 import { Link, useNavigate } from "react-router";
 import {
-  Button, Input, Spacer,
+  Button, Input,
 } from "@heroui/react";
 
 import { changePasswordWithToken } from "../slices/user";
@@ -78,7 +78,7 @@ function PasswordReset(props) {
             <img src={isDark ? cbLogoSmall : cbLogo} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row>
           <Text size="h2">
             Forgot your password?
@@ -87,7 +87,7 @@ function PasswordReset(props) {
         <Row>
           <Text size="h4">{"No worries, complete the form below to change to a brand new one"}</Text>
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row>
           <Input
             label="New password"
@@ -99,7 +99,7 @@ function PasswordReset(props) {
             fullWidth
           />
         </Row>
-        <Spacer y={2} />
+        <div className="h-2" />
         <Row>
           <Input
             label="Confirm your new password"
@@ -111,7 +111,7 @@ function PasswordReset(props) {
             variant="bordered"
           />
         </Row>
-        <Spacer y={4} />
+        <div className="h-4" />
         <Row>
           <Button
             type="submit"
@@ -124,7 +124,7 @@ function PasswordReset(props) {
             Change password
           </Button>
         </Row>
-        <Spacer y={1} />
+        <div className="h-1" />
         {success && (
           <Row>
             <Callout

@@ -3,7 +3,6 @@ import PropTypes from "prop-types"
 import {
   Button, Checkbox, Input, Modal,
   Radio, RadioGroup, Spinner, Switch, Tooltip, Listbox, ListboxItem,
-  Spacer,
   Chip,
 } from "@heroui/react"
 import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
@@ -398,7 +397,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                       {policy.allow_params ? "Allow params" : "No URL params"}
                     </Chip>
                   </div>
-                  <Spacer y={0.5} />
+                  <div className="h-1" />
                   <div className="text-xs text-gray-500">
                     {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
                   </div>
@@ -456,7 +455,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   }
                 />
               </div>
-              <Spacer y={2} />
+              <div className="h-4" />
               <div>
                 <Input
                   label="Direct Link"

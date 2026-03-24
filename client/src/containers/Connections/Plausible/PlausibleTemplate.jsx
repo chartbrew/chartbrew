@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, Spacer, Label, ListBox,
+  Button, Checkbox, Divider, Input, Link, Select, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -182,7 +182,7 @@ function PlausibleTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Row align="center">
+      <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
           variant="flat"
@@ -191,12 +191,11 @@ function PlausibleTemplate(props) {
         >
           <LuArrowLeft />
         </Button>
-        <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row className={"gap-2"}>
             <Select
               isDisabled={formVisible}
@@ -244,7 +243,7 @@ function PlausibleTemplate(props) {
             />
           </Row>
 
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             {!formVisible && (
               <Button
@@ -267,7 +266,7 @@ function PlausibleTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={2} />
+      <div className="h-2" />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -275,7 +274,7 @@ function PlausibleTemplate(props) {
               <Divider />
             </Row>
           )}
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your Plausible site ID"
@@ -290,7 +289,7 @@ function PlausibleTemplate(props) {
               fullWidth
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Input
               label="Enter your Plausible API key."
@@ -303,7 +302,7 @@ function PlausibleTemplate(props) {
               fullWidth
             />
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <Link
               href="https://plausible.io/settings#api-keys"
@@ -312,7 +311,7 @@ function PlausibleTemplate(props) {
               className="flex items-center text-secondary"
             >
               <Text size="sm" className={"text-secondary"}>{"Get your API key here "}</Text>
-              <Spacer x={1} />
+              <div className="w-1" />
               <LuExternalLink />
             </Link>
           </Row>
@@ -321,11 +320,11 @@ function PlausibleTemplate(props) {
 
       {configuration && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row align="center">
             <div className="grid grid-cols-12 gap-2">
               {configuration.Charts && configuration.Charts.map((chart) => (
@@ -344,7 +343,7 @@ function PlausibleTemplate(props) {
             </div>
           </Row>
 
-          <Spacer y={4} />
+          <div className="h-4" />
           <Row>
             <Button
               variant="ghost"
@@ -355,7 +354,7 @@ function PlausibleTemplate(props) {
             >
               Select all
             </Button>
-            <Spacer x={1} />
+            <div className="w-1" />
             <Button
               variant="ghost"
               startContent={<LuX />}
@@ -371,7 +370,7 @@ function PlausibleTemplate(props) {
 
       {addError && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <div className={"bg-danger-50 rounded-md p-5"}>
               <Row>
@@ -387,7 +386,7 @@ function PlausibleTemplate(props) {
 
       {generationError && (
         <>
-          <Spacer y={2} />
+          <div className="h-2" />
           <Row>
             <div className={"bg-danger-50 rounded-md p-5"}>
               <Row>
@@ -398,7 +397,7 @@ function PlausibleTemplate(props) {
               </Row>
               <Row align="center">
                 <LuChevronRight />
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Link
                   target="_blank"
                   rel="noopener noreferrer"
@@ -406,12 +405,12 @@ function PlausibleTemplate(props) {
                 >
                   <Text>You can log in and check if your site ID exists here</Text>
                 </Link>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <LuExternalLink />
               </Row>
               <Row align="center">
                 <LuChevronRight />
-                <Spacer x={1} />
+                <div className="w-1" />
                 <Link
                   href="https://plausible.io/settings#api-keys"
                   target="_blank"
@@ -419,7 +418,7 @@ function PlausibleTemplate(props) {
                 >
                   <Text>{"Then check if your API Key is correct or generate a new one here"}</Text>
                 </Link>
-                <Spacer x={1} />
+                <div className="w-1" />
                 <LuExternalLink />
               </Row>
             </div>
@@ -427,7 +426,7 @@ function PlausibleTemplate(props) {
         </>
       )}
 
-      <Spacer y={8} />
+      <div className="h-8" />
       <Row>
         <Button
           isDisabled={

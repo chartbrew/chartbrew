@@ -8,7 +8,7 @@ import { LuCircleCheck, LuInfo, LuWandSparkles, LuCircleX } from "react-icons/lu
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
-import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, PopoverContent, PopoverTrigger, SearchField, Select, Spacer, Tooltip, useFilter } from "@heroui/react";
+import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, PopoverContent, PopoverTrigger, SearchField, Select, Tooltip, useFilter } from "@heroui/react";
 import Text from "../../components/Text";
 import autoFieldSelector from "../../modules/autoFieldSelector";
 import fieldFinder from "../../modules/fieldFinder";
@@ -410,7 +410,7 @@ function DatasetBuilder(props) {
           </Autocomplete.Popover>
         </Autocomplete>
 
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <Autocomplete
           selectionMode="single"
@@ -449,7 +449,7 @@ function DatasetBuilder(props) {
           </Autocomplete.Popover>
         </Autocomplete>
 
-        <Spacer y={2} />
+        <div className="h-4" />
         <Select
           placeholder="Select an operation"
           selectionMode="single"
@@ -473,9 +473,9 @@ function DatasetBuilder(props) {
             </ListBox>
           </Select.Popover>
         </Select>
-        <Spacer y={4} />
+        <div className="h-8" />
         <Divider />
-        <Spacer y={4} />
+        <div className="h-8" />
         <Row align="center" className={"justify-between"}>
           <Autocomplete
             selectionMode="single"
@@ -515,14 +515,14 @@ function DatasetBuilder(props) {
           </Autocomplete>
         </Row>
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Divider />
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {!formula && (
           <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
             <TbMathFunctionY size={24} />
-            <Spacer x={0.5} />
+            <div className="w-1" />
             <Text>Apply formula on metrics</Text>
           </Link>
         )}
@@ -543,7 +543,7 @@ function DatasetBuilder(props) {
                 </PopoverContent>
               </Popover>
             </div>
-            <Spacer y={1} />
+            <div className="h-2" />
             <Row align={"center"} justify={"space-between"}>
               <div className="flex flex-col">
                 <div className="flex flex-row gap-3 items-center w-full">
@@ -580,14 +580,14 @@ function DatasetBuilder(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <div className="h-8" />
         <Divider />
-        <Spacer y={4} />
+        <div className="h-8" />
 
         <div className="">
           Filter settings
         </div>
-        <Spacer y={2} />
+        <div className="h-4" />
 
         <DatasetFilters
           onUpdate={_onUpdateDataset}
@@ -605,7 +605,7 @@ function DatasetBuilder(props) {
           useCache={useCache}
         />
         
-        <Spacer y={4} />
+        <div className="h-8" />
 
         {chart?.id && (
           <ChartSettings

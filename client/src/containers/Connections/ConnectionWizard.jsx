@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Separator, Image, Input, Modal, Spacer, Tooltip } from "@heroui/react";
+import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Separator, Image, Input, Modal, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -190,7 +190,7 @@ function ConnectionWizard() {
       <div>
         <div className="flex flex-col items-center justify-center h-screen">
           <span className="text-xl text-secondary font-semibold">{"You don't have access to this page"}</span>
-          <Spacer y={2} />
+          <div className="h-4" />
           <Button
             color="primary"
             onPress={() => navigate("/")}
@@ -206,7 +206,7 @@ function ConnectionWizard() {
     <div>
       <div className="flex flex-col">
         <div className="sm:mr-96">          
-          <Spacer y={2} />
+          <div className="h-4" />
 
           {!newConnection && (
             <>
@@ -214,7 +214,7 @@ function ConnectionWizard() {
                 <span className="text-xl text-secondary font-semibold">Step 1:</span>
                 <span className="text-xl font-semibold">Select your datasource type</span>
               </div>
-              <Spacer y={4} />
+              <div className="h-8" />
               <Segment>
                 <div className="flex flex-row justify-between items-center flex-wrap gap-2">
                   <Input
@@ -226,7 +226,7 @@ function ConnectionWizard() {
                     onChange={(e) => setConnectionSearch(e.target.value)}
                   />
                 </div>
-                <Spacer y={4} />
+                <div className="h-8" />
                 <div className="grid grid-cols-12 gap-4">
                   {_filteredConnections.map((conn) => (
                     <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
@@ -265,7 +265,7 @@ function ConnectionWizard() {
                 </div>
               </Segment>
 
-              <Spacer y={8} />
+              <div className="h-16" />
               {selectedType && (
                 <div className="flex flex-row items-center gap-2">
                   <span className="text-xl text-secondary font-semibold">Step 2:</span>
@@ -283,7 +283,7 @@ function ConnectionWizard() {
               <span className="text-xl font-semibold">Edit your connection</span>
             </div>
           )}
-          <Spacer y={4} />
+          <div className="h-8" />
 
           {selectedType === "api" && (
             <ApiConnectionForm
@@ -380,7 +380,7 @@ function ConnectionWizard() {
         <aside className="hidden sm:block fixed top-0 right-0 z-40 w-96 h-screen" aria-label="Sidebar">
           <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col gap-2 p-2">
-              <Spacer y={10} />
+              <div className="h-20" />
 
               <Card>
                 <CardHeader className="flex flex-col items-start">
@@ -390,11 +390,11 @@ function ConnectionWizard() {
                   <p className="text-sm text-gray-500">
                     {"Someone from your engineering team can help you with this."}
                   </p>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <p className="text-sm text-gray-500">
                     Ask them to join your team with this link
                   </p>
-                  <Spacer y={1} />
+                  <div className="h-2" />
                   <Input
                     readOnly
                     labelPlacement="outside"
@@ -415,7 +415,7 @@ function ConnectionWizard() {
                 </CardFooter>
               </Card>
 
-              <Spacer y={1} />
+              <div className="h-2" />
 
               <Card>
                 <CardHeader className="flex flex-col items-start">
@@ -438,7 +438,7 @@ function ConnectionWizard() {
                 </CardFooter>
               </Card>
 
-              <Spacer y={1} />
+              <div className="h-2" />
 
               {selectedType && (
                 <HelpBanner

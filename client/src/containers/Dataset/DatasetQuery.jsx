@@ -1,7 +1,7 @@
 import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
-  Button, Spacer, Avatar, Card, CardBody,
+  Button, Avatar, Card, CardBody,
   CardFooter, Input, Separator, Chip,
   Tabs,
   Tab,
@@ -407,7 +407,7 @@ function DatasetQuery(props) {
                 </Tabs>
               </div>
             )}
-            <Spacer y={4} />
+            <div className="h-8" />
             {dataRequests.map((dr) => (
               <Fragment key={dr.id}>
                 {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
@@ -487,7 +487,7 @@ function DatasetQuery(props) {
                   <div className="p-4">
                     <p className="font-semibold">This data request does not have a connection.</p>
                     <p className="text-sm text-default-500">{"You can safely delete this and create a new data request by clicking the '+' button."}</p>
-                    <Spacer y={2} />
+                    <div className="h-4" />
                     <Button
                       onPress={() => _onDeleteRequest(selectedRequest.id)}
                       color="danger"
@@ -503,14 +503,14 @@ function DatasetQuery(props) {
         )}
         {createMode && (
           <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20 bg-background rounded-lg border-1 border-divider p-4">
-            <Spacer y={1} />
+            <div className="h-2" />
             <div className="flex flex-row items-center gap-2">
               <Button variant="flat" isIconOnly onPress={() => setCreateMode(false)} size="sm">
                 <LuArrowLeft size={16} />
               </Button>
               <div className="text-lg font-tw font-semibold">Select a connection</div>
             </div>
-            <Spacer y={2} />
+            <div className="h-4" />
             {connections.length > 0 && (
               <div>
                 <Input
@@ -526,12 +526,12 @@ function DatasetQuery(props) {
                 />
               </div>
             )}
-            <Spacer y={4} />
+            <div className="h-8" />
             <div className="grid grid-cols-12 gap-4">
               {_filteredConnections().length === 0 && connections.length === 0 && (
                 <div className="col-span-12 flex flex-col">
                   <p className="text-default-500">{"No connections found. Please create a connection first."}</p>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <div>
                     <Button
                       onPress={() => navigate("/connections/new")}
@@ -546,7 +546,7 @@ function DatasetQuery(props) {
               {_filteredConnections().length === 0 && connections.length > 0 && (
                 <div className="col-span-12 flex flex-col">
                   <p className="text-default-500">{"No connections found with this search query. Please try again."}</p>
-                  <Spacer y={2} />
+                  <div className="h-4" />
                   <div>
                     <Button
                       onPress={() => setConnectionSearch("")}
@@ -587,7 +587,7 @@ function DatasetQuery(props) {
                             alt={`${c.type} logo`}
                           />
                         </div>
-                        <Spacer y={2} />
+                        <div className="h-4" />
                         <div className="flex flex-row items-center">
                           <span className="text-xs text-default-400">
                             {`Created on ${moment(c.createdAt).format("LLL")}`}

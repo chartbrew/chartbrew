@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Link, Spacer,
+  Link,
 } from "@heroui/react";
 
 import Row from "./Row";
@@ -29,7 +29,7 @@ function Callout({
       )}
       {actionUrl && actionText && (
         <>
-          <Spacer y={0.5} />
+          <div className="h-0.5" />
           <Row>
             <Text variant={"b"}>
               <Link href={actionUrl} target="_blank" rel="noopener noreferrer">

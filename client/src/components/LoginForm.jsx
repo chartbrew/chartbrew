@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import {
-  Button, Input, Spacer, Link, Modal, Separator,
+  Button, Input, Link, Modal, Separator,
 } from "@heroui/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 import { useNavigate } from "react-router";
@@ -162,7 +162,7 @@ function LoginForm() {
                 </Text>
               </Row>
             )}
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row>
               <Input
                 type="password"
@@ -181,13 +181,13 @@ function LoginForm() {
             </Row>
             {errors.login && (
               <>
-                <Spacer y={2} />
+                <div className="h-2" />
                 <p className="text-danger">
                   {errors.login}
                 </p>
               </>
             )}
-            <Spacer y={4} />
+            <div className="h-4" />
             <Row justify="center" align="center">
               <Button
                 onPress={loginUser}
@@ -201,9 +201,9 @@ function LoginForm() {
                 <LuChevronRight />
               </Button>
             </Row>
-            <Spacer y={4} />
+            <div className="h-4" />
             <Separator />
-            <Spacer y={2} />
+            <div className="h-2" />
             <Row justify="center" align="center">
               <Link
                 style={{ paddingTop: 10 }}
@@ -235,7 +235,7 @@ function LoginForm() {
             </Row>
           )}
 
-          <Spacer />
+          <div className="h-2" />
           <div>
             <Button
               onPress={_onValidateToken}

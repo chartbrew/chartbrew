@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
   Autocomplete, EmptyState, Label, ListBox, SearchField, useFilter,
-  Button, Chip, Input, Link, Modal, Spacer,
+  Button, Chip, Input, Link, Modal,
 } from "@heroui/react";
 import { LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -429,7 +429,7 @@ function Dataset() {
               labelPlacement="outside"
             />
 
-            <Spacer y={2} />
+            <div className="h-2" />
 
             <div className="flex flex-col gap-2">
               <div className="text-sm font-medium text-foreground">Tags</div>
@@ -505,7 +505,7 @@ function Dataset() {
             <div className="text-sm text-foreground-500">
               Pick the dashboard (project) where this chart should be added. A new chart will be created and linked to this dataset.
             </div>
-            <Spacer y={2} />
+            <div className="h-2" />
             <Autocomplete
               placeholder="Search or select a dashboard"
               selectionMode="single"
