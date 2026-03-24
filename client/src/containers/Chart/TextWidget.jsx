@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import PropTypes from "prop-types"
 import {
-  Card, CardBody, TextArea, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Link as LinkNext,
+  Card, TextArea, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Link as LinkNext,
   Kbd, Modal, Button,
   ButtonGroup,
-  CardFooter,
   Tooltip,
   Link,
 } from "@heroui/react"
@@ -277,7 +276,7 @@ function TextWidget({
         >
           {isEditing && (
             <>
-              <CardBody>
+              <Card.Content>
                 {!isPreview && (
                   <>
                     <div 
@@ -382,8 +381,8 @@ function TextWidget({
                     {MemoizedMarkdown}
                   </div>
                 )}
-              </CardBody>
-              <CardFooter>
+              </Card.Content>
+              <Card.Footer>
                 <ButtonGroup fullWidth size="sm">
                   <Button
                     variant="flat"
@@ -400,11 +399,11 @@ function TextWidget({
                     Save
                   </Button>
                 </ButtonGroup>
-              </CardFooter>
+              </Card.Footer>
             </>
           )}
           {!isEditing && (
-            <CardBody className="relative">
+            <Card.Content className="relative">
               {!isPublic && (
                 <div className={`absolute top-4 right-2 ${_canAccess("projectEditor") ? "" : "hidden"}`}>
                   <Dropdown aria-label="Select a widget option">
@@ -464,7 +463,7 @@ function TextWidget({
               <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                 {MemoizedMarkdown}
               </div>
-            </CardBody>
+            </Card.Content>
           )}
         </Card>
       )}

@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
-  Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
-  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, CardBody, Select,
+  Popover, Chip, CircularProgress, PopoverTrigger,
+  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, Select,
   Badge,
   Divider,
   Kbd,
@@ -543,7 +543,7 @@ function Chart(props) {
           shadow="none"
           className={`h-full bg-content1 border-solid border-1 border-divider ${print && "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
-          <CardHeader className={`pb-0 grid grid-cols-12 items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
+          <Card.Header className={`pb-0 grid grid-cols-12 items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
             <div className={`col-span-6 sm:col-span-8 flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
@@ -836,8 +836,8 @@ function Chart(props) {
                 </Dropdown>
               )}
             </div>
-          </CardHeader>
-          <CardBody
+          </Card.Header>
+          <Card.Content
             className={`${_shouldCompact() ? "pt-0 pb-0" : "pt-2 pb-4"} overflow-y-hidden`}
           >
             {chart.chartData && (
@@ -932,7 +932,7 @@ function Chart(props) {
                   )}
               </div>
             )}
-          </CardBody>
+          </Card.Content>
         </Card>
       )}
 

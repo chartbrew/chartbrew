@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Card, ProgressCircle, CardHeader, CardBody, CardFooter, Separator,
+  Button, Card, ProgressCircle, Separator,
 } from "@heroui/react";
 import moment from "moment";
 import { LuChartColumn } from "react-icons/lu";
@@ -106,21 +106,21 @@ function CustomTemplates(props) {
             className="w-[230px] border-1 border-solid border-content3 h-full"
             shadow="none"
           >
-            <CardHeader>
+            <Card.Header>
               <Text b>{template.name}</Text>
-            </CardHeader>
+            </Card.Header>
             <Separator />
-            <CardBody className="flex flex-col align-middle justify-center">
+            <Card.Content className="flex flex-col align-middle justify-center">
               <Row>
                 <LuChartColumn />
                 <div className="w-1" />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>
-            </CardBody>
+            </Card.Content>
             <Separator />
-            <CardFooter>
+            <Card.Footer>
               <span className="text-sm">{`Updated ${_getUpdatedTime(template.updatedAt)}`}</span>
-            </CardFooter>
+            </Card.Footer>
           </Card>
         </div>
       ))}

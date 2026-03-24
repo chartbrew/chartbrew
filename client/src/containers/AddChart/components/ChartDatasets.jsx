@@ -7,7 +7,7 @@ import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
 import {
-  Avatar, Button, Card, CardFooter, CardHeader, Chip, Separator, Input, ScrollShadow, Tooltip
+  Avatar, Button, Card, Chip, Separator, Input, ScrollShadow, Tooltip
 } from "@heroui/react";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
@@ -235,7 +235,7 @@ function ChartDatasets(props) {
                   className={`w-full shadow-none border-2 border-solid border-content3 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
                   onClick={() => _onCreateCdc(dataset.id)}
                 >
-                  <CardHeader>
+                  <Card.Header>
                     <div className={"flex flex-row justify-between gap-4 w-full"}>
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
                         <div className="flex flex-col gap-1 items-start">
@@ -262,9 +262,9 @@ function ChartDatasets(props) {
                         </div>
                       </div>                      
                     </div>
-                  </CardHeader>
+                  </Card.Header>
                   <Separator />
-                  <CardFooter className="justify-between">
+                  <Card.Footer className="justify-between">
                     <div className="text-xs text-foreground-500">{`Created ${moment(dataset.createdAt).calendar()}`}</div>
                     {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
                       <div className="z-50">
@@ -281,7 +281,7 @@ function ChartDatasets(props) {
                         </Button>
                       </div>
                     )}
-                  </CardFooter>
+                  </Card.Footer>
                 </Card>
                 <div className="h-4" />
               </Fragment>

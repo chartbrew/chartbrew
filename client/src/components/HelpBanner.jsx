@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Card, CardBody, CardFooter, CardHeader, Separator, Link,
+  Card, Separator, Link,
 } from "@heroui/react";
 import { LuGraduationCap } from "react-icons/lu";
 
@@ -114,7 +114,7 @@ function HelpBanner(props) {
       className="max-w-[400px]"
       shadow="sm"
     >
-      <CardHeader className="flex gap-3">
+      <Card.Header className="flex gap-3">
         <div>
           <img
             src={imageUrl}
@@ -133,15 +133,15 @@ function HelpBanner(props) {
             {bannerData[type].title}
           </Link>
         </div>
-      </CardHeader>
+      </Card.Header>
       <Separator />
-      <CardBody>
+      <Card.Content>
         <div className="text-sm">
           {bannerData[type].description}
         </div>
-      </CardBody>
+      </Card.Content>
       <Separator />
-      <CardFooter>
+      <Card.Footer>
         <Row align="center">
           <LuGraduationCap size={24} />
           <div className="w-1" />
@@ -149,7 +149,7 @@ function HelpBanner(props) {
             {bannerData[type].info}
           </div>
         </Row>
-      </CardFooter>
+      </Card.Footer>
     </Card>
   );
 }

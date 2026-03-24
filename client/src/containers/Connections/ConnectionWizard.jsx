@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Separator, Image, Input, Modal, Tooltip } from "@heroui/react";
+import { Button, Card, Chip, Separator, Image, Input, Modal, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -236,15 +236,15 @@ function ConnectionWizard() {
                         className={`w-full h-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
                         onPress={() => setSelectedType(conn.type)}
                       >
-                        <CardBody className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
+                        <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
                           <Image
                             radius="lg"
                             alt={conn.name}
                             className="h-[80px]"
                             src={connectionImages(isDark)[conn.type]}
                           />
-                        </CardBody>
-                        <CardFooter className="justify-center flex flex-col gap-1">
+                        </Card.Content>
+                        <Card.Footer className="justify-center flex flex-col gap-1">
                           {conn.ai && (
                             <Tooltip content="You can use AI to ask questions about your data">
                               <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit size={14} />}>
@@ -253,7 +253,7 @@ function ConnectionWizard() {
                             </Tooltip>
                           )}
                           <span className="text-sm font-semibold">{conn.name}</span>
-                        </CardFooter>
+                        </Card.Footer>
                       </Card>
                     </div>
                   ))}
@@ -383,10 +383,10 @@ function ConnectionWizard() {
               <div className="h-20" />
 
               <Card>
-                <CardHeader className="flex flex-col items-start">
+                <Card.Header className="flex flex-col items-start">
                   <p className="font-semibold">Missing the data source credentials?</p>
-                </CardHeader>
-                <CardBody>
+                </Card.Header>
+                <Card.Content>
                   <p className="text-sm text-gray-500">
                     {"Someone from your engineering team can help you with this."}
                   </p>
@@ -400,8 +400,8 @@ function ConnectionWizard() {
                     labelPlacement="outside"
                     value={inviteUrl}
                   />
-                </CardBody>
-                <CardFooter>
+                </Card.Content>
+                <Card.Footer>
                   <Button
                     size="sm"
                     color="primary"
@@ -412,21 +412,21 @@ function ConnectionWizard() {
                   >
                     {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
                   </Button>
-                </CardFooter>
+                </Card.Footer>
               </Card>
 
               <div className="h-2" />
 
               <Card>
-                <CardHeader className="flex flex-col items-start">
+                <Card.Header className="flex flex-col items-start">
                   <p className="font-semibold">Check out our tutorials</p>
-                </CardHeader>
-                <CardBody>
+                </Card.Header>
+                <Card.Content>
                   <p className="text-sm text-gray-500">
                     {"We have a number of tutorials that can help you get started with Chartbrew and learn more about the platform."}
                   </p>
-                </CardBody>
-                <CardFooter>
+                </Card.Content>
+                <Card.Footer>
                   <Button
                     size="sm"
                     color="primary"
@@ -435,7 +435,7 @@ function ConnectionWizard() {
                   >
                     Open the tutorials
                   </Button>
-                </CardFooter>
+                </Card.Footer>
               </Card>
 
               <div className="h-2" />

@@ -1,8 +1,8 @@
 import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
-  Button, Avatar, Card, CardBody,
-  CardFooter, Input, Separator, Chip,
+  Button, Avatar, Card,
+  Input, Separator, Chip,
   Tabs,
   Tab,
   Image,
@@ -571,7 +571,7 @@ function DatasetQuery(props) {
                       shadow="none"
                       className="h-full border-1 border-solid border-content3"
                     >
-                      <CardBody className="p-4 pl-unit-8">
+                      <Card.Content className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-col gap-1">
                             <Text size="h4">{c.name}</Text>
@@ -593,11 +593,11 @@ function DatasetQuery(props) {
                             {`Created on ${moment(c.createdAt).format("LLL")}`}
                           </span>
                         </div>
-                      </CardBody>
+                      </Card.Content>
                       <Separator />
                       {_getConnectionTags(c.project_ids).length > 0 && (
                         <>
-                          <CardBody>
+                          <Card.Content>
                             <div className="flex flex-row items-center gap-1 flex-wrap">
                               {_getConnectionTags(c.project_ids).map((tag) => (
                                 <Chip key={tag} color="primary" variant="flat" size="sm">
@@ -605,11 +605,11 @@ function DatasetQuery(props) {
                                 </Chip>
                               ))}
                             </div>
-                          </CardBody>
+                          </Card.Content>
                           <Separator />
                         </>
                       )}
-                      <CardFooter>
+                      <Card.Footer>
                         <Container>
                           <div className="flex flex-row justify-center">
                             <Button
@@ -622,7 +622,7 @@ function DatasetQuery(props) {
                             </Button>
                           </div>
                         </Container>
-                      </CardFooter>
+                      </Card.Footer>
                     </Card>
                   </div>
                 );

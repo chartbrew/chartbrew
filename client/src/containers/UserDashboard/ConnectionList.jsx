@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, CardFooter, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -175,7 +175,7 @@ function ConnectionList() {
               className="border-1 border-solid border-content3 p-4 h-full"
               fullWidth
             >
-              <CardBody>
+              <Card.Content>
                 <div className="flex flex-row items-center justify-between">
                   <div className="flex flex-row items-center gap-2">
                     <Avatar src={connectionImages(isDark)[connection.subType]} />
@@ -198,8 +198,8 @@ function ConnectionList() {
                     )}
                   </div>
                 </div>
-              </CardBody>
-              <CardBody>
+              </Card.Content>
+              <Card.Content>
                 <div className="flex flex-row items-center flex-wrap gap-1">
                   {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
                     <Chip key={tag} size="sm" variant="flat" color="primary" radius="sm" className="cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
@@ -210,14 +210,14 @@ function ConnectionList() {
                     <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
                   )}
                 </div>
-              </CardBody>
-              <CardBody>
+              </Card.Content>
+              <Card.Content>
                 <div className="flex flex-row items-center justify-between">
                   <span className="text-xs text-foreground-500">{`${_getRelatedDatasets(connection.id).length} datasets`}</span>
                   <span className="text-xs text-foreground-500">Created on {new Date(connection.createdAt).toLocaleDateString()}</span>
                 </div>
-              </CardBody>
-              <CardFooter>
+              </Card.Content>
+              <Card.Footer>
                 <Button
                   variant="flat"
                   size="sm"
@@ -269,7 +269,7 @@ function ConnectionList() {
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
-              </CardFooter>
+              </Card.Footer>
             </Card>
           </div>
         ))}

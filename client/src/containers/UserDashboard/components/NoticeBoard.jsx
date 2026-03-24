@@ -1,5 +1,5 @@
 import {
-  Button, Card, CardBody, CardFooter, CardHeader, Separator, Image, Tooltip,
+  Button, Card, Separator, Image, Tooltip,
 } from "@heroui/react";
 import React, { useState } from "react"
 import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
@@ -25,16 +25,16 @@ function NoticeBoard() {
     <div className="flex flex-col gap-1">
       {!user?.tutorials?.quickStartVideo && (
         <Card className="mt-4 hidden sm:block" shadow-sm="sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <Card.Header className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Quick start guide</span>
             <Tooltip content="Close the guide">
               <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ quickStartVideo: true })}>
                 <LuX />
               </span>
             </Tooltip>
-          </CardHeader>
+          </Card.Header>
           <Separator />
-          <CardBody>
+          <Card.Content>
             <div className="relative pb-[60.25%] h-0 mb-4">
               <Image
                 src={startVideoThumbnail}
@@ -54,28 +54,28 @@ function NoticeBoard() {
                 </Button>
               </div>
             </div>
-          </CardBody>
+          </Card.Content>
         </Card>
       )}
 
       {!user?.tutorials?.twoFactorAuth && user?.User2fas && user?.User2fas?.length < 1 && (
         <Card className="mt-4 hidden sm:block" shadow-sm="sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <Card.Header className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Two-factor Authentication</span>
             <Tooltip content="Close the guide">
               <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ twoFactorAuth: true })}>
                 <LuX />
               </span>
             </Tooltip>
-          </CardHeader>
+          </Card.Header>
           <Separator />
-          <CardBody>
+          <Card.Content>
             <p>
               {"Protect your account by enabling two-factor authentication. It's easy and only takes a few moments."}
             </p>
-          </CardBody>
+          </Card.Content>
           <Separator />
-          <CardFooter>
+          <Card.Footer>
             <Link to="/user/profile" className="w-full">
               <Button
                 color="primary"
@@ -86,7 +86,7 @@ function NoticeBoard() {
                 Set up 2FA
               </Button>
             </Link>
-          </CardFooter>
+          </Card.Footer>
         </Card>
       )}
 

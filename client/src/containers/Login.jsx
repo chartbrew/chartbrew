@@ -3,7 +3,7 @@ import { connect, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
 import { Link, useNavigate } from "react-router";
 import {
-  Card, CardBody, CardFooter, CardHeader,
+  Card,
 } from "@heroui/react";
 import _ from "lodash";
 
@@ -45,21 +45,21 @@ function Login(props) {
       <div className="h-4" />
       <div className="sm:flex m-4 justify-center">
         <Card shadow="none" className="border-1 border-divider">
-          <CardHeader className={"flex justify-center"}>
+          <Card.Header className={"flex justify-center"}>
             <h1 className={"mt-4 text-xl font-bold"}>{"Welcome back to Chartbrew"}</h1>
-          </CardHeader>
-          <CardBody>
+          </Card.Header>
+          <Card.Content>
             <LoginForm />
-          </CardBody>
+          </Card.Content>
           {loginError && (
-            <CardFooter>
+            <Card.Footer>
               <Row justify="center">
                 <Text size="h4" color="danger">{loginError.message}</Text>
               </Row>
               <Row justify="center">
                 <Text color="danger">{"Please try again."}</Text>
               </Row>
-            </CardFooter>
+            </Card.Footer>
           )}
         </Card>
       </div>

@@ -5,8 +5,7 @@ import _ from "lodash";
 import toast from "react-hot-toast";
 import {
   Button, Link, Modal, Avatar, Badge, Tooltip, Card,
-  ProgressCircle, CardBody,
-  CardFooter, Spinner,
+  ProgressCircle, Spinner,
 } from "@heroui/react";
 import moment from "moment";
 import { LuLink2, LuMonitorX, LuPlus } from "react-icons/lu";
@@ -424,7 +423,7 @@ function DatarequestModal(props) {
                           onClick={() => _onCreateNewRequest(c)}
                           fullWidth
                         >
-                          <CardBody className="p-4 pl-unit-8">
+                          <Card.Content className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">
                               <Text size="h4">{c.name}</Text>
                               <div className="w-1" />
@@ -439,8 +438,8 @@ function DatarequestModal(props) {
                                 {`Created on ${moment(c.createdAt).format("LLL")}`}
                               </Text>
                             </Row>
-                          </CardBody>
-                          <CardFooter>
+                          </Card.Content>
+                          <Card.Footer>
                             <Container>
                               <Row justify="center">
                                 <Button
@@ -453,7 +452,7 @@ function DatarequestModal(props) {
                                 </Button>
                               </Row>
                             </Container>
-                          </CardFooter>
+                          </Card.Footer>
                         </Card>
                       </div>
                     );

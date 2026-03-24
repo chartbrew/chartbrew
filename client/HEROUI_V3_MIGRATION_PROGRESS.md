@@ -45,7 +45,7 @@ Goals:
    - Modal
    - Select / Autocomplete
    - ListBox
-   - Card
+   - Card (compound `Card.Header` / `Card.Content` / `Card.Footer` — see Batch 30)
    - Progress / loader states
 
 ## Revalidation Audit
@@ -951,6 +951,36 @@ Notes:
   - `npm run lint` passes
   - `rg -n 'import .*\\bCode\\b|<Code\\b' chartbrew-os/client/src` returns only a commented-out example in `src/containers/Chart/TextWidget.jsx`
 
+### Batch 30: Card v3 Compound Structure
+
+Files migrated:
+- `src/components/DatasetFilters.jsx`
+- `src/components/HelpBanner.jsx`
+- `src/components/ProjectForm.jsx`
+- `src/containers/Login.jsx`
+- `src/containers/AddChart/components/ChartDatasets.jsx`
+- `src/containers/AddChart/components/DatarequestModal.jsx`
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/Chart/TextWidget.jsx`
+- `src/containers/Connections/ConnectionWizard.jsx`
+- `src/containers/Connections/CustomTemplates/CustomTemplates.jsx`
+- `src/containers/Dataset/DatasetQuery.jsx`
+- `src/containers/UserDashboard/ConnectionList.jsx`
+- `src/containers/UserDashboard/DashboardList.jsx`
+- `src/containers/UserDashboard/components/NoticeBoard.jsx`
+- `src/containers/UserDashboard/components/WhatsNewPanel.jsx`
+
+Notes:
+- Replaced v2 flat card section components with HeroUI v3 compound parts on `Card`:
+  - `CardHeader` -> `Card.Header`
+  - `CardBody` -> `Card.Content`
+  - `CardFooter` -> `Card.Footer`
+- Dropped named imports of `CardBody`, `CardHeader`, and `CardFooter`; only `Card` is imported from `@heroui/react` for these trees.
+- Left root `Card` props (for example `shadow`, `radius`, `isPressable`) unchanged in this batch; follow-up passes can align those with v3-only APIs if needed.
+- Verification:
+  - `npm run lint` passes
+  - `rg -l 'CardBody|CardHeader|CardFooter' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -958,7 +988,7 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `SelectItem` / `AutocompleteItem`: 0 files
 - `Spacer`: 0 files
 - `Code`: 0 active files
-- `CardBody`: about 14 files
+- `CardBody` / `CardHeader` / `CardFooter`: 0 files (migrated to `Card.Content` / `Card.Header` / `Card.Footer`)
 - `Image`: about 10 files
 - `Listbox` / `ListboxItem`: 5 files
 - `Progress`: about 4 files
@@ -976,7 +1006,7 @@ Important:
 Priority order:
 1. Remove `Spacer` usage and replace with layout `gap` / margin utilities
 2. Replace removed `Code`, `Image`, and `User` usages with plain elements with tailwind classes or direct v3 composition
-3. Convert `CardBody` / `CardHeader` / `CardFooter` usage to the direct `Card.*` structure consistently
+3. Align root `Card` props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, etc.)
 4. Audit remaining non-picker v2 surfaces file-by-file after the picker family completion
 
 ## Notes

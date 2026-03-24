@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import {
-  Autocomplete, Button, Card, CardBody, CardFooter, CardHeader,
+  Autocomplete, Button, Card,
   Checkbox, Chip, DatePicker, Divider, Drawer, DrawerBody, DrawerContent, DrawerFooter,
   DrawerHeader, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
   Modal, SearchField, Select,
@@ -248,12 +248,12 @@ function DatasetFilters(props) {
       {conditions.map((condition, index) => {
         return (
           <Card key={condition.id} className="datasetdata-filters-tut shadow-none border-1 border-content3 border-solid rounded-lg">
-            <CardHeader>
+            <Card.Header>
               {index === 0 && (<div className="text-sm">{"where "}</div>)}
               {index > 0 && (<div className="text-sm">{"and "}</div>)}
-            </CardHeader>
+            </Card.Header>
             <Divider />
-            <CardBody>
+            <Card.Content>
               <Autocomplete
                 placeholder="Field"
                 selectionMode="single"
@@ -353,11 +353,11 @@ function DatasetFilters(props) {
                     )}
                 </div>
               </Row>
-            </CardBody>
+            </Card.Content>
             {condition.value && _renderValueWithVariables(condition.value) && _renderValueWithVariables(condition.value).some(part => part.type === "variable") && (
               <>
                 <Divider />
-                <CardBody>
+                <Card.Content>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs text-gray-500">Variables:</span>
                     <div className="flex flex-row gap-1 items-center flex-wrap">
@@ -373,11 +373,11 @@ function DatasetFilters(props) {
                       ))}
                     </div>
                   </div>
-                </CardBody>
+                </Card.Content>
               </>
             )}
             <Divider />
-            <CardFooter className="justify-between gap-2">
+            <Card.Footer className="justify-between gap-2">
               {!condition.saved && condition.field && (
                 <Tooltip content="Apply this condition">
                   <Button
@@ -473,7 +473,7 @@ function DatasetFilters(props) {
                   </Button>
                 </Tooltip>
               )}
-            </CardFooter>
+            </Card.Footer>
           </Card>
         );
       })}

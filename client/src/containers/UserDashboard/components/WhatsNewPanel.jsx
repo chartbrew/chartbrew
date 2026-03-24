@@ -1,8 +1,6 @@
 import {
   Button,
   Card,
-  CardBody,
-  CardHeader,
   Chip,
   Separator,
 } from "@heroui/react";
@@ -118,7 +116,7 @@ function WhatsNewItemCard({ item, onAction }) {
         radius="lg"
         className={cn("overflow-hidden", tone.tipCard)}
       >
-        <CardBody className="gap-4 p-5">
+        <Card.Content className="gap-4 p-5">
           <div className="flex items-start gap-3">
             {Icon && (
               <div className={cn("mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl", tone.icon)}>
@@ -150,7 +148,7 @@ function WhatsNewItemCard({ item, onAction }) {
               {actionLabel}
             </Button>
           )}
-        </CardBody>
+        </Card.Content>
       </Card>
     );
   }
@@ -161,7 +159,7 @@ function WhatsNewItemCard({ item, onAction }) {
       radius="lg"
       className={cn("border-1 bg-content1", tone.card)}
     >
-      <CardBody className="gap-4 p-4">
+      <Card.Content className="gap-4 p-4">
         <div className="flex items-start gap-3">
           {Icon && (
             <div className={cn("mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", tone.icon)}>
@@ -202,7 +200,7 @@ function WhatsNewItemCard({ item, onAction }) {
             )}
           </div>
         </div>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }
@@ -243,7 +241,7 @@ function WhatsNewPanel({ onCollapse }) {
   return (
     <aside className="sticky top-[88px]">
       <Card shadow="none" radius="lg" className="border-1 border-divider bg-content1">
-        <CardHeader className="flex items-start justify-between gap-3 px-5 py-4">
+        <Card.Header className="flex items-start justify-between gap-3 px-5 py-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
               Discover more
@@ -255,9 +253,9 @@ function WhatsNewPanel({ onCollapse }) {
           <Button isIconOnly size="sm" variant="light" onPress={onCollapse}>
             <LuX size={16} />
           </Button>
-        </CardHeader>
+        </Card.Header>
         <Separator />
-        <CardBody className="flex flex-col gap-4 px-4 py-5">
+        <Card.Content className="flex flex-col gap-4 px-4 py-5">
           {groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3">
@@ -280,7 +278,7 @@ function WhatsNewPanel({ onCollapse }) {
               </section>
             </>
           )}
-        </CardBody>
+        </Card.Content>
       </Card>
     </aside>
   );

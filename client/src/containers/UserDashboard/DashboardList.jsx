@@ -3,8 +3,6 @@ import {
   AvatarGroup,
   Button,
   Card,
-  CardBody,
-  CardHeader,
   Chip,
   Dropdown,
   DropdownItem,
@@ -307,7 +305,7 @@ function DashboardList() {
                     radius="sm"
                     onPress={() => directToProject(project.id)}
                   >
-                    <CardHeader className="flex flex-row justify-between items-center">
+                    <Card.Header className="flex flex-row justify-between items-center">
                       <div className="flex flex-row items-center gap-2">
                         {isPinned && (
                           <LuPin className="text-secondary" size={18} fill="currentColor" />
@@ -350,8 +348,8 @@ function DashboardList() {
                           </DropdownMenu>
                         </Dropdown>
                       )}
-                    </CardHeader>
-                    <CardBody>
+                    </Card.Header>
+                    <Card.Content>
                       <div className="flex flex-row justify-between items-center">
                         {projectMembers.length > 0 ? (
                           <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
@@ -369,7 +367,7 @@ function DashboardList() {
                           <span>{project?.Charts?.length || 0} {project?.Charts?.length === 1 ? "chart" : "charts"}</span>
                         </div>
                       </div>
-                    </CardBody>
+                    </Card.Content>
                   </Card>
                 );
               })}

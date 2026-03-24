@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, Modal, Tabs, Tab, Card, CardBody, Image, CardFooter
+  Input, Button, Modal, Tabs, Tab, Card, Image
 } from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -155,16 +155,16 @@ function ProjectForm(props) {
                               onClick={() => setCommunityTemplate(t.type)}
                               className="border-1 border-solid border-content3"
                             >
-                              <CardBody className="p-0">
+                              <Card.Content className="p-0">
                                 <Image className="object-cover" width="300" height="300" src={t.image} />
-                              </CardBody>
-                              <CardFooter>
+                              </Card.Content>
+                              <Card.Footer>
                                 <Row wrap="wrap" justify="center" align="center">
                                   <span>
                                     {t.name}
                                   </span>
                                 </Row>
-                              </CardFooter>
+                              </Card.Footer>
                             </Card>
                           </div>
                         ))}
