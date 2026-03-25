@@ -85,27 +85,35 @@ function Variables() {
       </div>
 
       <div className="h-4" />
-      <Table shadow="none" className="border-1 border-divider rounded-lg" aria-label="Variables">
-        <TableHeader>
-          <TableColumn key="name">Name</TableColumn>
-          <TableColumn key="createdAt">Created At</TableColumn>
-          <TableColumn key="actions" hideHeader align="end" />
-        </TableHeader>
-        <TableBody emptyContent="No variables yet">
-          {project?.Variables?.map((variable) => (
-            <TableRow key={variable.id}>
+      <Table className="border-1 border-divider rounded-lg shadow-none">
+        <Table.ScrollContainer>
+          <Table.Content aria-label="Variables" className="min-w-full">
+            <TableHeader>
+              <TableColumn key="name" isRowHeader textValue="Name">
+                Name
+              </TableColumn>
+              <TableColumn key="createdAt" textValue="Created At">
+                Created At
+              </TableColumn>
+              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
+            </TableHeader>
+            <TableBody renderEmptyState={() => "No variables yet"}>
+              {project?.Variables?.map((variable) => (
+                <TableRow key={variable.id}>
               <TableCell key="name">
                 <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{variable.name}</code>
               </TableCell>
               <TableCell key="createdAt">{new Date(variable.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell key="actions" align="end" className="flex justify-end">
+              <TableCell key="actions" className="flex justify-end text-end">
                 <Button isIconOnly variant="light" color="danger" onClick={() => setDeleteModal(variable.id)}>
                   <LuTrash />
                 </Button>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table.Content>
+        </Table.ScrollContainer>
       </Table>
 
       <Modal>

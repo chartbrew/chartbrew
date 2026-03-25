@@ -1,5 +1,5 @@
 import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -240,6 +240,11 @@ function DatasetList() {
     currentPage * DATASETS_PER_PAGE
   );
 
+  const selectedDatasetKeys = useMemo(
+    () => new Set(selectedDatasets.map((id) => `${id}`)),
+    [selectedDatasets]
+  );
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchFilter]);
@@ -464,75 +469,76 @@ function DatasetList() {
       )}
 
       <div className="border-1 border-solid border-content3 rounded-lg">
-        <Table
-          shadow="none"
-          radius="sm"
-          isStriped
-          aria-label="Dataset list"
-          selectionMode="multiple"
-          selectedKeys={selectedDatasets}
-          onSelectionChange={(keys) => {
-            const paginatedDatasetIds = paginatedDatasets.map((dataset) => `${dataset.id}`);
-            if (keys === "all") {
-              setSelectedDatasets((prev) => {
-                const prevIds = prev.map((id) => `${id}`);
-                return [...new Set([...prevIds, ...paginatedDatasetIds])];
-              });
-            } else {
-              const nextPageSelection = Array.from(keys).map((key) => `${key}`);
-              setSelectedDatasets((prev) => {
-                const offPageSelections = prev
-                  .map((id) => `${id}`)
-                  .filter((id) => !paginatedDatasetIds.includes(id));
+        <Table className="shadow-none rounded-sm">
+          <Table.ScrollContainer>
+            <Table.Content
+              aria-label="Dataset list"
+              className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+              selectionMode="multiple"
+              selectedKeys={selectedDatasetKeys}
+              onSelectionChange={(keys) => {
+                const paginatedDatasetIds = paginatedDatasets.map((dataset) => `${dataset.id}`);
+                if (keys === "all") {
+                  setSelectedDatasets((prev) => {
+                    const prevIds = prev.map((id) => `${id}`);
+                    return [...new Set([...prevIds, ...paginatedDatasetIds])];
+                  });
+                } else {
+                  const nextPageSelection = Array.from(keys).map((key) => `${key}`);
+                  setSelectedDatasets((prev) => {
+                    const offPageSelections = prev
+                      .map((id) => `${id}`)
+                      .filter((id) => !paginatedDatasetIds.includes(id));
 
-                return [...new Set([...offPageSelections, ...nextPageSelection])];
-              });
-            }
-          }}
-          onRowAction={() => {}}
-        >
-          <TableHeader>
-            <TableColumn key="name">Dataset name</TableColumn>
-            <TableColumn key="connections" textValue="Connections" align="center" justify="center">
-              <div className="flex flex-row items-center justify-center gap-1">
-                <LuPlug />
-                <span>Connections</span>
-              </div>
-            </TableColumn>
-            <TableColumn key="tags" textValue="Tags">
-              <div className="flex flex-row items-center gap-1">
-                <LuTags />
-                <span>Tags</span>
-              </div>
-            </TableColumn>
-            <TableColumn key="createdAt" textValue="Created at" align="center" justify="center">
-              <div className="flex flex-row items-center justify-center gap-1">
-                <LuCalendarDays />
-                <span>Created</span>
-              </div>
-            </TableColumn>
-            <TableColumn key="actions" align="center" hideHeader />
-          </TableHeader>
-          <TableBody
-            emptyContent={
-              connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
-                <div className="flex flex-col items-center gap-1">
-                  <LuLayers size={24} />
-                  <span>You need to create a connection to get started</span>
-                  <div className="h-1" />
-                  <Button
-                    onPress={() => navigate("/connections/new")}
-                    color="primary"
-                  >
-                    Create your first connection
-                  </Button>
-                </div>
-              ) : (
-                "No datasets found"
-              )
-            }
-          >
-            {paginatedDatasets.map((dataset) => {
+                    return [...new Set([...offPageSelections, ...nextPageSelection])];
+                  });
+                }
+              }}
+            >
+              <TableHeader>
+                <TableColumn key="name" isRowHeader textValue="Dataset name">
+                  Dataset name
+                </TableColumn>
+                <TableColumn key="connections" textValue="Connections" className="text-center">
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <LuPlug />
+                    <span>Connections</span>
+                  </div>
+                </TableColumn>
+                <TableColumn key="tags" textValue="Tags">
+                  <div className="flex flex-row items-center gap-1">
+                    <LuTags />
+                    <span>Tags</span>
+                  </div>
+                </TableColumn>
+                <TableColumn key="createdAt" textValue="Created at" className="text-center">
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <LuCalendarDays />
+                    <span>Created</span>
+                  </div>
+                </TableColumn>
+                <TableColumn key="actions" className="w-12 text-center" textValue="Actions" />
+              </TableHeader>
+              <TableBody
+                renderEmptyState={() => (
+                  connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <LuLayers size={24} />
+                      <span>You need to create a connection to get started</span>
+                      <div className="h-1" />
+                      <Button
+                        onPress={() => navigate("/connections/new")}
+                        color="primary"
+                      >
+                        Create your first connection
+                      </Button>
+                    </div>
+                  ) : (
+                    "No datasets found"
+                  )
+                )}
+              >
+                {paginatedDatasets.map((dataset) => {
               const dataRequests = dataset?.DataRequests || [];
               const drStackMax = 3;
               const drStackOverflow = dataRequests.length > drStackMax
@@ -543,7 +549,7 @@ function DatasetList() {
                 : dataRequests.slice(0, drStackMax);
 
               return (
-              <TableRow key={`${dataset.id}`}>
+              <TableRow key={`${dataset.id}`} id={`${dataset.id}`}>
                 <TableCell key="name">
                   <div className="flex flex-row items-center gap-2">
                     <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
@@ -685,8 +691,10 @@ function DatasetList() {
                 </TableCell>
               </TableRow>
               );
-            })}
-          </TableBody>
+                })}
+              </TableBody>
+            </Table.Content>
+          </Table.ScrollContainer>
         </Table>
       </div>
       {filteredDatasets.length > DATASETS_PER_PAGE && (

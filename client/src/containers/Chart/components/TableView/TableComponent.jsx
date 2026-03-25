@@ -14,6 +14,7 @@ import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from 
 
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
+import { cn } from "../../../../modules/utils";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   key: pageSize,
@@ -224,6 +225,17 @@ function TableComponent({
     setPageSize(defaultRowsPerPage);
   }, [defaultRowsPerPage]);
 
+  const tableProps = getTableProps();
+  const {
+    className: tablePropsClassName,
+    style: tablePropsStyle,
+    ...tablePropsRest
+  } = tableProps;
+  const mergedTableStyle = { ...styles.table, ...tablePropsStyle };
+
+  const headerGroup = headerGroups && headerGroups[headerGroups.length - 1];
+  const headerCount = headerGroup?.headers?.length ?? 0;
+
   return (
     <div style={styles.mainBody(embedded)}>
       {(!headerGroups
@@ -238,57 +250,25 @@ function TableComponent({
         && headerGroups[headerGroups.length - 1].headers
         && (
         <>
-          <Table
-            aria-label="Table data"
-            {...getTableProps()}
-            isStriped
-            shadow="none"
-            classNames={{ wrapper: "bg-content1" }}
-            bottomContent={(
-              <div>
-                <Row align="center">
-                  <Pagination
-                    total={pageCount}
-                    initialPage={1}
-                    onChange={(page) => {
-                      gotoPage(page - 1);
-                    }}
-                    size="sm"
-                    aria-label="Pagination"
-                  />
-                  <div className="w-1" />
-                  <Dropdown aria-label="Select a page size">
-                    <DropdownTrigger>
-                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
-                        {paginationOptions.find((option) => option.value === pageSize).text}
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="bordered"
-                      selectionMode="single"
-                      selectedKeys={[`${pageSize}`]}
-                      onSelectionChange={(selection) => {
-                        setPageSize(Number(Object.values(selection)[0]));
-                      }}
-                    >
-                      {paginationOptions.map((option) => (
-                        <DropdownItem key={`${option.value}`} textValue={option.text}>
-                          <Text>{option.text}</Text>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                </Row>
-              </div>
-            )}
-          >
-            <TableHeader>
-              {headerGroups[headerGroups.length - 1].headers.map((column) => {
+          <Table className="bg-content1 w-full min-w-0">
+            <Table.ScrollContainer>
+              <Table.Content
+                {...tablePropsRest}
+                aria-label="Table data"
+                className={cn(
+                  "min-w-full shadow-none even:[&_tbody>tr]:bg-default-100/40",
+                  tablePropsClassName
+                )}
+                style={mergedTableStyle}
+              >
+                <TableHeader>
+                  {headerGroups[headerGroups.length - 1].headers.map((column, colIdx) => {
                 return (
                   <TableColumn
                     key={column.getHeaderProps(column.getSortByToggleProps()).key}
+                    isRowHeader={colIdx === 0}
                     style={{ whiteSpace: "unset" }}
-                    className={"pl-10 pr-10 max-w-[400px]"}
+                    className="pl-10 pr-10 max-w-[400px]"
                   >
                     <Row align="center">
                       {column.isSorted
@@ -313,12 +293,14 @@ function TableComponent({
                     </Row>
                   </TableColumn>
                 );
-              })}
-            </TableHeader>
-            <TableBody {...getTableBodyProps()}>
+                  })}
+                </TableHeader>
+                <TableBody {...getTableBodyProps()}>
               {page.length < 1 && (
                 <TableRow>
-                  <TableCell key="noresult">No Results</TableCell>
+                  <TableCell key="noresult" colSpan={Math.max(1, headerCount)}>
+                    No Results
+                  </TableCell>
                 </TableRow>
               )}
               {page.map((row) => {
@@ -339,15 +321,16 @@ function TableComponent({
                       // to display the value directly
                       const isShort = isObject && Object.keys(objDetails).length === 1;
 
+                      const { className: cellPropsClassName, ...cellPropsRest } = cell.getCellProps();
                       return (
                         <TableCell
                           key={`${row.id}-${cell.column.Header}`}
-                          {...cell.getCellProps()}
-                          className={"max-w-[300px] pr-10 pl-10 truncate"}
-                          css={{
-                            userSelect: "text",
-                            borderRight: cellIndex === row.cells.length - 1 ? "none" : "$accents3 solid 1px",
-                          }}
+                          {...cellPropsRest}
+                          className={cn(
+                            "max-w-[300px] pr-10 pl-10 truncate select-text",
+                            cellIndex !== row.cells.length - 1 && "border-e border-content3",
+                            cellPropsClassName
+                          )}
                           title={cellObj.props.value}
                         >
                           {(!isObject && !isArray) && (
@@ -388,7 +371,46 @@ function TableComponent({
                   </TableRow>
                 );
               })}
-            </TableBody>
+                </TableBody>
+              </Table.Content>
+            </Table.ScrollContainer>
+            <Table.Footer>
+              <div>
+                <Row align="center">
+                  <Pagination
+                    total={pageCount}
+                    initialPage={1}
+                    onChange={(page) => {
+                      gotoPage(page - 1);
+                    }}
+                    size="sm"
+                    aria-label="Pagination"
+                  />
+                  <div className="w-1" />
+                  <Dropdown aria-label="Select a page size">
+                    <DropdownTrigger>
+                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
+                        {paginationOptions.find((option) => option.value === pageSize).text}
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      variant="bordered"
+                      selectionMode="single"
+                      selectedKeys={[`${pageSize}`]}
+                      onSelectionChange={(selection) => {
+                        setPageSize(Number(Object.values(selection)[0]));
+                      }}
+                    >
+                      {paginationOptions.map((option) => (
+                        <DropdownItem key={`${option.value}`} textValue={option.text}>
+                          <Text>{option.text}</Text>
+                        </DropdownItem>
+                      ))}
+                    </DropdownMenu>
+                  </Dropdown>
+                </Row>
+              </div>
+            </Table.Footer>
           </Table>
         </>
         )}

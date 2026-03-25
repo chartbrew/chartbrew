@@ -208,16 +208,33 @@ function TeamMembers(props) {
         <div className="h-4" />
 
         {_canAccess("teamAdmin") && (
-          <Table shadow="none" isStriped aria-label="Team members">
-            <TableHeader>
-              <TableColumn key="member">Member</TableColumn>
-              <TableColumn key="role">Role</TableColumn>
-              <TableColumn key="projectAccess">Projects</TableColumn>
-              <TableColumn key="export">Can export</TableColumn>
-              <TableColumn key="actions" hideHeader>Actions</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {teamMembers?.length > 0 && teamMembers.map((member) => {
+          <Table className="shadow-none">
+            <Table.ScrollContainer>
+              <Table.Content
+                aria-label="Team members"
+                className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+              >
+                <TableHeader>
+                  <TableColumn key="member" isRowHeader textValue="Member">
+                    Member
+                  </TableColumn>
+                  <TableColumn key="role" textValue="Role">
+                    Role
+                  </TableColumn>
+                  <TableColumn key="projectAccess" textValue="Projects">
+                    Projects
+                  </TableColumn>
+                  <TableColumn key="export" textValue="Can export">
+                    Can export
+                  </TableColumn>
+                  <TableColumn key="actions" className="w-12" textValue="Actions" />
+                </TableHeader>
+                <TableBody
+                  renderEmptyState={() => (
+                    <span className="text-default-500">No team members</span>
+                  )}
+                >
+                  {(teamMembers || []).map((member) => {
                 let memberRole = {};
                 for (let i = 0; i < member.TeamRoles.length; i++) {
                   if (member.TeamRoles[i].team_id === team.id) {
@@ -373,8 +390,10 @@ function TeamMembers(props) {
                     </TableCell>
                   </TableRow>
                 );
-              })}
-            </TableBody>
+                  })}
+                </TableBody>
+              </Table.Content>
+            </Table.ScrollContainer>
           </Table>
         )}
       </div>

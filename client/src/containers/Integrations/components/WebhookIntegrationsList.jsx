@@ -198,17 +198,28 @@ function WebhookIntegrations({ teamId }) {
         </div>
       </div>
       <div className="h-2" />
-      <Table shadow={"none"} aria-label="Webhook integrations" className="border-1 border-divider rounded-lg">
-        <TableHeader>
-          <TableColumn key="name">Name</TableColumn>
-          <TableColumn key="url">URL</TableColumn>
-          <TableColumn key="created" align="flex-end">Date created</TableColumn>
-          <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
-        </TableHeader>
+      <Table className="border-1 border-divider rounded-lg shadow-none">
+        <Table.ScrollContainer>
+          <Table.Content
+            aria-label="Webhook integrations"
+            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+          >
+            <TableHeader>
+              <TableColumn key="name" isRowHeader textValue="Name">
+                Name
+              </TableColumn>
+              <TableColumn key="url" textValue="URL">
+                URL
+              </TableColumn>
+              <TableColumn key="created" className="text-end" textValue="Date created">
+                Date created
+              </TableColumn>
+              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
+            </TableHeader>
 
-        <TableBody emptyContent={"No webhook integrations"}>
-          {webhookIntegrations.map((i) => (
-            <TableRow key={i.id}>
+            <TableBody renderEmptyState={() => "No webhook integrations"}>
+              {webhookIntegrations.map((i) => (
+                <TableRow key={i.id}>
               <TableCell key="name">
                 {i.name}
               </TableCell>
@@ -241,9 +252,11 @@ function WebhookIntegrations({ teamId }) {
                   </Button>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table.Content>
+        </Table.ScrollContainer>
       </Table>
 
       <Modal>

@@ -122,25 +122,29 @@ function ApiKeys() {
       </div>
       <div className="h-2" />
 
-      <Table shadow={"none"} aria-label="API keys" isStriped>
-        <TableHeader>
-          <TableColumn key="token">API Tokens list</TableColumn>
-          <TableColumn key="created" hideHeader align="flex-end">Date created</TableColumn>
-          <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
-        </TableHeader>
+      <Table className="shadow-none">
+        <Table.ScrollContainer>
+          <Table.Content
+            aria-label="API keys"
+            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+          >
+            <TableHeader>
+              <TableColumn key="token" isRowHeader textValue="API Tokens list">
+                API Tokens list
+              </TableColumn>
+              <TableColumn key="created" className="text-end" textValue="Date created">
+                Date created
+              </TableColumn>
+              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
+            </TableHeader>
 
-        <TableBody>
-          {apiKeys.length === 0 && (
-            <TableRow>
-              <TableCell key="token">
+            <TableBody
+              renderEmptyState={() => (
                 <i>{"You don't have any API Keys yet"}</i>
-              </TableCell>
-              <TableCell key="created" />
-              <TableCell key="actions" />
-            </TableRow>
-          )}
-          {apiKeys.map((key) => (
-            <TableRow key={key.id}>
+              )}
+            >
+              {apiKeys.map((key) => (
+                <TableRow key={key.id}>
               <TableCell key="token">
                 {key.name}
               </TableCell>
@@ -158,9 +162,11 @@ function ApiKeys() {
                   <LuTrash />
                 </Button>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table.Content>
+        </Table.ScrollContainer>
       </Table>
 
       <Modal>

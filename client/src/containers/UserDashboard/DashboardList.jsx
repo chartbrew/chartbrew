@@ -387,31 +387,36 @@ function DashboardList() {
           )}
 
           {projects && viewMode === "table" && (
-            <Table
-              aria-label="Dashboard list"
-              className="h-auto min-w-full border-1 border-solid border-content3 rounded-xl"
-              radius="md"
-              shadow="none"
-              isStriped
-            >
-              <TableHeader>
-                <TableColumn key="name">Dashboard name</TableColumn>
-                <TableColumn key="members">
-                  <div className="flex flex-row items-end gap-1">
-                    <LuUsers />
-                    <span>Dashboard members</span>
-                  </div>
-                </TableColumn>
-                <TableColumn key="charts">
-                  <div className="flex flex-row items-end justify-center gap-1">
-                    <LuChartNoAxesColumnIncreasing />
-                    <span>Charts</span>
-                  </div>
-                </TableColumn>
-                <TableColumn key="actions" align="center" hideHeader />
-              </TableHeader>
-              <TableBody>
-                {filteredProjects.map((project) => {
+            <Table className="h-auto min-w-full border-1 border-solid border-content3 rounded-xl shadow-none">
+              <Table.ScrollContainer>
+                <Table.Content
+                  aria-label="Dashboard list"
+                  className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+                >
+                  <TableHeader>
+                    <TableColumn key="name" isRowHeader>
+                      Dashboard name
+                    </TableColumn>
+                    <TableColumn key="members" className="text-center">
+                      <div className="flex flex-row items-end justify-center gap-1">
+                        <LuUsers />
+                        <span>Dashboard members</span>
+                      </div>
+                    </TableColumn>
+                    <TableColumn key="charts" className="text-center">
+                      <div className="flex flex-row items-end justify-center gap-1">
+                        <LuChartNoAxesColumnIncreasing />
+                        <span>Charts</span>
+                      </div>
+                    </TableColumn>
+                    <TableColumn key="actions" className="w-12 text-center" textValue="Actions" />
+                  </TableHeader>
+                  <TableBody
+                    renderEmptyState={() => (
+                      <span className="italic text-default-500">No dashboards here</span>
+                    )}
+                  >
+                    {filteredProjects.map((project) => {
                   const projectMembers = _getProjectMembers(project);
                   const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
                   const memberStackMax = 3;
@@ -509,20 +514,10 @@ function DashboardList() {
                       </TableCell>
                     </TableRow>
                   );
-                })}
-              </TableBody>
-              {filteredProjects.length === 0 && (
-                <TableBody>
-                  <TableRow>
-                    <TableCell key="name" className="p-0 pt-2">
-                      <span className="italic text-default-500">No dashboards here</span>
-                    </TableCell>
-                    <TableCell key="members" align="center" />
-                    <TableCell key="charts" align="center" />
-                    <TableCell key="actions" align="center" />
-                  </TableRow>
-                </TableBody>
-              )}
+                    })}
+                  </TableBody>
+                </Table.Content>
+              </Table.ScrollContainer>
             </Table>
           )}
         </div>

@@ -1145,6 +1145,22 @@ Notes:
 - **`DatasetFilters.jsx`** already expressed no shadow via **`shadow-none`** on **`className`** (no change).
 - Verification: `npm run lint` and `npm run build` pass in `client/`.
 
+### Batch 39: **`Table`** v3 anatomy (React Aria)
+
+v3 **`Table`** root is a wrapper **`div`** ( **`variant`**, **`className`** only). The real **`<table>`** is **`Table.Content`**, wrapped by **`Table.ScrollContainer`**. React Aria requires at least one **`TableColumn`** with **`isRowHeader`**. Replaced v2-only root props (**`shadow`**, **`radius`**, **`isStriped`**, **`aria-label`** on root, **`bottomContent`**, **`classNames`**, **`emptyContent`**, **`onRowAction`**) with the compound structure, Tailwind striping (**`even:[&_tbody>tr]:...`**), **`renderEmptyState`** on **`TableBody`**, and **`Table.Footer`** where pagination sat in **`bottomContent`**.
+
+Files migrated:
+- `src/containers/UserDashboard/DashboardList.jsx` — **`Table.ScrollContainer`** + **`Table.Content`**; empty state via **`renderEmptyState`**; **`isRowHeader`** on name column; actions column **`textValue`**
+- `src/containers/UserDashboard/DatasetList.jsx` — selection on **`Table.Content`**; **`selectedKeys`** as **`Set`** (**`useMemo`**); **`TableRow`** **`id`** for row keys; **`emptyContent`** → **`renderEmptyState`**
+- `src/containers/Chart/components/TableView/TableComponent.jsx` — **`getTableProps()`** merged into **`Table.Content`**; pagination in **`Table.Footer`**; removed v2 **`css`** on **`TableCell`** (Tailwind **`border-e`** / **`select-text`**); **`isRowHeader`** on first column; **`colSpan`** for empty row
+- `src/containers/Integrations/components/SlackIntegrationsList.jsx` — same compound pattern; **`align` / `hideHeader`** → **`className` / `textValue`**
+- `src/containers/Integrations/components/WebhookIntegrationsList.jsx` — same
+- `src/containers/Variables/Variables.jsx` — same
+- `src/containers/Settings/TeamMembers.jsx` — same; **`renderEmptyState`** when no members; **`(teamMembers || []).map`**
+- `src/containers/ApiKeys/ApiKeys.jsx` — empty placeholder row → **`renderEmptyState`**
+
+Verification: `npm run lint` and `npm run build` pass in `client/`.
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1164,11 +1180,12 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `TimeInput`: 0 files (replaced with `TimeField` compound in Batch 37)
 - `Navbar` / `NavbarBrand` from `@heroui/react`: 0 files (public dashboards use `<header>` in Batch 37)
 - Root **`Card`** v2-only props (**`shadow`**, **`radius`**, **`isPressable`**, **`isHoverable`**, **`fullWidth`**, **`onPress`**, **`variant="bordered"`**): 0 remaining on **`Card`** roots in `client/src` (Batch 38)
+- Root **`Table`** v2-only props (**`shadow`**, **`radius`**, **`isStriped`**, **`bottomContent`**, **`classNames`**, **`emptyContent`**, **`onRowAction`** on **`<Table>`**): 0 remaining in `client/src` (Batch 39); tables use **`Table.ScrollContainer`** + **`Table.Content`** + RAC **`renderEmptyState`** where needed
 
 ## Verification
 
 - `npm run lint` currently passes
-- `npm run build` in `client/` currently passes (last verified after Batch 38)
+- `npm run build` in `client/` currently passes (last verified after Batch 39)
 
 Important:
 - Lint in this repo does not validate package export correctness; use **`npm run build`** when chasing missing exports.
@@ -1176,7 +1193,7 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Align root **`Table`** (and other layout primitives) with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isStriped`, etc.) — grep **`Table`** for **`shadow=`** / **`radius=`** as a starting point.
+1. Grep for other layout primitives or **`@heroui/react`** components still passing v2-only DOM props to roots (e.g. **`fullWidth`**, **`disableAnimation`**, **`isDisabled`** on the wrong node).
 2. Keep running **`npm run build`** after import-surface changes to catch renamed or removed exports.
 
 ## Notes

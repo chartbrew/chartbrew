@@ -50,18 +50,31 @@ function SlackIntegrations() {
       <div className="h-2" />
       <Separator />
       <div className="h-2" />
-      <Table shadow={"none"} aria-label="Slack integrations" className="border-1 border-divider rounded-lg">
-        <TableHeader>
-          <TableColumn key="name">Name</TableColumn>
-          <TableColumn key="slack_team_name">Slack workspace</TableColumn>
-          <TableColumn key="installer_slack_user_id">Channels access</TableColumn>
-          <TableColumn key="created" align="flex-end">Date created</TableColumn>
-          <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
-        </TableHeader>
+      <Table className="border-1 border-divider rounded-lg shadow-none">
+        <Table.ScrollContainer>
+          <Table.Content
+            aria-label="Slack integrations"
+            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+          >
+            <TableHeader>
+              <TableColumn key="name" isRowHeader textValue="Name">
+                Name
+              </TableColumn>
+              <TableColumn key="slack_team_name" textValue="Slack workspace">
+                Slack workspace
+              </TableColumn>
+              <TableColumn key="installer_slack_user_id" textValue="Channels access">
+                Channels access
+              </TableColumn>
+              <TableColumn key="created" className="text-end" textValue="Date created">
+                Date created
+              </TableColumn>
+              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
+            </TableHeader>
 
-        <TableBody emptyContent={"No Slack integrations"}>
-          {slackIntegrations.map((i) => (
-            <TableRow key={i.id}>
+            <TableBody renderEmptyState={() => "No Slack integrations"}>
+              {slackIntegrations.map((i) => (
+                <TableRow key={i.id}>
               <TableCell key="name">
                 <Link
                   to={`/integrations/${i.id}`}
@@ -93,9 +106,11 @@ function SlackIntegrations() {
                   </Button>
                 </Link>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table.Content>
+        </Table.ScrollContainer>
       </Table>
 
       <Modal>
