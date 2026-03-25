@@ -257,7 +257,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {filterOptions("x").map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -296,7 +296,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {fieldOptions.map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -362,7 +362,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {getDateFieldOptions().map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>

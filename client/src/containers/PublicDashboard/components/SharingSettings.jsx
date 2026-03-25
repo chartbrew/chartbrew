@@ -366,10 +366,10 @@ function SharingSettings(props) {
                   size="sm"
                   endContent={
                     <div className="flex flex-row items-center gap-1">
-                      <Button isIconOnly size="sm" variant="flat" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
                         <LuExternalLink />
                       </Button>
-                      <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
                         {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                       </Button>
                     </div>
@@ -385,7 +385,7 @@ function SharingSettings(props) {
                   readOnly
                   size="sm"
                   endContent={
-                    <Button isIconOnly size="sm" variant="flat" onPress={_onCopyEmbed}>
+                    <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyEmbed}>
                       {embedCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                     </Button>
                   }
@@ -422,7 +422,7 @@ function SharingSettings(props) {
             </div>
             <Button
               size="sm"
-              variant="flat"
+              variant="tertiary"
               onPress={() => {
                 setParameters([...parameters, { key: "", value: "" }]);
               }}
@@ -462,7 +462,7 @@ function SharingSettings(props) {
                 <Button
                   isIconOnly
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   onPress={() => {
                     setParameters(parameters.filter((_, i) => i !== index));
                   }}
@@ -511,7 +511,7 @@ function SharingSettings(props) {
           {expirationDate && (
             <Button
               size="sm"
-              variant="light"
+              variant="ghost"
               className="mt-2"
               onPress={() => {
                 setExpirationDate("");
@@ -555,7 +555,7 @@ function SharingSettings(props) {
                   isIconOnly
                   onPress={onClose}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -690,7 +690,7 @@ function SharingSettings(props) {
             <div className="flex items-center">
               <Button
                 size="sm"
-                variant="flat"
+                variant="tertiary"
                 onPress={_onCreateNewPolicy}
                 startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
                 isPending={shareLoading}
@@ -722,16 +722,16 @@ function SharingSettings(props) {
                       </div>
                     </div>
                     <div className="flex flex-row items-center gap-2">
-                      <Button isIconOnly size="sm" variant="flat" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
                         <LuExternalLink size={16} />
                       </Button>
-                      <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
                         {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy size={16} />}
                       </Button>
                       <Button
                         isIconOnly
                         size="sm"
-                        variant="flat"
+                        variant="tertiary"
                         color="danger"
                         onPress={() => _onDeletePolicy(policy.id)}
                       >
@@ -787,7 +787,7 @@ function SharingSettings(props) {
           {!project?.public && sharePolicies?.length > 0 && (
             <div className="mt-2">
               <Alert
-                variant="flat"
+                status="accent"
                 title="Report not shareable"
                 description="Toggle 'Allow sharing' to make it shareable. Right now, only team members can view it."
               />
@@ -809,7 +809,7 @@ function SharingSettings(props) {
         <Drawer.Footer>
           <Button
             onPress={onClose}
-            variant="flat"
+            variant="tertiary"
           >
             Close
           </Button>

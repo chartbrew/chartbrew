@@ -467,7 +467,7 @@ function AddChart() {
       <div className="mt-4 max-w-xl mx-auto border-1 border-divider rounded-lg p-4 bg-content1">
         <Button
           onPress={() => navigate(`/dashboard/${params.projectId}`)}
-          variant="flat"
+          variant="tertiary"
           size="sm"
           startContent={<LuArrowLeft size={16} />}
         >
@@ -478,7 +478,7 @@ function AddChart() {
           <>
             <Alert
               color="warning"
-              variant="flat"
+              status="accent"
               title="Dataset access required"
               description={missingDatasetDescription}
             />

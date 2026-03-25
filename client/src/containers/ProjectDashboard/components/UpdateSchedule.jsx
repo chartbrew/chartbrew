@@ -284,9 +284,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                 </Autocomplete.Popover>
               </Autocomplete>
 
-              <Button
-                color="primary"
-                variant="light"
+              <Button variant="ghost"
                 size="sm"
                 onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
               >

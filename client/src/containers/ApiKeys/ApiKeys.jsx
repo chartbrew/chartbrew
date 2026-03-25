@@ -114,9 +114,7 @@ function ApiKeys() {
       <div>
         <Button
           onPress={_onCreateRequested}
-          endContent={<LuPlus />}
-          color="primary"
-        >
+          endContent={<LuPlus />} >
           Create a new API Key
         </Button>
       </div>
@@ -154,7 +152,7 @@ function ApiKeys() {
               <TableCell key="actions">
                 <Button
                   isIconOnly
-                  variant="light"
+                  variant="ghost"
                   color="danger"
                   onPress={() => _onRemoveConfirmation(key)}
                   size="sm"

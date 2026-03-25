@@ -288,7 +288,7 @@ function DashboardFilters({
                     <div className="cursor-pointer"><LuEllipsisVertical /></div>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
-                    <Dropdown.Menu variant="flat">
+                    <Dropdown.Menu>
                       <Dropdown.Item id="edit-filter" onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />} textValue="Edit filter">
                         Edit filter
                       </Dropdown.Item>

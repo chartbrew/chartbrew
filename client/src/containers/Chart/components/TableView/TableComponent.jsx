@@ -103,7 +103,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
                     <Text className="text-sm font-medium">Full Text</Text>
                     <Button
                       size="sm"
-                      variant="flat"
+                      variant="tertiary"
                       onPress={() => navigator.clipboard.writeText(value)}
                     >
                       Copy
@@ -132,7 +132,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
 
     if (matchRule) {
       return (
-        <Chip size="sm" variant="flat" className="rounded-sm" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
+        <Chip size="sm" variant="soft" className="rounded-sm" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
           {baseContent}
         </Chip>
       );
@@ -355,7 +355,7 @@ function TableComponent({
                             <Popover aria-label="Object details">
                               <Popover.Trigger>
                                 <LinkNext>
-                                  <Chip color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
+                                  <Chip variant="primary">{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
                                 </LinkNext>
                               </Popover.Trigger>
                               <Popover.Content>

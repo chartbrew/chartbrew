@@ -236,9 +236,7 @@ function ChartPreview(props) {
                   size="sm"
                   endContent={!chartLoading ? <LuRefreshCw size={18} /> : undefined}
                   startContent={chartLoading ? <ButtonSpinner /> : undefined}
-                  variant="flat"
-                  color="primary"
-                >
+                  variant="tertiary" >
                   {"Refresh chart"}
                 </Button>
                 <div className="w-2" />
@@ -283,8 +281,7 @@ function ChartPreview(props) {
                 <div className="flex items-center gap-1">
                   {chart.ChartDatasetConfigs && conditions.map((c) => (
                     <Chip
-                      color="primary"
-                      variant={"flat"}
+                      variant="primary"
                       key={c.id}
                       size="sm"
                       endContent={(
@@ -401,9 +398,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "avg" ? "bordered" : "solid"}
-                      color={chart.type === "avg" ? "secondary" : "default"}
-                      onPress={() => _onChangeChartType({ type: "avg" })}
+                      variant={chart.type !== "avg" ? "bordered" : "solid"} onPress={() => _onChangeChartType({ type: "avg" })}
                       isIconOnly
                     >
                       <TbMathAvg size={24} />
@@ -414,9 +409,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
-                      color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
-                      onPress={_toggleAccumulation}
+                      variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"} onPress={_toggleAccumulation}
                       isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                       isIconOnly
                     >
@@ -434,9 +427,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "table" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "table" })}
-                      color={chart.type === "table" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "table" })} isIconOnly
                     >
                       <BsTable size={20} />
                     </Button>
@@ -447,9 +438,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "line" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "line" })}
-                      color={chart.type === "line" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "line" })} isIconOnly
                     >
                       <TbChartLine size={24} />
                     </Button>
@@ -460,9 +449,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "bar" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "bar" })}
-                      color={chart.type === "bar" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "bar" })} isIconOnly
                     >
                       <TbChartBar size={24} />
                     </Button>
@@ -473,9 +460,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "kpi" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "kpi" })}
-                      color={chart.type === "kpi" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "kpi" })} isIconOnly
                     >
                       <TbHash size={24} />
                     </Button>
@@ -486,9 +471,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "gauge" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "gauge" })}
-                      color={chart.type === "gauge" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "gauge" })} isIconOnly
                     >
                       <LuGauge size={24} />
                     </Button>
@@ -499,9 +482,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "matrix" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "matrix" })}
-                      color={chart.type === "matrix" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "matrix" })} isIconOnly
                     >
                       <TbGridDots size={24} />
                     </Button>
@@ -515,9 +496,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "pie" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "pie" })}
-                      color={chart.type === "pie" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "pie" })} isIconOnly
                     >
                       <TbChartPie2 size={24} />
                     </Button>
@@ -528,9 +507,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "doughnut" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "doughnut" })}
-                      color={chart.type === "doughnut" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "doughnut" })} isIconOnly
                     >
                       <TbChartDonut4 size={24} />
                     </Button>
@@ -541,9 +518,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "radar" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "radar" })}
-                      color={chart.type === "radar" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "radar" })} isIconOnly
                     >
                       <TbChartRadar size={24} />
                     </Button>
@@ -554,9 +529,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "polar" ? "bordered" : "solid"}
-                      onPress={() => _onChangeChartType({ type: "polar" })}
-                      color={chart.type === "polar" ? "primary" : "default"}
-                      isIconOnly
+                      onPress={() => _onChangeChartType({ type: "polar" })} isIconOnly
                     >
                       <TiChartPie size={24} />
                     </Button>
@@ -680,9 +653,7 @@ function ChartPreview(props) {
                   <Popover.Content>
                     <Popover.Dialog>
                       <TwitterPicker
-                        triangle={"hide"}
-                        color={range.color}
-                        onChange={(color) => _onChangeColor(color, index)}
+                        triangle={"hide"} onChange={(color) => _onChangeColor(color, index)}
                         colors={Object.values(chartColors).map((c) => c.hex)}
                       />
                     </Popover.Dialog>
@@ -691,7 +662,7 @@ function ChartPreview(props) {
                 {ranges.length > 1 && (
                   <Button
                     onPress={() => _onRemoveRange(index)}
-                    variant="light"
+                    variant="ghost"
                     size="sm"
                     isIconOnly
                   >
@@ -704,7 +675,7 @@ function ChartPreview(props) {
             <div className="flex flex-row gap-2 items-center">
               <Button
                 onPress={_onAddRange}
-                variant="flat"
+                variant="tertiary"
                 size="sm"
                 endContent={<LuPlus />}
               >
@@ -713,7 +684,7 @@ function ChartPreview(props) {
               {!isEqual(ranges, chart.ranges) && (
                 <Button
                   onPress={_onSaveRanges}
-                  variant="flat"
+                  variant="tertiary"
                   size="sm"
                   color="primary"
                 >

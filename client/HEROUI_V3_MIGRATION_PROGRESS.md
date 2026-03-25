@@ -226,6 +226,7 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 | Flat **`DropdownTrigger` / `DropdownMenu` / `DropdownItem`** | 0 — Batch 46; use **`Dropdown.Trigger`**, **`Dropdown.Popover`**, **`Dropdown.Menu`**, **`Dropdown.Item`** |
 | v2 **`variant="bordered"`** on HeroUI **`Input` / `Button` / …** | 0 — Batch 50; use **`secondary`** (or **`Accordion` `surface`**) |
 | Flat **`AccordionItem`** / **`title=`** / **`subtitle=`** on accordion | 0 — Batches 51–52; use **`Accordion.Item`** + **`Heading` / `Trigger` / `Indicator` / `Panel` / `Body`** |
+| v2 **`variant="flat"`** on **`Chip` / `Button` / `Select` / `Alert`** | 0 — Batch 54; **`Chip` → `soft`** (or **`variant` `primary`/`secondary`**) / **`Button` → `tertiary`/`secondary`/`danger-soft`/`primary`** / **`Select` → `primary`** / **`Alert` → `status`** |
 
 ## Batch 51 (follow-ups)
 
@@ -244,15 +245,43 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 - **`TableConfiguration.jsx`:** column options → compounds; custom **`LuSettings`** via **`Accordion.Indicator`**; **`fullWidth`** → **`className="w-full"`**; cancel reorder **`Button` `light` → `tertiary`**.
 - **`client/src`:** zero **`AccordionItem`** imports/usages (confirm: **`rg AccordionItem src`**).
 
+## Batch 53 (v3 variant / input cleanup)
+
+- **`TableConfiguration.jsx`:** drop invalid **`Dropdown.Menu` `variant="flat"`**; hidden-field **`Chip` `flat` → `soft`**; reorder **`Button` `faded` + invalid `color` → `secondary` / `primary`**; cancel **`tertiary` + `color` → `danger-soft`**.
+- **`TeamSettings.jsx`:** **`Input` `classNames` → `className`**; validation via **`isInvalid` / `errorMessage`**; save **`Button` v2 `flat`/`solid`/`color` → `secondary` / `primary`**.
+- **`InviteMembersForm.jsx`:** copy **`Button` `light` → `tertiary`/`primary`**; role **`Chip` `flat` → `soft`**.
+- **`FirestoreConnectionForm.jsx` / `RealtimeDbConnectionForm.jsx`:** connection name (and URL) **`Input` `color`/`description` → `isInvalid`/`errorMessage`**; JSON toggle + footer **`Button` `onClick` → `onPress`**; remove **`auto`**; **`faded`/`color` → `tertiary`/`primary`/`ghost`** as appropriate.
+- **`DateRangeFilter.jsx`:** **`DateRangePicker` `faded` → `secondary`**; preset **`Chip` `flat` → `soft`**.
+- **`ProjectDashboard.jsx`:** member role + snapshot **`Chip` `flat`/invalid combos → `soft`**.
+- **`AiModal.jsx`:** tool/chart/context **`Chip` `flat` → `soft`**; suggestion + link-styled **`Button` `flat` → `secondary`/`tertiary`**; remove invalid **`color`** on **`Button`** where replaced by variant.
+
+## Batch 54 (`variant="flat"` sweep — complete)
+
+- **`client/src`:** zero **`variant="flat"`** / **`variant={"flat"}`** on HeroUI components (confirm: **`rg 'variant="flat"' src`**, brace forms).
+- **Targeted edits (examples):** **`ApiBuilder.jsx`** — variable **`Chip`** **`variant="primary"`**; Transform control via **`Badge.Anchor`** + conditional **`Badge`** (replaces v2 **`Badge`** **`content`/`isInvisible`**); **`Button`** **`tertiary`/`danger-soft`/`secondary`/`primary`**; drawer Close/Save variants.
+- **`DatasetQuery.jsx`**, **`Chart.jsx`**, **`CampaignsQuery.jsx`**, **`SlackIntegrationsList.jsx`**, **`VisualSQL.jsx`** — **`Chip` `flat` → `soft`** or **`variant` `primary`/`secondary`**; **`Button` `flat` → `tertiary`/`primary`/`danger-soft`**; **`Tabs` `solid`/`light` → `primary`/`secondary`**; **`Select` `flat`+invalid `color` → `variant="primary"`**; variables **`Alert` `flat` → `status="accent"`**.
+- **Bulk assist:** scripted pass for **`Dropdown.Menu`** (drop invalid **`variant="flat"`**), **`Chip`/`Button`/`Select`/`Alert`** where **`flat`** was on one line with the opening tag; second pass for **multiline** openings + strip invalid **`Button` `color`** when paired with **`tertiary`/`secondary`/`danger-soft`**.
+- **Also touched (same sweep):** **`TableDataFormattingModal`** (preview swatches **`soft`**; chart config still stores legacy **`flat`** string), **`ApiPagination`**, **`ConnectionList`**, **`DatasetList`**, **`ChartDatasetConfig`** sort toggles, **`EditFieldFilter`**, **`ConnectionWizard`**, **`DashboardList`**, and remaining **`src`** call sites from the script list.
+- **Brace cleanup:** **`TeamMembers`**, **`ChartPreview`**, **`DatarequestSettings`**, **`TableComponent`** — **`variant={"flat"}`** / invalid **`Chip` `color`+`flat`** combos.
+
+## Batch 55 (`variant="light"` → **`ghost`** / **`Chip`** + **`Button`** cleanup)
+
+- **`variant="light"`** on **`Button`** / **`Tabs`** / **`Chip`:** scripted pass → **`Button`** **`ghost`** (strip invalid **`color`** on ghost **`Button`**), **`Tabs`** **`secondary`**, **`Chip`** **`soft`** where applicable.
+- **Lint follow-up:** **`SqlBuilder`**, **`MongoQueryBuilder`**, **`ClickHouseBuilder`** — **`useState` success flags** → **`[, setX]`** (value unused); **`ProjectSettings`** — remove dead **`success`/`error`** state (toasts remain).
+- **`SnapshotSchedule.jsx`:** medium toggles **`flat`/`solid`** → **`tertiary`/`primary`**; remove **`auto`**; viewport **`ButtonGroup`** — drop invalid **`color`** on ghost children, use **`className` `bg-primary/15`** when selected.
+- **`Chip` `@heroui/styles` alignment:** invalid **`color="primary"`** / **`color="secondary"`** (chip colors are **`accent`/`danger`/`default`/`success`/`warning`**) → **`variant="primary"`** / **`variant="secondary"`**; **`Postgres`/`Mysql`** test result **`Chip`** — replace v2 **`type=`** with **`color` + `variant="soft"`**; **`FirestoreBuilder`** collection/subcollection chips **`flat`/`solid`/`bordered`** → **`soft`/`primary`**; condition value **`faded` → `tertiary`**; refresh **`Button`** drop **`color`** on **`ghost`**.
+- **`ChartDatasets.jsx`**, **`DatasetList.jsx` (tag modal)**, **`SlackIntegration`**, **`AiModal`**, **`InviteMembersForm`**, **`FirestoreConnectionForm`:** same **`Chip`** rules.
+- **`ProjectSettings.jsx`:** **`Input`** — remove invalid **`color`**, use **`isInvalid`** for name validation.
+
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 52)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 55)
 
 ## Next batch
 
-1. Re-grep for v2 **`classNames`** on HeroUI inputs / stray **`onClick`** on **`Button`**.
-2. **`TableConfiguration.jsx`:** remaining v2 patterns (**`Dropdown.Menu` `variant="flat"`**, **`Chip` `variant="flat"`**, **`Button` `variant="faded"`**) when touching that file.
+1. **Legacy **`Alert`** API** (**`title`**, **`description`**, **`icon`**, **`color`**, **`variant`** on root) → **`Alert`/`Alert.Indicator`/`Alert.Content`/`Alert.Title`/`Alert.Description`** compounds + **`status`** (largest visual/behavior win after variant sweeps).
+2. Remaining **`Button` `variant="solid"`** / invalid v2 props (**`TableDataFormattingModal`**, **`AddChart`**, etc.) if any still present.
 3. Keep **`npm run build`** after import-surface edits.
 
 ## Notes

@@ -26,19 +26,17 @@ function SlackIntegrations() {
         <div className="flex items-center gap-1">
           <LuSlack size={24} />
           <div className="text-lg font-semibold">Slack</div>
-          <Chip color="secondary" variant="flat" size="sm" className="rounded-sm">
+          <Chip variant="secondary" size="sm" className="rounded-sm">
             New!
           </Chip>
         </div>
         <div className="w-2" />
         <Button
-          auto
           onPress={() => {
             setCreateOpen(true);
           }}
           startContent={<LuPlus />}
-          variant="flat"
-          color={"primary"}
+          variant="primary"
           size="sm"
         >
           Add a new Slack integration
@@ -98,7 +96,7 @@ function SlackIntegrations() {
                 <Link to={`/integrations/${i.id}`}>
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="ghost"
                     size="sm"
                     className="pointer-events-none"
                   >

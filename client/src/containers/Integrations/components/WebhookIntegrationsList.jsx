@@ -166,9 +166,7 @@ function WebhookIntegrations({ teamId }) {
             setCreateOpen(true);
           }}
           startContent={<LuPlus />}
-          variant="flat"
-          color={"primary"}
-          size="sm"
+          variant="tertiary" size="sm"
         >
           Add a new webhook
         </Button>
@@ -236,7 +234,7 @@ function WebhookIntegrations({ teamId }) {
                 <div className="flex items-center">
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="ghost"
                     onPress={() => _onEditOpen(i)}
                     size="sm"
                   >
@@ -244,9 +242,7 @@ function WebhookIntegrations({ teamId }) {
                   </Button>
                   <Button
                     isIconOnly
-                    variant="light"
-                    color="danger"
-                    onPress={() => setIntegrationToDelete(i.id)}
+                    variant="ghost" onPress={() => setIntegrationToDelete(i.id)}
                     size="sm"
                   >
                     <LuTrash size={18} />
@@ -330,9 +326,7 @@ function WebhookIntegrations({ teamId }) {
             </Button>
             <Button
               auto
-              onPress={!newIntegration.id ? _onCreate : _onEdit}
-              color="primary"
-              isPending={createLoading}
+              onPress={!newIntegration.id ? _onCreate : _onEdit} isPending={createLoading}
               startContent={createLoading ? <ButtonSpinner /> : undefined}
             >
               {!newIntegration.id && "Create"}
@@ -369,9 +363,7 @@ function WebhookIntegrations({ teamId }) {
             </Button>
             <Button
               auto
-              onPress={_onDelete}
-              color="danger"
-              isPending={deleteLoading}
+              onPress={_onDelete} isPending={deleteLoading}
               startContent={deleteLoading ? <ButtonSpinner /> : undefined}
             >
               Delete

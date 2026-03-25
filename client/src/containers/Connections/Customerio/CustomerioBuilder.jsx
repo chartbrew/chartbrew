@@ -245,7 +245,7 @@ function CustomerioBuilder(props) {
                 <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!cioRequest.transform?.enabled}>
                   <Button
                     color="primary"
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
                     onPress={() => setShowTransform(true)}
                   >

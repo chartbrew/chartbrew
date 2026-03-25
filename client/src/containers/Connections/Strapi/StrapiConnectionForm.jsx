@@ -280,7 +280,7 @@ function StrapiConnectionForm(props) {
                   <Button
                     isIconOnly
                     onClick={() => _removeOption(option.id)}
-                    variant="flat"
+                    variant="tertiary"
                     color="warning"
                   >
                     <LuCircleX />

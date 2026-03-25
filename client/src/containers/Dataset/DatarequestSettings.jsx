@@ -349,7 +349,7 @@ function DatarequestSettings(props) {
                     <Select.Trigger>
                       {_renderIcon(join.dr_id, "sm")}
                       <Select.Value />
-                      <Chip variant={"flat"} size="sm" color="primary">
+                      <Chip variant="primary" size="sm">
                         {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
                       </Chip>
                       <Select.Indicator />
@@ -395,7 +395,7 @@ function DatarequestSettings(props) {
                     <Select.Trigger>
                       {_renderIcon(join.join_id, "sm")}
                       <Select.Value />
-                      <Chip variant={"flat"} size="sm" color="secondary">
+                      <Chip variant="secondary" size="sm">
                         {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
                       </Chip>
                       <Select.Indicator />
@@ -512,9 +512,7 @@ function DatarequestSettings(props) {
           <Row className="drsettings-join-tut gap-2">
             <Button
               size="sm"
-              variant="light"
-              color="primary"
-              startContent={<LuPlus />}
+              variant="ghost" startContent={<LuPlus />}
               onPress={() => _onAddJoin()}
             >
               Join with another source
@@ -523,9 +521,7 @@ function DatarequestSettings(props) {
             {joins.length > 0 && (
               <Button
                 size="sm"
-                variant="light"
-                color="danger"
-                startContent={<LuX />}
+                variant="ghost" startContent={<LuX />}
                 onPress={() => _onRemoveLastJoin()}
               >
                 Remove last join
@@ -558,7 +554,7 @@ function DatarequestSettings(props) {
                 color="warning"
                 onPress={() => _onRevertChanges()}
                 size="sm"
-                variant="flat"
+                variant="tertiary"
               >
                 Revert changes
               </Button>

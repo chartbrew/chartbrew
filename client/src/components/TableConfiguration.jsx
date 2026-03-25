@@ -172,7 +172,7 @@ function TableConfiguration(props) {
                             </Link>
                           </Dropdown.Trigger>
                           <Dropdown.Popover>
-                            <Dropdown.Menu variant="flat">
+                            <Dropdown.Menu>
                               <Dropdown.Item
                                 id="format"
                                 startContent={<LuSettings />}
@@ -244,7 +244,7 @@ function TableConfiguration(props) {
                   <Chip
                     key={field}
                     onClick={() => _onShowField(field)}
-                    variant="flat"
+                    variant="soft"
                     className="rounded-sm"
                     startContent={(
                       <Link className="flex items-center" onPress={() => _onShowField(field)}>
@@ -261,8 +261,7 @@ function TableConfiguration(props) {
             <div className="h-2" />
             <div className="flex flex-row">
               <Button
-                color={isDragState ? "success" : "primary"}
-                variant="faded"
+                variant={isDragState ? "primary" : "secondary"}
                 onPress={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
                 isPending={loading}
                 size="sm"
@@ -275,8 +274,7 @@ function TableConfiguration(props) {
                   <div className="w-1" />
                   <Button
                     isIconOnly
-                    variant="tertiary"
-                    color={"danger"}
+                    variant="danger-soft"
                     onPress={_onCancelColumnOrder}
                     title="Cancel ordering"
                     size="sm"

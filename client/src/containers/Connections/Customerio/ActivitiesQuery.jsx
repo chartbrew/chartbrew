@@ -366,7 +366,7 @@ function ActivitiesQuery({
             <Button
               size="sm"
               color="success"
-              variant="flat"
+              variant="tertiary"
               onPress={_handleEventNameSave}
             >
               Save
@@ -391,7 +391,7 @@ function ActivitiesQuery({
             <Button
               size="sm"
               color="success"
-              variant="flat"
+              variant="tertiary"
               onPress={_handleCustomerIdSave}
             >
               Save
@@ -516,7 +516,7 @@ function ActivitiesQuery({
             <Button
               size="sm"
               color="success"
-              variant="flat"
+              variant="tertiary"
               onPress={_handleLimitSave}
             >
               Save

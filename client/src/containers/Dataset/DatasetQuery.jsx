@@ -292,20 +292,20 @@ function DatasetQuery(props) {
   const _renderDataRequestTabChip = (dr) => {
     if (_isMainDataRequest(dr)) {
       return (
-        <Chip size="sm" variant="flat" color="primary" className="rounded-sm">
+        <Chip size="sm" variant="primary" className="rounded-sm">
           main
         </Chip>
       );
     }
     if (_isDataRequestInJoin(dr)) {
       return (
-        <Chip size="sm" variant="flat" color="success" className="rounded-sm">
+        <Chip size="sm" variant="soft" color="success" className="rounded-sm">
           joined
         </Chip>
       );
     }
     return (
-      <Chip size="sm" variant="flat" color="warning" className="rounded-sm">
+      <Chip size="sm" variant="soft" color="warning" className="rounded-sm">
         needs config
       </Chip>
     );
@@ -320,7 +320,7 @@ function DatasetQuery(props) {
       <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
         <div className="flex flex-row items-center">
           <Tabs
-            variant="solid"
+            variant="primary"
             selectedKey={selectedTab}
             onSelectionChange={(key) => {
               setSelectedTab(key);
@@ -343,7 +343,7 @@ function DatasetQuery(props) {
                   <LuGitMerge size={16} />
                   <span>Join settings</span>
                   {_hasJoinConfiguration() && (
-                    <Chip size="sm" variant="flat" className="rounded-sm">
+                    <Chip size="sm" variant="soft" className="rounded-sm">
                       {`${_getJoinSettingsJoinCount()} join${_getJoinSettingsJoinCount() === 1 ? "" : "s"}`}
                     </Chip>
                   )}
@@ -370,7 +370,7 @@ function DatasetQuery(props) {
                 <Tabs
                   key={`sources-${_getSelectedTab()}`}
                   defaultSelectedKey={_getSelectedTab()}
-                  variant="light"
+                  variant="secondary"
                 >
                   {dataRequests.map((dr) => (
                     <Tab
@@ -504,7 +504,7 @@ function DatasetQuery(props) {
           <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20 bg-background rounded-lg border-1 border-divider p-4">
             <div className="h-2" />
             <div className="flex flex-row items-center gap-2">
-              <Button variant="flat" isIconOnly onPress={() => setCreateMode(false)} size="sm">
+              <Button variant="tertiary" isIconOnly onPress={() => setCreateMode(false)} size="sm">
                 <LuArrowLeft size={16} />
               </Button>
               <div className="text-lg font-tw font-semibold">Select a connection</div>
@@ -549,8 +549,7 @@ function DatasetQuery(props) {
                   <div>
                     <Button
                       onPress={() => setConnectionSearch("")}
-                      color="default"
-                      variant="flat"
+                      variant="tertiary"
                       endContent={<LuX />}
                     >
                       Clear search
@@ -579,7 +578,7 @@ function DatasetQuery(props) {
                           <div className="flex flex-col gap-1">
                             <Text size="h4">{c.name}</Text>
                             {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb" || c.type === "clickhouse") && (
-                              <Chip color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit />}>
+                              <Chip variant="secondary" size="sm" startContent={<LuBrainCircuit />}>
                                 {"AI-powered"}
                               </Chip>
                             )}
@@ -602,7 +601,7 @@ function DatasetQuery(props) {
                           <Card.Content>
                             <div className="flex flex-row items-center gap-1 flex-wrap">
                               {_getConnectionTags(c.project_ids).map((tag) => (
-                                <Chip key={tag} color="primary" variant="flat" size="sm">
+                                <Chip key={tag} variant="primary" size="sm">
                                   {tag}
                                 </Chip>
                               ))}
@@ -615,7 +614,7 @@ function DatasetQuery(props) {
                         <Container>
                           <div className="flex flex-row justify-center">
                             <Button
-                              variant="flat"
+                              variant="tertiary"
                               onPress={() => _onCreateNewRequest(c)}
                               size="sm"
                               fullWidth

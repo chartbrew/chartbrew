@@ -375,7 +375,7 @@ function ApiConnectionForm(props) {
                 <Button
                   isIconOnly
                   onPress={() => _removeOption(option.id)}
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuX />
                 </Button>
@@ -461,7 +461,7 @@ function ApiConnectionForm(props) {
                 <Chip
                   size="sm"
                   color={testResult.status < 400 ? "success" : "danger"}
-                  variant="flat"
+                  variant="soft"
                 >
                   {`Status code: ${testResult.status}`}
                 </Chip>

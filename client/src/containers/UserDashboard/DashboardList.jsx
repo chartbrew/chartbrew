@@ -239,9 +239,7 @@ function DashboardList() {
 
             <div className="flex flex-row items-center gap-2">
               {canManageDashboards && (
-                <Button
-                  color="primary"
-                  onPress={() => _onNewProject(team)}
+                <Button onPress={() => _onNewProject(team)}
                   endContent={<LuPlus />}
                   className="create-dashboard-tutorial"
                 >
@@ -447,7 +445,7 @@ function DashboardList() {
                           {isPinned ? (
                             <Tooltip>
                               <Tooltip.Trigger>
-                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
+                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost">
                                   <LuPin className="text-secondary" size={18} fill="currentColor" />
                                 </Button>
                               </Tooltip.Trigger>
@@ -456,7 +454,7 @@ function DashboardList() {
                           ) : (
                             <Tooltip>
                               <Tooltip.Trigger>
-                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                   <LuPin className="text-secondary" size={18} />
                                 </Button>
                               </Tooltip.Trigger>
@@ -489,7 +487,7 @@ function DashboardList() {
                               )}
                             </div>
                           ) : (
-                            <Chip variant="flat" size="sm">
+                            <Chip variant="soft" size="sm">
                               Team only
                             </Chip>
                           )}
@@ -509,7 +507,7 @@ function DashboardList() {
                               <Tooltip.Trigger>
                                 <Button
                                   isIconOnly
-                                  variant="light"
+                                  variant="ghost"
                                   size="sm"
                                   className="min-w-fit"
                                   onPress={() => _onEditProject(project)}
@@ -522,9 +520,7 @@ function DashboardList() {
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Button
-                                  isIconOnly
-                                  color="danger"
-                                  variant="light"
+                                  isIconOnly variant="ghost"
                                   size="sm"
                                   className="min-w-fit"
                                   onPress={() => _onDeleteProject(project)}

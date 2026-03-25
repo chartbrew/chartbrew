@@ -783,9 +783,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           }
           variant="secondary"
         >
-          <Button
-            color="primary"
-            size="sm"
+          <Button size="sm"
             onPress={() => _onResetQuery()}
             className="mt-2"
           >
@@ -843,7 +841,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
       {variables && variables.length > 0 && (
         <Alert
           title="Click to edit variables"
-          variant="flat"
+          status="accent"
           icon={<LuVariable fillOpacity={0} />}
         >
           <div className="flex gap-1 items-center mt-2">
@@ -897,8 +895,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           {fromItem.table && (
             <Select
               size="sm"
-              color="primary"
-              variant="flat"
+              variant="primary"
               value={fromItem.table || null}
               selectionMode="single"
               aria-label="Select main database table"
@@ -924,8 +921,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           {fromItem.joinTable && (
             <Button
               size="sm"
-              color="primary"
-              variant="flat"
+              variant="tertiary"
               onPress={() => setViewJoin({ ...fromItem, index })}
             >
               {`${fromItem.joinTable} on ${fromItem.on.left} ${fromItem.on.operator} ${fromItem.on.right}`}
@@ -935,7 +931,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
             <Button
               isIconOnly
               size="sm"
-              variant="light"
+              variant="ghost"
               onPress={() => _onRemoveJoin(index)}
             >
               <LuX />
@@ -951,10 +947,9 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               <Popover.Trigger>
                 <Button
                   size="sm"
-                  color="primary"
-                  variant="flat"
+                  variant="tertiary"
                 >
-                  {typeof col.expr.column === "object" 
+                  {typeof col.expr.column === "object"
                     ? (col.expr.column.expr.value === "*" ? "All" : col.expr.column.expr.value)
                     : (col.expr.column === "*" ? "All" : col.expr.column)
                   }
@@ -963,9 +958,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               <Popover.Content>
                 <Popover.Dialog>
                   <Button
-                    size="sm"
-                    color="danger"
-                    variant="light"
+                    size="sm" variant="ghost"
                     endContent={<LuX />}
                     onPress={() => _onRemoveColumn(typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column)}
                   >
@@ -978,7 +971,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <Button
             isIconOnly
             size="sm"
-            variant="light"
+            variant="ghost"
             onPress={() => setViewAddColumn(true)}
           >
             <LuPlus />
@@ -990,7 +983,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
         <Button
           isIconOnly
           size="sm"
-          variant="light"
+          variant="ghost"
           onPress={() => setViewFilter(true)}
         >
           <LuPlus />
@@ -1001,7 +994,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           {index > 0 && ast?.where?.operator && (
             <Chip
               size="sm"
-              variant="flat"
+              variant="soft"
               color="default"
               className="rounded-sm cursor-pointer"
               onPress={() => _onChangeOperator(ast?.where?.operator)}
@@ -1011,29 +1004,26 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           )}
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {typeof condition.left?.column === "object" ? condition.left.column?.expr?.value : condition.left?.column}
           </Button>
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {condition.operator}
           </Button>
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {condition.right?.value}
           </Button>
           <Button
             isIconOnly
             size="sm"
-            variant="light"
+            variant="ghost"
             onPress={() => _onRemoveFilter(condition)}
           >
             <LuX />
@@ -1046,15 +1036,14 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Group by</code>
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {`${group.table.value ? `${group.table.value}.` : ""}${group.column}`}
           </Button>
           <Button
             isIconOnly
             size="sm"
-            variant="light"
+            variant="ghost"
             onPress={() => _onRemoveGroup(group)}
           >
             <LuX />
@@ -1067,15 +1056,14 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Order by</code>
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {`${order.expr?.table?.value ? `${order.expr.table.value}.` : ""}${order.expr.column} ${order.type}`}
           </Button>
           <Button
             isIconOnly
             size="sm"
-            variant="light"
+            variant="ghost"
             onPress={() => _onRemoveOrder(order)}
           >
             <LuX />
@@ -1088,15 +1076,14 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Limit</code>
           <Button
             size="sm"
-            color="primary"
-            variant="flat"
+            variant="tertiary"
           >
             {ast.limit.value[0]?.value}
           </Button>
           <Button
             isIconOnly
             size="sm"
-            variant="light"
+            variant="ghost"
             onPress={() => _onRemoveLimit()}
           >
             <LuX />
@@ -1109,11 +1096,11 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
       </div>
 
       <div className="flex gap-1 items-center">
-        <Button variant="flat" size="sm" onPress={() => setViewGroupBy(true)}>group</Button>
-        <Button variant="flat" size="sm" onPress={() => setViewOrderBy(true)}>order</Button>
-        <Button variant="flat" size="sm" onPress={() => setViewLimit(true)}>limit</Button>
+        <Button variant="tertiary" size="sm" onPress={() => setViewGroupBy(true)}>group</Button>
+        <Button variant="tertiary" size="sm" onPress={() => setViewOrderBy(true)}>order</Button>
+        <Button variant="tertiary" size="sm" onPress={() => setViewLimit(true)}>limit</Button>
         <Button
-          variant="flat"
+          variant="tertiary"
           size="sm"
           onPress={() => _onAddJoin()}
         >
@@ -1184,7 +1171,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                             id={column}
                             textValue={column}
                           >
-                            <Chip size="sm" variant="flat">{viewJoin.joinTable}</Chip>
+                            <Chip size="sm" variant="soft">{viewJoin.joinTable}</Chip>
                             {column}
                             <ListBox.ItemIndicator />
                           </ListBox.Item>
@@ -1215,7 +1202,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                             id={`${column.table}.${column.column}`}
                             textValue={column.column}
                           >
-                            <Chip size="sm" variant="flat">{column.table}</Chip>
+                            <Chip size="sm" variant="soft">{column.table}</Chip>
                             {column.column}
                             <ListBox.ItemIndicator />
                           </ListBox.Item>
@@ -1281,14 +1268,14 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
             </Select>
             <div className="flex flex-row gap-1">
               <Button
-                variant="flat"
+                variant="tertiary"
                 size="sm"
                 onPress={() => setSelectedColumns(_getAvailableColumns())}
               >
                 Select all
               </Button>
               <Button
-                variant="flat"
+                variant="tertiary"
                 size="sm"
                 onPress={() => setSelectedColumns([])}
               >

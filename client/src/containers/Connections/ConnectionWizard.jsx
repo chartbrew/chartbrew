@@ -253,7 +253,7 @@ function ConnectionWizard() {
                           {conn.ai && (
                             <Tooltip>
                               <Tooltip.Trigger>
-                                <Chip color="secondary" variant="flat" size="sm" className="rounded-sm" startContent={<LuBrainCircuit size={14} />}>
+                                <Chip variant="secondary" size="sm" className="rounded-sm" startContent={<LuBrainCircuit size={14} />}>
                                   {"AI-powered"}
                                 </Chip>
                               </Tooltip.Trigger>

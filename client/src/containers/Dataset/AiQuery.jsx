@@ -109,7 +109,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
         ) : conversation.length === 0 ? (
           <Alert
             icon={<LuBrainCircuit />}
-            variant="flat"
+            status="accent"
             color="primary"
             description={`Hi! I can help you write ${connectionType === "mongodb" ? "MongoDB" : "SQL"} queries. Ask me a question about your data and I'll generate a query for you.`}
           />

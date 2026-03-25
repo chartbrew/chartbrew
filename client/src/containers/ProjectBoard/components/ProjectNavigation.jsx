@@ -276,7 +276,7 @@ function ProjectNavigation(props) {
                 <Tooltip.Trigger>
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="ghost"
                     color="default"
                     onPress={() => onSetMenuSize(70)}
                   >
@@ -293,7 +293,7 @@ function ProjectNavigation(props) {
                 <Tooltip.Trigger>
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="ghost"
                     color="default"
                     onPress={() => onSetMenuSize(sideMaxSize)}
                   >

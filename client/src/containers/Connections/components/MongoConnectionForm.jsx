@@ -419,7 +419,7 @@ function MongoConnectionForm(props) {
                         isIconOnly
                         onClick={() => _removeOption(option.id)}
                         auto
-                        variant="flat"
+                        variant="tertiary"
                         color="danger"
                       >
                         <LuCircleX />
@@ -556,7 +556,7 @@ function MongoConnectionForm(props) {
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
-                variant="flat"
+                variant="soft"
               >
                 {`Status code: ${testResult.status}`}
               </Chip>

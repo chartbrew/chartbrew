@@ -466,9 +466,7 @@ function ClickHouseConnectionForm(props) {
           <div className="w-2" />
           <Button
             isPending={loading}
-            onPress={_onCreateConnection}
-            color="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
+            onPress={_onCreateConnection} startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}
           </Button>
@@ -486,10 +484,8 @@ function ClickHouseConnectionForm(props) {
                 {"Test Result "}
               </div>
               <div className="w-4" />
-              <Chip
-                color={testResult.status < 400 ? "success" : "danger"}
-                size="sm"
-                variant="flat"
+              <Chip size="sm"
+                variant="soft"
                 className="rounded-sm"
               >
                 {`Status code: ${testResult.status}`}
@@ -527,7 +523,7 @@ function FormGuides() {
         </div>
         <div className="w-2" />
         <Button
-          variant="light"
+          variant="ghost"
           size="sm"
           isIconOnly
           color={copiedIP ? "success" : "default"}

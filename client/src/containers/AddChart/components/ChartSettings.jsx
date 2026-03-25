@@ -214,10 +214,8 @@ function ChartSettings({ chart, onChange }) {
             <Tooltip>
               <Tooltip.Trigger>
                 <Button
-                  variant="light"
-                  isIconOnly
-                  color="danger"
-                  onPress={() => _onRemoveDateFiltering()}
+                  variant="ghost"
+                  isIconOnly onPress={() => _onRemoveDateFiltering()}
                   size="sm"
                 >
                   <LuCircleX />
@@ -230,7 +228,7 @@ function ChartSettings({ chart, onChange }) {
             <Tooltip>
               <Tooltip.Trigger>
                 <Button
-                  variant="light"
+                  variant="ghost"
                   isIconOnly
                   onPress={() => setDateFormattingModal(true)}
                   size="sm"
@@ -454,15 +452,13 @@ function ChartSettings({ chart, onChange }) {
                   <>
                     <Button
                       disabled={!max || (max === chart.maxValue)}
-                      onPress={() => onChange({ maxValue: max })}
-                      color="success"
-                      variant="flat"
+                      onPress={() => onChange({ maxValue: max })} variant="secondary"
                       size="sm"
                     >
                       Save
                     </Button>
                     <Button
-                      variant="flat"
+                      variant="tertiary"
                       color="danger"
                       onPress={() => {
                         onChange({ maxValue: null });
@@ -490,15 +486,13 @@ function ChartSettings({ chart, onChange }) {
                   <>
                     <Button
                       disabled={!min || (min === chart.minValue)}
-                      onPress={() => onChange({ minValue: min })}
-                      color="success"
-                      variant="flat"
+                      onPress={() => onChange({ minValue: min })} variant="secondary"
                       size="sm"
                     >
                       Save
                     </Button>
                     <Button
-                      variant="flat"
+                      variant="tertiary"
                       color="danger"
                       onPress={() => {
                         onChange({ minValue: null });
@@ -592,7 +586,7 @@ function ChartSettings({ chart, onChange }) {
               }}
               endContent={(
                 <Button
-                  variant="flat"
+                  variant="tertiary"
                   color="success"
                   onPress={() => _onConfirmTicksNumber()}
                   auto
@@ -633,35 +627,27 @@ function ChartSettings({ chart, onChange }) {
               />
             </div>
             <div className="flex flex-row flex-wrap gap-1">
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => setDatesFormat("YYYY-MM-DD")}
-                variant="flat"
+                variant="tertiary"
               >
                 {"YYYY-MM-DD"}
               </Button>
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => setDatesFormat("YYYY-MM-DD HH:mm:ss")}
-                variant="flat"
+                variant="tertiary"
               >
                 {"YYYY-MM-DD HH:mm:ss"}
               </Button>
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => setDatesFormat("X")}
-                variant="flat"
+                variant="tertiary"
               >
                 {"Timestamp (in seconds)"}
               </Button>
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => setDatesFormat("x")}
-                variant="flat"
+                variant="tertiary"
               >
                 {"Timestamp (in ms)"}
               </Button>

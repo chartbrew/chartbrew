@@ -60,7 +60,7 @@ function EditDateRangeFilter({
       </div>
       <div className="flex flex-row flex-wrap gap-1">
         <Button
-          variant="flat"
+          variant="tertiary"
           startContent={<LuSquareCheck />}
           size="sm"
           onPress={() => _handleChartSelection(null, true)}
@@ -68,7 +68,7 @@ function EditDateRangeFilter({
           Select all
         </Button>
         <Button
-          variant="flat"
+          variant="tertiary"
           startContent={<LuX />}
           size="sm"
           onPress={() => _handleChartSelection(null, false, true)}

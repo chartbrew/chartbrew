@@ -47,7 +47,7 @@ function NoticeBoard() {
               />
               <div className="absolute inset-0 w-full h-full flex flex-col justify-center items-center z-50">
                 <Button
-                  variant="flat"
+                  variant="tertiary"
                   color="primary"
                   onPress={() => setShowQuickStart(true)}
                   endContent={<LuCirclePlay />}

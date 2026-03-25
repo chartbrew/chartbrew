@@ -267,9 +267,7 @@ function DatasetList() {
           </div>
         </div>
         {_canAccess("teamAdmin", team.TeamRoles) && (
-          <Button
-            color="primary"
-            endContent={<LuPlus />}
+          <Button endContent={<LuPlus />}
             onPress={() => _onCreateDataset()}
             isDisabled={connections.length === 0}
           >
@@ -285,14 +283,14 @@ function DatasetList() {
             <LuListFilter strokeWidth={1.5} />
             <span className="text-sm">Filters</span>
             {_getActiveFilterCount() > 0 && (
-              <Chip size="sm" variant="flat" rounded="sm">
+              <Chip size="sm" variant="soft" className="rounded-sm">
                 {_getActiveFilterCount()}
               </Chip>
             )}
           </div>
           {_getActiveFilterCount() > 0 && (
             <Button
-              variant="light"
+              variant="ghost"
               size="sm"
               onPress={_onClearAllFilters}
               startContent={<LuX size={14} />}
@@ -456,10 +454,9 @@ function DatasetList() {
       {selectedDatasets.length > 0 && (
         <div>
           <Button
-            variant="flat"
+            variant="danger-soft"
             size="sm"
             onPress={() => setShowDeleteDatasets(true)}
-            color="danger"
             startContent={<LuTrash size={16} />}
           >
             Delete selected
@@ -527,9 +524,7 @@ function DatasetList() {
                       <span>You need to create a connection to get started</span>
                       <div className="h-1" />
                       <Button
-                        onPress={() => navigate("/connections/new")}
-                        color="primary"
-                      >
+                        onPress={() => navigate("/connections/new")} >
                         Create your first connection
                       </Button>
                     </div>
@@ -556,7 +551,7 @@ function DatasetList() {
                       <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
                     </Link>
                     {dataset.draft && (
-                      <Chip size="sm" variant="flat" color="secondary">
+                      <Chip size="sm" variant="secondary">
                         Draft
                       </Chip>
                     )}
@@ -602,8 +597,7 @@ function DatasetList() {
                         <Chip
                           key={tag}
                           size="sm"
-                          variant="flat"
-                          color="primary"
+                          variant="primary"
                         >
                           {tag}
                         </Chip>
@@ -615,7 +609,7 @@ function DatasetList() {
                   )}
                   {_getDatasetTags(dataset.project_ids).length === 0 && (
                     <Button
-                      variant="light"
+                      variant="ghost"
                       startContent={<LuPlus size={18} />}
                       size="sm"
                       className="opacity-0 hover:opacity-100"
@@ -638,7 +632,7 @@ function DatasetList() {
                       <Dropdown.Trigger>
                         <Button
                           isIconOnly
-                          variant="light"
+                          variant="ghost"
                           size="sm"
                         >
                           <LuEllipsis />
@@ -646,7 +640,6 @@ function DatasetList() {
                       </Dropdown.Trigger>
                       <Dropdown.Popover>
                         <Dropdown.Menu
-                          variant="flat"
                           disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
                         >
                           <Dropdown.Item
@@ -746,8 +739,7 @@ function DatasetList() {
                 <Chip
                   key={chart.id}
                   size="sm"
-                  variant="flat"
-                  color="primary"
+                  variant="primary"
                 >
                   {chart.name}
                 </Chip>
@@ -789,8 +781,7 @@ function DatasetList() {
               {projects.filter((p) => !p.ghost).map((project) => (
                 <Chip
                   key={project.id}
-                  variant={datasetToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
-                  color="primary"
+                  variant={datasetToEdit?.project_ids?.includes(project.id) ? "primary" : "soft"}
                   className="rounded-sm cursor-pointer"
                   onClick={() => {
                     if (datasetToEdit?.project_ids?.includes(project.id)) {

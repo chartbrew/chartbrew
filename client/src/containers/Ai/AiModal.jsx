@@ -799,7 +799,7 @@ function AiModal({ isOpen, onClose }) {
                   <Popover key={idx} aria-label="Tool call arguments">
                     <Popover.Trigger>
                       <Chip
-                        variant="flat"
+                        variant="soft"
                         color="primary"
                         size="sm"
                         endContent={<LuChevronDown size={14} />}
@@ -834,13 +834,13 @@ function AiModal({ isOpen, onClose }) {
           <div className="w-full max-w-[90%]">
             <div className="bg-success-50 border border-success-200 px-4 py-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Chip variant="flat" color="success" size="sm">
+                <Chip variant="soft" color="success" size="sm">
                   Result: {parsed.name}
                 </Chip>
               </div>
               <Popover aria-label="Tool result">
                 <Popover.Trigger>
-                  <Button size="sm" variant="flat" endContent={<LuChevronDown size={14} />}>
+                  <Button size="sm" variant="tertiary" endContent={<LuChevronDown size={14} />}>
                     View result
                   </Button>
                 </Popover.Trigger>
@@ -883,7 +883,7 @@ function AiModal({ isOpen, onClose }) {
                     </span>
                     <Chip
                       size="sm"
-                      variant="flat"
+                      variant="soft"
                       color={parsed.type === "chart_created" ? "success" : "warning"}
                     >
                       {parsed.chartName}
@@ -909,8 +909,7 @@ function AiModal({ isOpen, onClose }) {
                     <a href={`/${team.id}/${parsed.projectId}/dashboard`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
-                        variant="flat"
-                        color="primary"
+                        variant="tertiary"
                         className="pointer-events-none"
                       >
                         View on Dashboard
@@ -919,7 +918,7 @@ function AiModal({ isOpen, onClose }) {
                     <a href={`/${team.id}/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
-                        variant="flat"
+                        variant="tertiary"
                         className="pointer-events-none"
                       >
                         Edit Chart
@@ -955,14 +954,14 @@ function AiModal({ isOpen, onClose }) {
                     </span>
                     <Chip
                       size="sm"
-                      variant="flat"
+                      variant="soft"
                       color="primary"
                     >
                       {parsed.chartName}
                     </Chip>
                     <Chip
                       size="sm"
-                      variant="flat"
+                      variant="soft"
                       color="default"
                       className="ml-auto"
                     >
@@ -1027,8 +1026,7 @@ function AiModal({ isOpen, onClose }) {
                         <Button
                           key={suggestion.id}
                           type="button"
-                          variant="flat"
-                          color="secondary"
+                          variant="secondary"
                           size="sm"
                           className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
                           onPress={() => _onSuggestionClick(suggestion)}
@@ -1190,8 +1188,7 @@ function AiModal({ isOpen, onClose }) {
                       <Button
                         key={suggestion.id}
                         type="button"
-                        variant="flat"
-                        color="secondary"
+                        variant="secondary"
                         size="sm"
                         className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
                         onPress={() => _onSuggestionClick(suggestion)}
@@ -1269,7 +1266,7 @@ function AiModal({ isOpen, onClose }) {
               <div className="flex flex-col items-center justify-center">
                 <div className="flex flex-row items-center gap-2">
                   <div className="font-tw font-medium text-lg">Chartbrew AI</div>
-                  <Chip color="primary" variant="flat" size="sm" className="rounded-sm shadow-sm">
+                  <Chip variant="primary" size="sm" className="rounded-sm shadow-sm">
                     Beta
                   </Chip>
                 </div>
@@ -1421,7 +1418,7 @@ function AiModal({ isOpen, onClose }) {
                     <Chip
                       key={`${entity.entity_type}-${entity.id}`}
                       color="primary"
-                      variant="flat"
+                      variant="soft"
                       size="sm"
                       onClose={() => {
                         setSelectedContext(prev => ({
@@ -1436,7 +1433,7 @@ function AiModal({ isOpen, onClose }) {
                   {selectedContext.singleSelect && (
                     <Chip
                       color="secondary"
-                      variant="flat"
+                      variant="soft"
                       size="sm"
                       onClose={() => {
                         setSelectedContext(prev => ({
@@ -1736,7 +1733,7 @@ function AiModal({ isOpen, onClose }) {
                           <Chip
                             key={`${entity.entity_type}-${entity.id}`}
                             color="primary"
-                            variant="flat"
+                            variant="soft"
                             size="sm"
                             onClose={() => {
                               setSelectedContext(prev => ({
@@ -1751,7 +1748,7 @@ function AiModal({ isOpen, onClose }) {
                         {selectedContext.singleSelect && (
                           <Chip
                             color="secondary"
-                            variant="flat"
+                            variant="soft"
                             size="sm"
                             onClose={() => {
                               setSelectedContext(prev => ({

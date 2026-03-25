@@ -201,7 +201,7 @@ function ChartFilters(props) {
 
                     {_getConditionValue(condition.id) && (
                       <Button
-                        variant="light"
+                        variant="ghost"
                         isIconOnly
                         onPress={() => _onOptionSelected("", condition, true)}
                         size={size}
@@ -232,7 +232,7 @@ function ChartFilters(props) {
                     </I18nProvider>
                     {_getConditionValue(condition.id) && (
                       <Button
-                        variant="light"
+                        variant="ghost"
                         isIconOnly
                         onPress={() => _onOptionSelected("", condition, true)}
                         size={size}

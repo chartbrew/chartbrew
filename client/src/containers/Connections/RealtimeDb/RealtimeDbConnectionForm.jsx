@@ -217,8 +217,8 @@ function RealtimeDbConnectionForm(props) {
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            color={errors.name ? "danger" : "primary"}
-            description={errors.name}
+            isInvalid={!!errors.name}
+            errorMessage={errors.name || undefined}
             variant="secondary"
             fullWidth
           />
@@ -232,8 +232,8 @@ function RealtimeDbConnectionForm(props) {
             onChange={(e) => {
               setConnection({ ...connection, connectionString: e.target.value });
             }}
-            color={errors.connectionString ? "danger" : "primary"}
-            description={errors.connectionString}
+            isInvalid={!!errors.connectionString}
+            errorMessage={errors.connectionString || undefined}
             variant="secondary"
             fullWidth
           />
@@ -247,10 +247,9 @@ function RealtimeDbConnectionForm(props) {
         {!jsonVisible && (
           <Row>
             <Button
-              onClick={() => setJsonVisible(true)}
+              onPress={() => setJsonVisible(true)}
               size="sm"
-              color="primary"
-              variant="faded"
+              variant="tertiary"
             >
               Click here to copy the JSON manually
             </Button>
@@ -396,8 +395,7 @@ function RealtimeDbConnectionForm(props) {
         <Row>
           <Button
             variant="ghost"
-            auto
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
             startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
@@ -406,8 +404,8 @@ function RealtimeDbConnectionForm(props) {
           <div className="w-2" />
           <Button
             isPending={loading}
-            onClick={_onCreateConnection}
-            color="primary"
+            onPress={_onCreateConnection}
+            variant="primary"
             startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}

@@ -200,16 +200,14 @@ function ChartDatasets(props) {
           <div className="h-4" />
           <div className="flex flex-row gap-1 items-center">
             <Chip
-              color={tag === "project" ? "primary" : "default"}
-              variant={tag === "project" ? "solid" : "bordered"}
+              variant={tag === "project" ? "primary" : "soft"}
               onClick={() => setTag("project")}
               className="rounded-sm cursor-pointer"
             >
               This project
             </Chip>
             <Chip
-              color={tag === "team" ? "primary" : "default"}
-              variant={tag === "team" ? "solid" : "bordered"}
+              variant={tag === "team" ? "primary" : "soft"}
               onClick={() => setTag("team")}
               className="rounded-sm cursor-pointer chart-empty-filter-tutorial"
             >
@@ -246,7 +244,7 @@ function ChartDatasets(props) {
                           <div className="font-bold">{getDatasetDisplayName(dataset)}</div>
                           <div className="flex flex-wrap gap-1">
                             {_getDatasetTags(dataset).map((tag) => (
-                              <Chip key={tag} size="sm" variant="flat" color="primary">
+                              <Chip key={tag} size="sm" variant="primary">
                                 {tag}
                               </Chip>
                             ))}
@@ -334,9 +332,7 @@ function ChartDatasets(props) {
             <Chip
               key={cdc.id}
               title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
-              color={activeCdc?.id === cdc.id ? "primary" : "default"}
-              // variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
-              variant="flat"
+              variant={activeCdc?.id === cdc.id ? "primary" : "soft"}
               onClick={() => setActiveCdc(cdc)}
               className={`rounded-sm cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
               size="lg"

@@ -425,9 +425,7 @@ function CustomerQuery(props) {
             size="sm"
             startContent={<LuFolder />}
             onPress={() => _onConfigureSegment()}
-            variant="secondary"
-            color="primary"
-          >
+            variant="secondary" >
             Add segment condition
           </Button>
           <div className="w-0.5" />
@@ -435,9 +433,7 @@ function CustomerQuery(props) {
             size="sm"
             startContent={<LuUser />}
             onPress={() => _onConfigureAttribute()}
-            variant="secondary"
-            color="primary"
-          >
+            variant="secondary" >
             Add attribute condition
           </Button>
         </Row>
@@ -505,17 +501,13 @@ function CustomerQuery(props) {
           <Button
             isIconOnly
             onClick={_onAddSegmentCondition}
-            size="sm"
-            color="success"
-            variant="light"
+            size="sm" variant="ghost"
           >
             <LuCheck />
           </Button>
           <div className="w-1" />
           <Button
-            isIconOnly
-            color="danger"
-            variant="light"
+            isIconOnly variant="ghost"
             onClick={() => setSegmentConfig(null)}
             size="sm"
           >

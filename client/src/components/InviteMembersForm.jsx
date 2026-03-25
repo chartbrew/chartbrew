@@ -246,11 +246,10 @@ function InviteMembersForm(props) {
               variant="secondary"
               endContent={(
                 <Button
-                  color={urlCopied ? "success" : "default"}
                   onPress={_onCopyUrl}
                   size="sm"
                   isIconOnly
-                  variant="light"
+                  variant={urlCopied ? "primary" : "tertiary"}
                 >
                   {urlCopied ? <LuCheck /> : <LuCopy />}
                 </Button>
@@ -260,17 +259,17 @@ function InviteMembersForm(props) {
           </div>
           <div className="h-2" />
           <div className="flex flex-wrap items-center gap-1">
-            <Chip color="warning" variant={"flat"} size="sm">
+            <Chip color="warning" variant="soft" size="sm">
               {`${role} role`}
             </Chip>
             {role !== "teamAdmin" && (
               <>
                 <div className="w-1" />
-                <Chip color="primary" variant={"flat"} size="sm">
+                <Chip variant="primary" size="sm">
                   {`Access to ${projectAccess.length} dashboard${projectAccess.length !== 1 ? "s" : ""}`}
                 </Chip>
                 <div className="w-1" />
-                <Chip color="success" variant={"flat"} size="sm">
+                <Chip color="success" variant="soft" size="sm">
                   {exportAllowed ? "Data export allowed" : "Data export not allowed"}
                 </Chip>
               </>

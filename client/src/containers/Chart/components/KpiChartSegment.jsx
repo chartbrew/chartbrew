@@ -51,7 +51,7 @@ function KpiChartSegment(props) {
                       <div>
                         <Chip
                           size="sm"
-                          variant="flat"
+                          variant="soft"
                           className="rounded-sm"
                           color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
                           startContent={c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : ""}

@@ -84,7 +84,7 @@ function QueryResultsTable({ result }) {
                             <Popover.Trigger>
                               <Button
                                 size="sm"
-                                variant="flat"
+                                variant="tertiary"
                                 color="primary"
                               >
                                 {Array.isArray(row[key]) ? "Array" : "Object"}

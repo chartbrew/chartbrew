@@ -400,7 +400,7 @@ function DatasetBuilder(props) {
               <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
                 {_filterOptions("x").map((option) => (
                   <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                    <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                    <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                     <span>{option.text}</span>
                     <ListBox.ItemIndicator />
                   </ListBox.Item>
@@ -439,7 +439,7 @@ function DatasetBuilder(props) {
               <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
                 {_getYFieldOptions().map((option) => (
                   <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                    <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                    <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                     <span>{option.text}</span>
                     <ListBox.ItemIndicator />
                   </ListBox.Item>
@@ -504,7 +504,7 @@ function DatasetBuilder(props) {
                 <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
                   {_getDateFieldOptions().map((option) => (
                     <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                      <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                      <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
                       <span>{option.text}</span>
                       <ListBox.ItemIndicator />
                     </ListBox.Item>

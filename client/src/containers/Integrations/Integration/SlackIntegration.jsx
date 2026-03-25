@@ -154,7 +154,7 @@ function SlackIntegration({ integration }) {
           </div>
         </div>
         <Button
-          variant="flat"
+          variant="tertiary"
           color="danger"
           onPress={() => setDeleteModalOpen(true)}
           size="sm"
@@ -243,7 +243,7 @@ function SlackIntegration({ integration }) {
                       <div className="flex flex-row items-center gap-2">
                         <LuHash />
                         <span>{c.name}</span>
-                        {c.is_private ? <Chip size="sm" color="primary" variant="flat">Private</Chip> : null}
+                        {c.is_private ? <Chip size="sm" variant="primary">Private</Chip> : null}
                       </div>
                       <ListBox.ItemIndicator />
                     </ListBox.Item>

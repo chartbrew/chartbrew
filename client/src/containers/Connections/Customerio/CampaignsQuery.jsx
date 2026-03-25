@@ -364,7 +364,7 @@ function CampaignsQuery(props) {
                   id={campaign.key}
                   textValue={campaign.text}
                 >
-                  <Chip color={campaign.label.color} size="sm" className="min-w-[70px] text-center" variant="flat">
+                  <Chip color={campaign.label.color} size="sm" className="min-w-[70px] text-center" variant="soft">
                     {campaign.label.content}
                   </Chip>
                   <span>{campaign.text}</span>

@@ -203,7 +203,7 @@ function Signup() {
               <Alert
                 className="mt-4"
                 color="success"
-                variant="flat"
+                status="accent"
                 title="You have been added to the team"
                 description="We will redirect you to your dashboard now..."
               />

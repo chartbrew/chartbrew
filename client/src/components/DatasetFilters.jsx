@@ -239,7 +239,7 @@ function DatasetFilters(props) {
           <Button
             startContent={<LuListFilter />}
             onPress={_onAddCondition}
-            variant="flat"
+            variant="tertiary"
             size="sm"
           >
             Add data filters
@@ -285,7 +285,7 @@ function DatasetFilters(props) {
                           id={field.value}
                           textValue={field.text}
                         >
-                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={field.label.color}>{field.label.content}</Chip>
+                          <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} >{field.label.content}</Chip>
                           <span>{field.text}</span>
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
@@ -384,10 +384,8 @@ function DatasetFilters(props) {
               {!condition.saved && condition.field && (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button
-                      color="success"
-                      endContent={<LuCircleCheck size={18} />}
-                      variant="light"
+                    <Button endContent={<LuCircleCheck size={18} />}
+                      variant="ghost"
                       size="sm"
                       onClick={() => _onApplyCondition(condition.id, condition.exposed)}
                       fullWidth
@@ -401,10 +399,8 @@ function DatasetFilters(props) {
 
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    color="danger"
-                    endContent={<LuCircleX size={18} />}
-                    variant="light"
+                  <Button endContent={<LuCircleX size={18} />}
+                    variant="ghost"
                     size="sm"
                     onClick={() => _onRemoveCondition(condition.id)}
                     fullWidth
@@ -419,9 +415,7 @@ function DatasetFilters(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      endContent={<LuEye size={18} />}
-                      color="secondary"
-                      variant="light"
+                      endContent={<LuEye size={18} />} variant="ghost"
                       size="sm"
                       onClick={() => _onApplyCondition(
                         condition.id,
@@ -441,9 +435,7 @@ function DatasetFilters(props) {
               {condition.field && condition.operator && condition.exposed && (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button
-                      color="secondary"
-                      variant="light"
+                    <Button variant="ghost"
                       size="sm"
                       endContent={<LuEyeOff size={18} />}
                       onClick={() => _onApplyCondition(
@@ -464,10 +456,8 @@ function DatasetFilters(props) {
               {!condition.saved && condition.value && (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button
-                      color="warning"
-                      endContent={<LuRedo size={18} />}
-                      variant="light"
+                    <Button endContent={<LuRedo size={18} />}
+                      variant="ghost"
                       size="sm"
                       onClick={() => _onRevertCondition(condition.id)}
                       fullWidth
@@ -482,7 +472,7 @@ function DatasetFilters(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant="light"
+                      variant="ghost"
                       size="sm"
                       endContent={<LuSettings size={18} />}
                       onClick={() => _onEditConditionSettings(condition)}
@@ -501,7 +491,7 @@ function DatasetFilters(props) {
       {conditions?.length > 0 && (
         <div className="col-span-12">
           <Button
-            variant="flat"
+            variant="tertiary"
             onClick={_onAddCondition}
             endContent={<LuPlus />}
             size="sm"
@@ -529,9 +519,7 @@ function DatasetFilters(props) {
                         false,
                         find(fieldOptions, { value: condition.field })
                         && find(fieldOptions, { value: condition.field }).type
-                      )}
-                      color="danger"
-                    >
+                      )} >
                       <LuCircleX size={16} />
                     </Link>
                   )}
@@ -641,7 +629,7 @@ function DatasetFilters(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -724,7 +712,7 @@ function DatasetFilters(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               onPress={() => setVariableSettings(null)}
             >
               Close

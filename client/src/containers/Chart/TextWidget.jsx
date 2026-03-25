@@ -377,7 +377,7 @@ function TextWidget({
                         fullWidth
                         endContent={(
                           <Button
-                            variant="flat"
+                            variant="tertiary"
                             size="sm"
                             onPress={() => setIsPreview(true)}
                             isPending={chartLoading}
@@ -402,7 +402,7 @@ function TextWidget({
                     <Button
                       isIconOnly
                       size="sm" 
-                      variant="flat"
+                      variant="tertiary"
                       className="absolute top-1 right-1"
                       onPress={() => setIsPreview(false)}
                     >
@@ -415,13 +415,13 @@ function TextWidget({
               <Card.Footer>
                 <ButtonGroup fullWidth size="sm">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     onPress={_onCancelChanges}
                   >
                     Cancel
                   </Button>
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     onPress={_onSaveContent}
                     isPending={chartLoading}
                     color="primary"

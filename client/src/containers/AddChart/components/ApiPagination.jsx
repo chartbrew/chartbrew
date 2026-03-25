@@ -335,13 +335,13 @@ function ApiPagination(props) {
           <div className="text-sm">{"You should include these query parameters: "}</div>
           <div className="h-2" />
           <div style={styles.rowDisplay}>
-            <Chip size="sm" variant="flat" className="rounded-sm">
+            <Chip size="sm" variant="soft" className="rounded-sm">
               {`${items}=<xxx>&${offset}=<xxx> `}
             </Chip>
             <div className="w-2" />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
-                <Chip color="success" size="sm" variant="flat" className="rounded-sm">
+                <Chip color="success" size="sm" variant="soft" className="rounded-sm">
                   {`${items} was found`}
                 </Chip>
                 <div className="w-1" />
@@ -350,7 +350,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="warning" size="sm" variant="flat" className="rounded-sm">
+                <Chip color="warning" size="sm" variant="soft" className="rounded-sm">
                   {`${items} not found in route`}
                 </Chip>
               </>
@@ -358,7 +358,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="success" size="sm" variant="flat" className="rounded-sm">
+                <Chip color="success" size="sm" variant="soft" className="rounded-sm">
                   {`${offset} was found`}
                 </Chip>
               </>
@@ -366,7 +366,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="warning" size="sm" variant="flat" className="rounded-sm">
+                <Chip color="warning" size="sm" variant="soft" className="rounded-sm">
                   {`${offset} not found in route`}
                 </Chip>
               </>
@@ -378,7 +378,7 @@ function ApiPagination(props) {
               {"The maximum amount of item that you're going to get is: "}
             </div>
             <div className="w-2" />
-            <Chip size="sm" variant="flat" className="rounded-sm">
+            <Chip size="sm" variant="soft" className="rounded-sm">
               {itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}
             </Chip>
           </div>

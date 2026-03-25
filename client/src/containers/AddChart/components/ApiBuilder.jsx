@@ -507,8 +507,7 @@ function ApiBuilder(props) {
         return (
           <Chip
             key={index}
-            color="primary"
-            variant="flat"
+            variant="primary"
             size="sm"
             className={`cursor-pointer mx-1 ${size === "sm" ? "text-xs" : ""}`}
             onClick={() => onVariableClick(part)}
@@ -530,9 +529,7 @@ function ApiBuilder(props) {
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
             <div className="flex flex-row items-center gap-2">
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
                 startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
@@ -541,22 +538,21 @@ function ApiBuilder(props) {
               </Button>
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Badge
-                    color="success"
-                    content=""
-                    placement="top-right"
-                    shape="circle"
-                    isInvisible={!apiRequest.transform?.enabled}
-                  >
+                  <Badge.Anchor className="relative inline-flex">
                     <Button
-                      color="primary"
-                      variant="flat"
+                      variant="tertiary"
                       size="sm"
                       onPress={() => setShowTransform(true)}
                     >
                       Transform
                     </Button>
-                  </Badge>
+                    {apiRequest.transform?.enabled && (
+                      <Badge size="sm"
+                        className="min-h-2 min-w-2 p-0"
+                        aria-label="Transformations active"
+                      />
+                    )}
+                  </Badge.Anchor>
                 </Tooltip.Trigger>
                 <Tooltip.Content placement="bottom" className="z-[99999]">
                   Apply transformations to the data
@@ -565,10 +561,9 @@ function ApiBuilder(props) {
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    color="danger"
                     isIconOnly
                     size="sm"
-                    variant="flat"
+                    variant="danger-soft"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
@@ -700,9 +695,7 @@ function ApiBuilder(props) {
                 </div>
                 <div className="h-4" />
                 <div>
-                  <Button
-                    color={isEqual(variables, apiRequest.variables) ? "success" : "primary"}
-                    variant={isEqual(variables, apiRequest.variables) ? "flat" : "solid"}
+                  <Button variant={isEqual(variables, apiRequest.variables) ? "flat" : "solid"}
                     size="sm"
                     onPress={() => _onSaveVariables()}
                   >
@@ -797,9 +790,7 @@ function ApiBuilder(props) {
                               <Tooltip.Trigger>
                                 <Button
                                   isIconOnly
-                                  onPress={() => _onVariableClick(_getFirstVariable(header.key))}
-                                  color="primary"
-                                  variant="light"
+                                  onPress={() => _onVariableClick(_getFirstVariable(header.key))} variant="ghost"
                                   size="sm"
                                 >
                                   <LuVariable />
@@ -825,9 +816,7 @@ function ApiBuilder(props) {
                               <Tooltip.Trigger>
                                 <Button
                                   isIconOnly
-                                  onPress={() => _onVariableClick(_getFirstVariable(header.value))}
-                                  color="primary"
-                                  variant="light"
+                                  onPress={() => _onVariableClick(_getFirstVariable(header.value))} variant="ghost"
                                   size="sm"
                                 >
                                   <LuVariable />
@@ -842,9 +831,7 @@ function ApiBuilder(props) {
                         <div className="w-2" />
                         <Button
                           isIconOnly
-                          onPress={() => _removeHeader(header.id)}
-                          color="danger"
-                          variant="light"
+                          onPress={() => _removeHeader(header.id)} variant="ghost"
                         >
                           <LuCircleX />
                         </Button>
@@ -888,11 +875,10 @@ function ApiBuilder(props) {
               {_hasVariables(apiRequest.body) && (
                 <Row className="mt-2">
                   <div className="flex items-center gap-2">
-                    <Text size="sm" color="default">Variables detected in body:</Text>
+                    <Text size="sm" >Variables detected in body:</Text>
                     <Button
                       size="sm"
-                      color="primary"
-                      variant="flat"
+                      variant="tertiary"
                       startContent={<LuVariable />}
                       onPress={() => _onVariableClick(_getFirstVariable(apiRequest.body))}
                     >
@@ -951,9 +937,7 @@ function ApiBuilder(props) {
               isPending={requestLoading}
               startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
-              fullWidth
-              color="primary"
-              size="sm"
+              fullWidth size="sm"
               variant="ghost"
             >
               {"Send the request"}
@@ -984,19 +968,19 @@ function ApiBuilder(props) {
 
             <div className="flex flex-row gap-2 items-center">
               {apiRequest.transform?.enabled && (
-                <Chip color="primary" size="sm" variant="flat">
+                <Chip variant="primary" size="sm">
                   {"Transformed"}
                 </Chip>
               )}
               {requestSuccess && (
                 <>
-                  <Chip color="success" size="sm" variant="flat">
+                  <Chip color="success" size="sm" variant="soft">
                     {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Chip>
                 </>
               )}
               {requestError && (
-                <Chip color="danger" size="sm" variant="flat">
+                <Chip color="danger" size="sm" variant="soft">
                   {`${requestError?.status?.statusCode} ${requestError?.status?.statusText}`}
                 </Chip>
               )}
@@ -1057,7 +1041,7 @@ function ApiBuilder(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -1140,13 +1124,13 @@ function ApiBuilder(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="secondary"
               onPress={() => setVariableSettings(null)}
             >
               Close
             </Button>
             <Button
-              color="primary"
+              variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
               startContent={variableLoading ? <ButtonSpinner /> : undefined}

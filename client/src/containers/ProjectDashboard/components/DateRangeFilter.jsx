@@ -121,7 +121,7 @@ function DateRangeFilter({
 
   return (
     <DateRangePicker
-      variant="faded"
+      variant="secondary"
       color="primary"
       visibleMonths={2}
       value={currentValue}
@@ -146,47 +146,47 @@ function DateRangeFilter({
         <div className="flex flex-col gap-1 pb-4">
           <div className="flex flex-row flex-wrap gap-1 px-2 py-1">
             <Link onPress={() => _onSelectRange("this_month")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 This month
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_month")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last month
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_7_days")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last 7 days
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_30_days")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last 30 days
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_90_days")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last 90 days
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_year")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last year
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("quarter_to_date")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Quarter to date
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("last_quarter")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Last quarter
               </Chip>
             </Link>
             <Link onPress={() => _onSelectRange("year_to_date")} className="whitespace-nowrap">
-              <Chip size="sm" variant="flat" className="cursor-pointer">
+              <Chip size="sm" variant="soft" className="cursor-pointer">
                 Year to date
               </Chip>
             </Link>

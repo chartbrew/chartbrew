@@ -115,18 +115,17 @@ function TeamSettings() {
             setTeamState({ ...teamState, name: e.target.value });
           }}
           variant="secondary"
-          color={submitError ? "error" : "default"}
-          description={submitError ? "Error updating team" : ""}
-          classNames="max-w-md"
+          isInvalid={!!submitError}
+          errorMessage={submitError ? "Error updating team" : undefined}
+          className="max-w-md"
         />
 
         <div>
           <Button
-            color={success ? "success" : "primary"}
             isPending={loading}
             startContent={loading ? <ButtonSpinner /> : undefined}
             onPress={_onTeamUpdate}
-            variant={success ? "flat" : "solid"}
+            variant={success ? "secondary" : "primary"}
             size="sm"
           >
             {success ? "Saved" : "Save"}

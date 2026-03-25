@@ -1039,7 +1039,7 @@ function ProjectDashboard() {
                                         <div className="font-medium">{member.name}</div>
                                         <div className="text-xs text-default-500">{member.email}</div>
                                       </div>
-                                      <Chip size="sm" variant="flat">
+                                      <Chip size="sm" variant="soft">
                                         {member.TeamRoles?.find((r) => r.team_id === team?.id)?.role}
                                       </Chip>
                                     </div>
@@ -1238,7 +1238,7 @@ function ProjectDashboard() {
                               onPress={() => setSnapshotScheduleVisible(true)}
                               endContent={
                                 project?.snapshotSchedule?.frequency && (
-                                  <Chip size="sm" variant="secondary" color="success" className="rounded-sm">
+                                  <Chip size="sm" variant="soft" color="success" className="rounded-sm">
                                     Active
                                   </Chip>
                                 )

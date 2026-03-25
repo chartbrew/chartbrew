@@ -215,8 +215,8 @@ function FirestoreConnectionForm(props) {
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            color={errors.name ? "danger" : "default"}
-            description={errors.name}
+            isInvalid={!!errors.name}
+            errorMessage={errors.name || undefined}
             variant="secondary"
             fullWidth
           />
@@ -232,10 +232,9 @@ function FirestoreConnectionForm(props) {
         {!jsonVisible && (
           <Row>
             <Button
-              onClick={() => setJsonVisible(true)}
+              onPress={() => setJsonVisible(true)}
               size="sm"
-              color="primary"
-              variant="faded"
+              variant="tertiary"
             >
               Click here to copy the JSON manually
             </Button>
@@ -334,8 +333,7 @@ function FirestoreConnectionForm(props) {
         <Row>
           <Button
             variant="ghost"
-            auto
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
             startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
@@ -344,8 +342,8 @@ function FirestoreConnectionForm(props) {
           <div className="w-2" />
           <Button
             isPending={loading}
-            onClick={_onCreateConnection}
-            color="primary"
+            onPress={_onCreateConnection}
+            variant="primary"
             startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}
@@ -363,7 +361,7 @@ function FirestoreConnectionForm(props) {
               <Text>
                 {"Test Result "}
               </Text>
-              <Chip color={testResult.status < 400 ? "success" : "danger"}>
+              <Chip color={testResult.status < 400 ? "success" : "danger"} variant="soft" size="sm">
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>

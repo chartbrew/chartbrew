@@ -50,7 +50,7 @@ function SqlBuilder(props) {
   const [saveQueryModal, setSaveQueryModal] = useState(false);
   const [savingQuery, setSavingQuery] = useState(false);
   const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
-  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [result, setResult] = useState("");
@@ -282,8 +282,6 @@ function SqlBuilder(props) {
             <Text b size={"lg"}>{connection.name}</Text>
             <div className="flex flex-row items-center gap-2">
               <Button
-                color="primary"
-                auto
                 size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
@@ -291,10 +289,8 @@ function SqlBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!sqlRequest.transform?.enabled}>
-                <Button
-                  color="primary"
-                  variant="flat"
+              <Badge content="" placement="top-right" shape="circle" isInvisible={!sqlRequest.transform?.enabled}>
+                <Button variant="tertiary"
                   size="sm"
                   onPress={() => setShowTransform(true)}
                 >
@@ -303,12 +299,9 @@ function SqlBuilder(props) {
               </Badge>
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    auto
+                  <Button isIconOnly
                     size="sm"
-                    variant="flat"
+                    variant="danger-soft"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
@@ -324,7 +317,7 @@ function SqlBuilder(props) {
           <Separator />
           <div className="h-4" />
           <Tabs
-            variant="light"
+            variant="secondary"
             selectedKey={activeTab}
             aria-busy={blockTabSwitch}
             onSelectionChange={(key) => {
@@ -383,9 +376,7 @@ function SqlBuilder(props) {
           </>
           <div className="h-4" />
           <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
-            <Button
-              color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
-              endContent={!requestLoading ? <LuPlay /> : undefined}
+            <Button endContent={!requestLoading ? <LuPlay /> : undefined}
               onPress={() => _onTest()}
               isPending={requestLoading}
               startContent={requestLoading ? <ButtonSpinner /> : undefined}
@@ -437,7 +428,7 @@ function SqlBuilder(props) {
               isPending={savingQuery}
               startContent={savingQuery ? <ButtonSpinner /> : undefined}
               onPress={_onSaveQueryConfirmation}
-              variant="flat"
+              variant="tertiary"
               size="sm"
             >
               {!savedQuery && "Save this query"}
@@ -447,7 +438,7 @@ function SqlBuilder(props) {
             {savedQuery && (
               <>
                 <Button
-                  variant="flat"
+                  variant="tertiary"
                   endContent={!updatingSavedQuery ? <LuCheck /> : undefined}
                   onPress={_onUpdateSavedQuery}
                   isPending={updatingSavedQuery}
@@ -475,7 +466,7 @@ function SqlBuilder(props) {
         </div>
         <div className="col-span-12 sm:col-span-6 md:col-span-7">
           <Tabs
-            variant="light"
+            variant="secondary"
             selectedKey={activeResultsTab}
             aria-busy={blockTabSwitch}
             onSelectionChange={(key) => {
@@ -563,7 +554,7 @@ function SqlBuilder(props) {
         onSave={_onTransformSave}
         initialTransform={sqlRequest.transform}
       />
-    
+
       <Drawer
         isOpen={!!variableSettings}
         onOpenChange={(open) => {
@@ -588,7 +579,7 @@ function SqlBuilder(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -671,7 +662,7 @@ function SqlBuilder(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               onPress={() => setVariableSettings(null)}
             >
               Close

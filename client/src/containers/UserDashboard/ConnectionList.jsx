@@ -182,7 +182,7 @@ function ConnectionList() {
                     {_getRelatedDatasets(connection.id).length > 0 && (
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <Chip size="sm" variant="flat" color="success" className="rounded-sm">
+                          <Chip size="sm" variant="soft" color="success" className="rounded-sm">
                             Active
                           </Chip>
                         </Tooltip.Trigger>
@@ -192,7 +192,7 @@ function ConnectionList() {
                     {_getRelatedDatasets(connection.id).length === 0 && (
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <Chip size="sm" variant="flat" color="danger" className="rounded-sm">
+                          <Chip size="sm" variant="soft" color="danger" className="rounded-sm">
                             Inactive
                           </Chip>
                         </Tooltip.Trigger>
@@ -205,7 +205,7 @@ function ConnectionList() {
               <Card.Content>
                 <div className="flex flex-row items-center flex-wrap gap-1">
                   {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
-                    <Chip key={tag} size="sm" variant="flat" color="primary" className="rounded-sm cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
+                    <Chip key={tag} size="sm" variant="primary" className="rounded-sm cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
                       {tag}
                     </Chip>
                   ))}
@@ -222,7 +222,7 @@ function ConnectionList() {
               </Card.Content>
               <Card.Footer>
                 <Button
-                  variant="flat"
+                  variant="tertiary"
                   size="sm"
                   onPress={() => navigate(`/connections/${connection.id}`)}
                   fullWidth
@@ -242,7 +242,7 @@ function ConnectionList() {
                     </Button>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
-                    <Dropdown.Menu variant="flat">
+                    <Dropdown.Menu>
                       <Dropdown.Item
                         id="edit"
                         onPress={() => navigate(`/connections/${connection.id}`)}
@@ -333,8 +333,7 @@ function ConnectionList() {
                     <Chip
                       key={dataset.id}
                       size="sm"
-                      variant="flat"
-                      color="primary"
+                      variant="primary"
                     >
                       {getDatasetDisplayName(dataset)}
                     </Chip>

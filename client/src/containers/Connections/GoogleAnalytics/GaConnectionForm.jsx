@@ -189,7 +189,7 @@ function GaConnectionForm(props) {
           <>
             <div className="h-4" />
             <Row>
-              <Chip variant="flat">
+              <Chip variant="soft">
                 {`Authenticated as ${connection.OAuth.email}`}
               </Chip>
             </Row>

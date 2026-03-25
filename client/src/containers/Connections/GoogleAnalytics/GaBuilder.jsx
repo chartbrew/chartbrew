@@ -377,7 +377,7 @@ function GaBuilder(props) {
         <Popover.Trigger>
           <Button
             isIconOnly
-            variant="light"
+            variant="ghost"
             color="secondary"
             isDisabled={!configuration.propertyId}
           >
@@ -448,19 +448,15 @@ function GaBuilder(props) {
             <div className="col-span-12 flex justify-between">
               <Text b size={"lg"}>{connection.name}</Text>
               <div className="flex flex-row items-center gap-2">
-                <Button
-                  color="primary"
-                  size="sm"
+                <Button size="sm"
                   onPress={() => _onSavePressed()}
                   isPending={saveLoading || requestLoading}
                   startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
                 >
                   {"Save"}
                 </Button>
-                <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!gaRequest.transform?.enabled}>
-                  <Button
-                    color="primary"
-                    variant="flat"
+                <Badge content="" placement="top-right" shape="circle" isInvisible={!gaRequest.transform?.enabled}>
+                  <Button variant="tertiary"
                     size="sm"
                     onPress={() => setShowTransform(true)}
                   >
@@ -469,9 +465,7 @@ function GaBuilder(props) {
                 </Badge>
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button
-                      color="danger"
-                      isIconOnly
+                    <Button isIconOnly
                       size="sm"
                       variant="secondary"
                       onPress={() => onDelete()}
@@ -564,9 +558,7 @@ function GaBuilder(props) {
                 isPending={collectionsLoading}
                 value={configuration.metrics || null}
                 placeholder="Select a metric"
-                errorMessage={formErrors.metrics}
-                color={formErrors.metrics ? "danger" : "default"}
-                onChange={(value) => setConfiguration({ ...configuration, metrics: value })}
+                errorMessage={formErrors.metrics} onChange={(value) => setConfiguration({ ...configuration, metrics: value })}
                 selectionMode="single"
                 aria-label="Select a metric"
               >
@@ -609,9 +601,7 @@ function GaBuilder(props) {
                 onChange={(value) => setConfiguration({ ...configuration, dimensions: value })}
                 selectionMode="single"
                 placeholder="Select a dimension"
-                errorMessage={formErrors.dimensions}
-                color={formErrors.dimensions ? "danger" : "default"}
-                aria-label="Select a dimension"
+                errorMessage={formErrors.dimensions} aria-label="Select a dimension"
               >
                 <Autocomplete.Trigger>
                   <Autocomplete.Value />
@@ -653,34 +643,26 @@ function GaBuilder(props) {
               <div className="h-2" />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
                 >
                   today
                 </Chip>
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
                 >
                   yesterday
                 </Chip>
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
                 >
                   30daysAgo
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="secondary"
-                  color={dateHelp ? "secondary" : "default"}
-                  startContent={<LuInfo />}
+                  variant="secondary" startContent={<LuInfo />}
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
                   info
@@ -704,34 +686,26 @@ function GaBuilder(props) {
               <div className="h-2" />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
                 >
                   today
                 </Chip>
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
                 >
                   yesterday
                 </Chip>
                 <Chip
-                  variant="flat"
-                  color="secondary"
-                  className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
+                  variant="soft" className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
                 >
                   30daysAgo
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="secondary"
-                  color={dateHelp ? "secondary" : "default"}
-                  startContent={<LuInfo />}
+                  variant="secondary" startContent={<LuInfo />}
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
                   info
@@ -767,9 +741,7 @@ function GaBuilder(props) {
               isPending={requestLoading}
               startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
-              className="w-full"
-              color="primary"
-              variant="ghost"
+              className="w-full" variant="ghost"
             >
               Get analytics data
             </Button>

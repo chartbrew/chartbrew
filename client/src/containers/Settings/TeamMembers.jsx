@@ -249,19 +249,19 @@ function TeamMembers(props) {
                       <div className="text-sm text-gray-500">{member.email}</div>
                     </TableCell>
                     <TableCell key="role">
-                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm" startContent={<LuStar size={14} />}>Team Owner</Chip>}
-                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm" startContent={<LuStar size={14} />}>Team Admin</Chip>}
-                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client admin</Chip>}
-                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client editor</Chip>}
-                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm" startContent={<LuUser size={14} />}>Client viewer</Chip>}
+                      {memberRole.role === "teamOwner" && <Chip variant="primary" size="sm" startContent={<LuStar size={14} />}>Team Owner</Chip>}
+                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="soft" size="sm" startContent={<LuStar size={14} />}>Team Admin</Chip>}
+                      {memberRole.role === "projectAdmin" && <Chip variant="secondary" size="sm" startContent={<LuUser size={14} />}>Client admin</Chip>}
+                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="soft" size="sm" startContent={<LuUser size={14} />}>Client editor</Chip>}
+                      {memberRole.role === "projectViewer" && <Chip color="default" variant="soft" size="sm" startContent={<LuUser size={14} />}>Client viewer</Chip>}
                     </TableCell>
                     <TableCell key="projectAccess">
                       {memberRole?.role !== "teamOwner" && memberRole?.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
                       {memberRole?.role === "teamOwner" || memberRole?.role === "teamAdmin" ? "All" : ""}
                     </TableCell>
                     <TableCell key="export">
-                      {(memberRole?.canExport || (memberRole?.role?.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
-                      {(!memberRole?.canExport && memberRole?.role?.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
+                      {(memberRole?.canExport || (memberRole?.role?.indexOf("team") > -1)) && <Chip color="success" variant="soft" size="sm">Yes</Chip>}
+                      {(!memberRole?.canExport && memberRole?.role?.indexOf("team") === -1) && <Chip color="danger" variant="soft" size="sm">No</Chip>}
                     </TableCell>
                     <TableCell key="actions">
                       <div className="flex flex-row items-center gap-1">
@@ -270,7 +270,7 @@ function TeamMembers(props) {
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Button
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
                                   onPress={() => _openProjectAccess(member)}
                                   size="sm"
@@ -287,7 +287,7 @@ function TeamMembers(props) {
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Button
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
                                   onPress={() => {
                                     if (_teamsOwned().length < 2) {
@@ -313,7 +313,7 @@ function TeamMembers(props) {
                                 <div>
                                   <Dropdown aria-label="Select a role">
                                     <Dropdown.Trigger>
-                                      <Button variant="light" isIconOnly size="sm">
+                                      <Button variant="ghost" isIconOnly size="sm">
                                         <LuIdCard />
                                       </Button>
                                     </Dropdown.Trigger>
@@ -395,7 +395,7 @@ function TeamMembers(props) {
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Button
-                                  variant="light"
+                                  variant="ghost"
                                   onPress={() => _onDeleteConfirmation(member.id)}
                                   isIconOnly
                                   color="danger"

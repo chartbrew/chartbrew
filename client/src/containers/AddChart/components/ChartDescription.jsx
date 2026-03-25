@@ -150,9 +150,7 @@ function ChartDescription(props) {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           {canCreateDataset && (
-            <Button
-              color="primary"
-              size="sm"
+            <Button size="sm"
               startContent={creatingNewDataset ? <ButtonSpinner /> : <LuPlus size={16} />}
               isDisabled={creatingNewDataset}
               onPress={onCreateDataset}
@@ -231,7 +229,7 @@ function ChartDescription(props) {
                         <Chip
                           key={`${dataset.id}-${connectionType}`}
                           size="sm"
-                          variant="flat"
+                          variant="soft"
                         >
                           {connectionType}
                         </Chip>
@@ -244,7 +242,7 @@ function ChartDescription(props) {
                   <TableCell key="tags">
                     <div className={`flex flex-wrap gap-1 ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
                       {tags.length > 0 && tags.slice(0, 3).map((tag) => (
-                        <Chip key={`${dataset.id}-${tag}`} size="sm" variant="flat" color="primary">
+                        <Chip key={`${dataset.id}-${tag}`} size="sm" variant="soft" >
                           {tag}
                         </Chip>
                       ))}
@@ -273,7 +271,7 @@ function ChartDescription(props) {
                       <Button
                         isIconOnly
                         size="sm"
-                        variant="light"
+                        variant="ghost"
                         onPress={() => _onSelectDataset(dataset)}
                         isDisabled={(isBusy && !isCreatingChart) || isCreatingChart}
                         aria-label={`Create chart from ${getDatasetDisplayName(dataset)}`}

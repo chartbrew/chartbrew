@@ -599,7 +599,7 @@ function MysqlConnectionForm(props) {
           >
             <div className="flex items-center gap-2">
               {"Use SSH Tunnel"}
-              <Chip color="secondary" size="sm" variant="flat" className="rounded-sm">{"New!"}</Chip>
+              <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
             </div>
           </Switch>
         </Row>
@@ -737,7 +737,7 @@ function MysqlConnectionForm(props) {
               <Alert
                 title="Something not working?"
                 color="default"
-                variant="flat"
+                status="accent"
               >
                 <div className="flex flex-col gap-2">
                   <span className="text-sm">
@@ -812,6 +812,7 @@ function MysqlConnectionForm(props) {
               <div className="w-4" />
               <Chip
                 color={testResult.status < 400 ? "success" : "danger"}
+                variant="soft"
                 size="sm"
               >
                 {`Status code: ${testResult.status}`}

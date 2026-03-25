@@ -28,8 +28,6 @@ function ProjectSettings(props) {
     user, cleanErrors, style,
   } = props;
 
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [nameError, setNameError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,8 +55,6 @@ function ProjectSettings(props) {
     }
 
     setLoading(true);
-    setSuccess(false);
-    setError(false);
 
     dispatch(updateProject({ project_id: project.id, data: { name: projectName } }))
       .then((data) => {
@@ -66,13 +62,11 @@ function ProjectSettings(props) {
           throw new Error(data.error);
         }
         setLoading(false);
-        setSuccess(true);
         dispatch(changeActiveProject(project.id));
         toast.success("Dashboard name updated!");
       })
       .catch(() => {
         setLoading(false);
-        setError(true);
         toast.error("There was a problem updating the dashboard name. Please try again.");
       });
   };
@@ -105,7 +99,6 @@ function ProjectSettings(props) {
       })
       .catch(() => {
         setLoadingTimezone(false);
-        setError(true);
       });
   };
 
@@ -144,15 +137,13 @@ function ProjectSettings(props) {
               : project.name ? project.name : ""}
             onChange={(e) => setProjectName(e.target.value)}
             variant="secondary"
-            color={nameError ? "success" : "default"}
+            isInvalid={nameError}
             description={nameError ? "Dashboard name is required" : ""}
             className="max-w-md"
           />
           <div className="h-4" />
           <Button
-            type="submit"
-            color={success ? "success" : error ? "danger" : "primary"}
-            isDisabled={!_canAccess("projectEditor")}
+            type="submit" isDisabled={!_canAccess("projectEditor")}
             isPending={loading}
             onClick={_onSaveName}
             startContent={loading ? <ButtonSpinner /> : undefined}
@@ -206,9 +197,7 @@ function ProjectSettings(props) {
           </Autocomplete.Popover>
         </Autocomplete>
         <div className="w-2" />
-        <Button
-          color="primary"
-          variant="light"
+        <Button variant="ghost"
           disabled={!_canAccess("projectEditor")}
           onClick={() => _onGetMachineTimezone()}
           startContent={<LuClock4 />}
@@ -233,7 +222,7 @@ function ProjectSettings(props) {
         {project.timezone && (
           <Button
             color="warning"
-            variant="flat"
+            variant="tertiary"
             disabled={!_canAccess("projectEditor")}
             endContent={<LuX />}
             onClick={() => _onSaveTimezone(true)}

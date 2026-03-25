@@ -618,9 +618,7 @@ function FirestoreBuilder(props) {
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
             <div className="flex flex-row items-center gap-2">
-              <Button
-                color="primary"
-                auto
+              <Button auto
                 size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
@@ -628,10 +626,8 @@ function FirestoreBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!firestoreRequest.transform?.enabled}>
-                <Button
-                  color="primary"
-                  variant="flat"
+              <Badge content="" placement="top-right" shape="circle" isInvisible={!firestoreRequest.transform?.enabled}>
+                <Button variant="tertiary"
                   size="sm"
                   onPress={() => setShowTransform(true)}
                 >
@@ -640,9 +636,7 @@ function FirestoreBuilder(props) {
               </Badge>
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    color="danger"
-                    isIconOnly
+                  <Button isIconOnly
                     auto
                     size="sm"
                     variant="secondary"
@@ -670,8 +664,7 @@ function FirestoreBuilder(props) {
             {collectionData?.length > 0 && collectionData?.map((collection) => (
               <Fragment key={collection._queryOptions.collectionId}>
                 <Chip
-                  variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "flat" : "solid"}
-                  color={firestoreRequest.query !== collection._queryOptions.collectionId ? "default" : "primary"}
+                  variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "soft" : "primary"}
                   onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                   className="rounded-sm min-w-[50px] text-center cursor-pointer"
                   size="lg"
@@ -691,8 +684,7 @@ function FirestoreBuilder(props) {
               startContent={collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
               onClick={() => _onFetchCollections()}
               isPending={collectionsLoading}
-              variant="light"
-              color="primary"
+              variant="ghost"
             >
               Refresh collections
             </Button>
@@ -834,8 +826,7 @@ function FirestoreBuilder(props) {
                 {dataRequest.configuration.subCollections.map((subCollection) => (
                   <Fragment key={subCollection}>
                     <Chip
-                      color="secondary"
-                      variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "solid"}
+                      variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "soft" : "primary"}
                       onClick={() => _onSelectSubCollection(subCollection)}
                       className="rounded-sm min-w-[50px] text-center cursor-pointer"
                     >
@@ -844,12 +835,10 @@ function FirestoreBuilder(props) {
                   </Fragment>
                 ))}
 
-                <Button
-                  color="danger"
-                  onClick={() => _onSelectSubCollection("")}
+                <Button onClick={() => _onSelectSubCollection("")}
                   startContent={<LuX />}
                   disabled={!dataRequest.configuration.selectedSubCollection}
-                  variant="light"
+                  variant="ghost"
                   size="sm"
                 >
                   Clear selection
@@ -942,9 +931,7 @@ function FirestoreBuilder(props) {
                 isPending={requestLoading}
                 startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={() => _onTest()}
-                className={"w-full"}
-                color="primary"
-                variant="ghost"
+                className={"w-full"} variant="ghost"
               >
                 Get Firestore data
               </Button>
@@ -1020,7 +1007,7 @@ function FirestoreBuilder(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -1103,14 +1090,12 @@ function FirestoreBuilder(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               onPress={() => setVariableSettings(null)}
             >
               Close
             </Button>
-            <Button
-              color="primary"
-              onPress={_onVariableSave}
+            <Button onPress={_onVariableSave}
               isPending={variableLoading}
               startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
@@ -1192,7 +1177,7 @@ function Conditions(props) {
                         textValue={condition?.field?.substring(condition.field.lastIndexOf(".") + 1)}
                       >
                         <Row className={"gap-2"}>
-                          <Chip color={option.label.color} className="min-w-[70px] text-center" variant="flat" size="sm">
+                          <Chip className="min-w-[70px] text-center" variant="soft" size="sm">
                             {option.label.content}
                           </Chip>
                           <Text>{option.text}</Text>
@@ -1246,9 +1231,7 @@ function Conditions(props) {
                         <Tooltip.Trigger>
                           <Button
                             isIconOnly
-                            onPress={() => onVariableClick(getFirstVariable(condition.value))}
-                            color="primary"
-                            variant="light"
+                            onPress={() => onVariableClick(getFirstVariable(condition.value))} variant="ghost"
                             size="sm"
                           >
                             <LuVariable />
@@ -1298,7 +1281,7 @@ function Conditions(props) {
                         disableAnimation
                         endContent={(
                           <Button
-                            variant="light"
+                            variant="ghost"
                             color="primary"
                             isIconOnly
                             onClick={() => _onAddConditionValue(condition)}
@@ -1319,7 +1302,7 @@ function Conditions(props) {
                           endContent={<LuCircleX />}
                           size="sm"
                           onClick={() => _onRemoveConditionValue(condition, v)}
-                          variant="faded"
+                          variant="tertiary"
                         >
                           {v}
                         </Chip>
@@ -1338,9 +1321,7 @@ function Conditions(props) {
                         isIconOnly
                         onClick={() => onApplyCondition(condition.id)}
                         size="sm"
-                        variant="faded"
-                        color="success"
-                      >
+                        variant="faded" >
                         <LuCirclePlus />
                       </Button>
                     </Tooltip.Trigger>
@@ -1372,9 +1353,7 @@ function Conditions(props) {
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    isIconOnly
-                    color="danger"
-                    onClick={() => onRemoveCondition(condition.id)}
+                    isIconOnly onClick={() => onRemoveCondition(condition.id)}
                     size="sm"
                     variant="faded"
                   >
@@ -1393,7 +1372,7 @@ function Conditions(props) {
           startContent={<LuPlus />}
           onClick={onAddCondition}
           size="sm"
-          variant="light"
+          variant="ghost"
           auto
           disableRipple
           color="primary"

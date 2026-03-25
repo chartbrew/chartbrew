@@ -368,7 +368,7 @@ function Dataset() {
                 labelPlacement="outside"
                 endContent={
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     isIconOnly
                     onPress={() => _onSaveDataset("save")}
                     size="sm"

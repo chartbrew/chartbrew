@@ -403,7 +403,7 @@ function TableDataFormattingModal(props) {
                     <Popover.Trigger>
                       <Chip
                         size="sm"
-                        variant="light"
+                        variant="soft"
                         onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : "rgba(0,0,0,0)" } : r)))}
                         className="rounded-sm pl-10 border border-solid border-content3"
                         style={{
@@ -421,7 +421,7 @@ function TableDataFormattingModal(props) {
                           styles={{ default: { card: { boxShadow: "none" } } }}
                         />
                         <Button
-                          variant="light"
+                          variant="ghost"
                           onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: null } : r)))}
                           size="sm"
                           startContent={<LuX />}
@@ -433,7 +433,7 @@ function TableDataFormattingModal(props) {
                   </Popover>
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="ghost"
                     onPress={() => setRules(rules.filter((_, i) => i !== index))}
                     size="sm"
                   >
@@ -442,7 +442,7 @@ function TableDataFormattingModal(props) {
                 </div>
               ))}
               <Button
-                variant="light"
+                variant="ghost"
                 onPress={() => setRules([...rules, { value: "", label: "" }])}
                 size="sm"
                 startContent={<LuPlus className="text-gray-500" size={16} />}
@@ -492,7 +492,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="primary"
                   onClick={() => _onChangeButtonSettings({ color: "primary", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "flat" ? " outline-black outline-2" : ""}`}
@@ -508,7 +508,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="secondary"
                   onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "bordered" })}
                   className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "bordered" ? "outline-black outline-2" : ""}`}
@@ -524,7 +524,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="success"
                   onClick={() => _onChangeButtonSettings({ color: "success", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
@@ -540,7 +540,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="default"
                   onClick={() => _onChangeButtonSettings({ color: "default", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
@@ -556,7 +556,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="warning"
                   onClick={() => _onChangeButtonSettings({ color: "warning", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
@@ -572,7 +572,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="soft"
                   color="danger"
                   onClick={() => _onChangeButtonSettings({ color: "danger", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}

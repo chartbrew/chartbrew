@@ -43,7 +43,7 @@ function MongoQueryBuilder(props) {
   const [savedQuerySummary, setSavedQuerySummary] = useState("");
   const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
   const [savingQuery, setSavingQuery] = useState(false);
-  const [testSuccess, setTestSuccess] = useState(false);
+  const [, setTestSuccess] = useState(false);
   const [testError, setTestError] = useState("");
   const [testingQuery, setTestingQuery] = useState(false);
   const [result, setResult] = useState("");
@@ -254,9 +254,7 @@ function MongoQueryBuilder(props) {
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
             <div className="flex flex-row items-center gap-2">
-              <Button
-                color="primary"
-                auto
+              <Button auto
                 size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || testingQuery}
@@ -264,10 +262,8 @@ function MongoQueryBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!mongoRequest.transform?.enabled}>
-                <Button
-                  color="primary"
-                  variant="flat"
+              <Badge content="" placement="top-right" shape="circle" isInvisible={!mongoRequest.transform?.enabled}>
+                <Button variant="tertiary"
                   size="sm"
                   onPress={() => setShowTransform(true)}
                 >
@@ -276,9 +272,7 @@ function MongoQueryBuilder(props) {
               </Badge>
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    color="danger"
-                    isIconOnly
+                  <Button isIconOnly
                     auto
                     size="sm"
                     variant="secondary"
@@ -338,9 +332,7 @@ function MongoQueryBuilder(props) {
           </Row>
           <div className="h-4" />
           <div className="mongobuilder-buttons-tut flex flex-row items-center">
-            <Button
-              color={testSuccess ? "success" : testError ? "danger" : "primary"}
-              endContent={!testingQuery ? <LuPlay /> : undefined}
+            <Button endContent={!testingQuery ? <LuPlay /> : undefined}
               onPress={() => _onTest()}
               isPending={testingQuery}
               startContent={testingQuery ? <ButtonSpinner /> : undefined}
@@ -391,7 +383,7 @@ function MongoQueryBuilder(props) {
               isPending={savingQuery}
               startContent={savingQuery ? <ButtonSpinner /> : undefined}
               onPress={_onSaveQueryConfirmation}
-              variant="flat"
+              variant="tertiary"
               size="sm"
             >
               {!savedQuery && "Save this query"}
@@ -401,7 +393,7 @@ function MongoQueryBuilder(props) {
             {savedQuery && (
               <>
                 <Button
-                  variant="flat"
+                  variant="tertiary"
                   endContent={!updatingSavedQuery ? <LuCheck /> : undefined}
                   onPress={_onUpdateSavedQuery}
                   isPending={updatingSavedQuery}
@@ -429,7 +421,7 @@ function MongoQueryBuilder(props) {
         </div>
         <div className="col-span-12 sm:col-span-6">
           <Tabs
-            variant="light"
+            variant="secondary"
             selectedKey={activeResultsTab}
             aria-busy={blockResultsTabSwitch}
             onSelectionChange={(key) => {
@@ -500,7 +492,7 @@ function MongoQueryBuilder(props) {
                       >
                         <div><LuChevronRight /></div>
                         <div className="w-1" />
-                        <Text color="primary">
+                        <Text >
                           {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
                         </Text>
                       </Link>
@@ -515,7 +507,7 @@ function MongoQueryBuilder(props) {
                         className="flex items-start"
                       >
                         <div><LuChevronRight /></div>
-                        <Text color="primary">
+                        <Text >
                           {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
                         </Text>
                       </Link>
@@ -531,7 +523,7 @@ function MongoQueryBuilder(props) {
                       >
                         <div><LuChevronRight /></div>
                         <div className="w-2" />
-                        <Text color="primary">
+                        <Text >
                           {"If you store files encoded in base64, make sure you exclude them using the method above"}
                         </Text>
                       </Link>
@@ -611,7 +603,7 @@ function MongoQueryBuilder(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -694,7 +686,7 @@ function MongoQueryBuilder(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               onPress={() => setVariableSettings(null)}
             >
               Close

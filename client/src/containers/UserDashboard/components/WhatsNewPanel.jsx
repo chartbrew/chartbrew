@@ -139,9 +139,7 @@ function WhatsNewItemCard({ item, onAction }) {
             <Button
               className={cn("font-medium", tone.tipButton)}
               endContent={isExternalAction ? <LuExternalLink size={16} /> : <LuChevronRight size={16} />}
-              onPress={() => onAction(item.action)}
-              color="primary"
-              variant="flat"
+              onPress={() => onAction(item.action)} variant="tertiary"
             >
               {actionLabel}
             </Button>
@@ -168,7 +166,7 @@ function WhatsNewItemCard({ item, onAction }) {
                 {item.title}
               </h3>
               {item.badge && (
-                <Chip size="sm" variant="flat" color={tone.badge}>
+                <Chip size="sm" variant="soft" >
                   {item.badge}
                 </Chip>
               )}
@@ -184,7 +182,7 @@ function WhatsNewItemCard({ item, onAction }) {
                 {item.action && (
                   <Button
                     size="sm"
-                    variant="light"
+                    variant="ghost"
                     color={tone.badge}
                     endContent={isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
                     onPress={() => onAction(item.action)}
@@ -246,7 +244,7 @@ function WhatsNewPanel({ onCollapse }) {
               New features, tips, and shortcuts for Chartbrew.
             </p>
           </div>
-          <Button isIconOnly size="sm" variant="light" onPress={onCollapse}>
+          <Button isIconOnly size="sm" variant="ghost" onPress={onCollapse}>
             <LuX size={16} />
           </Button>
         </Card.Header>

@@ -546,7 +546,7 @@ function Chart(props) {
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
-                    <Chip color="secondary" variant="flat" size="sm" className="rounded-sm">Draft</Chip>
+                    <Chip variant="secondary" size="sm" className="rounded-sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (

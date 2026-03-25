@@ -182,7 +182,7 @@ function SimpleAnalyticsTemplate(props) {
       <Row align="center" className={"gap-2"}>
         <Button
           isIconOnly
-          variant="flat"
+          variant="tertiary"
           onClick={onBack}
           size="sm"
         >

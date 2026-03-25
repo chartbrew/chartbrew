@@ -320,9 +320,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
           </div>
           <Button
             size="sm"
-            variant="flat"
-            color="primary"
-            onPress={_onCreateNewPolicy}
+            variant="tertiary" onPress={_onCreateNewPolicy}
             startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
             isPending={shareLoading}
           >
@@ -338,7 +336,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
           <div className="text-sm font-medium">Share Links</div>
           <Button
             size="sm"
-            variant="flat"
+            variant="tertiary"
             onPress={_onCreateNewPolicy}
             startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
             isPending={shareLoading}
@@ -346,7 +344,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
             New Link
           </Button>
         </div>
-        
+
         {sharePolicies.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <LuShare2 className="mx-auto mb-2" size={24} />
@@ -382,11 +380,9 @@ function ChartSharing({ chart, isOpen, onClose }) {
                     <div className="flex flex-row items-center gap-2">
                       <div className="font-medium">Link {index + 1}</div>
                       <Chip
-                        variant="flat"
+                        variant="soft"
                         size="sm"
-                        className="rounded-sm text-xs"
-                        color={policy.allow_params ? "success" : "default"}
-                      >
+                        className="rounded-sm text-xs" >
                         {policy.allow_params ? "Allow params" : "No URL params"}
                       </Chip>
                     </div>
@@ -403,7 +399,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                     <Button
                       isIconOnly
                       size="sm"
-                      variant="light"
+                      variant="ghost"
                       color="danger"
                       onPress={() => _onDeletePolicy(policy.id)}
                       isDisabled={sharePolicies.length === 1}
@@ -459,7 +455,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   readOnly
                   size="sm"
                   endContent={
-                    <Button isIconOnly size="sm" variant="flat" onPress={_onCopyIframe}>
+                    <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyIframe}>
                       {iframeCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                     </Button>
                   }
@@ -477,10 +473,10 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   size="sm"
                   endContent={
                     <div className="flex flex-row items-center gap-1">
-                      <Button isIconOnly size="sm" variant="flat" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
                         <LuExternalLink />
                       </Button>
-                      <Button isIconOnly size="sm" variant="flat" onPress={_onCopyUrl}>
+                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
                         {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                       </Button>
                     </div>
@@ -519,7 +515,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
             </div>
             <Button
               size="sm"
-              variant="flat"
+              variant="tertiary"
               onPress={() => {
                 setParameters([...parameters, { key: "", value: "" }]);
               }}
@@ -559,7 +555,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 <Button
                   isIconOnly
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   onPress={() => {
                     setParameters(parameters.filter((_, i) => i !== index));
                   }}
@@ -608,7 +604,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
           {expirationDate && (
             <Button
               size="sm"
-              variant="light"
+              variant="ghost"
               className="mt-2"
               onPress={() => {
                 setExpirationDate("");

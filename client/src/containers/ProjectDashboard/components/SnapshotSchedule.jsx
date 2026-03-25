@@ -413,9 +413,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     </Autocomplete.Popover>
                   </Autocomplete>
 
-                  <Button
-                    color="primary"
-                    variant="light"
+                  <Button variant="ghost"
                     size="sm"
                     onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
                   >
@@ -432,19 +430,16 @@ function SnapshotSchedule({ isOpen, onClose }) {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Button
-                  auto
                   startContent={<LuMail />}
                   size="sm"
-                  variant={!schedule.mediums.email?.enabled ? "flat": "solid"}
+                  variant={!schedule.mediums.email?.enabled ? "tertiary" : "primary"}
                   onPress={() => _onChangeMediums("email")}
-                  color={schedule.mediums.email?.enabled ? "primary" : "default"}
                 >
                   Email
                 </Button>
                 {integrations && integrations.map((integration) => (
                   <Button
                     key={integration.id}
-                    auto
                     startContent={
                       integration.config?.slackMode ? <LuSlack />
                         : integration.type === "webhook" ? <LuWebhook />
@@ -455,15 +450,9 @@ function SnapshotSchedule({ isOpen, onClose }) {
                       selectedIntegrations.length === 0
                       || !selectedIntegrations.find(
                         (i) => i.integration_id === integration.id && i.enabled
-                      ) ? "flat" : "solid"
+                      ) ? "tertiary" : "primary"
                     }
                     onPress={() => _onSelectIntegration(integration)}
-                    color={
-                      selectedIntegrations.length === 0
-                      || !selectedIntegrations.find(
-                        (i) => i.integration_id === integration.id && i.enabled
-                      ) ? "default" : "primary"
-                    }
                   >
                     {integration.name}
                   </Button>
@@ -472,7 +461,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
-                      variant="light"
+                      variant="ghost"
                       size="sm"
                       onPress={_onCreateNewIntegration}
                     >
@@ -485,7 +474,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
-                      variant="light"
+                      variant="ghost"
                       size="sm"
                       onPress={_onRefreshIntegrationList}
                     >
@@ -510,7 +499,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                       <Button
                         size="sm"
                         onPress={_onAddProjectMembers}
-                        variant="light"
+                        variant="ghost"
                         startContent={<LuMailPlus size={18} />}
                       >
                         Add dashboard members
@@ -528,7 +517,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </div>
                 <div className="flex flex-row items-center gap-2">
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
                     onPress={_onCopyToClipboard}
                     startContent={<LuCopy size={18} />}
@@ -536,7 +525,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     Copy image
                   </Button>
                   <Button
-                    variant="flat"
+                    variant="tertiary"
                     size="sm"
                     onPress={() => navigate(`/report/${project.brewName}/edit`)}
                     startContent={<LuSettings size={18} />}
@@ -565,7 +554,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     size="sm"
                     onPress={_onTakeSnapshot}
                     isPending={isLoading}
-                    variant="flat"
+                    variant="tertiary"
                     startContent={isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
                   >
                     Take snapshot
@@ -575,7 +564,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     selectedKey={schedule.theme}
                     onSelectionChange={(key) => setSchedule({ ...schedule, theme: key })}
                     size="sm"
-                    variant="light"
+                    variant="ghost"
                     disableAnimation
                   >
                     <Tab key="light" title={<LuSun size={18} />} />
@@ -586,32 +575,32 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 <div className="flex flex-row items-center gap-2">
                   <Tooltip>
                     <Tooltip.Trigger>
-                      <ButtonGroup variant="light" size="sm">
+                      <ButtonGroup variant="ghost" size="sm">
                         <Button
                           onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
                           isIconOnly
-                          color={schedule?.viewport?.width === 375 ? "primary" : "default"}
+                          className={schedule?.viewport?.width === 375 ? "bg-primary/15" : undefined}
                         >
                           <LuSmartphone />
                         </Button>
                         <Button
                           onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
                           isIconOnly
-                          color={schedule?.viewport?.width === 768 ? "primary" : "default"}
+                          className={schedule?.viewport?.width === 768 ? "bg-primary/15" : undefined}
                         >
                           <LuTablet />
                         </Button>
                         <Button
                           onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
                           isIconOnly
-                          color={schedule?.viewport?.width === 1440 ? "primary" : "default"}
+                          className={schedule?.viewport?.width === 1440 ? "bg-primary/15" : undefined}
                         >
                           <LuLaptop />
                         </Button>
                         <Button
                           onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
                           isIconOnly
-                          color={schedule?.viewport?.width === 1920 ? "primary" : "default"}
+                          className={schedule?.viewport?.width === 1920 ? "bg-primary/15" : undefined}
                         >
                           <LuMonitor />
                         </Button>

@@ -522,8 +522,7 @@ function ChartDatasetConfig(props) {
                   <Tooltip>
                     <Tooltip.Trigger>
                       <Button
-                        color={cdc.sort === "asc" ? "secondary" : "default"}
-                        variant="flat"
+                        variant={cdc.sort === "asc" ? "secondary" : "tertiary"}
                         onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
                         startContent={<LuArrowDown01 />}
                         fullWidth
@@ -537,8 +536,7 @@ function ChartDatasetConfig(props) {
                   <Tooltip>
                     <Tooltip.Trigger>
                       <Button
-                        color={cdc.sort === "desc" ? "secondary" : "default"}
-                        variant="flat"
+                        variant={cdc.sort === "desc" ? "secondary" : "tertiary"}
                         onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
                         startContent={<LuArrowDown10 />}
                         fullWidth

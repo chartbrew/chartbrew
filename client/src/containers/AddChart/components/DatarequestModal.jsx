@@ -460,7 +460,7 @@ function DatarequestModal(props) {
                             <Container>
                               <Row justify="center">
                                 <Button
-                                  variant="flat"
+                                  variant="tertiary"
                                   onClick={() => _onCreateNewRequest(c)}
                                   size="sm"
                                   fullWidth
@@ -484,7 +484,7 @@ function DatarequestModal(props) {
             auto
             onClick={() => onClose()}
             color="warning"
-            variant="flat"
+            variant="tertiary"
           >
             Close
           </Button>

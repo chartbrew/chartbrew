@@ -75,7 +75,7 @@ function SlackAuth() {
       {_getAdminTeams().length === 0 && (
         <Alert
           color="warning"
-          variant="flat"
+          status="accent"
           title="You are not an admin of any teams"
           description="Please contact your administrator to authenticate this action."
         />

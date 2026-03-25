@@ -285,19 +285,15 @@ function RealtimeDbBuilder(props) {
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>
             <div className="flex flex-row items-center gap-2">
-              <Button
-                color="primary"
-                size="sm"
+              <Button size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
                 startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
-              <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!firebaseRequest.transform?.enabled}>
-                <Button
-                  color="primary"
-                  variant="flat"
+              <Badge content="" placement="top-right" shape="circle" isInvisible={!firebaseRequest.transform?.enabled}>
+                <Button variant="tertiary"
                   size="sm"
                   onPress={() => setShowTransform(true)}
                 >
@@ -306,9 +302,7 @@ function RealtimeDbBuilder(props) {
               </Badge>
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    color="danger"
-                    isIconOnly
+                  <Button isIconOnly
                     size="sm"
                     variant="secondary"
                     onPress={() => onDelete()}
@@ -360,9 +354,7 @@ function RealtimeDbBuilder(props) {
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
-                      onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))}
-                      color="primary"
-                      variant="light"
+                      onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))} variant="ghost"
                       size="sm"
                     >
                       <LuVariable />
@@ -379,13 +371,13 @@ function RealtimeDbBuilder(props) {
               <div className="flex flex-row items-center gap-1">
                 {requestSuccess && requestSuccess.statusCode < 300 && (
                   <>
-                    <Chip color="success" variant="flat" size="sm">
+                    <Chip color="success" variant="soft" size="sm">
                       {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                     </Chip>
                   </>
                 )}
                 {requestSuccess?.statusCode > 300 && (
-                  <Chip color="danger" variant="flat" size="sm">
+                  <Chip color="danger" variant="soft" size="sm">
                     {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Chip>
                 )}
@@ -406,9 +398,7 @@ function RealtimeDbBuilder(props) {
           <Row align="center" className={"gap-1"}>
             <Button
               variant={"bordered"}
-              size="sm"
-              color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "child") ? "default" : "secondary"}
-              onClick={() => (
+              size="sm" onClick={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -422,9 +412,7 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant="secondary"
-              color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "key") ? "default" : "secondary"}
-              onClick={() => (
+              variant="secondary" onClick={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -438,9 +426,7 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant={"bordered"}
-              color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "value") ? "default" : "secondary"}
-              onClick={() => (
+              variant={"bordered"} onClick={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -454,9 +440,7 @@ function RealtimeDbBuilder(props) {
             </Button>
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
               <>
-                <Button
-                  color="danger"
-                  variant="light"
+                <Button variant="ghost"
                   startContent={<LuX />}
                   onClick={() => (
                     setFirebaseRequest({
@@ -508,13 +492,7 @@ function RealtimeDbBuilder(props) {
           <Row align="center" className={"gap-1"}>
             <Button
               size="sm"
-              variant={"bordered"}
-              color={
-                !firebaseRequest.configuration
-                || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToLast)
-                  ? "default" : "secondary"
-              }
-              onClick={() => (
+              variant={"bordered"} onClick={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -529,13 +507,7 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant={"bordered"}
-              color={
-                !firebaseRequest.configuration
-                || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToFirst)
-                  ? "default" : "secondary"
-              }
-              onClick={() => (
+              variant={"bordered"} onClick={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -564,7 +536,7 @@ function RealtimeDbBuilder(props) {
                       }
                     })
                   )}
-                  variant="light"
+                  variant="ghost"
                   color="danger"
                   size="sm"
                 >
@@ -594,9 +566,7 @@ function RealtimeDbBuilder(props) {
         </div>
         <div className="col-span-12 sm:col-span-5">
           <Row className="RealtimeDb-request-tut">
-            <Button
-              color="primary"
-              endContent={!requestLoading ? <LuPlay /> : undefined}
+            <Button endContent={!requestLoading ? <LuPlay /> : undefined}
               isPending={requestLoading}
               startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
@@ -683,7 +653,7 @@ function RealtimeDbBuilder(props) {
                   isIconOnly
                   onPress={() => setVariableSettings(null)}
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                 >
                   <LuChevronsRight />
                 </Button>
@@ -766,7 +736,7 @@ function RealtimeDbBuilder(props) {
           </Drawer.Body>
           <Drawer.Footer>
             <Button
-              variant="flat"
+              variant="tertiary"
               onPress={() => setVariableSettings(null)}
             >
               Close

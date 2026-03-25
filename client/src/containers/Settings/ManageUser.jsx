@@ -247,9 +247,7 @@ function ManageUser() {
       <div>
         <Button
           isDisabled={!user.name}
-          isPending={loading}
-          color={success ? "success" : "primary"}
-          onPress={_onUpdateUser}
+          isPending={loading} onPress={_onUpdateUser}
           variant={success ? "flat" : "solid"}
           startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
@@ -259,7 +257,6 @@ function ManageUser() {
       </div>
 
       <div className="h-8" />
-
 
       <Input
         label="Your email"
@@ -282,9 +279,7 @@ function ManageUser() {
       <div>
         <Button
           isDisabled={!userEmail || userEmail === userProp.email}
-          isPending={loading}
-          color={successEmail ? "success" : "primary"}
-          onPress={_onUpdateEmail}
+          isPending={loading} onPress={_onUpdateEmail}
           variant={successEmail ? "flat" : "solid"}
           startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
@@ -302,9 +297,7 @@ function ManageUser() {
 
       {!qrCode && authMethods?.length === 0 && (
         <div>
-          <Button
-            color="primary"
-            onPress={() => _onSetup2FA()}
+          <Button onPress={() => _onSetup2FA()}
             endContent={<LuShieldCheck />}
           >
             {"Enable 2FA"}
@@ -338,9 +331,7 @@ function ManageUser() {
           />
 
           <div>
-            <Button
-              color="primary"
-              onPress={() => _onVerify2FA()}
+            <Button onPress={() => _onVerify2FA()}
               isDisabled={!appToken || !password}
               isPending={loading2fa}
               startContent={loading2fa ? <ButtonSpinner /> : undefined}
@@ -357,7 +348,7 @@ function ManageUser() {
           <div className="h-2" />
           <div className="flex flex-row flex-wrap gap-1">
             {backupCodes?.map((code) => (
-              <Chip key={code} variant="flat" className="rounded-sm">
+              <Chip key={code} variant="soft" className="rounded-sm">
                 {code}
               </Chip>
             ))}
@@ -389,14 +380,12 @@ function ManageUser() {
                 <TableCell key="method">{method.method}</TableCell>
                 <TableCell key="isEnabled">
                   {method.isEnabled
-                    ? <Chip color="success" size="sm" variant="flat">Yes</Chip>
-                    : <Chip color="danger" size="sm" variant="flat">No</Chip>
+                    ? <Chip size="sm" variant="soft">Yes</Chip>
+                    : <Chip size="sm" variant="soft">No</Chip>
                   }
                 </TableCell>
                 <TableCell key="actions" align="right" className="flex justify-end">
-                  <Button
-                    color="danger"
-                    variant="light"
+                  <Button variant="ghost"
                     isIconOnly
                     onClick={() => setRemoveMethod(method.id)}
                   >

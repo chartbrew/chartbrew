@@ -87,7 +87,7 @@ function KpiMode(props) {
             <div className="w-full py-1">
               <Chip
                 size="sm"
-                variant="flat"
+                variant="soft"
                 className="rounded-sm"
                 color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
                 startContent={status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : ""}

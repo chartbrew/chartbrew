@@ -86,7 +86,7 @@ function SlackCallback() {
         {error && (
           <Alert
             color="danger"
-            variant="flat"
+            status="accent"
             title="Failed to add Chartbrew to your Slack workspace"
             description="Please try again."
             endContent={
