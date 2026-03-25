@@ -484,8 +484,7 @@ function TableDataFormattingModal(props) {
               <div className="flex flex-row items-center gap-1">
                 <Chip
                   size="sm"
-                  variant="solid"
-                  color="primary"
+                  variant="primary"
                   onClick={() => _onChangeButtonSettings({ color: "primary", variant: "solid" })}
                   className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
                   content=" "
@@ -493,30 +492,28 @@ function TableDataFormattingModal(props) {
                 <Chip
                   size="sm"
                   variant="soft"
-                  color="primary"
+                  color="accent"
                   onClick={() => _onChangeButtonSettings({ color: "primary", variant: "flat" })}
                   className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "flat" ? " outline-black outline-2" : ""}`}
                   content=" "
                 />
                 <Chip
                   size="sm"
-                  variant="solid"
-                  color="secondary"
+                  variant="secondary"
                   onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "solid" })}
                   className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
                   content=" "
                 />
                 <Chip
                   size="sm"
-                  variant="soft"
-                  color="secondary"
+                  variant="tertiary"
                   onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "bordered" })}
                   className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "bordered" ? "outline-black outline-2" : ""}`}
                   content=" "
                 />
                 <Chip
                   size="sm"
-                  variant="solid"
+                  variant="soft"
                   color="success"
                   onClick={() => _onChangeButtonSettings({ color: "success", variant: "light" })}
                   className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "light" ? "outline-black outline-2" : ""}`}
@@ -532,8 +529,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="solid"
-                  color="default"
+                  variant="secondary"
                   onClick={() => _onChangeButtonSettings({ color: "default", variant: "solid" })}
                   className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
                   content=" "
@@ -548,7 +544,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="solid"
+                  variant="soft"
                   color="warning"
                   onClick={() => _onChangeButtonSettings({ color: "warning", variant: "solid" })}
                   className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
@@ -564,7 +560,7 @@ function TableDataFormattingModal(props) {
                 />
                 <Chip
                   size="sm"
-                  variant="solid"
+                  variant="soft"
                   color="danger"
                   onClick={() => _onChangeButtonSettings({ color: "danger", variant: "solid" })}
                   className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}

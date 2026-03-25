@@ -1332,8 +1332,7 @@ function ProjectDashboard() {
                   <Button
                     endContent={<LuPlug size={22} />}
                     size="lg"
-                    color="primary"
-                    variant={connections.length > 0 ? "flat" : "solid"}
+                    variant={connections.length > 0 ? "tertiary" : "primary"}
                     onPress={() => navigate("/connections/new")}
                   >
                     Create a connection
@@ -1342,7 +1341,6 @@ function ProjectDashboard() {
                     <Button
                       endContent={<LuChartPie size={22} />}
                       size="lg"
-                      color="primary"
                       onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
                     >
                       Create a chart

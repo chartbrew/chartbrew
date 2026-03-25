@@ -49,8 +49,7 @@ function MessageTypeLabels(props) {
           <Chip
             key={message.value}
             onClick={() => onSelect(message.value)}
-            color="primary"
-            variant={selected === message.value ? "solid" : "bordered"}
+            variant={selected === message.value ? "primary" : "tertiary"}
             className="cursor-pointer"
           >
             {message.text}
@@ -62,7 +61,6 @@ function MessageTypeLabels(props) {
           <>
             <Chip
               onClick={() => onSelect(message.value)}
-              color="primary"
               variant="secondary"
               className="cursor-pointer"
             >
@@ -74,7 +72,7 @@ function MessageTypeLabels(props) {
         <>
           <Chip
             onClick={() => setShowAll(true)}
-            color="secondary"
+            variant="secondary"
             className="cursor-pointer"
           >
             {"Show all"}
@@ -86,8 +84,7 @@ function MessageTypeLabels(props) {
           <Chip
             key={message.value}
             onClick={() => onSelect(message.value)}
-            variant={selected === message.value ? "solid" : "bordered"}
-            color="primary"
+            variant={selected === message.value ? "primary" : "tertiary"}
             className="cursor-pointer"
           >
             {message.text}
@@ -98,7 +95,7 @@ function MessageTypeLabels(props) {
         <>
           <Chip
             onClick={() => setShowAll(false)}
-            color="secondary"
+            variant="secondary"
             className="cursor-pointer"
           >
             {"Hide extra"}

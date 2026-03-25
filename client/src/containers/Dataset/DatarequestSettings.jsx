@@ -535,14 +535,12 @@ function DatarequestSettings(props) {
           </>
           <Row>
             <Button
-              auto
               onPress={() => _onSaveJoins()}
               size="sm"
               isDisabled={isSaved}
               isPending={saveLoading}
               startContent={saveLoading ? <ButtonSpinner /> : undefined}
-              variant={isSaved ? "flat" : "solid"}
-              color={isSaved ? "success" : "primary"}
+              variant={isSaved ? "tertiary" : "primary"}
             >
               {!isSaved && "Save"}
               {isSaved && "Saved"}
@@ -550,8 +548,6 @@ function DatarequestSettings(props) {
             <div className="w-1" />
             {!isSaved && (
               <Button
-                auto
-                color="warning"
                 onPress={() => _onRevertChanges()}
                 size="sm"
                 variant="tertiary"

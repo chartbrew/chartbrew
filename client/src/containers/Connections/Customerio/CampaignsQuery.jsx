@@ -454,8 +454,7 @@ function CampaignsQuery(props) {
               <Row>
                 <Chip
                   onClick={_onShowCampaingLinkMetrics}
-                  color="primary"
-                  variant={config.requestRoute.indexOf("metrics/links") > -1 ? "solid" : "bordered"}
+                  variant={config.requestRoute.indexOf("metrics/links") > -1 ? "primary" : "tertiary"}
                   className="cursor-pointer"
                 >
                   {`Show ${config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"} link metrics`}
@@ -561,17 +560,15 @@ function CampaignsQuery(props) {
                       <Button
                         onClick={() => setConfig({ ...config, linksMode: "total" })}
                         size="sm"
-                        variant={config.linksMode !== "total" ? "bordered" : "solid"}
-                        color="secondary"
+                        variant={config.linksMode !== "total" ? "outline" : "secondary"}
                       >
                         Total clicks
                       </Button>
                       <div className="w-1" />
                       <Button
                         onClick={() => _onSelectClickTimeseries()}
-                        variant={config.linksMode !== "links" ? "bordered" : "solid"}
+                        variant={config.linksMode !== "links" ? "outline" : "secondary"}
                         size="sm"
-                        color="secondary"
                       >
                         Click timeseries
                       </Button>

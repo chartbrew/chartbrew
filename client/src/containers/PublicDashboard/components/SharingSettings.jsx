@@ -786,11 +786,13 @@ function SharingSettings(props) {
 
           {!project?.public && sharePolicies?.length > 0 && (
             <div className="mt-2">
-              <Alert
-                status="accent"
-                title="Report not shareable"
-                description="Toggle 'Allow sharing' to make it shareable. Right now, only team members can view it."
-              />
+              <Alert status="accent">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>Report not shareable</Alert.Title>
+                  <Alert.Description>Toggle &apos;Allow sharing&apos; to make it shareable. Right now, only team members can view it.</Alert.Description>
+                </Alert.Content>
+              </Alert>
             </div>
           )}
 

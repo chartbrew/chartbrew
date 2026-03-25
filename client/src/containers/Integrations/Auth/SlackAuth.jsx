@@ -73,12 +73,13 @@ function SlackAuth() {
         {"Connect your Slack workspace to your Chartbrew team"}
       </div>
       {_getAdminTeams().length === 0 && (
-        <Alert
-          color="warning"
-          status="accent"
-          title="You are not an admin of any teams"
-          description="Please contact your administrator to authenticate this action."
-        />
+        <Alert status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>You are not an admin of any teams</Alert.Title>
+            <Alert.Description>Please contact your administrator to authenticate this action.</Alert.Description>
+          </Alert.Content>
+        </Alert>
       )}
 
       {_getAdminTeams().length > 0 && (

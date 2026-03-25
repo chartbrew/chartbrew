@@ -695,7 +695,7 @@ function ApiBuilder(props) {
                 </div>
                 <div className="h-4" />
                 <div>
-                  <Button variant={isEqual(variables, apiRequest.variables) ? "flat" : "solid"}
+                  <Button variant={isEqual(variables, apiRequest.variables) ? "tertiary" : "primary"}
                     size="sm"
                     onPress={() => _onSaveVariables()}
                   >

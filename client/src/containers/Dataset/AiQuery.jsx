@@ -94,32 +94,41 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
 
       <div className="max-h-[300px] overflow-y-auto">
         {askAiLoading ? (
-          <Alert 
-            icon={<LuBrainCircuit />}
-            color="primary"
-            title={
-              <div className="flex items-center gap-1">
-              Thinking
-              <span className="animate-pulse">.</span>
-              <span className="animate-pulse delay-100">.</span>
-                <span className="animate-pulse delay-200">.</span>
-              </div>
-            }
-          />
+          <Alert status="accent">
+            <Alert.Indicator>
+              <LuBrainCircuit />
+            </Alert.Indicator>
+            <Alert.Content>
+              <Alert.Title>
+                <span className="flex items-center gap-1">
+                  Thinking
+                  <span className="animate-pulse">.</span>
+                  <span className="animate-pulse delay-100">.</span>
+                  <span className="animate-pulse delay-200">.</span>
+                </span>
+              </Alert.Title>
+            </Alert.Content>
+          </Alert>
         ) : conversation.length === 0 ? (
-          <Alert
-            icon={<LuBrainCircuit />}
-            status="accent"
-            color="primary"
-            description={`Hi! I can help you write ${connectionType === "mongodb" ? "MongoDB" : "SQL"} queries. Ask me a question about your data and I'll generate a query for you.`}
-          />
+          <Alert status="accent">
+            <Alert.Indicator>
+              <LuBrainCircuit />
+            </Alert.Indicator>
+            <Alert.Content>
+              <Alert.Description>
+                {`Hi! I can help you write ${connectionType === "mongodb" ? "MongoDB" : "SQL"} queries. Ask me a question about your data and I'll generate a query for you.`}
+              </Alert.Description>
+            </Alert.Content>
+          </Alert>
         ) : (
-          <Alert
-            icon={<LuBrainCircuit />}
-            color="primary"
-            size="sm"
-            description={typedText}
-          />
+          <Alert status="accent" className="text-sm">
+            <Alert.Indicator>
+              <LuBrainCircuit />
+            </Alert.Indicator>
+            <Alert.Content>
+              <Alert.Description>{typedText}</Alert.Description>
+            </Alert.Content>
+          </Alert>
         )}
       </div>
 

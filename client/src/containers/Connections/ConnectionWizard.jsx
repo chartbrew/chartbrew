@@ -414,8 +414,7 @@ function ConnectionWizard() {
                 <Card.Footer>
                   <Button
                     size="sm"
-                    color="primary"
-                    variant={inviteCopied ? "flat" : "solid"}
+                    variant={inviteCopied ? "tertiary" : "primary"}
                     fullWidth
                     endContent={inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
                     onClick={() => _onCopyInviteUrl()}

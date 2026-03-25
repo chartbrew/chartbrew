@@ -443,8 +443,7 @@ function Dataset() {
                   <Chip
                     key={project.id}
                     className="rounded-sm cursor-pointer"
-                    color={selectedProjectIds.includes(project.id) ? "primary" : "default"}
-                    variant={selectedProjectIds.includes(project.id) ? "solid" : "bordered"}
+                    variant={selectedProjectIds.includes(project.id) ? "primary" : "tertiary"}
                     onClick={() => _toggleProjectTag(project.id)}
                   >
                     {project.name}

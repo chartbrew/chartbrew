@@ -92,11 +92,13 @@ function ApiKeys() {
   if (!canAccess("teamAdmin", user.id, team.TeamRoles)) {
     return (
       <div className="container mx-auto">
-        <Alert
-          color="default"
-          title="You don't have access to this page"
-          description="Please contact your team admin or change the team from the sidebar"
-        />
+        <Alert status="default">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>You don&apos;t have access to this page</Alert.Title>
+            <Alert.Description>Please contact your team admin or change the team from the sidebar</Alert.Description>
+          </Alert.Content>
+        </Alert>
       </div>
     )
   }

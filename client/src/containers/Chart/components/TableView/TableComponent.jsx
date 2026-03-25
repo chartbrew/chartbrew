@@ -19,6 +19,18 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   text: `Show ${pageSize}`,
 }));
 
+/** Maps legacy table column button settings (v2) to HeroUI v3 Button variant. */
+const tableDisplayButtonVariant = (buttonSettings) => {
+  const color = buttonSettings.color || "primary";
+  const legacy = buttonSettings.variant || "solid";
+  if (legacy === "flat") return "tertiary";
+  if (legacy === "bordered") return "outline";
+  if (legacy === "light") return "tertiary";
+  if (color === "danger") return "danger";
+  if (color === "secondary") return "secondary";
+  return "primary";
+};
+
 // Add URL detection function
 const isUrl = (str) => {
   if (typeof str !== "string") return false;
@@ -67,8 +79,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
           <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
             <Button
               size="sm"
-              color={buttonSettings.color || "primary"}
-              variant={buttonSettings.variant || "solid"}
+              variant={tableDisplayButtonVariant(buttonSettings)}
             >
               {buttonSettings.text || "View"}
             </Button>

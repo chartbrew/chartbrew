@@ -200,13 +200,13 @@ function Signup() {
               </div>
             )}
             {addedToTeam && (
-              <Alert
-                className="mt-4"
-                color="success"
-                status="accent"
-                title="You have been added to the team"
-                description="We will redirect you to your dashboard now..."
-              />
+              <Alert status="success" className="mt-4">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>You have been added to the team</Alert.Title>
+                  <Alert.Description>We will redirect you to your dashboard now...</Alert.Description>
+                </Alert.Content>
+              </Alert>
             )}
           </form>
 

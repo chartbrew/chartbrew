@@ -268,10 +268,13 @@ function SharedChart() {
   if (error) {
     return (
       <div className="p-2">
-        <Alert
-          title={"Chart cannot be loaded"}
-          description="The chart might be private or the link expired."
-        />
+        <Alert status="danger">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Chart cannot be loaded</Alert.Title>
+            <Alert.Description>The chart might be private or the link expired.</Alert.Description>
+          </Alert.Content>
+        </Alert>
       </div>
     );
   }

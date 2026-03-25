@@ -476,12 +476,13 @@ function AddChart() {
         <div className="h-4" />
         {showMissingDatasetAlert && (
           <>
-            <Alert
-              color="warning"
-              status="accent"
-              title="Dataset access required"
-              description={missingDatasetDescription}
-            />
+            <Alert status="warning">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Dataset access required</Alert.Title>
+                <Alert.Description>{missingDatasetDescription}</Alert.Description>
+              </Alert.Content>
+            </Alert>
             <div className="h-4" />
           </>
         )}
@@ -493,12 +494,13 @@ function AddChart() {
     <div className="flex flex-col">
       {showMissingDatasetAlert && (
         <>
-          <Alert
-            color="warning"
-            variant="solid"
-            title="Dataset access required"
-            description={missingDatasetDescription}
-          />
+          <Alert status="warning">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Dataset access required</Alert.Title>
+              <Alert.Description>{missingDatasetDescription}</Alert.Description>
+            </Alert.Content>
+          </Alert>
           <div className="h-4" />
         </>
       )}
@@ -563,12 +565,11 @@ function AddChart() {
                 />
               </div>
               <Button
-                color={saveRequired ? "primary" : "success"}
                 onPress={() => _onChangeChart({})}
                 isPending={loading}
                 startContent={loading ? <ButtonSpinner /> : undefined}
                 size="sm"
-                variant={saveRequired ? "solid" : "flat"}
+                variant={saveRequired ? "primary" : "secondary"}
               >
                 {saveRequired && "Save chart"}
                 {!saveRequired && "Chart saved"}

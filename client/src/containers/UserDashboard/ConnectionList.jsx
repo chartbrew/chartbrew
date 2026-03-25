@@ -388,8 +388,7 @@ function ConnectionList() {
                   {projects.filter((p) => !p.ghost).map((project) => (
                     <Chip
                       key={project.id}
-                      variant={connectionToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
-                      color="primary"
+                      variant={connectionToEdit?.project_ids?.includes(project.id) ? "primary" : "soft"}
                       className="rounded-sm cursor-pointer"
                       onClick={() => {
                         if (connectionToEdit?.project_ids?.includes(project.id)) {

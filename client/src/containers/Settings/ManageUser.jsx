@@ -236,11 +236,13 @@ function ManageUser() {
       <div className="h-4" />
       {submitError && (
         <>
-          <Alert
-            color="danger"
-            title="There was an error updating your account"
-            description="Please try saving again."
-          />
+          <Alert status="danger">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>There was an error updating your account</Alert.Title>
+              <Alert.Description>Please try saving again.</Alert.Description>
+            </Alert.Content>
+          </Alert>
           <div className="h-4" />
         </>
       )}
@@ -248,7 +250,7 @@ function ManageUser() {
         <Button
           isDisabled={!user.name}
           isPending={loading} onPress={_onUpdateUser}
-          variant={success ? "flat" : "solid"}
+          variant={success ? "tertiary" : "primary"}
           startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
@@ -280,7 +282,7 @@ function ManageUser() {
         <Button
           isDisabled={!userEmail || userEmail === userProp.email}
           isPending={loading} onPress={_onUpdateEmail}
-          variant={successEmail ? "flat" : "solid"}
+          variant={successEmail ? "tertiary" : "primary"}
           startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
@@ -495,11 +497,13 @@ function ManageUser() {
 
       {deleteUserError && (
         <div>
-          <Alert
-            title="Something went wrong while deleting your account"
-            description={"Please try refreshing the page."}
-            color="danger"
-          />
+          <Alert status="danger">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Something went wrong while deleting your account</Alert.Title>
+              <Alert.Description>Please try refreshing the page.</Alert.Description>
+            </Alert.Content>
+          </Alert>
         </div>
       )}
 

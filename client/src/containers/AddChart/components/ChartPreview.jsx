@@ -398,7 +398,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "avg" ? "bordered" : "solid"} onPress={() => _onChangeChartType({ type: "avg" })}
+                      variant={chart.type !== "avg" ? "outline" : "primary"} onPress={() => _onChangeChartType({ type: "avg" })}
                       isIconOnly
                     >
                       <TbMathAvg size={24} />
@@ -409,7 +409,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"} onPress={_toggleAccumulation}
+                      variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "outline" : "primary"} onPress={_toggleAccumulation}
                       isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                       isIconOnly
                     >
@@ -426,7 +426,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "table" ? "bordered" : "solid"}
+                      variant={chart.type !== "table" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "table" })} isIconOnly
                     >
                       <BsTable size={20} />
@@ -437,7 +437,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "line" ? "bordered" : "solid"}
+                      variant={chart.type !== "line" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "line" })} isIconOnly
                     >
                       <TbChartLine size={24} />
@@ -448,7 +448,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "bar" ? "bordered" : "solid"}
+                      variant={chart.type !== "bar" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "bar" })} isIconOnly
                     >
                       <TbChartBar size={24} />
@@ -459,7 +459,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "kpi" ? "bordered" : "solid"}
+                      variant={chart.type !== "kpi" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "kpi" })} isIconOnly
                     >
                       <TbHash size={24} />
@@ -470,7 +470,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "gauge" ? "bordered" : "solid"}
+                      variant={chart.type !== "gauge" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "gauge" })} isIconOnly
                     >
                       <LuGauge size={24} />
@@ -481,7 +481,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "matrix" ? "bordered" : "solid"}
+                      variant={chart.type !== "matrix" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "matrix" })} isIconOnly
                     >
                       <TbGridDots size={24} />
@@ -495,7 +495,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "pie" ? "bordered" : "solid"}
+                      variant={chart.type !== "pie" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "pie" })} isIconOnly
                     >
                       <TbChartPie2 size={24} />
@@ -506,7 +506,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "doughnut" ? "bordered" : "solid"}
+                      variant={chart.type !== "doughnut" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "doughnut" })} isIconOnly
                     >
                       <TbChartDonut4 size={24} />
@@ -517,7 +517,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "radar" ? "bordered" : "solid"}
+                      variant={chart.type !== "radar" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "radar" })} isIconOnly
                     >
                       <TbChartRadar size={24} />
@@ -528,7 +528,7 @@ function ChartPreview(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={chart.type !== "polar" ? "bordered" : "solid"}
+                      variant={chart.type !== "polar" ? "outline" : "primary"}
                       onPress={() => _onChangeChartType({ type: "polar" })} isIconOnly
                     >
                       <TiChartPie size={24} />

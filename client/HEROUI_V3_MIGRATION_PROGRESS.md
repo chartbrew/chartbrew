@@ -273,16 +273,32 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 - **`ChartDatasets.jsx`**, **`DatasetList.jsx` (tag modal)**, **`SlackIntegration`**, **`AiModal`**, **`InviteMembersForm`**, **`FirestoreConnectionForm`:** same **`Chip`** rules.
 - **`ProjectSettings.jsx`:** **`Input`** — remove invalid **`color`**, use **`isInvalid`** for name validation.
 
+## Batch 56 (legacy **`Button` `variant="solid"`** / **`bordered`** / **`flat`**)
+
+- HeroUI v3 **`Button`** has no **`solid`**; default visual is **`primary`**. **`bordered` → `outline`**, **`flat` → `tertiary`** (or **`secondary`** where “saved / muted” state).
+- **`TableComponent.jsx`:** **`tableDisplayButtonVariant()`** maps persisted column button settings (**`solid`/`flat`/`bordered`/`light`**) + legacy **`color`** → v3 **`Button`** **`variant`**; drop invalid **`color`** on **`Button`**.
+- **`ChartPreview.jsx`:** chart-type toggles **`bordered`/`solid` → `outline`/`primary`**.
+- **`ManageUser.jsx`**, **`ApiBuilder.jsx`**, **`DatarequestSettings.jsx`**, **`ConnectionWizard.jsx`**, **`ProjectDashboard.jsx`**, **`AddChart.jsx`** (save control): same ternary pattern.
+- **`CampaignsQuery.jsx`:** link-metrics **`Chip`** + visualization **`Button`** pairs updated; removed invalid **`color`** on those **`Button`**s.
+- **`TableDataFormattingModal.jsx`:** button-style **swatch `Chip`s** — replace invalid **`variant="solid"`** / invalid **`color`** combos with valid **`Chip`** **`variant`/`color`**; stored JSON still uses legacy **`variant: "solid"`** etc. for **`tableDisplayButtonVariant`**.
+- **`Chip` toggles:** **`EditDateRangeFilter`**, **`Dataset.jsx`** (tags modal), **`ConnectionList`**, **`MessageTypeLabels`** — **`solid`/`flat`/`bordered` → `primary`/`soft`/`tertiary`** as appropriate; remove invalid **`color="primary"`** / **`color="secondary"`** on **`Chip`** where needed.
+
+## Batch 57 (**`Alert`** v3 compounds + **`status`**)
+
+- Replaced legacy root props (**`title`**, **`description`**, **`color`**, **`variant`**, **`icon`**, **`endContent`**, **`size`**) with **`Alert` → `Alert.Indicator` + `Alert.Content` + `Alert.Title` / `Alert.Description`** (and optional siblings in **`Content`** for actions, e.g. **`Button`**, Slack **`<a>`**).
+- **`status`** from **`@heroui/styles`:** **`default`**, **`accent`**, **`success`**, **`warning`**, **`danger`**. Dropped v2 **`color`** on root; map semantics (**`danger`** errors, **`warning`** access/cautions, **`accent`** info, **`success`** confirmations, **`default`** neutral).
+- **Touched:** **`AddChart.jsx`**, **`ManageUser.jsx`**, **`ApiKeys.jsx`**, **`SharingSettings.jsx`**, **`ApiConnectionForm.jsx`**, **`MysqlConnectionForm.jsx`**, **`PostgresConnectionForm.jsx`**, **`VisualSQL.jsx`**, **`AiQuery.jsx`**, **`SlackAuth.jsx`**, **`SlackCallback.jsx`**, **`Signup.jsx`**, **`EmbeddedChart.jsx`**, **`SharedChart.jsx`**.
+- **Confirm:** **`rg '<Alert\\s' src`** — no **`title=`** / **`description=`** / **`color=`** / **`icon=`** on **`Alert`** root.
+
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 55)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 57)
 
 ## Next batch
 
-1. **Legacy **`Alert`** API** (**`title`**, **`description`**, **`icon`**, **`color`**, **`variant`** on root) → **`Alert`/`Alert.Indicator`/`Alert.Content`/`Alert.Title`/`Alert.Description`** compounds + **`status`** (largest visual/behavior win after variant sweeps).
-2. Remaining **`Button` `variant="solid"`** / invalid v2 props (**`TableDataFormattingModal`**, **`AddChart`**, etc.) if any still present.
-3. Keep **`npm run build`** after import-surface edits.
+1. Keep **`npm run build`** after import-surface edits.
+2. Continue other HeroUI v3 sweeps as needed (e.g. remaining **`Avatar`** / **`Badge`** legacy props if any).
 
 ## Notes
 

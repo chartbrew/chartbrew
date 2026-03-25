@@ -744,16 +744,14 @@ function PostgresConnectionForm(props) {
             </div>
             <div className="h-4" />
             <div>
-              <Alert
-                title="Something not working?"
-                color="default"
-                status="accent"
-              >
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm">
-                    {"SSH tunneling is a new feature and some things might not work as expected. If you're having trouble, please contact support."}
-                  </span>
-                  <div>
+              <Alert status="accent">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>Something not working?</Alert.Title>
+                  <Alert.Description className="block text-sm">
+                    SSH tunneling is a new feature and some things might not work as expected. If you&apos;re having trouble, please contact support.
+                  </Alert.Description>
+                  <div className="mt-2">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -764,7 +762,7 @@ function PostgresConnectionForm(props) {
                       {"Contact support"}
                     </Button>
                   </div>
-                </div>
+                </Alert.Content>
               </Alert>
             </div>
           </>

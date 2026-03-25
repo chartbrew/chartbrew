@@ -470,11 +470,15 @@ function ApiConnectionForm(props) {
             {testResult.status >= 400 && (
               <>
                 <div className="h-4" />
-                <Alert
-                  variant="secondary"
-                  title="Connection info"
-                  description="Making API requests to base URLs can sometimes fail, but it's not always an issue. Lots of APIs fail to return data when the base URL is used directly. You can configure datasets to make requests to the correct endpoints after the connection is saved."
-                />
+                <Alert status="accent">
+                  <Alert.Indicator />
+                  <Alert.Content>
+                    <Alert.Title>Connection info</Alert.Title>
+                    <Alert.Description>
+                      Making API requests to base URLs can sometimes fail, but it&apos;s not always an issue. Lots of APIs fail to return data when the base URL is used directly. You can configure datasets to make requests to the correct endpoints after the connection is saved.
+                    </Alert.Description>
+                  </Alert.Content>
+                </Alert>
               </>
             )}
             <div className="h-8" />

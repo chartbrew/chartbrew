@@ -773,22 +773,22 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
     
     return (
       <Container className={"flex flex-col gap-4"}>
-        <Alert
-          color="primary"
-          title="We could not parse your query"
-          description={
-            hasVariables 
-              ? "The query contains variables that may be causing parsing issues. You can try modifying the query manually or restart from here."
-              : "Modify the query manually or restart the query from here."
-          }
-          variant="secondary"
-        >
-          <Button size="sm"
-            onPress={() => _onResetQuery()}
-            className="mt-2"
-          >
-            Restart query
-          </Button>
+        <Alert status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>We could not parse your query</Alert.Title>
+            <Alert.Description>
+              {hasVariables
+                ? "The query contains variables that may be causing parsing issues. You can try modifying the query manually or restart from here."
+                : "Modify the query manually or restart the query from here."}
+            </Alert.Description>
+            <Button size="sm"
+              onPress={() => _onResetQuery()}
+              className="mt-2"
+            >
+              Restart query
+            </Button>
+          </Alert.Content>
         </Alert>
       </Container>
     );
@@ -839,24 +839,26 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
     <Container className={"flex flex-col gap-4"}>
       {/* Show variable indicator if variables are present */}
       {variables && variables.length > 0 && (
-        <Alert
-          title="Click to edit variables"
-          status="accent"
-          icon={<LuVariable fillOpacity={0} />}
-        >
-          <div className="flex gap-1 items-center mt-2">
-            <span className="text-sm flex flex-wrap gap-1">
-              {variables.map((v) => (
-                <code
-                  className="cursor-pointer rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700 transition-colors duration-200 hover:bg-default/60"
-                  key={v.variable}
-                  onClick={() => onVariableClick(v)}
-                >
-                  {v.variable}
-                </code>
-              ))}
-            </span>
-          </div>
+        <Alert status="accent">
+          <Alert.Indicator>
+            <LuVariable fillOpacity={0} />
+          </Alert.Indicator>
+          <Alert.Content>
+            <Alert.Title>Click to edit variables</Alert.Title>
+            <div className="flex gap-1 items-center mt-2">
+              <span className="text-sm flex flex-wrap gap-1">
+                {variables.map((v) => (
+                  <code
+                    className="cursor-pointer rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700 transition-colors duration-200 hover:bg-default/60"
+                    key={v.variable}
+                    onClick={() => onVariableClick(v)}
+                  >
+                    {v.variable}
+                  </code>
+                ))}
+              </span>
+            </div>
+          </Alert.Content>
         </Alert>
       )}
       {!ast?.from && (
