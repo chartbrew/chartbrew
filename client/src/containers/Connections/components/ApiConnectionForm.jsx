@@ -2,8 +2,15 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button, Separator, Input, Chip, Tabs, Tab, Select,
-  Alert, Label, ListBox,
+  Button,
+  Separator,
+  Input,
+  Chip,
+  Tabs,
+  Select,
+  Alert,
+  Label,
+  ListBox
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
@@ -241,8 +248,12 @@ function ApiConnectionForm(props) {
         <div className="h-8" />
 
         <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
-          <Tab key="authentication" title="Authentication" />
-          <Tab key="headers" title="Headers" />
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="authentication">Authentication</Tabs.Tab>
+              <Tabs.Tab id="headers">Headers</Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
         </Tabs>
         <div className="h-8" />
         <Separator />

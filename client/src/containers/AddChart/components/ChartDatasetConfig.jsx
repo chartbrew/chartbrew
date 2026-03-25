@@ -3,7 +3,19 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
-  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, ScrollShadow, Spinner, Tab, Tabs, Tooltip,
+  Button,
+  Checkbox,
+  Chip,
+  Separator,
+  Input,
+  Link,
+  Modal,
+  Popover,
+  ScrollShadow,
+  Spinner,
+  Tabs,
+  Tooltip,
+  Label
 } from "@heroui/react";
 import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
@@ -367,7 +379,14 @@ function ChartDatasetConfig(props) {
         aria-label="Series configuration"
         fullWidth
       >
-        <Tab key="data-setup" title="Data setup">
+        <Tabs.ListContainer>
+          <Tabs.List className="w-full">
+            <Tabs.Tab id="data-setup">Data setup</Tabs.Tab>
+            <Tabs.Tab id="display">Display</Tabs.Tab>
+            <Tabs.Tab id="automation">Automation</Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
+        <Tabs.Panel id="data-setup">
           <div className="h-8" />
           <ChartDatasetDataSetup
             cdc={cdc}
@@ -382,9 +401,9 @@ function ChartDatasetConfig(props) {
             onUpdateCdc={_onUpdateCdc}
             onEditDataset={_onEditDataset}
           />
-        </Tab>
+        </Tabs.Panel>
 
-        <Tab key="display" title="Display">
+        <Tabs.Panel id="display">
           <div className="h-8" />
 
           {chart.type !== "table" && (
@@ -423,12 +442,17 @@ function ChartDatasetConfig(props) {
                   <Row align={"center"} justify={"space-between"}>
                     <Row align={"center"}>
                       <Checkbox
+                        id={`cdc-fill-${cdc.id}`}
                         isSelected={cdc.fill}
-                        onChange={() => _onUpdateCdc({ fill: !cdc.fill, fillColor: ["transparent"] })}
+                        onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
                         isDisabled={cdc.multiFill}
-                        size="sm"
                       >
-                        Fill Color
+                        <Checkbox.Control className="size-4 shrink-0">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Content>
+                          <Label htmlFor={`cdc-fill-${cdc.id}`} className="text-sm">Fill Color</Label>
+                        </Checkbox.Content>
                       </Checkbox>
                     </Row>
                     {cdc.fill && !cdc.multiFill && (
@@ -460,11 +484,18 @@ function ChartDatasetConfig(props) {
                 {chart.type !== "line" && chart.type !== "matrix" && (
                   <Row>
                     <Checkbox
+                      id={`cdc-multifill-${cdc.id}`}
                       isSelected={cdc.multiFill}
-                      onChange={() => _onChangeMultiFill()}
-                      size="sm"
+                      onChange={(selected) => {
+                        if (selected !== cdc.multiFill) _onChangeMultiFill();
+                      }}
                     >
-                      Multiple colors
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Content>
+                        <Label htmlFor={`cdc-multifill-${cdc.id}`} className="text-sm">Multiple colors</Label>
+                      </Checkbox.Content>
                     </Checkbox>
                   </Row>
                 )}
@@ -756,9 +787,9 @@ function ChartDatasetConfig(props) {
               </div>
             </>
           )}
-        </Tab>
+        </Tabs.Panel>
 
-        <Tab key="automation" title="Automation">
+        <Tabs.Panel id="automation">
           <div className="h-8" />
 
           <Row>
@@ -853,7 +884,7 @@ function ChartDatasetConfig(props) {
               </div>
             )}
           </div>
-        </Tab>
+        </Tabs.Panel>
       </Tabs>
 
       <div className="h-8" />

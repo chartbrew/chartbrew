@@ -293,13 +293,19 @@ function ChartMogulTemplate(props) {
               {configuration.Charts && configuration.Charts.map((chart) => (
                 <div key={chart.tid} className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-3 flex justify-start">
                   <Checkbox
-                    isSelected={
-                      _.indexOf(selectedCharts, chart.tid) > -1
-                    }
-                    onChange={() => _onChangeSelectedCharts(chart.tid)}
-                    size="sm"
+                    id={`chartmogul-chart-${chart.tid}`}
+                    isSelected={_.indexOf(selectedCharts, chart.tid) > -1}
+                    onChange={(selected) => {
+                      const wasSelected = _.indexOf(selectedCharts, chart.tid) > -1;
+                      if (selected !== wasSelected) _onChangeSelectedCharts(chart.tid);
+                    }}
                   >
-                    {chart.name}
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Label htmlFor={`chartmogul-chart-${chart.tid}`} className="text-sm">{chart.name}</Label>
+                    </Checkbox.Content>
                   </Checkbox>
                 </div>
               ))}

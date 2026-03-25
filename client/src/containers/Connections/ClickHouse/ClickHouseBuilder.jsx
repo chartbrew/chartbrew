@@ -2,11 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Modal, Input, Tooltip, Checkbox, Separator,
-  Tabs, Tab,
+  Button,
+  Modal,
+  Input,
+  Tooltip,
+  Checkbox,
+  Separator,
+  Tabs,
   ProgressCircle,
   Badge,
-  Drawer, Label, ListBox, Switch, Select,
+  Drawer,
+  Label,
+  ListBox,
+  Switch,
+  Select
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -384,11 +393,16 @@ function ClickHouseBuilder(props) {
           <div className="h-4" />
           <Row align="center">
             <Checkbox
+              id="clickhouse-use-cache"
               isSelected={!invalidateCache}
-              onChange={() => setInvalidateCache(!invalidateCache)}
-              size="sm"
+              onChange={(selected) => setInvalidateCache(!selected)}
             >
-              {"Use cached data"}
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="clickhouse-use-cache" className="text-sm">Use cached data</Label>
+              </Checkbox.Content>
             </Checkbox>
             <div className="w-1" />
             <Tooltip>
@@ -468,8 +482,12 @@ function ClickHouseBuilder(props) {
               setActiveResultsTab(key);
             }}
           >
-            <Tab title="Table" key="table" />
-            <Tab title="JSON" key="json" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="table">Table</Tabs.Tab>
+                <Tabs.Tab id="json">JSON</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
           <div className="h-4" />
 

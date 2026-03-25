@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
+  Button, Checkbox, Chip, Label, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
@@ -115,22 +115,19 @@ function ChartPreview(props) {
     return onChange(updateData);
   };
 
-  const _onChangeMode = () => {
+  const _onChangeMode = (selected) => {
     setRedraw(true);
-
-    return onChange({ mode: chart.mode === "chart" ? "kpichart" : "chart" });
+    return onChange({ mode: selected ? "kpichart" : "chart" });
   };
 
-  const _onChangeGrowth = () => {
+  const _onChangeGrowth = (selected) => {
     setRedraw(true);
-
-    return onChange({ showGrowth: !chart.showGrowth });
+    return onChange({ showGrowth: selected });
   };
 
-  const _onChangeInvertGrowth = () => {
+  const _onChangeInvertGrowth = (selected) => {
     setRedraw(true);
-
-    return onChange({ invertGrowth: !chart.invertGrowth });
+    return onChange({ invertGrowth: selected });
   };
 
   const _redrawComplete = () => {
@@ -241,11 +238,16 @@ function ChartPreview(props) {
                 </Button>
                 <div className="w-2" />
                 <Checkbox
+                  id="chart-preview-use-cache"
                   isSelected={useCache}
-                  onValueChange={changeCache}
-                  size="sm"
+                  onChange={changeCache}
                 >
-                  {"Use cached data"}
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="chart-preview-use-cache" className="text-sm">Use cached data</Label>
+                  </Checkbox.Content>
                 </Checkbox>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -577,27 +579,42 @@ function ChartPreview(props) {
         <div style={styles.topBuffer} className="chart-preview-growth">
           <div className="flex flex-row items-center gap-4">
             <Checkbox
+              id="chart-preview-kpi-mode"
               isSelected={chart.mode === "kpichart"}
               onChange={_onChangeMode}
               isDisabled={chart.type === "kpi" || chart.type === "avg"}
-              size="sm"
             >
-              Show KPI on chart
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-preview-kpi-mode" className="text-sm">Show KPI on chart</Label>
+              </Checkbox.Content>
             </Checkbox>
             <Checkbox
+              id="chart-preview-growth"
               isSelected={chart.showGrowth}
               onChange={_onChangeGrowth}
               isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
-              size="sm"
             >
-              Show growth
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-preview-growth" className="text-sm">Show growth</Label>
+              </Checkbox.Content>
             </Checkbox>
             <Checkbox
+              id="chart-preview-invert-growth"
               isSelected={chart.invertGrowth}
               onChange={_onChangeInvertGrowth}
-              size="sm"
             >
-              Invert growth
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-preview-invert-growth" className="text-sm">Invert growth</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
           <div className="h-4" />

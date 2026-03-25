@@ -1,10 +1,13 @@
 import React, { useState, Fragment, useEffect, useRef } from "react"
 import PropTypes from "prop-types";
 import {
-  Button, Avatar, Card,
-  Input, Separator, Chip,
-  Tabs,
-  Tab,
+  Button,
+  Avatar,
+  Card,
+  Input,
+  Separator,
+  Chip,
+  Tabs
 } from "@heroui/react";
 import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -327,29 +330,27 @@ function DatasetQuery(props) {
               setCreateMode(false);
             }}
           >
-            <Tab
-              key="queryBuilder"
-              title={(
-                <div className="flex flex-row items-center gap-2">
-                  <LuLayers size={16} />
-                  <span>Query builder</span>
-                </div>
-              )}
-            />
-            <Tab
-              key="joinSettings"
-              title={(
-                <div className="flex flex-row items-center gap-2">
-                  <LuGitMerge size={16} />
-                  <span>Join settings</span>
-                  {_hasJoinConfiguration() && (
-                    <Chip size="sm" variant="soft" className="rounded-sm">
-                      {`${_getJoinSettingsJoinCount()} join${_getJoinSettingsJoinCount() === 1 ? "" : "s"}`}
-                    </Chip>
-                  )}
-                </div>
-              )}
-            />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="queryBuilder">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuLayers size={16} />
+                    <span>Query builder</span>
+                  </div>
+                </Tabs.Tab>
+                <Tabs.Tab id="joinSettings">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuGitMerge size={16} />
+                    <span>Join settings</span>
+                    {_hasJoinConfiguration() && (
+                      <Chip size="sm" variant="soft" className="rounded-sm">
+                        {`${_getJoinSettingsJoinCount()} join${_getJoinSettingsJoinCount() === 1 ? "" : "s"}`}
+                      </Chip>
+                    )}
+                  </div>
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         </div>
       </div>
@@ -368,41 +369,45 @@ function DatasetQuery(props) {
             {dataRequests && dataRequests.length > 0 && (
               <div className="bg-content2 rounded-lg p-2">
                 <Tabs
-                  key={`sources-${_getSelectedTab()}`}
-                  defaultSelectedKey={_getSelectedTab()}
+                  key={dataRequests.map((dr) => dr.id).join("-")}
+                  selectedKey={_getSelectedTab()}
+                  onSelectionChange={(key) => {
+                    if (key === "add") {
+                      setCreateMode(true);
+                      return;
+                    }
+                    const dr = dataRequests.find((d) => `${d.id}` === `${key}`);
+                    if (dr) _onSelectDataRequest(dr);
+                  }}
                   variant="secondary"
                 >
-                  {dataRequests.map((dr) => (
-                    <Tab
-                      key={dr.id}
-                      title={(
-                        <div className="flex flex-row items-center gap-2">
-                          <div className="w-6 h-6">
-                            <img
-                              src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
-                              alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                              className="h-full w-full rounded-sm border-1 border-divider object-contain"
-                            />
+                  <Tabs.ListContainer>
+                    <Tabs.List>
+                      {dataRequests.map((dr) => (
+                        <Tabs.Tab key={dr.id} id={`${dr.id}`}>
+                          <div className="flex flex-row items-center gap-2">
+                            <div className="w-6 h-6">
+                              <img
+                                src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
+                                alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                                className="h-full w-full rounded-sm border-1 border-divider object-contain"
+                              />
+                            </div>
+                            <span>{dr?.Connection?.name}</span>
+                            {_renderDataRequestTabChip(dr)}
                           </div>
-                          <span>{dr?.Connection?.name}</span>
-                          {_renderDataRequestTabChip(dr)}
-                        </div>
+                        </Tabs.Tab>
+                      ))}
+                      {_canAccess("teamAdmin") && (
+                        <Tabs.Tab id="add">
+                          <div className="flex flex-row items-center gap-2">
+                            <LuPlus size={16} />
+                            <span>Add data request</span>
+                          </div>
+                        </Tabs.Tab>
                       )}
-                      onPress={() => _onSelectDataRequest(dr)}
-                    />
-                  ))}
-                  {_canAccess("teamAdmin") && (
-                    <Tab
-                      key="add"
-                      title={(
-                        <div className="flex flex-row items-center gap-2">
-                          <LuPlus size={16} />
-                          <span>Add data request</span>
-                        </div>
-                      )}
-                      onPress={() => setCreateMode(true)}
-                    />
-                  )}
+                    </Tabs.List>
+                  </Tabs.ListContainer>
                 </Tabs>
               </div>
             )}

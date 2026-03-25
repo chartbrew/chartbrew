@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Checkbox, Chip, Dropdown, Input, Modal, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, Checkbox, Chip, Dropdown, Input, Label, Modal, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -345,11 +345,16 @@ function ConnectionList() {
               </Modal.Body>
               <Modal.Footer className="justify-between">
                 <Checkbox
-                  onChange={() => setDeleteRelatedDatasets(!deleteRelatedDatasets)}
+                  id="connection-delete-related-datasets"
+                  onChange={(selected) => setDeleteRelatedDatasets(selected)}
                   isSelected={deleteRelatedDatasets}
-                  size="sm"
                 >
-                  Delete related datasets
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="connection-delete-related-datasets" className="text-sm">Delete related datasets</Label>
+                  </Checkbox.Content>
                 </Checkbox>
                 <div className="flex flex-row items-center gap-1">
                   <Button

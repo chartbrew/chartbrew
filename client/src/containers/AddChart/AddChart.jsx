@@ -587,7 +587,7 @@ function AddChart() {
               onClearFilter={_onClearFilter}
               conditions={conditions}
               useCache={useCache}
-              changeCache={() => setUseCache(!useCache)}
+              changeCache={(use) => setUseCache(use)}
             />
           </div>
           <div className="h-4" />

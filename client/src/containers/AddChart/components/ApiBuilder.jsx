@@ -2,10 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Separator, Input, Tooltip, Chip,
-  Tabs, Tab, Select, Popover,
-  Badge, Drawer,
-  Switch, Label, ListBox,
+  Button,
+  Checkbox,
+  Separator,
+  Input,
+  Tooltip,
+  Chip,
+  Tabs,
+  Select,
+  Popover,
+  Badge,
+  Drawer,
+  Switch,
+  Label,
+  ListBox
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
@@ -305,12 +315,6 @@ function ApiBuilder(props) {
     } else {
       setApiRequest({ ...apiRequest, method: value });
     }
-  };
-
-  const _onToggleGlobal = () => {
-    setApiRequest({
-      ...apiRequest, useGlobalHeaders: !apiRequest.useGlobalHeaders,
-    });
   };
 
   const _onChangeBody = (value) => {
@@ -716,9 +720,13 @@ function ApiBuilder(props) {
               }}
               disabledKeys={apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? ["body"] : []}
             >
-              <Tab key="headers" title="Headers" />
-              <Tab key="body" title="Body" />
-              <Tab key="pagination" title="Pagination" />
+              <Tabs.ListContainer>
+                <Tabs.List>
+                  <Tabs.Tab id="headers">Headers</Tabs.Tab>
+                  <Tabs.Tab id="body">Body</Tabs.Tab>
+                  <Tabs.Tab id="pagination">Pagination</Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
             </Tabs>
           </Row>
 
@@ -734,11 +742,16 @@ function ApiBuilder(props) {
                 <>
                   <Row>
                     <Checkbox
+                      id="apibuilder-global-headers"
                       isSelected={!!apiRequest.useGlobalHeaders}
-                      onChange={_onToggleGlobal}
-                      size="sm"
+                      onChange={(selected) => setApiRequest({ ...apiRequest, useGlobalHeaders: selected })}
                     >
-                      Include connection headers
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Content>
+                        <Label htmlFor="apibuilder-global-headers" className="text-sm">Include connection headers</Label>
+                      </Checkbox.Content>
                     </Checkbox>
                   </Row>
                   <div className="h-4" />
@@ -947,11 +960,16 @@ function ApiBuilder(props) {
           <div className="flex flex-row justify-between items-center">
             <div className="flex flex-row gap-2 items-center">
               <Checkbox
+                id="apibuilder-use-cache"
                 isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
+                onChange={(selected) => setInvalidateCache(!selected)}
               >
-                Use cache
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="apibuilder-use-cache" className="text-sm">Use cache</Label>
+                </Checkbox.Content>
               </Checkbox>
               <Tooltip>
                 <Tooltip.Trigger>

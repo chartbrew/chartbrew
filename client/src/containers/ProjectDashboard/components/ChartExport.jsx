@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Separator, Tooltip, Link as LinkNext,
+  Button, Checkbox, Label, Separator, Tooltip, Link as LinkNext,
 } from "@heroui/react";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
@@ -71,11 +71,19 @@ function ChartExport(props) {
               <div className="flex items-center align-middle">
                 <div className="flex flex-row flex-wrap gap-2">
                   <Checkbox
+                    id={`chart-export-${chart.id}`}
                     isSelected={_.indexOf(selectedIds, chart.id) > -1}
-                    onChange={() => _onSelectChart(chart.id)}
-                    size="sm"
+                    onChange={(selected) => {
+                      const wasSelected = _.indexOf(selectedIds, chart.id) > -1;
+                      if (selected !== wasSelected) _onSelectChart(chart.id);
+                    }}
                   >
-                    {chart.name}
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Label htmlFor={`chart-export-${chart.id}`} className="text-sm">{chart.name}</Label>
+                    </Checkbox.Content>
                   </Checkbox>
                   {showDisabled && (
                     <Tooltip>

@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Tooltip, Separator, Tabs, Tab,
-  Badge,
+  Button,
+  Checkbox,
+  Label,
+  Tooltip,
+  Separator,
+  Tabs,
+  Badge
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -300,33 +305,28 @@ function CustomerioBuilder(props) {
                   }
                 }}
               >
-                <Tab
-                  key="customers"
-                  title={(
-                    <div className="flex items-center space-x-2">
-                      <LuUsers />
-                      <span>Customers</span>
-                    </div>
-                  )}
-                />
-                <Tab
-                  key="campaigns"
-                  title={(
-                    <div className="flex items-center space-x-2">
-                      <LuMessageCircle />
-                      <span>Campaigns</span>
-                    </div>
-                  )}
-                />
-                <Tab
-                  key="activities"
-                  title={(
-                    <div className="flex items-center space-x-2">
-                      <LuActivity />
-                      <span>Activities</span>
-                    </div>
-                  )}
-                />
+                <Tabs.ListContainer>
+                  <Tabs.List>
+                    <Tabs.Tab id="customers">
+                      <div className="flex items-center space-x-2">
+                        <LuUsers />
+                        <span>Customers</span>
+                      </div>
+                    </Tabs.Tab>
+                    <Tabs.Tab id="campaigns">
+                      <div className="flex items-center space-x-2">
+                        <LuMessageCircle />
+                        <span>Campaigns</span>
+                      </div>
+                    </Tabs.Tab>
+                    <Tabs.Tab id="activities">
+                      <div className="flex items-center space-x-2">
+                        <LuActivity />
+                        <span>Activities</span>
+                      </div>
+                    </Tabs.Tab>
+                  </Tabs.List>
+                </Tabs.ListContainer>
               </Tabs>
             </Row>
 
@@ -348,12 +348,12 @@ function CustomerioBuilder(props) {
                   populateAttributes={
                     cioRequest.configuration && cioRequest.configuration.populateAttributes
                   }
-                  onChangeAttributes={() => {
+                  onChangeAttributes={(selected) => {
                     setCioRequest({
                       ...cioRequest,
                       configuration: {
                         ...cioRequest.configuration,
-                        populateAttributes: !cioRequest.configuration.populateAttributes,
+                        populateAttributes: selected,
                       }
                     });
                   }}
@@ -399,11 +399,16 @@ function CustomerioBuilder(props) {
             <div className="h-2" />
             <Row align="center">
               <Checkbox
+                id="customerio-use-cache"
                 isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
+                onChange={(selected) => setInvalidateCache(!selected)}
               >
-                {"Use cache"}
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="customerio-use-cache" className="text-sm">Use cache</Label>
+                </Checkbox.Content>
               </Checkbox>
               <div className="w-1" />
               <Tooltip>

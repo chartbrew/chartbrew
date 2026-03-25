@@ -51,7 +51,7 @@ Goals:
 
 ## Component status (sweep 2026-03-25)
 
-Source: `client/src` only. **124** files import from `@heroui/react` (`@heroui/react` ^3 / `@heroui/styles` ^3 in `package.json`). Unique named imports from that package (brace-matched): Accordion, Alert, Autocomplete, Avatar, Badge, Button, ButtonGroup, Card, Checkbox, Chip, DatePicker, DateRangePicker, Description, Drawer, Dropdown, EmptyState, Form, Input, Kbd, Label, Link, ListBox, Modal, Pagination, Popover, ProgressBar, ProgressCircle, Radio, RadioGroup, ScrollShadow, SearchField, Select, Separator, Skeleton, Spinner, Surface, Switch, Tab, Table (+ TableBody/Cell/Column/Header/Row), Tabs, TextArea, TimeField, Tooltip, `cn`, `useFilter`.
+Source: `client/src` only. **124** files import from `@heroui/react` (`@heroui/react` ^3 / `@heroui/styles` ^3 in `package.json`). Unique named imports from that package (brace-matched): Accordion, Alert, Autocomplete, Avatar, Badge, Button, ButtonGroup, Card, Checkbox, Chip, DatePicker, DateRangePicker, Description, Drawer, Dropdown, EmptyState, Form, Input, Kbd, Label, Link, ListBox, Modal, Pagination, Popover, ProgressBar, ProgressCircle, Radio, RadioGroup, ScrollShadow, SearchField, Select, Separator, Skeleton, Spinner, Surface, Switch, Table (+ TableBody/Cell/Column/Header/Row), Tabs, TextArea, TimeField, Tooltip, `cn`, `useFilter`.
 
 Spot checks at sweep time: **0** matches for v2 JSX surfaces called out in **Remaining hard blockers** (`ModalContent`, `SelectItem`, `DropdownTrigger`, `classNames=` on HeroUI, `HeroUIProvider`, `@nextui-org`, etc.).
 
@@ -96,9 +96,8 @@ Tracking format: **`State` — component** (`Done` = v3 compound / valid props p
 - Done — Spinner
 - Done — Surface
 - Done — Switch
-- Done — Tab
 - Done — Table (including TableBody/Cell/Column/Header/Row usage with v3 table shell)
-- Done — Tabs
+- Done — Tabs (`Tabs.ListContainer` / `Tabs.List` / **`Tabs.Tab`** triggers / **`Tabs.Panel`**; no standalone **`Tab`** import)
 - Done — TextArea
 - Done — TimeField
 - Done — Tooltip
@@ -208,7 +207,7 @@ Replaced remaining **`css`** on JSX with **`className`** / **`style`**; extended
 ### Batch 45: `fullWidth` + `radius` audit
 
 - **`fullWidth`:** supported on **`Input`**, **`TextArea`**, **`Select`**, **`Button`**, **`ButtonGroup`**, etc. (**`@heroui/styles`**) — do **not** mass-replace with **`w-full`** unless fixing a specific bug.
-- **`Tabs`:** no **`fullWidth`** variant on root — use **`className`** on list/container if needed; **no** `<Tabs fullWidth>` in tree.
+- **`Tabs`:** no **`fullWidth`** variant on root — use **`className`** on list/container if needed; **no** `<Tabs fullWidth>` in tree. Tab triggers are **`Tabs.Tab`** (compound), not a top-level **`<Tab>`**.
 - **`ButtonGroup fullWidth`:** valid (e.g. **`TextWidget`**).
 - **No** stray **`radius=`** on HeroUI JSX (unrelated “radius” in charts/CSS only). **No code changes** this batch — policy only.
 

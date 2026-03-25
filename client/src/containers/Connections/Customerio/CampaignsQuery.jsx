@@ -1,8 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Button, Separator, Input, Popover, Switch, Tooltip, Select,
-  ListBox, Tabs, Tab,
+  Chip,
+  Button,
+  Separator,
+  Input,
+  Popover,
+  Switch,
+  Tooltip,
+  Select,
+  ListBox,
+  Tabs
 } from "@heroui/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
@@ -386,9 +394,13 @@ function CampaignsQuery(props) {
               if (key === "journey_metrics") _onSelectJourneyMetrics();
             }}
           >
-            <Tab key="metrics" title="Metrics" />
-            <Tab key="actions" title="Actions" />
-            <Tab key="journey_metrics" title="Journey metrics" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="metrics">Metrics</Tabs.Tab>
+                <Tabs.Tab id="actions">Actions</Tabs.Tab>
+                <Tabs.Tab id="journey_metrics">Journey metrics</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         </Row>
       )}

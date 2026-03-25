@@ -154,14 +154,6 @@ function ChartSettings({ chart, onChange }) {
     onChange({ pointRadius: value });
   };
 
-  const _onChangeStacked = () => {
-    onChange({ stacked: !chart.stacked });
-  };
-
-  const _onChangeHorizontal = () => {
-    onChange({ horizontal: !chart.horizontal });
-  };
-
   const _onChangeDateRangeNew = ({ startDate, endDate }) => {
     setDateRange({ startDate, endDate });
     onChange({
@@ -243,15 +235,18 @@ function ChartSettings({ chart, onChange }) {
         <div className="flex flex-col gap-1">
           <div className="flex flex-row items-center gap-2">
             <Checkbox
+              id="chart-settings-current-end"
               isSelected={chart.currentEndDate}
               isDisabled={!dateRange.endDate}
-              onChange={() => {
-                onChange({ currentEndDate: !chart.currentEndDate });
-              }}
-              size="sm"
+              onChange={(selected) => onChange({ currentEndDate: selected })}
               className="chart-settings-relative"
             >
-              Auto-update the date range
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-current-end" className="text-sm">Auto-update the date range</Label>
+              </Checkbox.Content>
             </Checkbox>
             <Tooltip>
               <Tooltip.Trigger>
@@ -292,14 +287,17 @@ function ChartSettings({ chart, onChange }) {
           </div>
           <div className="h-2" />
           <Checkbox
+            id="chart-settings-fixed-start"
             isSelected={chart.fixedStartDate}
             isDisabled={!chart.currentEndDate}
-            onValueChange={(selected) => {
-              onChange({ fixedStartDate: selected });
-            }}
-            size="sm"
+            onChange={(selected) => onChange({ fixedStartDate: selected })}
           >
-            Fix the start date
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label htmlFor="chart-settings-fixed-start" className="text-sm">Fix the start date</Label>
+            </Checkbox.Content>
           </Checkbox>
         </div>
       </div>
@@ -334,11 +332,16 @@ function ChartSettings({ chart, onChange }) {
         </div>
         <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
           <Checkbox
+            id="chart-settings-include-zeros"
             isSelected={chart.includeZeros}
-            onChange={() => onChange({ includeZeros: !chart.includeZeros })}
-            size="sm"
+            onChange={(selected) => onChange({ includeZeros: selected })}
           >
-            Allow zero values
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label htmlFor="chart-settings-include-zeros" className="text-sm">Allow zero values</Label>
+            </Checkbox.Content>
           </Checkbox>
         </div>
       </div>
@@ -351,81 +354,110 @@ function ChartSettings({ chart, onChange }) {
         {chart.type === "line" && (
           <div>
             <Checkbox
+              id="chart-settings-data-points"
               isSelected={chart.pointRadius > 0}
-              onChange={() => {
-                if (chart.pointRadius > 0) {
-                  _onAddPoints(0);
-                } else {
-                  _onAddPoints(3);
-                }
-              }}
-              size="sm"
+              onChange={(selected) => _onAddPoints(selected ? 3 : 0)}
             >
-              Data points
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-data-points" className="text-sm">Data points</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         )}
         {chart.type === "bar" && (
           <div>
             <Checkbox
+              id="chart-settings-stacked"
               isSelected={chart.stacked}
-              onChange={_onChangeStacked}
-              size="sm"
+              onChange={(selected) => onChange({ stacked: selected })}
             >
-              Stack datasets
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-stacked" className="text-sm">Stack datasets</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         )}
         {chart.type === "bar" && (
           <div>
             <Checkbox
+              id="chart-settings-horizontal"
               isSelected={chart.horizontal}
-              onChange={_onChangeHorizontal}
-              size="sm"
+              onChange={(selected) => onChange({ horizontal: selected })}
             >
-              Horizontal bars
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-horizontal" className="text-sm">Horizontal bars</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         )}
         <div>
           <Checkbox
+            id="chart-settings-legend"
             isSelected={chart.displayLegend}
-            onChange={() => onChange({ displayLegend: !chart.displayLegend })}
-            size="sm"
+            onChange={(selected) => onChange({ displayLegend: selected })}
             isDisabled={chart.type === "matrix"}
           >
-            Legend
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label htmlFor="chart-settings-legend" className="text-sm">Legend</Label>
+            </Checkbox.Content>
           </Checkbox>
         </div>
         <div>
           <Checkbox
+            id="chart-settings-data-labels"
             isSelected={chart.dataLabels}
-            onChange={() => onChange({ dataLabels: !chart.dataLabels })}
-            size="sm"
+            onChange={(selected) => onChange({ dataLabels: selected })}
             isDisabled={chart.type === "matrix"}
           >
-            Data labels
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label htmlFor="chart-settings-data-labels" className="text-sm">Data labels</Label>
+            </Checkbox.Content>
           </Checkbox>
         </div>
         {(chart.type === "line" || chart.type === "bar") && (
           <div>
             <Checkbox
+              id="chart-settings-log-scale"
               isSelected={chart.isLogarithmic}
-              onValueChange={(selected) => onChange({ isLogarithmic: selected })}
-              size="sm"
+              onChange={(selected) => onChange({ isLogarithmic: selected })}
             >
-              Logarithmic scale
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-log-scale" className="text-sm">Logarithmic scale</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         )}
         {chart.type === "line" && (
           <div>
             <Checkbox
+              id="chart-settings-dashed-last"
               isSelected={chart.dashedLastPoint}
-              onValueChange={(selected) => onChange({ dashedLastPoint: selected })}
-              size="sm"
+              onChange={(selected) => onChange({ dashedLastPoint: selected })}
             >
-              Dashed last point
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-dashed-last" className="text-sm">Dashed last point</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         )}

@@ -576,10 +576,16 @@ function DatasetAlerts(props) {
                   <div className="h-4" />
                   <Row>
                     <Checkbox
+                      id="dataset-alert-one-time"
                       isSelected={newAlert.oneTime}
                       onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
                     >
-                      Disable this alert after sending once
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Content>
+                        <Label htmlFor="dataset-alert-one-time" className="text-sm">Disable this alert after sending once</Label>
+                      </Checkbox.Content>
                     </Checkbox>
                   </Row>
                 </>

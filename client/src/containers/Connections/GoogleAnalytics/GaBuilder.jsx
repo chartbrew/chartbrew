@@ -763,11 +763,16 @@ function GaBuilder(props) {
           <div className="h-4" />
           <Row align="center">
             <Checkbox
+              id="ga-use-cache"
               isSelected={!invalidateCache}
-              onChange={() => setInvalidateCache(!invalidateCache)}
-              size="sm"
+              onChange={(selected) => setInvalidateCache(!selected)}
             >
-              {"Use cache"}
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="ga-use-cache" className="text-sm">Use cache</Label>
+              </Checkbox.Content>
             </Checkbox>
             <div className="w-2" />
             <Tooltip>

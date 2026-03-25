@@ -331,13 +331,19 @@ function PlausibleTemplate(props) {
               {configuration.Charts && configuration.Charts.map((chart) => (
                 <div className="col-span-12 md:col-span-6 lg:col-span-6 flex items-center" key={chart.tid}>
                   <Checkbox
-                    isSelected={
-                      _.indexOf(selectedCharts, chart.tid) > -1
-                    }
-                    onChange={() => _onChangeSelectedCharts(chart.tid)}
-                    size="sm"
+                    id={`plausible-chart-${chart.tid}`}
+                    isSelected={_.indexOf(selectedCharts, chart.tid) > -1}
+                    onChange={(selected) => {
+                      const wasSelected = _.indexOf(selectedCharts, chart.tid) > -1;
+                      if (selected !== wasSelected) _onChangeSelectedCharts(chart.tid);
+                    }}
                   >
-                    {chart.name}
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Label htmlFor={`plausible-chart-${chart.tid}`} className="text-sm">{chart.name}</Label>
+                    </Checkbox.Content>
                   </Checkbox>
                 </div>
               ))}

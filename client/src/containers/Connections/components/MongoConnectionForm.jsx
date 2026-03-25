@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Separator,
+  Link,
+  Input,
+  Checkbox,
+  Label,
+  Tooltip,
+  Button,
+  Chip,
+  Tabs,
+  Separator
 } from "@heroui/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -179,14 +187,6 @@ function MongoConnectionForm(props) {
     }, 100);
   };
 
-  const _onChangeSrv = () => {
-    if (!connection.srv) {
-      setConnection({ ...connection, srv: true });
-    } else {
-      setConnection({ ...connection, srv: false });
-    }
-  };
-
   const _addOption = () => {
     const option = {
       id: uuid(),
@@ -233,8 +233,12 @@ function MongoConnectionForm(props) {
         <div className="h-8" />
         <Row align="center" style={styles.formStyle}>
           <Tabs selectedKey={formStyle} onSelectionChange={(key) => setFormStyle(key)}>
-            <Tab key="string" title="Connection string" />
-            <Tab key="form" title="Connection form" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="string">Connection string</Tabs.Tab>
+                <Tabs.Tab id="form">Connection form</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         </Row>
         <div className="h-4" />
@@ -375,11 +379,16 @@ function MongoConnectionForm(props) {
 
               <div className="col-span-12 flex flex-row">
                 <Checkbox
-                  defaultChecked={connection.srv}
-                  onChange={_onChangeSrv}
-                  size="sm"
+                  id="mongo-connection-srv"
+                  isSelected={!!connection.srv}
+                  onChange={(selected) => setConnection({ ...connection, srv: selected })}
                 >
-                  Use MongoDB 3.6 SRV URI connection string
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="mongo-connection-srv" className="text-sm">Use MongoDB 3.6 SRV URI connection string</Label>
+                  </Checkbox.Content>
                 </Checkbox>
                 <Tooltip>
                   <Tooltip.Trigger>

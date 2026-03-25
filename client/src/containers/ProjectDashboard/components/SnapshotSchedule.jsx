@@ -1,9 +1,22 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import {
-  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeField, TextArea, ButtonGroup, Tooltip, useFilter,
-  Tabs, Tab,
-  Checkbox,
+  Autocomplete,
+  Button,
+  EmptyState,
+  Input,
+  Label,
+  ListBox,
+  Modal,
+  SearchField,
+  Select,
+  TimeField,
+  TextArea,
+  ButtonGroup,
+  Tooltip,
+  useFilter,
+  Tabs,
+  Checkbox
 } from "@heroui/react";
 import {
   LuCamera, LuLaptop, LuMail, LuMailPlus, LuMapPin, LuMonitor, LuPlus, LuRefreshCw, LuSettings,
@@ -565,10 +578,17 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     onSelectionChange={(key) => setSchedule({ ...schedule, theme: key })}
                     size="sm"
                     variant="ghost"
-                    disableAnimation
                   >
-                    <Tab key="light" title={<LuSun size={18} />} />
-                    <Tab key="dark" title={<LuMoon size={18} />} />
+                    <Tabs.ListContainer>
+                      <Tabs.List>
+                        <Tabs.Tab id="light">
+                          <LuSun size={18} />
+                        </Tabs.Tab>
+                        <Tabs.Tab id="dark">
+                          <LuMoon size={18} />
+                        </Tabs.Tab>
+                      </Tabs.List>
+                    </Tabs.ListContainer>
                   </Tabs>
                 </div>
 
@@ -622,18 +642,28 @@ function SnapshotSchedule({ isOpen, onClose }) {
               </div>
               <div className="flex flex-row items-center gap-4">
                 <Checkbox
+                  id="snapshot-remove-styling"
                   isSelected={schedule.removeStyling}
-                  onValueChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
-                  size="sm"
+                  onChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
                 >
-                  Remove styling
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="snapshot-remove-styling" className="text-sm">Remove styling</Label>
+                  </Checkbox.Content>
                 </Checkbox>
                 <Checkbox
+                  id="snapshot-remove-header"
                   isSelected={schedule.removeHeader}
-                  onValueChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
-                  size="sm"
+                  onChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
                 >
-                  Remove header
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="snapshot-remove-header" className="text-sm">Remove header</Label>
+                  </Checkbox.Content>
                 </Checkbox>
               </div>
             </div>

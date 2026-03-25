@@ -4,7 +4,7 @@ import _ from "lodash";
 import {
   Autocomplete,
   Avatar,
-  Button, Checkbox, Chip, Separator, EmptyState, ListBox, Modal, SearchField, Switch, useFilter,
+  Button, Checkbox, Chip, Separator, EmptyState, Label, ListBox, Modal, SearchField, Switch, useFilter,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
@@ -271,13 +271,19 @@ function CustomTemplateForm(props) {
               <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4 xl:col-span-3" key={chart.tid}>
                 <Row align={"center"} className={"gap-1"}>
                   <Checkbox
-                    isSelected={
-                      _.indexOf(selectedCharts, chart.tid) > -1
-                    }
-                    onChange={() => _onChangeSelectedCharts(chart.tid)}
-                    size="sm"
+                    id={`custom-template-chart-${chart.tid}`}
+                    isSelected={_.indexOf(selectedCharts, chart.tid) > -1}
+                    onChange={(selected) => {
+                      const wasSelected = _.indexOf(selectedCharts, chart.tid) > -1;
+                      if (selected !== wasSelected) _onChangeSelectedCharts(chart.tid);
+                    }}
                   >
-                    {chart.name}
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Label htmlFor={`custom-template-chart-${chart.tid}`} className="text-sm">{chart.name}</Label>
+                    </Checkbox.Content>
                   </Checkbox>
                 </Row>
               </div>

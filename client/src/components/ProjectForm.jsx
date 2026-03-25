@@ -2,7 +2,11 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, Modal, Tabs, Tab, Card
+  Input,
+  Button,
+  Modal,
+  Tabs,
+  Card
 } from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -90,9 +94,13 @@ function ProjectForm(props) {
                   {!hideType && (
                     <Row align="center" justify="center">
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
-                        <Tab key="empty" id="empty" title="Empty dashboard" />
-                        <Tab key="communityTemplates" title="Community templates" />
-                        <Tab key="template" id="template" title="Custom templates" />
+                        <Tabs.ListContainer>
+                          <Tabs.List className="w-full">
+                            <Tabs.Tab id="empty">Empty dashboard</Tabs.Tab>
+                            <Tabs.Tab id="communityTemplates">Community templates</Tabs.Tab>
+                            <Tabs.Tab id="template">Custom templates</Tabs.Tab>
+                          </Tabs.List>
+                        </Tabs.ListContainer>
                       </Tabs>
                     </Row>
                   )}

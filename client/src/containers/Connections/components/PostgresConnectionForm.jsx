@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Tabs, Tab, Separator, Switch, Select,
-  Alert, Label, ListBox,
+  Button,
+  Input,
+  Link,
+  Chip,
+  Tabs,
+  Separator,
+  Switch,
+  Select,
+  Alert,
+  Label,
+  ListBox
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDispatch, useSelector } from "react-redux";
@@ -303,8 +312,12 @@ function PostgresConnectionForm(props) {
             selectedKey={formStyle}
             onSelectionChange={(selected) => setFormStyle(selected)}
           >
-            <Tab key="string" title="Connection string" />
-            <Tab key="form" title="Connection form" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="string">Connection string</Tabs.Tab>
+                <Tabs.Tab id="form">Connection form</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         </Row>
         <div className="h-4" />

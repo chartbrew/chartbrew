@@ -3,8 +3,7 @@ import { useSelector } from "react-redux";
 import { Route, Routes, useNavigate } from "react-router";
 import {
   ProgressCircle,
-  Tabs,
-  Tab,
+  Tabs
 } from "@heroui/react";
 import { LuCode, LuSettings, LuUser, LuUsers } from "react-icons/lu";
 
@@ -67,33 +66,33 @@ function ManageTeam() {
       >
         <Tabs.ListContainer>
           <Tabs.List className="border-1 border-divider">
-            <Tab id="profile">
+            <Tabs.Tab id="profile">
               <div className="flex flex-row items-center gap-2">
                 <LuUser />
                 <div>Profile</div>
               </div>
-            </Tab>
+            </Tabs.Tab>
             {_canAccess("teamOwner") && (
-              <Tab id="team">
+              <Tabs.Tab id="team">
                 <div className="flex flex-row items-center gap-2">
                   <LuSettings />
                   <div>Team</div>
                 </div>
-              </Tab>
+              </Tabs.Tab>
             )}
-            <Tab id="members">
+            <Tabs.Tab id="members">
               <div className="flex flex-row items-center gap-2">
                 <LuUsers />
                 <div>Members</div>
               </div>
-            </Tab>
+            </Tabs.Tab>
             {_canAccess("teamAdmin") && (
-              <Tab id="api-keys">
+              <Tabs.Tab id="api-keys">
                 <div className="flex flex-row items-center gap-2">
                   <LuCode />
                   <div>API Keys</div>
                 </div>
-              </Tab>
+              </Tabs.Tab>
             )}
           </Tabs.List>
         </Tabs.ListContainer>

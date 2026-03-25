@@ -610,7 +610,7 @@ function DatasetBuilder(props) {
           chart={chart}
           onRefreshData={() => _onRefreshPreview(useCache)}
           onChange={(data) => _onUpdateChart(data)}
-          changeCache={() => setUseCache(!useCache)}
+          changeCache={(use) => setUseCache(use)}
           useCache={useCache}
         />
         

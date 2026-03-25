@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Tabs, Tab, Separator, Switch, Select,
-  ProgressCircle, Alert, Label, ListBox,
+  Button,
+  Input,
+  Link,
+  Chip,
+  Tabs,
+  Separator,
+  Switch,
+  Select,
+  ProgressCircle,
+  Alert,
+  Label,
+  ListBox
 } from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
@@ -293,8 +303,12 @@ function MysqlConnectionForm(props) {
             selectedKey={formStyle}
             onSelectionChange={(key) => setFormStyle(key)}
           >
-            <Tab key="string" title="Connection string" />
-            <Tab key="form" title="Connection form" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="string">Connection string</Tabs.Tab>
+                <Tabs.Tab id="form">Connection form</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         </Row>
         <div className="h-4" />

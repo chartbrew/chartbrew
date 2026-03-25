@@ -573,11 +573,16 @@ function DatarequestSettings(props) {
             </Row>
             <Row align="center">
               <Checkbox
+                id="datarequest-use-cache"
                 isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
+                onChange={(selected) => setInvalidateCache(!selected)}
               >
-                Use cache
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="datarequest-use-cache" className="text-sm">Use cache</Label>
+                </Checkbox.Content>
               </Checkbox>
               <div className="w-0.5" />
               <Tooltip>

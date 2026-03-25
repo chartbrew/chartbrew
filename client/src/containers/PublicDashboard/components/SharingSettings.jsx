@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Separator, Input, Switch, TextArea, Tooltip, RadioGroup, Radio,
-  Drawer, Checkbox, Spinner,
+  Drawer, Checkbox, Spinner, Label,
   Alert,
 } from "@heroui/react";
 import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft } from "react-icons/lu";
@@ -478,13 +478,16 @@ function SharingSettings(props) {
 
           <div className="flex flex-row items-center gap-2 mt-3">
             <Checkbox
+              id="sharing-settings-allow-params"
               isSelected={allowParams}
-              onValueChange={() => {
-                setAllowParams(!allowParams);
-              }}
-              size="sm"
+              onChange={(selected) => setAllowParams(selected)}
             >
-              Allow parameters in the URL
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="sharing-settings-allow-params" className="text-sm">Allow parameters in the URL</Label>
+              </Checkbox.Content>
             </Checkbox>
             <Tooltip>
               <Tooltip.Trigger>

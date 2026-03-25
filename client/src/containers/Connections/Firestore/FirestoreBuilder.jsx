@@ -955,11 +955,16 @@ function FirestoreBuilder(props) {
             <div className="h-4" />
             <Row align="center">
               <Checkbox
+                id="firestore-use-cache"
                 isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
+                onChange={(selected) => setInvalidateCache(!selected)}
               >
-                Use cached data
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="firestore-use-cache" className="text-sm">Use cached data</Label>
+                </Checkbox.Content>
               </Checkbox>
               <div className="w-2" />
               <Tooltip>

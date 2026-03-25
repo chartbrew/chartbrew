@@ -325,20 +325,30 @@ function TableDataFormattingModal(props) {
               )}
               <div>
                 <Checkbox
+                  id="table-format-thousands"
                   isSelected={thousandsSeparator}
-                  onValueChange={(checked) => setThousandsSeparator(checked)}
-                  size="sm"
+                  onChange={(checked) => setThousandsSeparator(checked)}
                 >
-                  Use thousands separator
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="table-format-thousands" className="text-sm">Use thousands separator</Label>
+                  </Checkbox.Content>
                 </Checkbox>
               </div>
               <div>
                 <Checkbox
+                  id="table-format-decimals"
                   isSelected={allowDecimals}
-                  onValueChange={(checked) => setAllowDecimals(checked)}
-                  size="sm"
+                  onChange={(checked) => setAllowDecimals(checked)}
                 >
-                  Allow decimals
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="table-format-decimals" className="text-sm">Allow decimals</Label>
+                  </Checkbox.Content>
                 </Checkbox>
               </div>
               <div>

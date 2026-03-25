@@ -572,17 +572,21 @@ function DatasetFilters(props) {
             </Row>
             <Row>
               <Checkbox
-                title="Hide existing values from the filter dropdown"
+                id="dataset-filter-hide-values"
                 isSelected={selectedCondition.hideValues}
-                onChange={() => {
+                onChange={(selected) => {
                   setSelectedCondition({
                     ...selectedCondition,
-                    hideValues: !selectedCondition.hideValues
+                    hideValues: selected
                   });
                 }}
-                size="sm"
               >
-                Hide existing values from the filter dropdown
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="dataset-filter-hide-values" className="text-sm">Hide existing values from the filter dropdown</Label>
+                </Checkbox.Content>
               </Checkbox>
             </Row>
           </Modal.Body>

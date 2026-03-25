@@ -2,10 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Modal, Input, Tooltip, Checkbox, Separator,
-  Tabs, Tab,
-  ProgressCircle, Badge, Drawer,
-  Select, Switch, Label, ListBox,
+  Button,
+  Modal,
+  Input,
+  Tooltip,
+  Checkbox,
+  Separator,
+  Tabs,
+  ProgressCircle,
+  Badge,
+  Drawer,
+  Select,
+  Switch,
+  Label,
+  ListBox
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -340,18 +350,16 @@ function SqlBuilder(props) {
               setActiveTab(key);
             }}
           >
-            <Tab
-              title="SQL Query"
-              key="sql"
-            />
-            <Tab
-              title={(
-                <div className="flex items-center gap-1">
-                  <Text>Visual Query</Text>
-                </div>
-              )}
-              key="visual"
-            />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="sql">SQL Query</Tabs.Tab>
+                <Tabs.Tab id="visual">
+                  <div className="flex items-center gap-1">
+                    <Text>Visual Query</Text>
+                  </div>
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
           <div className="h-4" />
           <>
@@ -403,11 +411,16 @@ function SqlBuilder(props) {
           <div className="h-4" />
           <Row align="center">
             <Checkbox
+              id="sqlbuilder-use-cache"
               isSelected={!invalidateCache}
-              onChange={() => setInvalidateCache(!invalidateCache)}
-              size="sm"
+              onChange={(selected) => setInvalidateCache(!selected)}
             >
-              {"Use cached data"}
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="sqlbuilder-use-cache" className="text-sm">Use cached data</Label>
+              </Checkbox.Content>
             </Checkbox>
             <div className="w-1" />
             <Tooltip>
@@ -489,8 +502,12 @@ function SqlBuilder(props) {
               setActiveResultsTab(key);
             }}
           >
-            <Tab title="Table" key="table" />
-            <Tab title="JSON" key="json" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="table">Table</Tabs.Tab>
+                <Tabs.Tab id="json">JSON</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
           <div className="h-4" />
 

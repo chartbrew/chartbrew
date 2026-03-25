@@ -498,11 +498,16 @@ function ActivitiesQuery({
       <div className="flex flex-col gap-4">
         <div className="flex flex-row items-center">
           <Checkbox
+            id="cio-activities-include-deleted"
             isSelected={deleted}
-            onChange={(e) => _handleDeletedChange(e.target.checked)}
-            size="sm"
+            onChange={_handleDeletedChange}
           >
-            Include deleted people
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label htmlFor="cio-activities-include-deleted" className="text-sm">Include deleted people</Label>
+            </Checkbox.Content>
           </Checkbox>
         </div>
         <Input

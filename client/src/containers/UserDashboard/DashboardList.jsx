@@ -6,7 +6,6 @@ import {
   Dropdown,
   Input,
   Modal,
-  Tab,
   Table,
   TableBody,
   TableCell,
@@ -14,7 +13,7 @@ import {
   TableHeader,
   TableRow,
   Tabs,
-  Tooltip,
+  Tooltip
 } from "@heroui/react";
 import React, { useEffect, useState } from "react";
 import {
@@ -282,8 +281,16 @@ function DashboardList() {
               labelPlacement="outside"
             />
             <Tabs selectedKey={viewMode} onSelectionChange={(key) => _changeViewMode(key)}>
-              <Tab key="grid" title={<LuLayoutGrid />} />
-              <Tab key="table" title={<LuTable />} />
+              <Tabs.ListContainer>
+                <Tabs.List>
+                  <Tabs.Tab id="grid">
+                    <LuLayoutGrid />
+                  </Tabs.Tab>
+                  <Tabs.Tab id="table">
+                    <LuTable />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
             </Tabs>
           </div>
 

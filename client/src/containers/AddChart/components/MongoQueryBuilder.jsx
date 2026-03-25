@@ -3,9 +3,20 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
-  Button, Checkbox, Separator, Input, Link, Modal, Popover,
-  Tab, Tabs, Tooltip, Drawer,
-  Switch, Select, Label, ListBox,
+  Button,
+  Checkbox,
+  Separator,
+  Input,
+  Link,
+  Modal,
+  Popover,
+  Tabs,
+  Tooltip,
+  Drawer,
+  Switch,
+  Select,
+  Label,
+  ListBox
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -359,11 +370,16 @@ function MongoQueryBuilder(props) {
           <div className="h-4" />
           <div className="flex flex-row items-center">
             <Checkbox
+              id="mongo-query-use-cache"
               isSelected={!invalidateCache}
-              onChange={() => setInvalidateCache(!invalidateCache)}
-              size="sm"
+              onChange={(selected) => setInvalidateCache(!selected)}
             >
-              {"Use cached data"}
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="mongo-query-use-cache" className="text-sm">Use cached data</Label>
+              </Checkbox.Content>
             </Checkbox>
             <div className="w-2" />
             <Tooltip>
@@ -444,8 +460,12 @@ function MongoQueryBuilder(props) {
               setActiveResultsTab(key);
             }}
           >
-            <Tab title="Table" key="table" />
-            <Tab title="JSON" key="json" />
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="table">Table</Tabs.Tab>
+                <Tabs.Tab id="json">JSON</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
           <div className="h-4" />
 

@@ -2,11 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Tooltip, Modal, Chip,
-  Avatar, Popover, ListBox, Separator, Dropdown, Kbd, ButtonGroup,
+  Button,
+  Tooltip,
+  Modal,
+  Chip,
+  Avatar,
+  Popover,
+  ListBox,
+  Separator,
+  Dropdown,
+  Kbd,
+  ButtonGroup,
   Tabs,
-  Tab,
-  Badge,
+  Badge
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router";
 import _, { isEqual } from "lodash";
@@ -1493,13 +1501,17 @@ function ProjectDashboard() {
                   selectedKey={previewSize?.breakpoint}
                   onSelectionChange={(key) => _onChangePreviewSize(key)}
                 >
-                  <Tab key="xxxl" title="4K" />
-                  <Tab key="xxl" title="2K" />
-                  <Tab key="xl" title="Large screen" />
-                  <Tab key="lg" title="Desktop" />
-                  <Tab key="md" title="Laptop" />
-                  <Tab key="sm" title="Tablet" />
-                  <Tab key="xs" title="Mobile" />
+                  <Tabs.ListContainer>
+                    <Tabs.List>
+                      <Tabs.Tab id="xxxl">4K</Tabs.Tab>
+                      <Tabs.Tab id="xxl">2K</Tabs.Tab>
+                      <Tabs.Tab id="xl">Large screen</Tabs.Tab>
+                      <Tabs.Tab id="lg">Desktop</Tabs.Tab>
+                      <Tabs.Tab id="md">Laptop</Tabs.Tab>
+                      <Tabs.Tab id="sm">Tablet</Tabs.Tab>
+                      <Tabs.Tab id="xs">Mobile</Tabs.Tab>
+                    </Tabs.List>
+                  </Tabs.ListContainer>
                 </Tabs>
               </div>
 

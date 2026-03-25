@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
   TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Input,
+  Input, Label,
 } from "@heroui/react";
 import _ from "lodash";
 import toast from "react-hot-toast";
@@ -121,15 +121,15 @@ function TeamMembers(props) {
       });
   };
 
-  const _onChangeExport = () => {
+  const _onChangeExport = (canExport) => {
     dispatch(updateTeamRole({
-      data: { canExport: !changedRole.canExport },
+      data: { canExport },
       memberId: changedMember.id,
       team_id: team.id,
     }))
       .then(() => {
         const newChangedRole = _.clone(changedRole);
-        newChangedRole.canExport = !changedRole.canExport;
+        newChangedRole.canExport = canExport;
         setChangedRole(newChangedRole);
         _getTeam();
         toast.success("Updated export settings 📊");
@@ -479,12 +479,19 @@ function TeamMembers(props) {
                       {projects && projects.filter((p) => !p.ghost).map((project) => (
                         <div className="col-span-12 sm:col-span-6 md:col-span-4" key={project.id}>
                           <Checkbox
-                            isSelected={
-                              _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
-                            }
-                            onChange={() => _onChangeProjectAccess(project.id)}
+                            id={`team-member-${changedMember.id}-project-${project.id}`}
+                            isSelected={_.indexOf(projectAccess[changedMember.id].projects, project.id) > -1}
+                            onChange={(selected) => {
+                              const wasSelected = _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1;
+                              if (selected !== wasSelected) _onChangeProjectAccess(project.id);
+                            }}
                           >
-                            {project.name}
+                            <Checkbox.Control className="size-4 shrink-0">
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                            <Checkbox.Content>
+                              <Label htmlFor={`team-member-${changedMember.id}-project-${project.id}`} className="text-sm">{project.name}</Label>
+                            </Checkbox.Content>
                           </Checkbox>
                         </div>
                       ))}
@@ -507,10 +514,16 @@ function TeamMembers(props) {
                     </div>
                     <div>
                       <Checkbox
+                        id={`team-member-export-${changedMember.id}`}
                         isSelected={changedRole.canExport}
                         onChange={_onChangeExport}
                       >
-                        Allow data export
+                        <Checkbox.Control className="size-4 shrink-0">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Content>
+                          <Label htmlFor={`team-member-export-${changedMember.id}`} className="text-sm">Allow data export</Label>
+                        </Checkbox.Content>
                       </Checkbox>
                     </div>
                   </>

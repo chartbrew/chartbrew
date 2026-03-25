@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Tooltip, Checkbox, Input, Accordion, Radio, RadioGroup, Chip,
+  Button, Tooltip, Checkbox, Input, Accordion, Radio, RadioGroup, Chip, Label,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
@@ -173,12 +173,19 @@ function InviteMembersForm(props) {
                     {projects && projects.filter((p) => !p.ghost).map((project) => (
                       <div className="col-span-12 sm:col-span-4" key={project.id}>
                         <Checkbox
-                          isSelected={
-                            _.indexOf(projectAccess, project.id) > -1
-                          }
-                          onChange={() => _onChangeProjectAccess(project.id)}
+                          id={`invite-project-${project.id}`}
+                          isSelected={_.indexOf(projectAccess, project.id) > -1}
+                          onChange={(selected) => {
+                            const wasSelected = _.indexOf(projectAccess, project.id) > -1;
+                            if (selected !== wasSelected) _onChangeProjectAccess(project.id);
+                          }}
                         >
-                          {project.name}
+                          <Checkbox.Control className="size-4 shrink-0">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Content>
+                            <Label htmlFor={`invite-project-${project.id}`} className="text-sm">{project.name}</Label>
+                          </Checkbox.Content>
                         </Checkbox>
                       </div>
                     ))}
@@ -212,10 +219,16 @@ function InviteMembersForm(props) {
           <div className="h-1" />
           <div>
             <Checkbox
+              id="invite-export-allowed"
               isSelected={exportAllowed}
-              onValueChange={(isSelected) => setExportAllowed(isSelected)}
+              onChange={(isSelected) => setExportAllowed(isSelected)}
             >
-              Allow data export
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="invite-export-allowed" className="text-sm">Allow data export</Label>
+              </Checkbox.Content>
             </Checkbox>
           </div>
         </>

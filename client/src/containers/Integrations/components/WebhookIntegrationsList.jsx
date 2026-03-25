@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Separator, Input, Link, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Checkbox, Separator, Input, Link, Label, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -294,14 +294,18 @@ function WebhookIntegrations({ teamId }) {
             </div>
             <div className="flex items-center">
               <Checkbox
-                checked={newIntegration.slackMode}
-                onValueChange={(isSelected) => {
+                id="webhook-slack-mode"
+                isSelected={newIntegration.slackMode}
+                onChange={(isSelected) => {
                   setNewIntegration({ ...newIntegration, slackMode: isSelected });
                 }}
-                size="sm"
-                isSelected={newIntegration.slackMode}
               >
-                {"This is a Slack webhook"}
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="webhook-slack-mode" className="text-sm">This is a Slack webhook</Label>
+                </Checkbox.Content>
               </Checkbox>
               <div className="w-3" />
               <Link onPress={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">

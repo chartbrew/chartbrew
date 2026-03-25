@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import {
-  Button, Checkbox, Input, Modal,
+  Button, Checkbox, Input, Modal, Label,
   Radio, RadioGroup, Spinner, Switch, Tooltip, ListBox,
   Chip,
 } from "@heroui/react"
@@ -571,13 +571,16 @@ function ChartSharing({ chart, isOpen, onClose }) {
 
           <div className="flex flex-row items-center gap-2 mt-3">
             <Checkbox
+              id="chart-sharing-allow-params"
               isSelected={allowParams}
-              onValueChange={() => {
-                setAllowParams(!allowParams);
-              }}
-              size="sm"
+              onChange={(selected) => setAllowParams(selected)}
             >
-              Allow parameters in the URL
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-sharing-allow-params" className="text-sm">Allow parameters in the URL</Label>
+              </Checkbox.Content>
             </Checkbox>
             <Tooltip>
               <Tooltip.Trigger>

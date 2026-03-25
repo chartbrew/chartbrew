@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Tab, Tabs,
+  Tabs
 } from "@heroui/react";
 
 import TableComponent from "./TableComponent";
@@ -53,12 +53,18 @@ function TableContainer(props) {
         {datasets.length > 1 && (
           <Tabs
             selectedKey={`${activeDatasetIndex}`}
-            onSelectionChange={(key) => setActiveDatasetIndex(parseInt(key))}
+            onSelectionChange={(key) => setActiveDatasetIndex(parseInt(key, 10))}
             size="sm"
-        >
-          {datasets.map((dataset, index) => (
-              <Tab key={index} title={dataset.legend} />
-            ))}
+          >
+            <Tabs.ListContainer>
+              <Tabs.List>
+                {datasets.map((dataset, index) => (
+                  <Tabs.Tab key={dataset.legend} id={`${index}`}>
+                    {dataset.legend}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+            </Tabs.ListContainer>
           </Tabs>
         )}
 
