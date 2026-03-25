@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Chip,
-  Progress, Tooltip,
+  ProgressBar, Tooltip,
 } from "@heroui/react";
 import { LuArrowUpRight, LuArrowDownRight } from "react-icons/lu";
 
@@ -118,17 +118,17 @@ function KpiMode(props) {
           <div className="text-xs text-default-500">{`${((value / max) * 100).toFixed()}%`}</div>
           <div className="text-xs text-default-500">{formattedMax}</div>
         </div>
-        <Progress
-          value={value}
+        <ProgressBar
+          value={Number.isFinite(Number(value)) ? Number(value) : 0}
           maxValue={max}
-          // size="sm"
-          css={{
-            "& .nextui-progress-bar": {
-              background: color
-            }
-          }}
+          minValue={0}
+          size="sm"
           aria-label="Goal progress"
-        />
+        >
+          <ProgressBar.Track>
+            <ProgressBar.Fill style={color ? { backgroundColor: color } : undefined} />
+          </ProgressBar.Track>
+        </ProgressBar>
       </div>
     );
   };

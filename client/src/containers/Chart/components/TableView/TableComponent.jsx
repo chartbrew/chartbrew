@@ -2,13 +2,12 @@ import React, { useEffect } from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip,
+  Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip, ProgressBar,
   TableHeader, TableColumn, TableBody, TableRow, TableCell,
   DropdownTrigger,
   DropdownMenu,
   Button,
   DropdownItem,
-  Progress,
   Tooltip,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
@@ -175,13 +174,22 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
   }
 
   if (columnConfig?.display?.format === "progress") {
+    const progressValue = Number(value);
+    const safeProgressValue = Number.isFinite(progressValue) ? progressValue : 0;
     return (
       <Tooltip content={`${value} / ${columnConfig.display.progress.max}`}>
-        <Progress
+        <ProgressBar
           aria-label="Progress"
-          value={value}
+          value={safeProgressValue}
           maxValue={columnConfig.display.progress.max}
-        />
+          minValue={0}
+          size="sm"
+          className="min-w-[80px]"
+        >
+          <ProgressBar.Track>
+            <ProgressBar.Fill />
+          </ProgressBar.Track>
+        </ProgressBar>
       </Tooltip>
     );
   }

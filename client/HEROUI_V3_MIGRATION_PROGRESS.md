@@ -1082,6 +1082,20 @@ Notes:
   - `npm run lint` passes
   - `rg 'DrawerContent|DrawerHeader|DrawerBody|DrawerFooter' client/src` returns no matches
 
+### Batch 35: Linear `Progress` → `ProgressBar` compound
+
+Files migrated:
+- `src/containers/Chart/components/TableView/TableComponent.jsx`
+- `src/containers/Chart/components/KpiMode.jsx`
+
+Notes:
+- `@heroui/react` v3 does not export a flat **`Progress`** component; linear progress is **`ProgressBar`** with **`ProgressBar.Track`** and **`ProgressBar.Fill`** (react-aria **`ProgressBar`** root). **`value`** / **`minValue`** / **`maxValue`** stay on the root; **`size="sm"`** maps to HeroUI variants.
+- **`TableComponent.jsx`**: table column “progress” format uses a compact bar (`min-w-[80px]`); non-numeric cell values coerce to **`0`** for the bar.
+- **`KpiMode.jsx`**: replaced v2 **`css`** / **`.nextui-progress-bar`** styling with **`style={{ backgroundColor: color }}`** on **`ProgressBar.Fill`** when a dataset color is present.
+- Verification:
+  - `npm run lint` passes
+  - No **`Progress`** import from `@heroui/react` in `client/src` (`rg 'Progress' client/src` may still match aria-label copy, UI strings like “Progress bar”, or unrelated words)
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1095,7 +1109,7 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `CircularProgress`: 0 files (replaced with `ProgressCircle` in Batch 32)
 - `PopoverTrigger` / `PopoverContent`: 0 files (migrated to `Popover.*` compounds in Batch 33)
 - `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: 0 files (migrated to `Drawer.*` compounds in Batch 34)
-- `Progress` (linear) / legacy loader components: audit remaining call sites
+- `Progress` (linear, HeroUI): 0 files (replaced with `ProgressBar` in Batch 35)
 
 ## Verification
 
@@ -1108,9 +1122,8 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
-2. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
-3. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
+1. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
+2. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
 
 ## Notes
 
