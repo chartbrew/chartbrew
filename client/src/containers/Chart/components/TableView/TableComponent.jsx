@@ -11,7 +11,6 @@ import {
   DropdownItem,
   Progress,
   Tooltip,
-  Image,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
 
@@ -145,12 +144,11 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
     if (columnConfig.display?.image?.variant === "inline") {
       return (
         <div style={{ width: `${columnConfig.display?.image?.size}px` }}>
-          <Image
+          <img
             src={value}
-            alt="Image"
+            alt=""
             width={columnConfig.display?.image?.size}
-            height="auto"
-            className="object-contain"
+            className="h-auto max-w-full object-contain"
           />
         </div>
       );
@@ -159,14 +157,14 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
         <Popover>
           <PopoverTrigger>
             <Button variant="flat" size="sm">
-              <Image src={value} alt="Image" width={columnConfig.display?.image?.size} height="auto" className="object-contain" />
+              <img src={value} alt="" width={columnConfig.display?.image?.size} className="h-auto max-w-full object-contain" />
             </Button>
           </PopoverTrigger>
           <PopoverContent>
-            <Image
+            <img
               src={value}
-              alt="Image"
-              className="object-contain max-w-lg"
+              alt=""
+              className="max-w-lg object-contain"
             />
           </PopoverContent>
         </Popover>

@@ -1,5 +1,5 @@
 import {
-  Button, Card, Separator, Image, Tooltip,
+  Button, Card, Separator, Tooltip,
 } from "@heroui/react";
 import React, { useState } from "react"
 import { LuCirclePlay, LuShieldCheck, LuX } from "react-icons/lu";
@@ -36,10 +36,10 @@ function NoticeBoard() {
           <Separator />
           <Card.Content>
             <div className="relative pb-[60.25%] h-0 mb-4">
-              <Image
+              <img
                 src={startVideoThumbnail}
                 alt="Chartbrew quick start video"
-                className="rounded-md"
+                className="absolute inset-0 h-full w-full cursor-pointer rounded-md object-cover"
                 onClick={() => setShowQuickStart(true)}
               />
               <div className="absolute inset-0 w-full h-full flex flex-col justify-center items-center z-50">

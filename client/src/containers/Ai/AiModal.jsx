@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, Listbox, ListboxItem } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, ListBox } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -1342,55 +1342,64 @@ function AiModal({ isOpen, onClose }) {
                       autoFocus
                     />
                     <div className="max-h-64 overflow-y-auto w-full">
-                      <Listbox emptyContent="No entities found" className="w-full">
+                      <ListBox
+                        aria-label="Context entities"
+                        selectionMode="none"
+                        className="w-full"
+                        renderEmptyState={() => (
+                          <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
+                        )}
+                      >
                         {filteredContextEntities.map((entity) => {
                           const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                          const rowId = `${entity.entity_type}-${entity.id}`;
                           return (
-                            <ListboxItem
-                              key={`${entity.entity_type}-${entity.id}`}
+                            <ListBox.Item
+                              key={rowId}
+                              id={rowId}
                               textValue={getContextLabel(entity)}
-                              startContent={
-                                entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
-                                entity.entity_type === "connection" ? <LuPlug size={16} /> :
-                                entity.entity_type === "dataset" ? <LuLayers size={16} /> : null
-                              }
-                              endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
                               className={isSelected ? "bg-primary-50" : ""}
-                              onPress={() => {
-                              setSelectedContext(prev => {
-                                const newEntity = {
-                                  ...entity,
-                                  label: getContextLabel(entity)
-                                };
-                                const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                if (isAlreadySelected) {
-                                  // Remove if already selected (toggle behavior for multi-select)
-                                  return {
-                                    ...prev,
-                                    multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                              onAction={() => {
+                                setSelectedContext((prev) => {
+                                  const newEntity = {
+                                    ...entity,
+                                    label: getContextLabel(entity)
                                   };
-                                } else {
-                                  // Add if not selected
+                                  const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                  if (isAlreadySelected) {
+                                    return {
+                                      ...prev,
+                                      multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                    };
+                                  }
                                   return {
                                     ...prev,
                                     multiSelect: [...prev.multiSelect, newEntity]
                                   };
-                                }
-                              });
-                              setContextSearch("");
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-sm">{entity.name || entity.legend}</span>
-                              <span className="text-xs text-foreground-500">
-                                {entity.entity_type === "project" ? "Project" :
-                                 entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                 "Dataset"}
-                              </span>
-                            </div>
-                          </ListboxItem>
-                        )})}
-                      </Listbox>
+                                });
+                                setContextSearch("");
+                              }}
+                            >
+                              <div className="flex w-full items-center justify-between gap-2">
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
+                                    entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
+                                      entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
+                                  <div className="flex min-w-0 flex-col">
+                                    <span className="text-sm">{entity.name || entity.legend}</span>
+                                    <span className="text-xs text-foreground-500">
+                                      {entity.entity_type === "project" ? "Project" :
+                                        entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                          "Dataset"}
+                                    </span>
+                                  </div>
+                                </div>
+                                {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+                              </div>
+                            </ListBox.Item>
+                          );
+                        })}
+                      </ListBox>
                     </div>
                   </div>
                 </PopoverContent>
@@ -1741,56 +1750,64 @@ function AiModal({ isOpen, onClose }) {
                               autoFocus
                             />
                             <div className="max-h-64 overflow-y-auto w-full">
-                              <Listbox emptyContent="No entities found" className="w-full">
+                              <ListBox
+                                aria-label="Context entities"
+                                selectionMode="none"
+                                className="w-full"
+                                renderEmptyState={() => (
+                                  <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
+                                )}
+                              >
                                 {filteredContextEntities.map((entity) => {
                                   const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                  const rowId = `${entity.entity_type}-${entity.id}`;
                                   return (
-                                    <ListboxItem
-                                      key={`${entity.entity_type}-${entity.id}`}
+                                    <ListBox.Item
+                                      key={rowId}
+                                      id={rowId}
                                       textValue={getContextLabel(entity)}
-                                      startContent={
-                                        entity.entity_type === "project" ? <LuLayoutGrid size={16} /> :
-                                          entity.entity_type === "connection" ? <LuPlug size={16} /> :
-                                            entity.entity_type === "dataset" ? <LuLayers size={16} /> : null
-                                      }
-                                      endContent={isSelected ? <div className="w-2 h-2 bg-primary rounded-full" /> : null}
                                       className={isSelected ? "bg-primary-50" : ""}
-                                      onPress={() => {
-                                        setSelectedContext(prev => {
+                                      onAction={() => {
+                                        setSelectedContext((prev) => {
                                           const newEntity = {
                                             ...entity,
                                             label: getContextLabel(entity)
                                           };
                                           const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
                                           if (isAlreadySelected) {
-                                            // Remove if already selected (toggle behavior for multi-select)
                                             return {
                                               ...prev,
                                               multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
                                             };
-                                          } else {
-                                            // Add if not selected
-                                            return {
-                                              ...prev,
-                                              multiSelect: [...prev.multiSelect, newEntity]
-                                            };
                                           }
+                                          return {
+                                            ...prev,
+                                            multiSelect: [...prev.multiSelect, newEntity]
+                                          };
                                         });
                                         setContextSearch("");
                                       }}
                                     >
-                                      <div className="flex flex-col">
-                                        <span className="text-sm">{entity.name || entity.legend}</span>
-                                        <span className="text-xs text-foreground-500">
-                                          {entity.entity_type === "project" ? "Project" :
-                                            entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                              "Dataset"}
-                                        </span>
+                                      <div className="flex w-full items-center justify-between gap-2">
+                                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                                          {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
+                                            entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
+                                              entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
+                                          <div className="flex min-w-0 flex-col">
+                                            <span className="text-sm">{entity.name || entity.legend}</span>
+                                            <span className="text-xs text-foreground-500">
+                                              {entity.entity_type === "project" ? "Project" :
+                                                entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                                  "Dataset"}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
                                       </div>
-                                    </ListboxItem>
-                                  )
+                                    </ListBox.Item>
+                                  );
                                 })}
-                              </Listbox>
+                              </ListBox>
                             </div>
                           </div>
                         </PopoverContent>

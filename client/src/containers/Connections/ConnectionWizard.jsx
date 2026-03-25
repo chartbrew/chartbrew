@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, Chip, Separator, Image, Input, Modal, Tooltip } from "@heroui/react";
+import { Button, Card, Chip, Separator, Input, Modal, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -237,10 +237,9 @@ function ConnectionWizard() {
                         onPress={() => setSelectedType(conn.type)}
                       >
                         <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
-                          <Image
-                            radius="lg"
+                          <img
                             alt={conn.name}
-                            className="h-[80px]"
+                            className="h-[80px] rounded-lg object-contain"
                             src={connectionImages(isDark)[conn.type]}
                           />
                         </Card.Content>

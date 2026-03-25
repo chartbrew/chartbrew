@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Chip, Checkbox, Divider,
-  CircularProgress, ListBox, Select,
+  ProgressCircle, ListBox, Select,
 } from "@heroui/react";
 import { isEqual } from "lodash";
 import { LuCheck, LuCloud, LuFolder, LuUser, LuWrench, LuX } from "react-icons/lu";
@@ -226,7 +226,7 @@ function CustomerQuery(props) {
     return (
       <Container>
         <Row>
-          <CircularProgress size="xl" aria-label="Loading segments" />
+          <ProgressCircle size="xl" aria-label="Loading segments" />
         </Row>
       </Container>
     );

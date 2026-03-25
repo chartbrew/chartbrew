@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Modal, Chip,
   AvatarGroup, Avatar, Popover, PopoverTrigger,
-  PopoverContent, Listbox, ListboxItem, Separator, Dropdown, DropdownTrigger,
+  PopoverContent, ListBox, Separator, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
   Tabs,
   Tab,
@@ -1007,22 +1007,25 @@ function ProjectDashboard() {
                             <Text>
                               {"Users with project access"}
                             </Text>
-                            <Listbox aria-label="Select a user">
+                            <ListBox aria-label="Select a user" selectionMode="none">
                               {projectMembers.map((member) => (
-                                <ListboxItem
+                                <ListBox.Item
                                   key={member.id}
+                                  id={String(member.id)}
                                   textValue={member.name}
-                                  description={member.email}
-                                  endContent={(
+                                >
+                                  <div className="flex w-full items-center justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium">{member.name}</div>
+                                      <div className="text-xs text-default-500">{member.email}</div>
+                                    </div>
                                     <Chip size="sm" variant="flat">
                                       {member.TeamRoles?.find((r) => r.team_id === team?.id)?.role}
                                     </Chip>
-                                  )}
-                                >
-                                  {member.name}
-                                </ListboxItem>
+                                  </div>
+                                </ListBox.Item>
                               ))}
-                            </Listbox>
+                            </ListBox>
                           </PopoverContent>
                         </Popover>
                         <div className="w-3" />

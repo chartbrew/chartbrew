@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import {
-  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeInput, Image, Textarea, ButtonGroup, Tooltip, useFilter,
+  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeInput, Textarea, ButtonGroup, Tooltip, useFilter,
   Tabs, Tab,
   Checkbox,
 } from "@heroui/react";
@@ -541,7 +541,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                       window.open(snapshotPath, "_blank");
                     }}
                   >
-                    <Image src={snapshotPath} alt="Snapshot" className="max-h-96" />
+                    <img src={snapshotPath} alt="Snapshot" className="max-h-96 max-w-full" />
                   </div>
                 </div>
               )}

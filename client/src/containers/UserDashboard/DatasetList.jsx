@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, AvatarGroup, Button, Chip, CircularProgress, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, AvatarGroup, Button, Chip, ProgressCircle, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
 import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -696,7 +696,7 @@ function DatasetList() {
             </div>
             {fetchingRelatedCharts && (
               <div className="flex flex-row items-center gap-1">
-                <CircularProgress size="sm" aria-label="Checking related charts" />
+                <ProgressCircle size="sm" aria-label="Checking related charts" />
                 <span className="italic">Checking related charts...</span>
               </div>
             )}

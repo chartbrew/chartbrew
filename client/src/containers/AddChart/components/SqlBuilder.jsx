@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Modal, Input, Tooltip, Checkbox, Divider,
   Tabs, Tab,
-  CircularProgress, Badge, Drawer, DrawerHeader, DrawerBody,
+  ProgressCircle, Badge, Drawer, DrawerHeader, DrawerBody,
   Select, DrawerFooter, DrawerContent, Switch, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -266,7 +266,7 @@ function SqlBuilder(props) {
   if (!connection) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <CircularProgress aria-label="Loading connection..." />
+        <ProgressCircle aria-label="Loading connection..." />
       </div>
     );
   }

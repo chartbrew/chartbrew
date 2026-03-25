@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
-  Popover, Chip, CircularProgress, PopoverTrigger,
+  Popover, Chip, ProgressCircle, PopoverTrigger,
   PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, Select,
   Badge,
   Divider,
@@ -570,7 +570,7 @@ function Chart(props) {
                     )}
                     {(chartLoading || chart.loading) && (
                       <>
-                        <CircularProgress classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
+                        <ProgressCircle className="w-4 h-4" aria-label="Updating chart" />
                         <div className="w-1" />
                         <span className="text-[10px] text-default-500">{"Updating..."}</span>
                       </>
@@ -670,7 +670,7 @@ function Chart(props) {
                   </DropdownTrigger>
                   <DropdownMenu disabledKeys={["status"]}>
                     <DropdownItem
-                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
+                      startContent={(chartLoading || chart.loading) ? <ProgressCircle className="w-5 h-5" size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       onPress={_onGetChartData}
                       textValue="Refresh chart"
                     >
@@ -760,7 +760,7 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                      startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onPress={_onExport}
                       textValue="Export to Excel"
                       showDivider
@@ -826,7 +826,7 @@ function Chart(props) {
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                      startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onClick={() => _onPublicExport(chart)}
                       textValue="Export to Excel"
                     >

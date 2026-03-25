@@ -3,7 +3,7 @@ import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
 import {
   Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
-  Link, Image, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
+  Link, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
   Spinner,
   Form,
 } from "@heroui/react";
@@ -628,11 +628,13 @@ function Report({ editMode = false }) {
           </Row>
           <div className="h-1" />
           <Row justify="center">
-            <Image
+            <img
               src={instructionDashboard}
               height={500}
               width={1000}
-              css={{ filter: "drop-shadow(1px 5px 5px rgba(0, 0, 0, 0.5))", p: 15 }}
+              alt="How to add charts to your report"
+              className="p-[15px]"
+              style={{ filter: "drop-shadow(1px 5px 5px rgba(0, 0, 0, 0.5))" }}
             />
           </Row>
         </Container>
@@ -645,7 +647,7 @@ function Report({ editMode = false }) {
       <div>
         <div className="container mx-auto pt-16">
           <div className="flex flex-col items-center justify-center">
-            <Image src={logo} height={50} width={50} radius="none" alt="Chartbrew logo" />
+            <img src={logo} height={50} width={50} alt="Chartbrew logo" className="rounded-none" />
             <div className="h-2" />
             <h3 className="text-xl font-bold font-tw">{"This report is not available"}</h3>
             <p className="text-sm">{"This report is not available because it has no charts or it is not public."}</p>

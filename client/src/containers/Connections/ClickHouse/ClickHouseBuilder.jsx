@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Modal, Input, Tooltip, Checkbox, Divider,
   Tabs, Tab,
-  CircularProgress,
+  ProgressCircle,
   Badge,
   Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
   DrawerContent, Label, ListBox, Switch, Select,
@@ -288,7 +288,7 @@ function ClickHouseBuilder(props) {
   if (!connection) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <CircularProgress aria-label="Loading connection..." />
+        <ProgressCircle aria-label="Loading connection..." />
       </div>
     );
   }

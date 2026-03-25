@@ -5,7 +5,6 @@ import {
   Input, Separator, Chip,
   Tabs,
   Tab,
-  Image,
 } from "@heroui/react";
 import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -379,10 +378,10 @@ function DatasetQuery(props) {
                       title={(
                         <div className="flex flex-row items-center gap-2">
                           <div className="w-6 h-6">
-                            <Image
+                            <img
                               src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
                               alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                              className="rounded-sm border-1 border-divider"
+                              className="h-full w-full rounded-sm border-1 border-divider object-contain"
                             />
                           </div>
                           <span>{dr?.Connection?.name}</span>

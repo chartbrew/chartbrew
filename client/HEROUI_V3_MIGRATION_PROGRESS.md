@@ -981,6 +981,53 @@ Notes:
   - `npm run lint` passes
   - `rg -l 'CardBody|CardHeader|CardFooter' client/src` returns no matches
 
+### Batch 31: Listbox → ListBox compound
+
+Files migrated:
+- `src/containers/Ai/AiModal.jsx`
+- `src/containers/Chart/components/ChartSharing.jsx`
+- `src/containers/ProjectBoard/components/ProjectNavigation.jsx`
+- `src/containers/ProjectDashboard/ProjectDashboard.jsx`
+
+Notes:
+- Replaced v2 `Listbox` / `ListboxItem` with HeroUI v3 `ListBox` / `ListBox.Item` (react-aria-backed collection API).
+- **ChartSharing**: `selectedKeys` is now a `Set` of string ids; `onSelectionChange` guards `"all"` and reads keys from the set. Removed v2-only `variant="faded"` and `hideSelectedIcon` (ListBox variants are `default` / `danger` only; selection affordance is row styling + `selectedKeys`). Delete control is wrapped with pointer/mouse `stopPropagation` so it does not steal list selection.
+- **ProjectDashboard** (members popover): `selectionMode="none"` with composed row layout; former `description` / `endContent` slots are plain flex children.
+- **ProjectNavigation**: project switcher and sidebar nav use `onAction` instead of `onPress` on items; removed v2 `classNames` / `color` / `variant` on the list root (layout handled with `className` + inner flex).
+- **AiModal** (context pickers): `emptyContent` → `renderEmptyState`; toggle logic moved from `onPress` to `onAction` on each `ListBox.Item`.
+- Verification:
+  - `npm run lint` passes
+  - `rg -l 'Listbox|ListboxItem' client/src` returns no matches
+
+### Batch 32: Native `Image` + `CircularProgress` → `ProgressCircle`
+
+Files migrated:
+- `src/components/ProjectForm.jsx`
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/Chart/components/TableView/TableComponent.jsx`
+- `src/containers/AddChart/components/SqlBuilder.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseConnectionForm.jsx`
+- `src/containers/Connections/Customerio/CustomerQuery.jsx`
+- `src/containers/Connections/RealtimeDb/RealtimeDbConnectionForm.jsx`
+- `src/containers/Connections/components/MysqlConnectionForm.jsx`
+- `src/containers/Dataset/DatasetQuery.jsx`
+- `src/containers/ProjectDashboard/components/SnapshotSchedule.jsx`
+- `src/containers/ProjectSettings.jsx`
+- `src/containers/PublicDashboard/PublicDashboard.jsx`
+- `src/containers/PublicDashboard/Report.jsx`
+- `src/containers/UserDashboard/DatasetList.jsx`
+- `src/containers/UserDashboard/components/NoticeBoard.jsx`
+- `src/containers/Connections/ConnectionWizard.jsx`
+
+Notes:
+- Removed `@heroui/react` **`Image`** imports and replaced usages with native **`<img>`** + Tailwind (`object-cover`, `rounded-*`, dimensions, `max-w-full`, etc.). Instruction screenshots on public dashboard/report: `css` prop → **`className` + `style`** for drop-shadow and padding; added missing **`alt`** where helpful.
+- Replaced all **`CircularProgress`** imports/usages with **`ProgressCircle`**. **`Chart.jsx`**: former `classNames={{ svg: "w-4 h-4" }}` → `className="w-4 h-4"` (and `w-5 h-5` for the menu spinner) on `ProgressCircle`.
+- Verification:
+  - `npm run lint` passes
+  - `rg 'Image' client/src` should show no `Image` in `@heroui/react` import lists (only unrelated matches like `LuImage` or UI copy such as "Image size" in `TableDataFormattingModal.jsx`)
+  - `rg 'CircularProgress' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -989,9 +1036,12 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `Spacer`: 0 files
 - `Code`: 0 active files
 - `CardBody` / `CardHeader` / `CardFooter`: 0 files (migrated to `Card.Content` / `Card.Header` / `Card.Footer`)
-- `Image`: about 10 files
-- `Listbox` / `ListboxItem`: 5 files
-- `Progress`: about 4 files
+- `Listbox` / `ListboxItem`: 0 files (migrated to `ListBox` / `ListBox.Item`)
+- `Image` (HeroUI): 0 files in `client/src` (replaced with `<img>` in Batch 32)
+- `CircularProgress`: 0 files (replaced with `ProgressCircle` in Batch 32)
+- `PopoverTrigger` / `PopoverContent`: still used in multiple files (v3 uses `Popover` compound parts; migrate in a dedicated pass)
+- `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: still in `DatasetFilters.jsx`, `RealtimeDbBuilder.jsx`, `FirestoreBuilder.jsx`, `ClickHouseBuilder.jsx`, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, and related builder files (v3 drawer compound structure)
+- `Progress` (linear) / legacy loader components: audit remaining call sites
 
 ## Verification
 
@@ -1004,10 +1054,11 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Remove `Spacer` usage and replace with layout `gap` / margin utilities
-2. Replace removed `Code`, `Image`, and `User` usages with plain elements with tailwind classes or direct v3 composition
-3. Align root `Card` props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, etc.)
-4. Audit remaining non-picker v2 surfaces file-by-file after the picker family completion
+1. Finish **Popover** v3 compound migration: replace `PopoverTrigger` / `PopoverContent` with the v3 `Popover.*` surface everywhere (chart shell, `TableComponent`, public dashboards, `AiModal`, `ChartPreview`, etc.).
+2. Migrate **Drawer** wrappers (`DrawerContent` / `DrawerHeader` / `DrawerBody` / `DrawerFooter`) to v3 drawer compounds across filters and query builders (`DatasetFilters.jsx`, connection builders, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, etc.; same idea as `Modal.*`).
+3. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
+4. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
+5. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
 
 ## Notes
 

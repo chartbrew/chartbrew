@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Image, Chip, Accordion, AccordionItem, Separator,
+  Button, Input, Link, Chip, Accordion, AccordionItem, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -346,7 +346,7 @@ function RealtimeDbConnectionForm(props) {
                   <Text>{"You can find the URL as soon as you access the Realtime Database menu option."}</Text>
                 </Row>
                 <Row>
-                  <Image src={realtimeDbImage} width="431" height="190" alt="Realtime database URL" />
+                  <img src={realtimeDbImage} width={431} height={190} alt="Realtime database URL" className="max-w-full" />
                 </Row>
               </Container>
             </AccordionItem>

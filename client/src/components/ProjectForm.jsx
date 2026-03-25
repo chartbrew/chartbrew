@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, Modal, Tabs, Tab, Card, Image
+  Input, Button, Modal, Tabs, Tab, Card
 } from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -156,7 +156,7 @@ function ProjectForm(props) {
                               className="border-1 border-solid border-content3"
                             >
                               <Card.Content className="p-0">
-                                <Image className="object-cover" width="300" height="300" src={t.image} />
+                                <img className="h-[300px] w-[300px] object-cover" src={t.image} alt={t.name || "Template"} />
                               </Card.Content>
                               <Card.Footer>
                                 <Row wrap="wrap" justify="center" align="center">

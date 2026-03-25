@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Chip, Tabs, Tab, Divider, Switch, Select,
-  CircularProgress, Alert, Label, ListBox,
+  ProgressCircle, Alert, Label, ListBox,
 } from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
@@ -276,7 +276,7 @@ function MysqlConnectionForm(props) {
   };
 
   if (editConnection && !connection.id) {
-    return <CircularProgress aria-label="Loading connection" />;
+    return <ProgressCircle aria-label="Loading connection" />;
   }
 
   return (

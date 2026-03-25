@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Chip, Divider, Switch, Select,
-  CircularProgress, Label, ListBox,
+  ProgressCircle, Label, ListBox,
 } from "@heroui/react";
 import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
 import AceEditor from "react-ace";
@@ -189,7 +189,7 @@ function ClickHouseConnectionForm(props) {
   };
 
   if (editConnection && !connection.id) {
-    return <CircularProgress aria-label="Loading connection" />;
+    return <ProgressCircle aria-label="Loading connection" />;
   }
 
   return (

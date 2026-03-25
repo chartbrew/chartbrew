@@ -4,7 +4,7 @@ import { useWindowSize } from "react-use";
 import { Link, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
-  Link as LinkNext, Tooltip, Button, Modal, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
+  Link as LinkNext, Tooltip, Button, Modal, Popover, PopoverTrigger, PopoverContent, ListBox, Input,
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
@@ -126,18 +126,23 @@ function ProjectNavigation(props) {
                     onChange={(e) => setProjectSearch(e.target.value)}
                     className="px-2"
                   />
-                  <Listbox aria-label="Dashboard switch list">
+                  <ListBox aria-label="Dashboard switch list" selectionMode="none">
                     {_getFilteredProjects().map((p) => (
-                      <ListboxItem
+                      <ListBox.Item
                         key={p.id}
-                        onPress={() => onChangeProject(p.id)}
-                        startContent={pinnedDashboards.find((pd) => pd.project_id === p.id) && <LuPin className="text-gray-500" size={18} />}
+                        id={String(p.id)}
                         textValue={p.name}
+                        onAction={() => onChangeProject(p.id)}
                       >
-                        {p.name}
-                      </ListboxItem>
+                        <div className="flex items-center gap-2">
+                          {pinnedDashboards.find((pd) => pd.project_id === p.id) && (
+                            <LuPin className="text-gray-500 shrink-0" size={18} />
+                          )}
+                          <span>{p.name}</span>
+                        </div>
+                      </ListBox.Item>
                     ))}
-                  </Listbox>
+                  </ListBox>
                 </div>
               </PopoverContent>
             </Popover>
@@ -145,105 +150,102 @@ function ProjectNavigation(props) {
 
           <div className="h-4" />
 
-          <Listbox
+          <ListBox
             aria-label="Project navigation"
-            variant="flat"
-            color="default"
+            selectionMode="none"
             className="p-0"
           >
-            <ListboxItem
+            <ListBox.Item
               key="dashboard"
-              startContent={menuSize === "large" ? <LuLayoutGrid size={24} /> : null}
-              onPress={() => navigate(`/${team.id}/${project.id}/dashboard`)}
+              id="dashboard"
+              textValue="Dashboard"
+              onAction={() => navigate(`/${team.id}/${project.id}/dashboard`)}
               className={`${_checkIfActive("dashboard") ? "text-primary" : "text-foreground"}`}
-              classNames={{
-                title: menuSize === "small" ? "flex flex-row justify-center" : "",
-              }}
-              textValue="Dashboard report"
             >
-              {menuSize === "large" ? "Dashboard" : (
-                <Tooltip content="Dashboard" placement="right">
-                  <div className=""><LuLayoutGrid size={24} /></div>
-                </Tooltip>
-              )}
-            </ListboxItem>
-
-            <ListboxItem
-              key="public"
-              startContent={menuSize === "large" ? <LuTvMinimal size={24} /> : null}
-              onPress={() => navigate(`/report/${project.brewName}/edit`)}
-              className={_checkIfActive("public") ? "text-primary" : "text-foreground"}
-              classNames={{
-                title: menuSize === "small" ? "flex flex-row justify-center" : "",
-              }}
-              textValue="Dashboard report"
-            >
-              {menuSize === "large" ? "Dashboard report" : (
-                <Tooltip content="Dashboard report" placement="right">
-                  <div className=""><LuTvMinimal size={24} /></div>
-                </Tooltip>
-              )}
-            </ListboxItem>
-
-            {canAccess("projectEditor") && (
-              <ListboxItem
-                key="members"
-                startContent={menuSize === "large" ? <LuUser size={24} /> : null}
-                onPress={() => navigate(`/${team.id}/${project.id}/members`)}
-                className={_checkIfActive("members") ? "text-primary" : "text-foreground"}
-                classNames={{
-                  title: menuSize === "small" ? "flex flex-row justify-center" : "",
-                }}
-                textValue="Members"
-              >
-                {menuSize === "large" ? "Members" : (
-                  <Tooltip content="Members" placement="right">
-                    <div className=""><LuUser size={24} /></div>
+              <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
+                {menuSize === "large" && <LuLayoutGrid size={24} />}
+                {menuSize === "large" ? "Dashboard" : (
+                  <Tooltip content="Dashboard" placement="right">
+                    <div><LuLayoutGrid size={24} /></div>
                   </Tooltip>
                 )}
-              </ListboxItem>
+              </div>
+            </ListBox.Item>
+
+            <ListBox.Item
+              key="public"
+              id="public"
+              textValue="Dashboard report"
+              onAction={() => navigate(`/report/${project.brewName}/edit`)}
+              className={_checkIfActive("public") ? "text-primary" : "text-foreground"}
+            >
+              <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
+                {menuSize === "large" && <LuTvMinimal size={24} />}
+                {menuSize === "large" ? "Dashboard report" : (
+                  <Tooltip content="Dashboard report" placement="right">
+                    <div><LuTvMinimal size={24} /></div>
+                  </Tooltip>
+                )}
+              </div>
+            </ListBox.Item>
+
+            {canAccess("projectEditor") && (
+              <ListBox.Item
+                key="members"
+                id="members"
+                textValue="Members"
+                onAction={() => navigate(`/${team.id}/${project.id}/members`)}
+                className={_checkIfActive("members") ? "text-primary" : "text-foreground"}
+              >
+                <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
+                  {menuSize === "large" && <LuUser size={24} />}
+                  {menuSize === "large" ? "Members" : (
+                    <Tooltip content="Members" placement="right">
+                      <div><LuUser size={24} /></div>
+                    </Tooltip>
+                  )}
+                </div>
+              </ListBox.Item>
             )}
 
             {canAccess("projectAdmin", project.TeamRoles) && (
-              <>
-                <ListboxItem
-                  key="settings"
-                  startContent={menuSize === "large" ? <LuSettings size={24} /> : null}
-                  onPress={() => navigate(`/${team.id}/${project.id}/settings`)}
-                  className={_checkIfActive("settings") ? "text-primary" : "text-foreground"}
-                  classNames={{
-                    title: menuSize === "small" ? "flex flex-row justify-center" : "",
-                  }}
-                  textValue="Settings"
-                >
+              <ListBox.Item
+                key="settings"
+                id="settings"
+                textValue="Settings"
+                onAction={() => navigate(`/${team.id}/${project.id}/settings`)}
+                className={_checkIfActive("settings") ? "text-primary" : "text-foreground"}
+              >
+                <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
+                  {menuSize === "large" && <LuSettings size={24} />}
                   {menuSize === "large" ? "Settings" : (
                     <Tooltip content="Dashboard settings" placement="right">
-                      <div className=""><LuSettings size={24} /></div>
+                      <div><LuSettings size={24} /></div>
                     </Tooltip>
                   )}
-                </ListboxItem>
-              </>
+                </div>
+              </ListBox.Item>
             )}
 
             {canAccess("teamAdmin") && (
-              <ListboxItem
+              <ListBox.Item
                 key="integrations"
-                startContent={menuSize === "large" ? <LuPuzzle size={24} /> : null}
-                onPress={() => navigate(`/${team.id}/${project.id}/integrations`)}
-                className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
-                classNames={{
-                  title: menuSize === "small" ? "flex flex-row justify-center" : "",
-                }}
+                id="integrations"
                 textValue="Integrations"
+                onAction={() => navigate(`/${team.id}/${project.id}/integrations`)}
+                className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
               >
-                {menuSize === "large" ? "Integrations" : (
-                  <Tooltip content="Integrations" placement="right">
-                    <div className=""><LuPuzzle size={24} /></div>
-                  </Tooltip>
-                )}
-              </ListboxItem>
+                <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
+                  {menuSize === "large" && <LuPuzzle size={24} />}
+                  {menuSize === "large" ? "Integrations" : (
+                    <Tooltip content="Integrations" placement="right">
+                      <div><LuPuzzle size={24} /></div>
+                    </Tooltip>
+                  )}
+                </div>
+              </ListBox.Item>
             )}
-          </Listbox>
+          </ListBox>
         </div>
         <div className="translate-y-[-50px]">
           {menuSize === "large" && (

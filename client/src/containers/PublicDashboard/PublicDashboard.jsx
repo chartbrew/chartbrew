@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import {
   Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
-  Link, Image, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
+  Link, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
   Spinner,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
@@ -622,11 +622,13 @@ function PublicDashboard() {
           </Row>
           <div className="h-2" />
           <Row justify="center">
-            <Image
+            <img
               src={instructionDashboard}
               height={500}
               width={1000}
-              css={{ filter: "drop-shadow(1px 5px 5px rgba(0, 0, 0, 0.5))", p: 15 }}
+              alt="How to add charts to your public dashboard"
+              className="p-[15px]"
+              style={{ filter: "drop-shadow(1px 5px 5px rgba(0, 0, 0, 0.5))" }}
             />
           </Row>
         </Container>

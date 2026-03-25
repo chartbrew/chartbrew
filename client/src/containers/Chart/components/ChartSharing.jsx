@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import {
   Button, Checkbox, Input, Modal,
-  Radio, RadioGroup, Spinner, Switch, Tooltip, Listbox, ListboxItem,
+  Radio, RadioGroup, Spinner, Switch, Tooltip, ListBox,
   Chip,
 } from "@heroui/react"
 import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
@@ -353,58 +353,68 @@ function ChartSharing({ chart, isOpen, onClose }) {
             <div className="text-xs">Create your first share link to get started</div>
           </div>
         ) : (
-          <Listbox
+          <ListBox
             aria-label="Share policies"
             selectionMode="single"
-            selectedKeys={selectedPolicy ? [selectedPolicy.id.toString()] : []}
+            selectedKeys={selectedPolicy ? new Set([selectedPolicy.id.toString()]) : new Set()}
             onSelectionChange={(keys) => {
-              const selectedId = Array.from(keys)[0];
+              if (keys === "all") {
+                return;
+              }
+              const selectedId = keys.size > 0 ? Array.from(keys)[0] : null;
               if (selectedId) {
-                const policy = sharePolicies.find(p => p.id.toString() === selectedId);
+                const policy = sharePolicies.find((p) => p.id.toString() === String(selectedId));
                 setSelectedPolicy(policy);
               }
             }}
-            variant="faded"
-            hideSelectedIcon
+            className="w-full"
           >
             {sharePolicies.map((policy, index) => (
-              <ListboxItem
+              <ListBox.Item
                 key={policy.id.toString()}
+                id={policy.id.toString()}
+                textValue={`Link ${index + 1}`}
                 className={`mb-2 ${selectedPolicy?.id === policy.id ? "bg-content3" : ""}`}
-                endContent={
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="danger"
-                    onPress={() => _onDeletePolicy(policy.id)}
-                    isDisabled={sharePolicies.length === 1}
-                  >
-                    <LuTrash2 size={14} />
-                  </Button>
-                }
               >
-                <div>
-                  <div className="flex flex-row items-center gap-2">
-                    <div className="font-medium">Link {index + 1}</div>
-                    <Chip
-                      variant="flat"
-                      size="sm"
-                      radius="sm"
-                      className="text-xs"
-                      color={policy.allow_params ? "success" : "default"}
-                    >
-                      {policy.allow_params ? "Allow params" : "No URL params"}
-                    </Chip>
+                <div className="flex w-full items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-row items-center gap-2">
+                      <div className="font-medium">Link {index + 1}</div>
+                      <Chip
+                        variant="flat"
+                        size="sm"
+                        radius="sm"
+                        className="text-xs"
+                        color={policy.allow_params ? "success" : "default"}
+                      >
+                        {policy.allow_params ? "Allow params" : "No URL params"}
+                      </Chip>
+                    </div>
+                    <div className="h-1" />
+                    <div className="text-xs text-gray-500">
+                      {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
+                    </div>
                   </div>
-                  <div className="h-1" />
-                  <div className="text-xs text-gray-500">
-                    {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
+                  <div
+                    className="shrink-0"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      color="danger"
+                      onPress={() => _onDeletePolicy(policy.id)}
+                      isDisabled={sharePolicies.length === 1}
+                    >
+                      <LuTrash2 size={14} />
+                    </Button>
                   </div>
                 </div>
-              </ListboxItem>
+              </ListBox.Item>
             ))}
-          </Listbox>
+          </ListBox>
         )}
       </div>
     );

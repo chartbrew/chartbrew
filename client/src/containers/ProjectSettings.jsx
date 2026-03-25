@@ -3,7 +3,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Autocomplete,
-  Button, CircularProgress, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
+  Button, ProgressCircle, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -126,7 +126,7 @@ function ProjectSettings(props) {
       {!project.id && (
         <>
           <Row>
-            <CircularProgress aria-label="Loading" />
+            <ProgressCircle aria-label="Loading" />
           </Row>
           <div className="h-2" />
         </>
