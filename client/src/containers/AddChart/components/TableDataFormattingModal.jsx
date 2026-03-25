@@ -6,7 +6,7 @@ import {
   Select,
 } from "@heroui/react";
 import { LuPlus, LuX } from "react-icons/lu";
-import { TwitterPicker } from "react-color";
+import { Block } from "@uiw/react-color";
 import { chartColors } from "../../../config/colors";
 
 const dataTypes = [{
@@ -413,7 +413,7 @@ function TableDataFormattingModal(props) {
                     </Popover.Trigger>
                     <Popover.Content className="flex flex-col items-start py-2">
                       <Popover.Dialog>
-                        <TwitterPicker
+                        <Block
                           triangle={"hide"}
                           color={r.color || "rgba(0,0,0,0)"}
                           onChange={(color) => setRules(rules.map((r, i) => (i === index ? { ...r, color: color.hex } : r)))}

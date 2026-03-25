@@ -7,7 +7,7 @@ import {
 } from "@heroui/react";
 import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
-import { TwitterPicker, SketchPicker } from "react-color";
+import { Block, Sketch } from "@uiw/react-color";
 import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
@@ -406,7 +406,7 @@ function ChartDatasetConfig(props) {
                       </Popover.Trigger>
                       <Popover.Content className="border-none bg-transparent shadow-none">
                         <Popover.Dialog>
-                          <TwitterPicker
+                          <Block
                             triangle={"hide"}
                             color={cdc.datasetColor}
                             colors={Object.values(chartColors).map((color) => color.hex)}
@@ -443,7 +443,7 @@ function ChartDatasetConfig(props) {
                           </Popover.Trigger>
                           <Popover.Content className="border-none bg-transparent shadow-none">
                             <Popover.Dialog>
-                              <SketchPicker
+                              <Sketch
                                 color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
                                 presetColors={Object.values(chartColors).map((color) => color.hex)}
                                 onChangeComplete={(color) => _onChangeFillColor(color)}
@@ -486,7 +486,7 @@ function ChartDatasetConfig(props) {
                               </Popover.Trigger>
                               <Popover.Content className="border-none bg-transparent shadow-none">
                                 <Popover.Dialog>
-                                  <TwitterPicker
+                                  <Block
                                     triangle={"hide"}
                                     color={cdc.fillColor[index] || "white"}
                                     colors={Object.values(chartColors).map((color) => color.hex)}

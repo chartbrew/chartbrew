@@ -12,7 +12,7 @@ import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
 import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus } from "react-icons/lu";
 import { findIndex, isEqual } from "lodash";
-import { TwitterPicker } from "react-color";
+import { Block } from "@uiw/react-color";
 import { chartColors } from "../../../config/colors";
 
 import LineChart from "../../Chart/components/LineChart";
@@ -652,7 +652,7 @@ function ChartPreview(props) {
                   </Popover.Trigger>
                   <Popover.Content>
                     <Popover.Dialog>
-                      <TwitterPicker
+                      <Block
                         triangle={"hide"} onChange={(color) => _onChangeColor(color, index)}
                         colors={Object.values(chartColors).map((c) => c.hex)}
                       />

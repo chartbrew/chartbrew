@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { usePagination, useSortBy, useTable } from "react-table";
+import { getPaginationRowModel, getSortedRowModel, useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import PropTypes from "prop-types";
 import {
   Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip, ProgressBar,
@@ -224,13 +224,15 @@ function TableComponent({
     gotoPage,
     setPageSize,
     state: { pageSize },
-  } = useTable({
+  } = useReactTable({
     columns,
     data,
-    initialState: { pageIndex: 0, pageSize: defaultRowsPerPage }
-  },
-  useSortBy,
-  usePagination);
+    initialState: { pageIndex: 0, pageSize: defaultRowsPerPage },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+
+  })
 
   useEffect(() => {
     setPageSize(defaultRowsPerPage);

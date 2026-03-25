@@ -8,7 +8,7 @@ import {
   Form,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { TwitterPicker } from "react-color";
+import { Block } from "@uiw/react-color";
 import { Helmet } from "react-helmet-async";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
@@ -747,7 +747,7 @@ function Report({ editMode = false }) {
                             <div className="h-1" />
                             <Row>
                               <div>
-                                <TwitterPicker
+                                <Block
                                   color={newChanges.backgroundColor}
                                   onChangeComplete={(color) => {
                                     setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
@@ -768,7 +768,7 @@ function Report({ editMode = false }) {
                             </Row>
                             <div className="h-1" />
                             <Row>
-                              <TwitterPicker
+                              <Block
                                 color={newChanges.titleColor}
                                 onChangeComplete={(color) => {
                                   setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
