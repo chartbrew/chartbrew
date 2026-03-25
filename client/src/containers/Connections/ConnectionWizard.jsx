@@ -192,7 +192,7 @@ function ConnectionWizard() {
           <span className="text-xl text-secondary font-semibold">{"You don't have access to this page"}</span>
           <div className="h-4" />
           <Button
-            color="primary"
+            variant="primary"
             onPress={() => navigate("/")}
           >
             Return to dashboard
@@ -417,7 +417,7 @@ function ConnectionWizard() {
                     variant={inviteCopied ? "tertiary" : "primary"}
                     fullWidth
                     endContent={inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                    onClick={() => _onCopyInviteUrl()}
+                    onPress={() => _onCopyInviteUrl()}
                   >
                     {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
                   </Button>
@@ -438,7 +438,7 @@ function ConnectionWizard() {
                 <Card.Footer>
                   <Button
                     size="sm"
-                    color="primary"
+                    variant="primary"
                     fullWidth
                     endContent={<LuCompass />}
                   >

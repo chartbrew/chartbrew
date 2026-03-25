@@ -292,14 +292,29 @@ function RealtimeDbBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge content="" placement="top-right" shape="circle" isInvisible={!firebaseRequest.transform?.enabled}>
-                <Button variant="tertiary"
-                  size="sm"
-                  onPress={() => setShowTransform(true)}
-                >
-                  Transform
-                </Button>
-              </Badge>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Badge.Anchor className="relative inline-flex">
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      onPress={() => setShowTransform(true)}
+                    >
+                      Transform
+                    </Button>
+                    {firebaseRequest.transform?.enabled && (
+                      <Badge
+                        size="sm"
+                        className="min-h-2 min-w-2 p-0"
+                        aria-label="Transformations active"
+                      />
+                    )}
+                  </Badge.Anchor>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Apply transformations to the data
+                </Tooltip.Content>
+              </Tooltip>
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button isIconOnly
@@ -397,8 +412,9 @@ function RealtimeDbBuilder(props) {
           <div className="h-2" />
           <Row align="center" className={"gap-1"}>
             <Button
-              variant={"bordered"}
-              size="sm" onClick={() => (
+              variant="outline"
+              size="sm"
+              onPress={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -412,7 +428,8 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant="secondary" onClick={() => (
+              variant="secondary"
+              onPress={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -426,7 +443,8 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant={"bordered"} onClick={() => (
+              variant="outline"
+              onPress={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -442,7 +460,7 @@ function RealtimeDbBuilder(props) {
               <>
                 <Button variant="ghost"
                   startContent={<LuX />}
-                  onClick={() => (
+                  onPress={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
                       configuration: {
@@ -492,7 +510,8 @@ function RealtimeDbBuilder(props) {
           <Row align="center" className={"gap-1"}>
             <Button
               size="sm"
-              variant={"bordered"} onClick={() => (
+              variant="outline"
+              onPress={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -507,7 +526,8 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant={"bordered"} onClick={() => (
+              variant="outline"
+              onPress={() => (
                 setFirebaseRequest({
                   ...firebaseRequest,
                   configuration: {
@@ -526,7 +546,7 @@ function RealtimeDbBuilder(props) {
               && (
                 <Button
                   startContent={<LuX />}
-                  onClick={() => (
+                  onPress={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
                       configuration: {
@@ -536,8 +556,7 @@ function RealtimeDbBuilder(props) {
                       }
                     })
                   )}
-                  variant="ghost"
-                  color="danger"
+                  variant="danger-soft"
                   size="sm"
                 >
                   Disable limit
@@ -551,7 +570,7 @@ function RealtimeDbBuilder(props) {
               type="number"
               value={limitValue}
               onChange={(e) => e.target.value && _onChangeLimitValue(e.target.value)}
-              disabled={
+              isDisabled={
                 !firebaseRequest.configuration
                   || (
                     !firebaseRequest.configuration.limitToLast
@@ -742,7 +761,7 @@ function RealtimeDbBuilder(props) {
               Close
             </Button>
             <Button
-              color="primary"
+              variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
               startContent={variableLoading ? <ButtonSpinner /> : undefined}

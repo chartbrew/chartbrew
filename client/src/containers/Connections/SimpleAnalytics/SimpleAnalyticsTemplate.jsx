@@ -183,7 +183,7 @@ function SimpleAnalyticsTemplate(props) {
         <Button
           isIconOnly
           variant="tertiary"
-          onClick={onBack}
+          onPress={onBack}
           size="sm"
         >
           <LuArrowLeft />
@@ -230,26 +230,24 @@ function SimpleAnalyticsTemplate(props) {
               description={errors.website}
               variant="secondary"
               fullWidth
-              disabled={formVisible}
+              isDisabled={formVisible}
             />
           </Row>
           <div className="h-4" />
           <Row align="center">
             {!formVisible && (
               <Button
-                variant="faded"
+                variant="primary"
                 endContent={<LuPlus />}
-                onClick={() => setFormVisible(true)}
-                color="primary"
+                onPress={() => setFormVisible(true)}
               >
                 Or create a new connection
               </Button>
             )}
             {formVisible && (
               <Button
-                variant="faded"
-                color="primary"
-                onClick={() => setFormVisible(false)}
+                variant="tertiary"
+                onPress={() => setFormVisible(false)}
               >
                 Use an existing connection instead
               </Button>
@@ -334,7 +332,7 @@ function SimpleAnalyticsTemplate(props) {
             <Button
               variant="secondary"
               startContent={<LuCheckCheck />}
-              onClick={_onSelectAll}
+              onPress={_onSelectAll}
               size="sm"
             >
               Select all
@@ -343,7 +341,7 @@ function SimpleAnalyticsTemplate(props) {
             <Button
               variant="secondary"
               startContent={<LuX />}
-              onClick={_onDeselectAll}
+              onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
@@ -440,8 +438,8 @@ function SimpleAnalyticsTemplate(props) {
             || (!selectedCharts || selectedCharts.length < 1)
             || (!projectId && !projectName)
           }
-          onClick={_onGenerateDashboard}
-          color="primary"
+          onPress={_onGenerateDashboard}
+          variant="primary"
           endContent={!loading ? <LuArrowRight /> : undefined}
           startContent={loading ? <ButtonSpinner /> : undefined}
         >

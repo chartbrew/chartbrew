@@ -111,7 +111,7 @@ function SlackAuth() {
             </Select.Popover>
           </Select>
           <Button
-            color="primary"
+            variant="primary"
             onPress={() => _onConnectSlack()}
             isDisabled={!selectedTeam}
           >

@@ -233,8 +233,7 @@ function CustomerioBuilder(props) {
               <Text b size={"lg"}>{connection.name}</Text>
               <div className="flex flex-row items-center gap-2">
                 <Button
-                  color="primary"
-                  auto
+                  variant="primary"
                   size="sm"
                   onPress={() => _onSavePressed()}
                   isPending={saveLoading || requestLoading}
@@ -242,24 +241,36 @@ function CustomerioBuilder(props) {
                 >
                   {"Save"}
                 </Button>
-                <Badge color="success" content="" placement="top-right" shape="circle" isInvisible={!cioRequest.transform?.enabled}>
-                  <Button
-                    color="primary"
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => setShowTransform(true)}
-                  >
-                    Transform
-                  </Button>
-                </Badge>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Badge.Anchor className="relative inline-flex">
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => setShowTransform(true)}
+                      >
+                        Transform
+                      </Button>
+                      {cioRequest.transform?.enabled && (
+                        <Badge
+                          color="success"
+                          size="sm"
+                          className="min-h-2 min-w-2 p-0"
+                          aria-label="Transformations active"
+                        />
+                      )}
+                    </Badge.Anchor>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="bottom" className="z-[99999]">
+                    Apply transformations to the data
+                  </Tooltip.Content>
+                </Tooltip>
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      color="danger"
                       isIconOnly
-                      auto
                       size="sm"
-                      variant="secondary"
+                      variant="danger-soft"
                       onPress={() => onDelete()}
                     >
                       <LuTrash />
@@ -380,8 +391,7 @@ function CustomerioBuilder(props) {
                 startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={_onTest}
                 className="w-full"
-                color="primary"
-                variant="ghost"
+                variant="primary"
               >
                 Make the request
               </Button>

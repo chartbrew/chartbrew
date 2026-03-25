@@ -145,7 +145,7 @@ function ProjectSettings(props) {
           <Button
             type="submit" isDisabled={!_canAccess("projectEditor")}
             isPending={loading}
-            onClick={_onSaveName}
+            onPress={_onSaveName}
             startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save name"}
@@ -198,8 +198,8 @@ function ProjectSettings(props) {
         </Autocomplete>
         <div className="w-2" />
         <Button variant="ghost"
-          disabled={!_canAccess("projectEditor")}
-          onClick={() => _onGetMachineTimezone()}
+          isDisabled={!_canAccess("projectEditor")}
+          onPress={() => _onGetMachineTimezone()}
           startContent={<LuClock4 />}
         >
           <Text hideIn={"xs"}>
@@ -212,7 +212,7 @@ function ProjectSettings(props) {
         <Button
           isDisabled={!_canAccess("projectEditor") || !projectTimezone || projectTimezone === project.timezone}
           isPending={loadingTimezone}
-          onClick={() => _onSaveTimezone()}
+          onPress={() => _onSaveTimezone()}
           startContent={loadingTimezone ? <ButtonSpinner /> : undefined}
           color="primary"
         >
@@ -223,9 +223,9 @@ function ProjectSettings(props) {
           <Button
             color="warning"
             variant="tertiary"
-            disabled={!_canAccess("projectEditor")}
+            isDisabled={!_canAccess("projectEditor")}
             endContent={<LuX />}
-            onClick={() => _onSaveTimezone(true)}
+            onPress={() => _onSaveTimezone(true)}
           >
             Clear
           </Button>
@@ -241,9 +241,9 @@ function ProjectSettings(props) {
           <Row>
             <Button
               color="danger"
-              disabled={!_canAccess("teamAdmin")}
+              isDisabled={!_canAccess("teamAdmin")}
               endContent={<LuTrash />}
-              onClick={_onRemoveConfirmation}
+              onPress={_onRemoveConfirmation}
               variant="secondary"
             >
               Remove project

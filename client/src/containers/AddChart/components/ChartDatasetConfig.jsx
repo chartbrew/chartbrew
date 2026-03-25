@@ -835,7 +835,7 @@ function ChartDatasetConfig(props) {
                       <div className="flex flex-row gap-1">
                         <Tooltip>
                           <Tooltip.Trigger>
-                            <Link onClick={() => _onClearVariableOverride(variable.name)}>
+                            <Link onPress={() => _onClearVariableOverride(variable.name)}>
                               <LuCircleX className="text-warning" />
                             </Link>
                           </Tooltip.Trigger>
@@ -882,8 +882,7 @@ function ChartDatasetConfig(props) {
         )}
 
         <Button
-          variant="faded"
-          color="danger"
+          variant="danger-soft"
           size="sm"
           onPress={_onRemoveCdc}
         >
@@ -911,7 +910,7 @@ function ChartDatasetConfig(props) {
                   Cancel
                 </Button>
                 <Button
-                  color="primary"
+                  variant="primary"
                   onPress={() => {
                     setEditConfirmation(false);
                     navigate(`/datasets/${cdc.dataset_id}?project_id=${params.projectId}&chart_id=${chartId}`);

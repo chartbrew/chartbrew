@@ -367,7 +367,7 @@ function DashboardFilters({
             <Button variant="secondary" onPress={() => setEditingFilter(null)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={_handleSaveFilter}>
+            <Button variant="primary" onPress={_handleSaveFilter}>
               Save changes
             </Button>
               </Modal.Footer>
@@ -389,7 +389,7 @@ function DashboardFilters({
               </Modal.Body>
               <Modal.Footer>
             <Button variant="secondary" onPress={() => setFilterToRemove(null)}>Cancel</Button>
-            <Button color="danger" onPress={() => _onRemoveFilter(filterToRemove, true)}>Remove from everyone</Button>
+            <Button variant="danger" onPress={() => _onRemoveFilter(filterToRemove, true)}>Remove from everyone</Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

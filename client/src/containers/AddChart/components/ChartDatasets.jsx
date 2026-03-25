@@ -165,7 +165,7 @@ function ChartDatasets(props) {
           {canAccess("teamAdmin", user.id, team?.TeamRoles) && addMode && (
             <Button
               size="sm"
-              color="primary"
+              variant="primary"
               onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             >
               Create new dataset
@@ -175,7 +175,7 @@ function ChartDatasets(props) {
           {datasets.length > 0 && chart?.ChartDatasetConfigs.length > 0 && (
             <Button
               isIconOnly={addMode}
-              variant="faded"
+              variant="tertiary"
               size="sm"
               onPress={() => setAddMode(!addMode)}
               className="chart-cdc-add"
@@ -310,7 +310,7 @@ function ChartDatasets(props) {
           <div className="text-sm text-foreground-500">No datasets found. Create a dataset to get started.</div>
           <div className="h-8" />
           <Button
-            color="primary"
+            variant="primary"
             onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             fullWidth
           >

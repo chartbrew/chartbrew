@@ -310,14 +310,29 @@ function ClickHouseBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge content="" placement="top-right" shape="circle" isInvisible={!sqlRequest.transform?.enabled}>
-                <Button variant="tertiary"
-                  size="sm"
-                  onPress={() => setShowTransform(true)}
-                >
-                  Transform
-                </Button>
-              </Badge>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Badge.Anchor className="relative inline-flex">
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      onPress={() => setShowTransform(true)}
+                    >
+                      Transform
+                    </Button>
+                    {sqlRequest.transform?.enabled && (
+                      <Badge
+                        size="sm"
+                        className="min-h-2 min-w-2 p-0"
+                        aria-label="Transformations active"
+                      />
+                    )}
+                  </Badge.Anchor>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Apply transformations to the data
+                </Tooltip.Content>
+              </Tooltip>
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button isIconOnly
@@ -647,7 +662,7 @@ function ClickHouseBuilder(props) {
               Close
             </Button>
             <Button
-              color="primary"
+              variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
               startContent={variableLoading ? <ButtonSpinner /> : undefined}

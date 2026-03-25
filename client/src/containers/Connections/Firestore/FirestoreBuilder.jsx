@@ -626,14 +626,29 @@ function FirestoreBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Badge content="" placement="top-right" shape="circle" isInvisible={!firestoreRequest.transform?.enabled}>
-                <Button variant="tertiary"
-                  size="sm"
-                  onPress={() => setShowTransform(true)}
-                >
-                  Transform
-                </Button>
-              </Badge>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Badge.Anchor className="relative inline-flex">
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      onPress={() => setShowTransform(true)}
+                    >
+                      Transform
+                    </Button>
+                    {firestoreRequest.transform?.enabled && (
+                      <Badge
+                        size="sm"
+                        className="min-h-2 min-w-2 p-0"
+                        aria-label="Transformations active"
+                      />
+                    )}
+                  </Badge.Anchor>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Apply transformations to the data
+                </Tooltip.Content>
+              </Tooltip>
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button isIconOnly
@@ -682,7 +697,7 @@ function FirestoreBuilder(props) {
             <Button
               size="sm"
               startContent={collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
-              onClick={() => _onFetchCollections()}
+              onPress={() => _onFetchCollections()}
               isPending={collectionsLoading}
               variant="ghost"
             >
@@ -835,9 +850,10 @@ function FirestoreBuilder(props) {
                   </Fragment>
                 ))}
 
-                <Button onClick={() => _onSelectSubCollection("")}
+                <Button
+                  onPress={() => _onSelectSubCollection("")}
                   startContent={<LuX />}
-                  disabled={!dataRequest.configuration.selectedSubCollection}
+                  isDisabled={!dataRequest.configuration.selectedSubCollection}
                   variant="ghost"
                   size="sm"
                 >
@@ -1250,7 +1266,7 @@ function Conditions(props) {
                         placeholder="Enter a value"
                         endContent={<LuCalendarDays />}
                         value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Click to select a date"}
-                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                        isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         variant="secondary"
                       />
                     </Popover.Trigger>
@@ -1282,9 +1298,8 @@ function Conditions(props) {
                         endContent={(
                           <Button
                             variant="ghost"
-                            color="primary"
                             isIconOnly
-                            onClick={() => _onAddConditionValue(condition)}
+                            onPress={() => _onAddConditionValue(condition)}
                             type="submit"
                             form="condition-values"
                             size="sm"
@@ -1319,9 +1334,10 @@ function Conditions(props) {
                     <Tooltip.Trigger>
                       <Button
                         isIconOnly
-                        onClick={() => onApplyCondition(condition.id)}
+                        onPress={() => onApplyCondition(condition.id)}
                         size="sm"
-                        variant="faded" >
+                        variant="tertiary"
+                      >
                         <LuCirclePlus />
                       </Button>
                     </Tooltip.Trigger>
@@ -1338,9 +1354,9 @@ function Conditions(props) {
                       <Tooltip.Trigger>
                         <Button
                           isIconOnly
-                          onClick={() => onRevertCondition(condition.id)}
+                          onPress={() => onRevertCondition(condition.id)}
                           size="sm"
-                          variant="faded"
+                          variant="tertiary"
                         >
                           <LuUndo />
                         </Button>
@@ -1353,9 +1369,10 @@ function Conditions(props) {
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    isIconOnly onClick={() => onRemoveCondition(condition.id)}
+                    isIconOnly
+                    onPress={() => onRemoveCondition(condition.id)}
                     size="sm"
-                    variant="faded"
+                    variant="tertiary"
                   >
                     <LuCircleX />
                   </Button>
@@ -1370,12 +1387,9 @@ function Conditions(props) {
       <Row>
         <Button
           startContent={<LuPlus />}
-          onClick={onAddCondition}
+          onPress={onAddCondition}
           size="sm"
           variant="ghost"
-          auto
-          disableRipple
-          color="primary"
         >
           {"Add a new filter"}
         </Button>

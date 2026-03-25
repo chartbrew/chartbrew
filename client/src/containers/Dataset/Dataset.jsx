@@ -351,7 +351,7 @@ function Dataset() {
         <div className="flex flex-row gap-2 items-center">
           {!editDatasetName && (
             <>
-              <Link onClick={() => setEditDatasetName(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
+              <Link onPress={() => setEditDatasetName(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
                 <div className="font-tw font-bold text-foreground text-lg">{getDatasetDisplayName(dataset)}</div>
                 <LuPencil size={16} className="text-foreground-500" />
               </Link>
@@ -384,7 +384,6 @@ function Dataset() {
         <div className="flex flex-row gap-2 flex-wrap">
           {!fromChart && (
             <Button
-              color="default"
               variant="ghost"
               onPress={() => _onSaveDataset("createChart")}
               isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
@@ -395,7 +394,7 @@ function Dataset() {
             </Button>
           )}
           <Button
-            color="primary"
+            variant="primary"
             onPress={() => _onSaveDataset("save")}
             isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
             isPending={saveDatasetLoading}
@@ -466,7 +465,7 @@ function Dataset() {
               Cancel
             </Button>
             <Button
-              color="primary"
+              variant="primary"
               isPending={saveDatasetLoading}
               startContent={saveDatasetLoading ? <ButtonSpinner /> : undefined}
               onPress={async () => {

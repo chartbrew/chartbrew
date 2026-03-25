@@ -303,8 +303,8 @@ function PostgresConnectionForm(props) {
             selectedKey={formStyle}
             onSelectionChange={(selected) => setFormStyle(selected)}
           >
-            <Tab key="string" value="string" title="Connection string" />
-            <Tab key="form" value="form" title="Connection form" />
+            <Tab key="string" title="Connection string" />
+            <Tab key="form" title="Connection form" />
           </Tabs>
         </Row>
         <div className="h-4" />
@@ -516,7 +516,7 @@ function PostgresConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("rootCertInput").click()}
+                onPress={() => document.getElementById("rootCertInput").click()}
               >
                 {"Certificate authority"}
               </Button>
@@ -544,7 +544,7 @@ function PostgresConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("clientCertInput").click()}
+                onPress={() => document.getElementById("clientCertInput").click()}
               >
                 {"SSL certificate"}
               </Button>
@@ -572,7 +572,7 @@ function PostgresConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("clientKeyInput").click()}
+                onPress={() => document.getElementById("clientKeyInput").click()}
               >
                 {"SSL key"}
               </Button>
@@ -684,7 +684,7 @@ function PostgresConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("sshPrivateKeyInput").click()}
+                onPress={() => document.getElementById("sshPrivateKeyInput").click()}
               >
                 {"SSH Private Key"}
               </Button>
@@ -791,7 +791,7 @@ function PostgresConnectionForm(props) {
           <Button
             variant="ghost"
             auto
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
             startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
@@ -800,8 +800,8 @@ function PostgresConnectionForm(props) {
           <div className="w-2" />
           <Button
             isPending={loading}
-            onClick={_onCreateConnection}
-            color="primary"
+            onPress={_onCreateConnection}
+            variant="primary"
             startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}

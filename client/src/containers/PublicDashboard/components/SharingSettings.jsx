@@ -565,7 +565,7 @@ function SharingSettings(props) {
             <div className="flex flex-row items-center gap-2">
               <Button
                 size="sm"
-                color="primary"
+                variant="primary"
                 endContent={<LuPalette size={18} />}
                 onPress={() => navigate(`/report/${newBrewName}/edit`)}
               >
@@ -635,7 +635,7 @@ function SharingSettings(props) {
               </Row>
               <Row>
                 <Button
-                  color="primary"
+                  variant="primary"
                   onPress={() => _onSavePassword(newPassword)}
                   isDisabled={
                     !project.passwordProtected
@@ -671,7 +671,7 @@ function SharingSettings(props) {
           />
           <Row>
             <Button
-              color="primary"
+              variant="primary"
               onPress={() => _onSaveBrewName(newBrewName)}
               isDisabled={!newBrewName}
               isPending={urlLoading}
@@ -731,8 +731,7 @@ function SharingSettings(props) {
                       <Button
                         isIconOnly
                         size="sm"
-                        variant="tertiary"
-                        color="danger"
+                        variant="danger-soft"
                         onPress={() => _onDeletePolicy(policy.id)}
                       >
                         <LuTrash2 size={16} />
@@ -763,7 +762,7 @@ function SharingSettings(props) {
                       <div className="mt-4 mb-2">
                         <Button
                           size="sm"
-                          color="primary"
+                          variant="primary"
                           onPress={_onUpdatePolicy}
                           isPending={isUpdating}
                           startContent={isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}

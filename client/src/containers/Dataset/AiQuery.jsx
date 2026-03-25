@@ -152,7 +152,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
           endContent={
             <Button
               isIconOnly
-              color="primary"
+              variant="primary"
               onPress={_onAskAi}
               isPending={askAiLoading}
             >

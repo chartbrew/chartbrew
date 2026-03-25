@@ -279,9 +279,8 @@ function StrapiConnectionForm(props) {
                   />
                   <Button
                     isIconOnly
-                    onClick={() => _removeOption(option.id)}
+                    onPress={() => _removeOption(option.id)}
                     variant="tertiary"
-                    color="warning"
                   >
                     <LuCircleX />
                   </Button>
@@ -293,9 +292,8 @@ function StrapiConnectionForm(props) {
           <Button
             size="sm"
             startContent={<LuCirclePlus />}
-            onClick={_addOption}
-            variant="faded"
-            color="primary"
+            onPress={_addOption}
+            variant="primary"
           >
             Add a header
           </Button>
@@ -317,8 +315,8 @@ function StrapiConnectionForm(props) {
           {!editConnection && (
             <Button
               isPending={loading}
-              onClick={_onCreateConnection}
-              color="primary"
+              onPress={_onCreateConnection}
+              variant="primary"
               startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
@@ -327,8 +325,8 @@ function StrapiConnectionForm(props) {
           {editConnection && (
             <Button
               isPending={loading}
-              onClick={_onCreateConnection}
-              color="primary"
+              onPress={_onCreateConnection}
+              variant="primary"
               startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}

@@ -178,7 +178,7 @@ function ChartMogulTemplate(props) {
         <Button
           isIconOnly
           variant="tertiary"
-          onClick={onBack}
+          onPress={onBack}
           size="sm"
         >
           <LuArrowLeft />
@@ -221,10 +221,9 @@ function ChartMogulTemplate(props) {
           <Row align="center">
             {!formVisible && (
               <Button
-                variant="faded"
+                variant="primary"
                 startContent={<LuPlus />}
-                onClick={() => setFormVisible(true)}
-                color="primary"
+                onPress={() => setFormVisible(true)}
               >
                 Or create a new connection
               </Button>
@@ -232,9 +231,8 @@ function ChartMogulTemplate(props) {
             {formVisible && (
               <Button
                 endContent={<LuArrowUp />}
-                variant="faded"
-                color="primary"
-                onClick={() => setFormVisible(false)}
+                variant="tertiary"
+                onPress={() => setFormVisible(false)}
               >
                 Use an existing connection
               </Button>
@@ -313,8 +311,7 @@ function ChartMogulTemplate(props) {
             <Button
               variant="secondary"
               startContent={<LuCheckCheck />}
-              auto
-              onClick={_onSelectAll}
+              onPress={_onSelectAll}
               size="sm"
             >
               Select all
@@ -323,8 +320,7 @@ function ChartMogulTemplate(props) {
             <Button
               variant="secondary"
               startContent={<LuX />}
-              auto
-              onClick={_onDeselectAll}
+              onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
@@ -379,8 +375,8 @@ function ChartMogulTemplate(props) {
             loading
             || (!connection.key && formVisible) || selectedCharts.length === 0
           }
-          onClick={_onGenerateDashboard}
-          color="primary"
+          onPress={_onGenerateDashboard}
+          variant="primary"
           startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {"Create the charts"}

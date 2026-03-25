@@ -168,7 +168,7 @@ function TopNav() {
               </Button>
             </Dropdown.Trigger>
             <Dropdown.Popover>
-              <Dropdown.Menu onAction={(key) => onDropdownAction(key)} variant="faded">
+              <Dropdown.Menu onAction={(key) => onDropdownAction(key)}>
                 <Dropdown.Item id="discord" textValue="Join our Discord">
                   <div className="flex flex-row items-center gap-2">
                     <TbBrandDiscord />

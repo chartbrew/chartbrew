@@ -143,7 +143,7 @@ function ConnectionList() {
 
         {_canAccess("teamAdmin", team.TeamRoles) && (
           <Button
-            color="primary"
+            variant="primary"
             endContent={<LuPlus />}
             onPress={() => navigate("/connections/new")}
             isDisabled={user.temporary}
@@ -295,7 +295,7 @@ function ConnectionList() {
           <div className="h-1" />
           {connections?.length === 0 && _canAccess("teamAdmin", team.TeamRoles) && (
             <Button
-              color="primary"
+              variant="primary"
               onPress={() => navigate("/connections/new")}
             >
               Create your first connection

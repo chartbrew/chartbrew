@@ -378,7 +378,6 @@ function GaBuilder(props) {
           <Button
             isIconOnly
             variant="ghost"
-            color="secondary"
             isDisabled={!configuration.propertyId}
           >
             <LuCalendarDays />
@@ -455,14 +454,29 @@ function GaBuilder(props) {
                 >
                   {"Save"}
                 </Button>
-                <Badge content="" placement="top-right" shape="circle" isInvisible={!gaRequest.transform?.enabled}>
-                  <Button variant="tertiary"
-                    size="sm"
-                    onPress={() => setShowTransform(true)}
-                  >
-                    Transform
-                  </Button>
-                </Badge>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Badge.Anchor className="relative inline-flex">
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => setShowTransform(true)}
+                      >
+                        Transform
+                      </Button>
+                      {gaRequest.transform?.enabled && (
+                        <Badge
+                          size="sm"
+                          className="min-h-2 min-w-2 p-0"
+                          aria-label="Transformations active"
+                        />
+                      )}
+                    </Badge.Anchor>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="bottom" className="z-[99999]">
+                    Apply transformations to the data
+                  </Tooltip.Content>
+                </Tooltip>
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button isIconOnly
@@ -633,7 +647,7 @@ function GaBuilder(props) {
                 placeholder="YYYY-MM-DD"
                 labelPlacement="outside"
                 value={configuration.startDate}
-                disabled={!configuration.propertyId}
+                isDisabled={!configuration.propertyId}
                 onChange={(e) => {
                   setConfiguration({ ...configuration, startDate: e.target.value });
                 }}
@@ -676,7 +690,7 @@ function GaBuilder(props) {
                 placeholder="YYYY-MM-DD"
                 labelPlacement="outside"
                 value={configuration.endDate}
-                disabled={!configuration.propertyId}
+                isDisabled={!configuration.propertyId}
                 onChange={(e) => {
                   setConfiguration({ ...configuration, endDate: e.target.value });
                 }}

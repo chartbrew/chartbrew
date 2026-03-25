@@ -558,7 +558,7 @@ function CampaignsQuery(props) {
                     <Text>Visualization type</Text>
                     <div style={styles.row}>
                       <Button
-                        onClick={() => setConfig({ ...config, linksMode: "total" })}
+                        onPress={() => setConfig({ ...config, linksMode: "total" })}
                         size="sm"
                         variant={config.linksMode !== "total" ? "outline" : "secondary"}
                       >
@@ -566,7 +566,7 @@ function CampaignsQuery(props) {
                       </Button>
                       <div className="w-1" />
                       <Button
-                        onClick={() => _onSelectClickTimeseries()}
+                        onPress={() => _onSelectClickTimeseries()}
                         variant={config.linksMode !== "links" ? "outline" : "secondary"}
                         size="sm"
                       >
@@ -618,8 +618,8 @@ function CampaignsQuery(props) {
                       </div>
                       <div className="col-span-12 md:col-span-3 flex items-center">
                         <Button
-                          onClick={() => _onSelectClickTimeseries()}
-                          color="secondary"
+                          onPress={() => _onSelectClickTimeseries()}
+                          variant="secondary"
                         >
                           Refresh links
                         </Button>

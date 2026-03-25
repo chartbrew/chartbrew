@@ -136,7 +136,7 @@ function DateRangeFilter({
       endContent={_hasChanges() && (
         <Link
           onPress={() => _applyDateRange()}
-          disabled={!_hasChanges()}
+          isDisabled={!_hasChanges()}
           className="text-foreground hover:text-foreground-500 cursor-pointer"
         >
           <LuArrowRight size={18} />

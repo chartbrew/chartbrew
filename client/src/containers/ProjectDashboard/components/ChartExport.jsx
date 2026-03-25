@@ -80,7 +80,7 @@ function ChartExport(props) {
                   {showDisabled && (
                     <Tooltip>
                       <Tooltip.Trigger>
-                        <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
+                        <LinkNext className={"text-warning"} onPress={() => onUpdate(chart.id, true)}>
                           <LuEye className="text-warning" />
                         </LinkNext>
                       </Tooltip.Trigger>
@@ -113,7 +113,7 @@ function ChartExport(props) {
                 <div key={chart.id}>
                   <Tooltip>
                     <Tooltip.Trigger>
-                      <LinkNext className="text-sm cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
+                      <LinkNext className="text-sm cursor-pointer" onPress={() => onUpdate(chart.id, false)}>
                         <LuEyeOff className="mr-1" size={16} />
                         {chart.name}
                       </LinkNext>

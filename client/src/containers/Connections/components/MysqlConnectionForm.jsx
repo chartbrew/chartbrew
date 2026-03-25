@@ -506,7 +506,7 @@ function MysqlConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("rootCertInput").click()}
+                onPress={() => document.getElementById("rootCertInput").click()}
               >
                 {"Certificate authority"}
               </Button>
@@ -534,7 +534,7 @@ function MysqlConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("clientCertInput").click()}
+                onPress={() => document.getElementById("clientCertInput").click()}
               >
                 {"SSL certificate"}
               </Button>
@@ -562,7 +562,7 @@ function MysqlConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("clientKeyInput").click()}
+                onPress={() => document.getElementById("clientKeyInput").click()}
               >
                 {"SSL key"}
               </Button>
@@ -674,7 +674,7 @@ function MysqlConnectionForm(props) {
               <Button
                 variant="ghost"
                 startContent={<LuUpload />}
-                onClick={() => document.getElementById("sshPrivateKeyInput").click()}
+                onPress={() => document.getElementById("sshPrivateKeyInput").click()}
               >
                 {"SSH Private Key"}
               </Button>
@@ -779,7 +779,7 @@ function MysqlConnectionForm(props) {
           <Button
             variant="ghost"
             auto
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
             startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
@@ -788,8 +788,8 @@ function MysqlConnectionForm(props) {
           <div className="w-2" />
           <Button
             isPending={loading}
-            onClick={_onCreateConnection}
-            color="primary"
+            onPress={_onCreateConnection}
+            variant="primary"
             startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}

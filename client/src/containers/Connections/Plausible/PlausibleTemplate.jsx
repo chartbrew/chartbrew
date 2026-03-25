@@ -240,7 +240,7 @@ function PlausibleTemplate(props) {
               description={errors.website}
               variant="secondary"
               fullWidth
-              disabled={formVisible}
+              isDisabled={formVisible}
             />
           </Row>
 

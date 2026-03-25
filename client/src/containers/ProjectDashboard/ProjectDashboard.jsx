@@ -1011,7 +1011,7 @@ function ProjectDashboard() {
                                   <Link to={"/settings/members"}>
                                     <Button
                                       endContent={<LuUsers />}
-                                      color="primary"
+                                      variant="primary"
                                       size="sm"
                                       fullWidth
                                       className="pointer-events-none"
@@ -1193,7 +1193,7 @@ function ProjectDashboard() {
                             </Button>
                           </Dropdown.Trigger>
                           <Badge
-                            color="secondary"
+                            variant="secondary"
                             size="sm"
                             className="animate-pulse min-h-2 min-w-2 p-0"
                             aria-label="New"
@@ -1277,7 +1277,7 @@ function ProjectDashboard() {
                 {editingLayout && (
                   <div className="flex flex-row items-center gap-1">
                     <Button
-                      color="primary"
+                      variant="primary"
                       size="sm"
                       onPress={() => _onSaveChanges()}
                     >
@@ -1527,7 +1527,7 @@ function ProjectDashboard() {
 
               <div className="flex gap-2">
                 <Button
-                  color="primary"
+                  variant="primary"
                   onPress={() => _onSaveChanges()}
                   size="sm"
                 >

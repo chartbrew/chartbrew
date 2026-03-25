@@ -49,6 +49,71 @@ Goals:
 - [x] v3-compatible packages; remove Vite `@heroui/react` alias and `src/lib/heroui-compat.jsx`
 - [x] Migrate `Row`, `Text`, `Container`, `Badge`; repoint `semanticColors` → `src/lib/themeTokens.js`
 
+## Component status (sweep 2026-03-25)
+
+Source: `client/src` only. **124** files import from `@heroui/react` (`@heroui/react` ^3 / `@heroui/styles` ^3 in `package.json`). Unique named imports from that package (brace-matched): Accordion, Alert, Autocomplete, Avatar, Badge, Button, ButtonGroup, Card, Checkbox, Chip, DatePicker, DateRangePicker, Description, Drawer, Dropdown, EmptyState, Form, Input, Kbd, Label, Link, ListBox, Modal, Pagination, Popover, ProgressBar, ProgressCircle, Radio, RadioGroup, ScrollShadow, SearchField, Select, Separator, Skeleton, Spinner, Surface, Switch, Tab, Table (+ TableBody/Cell/Column/Header/Row), Tabs, TextArea, TimeField, Tooltip, `cn`, `useFilter`.
+
+Spot checks at sweep time: **0** matches for v2 JSX surfaces called out in **Remaining hard blockers** (`ModalContent`, `SelectItem`, `DropdownTrigger`, `classNames=` on HeroUI, `HeroUIProvider`, `@nextui-org`, etc.).
+
+Tracking format: **`State` — component** (`Done` = v3 compound / valid props per batches below; `To do` = optional RAC polish, not missing exports).
+
+### Done
+
+- Done — Accordion
+- Done — Alert
+- Done — Autocomplete (+ ListBox item composition)
+- Done — Avatar
+- Done — Badge (`Badge.Anchor` / `Badge.Label` where needed)
+- Done — Button (`onPress`, `isPending` / `isDisabled`, `ButtonSpinner` for loading UI)
+- Done — ButtonGroup
+- Done — Card
+- Done — Checkbox
+- Done — Chip (v3 variants/colors; interactive chips use DOM `onClick` — v3 has no `onPress` on `Chip`)
+- Done — DatePicker
+- Done — DateRangePicker
+- Done — Description
+- Done — Drawer
+- Done — Dropdown
+- Done — EmptyState
+- Done — Form
+- Done — Input
+- Done — Kbd
+- Done — Label
+- Done — Link (`onPress`; includes imports aliased as `LinkNext`)
+- Done — ListBox
+- Done — Modal
+- Done — Pagination
+- Done — Popover
+- Done — ProgressBar
+- Done — ProgressCircle
+- Done — Radio
+- Done — RadioGroup
+- Done — ScrollShadow
+- Done — SearchField
+- Done — Select
+- Done — Separator
+- Done — Skeleton
+- Done — Spinner
+- Done — Surface
+- Done — Switch
+- Done — Tab
+- Done — Table (including TableBody/Cell/Column/Header/Row usage with v3 table shell)
+- Done — Tabs
+- Done — TextArea
+- Done — TimeField
+- Done — Tooltip
+- Done — Package utilities: `cn`, `useFilter`
+
+**Replaced without HeroUI (per migration rules):** Spacer, Code, Image, public Navbar/NavbarBrand — plain HTML/Tailwind (not listed as `@heroui/react` imports).
+
+### In progress
+
+- In progress — *(none — no component family is mid-migration)*
+
+### To do
+
+- To do — *(none — Batch 60 cleared optional **Link** / **`disabled` → `isDisabled`** follow-ups)*
+
 ## Verification (default)
 
 Unless a batch says otherwise: **`npm run lint`** and **`npm run build`** in `client/`. ESLint does not catch missing `@heroui/react` exports — use **`npm run build`** when fixing imports.
@@ -227,6 +292,7 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 | v2 **`variant="bordered"`** on HeroUI **`Input` / `Button` / …** | 0 — Batch 50; use **`secondary`** (or **`Accordion` `surface`**) |
 | Flat **`AccordionItem`** / **`title=`** / **`subtitle=`** on accordion | 0 — Batches 51–52; use **`Accordion.Item`** + **`Heading` / `Trigger` / `Indicator` / `Panel` / `Body`** |
 | v2 **`variant="flat"`** on **`Chip` / `Button` / `Select` / `Alert`** | 0 — Batch 54; **`Chip` → `soft`** (or **`variant` `primary`/`secondary`**) / **`Button` → `tertiary`/`secondary`/`danger-soft`/`primary`** / **`Select` → `primary`** / **`Alert` → `status`** |
+| v2 **`variant="faded"`** on **`Button` / `Chip`**; invalid **`Dropdown.Menu`** **`faded`** | 0 — Batch 58; **`Button` → `tertiary`/`primary`**, **`Chip` → `soft`**, drop bad menu variant |
 
 ## Batch 51 (follow-ups)
 
@@ -290,15 +356,46 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 - **Touched:** **`AddChart.jsx`**, **`ManageUser.jsx`**, **`ApiKeys.jsx`**, **`SharingSettings.jsx`**, **`ApiConnectionForm.jsx`**, **`MysqlConnectionForm.jsx`**, **`PostgresConnectionForm.jsx`**, **`VisualSQL.jsx`**, **`AiQuery.jsx`**, **`SlackAuth.jsx`**, **`SlackCallback.jsx`**, **`Signup.jsx`**, **`EmbeddedChart.jsx`**, **`SharedChart.jsx`**.
 - **Confirm:** **`rg '<Alert\\s' src`** — no **`title=`** / **`description=`** / **`color=`** / **`icon=`** on **`Alert`** root.
 
+## Batch 58 (`variant="faded"` + **`Button` `color=`** + transform **`Badge`** + **`Avatar`** tokens)
+
+- **`variant="faded"`** (invalid v3) → **`Button`** **`tertiary`** (muted actions) or **`primary`** where the old combo was **`faded` + `color="primary"`**; **`Chip`** exposed-filter pills → **`soft`** (`DatasetFilters`).
+- **`Dropdown.Menu`:** dropped invalid **`variant="faded"`** (`TopNav`); default menu styling.
+- **`Button` `color=`** → **`variant`**: **`primary`**, **`secondary`**, **`danger`**, **`danger-soft`** as appropriate; **`DashboardFilters`**, **`AddFilters`**, **`AiModal`**, **`CampaignsQuery`**, **`PublicDashboard`**, **`Report`**, **`ChartDatasetConfig`** modal, **`CustomTemplateForm`**, **`ChartMogulTemplate`**, **`CustomerioBuilder`** save/delete.
+- **Transform controls:** v2 **`Badge`** **`content` / `placement` / `shape` / `isInvisible`** replaced with **`Tooltip` + `Badge.Anchor` + conditional dot `Badge`** (same pattern as **`ApiBuilder`**) in **`SqlBuilder`**, **`MongoQueryBuilder`**, **`FirestoreBuilder`**, **`ClickHouseBuilder`**, **`RealtimeDbBuilder`**, **`GaBuilder`**; **`CustomerioBuilder`** uses **`color="success"`** on the dot when transform is on.
+- **`FirestoreBuilder`:** filter row icon **`Button`**s **`onClick` → `onPress`**, **`variant="tertiary"`**; clear subcollection **`Button`** **`onPress`**, **`disabled` → `isDisabled`**.
+- **`DatarequestModal`:** request list **`Badge.Anchor`** + **`Badge`** **`color`** **`accent` / `success` / `danger`** + **`variant="soft"`** and **`Badge.Label`** for spinner; **`Avatar`** **`color`** **`accent` / `default`** (v3 tokens); add-source **`Avatar`** **`accent` + `variant="soft"`**.
+- **Confirm:** **`rg 'variant="faded"' src`** → **0** in **`client/src`**.
+
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 57)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 60)
+
+## Batch 59 (**`Tabs` / connection footers / **`Button` sweep** / **`Badge` / `Link`**)
+
+- **`PostgresConnectionForm` / `MysqlConnectionForm`:** align footer **`Button`** with v3 — **`onPress`**, **`variant="primary"`** on save; cert/SSH upload **`Button`**s **`onClick` → `onPress`** (file input triggers).
+- **`ProjectDashboard`:** settings CTA + layout save **`Button`**s — invalid **`color="primary"`** → **`variant="primary"`** (tutorial **`Badge`** already **`variant="secondary"`**).
+- **`Button` `color=`** → **`variant`**: **`ApiConnectionForm`**, **`SharingSettings`**, **`ConnectionWizard`**, **`ConnectionList`**, **`Dataset`**, **`AddChart`**, **`AiQuery`**, **`SlackAuth`**, **`Signup`**, **`ApiKeys`** (**`danger-soft`** for destructive icon on ghost row), **`ManageUser`** delete (**`variant="danger"`**, **`endContent`**, drop v2 **`iconRight`**).
+- **`SharingSettings`:** delete policy icon **`Button`** — **`tertiary` + `color="danger"`** → **`variant="danger-soft"`**.
+- **`AiModal`:** **`Avatar`** brand tone **`color="primary"`** (invalid token) → **`color="accent"`**; context + tool **`Chip`** invalid **`color="primary"`** / **`color="secondary"`** → **`variant="primary"`** / **`variant="secondary"`**.
+- **`DatarequestModal`:** connection card footer **`Button`** **`onClick` → `onPress`**.
+- **`ManageUser`:** 2FA remove **`Button`** **`onClick` → `onPress`**.
+- **`DatasetFilters`:** exposed-condition clear **`Link`** **`onClick` → `onPress`** (RAC **`Link`**).
+- **`ConnectionWizard`:** invite copy **`Button`** **`onClick` → `onPress`**.
+
+## Batch 60 (**`Link` `onPress`** / **`disabled` → `isDisabled`**)
+
+- **`Link` `onClick` → `onPress`:** **`DatarequestModal`**, **`Dataset`**, **`ChartDatasetConfig`**, **`MongoConnectionForm`**, **`DatasetBuilder`** (4×), **`ChartExport`** (`LinkNext` 2×).
+- **`Input` / `Button` / `Link`:** **`disabled` → `isDisabled`** where HeroUI/RAC expect it — **`AiModal`** (ask input), **`DatasetFilters`**, **`RealtimeDbBuilder`**, **`FirestoreBuilder`**, **`GaBuilder`** (date inputs), **`SimpleAnalyticsTemplate`**, **`PlausibleTemplate`**, **`ChartSettings`** (min/max apply buttons), **`ProjectSettings`** (timezone + remove buttons; **`onClick` → `onPress`** on those **`Button`**s), **`DateRangeFilter`** (apply **`Link`**).
+- **`Chip`:** unchanged — v3 **`Chip`** has no **`onPress`**; **`ConnectionList`** tag chip keeps **`onClick`**.
+
+**Grep:** no **`disabled=`** on **`client/src` `*.jsx`** after this batch (native **`disabled`** on raw **`<input>`** / **`<button>`** not used in these call sites).
 
 ## Next batch
 
 1. Keep **`npm run build`** after import-surface edits.
-2. Continue other HeroUI v3 sweeps as needed (e.g. remaining **`Avatar`** / **`Badge`** legacy props if any).
+2. **`Chip`:** keep **`onClick`** where v3 **`Chip`** has no **`onPress`** (same pattern as interactive pills that rely on DOM click).
+3. Optional: remaining non-**`Button`** **`onClick`** (e.g. **`Card`**, **`div`**, native **`<button>`** in **`Input` `endContent`**) — only if moving to RAC **`onPress`** / semantics review.
 
 ## Notes
 

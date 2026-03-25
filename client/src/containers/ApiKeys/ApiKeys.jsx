@@ -154,8 +154,7 @@ function ApiKeys() {
               <TableCell key="actions">
                 <Button
                   isIconOnly
-                  variant="ghost"
-                  color="danger"
+                  variant="danger-soft"
                   onPress={() => _onRemoveConfirmation(key)}
                   size="sm"
                 >

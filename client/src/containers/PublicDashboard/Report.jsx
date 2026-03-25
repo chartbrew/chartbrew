@@ -586,8 +586,8 @@ function Report({ editMode = false }) {
                 fullWidth
                 variant="secondary"
               />
-              <Button 
-                color="primary"
+              <Button
+                variant="primary"
                 loading={loading}
                 onPress={() => {}}
                 type="submit"
@@ -620,7 +620,7 @@ function Report({ editMode = false }) {
           <Row justify="center">
             <Button
               onPress={() => window.history.back()}
-              color="primary"
+              variant="primary"
               size="lg"
               startContent={<LuChevronLeft />}
             >
@@ -883,7 +883,7 @@ function Report({ editMode = false }) {
           {editMode && !isSaved && !preview && project?.id && _canAccess("projectEditor") && (
             <div className="hidden sm:block">
               <Button
-                color="success"
+                variant="primary"
                 endContent={!saveLoading ? <LuCircleCheck /> : undefined}
                 isPending={saveLoading}
                 startContent={saveLoading ? <ButtonSpinner /> : undefined}
@@ -898,8 +898,7 @@ function Report({ editMode = false }) {
               <Button
                 onPress={() => editMode && setPreview(false)}
                 endContent={<LuCircleX />}
-                color="primary"
-                variant="faded"
+                variant="tertiary"
               >
                 Exit preview
               </Button>
@@ -914,7 +913,7 @@ function Report({ editMode = false }) {
                 isPending={refreshLoading}
                 startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                 size="sm"
-                color="primary"
+                variant="primary"
               >
                 Refresh charts
               </Button>
@@ -1103,7 +1102,7 @@ function Report({ editMode = false }) {
               </Modal.Body>
               <Modal.Footer>
             <Button
-              color="primary"
+              variant="primary"
               onPress={() => setEditingTitle(false)}
             >
               Preview changes

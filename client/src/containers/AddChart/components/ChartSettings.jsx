@@ -451,7 +451,7 @@ function ChartSettings({ chart, onChange }) {
                 {max && (
                   <>
                     <Button
-                      disabled={!max || (max === chart.maxValue)}
+                      isDisabled={!max || (max === chart.maxValue)}
                       onPress={() => onChange({ maxValue: max })} variant="secondary"
                       size="sm"
                     >
@@ -485,7 +485,7 @@ function ChartSettings({ chart, onChange }) {
                 {min && (
                   <>
                     <Button
-                      disabled={!min || (min === chart.minValue)}
+                      isDisabled={!min || (min === chart.minValue)}
                       onPress={() => onChange({ minValue: min })} variant="secondary"
                       size="sm"
                     >

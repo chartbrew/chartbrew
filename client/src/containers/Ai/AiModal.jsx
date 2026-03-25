@@ -790,7 +790,7 @@ function AiModal({ isOpen, onClose }) {
                 <Avatar
                   icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color="primary"
+                  color="accent"
                 />
                 <span className="text-sm font-medium">AI is working...</span>
               </div>
@@ -799,8 +799,7 @@ function AiModal({ isOpen, onClose }) {
                   <Popover key={idx} aria-label="Tool call arguments">
                     <Popover.Trigger>
                       <Chip
-                        variant="soft"
-                        color="primary"
+                        variant="primary"
                         size="sm"
                         endContent={<LuChevronDown size={14} />}
                         className="cursor-pointer"
@@ -945,7 +944,7 @@ function AiModal({ isOpen, onClose }) {
                 <Avatar
                   icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color="primary"
+                  color="accent"
                 />
                 <div className="w-full">
                   <div className="flex items-center gap-2 mb-2">
@@ -954,8 +953,7 @@ function AiModal({ isOpen, onClose }) {
                     </span>
                     <Chip
                       size="sm"
-                      variant="soft"
-                      color="primary"
+                      variant="primary"
                     >
                       {parsed.chartName}
                     </Chip>
@@ -1140,7 +1138,7 @@ function AiModal({ isOpen, onClose }) {
               <Avatar
                 icon={<LuBrainCircuit size={16} className="text-background" />}
                 size="sm"
-                color="primary"
+                color="accent"
               />
               <div className="flex-1">
                 {operations.length > 0 && (
@@ -1218,7 +1216,7 @@ function AiModal({ isOpen, onClose }) {
               <Avatar
                 icon={<LuBrainCircuit size={16} className="text-background" />}
                 size="sm"
-                color="primary"
+                color="accent"
               />
               <LuLoader size={16} className="animate-spin" />
               <span className="text-sm">Working...</span>
@@ -1261,7 +1259,7 @@ function AiModal({ isOpen, onClose }) {
               <Avatar
                 icon={<LuBrainCircuit size={24} className="text-background" />}
                 size="lg"
-                color="primary"
+                color="accent"
               />
               <div className="flex flex-col items-center justify-center">
                 <div className="flex flex-row items-center gap-2">
@@ -1291,7 +1289,7 @@ function AiModal({ isOpen, onClose }) {
                 }}
                 variant="secondary"
                 endContent={
-                  <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
+                  <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} variant="primary" onPress={() => setQuestion(question + " ")} size="sm">
                     <LuArrowRight size={18} />
                   </Button>
                 }
@@ -1417,8 +1415,7 @@ function AiModal({ isOpen, onClose }) {
                   {selectedContext.multiSelect.map((entity) => (
                     <Chip
                       key={`${entity.entity_type}-${entity.id}`}
-                      color="primary"
-                      variant="soft"
+                      variant="primary"
                       size="sm"
                       onClose={() => {
                         setSelectedContext(prev => ({
@@ -1432,8 +1429,7 @@ function AiModal({ isOpen, onClose }) {
                   ))}
                   {selectedContext.singleSelect && (
                     <Chip
-                      color="secondary"
-                      variant="soft"
+                      variant="secondary"
                       size="sm"
                       onClose={() => {
                         setSelectedContext(prev => ({
@@ -1528,7 +1524,7 @@ function AiModal({ isOpen, onClose }) {
                 <div className="flex flex-col relative h-full bg-content2 rounded-tl-2xl rounded-bl-2xl">
                   <div className="w-full px-4 pt-4 border-r border-divider rounded-tl-2xl">
                     <Button
-                      color="primary"
+                      variant="primary"
                       startContent={<LuPlus size={18} />}
                       onPress={() => {
                         setConversation(null);
@@ -1621,7 +1617,7 @@ function AiModal({ isOpen, onClose }) {
                   <div className="flex flex-row gap-3 pl-4 pr-4 items-start">
                     <Avatar
                       icon={<LuBrainCircuit size={24} className="text-background" />}
-                      color="primary"
+                      color="accent"
                     />
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="flex flex-row items-center gap-2">
@@ -1689,7 +1685,7 @@ function AiModal({ isOpen, onClose }) {
                                 <Avatar
                                   icon={<LuBrainCircuit size={16} className="text-background" />}
                                   size="sm"
-                                  color="primary"
+                                  color="accent"
                                 />
                                 <LuLoader size={16} className="animate-spin" />
                                 <span className="text-sm">Thinking...</span>
@@ -1732,8 +1728,7 @@ function AiModal({ isOpen, onClose }) {
                         {selectedContext.multiSelect.map((entity) => (
                           <Chip
                             key={`${entity.entity_type}-${entity.id}`}
-                            color="primary"
-                            variant="soft"
+                            variant="primary"
                             size="sm"
                             onClose={() => {
                               setSelectedContext(prev => ({
@@ -1747,8 +1742,7 @@ function AiModal({ isOpen, onClose }) {
                         ))}
                         {selectedContext.singleSelect && (
                           <Chip
-                            color="secondary"
-                            variant="soft"
+                            variant="secondary"
                             size="sm"
                             onClose={() => {
                               setSelectedContext(prev => ({
@@ -1865,13 +1859,13 @@ function AiModal({ isOpen, onClose }) {
                             setIsSecondContextPopoverOpen(true);
                           }
                         }}
-                        disabled={isLoading}
+                        isDisabled={isLoading}
                         endContent={<Kbd keys={["enter"]} />}
                       />
                       <Button
                         type="submit"
                         isIconOnly
-                        color="primary"
+                        variant="primary"
                         isDisabled={!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect}
                         isPending={isLoading}
                       >

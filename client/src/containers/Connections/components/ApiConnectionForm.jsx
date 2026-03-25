@@ -428,7 +428,7 @@ function ApiConnectionForm(props) {
             <Button
               isPending={loading}
               onPress={() => _onCreateConnection()}
-              color="primary"
+              variant="primary"
               startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
@@ -438,7 +438,7 @@ function ApiConnectionForm(props) {
             <Button
               isPending={loading}
               onPress={_onCreateConnection}
-              color="primary"
+              variant="primary"
               startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save changes"}

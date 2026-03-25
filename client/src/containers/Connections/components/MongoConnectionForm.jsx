@@ -490,7 +490,7 @@ function MongoConnectionForm(props) {
         <Row align="center">
           <LuChevronRight />
           <div className="w-2" />
-          <Link onClick={() => setShowIp(!showIp)}>
+          <Link onPress={() => setShowIp(!showIp)}>
             <Text>Front-end and back-end on different servers?</Text>
           </Link>
         </Row>

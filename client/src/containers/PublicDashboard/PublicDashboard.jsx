@@ -581,7 +581,7 @@ function PublicDashboard() {
             <div className="h-4" />
             <Row>
               <Button
-                color="primary"
+                variant="primary"
                 loading={loading}
                 onPress={() => _fetchProject(reportPassword)}
                 size="lg"
@@ -614,7 +614,7 @@ function PublicDashboard() {
           <Row justify="center">
             <Button
               onPress={() => window.history.back()}
-              color="primary"
+              variant="primary"
               size="lg"
               startContent={<LuChevronLeft />}
             >
@@ -874,7 +874,7 @@ function PublicDashboard() {
           {!isSaved && !preview && project?.id && _canAccess("projectEditor") && (
             <div className="hidden sm:block">
               <Button
-                color="success"
+                variant="primary"
                 endContent={!saveLoading ? <LuCircleCheck /> : undefined}
                 isPending={saveLoading}
                 startContent={saveLoading ? <ButtonSpinner /> : undefined}
@@ -889,8 +889,7 @@ function PublicDashboard() {
               <Button
                 onPress={() => setPreview(false)}
                 endContent={<LuCircleX />}
-                color="primary"
-                variant="faded"
+                variant="tertiary"
               >
                 Exit preview
               </Button>
@@ -905,7 +904,7 @@ function PublicDashboard() {
                 isPending={refreshLoading}
                 startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                 size="sm"
-                color="primary"
+                variant="primary"
               >
                 Refresh charts
               </Button>
@@ -1094,7 +1093,7 @@ function PublicDashboard() {
               </Modal.Body>
               <Modal.Footer>
             <Button
-              color="primary"
+              variant="primary"
               onPress={() => setEditingTitle(false)}
             >
               Preview changes

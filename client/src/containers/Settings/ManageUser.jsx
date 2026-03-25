@@ -389,7 +389,7 @@ function ManageUser() {
                 <TableCell key="actions" align="right" className="flex justify-end">
                   <Button variant="ghost"
                     isIconOnly
-                    onClick={() => setRemoveMethod(method.id)}
+                    onPress={() => setRemoveMethod(method.id)}
                   >
                     <LuTrash />
                   </Button>
@@ -409,8 +409,8 @@ function ManageUser() {
 
       <div>
         <Button
-          iconRight={<LuTrash />}
-          color="danger"
+          endContent={<LuTrash />}
+          variant="danger"
           onPress={() => setOpenDeleteModal(true)}
         >
           Delete account

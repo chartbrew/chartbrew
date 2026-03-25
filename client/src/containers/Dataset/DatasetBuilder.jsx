@@ -520,7 +520,7 @@ function DatasetBuilder(props) {
         <div className="h-8" />
 
         {!formula && (
-          <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
+          <Link onPress={_onAddFormula} className="flex items-center cursor-pointer">
             <TbMathFunctionY size={24} />
             <div className="w-1" />
             <Text>Apply formula on metrics</Text>
@@ -560,7 +560,7 @@ function DatasetBuilder(props) {
                   {formula !== dataset.formula && (
                     <Tooltip>
                       <Tooltip.Trigger>
-                        <Link onClick={_onApplyFormula}>
+                        <Link onPress={_onApplyFormula}>
                           <LuCircleCheck className={"text-success"} />
                         </Link>
                       </Tooltip.Trigger>
@@ -569,7 +569,7 @@ function DatasetBuilder(props) {
                   )}
                   <Tooltip>
                     <Tooltip.Trigger>
-                      <Link onClick={_onRemoveFormula}>
+                      <Link onPress={_onRemoveFormula}>
                         <LuCircleX className="text-danger" />
                       </Link>
                     </Tooltip.Trigger>
@@ -577,7 +577,7 @@ function DatasetBuilder(props) {
                   </Tooltip>
                   <Tooltip>
                     <Tooltip.Trigger>
-                      <Link onClick={_onExampleFormula}>
+                      <Link onPress={_onExampleFormula}>
                         <LuWandSparkles className="text-primary" />
                       </Link>
                     </Tooltip.Trigger>

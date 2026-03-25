@@ -333,7 +333,7 @@ function DatasetFilters(props) {
                         placeholder="Value or {{variable_name}}"
                         value={condition.value}
                         onChange={(e) => _updateCondition(condition.id, e.target.value, "value", find(fieldOptions, { value: condition.field }))}
-                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                        isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         labelPlacement="outside"
                         size="sm"
                         fullWidth
@@ -387,7 +387,7 @@ function DatasetFilters(props) {
                     <Button endContent={<LuCircleCheck size={18} />}
                       variant="ghost"
                       size="sm"
-                      onClick={() => _onApplyCondition(condition.id, condition.exposed)}
+                      onPress={() => _onApplyCondition(condition.id, condition.exposed)}
                       fullWidth
                     >
                       Apply
@@ -402,7 +402,7 @@ function DatasetFilters(props) {
                   <Button endContent={<LuCircleX size={18} />}
                     variant="ghost"
                     size="sm"
-                    onClick={() => _onRemoveCondition(condition.id)}
+                    onPress={() => _onRemoveCondition(condition.id)}
                     fullWidth
                   >
                     Remove
@@ -417,7 +417,7 @@ function DatasetFilters(props) {
                     <Button
                       endContent={<LuEye size={18} />} variant="ghost"
                       size="sm"
-                      onClick={() => _onApplyCondition(
+                      onPress={() => _onApplyCondition(
                         condition.id,
                         true,
                         find(fieldOptions, { value: condition.field })
@@ -438,7 +438,7 @@ function DatasetFilters(props) {
                     <Button variant="ghost"
                       size="sm"
                       endContent={<LuEyeOff size={18} />}
-                      onClick={() => _onApplyCondition(
+                      onPress={() => _onApplyCondition(
                         condition.id,
                         false,
                         find(fieldOptions, { value: condition.field })
@@ -459,7 +459,7 @@ function DatasetFilters(props) {
                     <Button endContent={<LuRedo size={18} />}
                       variant="ghost"
                       size="sm"
-                      onClick={() => _onRevertCondition(condition.id)}
+                      onPress={() => _onRevertCondition(condition.id)}
                       fullWidth
                     >
                       Undo
@@ -475,7 +475,7 @@ function DatasetFilters(props) {
                       variant="ghost"
                       size="sm"
                       endContent={<LuSettings size={18} />}
-                      onClick={() => _onEditConditionSettings(condition)}
+                      onPress={() => _onEditConditionSettings(condition)}
                       fullWidth
                     >
                       Config
@@ -492,7 +492,7 @@ function DatasetFilters(props) {
         <div className="col-span-12">
           <Button
             variant="tertiary"
-            onClick={_onAddCondition}
+            onPress={_onAddCondition}
             endContent={<LuPlus />}
             size="sm"
           >
@@ -510,16 +510,17 @@ function DatasetFilters(props) {
               return (
                 <Chip
                   key={condition.id}
-                  variant="faded"
+                  variant="soft"
                   className="rounded-sm"
                   endContent={(
                     <Link
-                      onClick={() => _onApplyCondition(
+                      onPress={() => _onApplyCondition(
                         condition.id,
                         false,
                         find(fieldOptions, { value: condition.field })
                         && find(fieldOptions, { value: condition.field }).type
-                      )} >
+                      )}
+                    >
                       <LuCircleX size={16} />
                     </Link>
                   )}
@@ -593,7 +594,8 @@ function DatasetFilters(props) {
               Close
             </Button>
             <Button
-              onClick={_onConfirmConditionSettings}
+              onPress={_onConfirmConditionSettings}
+              variant="primary"
               isDisabled={selectedCondition.variable && !_isVariableValid(selectedCondition.variable)}
               isPending={isLoading}
             >
@@ -718,7 +720,7 @@ function DatasetFilters(props) {
               Close
             </Button>
             <Button
-              color="primary"
+              variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
               startContent={variableLoading ? <ButtonSpinner /> : undefined}

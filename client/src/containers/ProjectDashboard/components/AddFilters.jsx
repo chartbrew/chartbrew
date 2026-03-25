@@ -184,7 +184,7 @@ function AddFilters(props) {
             Close
           </Button>
           {filterType === "date" && (
-            <Button color="primary" onPress={_onApplyFilter}>
+            <Button variant="primary" onPress={_onApplyFilter}>
               Add filter
             </Button>
           )}
@@ -193,7 +193,7 @@ function AddFilters(props) {
               endContent={<LuPlus />}
               isDisabled={!variableCondition.variable}
               onPress={_onAddVariableFilter}
-              color="primary"
+              variant="primary"
             >
               Add filter
             </Button>
@@ -202,7 +202,7 @@ function AddFilters(props) {
             <Button
               endContent={<LuPlus />}
               onPress={_onAddFilter}
-              color="primary"
+              variant="primary"
               isDisabled={!filter.field}
             >
               Add filter

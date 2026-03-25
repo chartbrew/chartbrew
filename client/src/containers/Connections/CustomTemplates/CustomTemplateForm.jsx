@@ -143,9 +143,9 @@ function CustomTemplateForm(props) {
     <div className="w-full">
       <Row align="center" className={"gap-2"}>
         <Button
-          variant="faded"
+          variant="tertiary"
           isIconOnly
-          onClick={onBack}
+          onPress={onBack}
           size="sm"
         >
           <LuArrowLeft />
@@ -289,7 +289,7 @@ function CustomTemplateForm(props) {
             <Button
               endContent={<LuCheckCheck />}
               variant="ghost"
-              onClick={_onSelectAll}
+              onPress={_onSelectAll}
               size="sm"
             >
               Select all
@@ -298,7 +298,7 @@ function CustomTemplateForm(props) {
             <Button
               endContent={<LuX />}
               variant="ghost"
-              onClick={_onDeselectAll}
+              onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
@@ -312,15 +312,15 @@ function CustomTemplateForm(props) {
         {isAdmin && (
           <Button variant="danger-soft"
             endContent={<LuTrash />}
-            onClick={() => setDeleteConfimation(true)}
+            onPress={() => setDeleteConfimation(true)}
           >
             Delete template
           </Button>
         )}
         <div className="w-1" />
         <Button
-          color="primary"
-          onClick={_generateTemplate}
+          variant="primary"
+          onPress={_generateTemplate}
           isDisabled={!selectedCharts.length || isCreating}
           endContent={!isCreating ? <LuArrowRight /> : undefined}
           startContent={isCreating ? <ButtonSpinner /> : undefined}
@@ -343,15 +343,14 @@ function CustomTemplateForm(props) {
             <Modal.Footer>
               <Button
                 variant="tertiary"
-                color="warning"
-                onClick={() => setDeleteConfimation(false)}
+                onPress={() => setDeleteConfimation(false)}
               >
                 Close
               </Button>
               <Button
-                color="danger"
+                variant="danger"
                 endContent={<LuTrash />}
-                onClick={() => {
+                onPress={() => {
                   setDeleteLoading(true);
                   onDelete(template.id);
                 }}

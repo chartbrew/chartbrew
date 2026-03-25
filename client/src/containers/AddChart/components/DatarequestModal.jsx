@@ -287,43 +287,53 @@ function DatarequestModal(props) {
                   <div className="h-4" />
                 </>
               )}
-              {dataRequests.map((dr, index) => (
-                <Fragment key={dr.id}>
-                  <Row align="center">
-                    <Badge
-                      variant={"faded"}
-                      color={
-                        responses.find((r) => r.id === dr.id)?.error
-                          ? "danger"
-                          : responses.find((r) => r.id === dr.id) ? "success" : "primary"
-                      }
-                      content={stateDataRequests.find((o) => o.id === dr.id)?.loading ? (<Spinner size="sm" />) : `${index + 1}`}
-                      shape="rectangle"
-                    >
-                      <Avatar
-                        className={`cursor-pointer rounded-sm ring-2 ${dr.id === selectedRequest?.id ? "ring-primary" : "ring-default-200"}`}
-                        color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                        onClick={() => _onSelectDataRequest(dr)}
-                      >
-                        {dr.Connection ? (
-                          <Avatar.Image
-                            src={connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]}
-                            alt=""
-                          />
-                        ) : null}
-                        <Avatar.Fallback>{!dr.Connection ? <LuMonitorX /> : null}</Avatar.Fallback>
-                      </Avatar>
-                    </Badge>
-                  </Row>
-                  <div className="h-1" />
-                </Fragment>
-              ))}
+              {dataRequests.map((dr, index) => {
+                const drResponse = responses.find((r) => r.id === dr.id);
+                const badgeColor = drResponse?.error ? "danger" : drResponse ? "success" : "accent";
+                const drLoading = stateDataRequests.find((o) => o.id === dr.id)?.loading;
+                return (
+                  <Fragment key={dr.id}>
+                    <Row align="center">
+                      <Badge.Anchor className="relative inline-flex shrink-0">
+                        <Avatar
+                          className={`cursor-pointer rounded-sm ring-2 ${dr.id === selectedRequest?.id ? "ring-primary" : "ring-default-200"}`}
+                          color={dr.id === selectedRequest?.id ? "accent" : "default"}
+                          onClick={() => _onSelectDataRequest(dr)}
+                        >
+                          {dr.Connection ? (
+                            <Avatar.Image
+                              src={connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]}
+                              alt=""
+                            />
+                          ) : null}
+                          <Avatar.Fallback>{!dr.Connection ? <LuMonitorX /> : null}</Avatar.Fallback>
+                        </Avatar>
+                        <Badge
+                          placement="top-right"
+                          color={badgeColor}
+                          variant="soft"
+                          size="sm"
+                        >
+                          {drLoading ? (
+                            <Badge.Label className="flex items-center justify-center p-0.5">
+                              <Spinner size="sm" />
+                            </Badge.Label>
+                          ) : (
+                            `${index + 1}`
+                          )}
+                        </Badge>
+                      </Badge.Anchor>
+                    </Row>
+                    <div className="h-1" />
+                  </Fragment>
+                );
+              })}
               <div className="h-3" />
               <Row>
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
-                      <Avatar className="cursor-pointer rounded-sm ring-2 ring-secondary" color="secondary">
+                    <Link onPress={() => setCreateMode(true)} className="cursor-pointer">
+                      <Avatar className="cursor-pointer rounded-sm ring-2 ring-accent" color="accent" variant="soft">
                         <Avatar.Fallback>
                           <LuPlus />
                         </Avatar.Fallback>
@@ -461,7 +471,7 @@ function DatarequestModal(props) {
                               <Row justify="center">
                                 <Button
                                   variant="tertiary"
-                                  onClick={() => _onCreateNewRequest(c)}
+                                  onPress={() => _onCreateNewRequest(c)}
                                   size="sm"
                                   fullWidth
                                 >
@@ -481,16 +491,14 @@ function DatarequestModal(props) {
             </Modal.Body>
             <Modal.Footer className="bg-content1">
           <Button
-            auto
-            onClick={() => onClose()}
-            color="warning"
+            onPress={() => onClose()}
             variant="tertiary"
           >
             Close
           </Button>
           <Button
             onPress={() => _onBuildChart()}
-            color="primary"
+            variant="primary"
             isPending={loading}
             startContent={loading ? <ButtonSpinner /> : undefined}
           >

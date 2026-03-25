@@ -542,7 +542,7 @@ function AddChart() {
                       size="sm"
                     />
                     <Button
-                      color="primary"
+                      variant="primary"
                       type="submit"
                       onPress={_onSubmitNewName}
                       size="sm"

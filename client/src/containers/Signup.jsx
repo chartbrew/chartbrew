@@ -188,7 +188,7 @@ function Signup() {
                 size="lg"
                 endContent={!loading ? <LuArrowRight /> : undefined}
                 startContent={loading ? <ButtonSpinner /> : undefined}
-                color="primary"
+                variant="primary"
                 fullWidth
               >
                 Continue
