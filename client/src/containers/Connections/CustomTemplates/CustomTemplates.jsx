@@ -100,11 +100,16 @@ function CustomTemplates(props) {
       {templates && templates.map((template) => (
         <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4" key={template.id}>
           <Card
+            role="button"
+            tabIndex={0}
             onClick={() => setSelectedTemplate(template)}
-            isHoverable
-            isPressable
-            className="w-[230px] border-1 border-solid border-content3 h-full"
-            shadow="none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setSelectedTemplate(template);
+              }
+            }}
+            className="h-full w-[230px] cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
           >
             <Card.Header>
               <Text b>{template.name}</Text>

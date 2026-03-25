@@ -298,11 +298,16 @@ function DashboardList() {
                 return (
                   <Card
                     key={project.id}
-                    isPressable
-                    shadow="none"
-                    className="border-1 border-solid border-divider p-2"
-                    radius="sm"
-                    onPress={() => directToProject(project.id)}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer rounded-sm border-1 border-solid border-divider p-2 shadow-none transition-colors hover:bg-content2/60"
+                    onClick={() => directToProject(project.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        directToProject(project.id);
+                      }
+                    }}
                   >
                     <Card.Header className="flex flex-row justify-between items-center">
                       <div className="flex flex-row items-center gap-2">

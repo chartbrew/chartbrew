@@ -231,10 +231,16 @@ function ConnectionWizard() {
                   {_filteredConnections.map((conn) => (
                     <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
                       <Card
-                        shadow="none"
-                        isPressable
-                        className={`w-full h-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
-                        onPress={() => setSelectedType(conn.type)}
+                        role="button"
+                        tabIndex={0}
+                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-content2/40 ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
+                        onClick={() => setSelectedType(conn.type)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedType(conn.type);
+                          }
+                        }}
                       >
                         <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
                           <img

@@ -44,7 +44,7 @@ function Login(props) {
       </Row>
       <div className="h-4" />
       <div className="sm:flex m-4 justify-center">
-        <Card shadow="none" className="border-1 border-divider">
+        <Card className="border-1 border-divider shadow-none">
           <Card.Header className={"flex justify-center"}>
             <h1 className={"mt-4 text-xl font-bold"}>{"Welcome back to Chartbrew"}</h1>
           </Card.Header>

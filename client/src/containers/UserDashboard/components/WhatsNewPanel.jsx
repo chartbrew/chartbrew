@@ -112,9 +112,7 @@ function WhatsNewItemCard({ item, onAction }) {
   if (item.variant === "tip") {
     return (
       <Card
-        shadow="none"
-        radius="lg"
-        className={cn("overflow-hidden", tone.tipCard)}
+        className={cn("overflow-hidden rounded-lg shadow-none", tone.tipCard)}
       >
         <Card.Content className="gap-4 p-5">
           <div className="flex items-start gap-3">
@@ -155,9 +153,7 @@ function WhatsNewItemCard({ item, onAction }) {
 
   return (
     <Card
-      shadow="none"
-      radius="lg"
-      className={cn("border-1 bg-content1", tone.card)}
+      className={cn("rounded-lg border-1 bg-content1 shadow-none", tone.card)}
     >
       <Card.Content className="gap-4 p-4">
         <div className="flex items-start gap-3">
@@ -240,7 +236,7 @@ function WhatsNewPanel({ onCollapse }) {
 
   return (
     <aside className="sticky top-[88px]">
-      <Card shadow="none" radius="lg" className="border-1 border-divider bg-content1">
+      <Card className="rounded-lg border-1 border-divider bg-content1 shadow-none">
         <Card.Header className="flex items-start justify-between gap-3 px-5 py-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground">

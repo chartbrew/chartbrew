@@ -417,11 +417,16 @@ function DatarequestModal(props) {
                     return (
                       <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
                         <Card
-                          variant="bordered"
-                          isPressable
-                          isHoverable
+                          role="button"
+                          tabIndex={0}
                           onClick={() => _onCreateNewRequest(c)}
-                          fullWidth
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              _onCreateNewRequest(c);
+                            }
+                          }}
+                          className="w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
                         >
                           <Card.Content className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">

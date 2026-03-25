@@ -150,10 +150,16 @@ function ProjectForm(props) {
                         {availableTemplates.map((t) => (
                           <div key={t.type} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4">
                             <Card
-                              isPressable
-                              isHoverable
+                              role="button"
+                              tabIndex={0}
                               onClick={() => setCommunityTemplate(t.type)}
-                              className="border-1 border-solid border-content3"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setCommunityTemplate(t.type);
+                                }
+                              }}
+                              className="cursor-pointer border-1 border-solid border-content3 transition-opacity hover:opacity-90"
                             >
                               <Card.Content className="p-0">
                                 <img className="h-[300px] w-[300px] object-cover" src={t.image} alt={t.name || "Template"} />

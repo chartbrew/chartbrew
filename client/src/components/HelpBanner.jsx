@@ -108,11 +108,16 @@ function HelpBanner(props) {
 
   return (
     <Card
-      isPressable
-      isHoverable
+      role="button"
+      tabIndex={0}
       onClick={() => _onOpenHelp()}
-      className="max-w-[400px]"
-      shadow="sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          _onOpenHelp();
+        }
+      }}
+      className="max-w-[400px] cursor-pointer shadow-sm transition-opacity hover:opacity-90"
     >
       <Card.Header className="flex gap-3">
         <div>

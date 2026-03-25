@@ -1121,6 +1121,30 @@ Notes:
   - `npm run lint` passes
   - `npm run build` in `client/` passes (catches missing package exports)
 
+### Batch 38: Root **`Card`** props (v3 surface)
+
+v3 **`Card`** only documents **`variant`**, **`className`**, and **`children`** on the root. Removed v2-only props (**`shadow`**, **`radius`**, **`isPressable`**, **`isHoverable`**, **`fullWidth`**, **`onPress`**, invalid **`variant="bordered"`**) and moved appearance / interaction to Tailwind + DOM handlers.
+
+Files migrated:
+- `src/containers/Chart/Chart.jsx` — **`shadow="none"`** → **`shadow-none`** in **`className`**
+- `src/containers/Chart/TextWidget.jsx` — same
+- `src/containers/Login.jsx` — same
+- `src/containers/UserDashboard/components/NoticeBoard.jsx` — invalid **`shadow-sm="sm"`** → **`shadow-sm`** on **`className`**
+- `src/containers/UserDashboard/components/WhatsNewPanel.jsx` — **`shadow` / `radius`** → **`rounded-lg shadow-none`** on **`className`**
+- `src/containers/UserDashboard/DashboardList.jsx` — grid dashboard cards: **`onPress`** → **`onClick`**, **`role="button"`**, **`tabIndex={0}`**, **`onKeyDown`** (Enter/Space); **`rounded-sm shadow-none`**, hover background
+- `src/components/HelpBanner.jsx` — same interactive pattern; **`shadow-sm`**, hover opacity
+- `src/components/ProjectForm.jsx` — template picker cards: keyboard + **`cursor-pointer`**
+- `src/containers/Dataset/DatasetQuery.jsx` — connection pick cards: **`onClick`**, **`w-full`**, hover
+- `src/containers/Connections/ConnectionWizard.jsx` — connection type tiles: **`onClick`** + keyboard
+- `src/containers/UserDashboard/ConnectionList.jsx` — **`fullWidth` / `isHoverable` / `shadow`** → **`w-full`** + hover **`className`**
+- `src/containers/AddChart/components/ChartDatasets.jsx` — dataset pick cards
+- `src/containers/Connections/CustomTemplates/CustomTemplates.jsx` — template cards
+- `src/containers/AddChart/components/DatarequestModal.jsx` — **`variant="bordered"`** → bordered **`className`**; interactive props as above
+
+Notes:
+- **`DatasetFilters.jsx`** already expressed no shadow via **`shadow-none`** on **`className`** (no change).
+- Verification: `npm run lint` and `npm run build` pass in `client/`.
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1139,11 +1163,12 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `AvatarGroup`: 0 files (replaced with stacked `Avatar` in Batch 37)
 - `TimeInput`: 0 files (replaced with `TimeField` compound in Batch 37)
 - `Navbar` / `NavbarBrand` from `@heroui/react`: 0 files (public dashboards use `<header>` in Batch 37)
+- Root **`Card`** v2-only props (**`shadow`**, **`radius`**, **`isPressable`**, **`isHoverable`**, **`fullWidth`**, **`onPress`**, **`variant="bordered"`**): 0 remaining on **`Card`** roots in `client/src` (Batch 38)
 
 ## Verification
 
 - `npm run lint` currently passes
-- `npm run build` in `client/` currently passes (last verified after Batch 37)
+- `npm run build` in `client/` currently passes (last verified after Batch 38)
 
 Important:
 - Lint in this repo does not validate package export correctness; use **`npm run build`** when chasing missing exports.
@@ -1151,7 +1176,7 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
+1. Align root **`Table`** (and other layout primitives) with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isStriped`, etc.) — grep **`Table`** for **`shadow=`** / **`radius=`** as a starting point.
 2. Keep running **`npm run build`** after import-surface changes to catch renamed or removed exports.
 
 ## Notes

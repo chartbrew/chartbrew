@@ -230,10 +230,16 @@ function ChartDatasets(props) {
             {datasets.length > 0 && _filteredDatasets().map((dataset, index) => (
               <Fragment key={dataset.id}>
                 <Card
-                  isPressable
-                  isHoverable
-                  className={`w-full shadow-none border-2 border-solid border-content3 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  className={`w-full cursor-pointer border-2 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
                   onClick={() => _onCreateCdc(dataset.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      _onCreateCdc(dataset.id);
+                    }
+                  }}
                 >
                   <Card.Header>
                     <div className={"flex flex-row justify-between gap-4 w-full"}>

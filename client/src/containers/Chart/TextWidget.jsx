@@ -271,8 +271,7 @@ function TextWidget({
     >
       {chart && (
         <Card
-          shadow="none"
-          className={"h-full bg-content1 border-solid border-1 border-divider"}
+          className={"h-full bg-content1 border-solid border-1 border-divider shadow-none"}
         >
           {isEditing && (
             <>

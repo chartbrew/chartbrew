@@ -563,12 +563,16 @@ function DatasetQuery(props) {
                 return (
                   <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
                     <Card
-                      isPressable
-                      isHoverable
-                      onPress={() => _onCreateNewRequest(c)}
-                      fullWidth
-                      shadow="none"
-                      className="h-full border-1 border-solid border-content3"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => _onCreateNewRequest(c)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          _onCreateNewRequest(c);
+                        }
+                      }}
+                      className="h-full w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
                     >
                       <Card.Content className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">
