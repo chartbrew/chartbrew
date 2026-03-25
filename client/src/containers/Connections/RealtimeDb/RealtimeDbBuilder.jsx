@@ -302,16 +302,21 @@ function RealtimeDbBuilder(props) {
                   Transform
                 </Button>
               </Badge>
-              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="danger"
-                  isIconOnly
-                  size="sm"
-                  variant="bordered"
-                  onPress={() => onDelete()}
-                >
-                  <LuTrash />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    size="sm"
+                    variant="bordered"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Delete this data request
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </Row>
@@ -349,16 +354,19 @@ function RealtimeDbBuilder(props) {
               disableAnimation
               labelPlacement="outside"
               endContent={_hasVariables(firebaseRequest.route) && (
-                <Tooltip content="Configure variable">
-                  <Button
-                    isIconOnly
-                    onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))}
-                    color="primary"
-                    variant="light"
-                    size="sm"
-                  >
-                    <LuVariable />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))}
+                      color="primary"
+                      variant="light"
+                      size="sm"
+                    >
+                      <LuVariable />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Configure variable</Tooltip.Content>
                 </Tooltip>
               )}
             />
@@ -605,11 +613,13 @@ function RealtimeDbBuilder(props) {
               Use cache
             </Checkbox>
             <div className="w-2" />
-            <Tooltip
-              content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
-              className="max-w-[600px]"
-            >
-              <div><LuInfo /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-[600px]">
+                Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings.
+              </Tooltip.Content>
             </Tooltip>
           </Row>
           <div className="h-4" />
@@ -664,15 +674,18 @@ function RealtimeDbBuilder(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">

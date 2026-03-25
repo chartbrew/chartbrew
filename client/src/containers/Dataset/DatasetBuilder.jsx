@@ -558,23 +558,30 @@ function DatasetBuilder(props) {
                     fullWidth
                   />
                   {formula !== dataset.formula && (
-                    <Tooltip
-                      content={"Apply the formula"}
-                    >
-                      <Link onClick={_onApplyFormula}>
-                        <LuCircleCheck className={"text-success"} />
-                      </Link>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Link onClick={_onApplyFormula}>
+                          <LuCircleCheck className={"text-success"} />
+                        </Link>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Apply the formula</Tooltip.Content>
                     </Tooltip>
                   )}
-                  <Tooltip content="Remove formula">
-                    <Link onClick={_onRemoveFormula}>
-                      <LuCircleX className="text-danger" />
-                    </Link>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Link onClick={_onRemoveFormula}>
+                        <LuCircleX className="text-danger" />
+                      </Link>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Remove formula</Tooltip.Content>
                   </Tooltip>
-                  <Tooltip content="Click for an example">
-                    <Link onClick={_onExampleFormula}>
-                      <LuWandSparkles className="text-primary" />
-                    </Link>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Link onClick={_onExampleFormula}>
+                        <LuWandSparkles className="text-primary" />
+                      </Link>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Click for an example</Tooltip.Content>
                   </Tooltip>
                 </div>
               </div>

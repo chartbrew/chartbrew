@@ -202,18 +202,16 @@ function ChartDatasets(props) {
             <Chip
               color={tag === "project" ? "primary" : "default"}
               variant={tag === "project" ? "solid" : "bordered"}
-              radius="sm"
               onClick={() => setTag("project")}
-              className="cursor-pointer"
+              className="rounded-sm cursor-pointer"
             >
               This project
             </Chip>
             <Chip
               color={tag === "team" ? "primary" : "default"}
               variant={tag === "team" ? "solid" : "bordered"}
-              radius="sm"
               onClick={() => setTag("team")}
-              className="cursor-pointer chart-empty-filter-tutorial"
+              className="rounded-sm cursor-pointer chart-empty-filter-tutorial"
             >
               All
             </Chip>
@@ -256,13 +254,22 @@ function ChartDatasets(props) {
                         </div>
                         <div className="flex flex-row items-center gap-1">
                           {dataset?.DataRequests?.map((dr) => (
-                            <Tooltip content={dr?.Connection?.name} key={dr.id}>
-                              <Avatar
-                                key={dr.id}
-                                src={connectionImages(isDark)[dr?.Connection?.subType]}
-                                isBordered
-                                size="sm"
-                              />
+                            <Tooltip key={dr.id}>
+                              <Tooltip.Trigger>
+                                <Avatar
+                                  size="sm"
+                                  className="ring-2 ring-primary shrink-0"
+                                >
+                                  <Avatar.Image
+                                    src={connectionImages(isDark)[dr?.Connection?.subType]}
+                                    alt=""
+                                  />
+                                  <Avatar.Fallback />
+                                </Avatar>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                {dr?.Connection?.name}
+                              </Tooltip.Content>
                             </Tooltip>
                           ))}
                         </div>
@@ -327,12 +334,11 @@ function ChartDatasets(props) {
             <Chip
               key={cdc.id}
               title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
-              radius="sm"
               color={activeCdc?.id === cdc.id ? "primary" : "default"}
               // variant={activeCdc?.id === cdc.id ? "solid" : "flat"}
               variant="flat"
               onClick={() => setActiveCdc(cdc)}
-              className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
+              className={`rounded-sm cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
               size="lg"
               endContent={<LuGripVertical size={16} className="cursor-grab" />}
               startContent={(

@@ -265,18 +265,22 @@ function DatarequestModal(props) {
               {selectedRequest && (
                 <>
                   <Row>
-                    <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="right-start">
-                      <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
-                        <Avatar
-                          isBordered
-                          icon={(
-                            <LuLink2 />
-                          )}
-                          radius="sm"
-                          className="cursor-pointer"
-                          color={selectedRequest.isSettings ? "primary" : "default"}
-                        />
-                      </Link>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
+                          <Avatar
+                            className={`cursor-pointer rounded-sm ring-2 ${selectedRequest.isSettings ? "ring-primary" : "ring-default-200"}`}
+                            color={selectedRequest.isSettings ? "primary" : "default"}
+                          >
+                            <Avatar.Fallback>
+                              <LuLink2 />
+                            </Avatar.Fallback>
+                          </Avatar>
+                        </Link>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right start" className="z-[99999]">
+                        Join data requests
+                      </Tooltip.Content>
                     </Tooltip>
                   </Row>
                   <div className="h-4" />
@@ -296,17 +300,18 @@ function DatarequestModal(props) {
                       shape="rectangle"
                     >
                       <Avatar
-                        isBordered
-                        radius="sm"
-                        src={
-                          dr.Connection
-                            ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
-                            : null
-                        }
-                        icon={!dr.Connection ? <LuMonitorX /> : null}
+                        className={`cursor-pointer rounded-sm ring-2 ${dr.id === selectedRequest?.id ? "ring-primary" : "ring-default-200"}`}
                         color={dr.id === selectedRequest?.id ? "primary" : "default"}
                         onClick={() => _onSelectDataRequest(dr)}
-                      />
+                      >
+                        {dr.Connection ? (
+                          <Avatar.Image
+                            src={connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]}
+                            alt=""
+                          />
+                        ) : null}
+                        <Avatar.Fallback>{!dr.Connection ? <LuMonitorX /> : null}</Avatar.Fallback>
+                      </Avatar>
                     </Badge>
                   </Row>
                   <div className="h-1" />
@@ -314,15 +319,19 @@ function DatarequestModal(props) {
               ))}
               <div className="h-3" />
               <Row>
-                <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
-                  <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
-                    <Avatar
-                      icon={<LuPlus />}
-                      isBordered
-                      className="cursor-pointer"
-                      color="secondary"
-                    />
-                  </Link>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
+                      <Avatar className="cursor-pointer rounded-sm ring-2 ring-secondary" color="secondary">
+                        <Avatar.Fallback>
+                          <LuPlus />
+                        </Avatar.Fallback>
+                      </Avatar>
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right start" className="z-[99999]">
+                    Add a new data source
+                  </Tooltip.Content>
                 </Tooltip>
               </Row>
             </div>
@@ -432,11 +441,13 @@ function DatarequestModal(props) {
                             <Row align="center" justify="space-between">
                               <Text size="h4">{c.name}</Text>
                               <div className="w-1" />
-                              <Avatar
-                                radius="sm"
-                                src={connectionImages(theme === "dark")[c.subType || c.type]}
-                                alt={`${c.type} logo`}
-                              />
+                              <Avatar className="rounded-sm">
+                                <Avatar.Image
+                                  src={connectionImages(theme === "dark")[c.subType || c.type]}
+                                  alt={`${c.type} logo`}
+                                />
+                                <Avatar.Fallback />
+                              </Avatar>
                             </Row>
                             <Row>
                               <Text className={"text-default-400"} size="sm">

@@ -487,7 +487,7 @@ function ClickHouseConnectionForm(props) {
                 color={testResult.status < 400 ? "success" : "danger"}
                 size="sm"
                 variant="flat"
-                radius="sm"
+                className="rounded-sm"
               >
                 {`Status code: ${testResult.status}`}
               </Chip>

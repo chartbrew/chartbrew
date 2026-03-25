@@ -268,122 +268,134 @@ function TeamMembers(props) {
                       <div className="flex flex-row items-center gap-1">
                         {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (
                           <>
-                            <Tooltip content="Change dashboard access">
-                              <Button
-                                variant="light"
-                                isIconOnly
-                                onPress={() => _openProjectAccess(member)}
-                                size="sm"
-                              >
-                                <LuFolderKey />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  variant="light"
+                                  isIconOnly
+                                  onPress={() => _openProjectAccess(member)}
+                                  size="sm"
+                                >
+                                  <LuFolderKey />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Change dashboard access</Tooltip.Content>
                             </Tooltip>
                           </>
                         )}
                         {_canAccess("teamOwner") && memberRole.role === "teamAdmin" && (
                           <>
-                            <Tooltip content="Transfer ownership">
-                              <Button
-                                variant="light"
-                                isIconOnly
-                                onPress={() => {
-                                  if (_teamsOwned().length < 2) {
-                                    toast.error("You need to own at least one other team to transfer ownership", { position: "bottom-right" });
-                                    return;
-                                  }
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  variant="light"
+                                  isIconOnly
+                                  onPress={() => {
+                                    if (_teamsOwned().length < 2) {
+                                      toast.error("You need to own at least one other team to transfer ownership", { position: "bottom-right" });
+                                      return;
+                                    }
 
-                                  setTransferOwnershipMember(member);
-                                }}
-                                size="sm"
-                              >
-                                <LuKeyRound />
-                              </Button>
+                                    setTransferOwnershipMember(member);
+                                  }}
+                                  size="sm"
+                                >
+                                  <LuKeyRound />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Transfer ownership</Tooltip.Content>
                             </Tooltip>
                           </>
                         )}
                         {_canAccess("teamAdmin") && user.id !== member.id && memberRole.role !== "teamOwner" && (
                           <>
-                            <Tooltip content="Change member role">
-                              <div>
-                                <Dropdown aria-label="Select a role">
-                                  <DropdownTrigger>
-                                    <Button variant="light" auto isIconOnly size="sm">
-                                      <LuIdCard />
-                                    </Button>
-                                  </DropdownTrigger>
-                                  <DropdownMenu
-                                    onAction={(key) => _onChangeRole(key, member)}
-                                    selectedKeys={[memberRole.role]}
-                                    selectionMode="single"
-                                    aria-label="Change member role"
-                                  >
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="teamAdmin"
-                                          textValue="Team Admin"
-                                          description={"Full access, but can't delete the team"}
-                                          className="max-w-[400px]"
-                                        >
-                                          Team Admin
-                                        </DropdownItem>
-                                      )}
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="projectAdmin"
-                                          textValue="Client admin"
-                                          description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
-                                          className="max-w-[400px]"
-                                        >
-                                          Client admin
-                                        </DropdownItem>
-                                      )}
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="projectEditor"
-                                          textValue="Client editor"
-                                          description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
-                                          className="max-w-[400px]"
-                                        >
-                                          Client editor
-                                        </DropdownItem>
-                                      )}
-                                    {user.id !== member.id
-                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                      && (
-                                        <DropdownItem
-                                          key="projectViewer"
-                                          textValue="Client viewer"
-                                          description={"Can view charts in assigned projects, but cannot edit or remove anything."}
-                                          className="max-w-[400px]"
-                                        >
-                                          Client viewer
-                                        </DropdownItem>
-                                      )}
-                                  </DropdownMenu>
-                                </Dropdown>
-                              </div>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <div>
+                                  <Dropdown aria-label="Select a role">
+                                    <DropdownTrigger>
+                                      <Button variant="light" auto isIconOnly size="sm">
+                                        <LuIdCard />
+                                      </Button>
+                                    </DropdownTrigger>
+                                    <DropdownMenu
+                                      onAction={(key) => _onChangeRole(key, member)}
+                                      selectedKeys={[memberRole.role]}
+                                      selectionMode="single"
+                                      aria-label="Change member role"
+                                    >
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="teamAdmin"
+                                            textValue="Team Admin"
+                                            description={"Full access, but can't delete the team"}
+                                            className="max-w-[400px]"
+                                          >
+                                            Team Admin
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectAdmin"
+                                            textValue="Client admin"
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
+                                            className="max-w-[400px]"
+                                          >
+                                            Client admin
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectEditor"
+                                            textValue="Client editor"
+                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
+                                            className="max-w-[400px]"
+                                          >
+                                            Client editor
+                                          </DropdownItem>
+                                        )}
+                                      {user.id !== member.id
+                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                        && (
+                                          <DropdownItem
+                                            key="projectViewer"
+                                            textValue="Client viewer"
+                                            description={"Can view charts in assigned projects, but cannot edit or remove anything."}
+                                            className="max-w-[400px]"
+                                          >
+                                            Client viewer
+                                          </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                  </Dropdown>
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Change member role</Tooltip.Content>
                             </Tooltip>
                           </>
                         )}
                         {user.id !== member.id
                           && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
                           && (
-                            <Tooltip content="Remove user from the team">
-                              <Button
-                                variant="light"
-                                onPress={() => _onDeleteConfirmation(member.id)}
-                                isIconOnly
-                                color="danger"
-                                size="sm"
-                              >
-                                <LuCircleX />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  variant="light"
+                                  onPress={() => _onDeleteConfirmation(member.id)}
+                                  isIconOnly
+                                  color="danger"
+                                  size="sm"
+                                >
+                                  <LuCircleX />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Remove user from the team</Tooltip.Content>
                             </Tooltip>
                           )}
                       </div>
@@ -475,10 +487,13 @@ function TeamMembers(props) {
 
                     <div className="flex flex-row items-center gap-1">
                       <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>
-                      <Tooltip
-                        content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-                      >
-                        <div><LuInfo /></div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div><LuInfo /></div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>
+                          The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data.
+                        </Tooltip.Content>
                       </Tooltip>
                     </div>
                     <div>

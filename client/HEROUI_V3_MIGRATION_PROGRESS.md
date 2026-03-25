@@ -1161,6 +1161,62 @@ Files migrated:
 
 Verification: `npm run lint` and `npm run build` pass in `client/`.
 
+### Batch 40: **`Chip`** (and stray **`Avatar`**) — remove v2 **`radius`**
+
+v3 **`Chip`** (`chip.d.ts`) exposes **`color`**, **`size`**, **`variant`**, **`className`** only — no **`radius`**. Replaced every **`radius="sm"`** on **`<Chip>`** with **`className="rounded-sm"`** (merged into existing **`className`** where present). **`Avatar`** in **`DatasetQuery`** and **`CustomTemplateForm`** no longer use legacy **`src` + `radius`** on the root; they use **`Avatar` / `Avatar.Image` / `Avatar.Fallback`** with **`className="rounded-sm"`** (or **`size-6 rounded-sm`** in the autocomplete row).
+
+Files touched (Chip): `SlackIntegrationsList.jsx`, `TableComponent.jsx`, `Chart.jsx`, `ConnectionList.jsx`, `ConnectionWizard.jsx`, `DatasetQuery.jsx`, `ProjectDashboard.jsx`, `CustomTemplateForm.jsx`, `ApiPagination.jsx`, `ManageUser.jsx`, `VariableFilter.jsx`, `EditFieldFilter.jsx`, `FieldFilter.jsx`, `AiModal.jsx`, `MysqlConnectionForm.jsx`, `PostgresConnectionForm.jsx`, `AccountNav.jsx`.
+
+Avatar-only in this batch: `DatasetQuery.jsx`, `CustomTemplateForm.jsx`.
+
+**Grep audit (Batch 40):** Follow-up **`Chip`** / **`Avatar`** / **`Table`** / **`Tooltip`** work landed in **Batch 41** (see below).
+
+Verification: `npm run lint` and `npm run build` pass in `client/`.
+
+### Batch 41: Remaining **`Chip` `radius`**, **`Avatar`** compound, **`ChartDescription` `Table`**, **`Tooltip` `css` z-index**
+
+- **`Chip`**: Removed remaining **`radius="sm"`**; merged **`className="rounded-sm"`** with existing **`className`** (fixes duplicate-prop lint in **`ChartSharing.jsx`**, **`Dataset.jsx`**).
+- **`Avatar`**: **`DatarequestSettings.jsx`** and **`DatarequestModal.jsx`** use **`Avatar` / `Avatar.Image` / `Avatar.Fallback`** with **`rounded-sm`** (and **`ring-2`** where **`isBordered`** applied before).
+- **`Table`**: **`ChartDescription.jsx`** — **`Table.ScrollContainer`** + **`Table.Content`**; **`renderEmptyState`**; **`isRowHeader`** on the name column; **`TableRow`** **`id`**; **`onRowAction`** on **`Table.Content`** (React Aria **`onRowAction`** prop).
+- **`Tooltip`**: Replaced legacy **`content` + `css={{ zIndex: … }}`** with **`Tooltip` / `Tooltip.Trigger` / `Tooltip.Content`** and **`className="z-[99999]"`** (or **`z-[999999]`** on **`ChartExport.jsx`** disable tooltip).
+
+Files touched include: **`TableConfiguration.jsx`**, **`DatasetFilters.jsx`**, **`DatasetList.jsx`**, **`ChartSharing.jsx`**, **`Dataset.jsx`**, **`VisualSQL.jsx`**, **`KpiMode.jsx`**, **`KpiChartSegment.jsx`**, **`DraggableLabel.jsx`**, **`EditDateRangeFilter.jsx`** (project dashboard), **`TableDataFormattingModal.jsx`**, **`DatasetAlerts.jsx`**, **`ClickHouseConnectionForm.jsx`**, **`ChartDatasets.jsx`**, **`ChartDatasetConfig.jsx`**, **`FirestoreBuilder.jsx`**, **`DatarequestSettings.jsx`**, **`DatarequestModal.jsx`**, **`ChartDescription.jsx`**, **`SqlBuilder.jsx`**, **`ApiBuilder.jsx`**, **`MongoQueryBuilder.jsx`**, **`GaBuilder.jsx`**, **`ClickHouseBuilder.jsx`**, **`RealtimeDbBuilder.jsx`**, **`CustomerioBuilder.jsx`**, **`ChartExport.jsx`**.
+
+Verification: `npm run lint` and `npm run build` pass in `client/`.
+
+### Batch 42: Stitches **`css={{...}}`** removal + builder / chart **`Tooltip`** compound pass
+
+- **Stitches `css` props:** Replaced with Tailwind **`className`** (or removed where obsolete v2-only selectors applied).
+  - **`ApiBuilder.jsx`** — removed NextUI-specific **`css`** on route **`Input`** (label hook no longer applies in v3).
+  - **`PostgresConnectionForm.jsx`** — error **`Container`**: **`rounded-medium bg-red-300 p-2.5 dark:bg-red-400/80`**
+  - **`MysqlConnectionForm.jsx`** — **`Row`**: **`className="p-5"`**
+  - **`RealtimeDbConnectionForm.jsx`** — **`Link`**: **`flex items-center text-primary`**
+  - **`MessageTypeLabels.jsx`** — **`Chip`**: **`cursor-pointer`**
+- **`Tooltip` shorthand → compound:** **`Tooltip` / `Tooltip.Trigger` / `Tooltip.Content`** in connection wizards, data-request builders, **`ChartSharing`**, **`ChartDatasets`** / **`ChartDatasetConfig`** (including variable overrides + footer avatars), **`AiModal`** (token count), and extended **`FirestoreBuilder`** filter tooltips.
+- **`Avatar` in tooltips:** **`ChartDatasets`** and **`ChartDatasetConfig`** footer stacks use **`Avatar.Image` / `Avatar.Fallback`** + **`ring-2 ring-primary`** (replacing **`isBordered`** + flat **`src`**).
+
+**Grep note (superseded by Batch 43):** See Batch 43 for the wide shorthand cleanup; multiline **`content=`** on **`<Tooltip>`** may still exist in builder-heavy files (see Batch 43 follow-up list).
+
+Verification: `npm run lint` and `npm run build` pass in `client/`.
+
+### Batch 43: Tooltip shorthand sweep (app shell + dashboards + settings)
+
+- **Pattern:** **`Tooltip` → `Tooltip.Trigger` + `Tooltip.Content`**; move **`placement`** / **`className`** (e.g. **`max-w-xs`**) to **`Tooltip.Content`** where they applied to the root; use space-separated placements (**`right end`**, **`left start`**, **`bottom end`**) instead of kebab (**`right-end`**, etc.).
+- **`Sidebar.jsx`:** When the rail is expanded, nav and quick actions render **without** a tooltip wrapper (icons-only collapsed branch only), replacing **`hidden={!collapsed}`**.
+- **Files touched (non-exhaustive):** **`ProjectDashboard.jsx`**, **`Sidebar.jsx`**, **`DashboardList.jsx`**, **`NoticeBoard.jsx`**, **`TextWidget.jsx`**, **`PublicDashboard.jsx`**, **`Report.jsx`**, **`SnapshotSchedule.jsx`**, **`ChartSettings.jsx`**, **`ChartDatasetDataSetup.jsx`**, **`DatasetBuilder.jsx`**, **`SharingSettings.jsx`**, **`ProjectNavigation.jsx`**, **`ChartPreview.jsx`**, **`TeamSettings.jsx`**, **`AddChart.jsx`**, **`PrintView.jsx`**, **`SavedQueries.jsx`**, **`TeamMembers.jsx`** (data-export info tooltip).
+
+Verification: `npm run lint` and `npm run build` pass in `client/` (2026-03-24).
+
+### Batch 44: Builder / forms **`Tooltip`** shorthand cleanup (remaining `content=`)
+
+- Converted remaining **`<Tooltip` … `content=`** (including multiline / JSX bodies) to **`Tooltip.Trigger`** + **`Tooltip.Content`** across connection and chart builders.
+- **Placement normalization:** **`top-start`** → **`top start`**, **`right-start`** → **`right start`**, **`left-start`** / legacy **`leftStart`** → **`left start`** on **`Tooltip.Content`**.
+- **Files:** **`ClickHouseBuilder.jsx`**, **`SqlBuilder.jsx`**, **`RealtimeDbBuilder.jsx`**, **`MongoQueryBuilder.jsx`** (query help + cache), **`FirestoreBuilder.jsx`** (filters, cache, condition warning), **`ApiBuilder.jsx`**, **`AiModal.jsx`** (usage stats), **`ChartSharing.jsx`** (URL params), **`GaBuilder.jsx`**, **`CustomerioBuilder.jsx`**, **`DatarequestSettings.jsx`**, **`ApiPagination.jsx`** (all five), **`CampaignsQuery.jsx`**, **`MongoConnectionForm.jsx`**, **`InviteMembersForm.jsx`**.
+
+**Grep:** `client/src` — no **`<Tooltip` + `content=`** (multiline or inline) remaining.
+
+Verification: `npm run lint` and `npm run build` pass in `client/` (2026-03-24).
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1180,12 +1236,15 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `TimeInput`: 0 files (replaced with `TimeField` compound in Batch 37)
 - `Navbar` / `NavbarBrand` from `@heroui/react`: 0 files (public dashboards use `<header>` in Batch 37)
 - Root **`Card`** v2-only props (**`shadow`**, **`radius`**, **`isPressable`**, **`isHoverable`**, **`fullWidth`**, **`onPress`**, **`variant="bordered"`**): 0 remaining on **`Card`** roots in `client/src` (Batch 38)
-- Root **`Table`** v2-only props (**`shadow`**, **`radius`**, **`isStriped`**, **`bottomContent`**, **`classNames`**, **`emptyContent`**, **`onRowAction`** on **`<Table>`**): 0 remaining in `client/src` (Batch 39); tables use **`Table.ScrollContainer`** + **`Table.Content`** + RAC **`renderEmptyState`** where needed
+- Root **`Table`** v2-only props (**`shadow`**, **`radius`**, **`isStriped`**, **`bottomContent`**, **`classNames`**, **`emptyContent`**, **`onRowAction`** on **`<Table>`**): 0 remaining in `client/src` (Batches 39–41); tables use **`Table.ScrollContainer`** + **`Table.Content`** + RAC **`renderEmptyState`** where needed
+- **`Chip`** **`radius=`**: 0 remaining in `client/src` (Batches 40–41)
+- **`Tooltip`** **`css={{ zIndex: … }}`** on high-z modal tooltips: 0 remaining in `client/src` (Batch 41); use compound **`Tooltip.Content`** **`className`** for stacking
+- Stitches / NextUI **`css={{...}}`** on **`client/src`** JSX: 0 remaining (Batch 42); use **`className`** / **`style`**
 
 ## Verification
 
 - `npm run lint` currently passes
-- `npm run build` in `client/` currently passes (last verified after Batch 39)
+- `npm run build` in `client/` currently passes (last verified after Batch 44)
 
 Important:
 - Lint in this repo does not validate package export correctness; use **`npm run build`** when chasing missing exports.
@@ -1193,8 +1252,9 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Grep for other layout primitives or **`@heroui/react`** components still passing v2-only DOM props to roots (e.g. **`fullWidth`**, **`disableAnimation`**, **`isDisabled`** on the wrong node).
-2. Keep running **`npm run build`** after import-surface changes to catch renamed or removed exports.
+1. Audit **`fullWidth`** on **`Input`**, **`Tabs`**, **`ButtonGroup`** for v3-supported alternatives (**`className="w-full"`** where documented).
+2. Remaining **`radius="sm"`** (if any reintroduced) on non-migrated primitives.
+3. Keep running **`npm run build`** after import-surface changes.
 
 ## Notes
 

@@ -26,7 +26,7 @@ function SlackIntegrations() {
         <div className="flex items-center gap-1">
           <LuSlack size={24} />
           <div className="text-lg font-semibold">Slack</div>
-          <Chip color="secondary" variant="flat" size="sm" radius="sm">
+          <Chip color="secondary" variant="flat" size="sm" className="rounded-sm">
             New!
           </Chip>
         </div>

@@ -401,8 +401,7 @@ function ChartDatasetConfig(props) {
                         <Chip
                           style={_getDatasetColor(cdc.datasetColor)}
                           size="lg"
-                          radius="sm"
-                          className="pl-[100px]"
+                          className="rounded-sm pl-[100px]"
                         />
                       </Popover.Trigger>
                       <Popover.Content className="border-none bg-transparent shadow-none">
@@ -439,8 +438,7 @@ function ChartDatasetConfig(props) {
                             <Chip
                               style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
                               size="lg"
-                              radius="sm"
-                              className="pl-[100px]"
+                              className="rounded-sm pl-[100px]"
                             />
                           </Popover.Trigger>
                           <Popover.Content className="border-none bg-transparent shadow-none">
@@ -483,7 +481,7 @@ function ChartDatasetConfig(props) {
                               <Popover.Trigger>
                                 <Chip
                                   style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                                  radius="sm"
+                                  className="rounded-sm"
                                 />
                               </Popover.Trigger>
                               <Popover.Content className="border-none bg-transparent shadow-none">
@@ -521,36 +519,45 @@ function ChartDatasetConfig(props) {
               <div className="flex flex-col gap-2">
                 <div className="text-sm">Sort records</div>
                 <div className="flex flex-row gap-2">
-                  <Tooltip content="Sort the dataset in ascending order">
-                    <Button
-                      color={cdc.sort === "asc" ? "secondary" : "default"}
-                      variant="flat"
-                      onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
-                      startContent={<LuArrowDown01 />}
-                      fullWidth
-                      size="sm"
-                    >
-                      Asc
-                    </Button>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        color={cdc.sort === "asc" ? "secondary" : "default"}
+                        variant="flat"
+                        onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
+                        startContent={<LuArrowDown01 />}
+                        fullWidth
+                        size="sm"
+                      >
+                        Asc
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Sort the dataset in ascending order</Tooltip.Content>
                   </Tooltip>
-                  <Tooltip content="Sort the dataset in descending order">
-                    <Button
-                      color={cdc.sort === "desc" ? "secondary" : "default"}
-                      variant="flat"
-                      onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
-                      startContent={<LuArrowDown10 />}
-                      fullWidth
-                      size="sm"
-                    >
-                      Desc
-                    </Button>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        color={cdc.sort === "desc" ? "secondary" : "default"}
+                        variant="flat"
+                        onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
+                        startContent={<LuArrowDown10 />}
+                        fullWidth
+                        size="sm"
+                      >
+                        Desc
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Sort the dataset in descending order</Tooltip.Content>
                   </Tooltip>
                   {cdc.sort && (
                     <>
-                      <Tooltip content="Clear sorting">
-                        <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
-                          <LuCircleX className="text-danger" />
-                        </Link>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
+                            <LuCircleX className="text-danger" />
+                          </Link>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Clear sorting</Tooltip.Content>
                       </Tooltip>
                     </>
                   )}
@@ -575,23 +582,29 @@ function ChartDatasetConfig(props) {
                     <>
                       {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
                         <>
-                          <Tooltip content="Save">
-                            <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
-                              <LuCircleCheck className="text-success" />
-                            </Link>
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
+                                <LuCircleCheck className="text-success" />
+                              </Link>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Save</Tooltip.Content>
                           </Tooltip>
                         </>
                       )}
-                      <Tooltip content="Clear limit">
-                        <Link
-                          className="text-danger"
-                          onPress={() => {
-                            _onUpdateCdc({ maxRecords: null });
-                            setMaxRecords("");
-                          }}
-                        >
-                          <LuCircleX className="text-danger" />
-                        </Link>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Link
+                            className="text-danger"
+                            onPress={() => {
+                              _onUpdateCdc({ maxRecords: null });
+                              setMaxRecords("");
+                            }}
+                          >
+                            <LuCircleX className="text-danger" />
+                          </Link>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Clear limit</Tooltip.Content>
                       </Tooltip>
                     </>
                   )}
@@ -652,21 +665,30 @@ function ChartDatasetConfig(props) {
                           fullWidth
                         />
                         {formula !== cdc.formula && (
-                          <Tooltip content={"Apply the formula"}>
-                            <Link onPress={_onApplyFormula}>
-                              <LuCircleCheck className={"text-success"} />
-                            </Link>
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Link onPress={_onApplyFormula}>
+                                <LuCircleCheck className={"text-success"} />
+                              </Link>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Apply the formula</Tooltip.Content>
                           </Tooltip>
                         )}
-                        <Tooltip content="Remove formula">
-                          <Link onPress={_onRemoveFormula}>
-                            <LuCircleX className="text-danger" />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link onPress={_onRemoveFormula}>
+                              <LuCircleX className="text-danger" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Remove formula</Tooltip.Content>
                         </Tooltip>
-                        <Tooltip content="Click for an example">
-                          <Link onPress={_onExampleFormula}>
-                            <LuWandSparkles className="text-primary" />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link onPress={_onExampleFormula}>
+                              <LuWandSparkles className="text-primary" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Click for an example</Tooltip.Content>
                         </Tooltip>
                       </div>
                     </div>
@@ -692,8 +714,13 @@ function ChartDatasetConfig(props) {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 items-center">
                       <div className="text-sm text-foreground">{"Goal"}</div>
-                      <Tooltip className="max-w-sm" content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                        <div><LuInfo size={16} /></div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div><LuInfo size={16} /></div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content className="max-w-sm">
+                          A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)
+                        </Tooltip.Content>
                       </Tooltip>
                     </div>
                     <div className="flex flex-row gap-2 items-center">
@@ -705,19 +732,25 @@ function ChartDatasetConfig(props) {
                         labelPlacement="outside"
                       />
                       {`${goal}` !== `${cdc.goal || ""}` && (
-                        <Tooltip content={"Save goal"}>
-                          <Link onPress={() => _onUpdateCdc({ goal })}>
-                            <LuCircleCheck className={"text-success"} />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link onPress={() => _onUpdateCdc({ goal })}>
+                              <LuCircleCheck className={"text-success"} />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Save goal</Tooltip.Content>
                         </Tooltip>
                       )}
-                      <Tooltip content="Remove goal">
-                        <Link onPress={() => {
-                          _onUpdateCdc({ goal: null });
-                          setGoal("");
-                        }}>
-                          <LuCircleX className="text-danger" />
-                        </Link>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Link onPress={() => {
+                            _onUpdateCdc({ goal: null });
+                            setGoal("");
+                          }}>
+                            <LuCircleX className="text-danger" />
+                          </Link>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Remove goal</Tooltip.Content>
                       </Tooltip>
                     </div>
                   </div>
@@ -771,35 +804,44 @@ function ChartDatasetConfig(props) {
                   endContent={
                     _hasVariableChanged(variable) ? (
                       <div className="flex flex-row gap-1">
-                        <Tooltip content="Save variable value">
-                          <Link
-                            onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
-                            className="text-success"
-                          >
-                            <LuCircleCheck className="text-success" />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link
+                              onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
+                              className="text-success"
+                            >
+                              <LuCircleCheck className="text-success" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Save variable value</Tooltip.Content>
                         </Tooltip>
-                        <Tooltip content="Reset to saved value">
-                          <Link
-                            onClick={() => {
-                              const originalValue = _getVariableOriginalValue(variable);
-                              setVariableValues((prev) => ({
-                                ...prev,
-                                [variable.name]: originalValue,
-                              }));
-                            }}
-                            className="text-warning"
-                          >
-                            <LuCircleX className="text-warning" />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link
+                              onClick={() => {
+                                const originalValue = _getVariableOriginalValue(variable);
+                                setVariableValues((prev) => ({
+                                  ...prev,
+                                  [variable.name]: originalValue,
+                                }));
+                              }}
+                              className="text-warning"
+                            >
+                              <LuCircleX className="text-warning" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Reset to saved value</Tooltip.Content>
                         </Tooltip>
                       </div>
                     ) : cdc.configuration?.variables?.find((item) => item.name === variable.name) && (
                       <div className="flex flex-row gap-1">
-                        <Tooltip content="Remove override and use default value">
-                          <Link onClick={() => _onClearVariableOverride(variable.name)}>
-                            <LuCircleX className="text-warning" />
-                          </Link>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Link onClick={() => _onClearVariableOverride(variable.name)}>
+                              <LuCircleX className="text-warning" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Remove override and use default value</Tooltip.Content>
                         </Tooltip>
                       </div>
                     )
@@ -824,12 +866,17 @@ function ChartDatasetConfig(props) {
         {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
           <div className="flex flex-row gap-2 items-center">
             {dataRequests?.map((dr) => (
-              <Tooltip content={dr?.Connection?.name} key={dr.id}>
-                <Avatar
-                  src={connectionImages(isDark)[dr?.Connection?.subType]}
-                  isBordered
-                  size="sm"
-                />
+              <Tooltip key={dr.id}>
+                <Tooltip.Trigger>
+                  <Avatar size="sm" className="ring-2 ring-primary shrink-0">
+                    <Avatar.Image
+                      src={connectionImages(isDark)[dr?.Connection?.subType]}
+                      alt=""
+                    />
+                    <Avatar.Fallback />
+                  </Avatar>
+                </Tooltip.Trigger>
+                <Tooltip.Content>{dr?.Connection?.name}</Tooltip.Content>
               </Tooltip>
             ))}
             {dataRequests?.length > 0 && <div><LuPlug /></div>}

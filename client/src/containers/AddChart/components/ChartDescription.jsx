@@ -178,40 +178,45 @@ function ChartDescription(props) {
       <div className="h-6" />
 
       <div className="rounded-lg border border-solid border-content3">
-        <Table
-          shadow="none"
-          radius="sm"
-          aria-label="Dataset picker"
-          selectionMode="single"
-          onRowAction={(key) => _onSelectDataset(key)}
-        >
-          <TableHeader>
-            <TableColumn key="name">Dataset</TableColumn>
-            <TableColumn key="source">Source</TableColumn>
-            <TableColumn key="tags">Tags</TableColumn>
-            <TableColumn key="createdBy">Created by</TableColumn>
-            <TableColumn key="modified">Last modified</TableColumn>
-            <TableColumn key="actions" align="center" hideHeader />
-          </TableHeader>
-          <TableBody
-            emptyContent={datasetLoading ? (
-              <div className="flex min-h-40 items-center justify-center">
-                <ProgressCircle aria-label="Loading datasets" />
-              </div>
-            ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">
-                <LuLayers size={20} />
-                <span>No datasets found</span>
-              </div>
-            )}
-          >
-            {paginatedDatasets.map((dataset) => {
+        <Table className="shadow-none rounded-sm">
+          <Table.ScrollContainer>
+            <Table.Content
+              aria-label="Dataset picker"
+              className="min-w-full"
+              selectionMode="single"
+              onRowAction={(key) => _onSelectDataset(key)}
+            >
+              <TableHeader>
+                <TableColumn key="name" isRowHeader textValue="Dataset">Dataset</TableColumn>
+                <TableColumn key="source" textValue="Source">Source</TableColumn>
+                <TableColumn key="tags" textValue="Tags">Tags</TableColumn>
+                <TableColumn key="createdBy" textValue="Created by">Created by</TableColumn>
+                <TableColumn key="modified" textValue="Last modified">Last modified</TableColumn>
+                <TableColumn key="actions" className="w-12 text-center" textValue="Actions">
+                  <span className="sr-only">Actions</span>
+                </TableColumn>
+              </TableHeader>
+              <TableBody
+                renderEmptyState={() => (
+                  datasetLoading ? (
+                    <div className="flex min-h-40 items-center justify-center">
+                      <ProgressCircle aria-label="Loading datasets" />
+                    </div>
+                  ) : (
+                    <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">
+                      <LuLayers size={20} />
+                      <span>No datasets found</span>
+                    </div>
+                  )
+                )}
+              >
+                {paginatedDatasets.map((dataset) => {
               const tags = _getDatasetTags(dataset);
               const connectionTypes = _getDatasetConnectionTypes(dataset);
               const isCreatingChart = creatingDatasetId === dataset.id;
 
               return (
-                <TableRow key={dataset.id}>
+                <TableRow key={dataset.id} id={String(dataset.id)}>
                   <TableCell key="name">
                     <div className={cn(`min-w-0 ${isBusy && !isCreatingChart ? "opacity-60" : ""} cursor-pointer hover:underline`)}>
                         <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
@@ -279,8 +284,10 @@ function ChartDescription(props) {
                   </TableCell>
                 </TableRow>
               );
-            })}
-          </TableBody>
+                })}
+              </TableBody>
+            </Table.Content>
+          </Table.ScrollContainer>
         </Table>
       </div>
 

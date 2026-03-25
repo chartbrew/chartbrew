@@ -1054,17 +1054,20 @@ function ProjectDashboard() {
                       <div className="w-0.5" />
                     </>
                   )}
-                  <Tooltip content="Add dashboard filters" placement="bottom">
-                    <Button
-                      variant="bordered"
-                      className="bg-background"
-                      isIconOnly
-                      isLoading={filterLoading}
-                      onPress={_onShowFilters}
-                      size="sm"
-                    >
-                      <LuListFilter size={18} />
-                    </Button>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant="bordered"
+                        className="bg-background"
+                        isIconOnly
+                        isLoading={filterLoading}
+                        onPress={_onShowFilters}
+                        size="sm"
+                      >
+                        <LuListFilter size={18} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="bottom">Add dashboard filters</Tooltip.Content>
                   </Tooltip>
                   <div className="md:pl-2">
                     <DashboardFilters
@@ -1126,33 +1129,39 @@ function ProjectDashboard() {
                         Refresh charts
                       </Button>
                       {_canAccess("projectEditor") && (
-                        <Tooltip content="Schedule data updates for this dashboard" placement="bottom">
-                          <Button
-                            variant="bordered"
-                            isIconOnly
-                            onPress={() => setScheduleVisible(true)}
-                            size="sm"
-                            className="rounded-tr-lg! rounded-br-lg! bg-background"
-                          >
-                            <LuCalendarClock
-                              className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
-                              size={22}
-                            />
-                          </Button>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <Button
+                              variant="bordered"
+                              isIconOnly
+                              onPress={() => setScheduleVisible(true)}
+                              size="sm"
+                              className="rounded-tr-lg! rounded-br-lg! bg-background"
+                            >
+                              <LuCalendarClock
+                                className={`${project.updateSchedule?.frequency ? "text-primary" : ""}`}
+                                size={22}
+                              />
+                            </Button>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content placement="bottom">Schedule data updates for this dashboard</Tooltip.Content>
                         </Tooltip>
                       )}
                     </ButtonGroup>
-                    <Tooltip content="Refresh all charts" placement="bottom-end">
-                      <Button
-                        variant="bordered"
-                        isIconOnly
-                        onPress={() => _onRefreshData()}
-                        isLoading={refreshLoading}
-                        size="sm"
-                        className="flex sm:hidden bg-background"
-                      >
-                        <LuRefreshCw />
-                      </Button>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          variant="bordered"
+                          isIconOnly
+                          onPress={() => _onRefreshData()}
+                          isLoading={refreshLoading}
+                          size="sm"
+                          className="flex sm:hidden bg-background"
+                        >
+                          <LuRefreshCw />
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="bottom end">Refresh all charts</Tooltip.Content>
                     </Tooltip>
                     <Dropdown aria-label="Dashboard actions">
                       {!user?.tutorials?.projectSettings && (
@@ -1218,7 +1227,7 @@ function ProjectDashboard() {
                             onPress={() => setSnapshotScheduleVisible(true)}
                             endContent={
                               project?.snapshotSchedule?.frequency && (
-                                <Chip size="sm" radius="sm" variant="flat" color="success">
+                                <Chip size="sm" variant="flat" color="success" className="rounded-sm">
                                   Active
                                 </Chip>
                               )
@@ -1453,10 +1462,15 @@ function ProjectDashboard() {
           <div className="bg-background p-4 flex justify-center items-center animate-appearance-in">
             <div className="flex gap-4 items-center flex-wrap">
               <div className="flex gap-2 items-center">
-                <Tooltip content="See how this dashboard looks on different devices. You can edit the layout on each device from here." size="sm" className="max-w-xs">
-                  <span className="text-foreground">
-                    <LuMonitorSmartphone />
-                  </span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span className="text-foreground">
+                      <LuMonitorSmartphone />
+                    </span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content className="max-w-xs">
+                    See how this dashboard looks on different devices. You can edit the layout on each device from here.
+                  </Tooltip.Content>
                 </Tooltip>
                 <Tabs
                   size="sm"

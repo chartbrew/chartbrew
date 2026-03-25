@@ -546,7 +546,7 @@ function Chart(props) {
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
-                    <Chip color="secondary" variant="flat" size="sm" radius="sm">Draft</Chip>
+                    <Chip color="secondary" variant="flat" size="sm" className="rounded-sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
@@ -574,47 +574,67 @@ function Chart(props) {
                       </>
                     )}
                     {chart.autoUpdate > 0 && (
-                      <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
-                        <div>
-                          <LuCalendarClock size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div>
+                            <LuCalendarClock size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>
+                          {`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}
+                        </Tooltip.Content>
                       </Tooltip>
                     )}
                     {chart.public && !isPublic && !print && (
-                      <Tooltip content="This chart is public">
-                        <div>
-                          <LuLockOpen size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div>
+                            <LuLockOpen size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>This chart is public</Tooltip.Content>
                       </Tooltip>
                     )}
                     {(chart.onReport && !isPublic && !print && !chart.draft) && (
-                      <Tooltip content="Visible on your report and snapshots">
-                        <div>
-                          <LuMonitor size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div>
+                            <LuMonitor size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Visible on your report and snapshots</Tooltip.Content>
                       </Tooltip>
                     )}
                     {(!chart.onReport || chart.draft) && (
-                      <Tooltip
-                        content={chart.draft ? "Drafts are not visible on report and snapshots" : "Hidden on reports and snapshots"}
-                      >
-                        <div>
-                          <LuMonitorX size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div>
+                            <LuMonitorX size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>
+                          {chart.draft ? "Drafts are not visible on report and snapshots" : "Hidden on reports and snapshots"}
+                        </Tooltip.Content>
                       </Tooltip>
                     )}
                     {chart?.Alerts?.length > 0 && (
-                      <Tooltip content="This chart has alerts">
-                        <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
-                          <LuBell size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
+                            <LuBell size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>This chart has alerts</Tooltip.Content>
                       </Tooltip>
                     )}
                     {_onGetVariables()?.length > 0 && (
-                      <Tooltip content="This chart has variables">
-                        <div>
-                          <LuVariable size={12} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div>
+                            <LuVariable size={12} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>This chart has variables</Tooltip.Content>
                       </Tooltip>
                     )}
                   </Row>

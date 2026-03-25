@@ -211,28 +211,34 @@ function ChartSettings({ chart, onChange }) {
             />
           </div>
           {(chart.startDate || chart.endDate) && (
-            <Tooltip content="Remove date filtering">
-              <Button
-                variant="light"
-                isIconOnly
-                color="danger"
-                onPress={() => _onRemoveDateFiltering()}
-                size="sm"
-              >
-                <LuCircleX />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  variant="light"
+                  isIconOnly
+                  color="danger"
+                  onPress={() => _onRemoveDateFiltering()}
+                  size="sm"
+                >
+                  <LuCircleX />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Remove date filtering</Tooltip.Content>
             </Tooltip>
           )}
           {chart.startDate && chart.endDate && (
-            <Tooltip content="Date formatting">
-              <Button
-                variant="light"
-                isIconOnly
-                onPress={() => setDateFormattingModal(true)}
-                size="sm"
-              >
-                <LuSettings />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  variant="light"
+                  isIconOnly
+                  onPress={() => setDateFormattingModal(true)}
+                  size="sm"
+                >
+                  <LuSettings />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Date formatting</Tooltip.Content>
             </Tooltip>
           )}
         </div>
@@ -249,8 +255,13 @@ function ChartSettings({ chart, onChange }) {
             >
               Auto-update the date range
             </Checkbox>
-            <Tooltip
-              content={(
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div>
+                  <LuInfo />
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Content>
                 <div style={{ padding: 5 }}>
                   <Text>
                     {"When this is enabled, the date range will be preserved but shifted to the present date."}
@@ -278,11 +289,7 @@ function ChartSettings({ chart, onChange }) {
                     </li>
                   </ul>
                 </div>
-              )}
-            >
-              <div>
-                <LuInfo />
-              </div>
+              </Tooltip.Content>
             </Tooltip>
           </div>
           <div className="h-2" />

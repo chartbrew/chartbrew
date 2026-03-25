@@ -1267,7 +1267,7 @@ function AiModal({ isOpen, onClose }) {
               <div className="flex flex-col items-center justify-center">
                 <div className="flex flex-row items-center gap-2">
                   <div className="font-tw font-medium text-lg">Chartbrew AI</div>
-                  <Chip color="primary" variant="flat" size="sm" radius="sm" className="shadow-sm">
+                  <Chip color="primary" variant="flat" size="sm" className="rounded-sm shadow-sm">
                     Beta
                   </Chip>
                 </div>
@@ -1580,17 +1580,20 @@ function AiModal({ isOpen, onClose }) {
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-4 border-r border-t border-divider bg-content2 rounded-bl-2xl">
-                    <Tooltip
-                      content={<div className="flex flex-col gap-1">
-                        <div className="text-xs text-foreground-500">Total tokens used: {formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
-                        <div className="text-xs text-foreground-500">Total API calls: {teamUsage?.total?.api_calls || 0}</div>
-                        <div className="text-xs text-foreground-500">Total models used: {teamUsage?.byModel?.length || 0}</div>
-                      </div>}
-                    >
-                      <div className="flex flex-row items-center justify-center gap-2 cursor-help">
-                        <div><LuCoins size={14} /></div>
-                        <div className="text-sm text-foreground-500">{formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
-                      </div>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div className="flex flex-row items-center justify-center gap-2 cursor-help">
+                          <div><LuCoins size={14} /></div>
+                          <div className="text-sm text-foreground-500">{formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                        </div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>
+                        <div className="flex flex-col gap-1">
+                          <div className="text-xs text-foreground-500">Total tokens used: {formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                          <div className="text-xs text-foreground-500">Total API calls: {teamUsage?.total?.api_calls || 0}</div>
+                          <div className="text-xs text-foreground-500">Total models used: {teamUsage?.byModel?.length || 0}</div>
+                        </div>
+                      </Tooltip.Content>
                     </Tooltip>
                   </div>
                 </div>
@@ -1630,11 +1633,16 @@ function AiModal({ isOpen, onClose }) {
                           </div>
                         )}
                         {conversation.total_tokens > 0 && (
-                          <Tooltip content={`${conversation.total_tokens.toLocaleString()} tokens used`}>
-                            <div className="flex items-center gap-1 cursor-help">
-                              <LuCoins size={12} />
-                              <span>{formatTokens(conversation.total_tokens)}</span>
-                            </div>
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <div className="flex items-center gap-1 cursor-help">
+                                <LuCoins size={12} />
+                                <span>{formatTokens(conversation.total_tokens)}</span>
+                              </div>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>
+                              {`${conversation.total_tokens.toLocaleString()} tokens used`}
+                            </Tooltip.Content>
                           </Tooltip>
                         )}
                       </div>

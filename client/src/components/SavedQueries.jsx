@@ -123,37 +123,46 @@ function SavedQueries(props) {
                     <Text size="sm">{`created by ${query.User.name}`}</Text>
                   </div>
                   <div className="flex flex-row justify-end gap-2">
-                    <Tooltip content="Use this query">
-                      <Button
-                        isIconOnly
-                        onPress={() => onSelectQuery(query)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        <LuCheck />
-                      </Button>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          isIconOnly
+                          onPress={() => onSelectQuery(query)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          <LuCheck />
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Use this query</Tooltip.Content>
                     </Tooltip>
-                    <Tooltip content="Edit the summary">
-                      <Button
-                        isIconOnly
-                        isDisabled={editQuery && editQuery.id === query.id}
-                        onPress={() => _onEditQueryConfirmation(query)}
-                        size="sm"
-                        isPending={editLoading}
-                        variant="secondary"
-                      >
-                        <LuPencilLine />
-                      </Button>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          isIconOnly
+                          isDisabled={editQuery && editQuery.id === query.id}
+                          onPress={() => _onEditQueryConfirmation(query)}
+                          size="sm"
+                          isPending={editLoading}
+                          variant="secondary"
+                        >
+                          <LuPencilLine />
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Edit the summary</Tooltip.Content>
                     </Tooltip>
-                    <Tooltip content="Remove the saved query">
-                      <Button
-                        isIconOnly
-                        onPress={() => _onRemoveQueryConfirmation(query.id)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        <LuX />
-                      </Button>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          isIconOnly
+                          onPress={() => _onRemoveQueryConfirmation(query.id)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          <LuX />
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Remove the saved query</Tooltip.Content>
                     </Tooltip>
                   </div>
                 </Row>

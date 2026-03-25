@@ -77,10 +77,15 @@ function ChartExport(props) {
                     {chart.name}
                   </Checkbox>
                   {showDisabled && (
-                    <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
-                      <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
-                        <LuEye className="text-warning" />
-                      </LinkNext>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
+                          <LuEye className="text-warning" />
+                        </LinkNext>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content className="z-[999999]">
+                        Disable the export function for this chart
+                      </Tooltip.Content>
                     </Tooltip>
                   )}
                 </div>
@@ -105,11 +110,16 @@ function ChartExport(props) {
             {charts && charts.filter((c) => c.disabledExport).map((chart) => {
               return (
                 <div key={chart.id}>
-                  <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
-                    <LinkNext className="text-sm cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
-                      <LuEyeOff className="mr-1" size={16} />
-                      {chart.name}
-                    </LinkNext>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <LinkNext className="text-sm cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
+                        <LuEyeOff className="mr-1" size={16} />
+                        {chart.name}
+                      </LinkNext>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content className="z-[99999]">
+                      Enable the export function for this chart
+                    </Tooltip.Content>
                   </Tooltip>
                 </div>
               );

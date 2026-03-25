@@ -636,17 +636,22 @@ function FirestoreBuilder(props) {
                   Transform
                 </Button>
               </Badge>
-              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="danger"
-                  isIconOnly
-                  auto
-                  size="sm"
-                  variant="bordered"
-                  onPress={() => onDelete()}
-                >
-                  <LuTrash />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    auto
+                    size="sm"
+                    variant="bordered"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Delete this data request
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </Row>
@@ -666,8 +671,7 @@ function FirestoreBuilder(props) {
                   variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "flat" : "solid"}
                   color={firestoreRequest.query !== collection._queryOptions.collectionId ? "default" : "primary"}
                   onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
-                  className="min-w-[50px] text-center cursor-pointer"
-                  radius="sm"
+                  className="rounded-sm min-w-[50px] text-center cursor-pointer"
                   size="lg"
                 >
                   {collection._queryOptions.collectionId}
@@ -701,10 +705,11 @@ function FirestoreBuilder(props) {
               {"Filter the collection "}
             </Text>
             <div className="w-2" />
-            <Tooltip
-              content="These filters are applied on the main collection only."
-            >
-              <div><LuInfo size={16} /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo size={16} /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content>These filters are applied on the main collection only.</Tooltip.Content>
             </Tooltip>
           </Row>
           <div className="h-2" />
@@ -830,8 +835,7 @@ function FirestoreBuilder(props) {
                       color="secondary"
                       variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "solid"}
                       onClick={() => _onSelectSubCollection(subCollection)}
-                      className="min-w-[50px] text-center cursor-pointer"
-                      radius="sm"
+                      className="rounded-sm min-w-[50px] text-center cursor-pointer"
                     >
                       {subCollection}
                     </Chip>
@@ -861,10 +865,11 @@ function FirestoreBuilder(props) {
                       {"Filter the sub-collection "}
                     </Text>
                     <div className="w-1" />
-                    <Tooltip
-                      content="These filters are applied on the sub-collection only."
-                    >
-                      <div><LuInfo /></div>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div><LuInfo /></div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>These filters are applied on the sub-collection only.</Tooltip.Content>
                     </Tooltip>
                   </Row>
                   <div className="h-2" />
@@ -951,11 +956,13 @@ function FirestoreBuilder(props) {
                 Use cached data
               </Checkbox>
               <div className="w-2" />
-              <Tooltip
-                content="Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings."
-                className="max-w-[500px]"
-              >
-                <div><LuInfo /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="max-w-[500px]">
+                  Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings.
+                </Tooltip.Content>
               </Tooltip>
             </Row>
             <div className="h-4" />
@@ -1004,15 +1011,18 @@ function FirestoreBuilder(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
@@ -1149,10 +1159,11 @@ function Conditions(props) {
           <Fragment key={condition.id}>
             <Row align="center" wrap="wrap" className={"gap-2"}>
               {!_.find(fieldOptions, { value: condition.field }) && condition.saved && (
-                <Tooltip
-                  content="This condition might not work on the current collection."
-                >
-                  <div><LuTriangleAlert className="text-secondary" /></div>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuTriangleAlert className="text-secondary" /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>This condition might not work on the current collection.</Tooltip.Content>
                 </Tooltip>
               )}
               <Select
@@ -1227,16 +1238,19 @@ function Conditions(props) {
                     isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                     variant="bordered"
                     endContent={hasVariables && hasVariables(condition.value) && (
-                      <Tooltip content="Configure variable">
-                        <Button
-                          isIconOnly
-                          onPress={() => onVariableClick(getFirstVariable(condition.value))}
-                          color="primary"
-                          variant="light"
-                          size="sm"
-                        >
-                          <LuVariable />
-                        </Button>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Button
+                            isIconOnly
+                            onPress={() => onVariableClick(getFirstVariable(condition.value))}
+                            color="primary"
+                            variant="light"
+                            size="sm"
+                          >
+                            <LuVariable />
+                          </Button>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Configure variable</Tooltip.Content>
                       </Tooltip>
                     )}
                   />
@@ -1314,18 +1328,19 @@ function Conditions(props) {
             <Row align="center" className="gap-2">
               {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || (condition.values && condition.values.length > 0)) && (
                 <>
-                  <Tooltip
-                    content="Apply this filter"
-                  >
-                    <Button
-                      isIconOnly
-                      onClick={() => onApplyCondition(condition.id)}
-                      size="sm"
-                      variant="faded"
-                      color="success"
-                    >
-                      <LuCirclePlus />
-                    </Button>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        isIconOnly
+                        onClick={() => onApplyCondition(condition.id)}
+                        size="sm"
+                        variant="faded"
+                        color="success"
+                      >
+                        <LuCirclePlus />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Apply this filter</Tooltip.Content>
                   </Tooltip>
                 </>
               )}
@@ -1334,31 +1349,35 @@ function Conditions(props) {
                 && condition.id && (condition.value || condition.values.length > 0)
                 && (
                   <>
-                    <Tooltip
-                      content="Undo changes"
-                    >
-                      <Button
-                        isIconOnly
-                        onClick={() => onRevertCondition(condition.id)}
-                        size="sm"
-                        variant="faded"
-                      >
-                        <LuUndo />
-                      </Button>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          isIconOnly
+                          onClick={() => onRevertCondition(condition.id)}
+                          size="sm"
+                          variant="faded"
+                        >
+                          <LuUndo />
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Undo changes</Tooltip.Content>
                     </Tooltip>
                   </>
                 )}
 
-              <Tooltip content="Remove filter">
-                <Button
-                  isIconOnly
-                  color="danger"
-                  onClick={() => onRemoveCondition(condition.id)}
-                  size="sm"
-                  variant="faded"
-                >
-                  <LuCircleX />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    color="danger"
+                    onClick={() => onRemoveCondition(condition.id)}
+                    size="sm"
+                    variant="faded"
+                  >
+                    <LuCircleX />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Remove filter</Tooltip.Content>
               </Tooltip>
             </Row>
             <Separator />

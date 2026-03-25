@@ -690,35 +690,44 @@ function Report({ editMode = false }) {
           <div className="h-full px-3 py-2 overflow-y-auto bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col gap-4 p-2">
               <div>
-                <Tooltip content="Back to your dashboard" placement="right-end">
-                  <LinkDom to={`/dashboard/${project.id}`}>
-                    <Link className="text-foreground cursor-pointer">
-                      <LuSquareArrowLeft size={26} className="text-foreground" />
-                    </Link>
-                  </LinkDom>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <LinkDom to={`/dashboard/${project.id}`}>
+                      <Link className="text-foreground cursor-pointer">
+                        <LuSquareArrowLeft size={26} className="text-foreground" />
+                      </Link>
+                    </LinkDom>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right end">Back to your dashboard</Tooltip.Content>
                 </Tooltip>
               </div>
 
               <Separator />
 
               <div>
-                <Tooltip content="Preview dashboard" placement="right-end">
-                  <Link className="text-foreground cursor-pointer" onPress={() => editMode && setPreview(true)}>
-                    <LuEye size={26} className="text-foreground" />
-                  </Link>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Link className="text-foreground cursor-pointer" onPress={() => editMode && setPreview(true)}>
+                      <LuEye size={26} className="text-foreground" />
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right end">Preview dashboard</Tooltip.Content>
                 </Tooltip>
               </div>
 
               {editMode && project?.id && _canAccess("projectEditor") && (
                 <>
                   <div>
-                    <Tooltip content="Change logo" placement="right-end">
-                      <Link className="text-foreground cursor-pointer">
-                        <div {...getRootProps()}>
-                          <input {...getInputProps()} />
-                          <LuImagePlus size={26} className="text-foreground" />
-                        </div>
-                      </Link>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Link className="text-foreground cursor-pointer">
+                          <div {...getRootProps()}>
+                            <input {...getInputProps()} />
+                            <LuImagePlus size={26} className="text-foreground" />
+                          </div>
+                        </Link>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right end">Change logo</Tooltip.Content>
                     </Tooltip>
                   </div>
                   <div>
@@ -775,18 +784,24 @@ function Report({ editMode = false }) {
                   </div>
 
                   <div>
-                    <Tooltip content="Report settings" placement="right-end">
-                      <Link className="text-foreground cursor-pointer" onPress={() => setEditingTitle(true)}>
-                        <LuClipboardPen size={26} className="text-foreground" />
-                      </Link>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Link className="text-foreground cursor-pointer" onPress={() => setEditingTitle(true)}>
+                          <LuClipboardPen size={26} className="text-foreground" />
+                        </Link>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right end">Report settings</Tooltip.Content>
                     </Tooltip>
                   </div>
 
                   <div>
-                    <Tooltip content="Sharing settings" placement="right-end">
-                      <Link className="text-foreground cursor-pointer" onPress={() => setShowSettings(true)}>
-                        <LuShare size={26} className="text-foreground" />
-                      </Link>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Link className="text-foreground cursor-pointer" onPress={() => setShowSettings(true)}>
+                          <LuShare size={26} className="text-foreground" />
+                        </Link>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right end">Sharing settings</Tooltip.Content>
                     </Tooltip>
                   </div>
                 </>

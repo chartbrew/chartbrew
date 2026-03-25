@@ -518,10 +518,9 @@ function DatasetAlerts(props) {
                         <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
                           <Chip
                             color="secondary"
-                            radius="sm"
                             size="sm"
                             variant={newAlert.recipients.includes(member.email) ? "solid" : "faded"}
-                            className="cursor-pointer"
+                            className="rounded-sm cursor-pointer"
                           >
                             {member.email}
                           </Chip>

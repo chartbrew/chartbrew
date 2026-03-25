@@ -126,17 +126,19 @@ function ApiPagination(props) {
       {/* CUSTOM */}
       {template === "custom" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip
-            content={"The query parameter name that limits the number of item per request."}
-            placement="top-start"
-          >
-            <div style={styles.rowDisplay}>
-              <Text>
-                {"Items per page"}
-              </Text>
-              <div className="w-1" />
-              <LuInfo />
-            </div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div style={styles.rowDisplay}>
+                <Text>
+                  {"Items per page"}
+                </Text>
+                <div className="w-1" />
+                <LuInfo />
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Content placement="top start">
+              The query parameter name that limits the number of item per request.
+            </Tooltip.Content>
           </Tooltip>
           <Input
             isDisabled={!pagination}
@@ -151,15 +153,17 @@ function ApiPagination(props) {
       )}
       {template === "custom" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip
-            content={"The query parameter name used for the starting point of the first request."}
-            placement="top-start"
-          >
-            <div style={styles.rowDisplay}>
-              <Text>{"Offset"}</Text>
-              <div className="w-1" />
-              <LuInfo />
-            </div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div style={styles.rowDisplay}>
+                <Text>{"Offset"}</Text>
+                <div className="w-1" />
+                <LuInfo />
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Content placement="top start">
+              The query parameter name used for the starting point of the first request.
+            </Tooltip.Content>
           </Tooltip>
           <Input
             isDisabled={!pagination}
@@ -249,15 +253,17 @@ function ApiPagination(props) {
       {/* CURSOR-BASED */}
       {template === "cursor" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip
-            content={"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
-            placement="top-start"
-          >
-            <div style={styles.rowDisplay}>
-              <div className="text-sm">{"Cursor query parameter"}</div>
-              <div className="w-1" />
-              <LuInfo />
-            </div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div style={styles.rowDisplay}>
+                <div className="text-sm">{"Cursor query parameter"}</div>
+                <div className="w-1" />
+                <LuInfo />
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Content placement="top start">
+              {"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
+            </Tooltip.Content>
           </Tooltip>
           <Input
             isDisabled={!pagination}
@@ -271,16 +277,17 @@ function ApiPagination(props) {
       )}
       {template === "cursor" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip
-            content={"This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position. "}
-            className="max-w-[400px]"
-            placement="top-start"
-          >
-            <div style={styles.rowDisplay}>
-              <div className="text-sm">{"Next cursor field name"}</div>
-              <div className="w-1" />
-              <LuInfo />
-            </div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div style={styles.rowDisplay}>
+                <div className="text-sm">{"Next cursor field name"}</div>
+                <div className="w-1" />
+                <LuInfo />
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="max-w-[400px]" placement="top start">
+              This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position.
+            </Tooltip.Content>
           </Tooltip>
           <Input
             isDisabled={!pagination}
@@ -295,15 +302,17 @@ function ApiPagination(props) {
       )}
 
       <div className="col-span-12">
-        <Tooltip
-          content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
-          placement="top-start"
-        >
-          <div style={styles.rowDisplay}>
-            <div className="text-sm">{"Maximum number of items (0 = unlimited)"}</div>
-            <div className="w-1" />
-            <LuInfo />
-          </div>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <div style={styles.rowDisplay}>
+              <div className="text-sm">{"Maximum number of items (0 = unlimited)"}</div>
+              <div className="w-1" />
+              <LuInfo />
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Content placement="top start">
+            The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited
+          </Tooltip.Content>
         </Tooltip>
         <Input
           isDisabled={!pagination}
@@ -326,13 +335,13 @@ function ApiPagination(props) {
           <div className="text-sm">{"You should include these query parameters: "}</div>
           <div className="h-2" />
           <div style={styles.rowDisplay}>
-            <Chip size="sm" radius="sm" variant="flat">
+            <Chip size="sm" variant="flat" className="rounded-sm">
               {`${items}=<xxx>&${offset}=<xxx> `}
             </Chip>
             <div className="w-2" />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
-                <Chip color="success" size="sm" radius="sm" variant="flat">
+                <Chip color="success" size="sm" variant="flat" className="rounded-sm">
                   {`${items} was found`}
                 </Chip>
                 <div className="w-1" />
@@ -341,7 +350,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="warning" size="sm" radius="sm" variant="flat">
+                <Chip color="warning" size="sm" variant="flat" className="rounded-sm">
                   {`${items} not found in route`}
                 </Chip>
               </>
@@ -349,7 +358,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="success" size="sm" radius="sm" variant="flat">
+                <Chip color="success" size="sm" variant="flat" className="rounded-sm">
                   {`${offset} was found`}
                 </Chip>
               </>
@@ -357,7 +366,7 @@ function ApiPagination(props) {
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
                 <div className="w-1" />
-                <Chip color="warning" size="sm" radius="sm" variant="flat">
+                <Chip color="warning" size="sm" variant="flat" className="rounded-sm">
                   {`${offset} not found in route`}
                 </Chip>
               </>
@@ -369,7 +378,7 @@ function ApiPagination(props) {
               {"The maximum amount of item that you're going to get is: "}
             </div>
             <div className="w-2" />
-            <Chip size="sm" radius="sm" variant="flat">
+            <Chip size="sm" variant="flat" className="rounded-sm">
               {itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}
             </Chip>
           </div>

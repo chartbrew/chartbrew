@@ -46,18 +46,23 @@ function KpiChartSegment(props) {
                 </div>
                 <div className="w-4" />
                 {chart.showGrowth && (
-                  <Tooltip content={`compared to last ${chart.timeInterval}`}>
-                    <div>
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        radius="sm"
-                        color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
-                        startContent={c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : ""}
-                      >
-                        {`${formattedComparison}%`}
-                      </Chip>
-                    </div>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <div>
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          className="rounded-sm"
+                          color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                          startContent={c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : ""}
+                        >
+                          {`${formattedComparison}%`}
+                        </Chip>
+                      </div>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      {`compared to last ${chart.timeInterval}`}
+                    </Tooltip.Content>
                   </Tooltip>
                 )}
               </div>

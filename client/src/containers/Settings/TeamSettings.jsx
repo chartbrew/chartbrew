@@ -145,8 +145,11 @@ function TeamSettings() {
           >
             Allow public exports
           </Switch>
-          <Tooltip content="Allow users to export embedded charts and reports to excel">
-            <div><LuInfo size={18} className="text-foreground" /></div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Allow users to export embedded charts and reports to excel</Tooltip.Content>
           </Tooltip>
         </div>
 
@@ -158,11 +161,13 @@ function TeamSettings() {
           >
             Allow report refresh
           </Switch>
-          <Tooltip
-            content="Allow report viewers to refresh data - these refreshes will query your data sources. This can greatly increase your read usage."
-            className="max-w-sm"
-          >
-            <div><LuInfo size={18} className="text-foreground" /></div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="max-w-sm">
+              Allow report viewers to refresh data - these refreshes will query your data sources. This can greatly increase your read usage.
+            </Tooltip.Content>
           </Tooltip>
         </div>
 
@@ -174,8 +179,11 @@ function TeamSettings() {
           >
             Show Chartbrew branding
           </Switch>
-          <Tooltip content="Chartbrew branding is shown in the footer of the dashboard reports">
-            <div><LuInfo size={18} className="text-foreground" /></div>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Chartbrew branding is shown in the footer of the dashboard reports</Tooltip.Content>
           </Tooltip>
         </div>
       </div>
@@ -196,8 +204,11 @@ function TeamSettings() {
               Delete team
             </Button>
             {_teamsOwned()?.length < 2 && (
-              <Tooltip content="You cannot delete your last owned team">
-                <div><LuInfo size={18} className="text-foreground" /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo size={18} className="text-foreground" /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content>You cannot delete your last owned team</Tooltip.Content>
               </Tooltip>
             )}
           </div>

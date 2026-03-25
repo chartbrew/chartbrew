@@ -132,7 +132,7 @@ function AccountNav() {
                     <LuSquareKanban size={18} />
                     <span>Roadmap</span>
                   </div>
-                  <Chip size="sm" variant="secondary" radius="sm">New</Chip>
+                  <Chip size="sm" variant="secondary" className="rounded-sm">New</Chip>
                 </div>
               </Dropdown.Item>
               <Dropdown.Item id="tutorials" textValue="Blog tutorials">

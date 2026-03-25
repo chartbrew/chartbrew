@@ -380,11 +380,13 @@ function MongoConnectionForm(props) {
                 >
                   Use MongoDB 3.6 SRV URI connection string
                 </Checkbox>
-                <Tooltip
-                  content="Tick this if your connection URI contains 'mongodb+srv://'"
-                  placement="left"
-                >
-                  <div><LuInfo /></div>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuInfo /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="left">
+                    {"Tick this if your connection URI contains 'mongodb+srv://'"}
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
 

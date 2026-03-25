@@ -147,9 +147,9 @@ function TableConfiguration(props) {
                   if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span key={field.accessor} />);
                   return (
                     <Chip
-                      radius="sm"
                       key={field.accessor}
                       color="primary"
+                      className="rounded-sm"
                       endContent={
                         <Dropdown aria-label="Select a data formatting option" size="sm">
                           <DropdownTrigger>
@@ -227,10 +227,10 @@ function TableConfiguration(props) {
                 && dataset.excludedFields
                 && dataset.excludedFields?.map((field) => (
                   <Chip
-                    radius="sm"
                     key={field}
                     onClick={() => _onShowField(field)}
                     variant="flat"
+                    className="rounded-sm"
                     startContent={(
                       <Link className="flex items-center" onPress={() => _onShowField(field)}>
                         <LuEye className="text-gray-500 cursor-pointer" size={16} />

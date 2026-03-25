@@ -139,15 +139,15 @@ function DatarequestSettings(props) {
   const _renderIcon = (drId, size = "md") => {
     const dr = dataRequests.find((o) => o.id === drId);
     if (dr?.Connection?.type) {
-          return (
+      const src = connectionImages(isDark)[
+        dr.Connection.subType || dr.Connection.type
+      ];
+      return (
         <>
-          <Avatar
-            radius="sm"
-            src={connectionImages(isDark)[
-              dr.Connection.subType || dr.Connection.type
-            ]}
-            size={size}
-          />
+          <Avatar size={size} className="rounded-sm shrink-0">
+            <Avatar.Image src={src} alt="" />
+            <Avatar.Fallback />
+          </Avatar>
           <div className="w-1" />
         </>
       );
@@ -307,14 +307,17 @@ function DatarequestSettings(props) {
                       textValue={request.Connection?.name || ""}
                     >
                       {(request.Connection?.type && (
-                        <Avatar
-                          radius="sm"
-                          src={
-                            connectionImages(isDark)[
-                              request.Connection.subType || request.Connection.type
-                            ]
-                          }
-                        />
+                        <Avatar className="size-6 rounded-sm shrink-0">
+                          <Avatar.Image
+                            src={
+                              connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]
+                            }
+                            alt=""
+                          />
+                          <Avatar.Fallback />
+                        </Avatar>
                       )) || null}
                       <span>{request.Connection?.name || ""}</span>
                       <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
@@ -358,12 +361,15 @@ function DatarequestSettings(props) {
                             id={`${request.id}`}
                             textValue={request.Connection.name}
                           >
-                            <Avatar
-                              radius="sm"
-                              src={connectionImages(isDark)[
-                                request.Connection.subType || request.Connection.type
-                              ]}
-                            />
+                            <Avatar className="size-6 rounded-sm shrink-0">
+                              <Avatar.Image
+                                src={connectionImages(isDark)[
+                                  request.Connection.subType || request.Connection.type
+                                ]}
+                                alt=""
+                              />
+                              <Avatar.Fallback />
+                            </Avatar>
                             <span>{request.Connection.name}</span>
                             <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
                             <ListBox.ItemIndicator />
@@ -401,12 +407,15 @@ function DatarequestSettings(props) {
                             id={`${request.id}`}
                             textValue={request.Connection.name}
                           >
-                            <Avatar
-                              radius="sm"
-                              src={connectionImages(isDark)[
-                                request.Connection.subType || request.Connection.type
-                              ]}
-                            />
+                            <Avatar className="size-6 rounded-sm shrink-0">
+                              <Avatar.Image
+                                src={connectionImages(isDark)[
+                                  request.Connection.subType || request.Connection.type
+                                ]}
+                                alt=""
+                              />
+                              <Avatar.Fallback />
+                            </Avatar>
                             <span>{request.Connection.name}</span>
                             <span className="text-xs text-foreground-500">{dataRequests.findIndex((o) => o.id === request.id) + 1}</span>
                             <ListBox.ItemIndicator />
@@ -576,12 +585,13 @@ function DatarequestSettings(props) {
                 Use cache
               </Checkbox>
               <div className="w-0.5" />
-              <Tooltip
-                content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                placement="leftStart"
-                className="max-w-[500px]"
-              >
-                <div><LuInfo /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="left start" className="max-w-[500px]">
+                  If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters.
+                </Tooltip.Content>
               </Tooltip>
             </Row>
             <Row>

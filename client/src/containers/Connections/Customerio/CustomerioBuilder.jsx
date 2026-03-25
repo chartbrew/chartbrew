@@ -250,17 +250,22 @@ function CustomerioBuilder(props) {
                     Transform
                   </Button>
                 </Badge>
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    auto
-                    size="sm"
-                    variant="bordered"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      color="danger"
+                      isIconOnly
+                      auto
+                      size="sm"
+                      variant="bordered"
+                      onPress={() => onDelete()}
+                    >
+                      <LuTrash />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="bottom" className="z-[99999]">
+                    Delete this data request
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
             </Row>
@@ -388,12 +393,13 @@ function CustomerioBuilder(props) {
                 {"Use cache"}
               </Checkbox>
               <div className="w-1" />
-              <Tooltip
-                content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                placement="left-start"
-                className="max-w-[500px]"
-              >
-                <div><LuInfo /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="left start" className="max-w-[500px]">
+                  If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters.
+                </Tooltip.Content>
               </Tooltip>
             </Row>
             <div className="h-2" />

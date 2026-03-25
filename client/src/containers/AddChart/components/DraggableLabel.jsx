@@ -78,7 +78,7 @@ function DraggableLabel({ field, index, onMove }) {
     <div ref={ref} style={{ display: "inline-block" }} data-handler-id={handlerId}>
       <Chip
         color="secondary"
-        radius="sm"
+        className="rounded-sm"
         startContent={<LuGripVertical size={16} />}
       >
         {`${field.Header.replace("?", ".")}  `}

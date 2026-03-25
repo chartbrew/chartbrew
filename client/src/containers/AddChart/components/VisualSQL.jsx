@@ -1003,8 +1003,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               size="sm"
               variant="flat"
               color="default"
-              radius="sm"
-              className="cursor-pointer"
+              className="rounded-sm cursor-pointer"
               onPress={() => _onChangeOperator(ast?.where?.operator)}
             >
               {ast?.where?.operator}

@@ -512,13 +512,16 @@ function AddChart() {
             <div className="flex items-center gap-2">
               {!editingTitle
                 && (
-                  <Tooltip content="Edit the chart name">
-                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center gap-2 cursor-pointer" color="foreground">
-                      <div className="text-lg font-bold text-foreground">
-                        {newChart.name}
-                      </div>
-                      <LuPencilLine size={18} className="text-foreground-500" />
-                    </LinkNext>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center gap-2 cursor-pointer" color="foreground">
+                        <div className="text-lg font-bold text-foreground">
+                          {newChart.name}
+                        </div>
+                        <LuPencilLine size={18} className="text-foreground-500" />
+                      </LinkNext>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Edit the chart name</Tooltip.Content>
                   </Tooltip>
                 )}
 

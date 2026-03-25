@@ -282,55 +282,85 @@ function TextWidget({
                       className="flex gap-1 flex-wrap"
                       onMouseDown={handleInteractiveMouseDown}
                     >
-                      <Tooltip content="Add heading">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("heading", e)}>
-                          <LuHeading size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("heading", e)}>
+                            <LuHeading size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add heading</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add bold text">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("bold", e)}>
-                          <LuBold size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("bold", e)}>
+                            <LuBold size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add bold text</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add italic text">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("italic", e)}>
-                          <LuItalic size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("italic", e)}>
+                            <LuItalic size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add italic text</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add quote">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("quote", e)}>
-                          <LuQuote size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("quote", e)}>
+                            <LuQuote size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add quote</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add code">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("code", e)}>
-                          <LuCode size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("code", e)}>
+                            <LuCode size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add code</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add image">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("image", e)}>
-                          <LuImage size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("image", e)}>
+                            <LuImage size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add image</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add link">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("link", e)}>
-                          <LuLink size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("link", e)}>
+                            <LuLink size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add link</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add numbered list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("numbered", e)}>
-                          <LuListOrdered size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("numbered", e)}>
+                            <LuListOrdered size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add numbered list</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add bullet list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("unordered", e)}>
-                          <LuList size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("unordered", e)}>
+                            <LuList size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add bullet list</Tooltip.Content>
                       </Tooltip>
-                      <Tooltip content="Add task list">
-                        <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("task", e)}>
-                          <LuSquareCheck size={16} />
-                        </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("task", e)}>
+                            <LuSquareCheck size={16} />
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Add task list</Tooltip.Content>
                       </Tooltip>
                     </div>
                     <div className="h-2" />

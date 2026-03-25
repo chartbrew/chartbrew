@@ -440,11 +440,10 @@ function Dataset() {
                 {projects.filter((project) => !project.ghost).map((project) => (
                   <Chip
                     key={project.id}
-                    radius="sm"
+                    className="rounded-sm cursor-pointer"
                     color={selectedProjectIds.includes(project.id) ? "primary" : "default"}
                     variant={selectedProjectIds.includes(project.id) ? "solid" : "bordered"}
                     onClick={() => _toggleProjectTag(project.id)}
-                    className="cursor-pointer"
                   >
                     {project.name}
                   </Chip>

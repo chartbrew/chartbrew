@@ -254,16 +254,21 @@ function DashboardList() {
               )}
 
               {canManageDashboards && (
-                <Tooltip content={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}>
-                  <Button
-                    isIconOnly
-                    variant="bordered"
-                    className="hidden xl:inline-flex"
-                    onPress={_toggleWhatsNewPanel}
-                    aria-label={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
-                  >
-                    {whatsNewPanelCollapsed ? <LuPanelLeftClose size={18} /> : <LuPanelLeftOpen size={18} />}
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      variant="bordered"
+                      className="hidden xl:inline-flex"
+                      onPress={_toggleWhatsNewPanel}
+                      aria-label={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
+                    >
+                      {whatsNewPanelCollapsed ? <LuPanelLeftClose size={18} /> : <LuPanelLeftOpen size={18} />}
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    {whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
+                  </Tooltip.Content>
                 </Tooltip>
               )}
             </div>
@@ -432,16 +437,22 @@ function DashboardList() {
                       <TableCell key="name">
                         <div className="flex flex-row items-center gap-2">
                           {isPinned ? (
-                            <Tooltip content="Unpin dashboard" placement="left-start">
-                              <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
-                                <LuPin className="text-secondary" size={18} fill="currentColor" />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light">
+                                  <LuPin className="text-secondary" size={18} fill="currentColor" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content placement="left start">Unpin dashboard</Tooltip.Content>
                             </Tooltip>
                           ) : (
-                            <Tooltip content="Pin dashboard" placement="left-start">
-                              <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <LuPin className="text-secondary" size={18} />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="light" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <LuPin className="text-secondary" size={18} />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content placement="left start">Pin dashboard</Tooltip.Content>
                             </Tooltip>
                           )}
                           <Link to={`/dashboard/${project.id}`} className="cursor-pointer flex flex-row items-center select-none">
@@ -486,28 +497,34 @@ function DashboardList() {
                       <TableCell key="actions">
                         {canManageDashboards && (
                           <div className="flex flex-row items-center justify-end gap-1">
-                            <Tooltip content="Rename dashboard">
-                              <Button
-                                isIconOnly
-                                variant="light"
-                                size="sm"
-                                className="min-w-fit"
-                                onPress={() => _onEditProject(project)}
-                              >
-                                <LuPencilLine />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  variant="light"
+                                  size="sm"
+                                  className="min-w-fit"
+                                  onPress={() => _onEditProject(project)}
+                                >
+                                  <LuPencilLine />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Rename dashboard</Tooltip.Content>
                             </Tooltip>
-                            <Tooltip content="Delete dashboard">
-                              <Button
-                                isIconOnly
-                                color="danger"
-                                variant="light"
-                                size="sm"
-                                className="min-w-fit"
-                                onPress={() => _onDeleteProject(project)}
-                              >
-                                <LuTrash />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  color="danger"
+                                  variant="light"
+                                  size="sm"
+                                  className="min-w-fit"
+                                  onPress={() => _onDeleteProject(project)}
+                                >
+                                  <LuTrash />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Delete dashboard</Tooltip.Content>
                             </Tooltip>
                           </div>
                         )}

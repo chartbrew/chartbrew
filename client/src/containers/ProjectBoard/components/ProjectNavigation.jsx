@@ -167,8 +167,11 @@ function ProjectNavigation(props) {
               <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                 {menuSize === "large" && <LuLayoutGrid size={24} />}
                 {menuSize === "large" ? "Dashboard" : (
-                  <Tooltip content="Dashboard" placement="right">
-                    <div><LuLayoutGrid size={24} /></div>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <div><LuLayoutGrid size={24} /></div>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Dashboard</Tooltip.Content>
                   </Tooltip>
                 )}
               </div>
@@ -184,8 +187,11 @@ function ProjectNavigation(props) {
               <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                 {menuSize === "large" && <LuTvMinimal size={24} />}
                 {menuSize === "large" ? "Dashboard report" : (
-                  <Tooltip content="Dashboard report" placement="right">
-                    <div><LuTvMinimal size={24} /></div>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <div><LuTvMinimal size={24} /></div>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Dashboard report</Tooltip.Content>
                   </Tooltip>
                 )}
               </div>
@@ -202,8 +208,11 @@ function ProjectNavigation(props) {
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuUser size={24} />}
                   {menuSize === "large" ? "Members" : (
-                    <Tooltip content="Members" placement="right">
-                      <div><LuUser size={24} /></div>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div><LuUser size={24} /></div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Members</Tooltip.Content>
                     </Tooltip>
                   )}
                 </div>
@@ -221,8 +230,11 @@ function ProjectNavigation(props) {
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuSettings size={24} />}
                   {menuSize === "large" ? "Settings" : (
-                    <Tooltip content="Dashboard settings" placement="right">
-                      <div><LuSettings size={24} /></div>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div><LuSettings size={24} /></div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Dashboard settings</Tooltip.Content>
                     </Tooltip>
                   )}
                 </div>
@@ -240,8 +252,11 @@ function ProjectNavigation(props) {
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuPuzzle size={24} />}
                   {menuSize === "large" ? "Integrations" : (
-                    <Tooltip content="Integrations" placement="right">
-                      <div><LuPuzzle size={24} /></div>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div><LuPuzzle size={24} /></div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Integrations</Tooltip.Content>
                     </Tooltip>
                   )}
                 </div>
@@ -252,29 +267,35 @@ function ProjectNavigation(props) {
         <div className="translate-y-[-50px]">
           {menuSize === "large" && (
             <div className="flex justify-end items-center mr-5">
-              <Tooltip content="Click to collapse menu" placement="right">
-                <Button
-                  isIconOnly
-                  variant="light"
-                  color="default"
-                  onPress={() => onSetMenuSize(70)}
-                >
-                  <LuPanelLeftClose size={24} />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    color="default"
+                    onPress={() => onSetMenuSize(70)}
+                  >
+                    <LuPanelLeftClose size={24} />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="right">Click to collapse menu</Tooltip.Content>
               </Tooltip>
             </div>
           )}
           {menuSize === "small" && (
             <div className="flex justify-center items-center">
-              <Tooltip content="Click to expand menu" placement="right">
-                <Button
-                  isIconOnly
-                  variant="light"
-                  color="default"
-                  onPress={() => onSetMenuSize(sideMaxSize)}
-                >
-                  <LuPanelLeftOpen size={24} />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    color="default"
+                    onPress={() => onSetMenuSize(sideMaxSize)}
+                  >
+                    <LuPanelLeftOpen size={24} />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="right">Click to expand menu</Tooltip.Content>
               </Tooltip>
             </div>
           )}

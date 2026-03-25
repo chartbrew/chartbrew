@@ -353,7 +353,7 @@ function ManageUser() {
           <div className="h-2" />
           <div className="flex flex-row flex-wrap gap-1">
             {backupCodes?.map((code) => (
-              <Chip key={code} variant="flat" radius="sm">
+              <Chip key={code} variant="flat" className="rounded-sm">
                 {code}
               </Chip>
             ))}

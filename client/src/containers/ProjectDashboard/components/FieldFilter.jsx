@@ -44,7 +44,7 @@ function FieldFilter({
     return (
       <Dropdown aria-label="Select an operator">
         <DropdownTrigger>
-          <Chip variant="flat" radius="sm" size="sm" className="text-xs cursor-pointer">
+          <Chip variant="flat" size="sm" className="rounded-sm text-xs cursor-pointer">
             {field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}
           </Chip>
         </DropdownTrigger>

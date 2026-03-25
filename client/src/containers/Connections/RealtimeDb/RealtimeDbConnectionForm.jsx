@@ -118,7 +118,7 @@ function RealtimeDbConnectionForm(props) {
       <div style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <Link css={{ ai: "center", color: "$primary" }}>
+          <Link className="flex items-center text-primary">
             <LuFileCode2 size={24} />
             <div className="w-1" />
             {" Drag and drop your JSON authentication file here"}

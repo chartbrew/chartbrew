@@ -627,11 +627,13 @@ function CampaignsQuery(props) {
                           Refresh links
                         </Button>
                         <div className="w-1" />
-                        <Tooltip
-                          content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
-                          className="max-w-[500px]"
-                        >
-                          <div><LuInfo /></div>
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <div><LuInfo /></div>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content className="max-w-[500px]">
+                            You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link.
+                          </Tooltip.Content>
                         </Tooltip>
                       </div>
                     </div>

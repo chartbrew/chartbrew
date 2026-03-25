@@ -535,34 +535,44 @@ function ApiBuilder(props) {
               >
                 {"Save"}
               </Button>
-              <Tooltip content="Apply transformations to the data" placement="bottom" css={{ zIndex: 99999 }}>
-                <Badge
-                  color="success"
-                  content=""
-                  placement="top-right"
-                  shape="circle"
-                  isInvisible={!apiRequest.transform?.enabled}
-                >
-                  <Button
-                    color="primary"
-                    variant="flat"
-                    size="sm"
-                    onPress={() => setShowTransform(true)}
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Badge
+                    color="success"
+                    content=""
+                    placement="top-right"
+                    shape="circle"
+                    isInvisible={!apiRequest.transform?.enabled}
                   >
-                    Transform
-                  </Button>
-                </Badge>
+                    <Button
+                      color="primary"
+                      variant="flat"
+                      size="sm"
+                      onPress={() => setShowTransform(true)}
+                    >
+                      Transform
+                    </Button>
+                  </Badge>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Apply transformations to the data
+                </Tooltip.Content>
               </Tooltip>
-              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="danger"
-                  isIconOnly
-                  size="sm"
-                  variant="flat"
-                  onPress={() => onDelete()}
-                >
-                  <LuTrash />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    size="sm"
+                    variant="flat"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Delete this data request
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </Row>
@@ -587,9 +597,6 @@ function ApiBuilder(props) {
               fullWidth
               variant="bordered"
               disableAnimation
-              css={{
-                "& .nextui-input-label--left": { minWidth: "max-content" }
-              }}
             />
           </Row>
           {apiRequest.route && _hasVariables(apiRequest.route) && (
@@ -778,16 +785,21 @@ function ApiBuilder(props) {
                           }}
                           variant="bordered"
                           endContent={_hasVariables(header.key) && (
-                            <Tooltip content="Configure variable in header name">
-                              <Button
-                                isIconOnly
-                                onPress={() => _onVariableClick(_getFirstVariable(header.key))}
-                                color="primary"
-                                variant="light"
-                                size="sm"
-                              >
-                                <LuVariable />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  onPress={() => _onVariableClick(_getFirstVariable(header.key))}
+                                  color="primary"
+                                  variant="light"
+                                  size="sm"
+                                >
+                                  <LuVariable />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                Configure variable in header name
+                              </Tooltip.Content>
                             </Tooltip>
                           )}
                         />
@@ -801,16 +813,21 @@ function ApiBuilder(props) {
                           }}
                           variant="bordered"
                           endContent={_hasVariables(header.value) && (
-                            <Tooltip content="Configure variable in header value">
-                              <Button
-                                isIconOnly
-                                onPress={() => _onVariableClick(_getFirstVariable(header.value))}
-                                color="primary"
-                                variant="light"
-                                size="sm"
-                              >
-                                <LuVariable />
-                              </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  onPress={() => _onVariableClick(_getFirstVariable(header.value))}
+                                  color="primary"
+                                  variant="light"
+                                  size="sm"
+                                >
+                                  <LuVariable />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                Configure variable in header value
+                              </Tooltip.Content>
                             </Tooltip>
                           )}
                         />
@@ -943,16 +960,16 @@ function ApiBuilder(props) {
               >
                 Use cache
               </Checkbox>
-              <Tooltip
-                content={(
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom">
                   <>
                     <p>{"Chartbrew will use cached data for extra editing speed ⚡️"}</p>
                     <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
                   </>
-                )}
-                placement="bottom"
-              >
-                <div><LuInfo /></div>
+                </Tooltip.Content>
               </Tooltip>
             </div>
 
@@ -1025,15 +1042,18 @@ function ApiBuilder(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">

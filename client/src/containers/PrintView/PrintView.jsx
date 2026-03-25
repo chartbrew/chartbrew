@@ -142,10 +142,13 @@ function PrintView(props) {
       </Container>
       <div onMouseEnter={_onDisplayMenu}>
         <Text className="text-[2.5em]" onClick={() => setEditingTitle(true)}>
-          <Tooltip content="Edit your public dashboard title">
-            <a style={styles.editTitle}>
-              {printTitle || project.name}
-            </a>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <a style={styles.editTitle}>
+                {printTitle || project.name}
+              </a>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Edit your public dashboard title</Tooltip.Content>
           </Tooltip>
         </Text>
 

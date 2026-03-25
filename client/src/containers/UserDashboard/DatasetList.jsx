@@ -787,10 +787,9 @@ function DatasetList() {
               {projects.filter((p) => !p.ghost).map((project) => (
                 <Chip
                   key={project.id}
-                  radius="sm"
                   variant={datasetToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
                   color="primary"
-                  className="cursor-pointer"
+                  className="rounded-sm cursor-pointer"
                   onClick={() => {
                     if (datasetToEdit?.project_ids?.includes(project.id)) {
                       setDatasetToEdit({ ...datasetToEdit, project_ids: datasetToEdit?.project_ids?.filter((p) => p !== project.id) });

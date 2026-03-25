@@ -135,7 +135,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
 
     if (matchRule) {
       return (
-        <Chip size="sm" radius="sm" variant="flat" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
+        <Chip size="sm" variant="flat" className="rounded-sm" style={{ backgroundColor: matchRule.color, color: "#fff" }}>
           {baseContent}
         </Chip>
       );
@@ -178,19 +178,22 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
     const progressValue = Number(value);
     const safeProgressValue = Number.isFinite(progressValue) ? progressValue : 0;
     return (
-      <Tooltip content={`${value} / ${columnConfig.display.progress.max}`}>
-        <ProgressBar
-          aria-label="Progress"
-          value={safeProgressValue}
-          maxValue={columnConfig.display.progress.max}
-          minValue={0}
-          size="sm"
-          className="min-w-[80px]"
-        >
-          <ProgressBar.Track>
-            <ProgressBar.Fill />
-          </ProgressBar.Track>
-        </ProgressBar>
+      <Tooltip>
+        <Tooltip.Trigger>
+          <ProgressBar
+            aria-label="Progress"
+            value={safeProgressValue}
+            maxValue={columnConfig.display.progress.max}
+            minValue={0}
+            size="sm"
+            className="min-w-[80px]"
+          >
+            <ProgressBar.Track>
+              <ProgressBar.Fill />
+            </ProgressBar.Track>
+          </ProgressBar>
+        </Tooltip.Trigger>
+        <Tooltip.Content>{`${value} / ${columnConfig.display.progress.max}`}</Tooltip.Content>
       </Tooltip>
     );
   }

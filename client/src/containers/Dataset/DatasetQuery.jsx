@@ -292,20 +292,20 @@ function DatasetQuery(props) {
   const _renderDataRequestTabChip = (dr) => {
     if (_isMainDataRequest(dr)) {
       return (
-        <Chip size="sm" variant="flat" color="primary" radius="sm">
+        <Chip size="sm" variant="flat" color="primary" className="rounded-sm">
           main
         </Chip>
       );
     }
     if (_isDataRequestInJoin(dr)) {
       return (
-        <Chip size="sm" variant="flat" color="success" radius="sm">
+        <Chip size="sm" variant="flat" color="success" className="rounded-sm">
           joined
         </Chip>
       );
     }
     return (
-      <Chip size="sm" variant="flat" color="warning" radius="sm">
+      <Chip size="sm" variant="flat" color="warning" className="rounded-sm">
         needs config
       </Chip>
     );
@@ -343,7 +343,7 @@ function DatasetQuery(props) {
                   <LuGitMerge size={16} />
                   <span>Join settings</span>
                   {_hasJoinConfiguration() && (
-                    <Chip size="sm" variant="flat" radius="sm">
+                    <Chip size="sm" variant="flat" className="rounded-sm">
                       {`${_getJoinSettingsJoinCount()} join${_getJoinSettingsJoinCount() === 1 ? "" : "s"}`}
                     </Chip>
                   )}
@@ -584,11 +584,10 @@ function DatasetQuery(props) {
                               </Chip>
                             )}
                           </div>
-                          <Avatar
-                            radius="sm"
-                            src={connectionImages(theme === "dark")[c.subType || c.type]}
-                            alt={`${c.type} logo`}
-                          />
+                          <Avatar className="rounded-sm">
+                            <Avatar.Image src={connectionImages(theme === "dark")[c.subType || c.type]} alt={`${c.type} logo`} />
+                            <Avatar.Fallback />
+                          </Avatar>
                         </div>
                         <div className="h-4" />
                         <div className="flex flex-row items-center">

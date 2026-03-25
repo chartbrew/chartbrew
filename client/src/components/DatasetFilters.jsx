@@ -379,98 +379,116 @@ function DatasetFilters(props) {
             <Separator />
             <Card.Footer className="justify-between gap-2">
               {!condition.saved && condition.field && (
-                <Tooltip content="Apply this condition">
-                  <Button
-                    color="success"
-                    endContent={<LuCircleCheck size={18} />}
-                    variant="light"
-                    size="sm"
-                    onClick={() => _onApplyCondition(condition.id, condition.exposed)}
-                    fullWidth
-                  >
-                    Apply
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      color="success"
+                      endContent={<LuCircleCheck size={18} />}
+                      variant="light"
+                      size="sm"
+                      onClick={() => _onApplyCondition(condition.id, condition.exposed)}
+                      fullWidth
+                    >
+                      Apply
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Apply this condition</Tooltip.Content>
                 </Tooltip>
               )}
 
-              <Tooltip content="Remove filter">
-                <Button
-                  color="danger"
-                  endContent={<LuCircleX size={18} />}
-                  variant="light"
-                  size="sm"
-                  onClick={() => _onRemoveCondition(condition.id)}
-                  fullWidth
-                >
-                  Remove
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    endContent={<LuCircleX size={18} />}
+                    variant="light"
+                    size="sm"
+                    onClick={() => _onRemoveCondition(condition.id)}
+                    fullWidth
+                  >
+                    Remove
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Remove filter</Tooltip.Content>
               </Tooltip>
 
               {condition.field && condition.operator && !condition.exposed && (
-                <Tooltip content="Expose filter to viewers">
-                  <Button
-                    endContent={<LuEye size={18} />}
-                    color="secondary"
-                    variant="light"
-                    size="sm"
-                    onClick={() => _onApplyCondition(
-                      condition.id,
-                      true,
-                      find(fieldOptions, { value: condition.field })
-                      && find(fieldOptions, { value: condition.field }).type
-                    )}
-                    fullWidth
-                  >
-                    Expose
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      endContent={<LuEye size={18} />}
+                      color="secondary"
+                      variant="light"
+                      size="sm"
+                      onClick={() => _onApplyCondition(
+                        condition.id,
+                        true,
+                        find(fieldOptions, { value: condition.field })
+                        && find(fieldOptions, { value: condition.field }).type
+                      )}
+                      fullWidth
+                    >
+                      Expose
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Expose filter to viewers</Tooltip.Content>
                 </Tooltip>
               )}
 
               {condition.field && condition.operator && condition.exposed && (
-                <Tooltip content="Hide this filter from viewers">
-                  <Button
-                    color="secondary"
-                    variant="light"
-                    size="sm"
-                    endContent={<LuEyeOff size={18} />}
-                    onClick={() => _onApplyCondition(
-                      condition.id,
-                      false,
-                      find(fieldOptions, { value: condition.field })
-                      && find(fieldOptions, { value: condition.field }).type
-                    )}
-                    fullWidth
-                  >
-                    Hide
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      color="secondary"
+                      variant="light"
+                      size="sm"
+                      endContent={<LuEyeOff size={18} />}
+                      onClick={() => _onApplyCondition(
+                        condition.id,
+                        false,
+                        find(fieldOptions, { value: condition.field })
+                        && find(fieldOptions, { value: condition.field }).type
+                      )}
+                      fullWidth
+                    >
+                      Hide
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Hide this filter from viewers</Tooltip.Content>
                 </Tooltip>
               )}
 
               {!condition.saved && condition.value && (
-                <Tooltip content="Undo changes">
-                  <Button
-                    color="warning"
-                    endContent={<LuRedo size={18} />}
-                    variant="light"
-                    size="sm"
-                    onClick={() => _onRevertCondition(condition.id)}
-                    fullWidth
-                  >
-                    Undo
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      color="warning"
+                      endContent={<LuRedo size={18} />}
+                      variant="light"
+                      size="sm"
+                      onClick={() => _onRevertCondition(condition.id)}
+                      fullWidth
+                    >
+                      Undo
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Undo changes</Tooltip.Content>
                 </Tooltip>
               )}
               {condition.saved && (
-                <Tooltip content="Filter settings">
-                  <Button
-                    variant="light"
-                    size="sm"
-                    endContent={<LuSettings size={18} />}
-                    onClick={() => _onEditConditionSettings(condition)}
-                    fullWidth
-                  >
-                    Config
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant="light"
+                      size="sm"
+                      endContent={<LuSettings size={18} />}
+                      onClick={() => _onEditConditionSettings(condition)}
+                      fullWidth
+                    >
+                      Config
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Filter settings</Tooltip.Content>
                 </Tooltip>
               )}
             </Card.Footer>
@@ -499,8 +517,8 @@ function DatasetFilters(props) {
               return (
                 <Chip
                   key={condition.id}
-                  radius="sm"
                   variant="faded"
+                  className="rounded-sm"
                   endContent={(
                     <Link
                       onClick={() => _onApplyCondition(
@@ -614,15 +632,18 @@ function DatasetFilters(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">

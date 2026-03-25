@@ -412,8 +412,11 @@ function SharingSettings(props) {
           <div className="flex flex-row justify-between items-center mb-2">
             <div className="flex flex-row items-center gap-2">
               <div className="text-sm font-medium">Parameters</div>
-              <Tooltip content="Parameters allow you to pass data to variables in your dashboard's charts.">
-                <div className="text-gray-500"><LuInfo size={16} /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div className="text-gray-500"><LuInfo size={16} /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content>{"Parameters allow you to pass data to variables in your dashboard's charts."}</Tooltip.Content>
               </Tooltip>
             </div>
             <Button
@@ -482,11 +485,13 @@ function SharingSettings(props) {
             >
               Allow parameters in the URL
             </Checkbox>
-            <Tooltip
-              content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the dashboard."
-              className="max-w-xs"
-            >
-              <div className="text-gray-500"><LuInfo size={16} /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div className="text-gray-500"><LuInfo size={16} /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-xs">
+                When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the dashboard.
+              </Tooltip.Content>
             </Tooltip>
           </div>
         </div>
@@ -543,15 +548,18 @@ function SharingSettings(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={onClose}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={onClose}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="flex flex-row items-center gap-2">
               <Button
@@ -577,17 +585,17 @@ function SharingSettings(props) {
                 Allow sharing
               </Switch>
               <div className="w-1" />
-              <Tooltip
-                content={(
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo size={16} /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="max-w-xs">
                   <>
                     <p>{"Allow sharing the report with anyone with or without a Chartbrew account."}</p>
                     <div className="h-2" />
                     <p>{"When disabled, the report can only be seen by members of your team if logged in."}</p>
                   </>
-                )}
-                className="max-w-xs"
-              >
-                <div><LuInfo size={16} /></div>
+                </Tooltip.Content>
               </Tooltip>
             </div>
             <div className="flex items-center">
@@ -600,11 +608,13 @@ function SharingSettings(props) {
                 Require password to view
               </Switch>
               <div className="w-1" />
-              <Tooltip
-                content="When enabled, the report will require the viewers outside of your team to enter a password before viewing"
-                className="max-w-xs"
-              >
-                <div><LuInfo size={16} /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo size={16} /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="max-w-xs">
+                  When enabled, the report will require the viewers outside of your team to enter a password before viewing
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </div>

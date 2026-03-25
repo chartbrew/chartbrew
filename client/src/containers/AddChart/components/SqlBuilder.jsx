@@ -297,17 +297,22 @@ function SqlBuilder(props) {
                   Transform
                 </Button>
               </Badge>
-              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="danger"
-                  isIconOnly
-                  auto
-                  size="sm"
-                  variant="flat"
-                  onPress={() => onDelete()}
-                >
-                  <LuTrash />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    auto
+                    size="sm"
+                    variant="flat"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Delete this data request
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </Row>
@@ -386,11 +391,13 @@ function SqlBuilder(props) {
               {"Use cached data"}
             </Checkbox>
             <div className="w-1" />
-            <Tooltip
-              content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings."}
-              className="max-w-[400px]"
-            >
-              <div><LuInfo /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-[400px]">
+                Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings.
+              </Tooltip.Content>
             </Tooltip>
           </Row>
 
@@ -552,15 +559,18 @@ function SqlBuilder(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">

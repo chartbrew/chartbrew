@@ -81,9 +81,8 @@ function EditDateRangeFilter({
           <Fragment key={chart.id}>
             <LinkNext onPress={() => _handleChartSelection(chart.id)}>
               <Chip
-                className="cursor-pointer"
+                className="rounded-sm cursor-pointer"
                 color={selectedCharts.includes(chart.id) ? "primary" : "default"}
-                radius="sm"
                 variant={selectedCharts.includes(chart.id) ? "solid" : "flat"}
               >
                 {chart.name}

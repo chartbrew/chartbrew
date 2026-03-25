@@ -467,25 +467,31 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     {integration.name}
                   </Button>
                 ))}
-                <Tooltip content="Create a new integration">
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    size="sm"
-                    onPress={_onCreateNewIntegration}
-                  >
-                    <LuPlus size={18} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      size="sm"
+                      onPress={_onCreateNewIntegration}
+                    >
+                      <LuPlus size={18} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Create a new integration</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Refresh list">
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    size="sm"
-                    onPress={_onRefreshIntegrationList}
-                  >
-                    <LuRefreshCw size={18} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      size="sm"
+                      onPress={_onRefreshIntegrationList}
+                    >
+                      <LuRefreshCw size={18} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Refresh list</Tooltip.Content>
                 </Tooltip>
               </div>
 
@@ -577,37 +583,40 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </div>
 
                 <div className="flex flex-row items-center gap-2">
-                  <Tooltip content="Viewport width">
-                    <ButtonGroup variant="light" size="sm">
-                      <Button
-                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
-                        isIconOnly
-                        color={schedule?.viewport?.width === 375 ? "primary" : "default"}
-                      >
-                        <LuSmartphone />
-                      </Button>
-                      <Button
-                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
-                        isIconOnly
-                        color={schedule?.viewport?.width === 768 ? "primary" : "default"}
-                      >
-                        <LuTablet />
-                      </Button>
-                      <Button
-                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
-                        isIconOnly
-                        color={schedule?.viewport?.width === 1440 ? "primary" : "default"}
-                      >
-                        <LuLaptop />
-                      </Button>
-                      <Button
-                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
-                        isIconOnly
-                        color={schedule?.viewport?.width === 1920 ? "primary" : "default"}
-                      >
-                        <LuMonitor />
-                      </Button>
-                    </ButtonGroup>
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <ButtonGroup variant="light" size="sm">
+                        <Button
+                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
+                          isIconOnly
+                          color={schedule?.viewport?.width === 375 ? "primary" : "default"}
+                        >
+                          <LuSmartphone />
+                        </Button>
+                        <Button
+                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
+                          isIconOnly
+                          color={schedule?.viewport?.width === 768 ? "primary" : "default"}
+                        >
+                          <LuTablet />
+                        </Button>
+                        <Button
+                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
+                          isIconOnly
+                          color={schedule?.viewport?.width === 1440 ? "primary" : "default"}
+                        >
+                          <LuLaptop />
+                        </Button>
+                        <Button
+                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
+                          isIconOnly
+                          color={schedule?.viewport?.width === 1920 ? "primary" : "default"}
+                        >
+                          <LuMonitor />
+                        </Button>
+                      </ButtonGroup>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Viewport width</Tooltip.Content>
                   </Tooltip>
                   <Input
                     placeholder="Viewport width"

@@ -608,7 +608,7 @@ function PostgresConnectionForm(props) {
           >
             <div className="flex items-center gap-2">
               {"Use SSH Tunnel"}
-              <Chip color="secondary" size="sm" radius="sm" variant="flat">{"New!"}</Chip>
+              <Chip color="secondary" size="sm" variant="flat" className="rounded-sm">{"New!"}</Chip>
             </div>
           </Switch>
         </Row>
@@ -776,7 +776,7 @@ function PostgresConnectionForm(props) {
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className="rounded-medium bg-red-300 p-2.5 dark:bg-red-400/80">
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>

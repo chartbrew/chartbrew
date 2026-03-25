@@ -184,10 +184,13 @@ function InviteMembersForm(props) {
               {"Data export permissions "}
             </div>
             <div className="w-1" />
-            <Tooltip
-              content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-            >
-              <div><LuInfo /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data.
+              </Tooltip.Content>
             </Tooltip>
           </div>
           <div className="h-1" />

@@ -251,10 +251,15 @@ function ConnectionWizard() {
                         </Card.Content>
                         <Card.Footer className="justify-center flex flex-col gap-1">
                           {conn.ai && (
-                            <Tooltip content="You can use AI to ask questions about your data">
-                              <Chip radius="sm" color="secondary" variant="flat" size="sm" startContent={<LuBrainCircuit size={14} />}>
-                                {"AI-powered"}
-                              </Chip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Chip color="secondary" variant="flat" size="sm" className="rounded-sm" startContent={<LuBrainCircuit size={14} />}>
+                                  {"AI-powered"}
+                                </Chip>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                You can use AI to ask questions about your data
+                              </Tooltip.Content>
                             </Tooltip>
                           )}
                           <span className="text-sm font-semibold">{conn.name}</span>

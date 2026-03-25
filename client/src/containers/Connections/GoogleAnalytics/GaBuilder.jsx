@@ -465,16 +465,21 @@ function GaBuilder(props) {
                     Transform
                   </Button>
                 </Badge>
-                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                  <Button
-                    color="danger"
-                    isIconOnly
-                    size="sm"
-                    variant="bordered"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      color="danger"
+                      isIconOnly
+                      size="sm"
+                      variant="bordered"
+                      onPress={() => onDelete()}
+                    >
+                      <LuTrash />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="bottom" className="z-[99999]">
+                    Delete this data request
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
             </div>
@@ -542,12 +547,13 @@ function GaBuilder(props) {
                   {"Choose a metric "}
                 </Text>
                 <div className="w-2" />
-                <Tooltip
-                  content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
-                  className="max-w-[500px]"
-                  placement="right-start"
-                >
-                  <div><LuInfo /></div>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuInfo /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content className="max-w-[500px]" placement="right start">
+                    {"You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."}
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
               <Autocomplete
@@ -774,11 +780,13 @@ function GaBuilder(props) {
               {"Use cache"}
             </Checkbox>
             <div className="w-2" />
-            <Tooltip
-              content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
-              className="max-w-[500px]"
-            >
-              <div><LuInfo /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-[500px]">
+                Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings.
+              </Tooltip.Content>
             </Tooltip>
           </Row>
           <div className="h-4" />

@@ -383,8 +383,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                       <Chip
                         variant="flat"
                         size="sm"
-                        radius="sm"
-                        className="text-xs"
+                        className="rounded-sm text-xs"
                         color={policy.allow_params ? "success" : "default"}
                       >
                         {policy.allow_params ? "Allow params" : "No URL params"}
@@ -508,8 +507,13 @@ function ChartSharing({ chart, isOpen, onClose }) {
           <div className="flex flex-row justify-between items-center mb-2">
             <div className="flex flex-row items-center gap-2">
               <div className="text-sm font-medium">Parameters</div>
-              <Tooltip content="Parameters allow you to pass data to variables in your chart's datasets.">
-                <div className="text-gray-500"><LuInfo size={16} /></div>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div className="text-gray-500"><LuInfo size={16} /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  Parameters allow you to pass data to variables in your chart&apos;s datasets.
+                </Tooltip.Content>
               </Tooltip>
             </div>
             <Button
@@ -578,11 +582,13 @@ function ChartSharing({ chart, isOpen, onClose }) {
             >
               Allow parameters in the URL
             </Checkbox>
-            <Tooltip
-              content="When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the chart."
-              className="max-w-xs"
-            >
-              <div className="text-gray-500"><LuInfo size={16} /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div className="text-gray-500"><LuInfo size={16} /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-xs">
+                When enabled, parameters and variables can be passed directly in the URL like ?param1=value1&param2=value2. This will mean that everyone who has the URL can change the parameters and variables in the chart.
+              </Tooltip.Content>
             </Tooltip>
           </div>
         </div>

@@ -33,7 +33,7 @@ function VariableFilter({
         return (
           <Input
             startContent={(
-              <Chip variant="flat" radius="sm" size="sm" className="text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
@@ -57,7 +57,7 @@ function VariableFilter({
         return (
           <Input
             startContent={(
-              <Chip variant="flat" radius="sm" size="sm" className="text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
@@ -81,7 +81,7 @@ function VariableFilter({
         return (
           <DatePicker
             startContent={(
-              <Chip variant="flat" radius="sm" size="sm" className="text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
@@ -114,7 +114,7 @@ function VariableFilter({
             size="sm"
             isDisabled={!allowValueChange}
             startContent={(
-              <Chip variant="flat" radius="sm" size="sm" className="text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}

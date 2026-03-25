@@ -197,7 +197,10 @@ function CustomTemplateForm(props) {
                                 id={`${c.id}`}
                                 textValue={c.name}
                               >
-                                <Avatar src={connectionImages(isDark)[c.subType]} radius="sm" />
+                                <Avatar className="size-6 rounded-sm">
+                                  <Avatar.Image src={connectionImages(isDark)[c.subType]} alt="" />
+                                  <Avatar.Fallback />
+                                </Avatar>
                                 {c.name}
                                 <ListBox.ItemIndicator />
                               </ListBox.Item>
@@ -209,11 +212,11 @@ function CustomTemplateForm(props) {
                     {`${customConnections[connection.id]}` !== `${connection.id}` && (
                       <div className="flex items-center gap-1">
                         <span className="text-sm">{"Connection "}</span>
-                        <Chip variant="flat" radius="sm">
+                        <Chip variant="flat" className="rounded-sm">
                           {connection.name}
                         </Chip>
                         <span className="text-sm">{" will be replaced by "}</span>
-                        <Chip variant="flat" radius="sm">
+                        <Chip variant="flat" className="rounded-sm">
                           {connections.find((c) => c.id === customConnections[connection.id])?.name}
                         </Chip>
                       </div>
@@ -249,7 +252,7 @@ function CustomTemplateForm(props) {
           )}
           {!template.model?.Datasets?.length && (
             <div className="flex flex-col gap-2">
-              <Chip variant="flat" color="warning" radius="sm">
+              <Chip variant="flat" color="warning" className="rounded-sm">
                 {"Legacy template"}
               </Chip>
               <span className="text-sm">

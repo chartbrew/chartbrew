@@ -405,8 +405,7 @@ function TableDataFormattingModal(props) {
                         size="sm"
                         variant="light"
                         onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : "rgba(0,0,0,0)" } : r)))}
-                        className="pl-10 border border-solid border-content3"
-                        radius="sm"
+                        className="rounded-sm pl-10 border border-solid border-content3"
                         style={{
                           backgroundColor: r.color || "transparent",
                         }}

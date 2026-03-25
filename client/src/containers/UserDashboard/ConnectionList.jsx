@@ -180,17 +180,23 @@ function ConnectionList() {
                   </div>
                   <div>
                     {_getRelatedDatasets(connection.id).length > 0 && (
-                      <Tooltip content="Datasets are using this connection.">
-                        <Chip size="sm" variant="flat" color="success" radius="sm">
-                          Active
-                        </Chip>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Chip size="sm" variant="flat" color="success" className="rounded-sm">
+                            Active
+                          </Chip>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Datasets are using this connection.</Tooltip.Content>
                       </Tooltip>
                     )}
                     {_getRelatedDatasets(connection.id).length === 0 && (
-                      <Tooltip content="No datasets are using this connection yet.">
-                        <Chip size="sm" variant="flat" color="danger" radius="sm">
-                          Inactive
-                        </Chip>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Chip size="sm" variant="flat" color="danger" className="rounded-sm">
+                            Inactive
+                          </Chip>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>No datasets are using this connection yet.</Tooltip.Content>
                       </Tooltip>
                     )}
                   </div>
@@ -199,7 +205,7 @@ function ConnectionList() {
               <Card.Content>
                 <div className="flex flex-row items-center flex-wrap gap-1">
                   {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
-                    <Chip key={tag} size="sm" variant="flat" color="primary" radius="sm" className="cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
+                    <Chip key={tag} size="sm" variant="flat" color="primary" className="rounded-sm cursor-pointer" onClick={() => setConnectionToEdit(connection)}>
                       {tag}
                     </Chip>
                   ))}
@@ -373,10 +379,9 @@ function ConnectionList() {
                   {projects.filter((p) => !p.ghost).map((project) => (
                     <Chip
                       key={project.id}
-                      radius="sm"
                       variant={connectionToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
                       color="primary"
-                      className="cursor-pointer"
+                      className="rounded-sm cursor-pointer"
                       onClick={() => {
                         if (connectionToEdit?.project_ids?.includes(project.id)) {
                           setConnectionToEdit({ ...connectionToEdit, project_ids: connectionToEdit?.project_ids?.filter((p) => p !== project.id) });

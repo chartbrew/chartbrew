@@ -247,10 +247,11 @@ function ChartPreview(props) {
                 >
                   {"Use cached data"}
                 </Checkbox>
-                <Tooltip
-                  content="Chartbrew will use cached data for extra editing speed ⚡️"
-                >
-                  <div><LuInfo /></div>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuInfo /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Chartbrew will use cached data for extra editing speed ⚡️</Tooltip.Content>
                 </Tooltip>
               </div>
 
@@ -395,136 +396,170 @@ function ChartPreview(props) {
           <div className="border-solid border border-content3 px-3 py-2 rounded-2xl chart-preview-types">
             <div className="flex flex-row gap-4 justify-around flex-wrap">
               <div className="flex flex-row gap-1">
-                <Tooltip
-                  content={"Get the average value of all the points on the chart"}
-                >
-                  <Button
-                    variant={chart.type !== "avg" ? "bordered" : "solid"}
-                    color={chart.type === "avg" ? "secondary" : "default"}
-                    onPress={() => _onChangeChartType({ type: "avg" })}
-                    isIconOnly
-                  >
-                    <TbMathAvg size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "avg" ? "bordered" : "solid"}
+                      color={chart.type === "avg" ? "secondary" : "default"}
+                      onPress={() => _onChangeChartType({ type: "avg" })}
+                      isIconOnly
+                    >
+                      <TbMathAvg size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Get the average value of all the points on the chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip
-                  content={chart.subType?.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
-                >
-                  <Button
-                    variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
-                    color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
-                    onPress={_toggleAccumulation}
-                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
-                    isIconOnly
-                  >
-                    <FaChartLine size={20} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
+                      color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
+                      onPress={_toggleAccumulation}
+                      isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
+                      isIconOnly
+                    >
+                      <FaChartLine size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    {chart.subType?.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
 
               <div className="flex flex-row gap-1">
-                <Tooltip content="Display data in a table view">
-                  <Button
-                    variant={chart.type !== "table" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "table" })}
-                    color={chart.type === "table" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <BsTable size={20} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "table" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "table" })}
+                      color={chart.type === "table" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <BsTable size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display data in a table view</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as line chart">
-                  <Button
-                    variant={chart.type !== "line" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "line" })}
-                    color={chart.type === "line" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbChartLine size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "line" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "line" })}
+                      color={chart.type === "line" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbChartLine size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as line chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as bar chart">
-                  <Button
-                    variant={chart.type !== "bar" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "bar" })}
-                    color={chart.type === "bar" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbChartBar size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "bar" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "bar" })}
+                      color={chart.type === "bar" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbChartBar size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as bar chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as a single value (KPI)">
-                  <Button
-                    variant={chart.type !== "kpi" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "kpi" })}
-                    color={chart.type === "kpi" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbHash size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "kpi" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "kpi" })}
+                      color={chart.type === "kpi" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbHash size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as a single value (KPI)</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as a gauge chart">
-                  <Button
-                    variant={chart.type !== "gauge" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "gauge" })}
-                    color={chart.type === "gauge" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <LuGauge size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "gauge" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "gauge" })}
+                      color={chart.type === "gauge" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <LuGauge size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as a gauge chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as a time-based matrix chart (heatmap)">
-                  <Button
-                    variant={chart.type !== "matrix" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "matrix" })}
-                    color={chart.type === "matrix" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbGridDots size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "matrix" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "matrix" })}
+                      color={chart.type === "matrix" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbGridDots size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as a time-based matrix chart (heatmap)</Tooltip.Content>
                 </Tooltip>
               </div>
 
               <div className={"flex flex-row gap-1"}>
-                <Tooltip content="Display as pie chart">
-                  <Button
-                    variant={chart.type !== "pie" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "pie" })}
-                    color={chart.type === "pie" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbChartPie2 size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "pie" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "pie" })}
+                      color={chart.type === "pie" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbChartPie2 size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as pie chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as doughnut chart">
-                  <Button
-                    variant={chart.type !== "doughnut" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "doughnut" })}
-                    color={chart.type === "doughnut" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbChartDonut4 size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "doughnut" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "doughnut" })}
+                      color={chart.type === "doughnut" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbChartDonut4 size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as doughnut chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as radar chart">
-                  <Button
-                    variant={chart.type !== "radar" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "radar" })}
-                    color={chart.type === "radar" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TbChartRadar size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "radar" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "radar" })}
+                      color={chart.type === "radar" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TbChartRadar size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as radar chart</Tooltip.Content>
                 </Tooltip>
-                <Tooltip content="Display as polar chart">
-                  <Button
-                    variant={chart.type !== "polar" ? "bordered" : "solid"}
-                    onPress={() => _onChangeChartType({ type: "polar" })}
-                    color={chart.type === "polar" ? "primary" : "default"}
-                    isIconOnly
-                  >
-                    <TiChartPie size={24} />
-                  </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "polar" ? "bordered" : "solid"}
+                      onPress={() => _onChangeChartType({ type: "polar" })}
+                      color={chart.type === "polar" ? "primary" : "default"}
+                      isIconOnly
+                    >
+                      <TiChartPie size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as polar chart</Tooltip.Content>
                 </Tooltip>
               </div>
             </div>

@@ -270,17 +270,22 @@ function MongoQueryBuilder(props) {
                   Transform
                 </Button>
               </Badge>
-              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                <Button
-                  color="danger"
-                  isIconOnly
-                  auto
-                  size="sm"
-                  variant="bordered"
-                  onPress={() => onDelete()}
-                >
-                  <LuTrash />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    color="danger"
+                    isIconOnly
+                    auto
+                    size="sm"
+                    variant="bordered"
+                    onPress={() => onDelete()}
+                  >
+                    <LuTrash />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="bottom" className="z-[99999]">
+                  Delete this data request
+                </Tooltip.Content>
               </Tooltip>
             </div>
           </Row>
@@ -294,8 +299,11 @@ function MongoQueryBuilder(props) {
               {"Enter your mongodb query here"}
             </Text>
             <div className="w-1" />
-            <Tooltip
-              content={(
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content placement="bottom">
                 <>
                   <Text>
                     {"In order to select a collection you always have to start with "}
@@ -305,10 +313,7 @@ function MongoQueryBuilder(props) {
                     {"You can use variables like {{variable_name}} in your queries"}
                   </Text>
                 </>
-              )}
-              placement="bottom"
-            >
-              <div><LuInfo /></div>
+              </Tooltip.Content>
             </Tooltip>
           </Row>
           <div className="h-2" />
@@ -349,11 +354,13 @@ function MongoQueryBuilder(props) {
               {"Use cached data"}
             </Checkbox>
             <div className="w-2" />
-            <Tooltip
-              content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
-              className="max-w-[400px]"
-            >
-              <div><LuInfo /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="max-w-[400px]">
+                Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query.
+              </Tooltip.Content>
             </Tooltip>
           </div>
 
@@ -583,15 +590,18 @@ function MongoQueryBuilder(props) {
           <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
-            <Tooltip content="Close">
-              <Button
-                isIconOnly
-                onPress={() => setVariableSettings(null)}
-                size="sm"
-                variant="light"
-              >
-                <LuChevronsRight />
-              </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  onPress={() => setVariableSettings(null)}
+                  size="sm"
+                  variant="light"
+                >
+                  <LuChevronsRight />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close</Tooltip.Content>
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">

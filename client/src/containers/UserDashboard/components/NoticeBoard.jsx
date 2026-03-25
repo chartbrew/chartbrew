@@ -27,10 +27,13 @@ function NoticeBoard() {
         <Card className="mt-4 hidden sm:block shadow-sm">
           <Card.Header className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Quick start guide</span>
-            <Tooltip content="Close the guide">
-              <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ quickStartVideo: true })}>
-                <LuX />
-              </span>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ quickStartVideo: true })}>
+                  <LuX />
+                </span>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close the guide</Tooltip.Content>
             </Tooltip>
           </Card.Header>
           <Separator />
@@ -62,10 +65,13 @@ function NoticeBoard() {
         <Card className="mt-4 hidden sm:block shadow-sm">
           <Card.Header className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Two-factor Authentication</span>
-            <Tooltip content="Close the guide">
-              <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ twoFactorAuth: true })}>
-                <LuX />
-              </span>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ twoFactorAuth: true })}>
+                  <LuX />
+                </span>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close the guide</Tooltip.Content>
             </Tooltip>
           </Card.Header>
           <Separator />

@@ -187,19 +187,25 @@ function ChartDatasetDataSetup({
         endContent={(
           <Row align="center" className="gap-2">
             {legend && legend !== cdc.legend && (
-              <Tooltip content="Save series name">
-                <Button
-                  isIconOnly
-                  color="primary"
-                  size="sm"
-                  onPress={onSaveLegend.onSave}
-                >
-                  <LuCheck />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    color="primary"
+                    size="sm"
+                    onPress={onSaveLegend.onSave}
+                  >
+                    <LuCheck />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Save series name</Tooltip.Content>
               </Tooltip>
             )}
-            <Tooltip content={`Dataset: ${getDatasetDisplayName(dataset)}`}>
-              <div><LuInfo size={18} className="text-default-400" /></div>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <div><LuInfo size={18} className="text-default-400" /></div>
+              </Tooltip.Trigger>
+              <Tooltip.Content>{`Dataset: ${getDatasetDisplayName(dataset)}`}</Tooltip.Content>
             </Tooltip>
           </Row>
         )}

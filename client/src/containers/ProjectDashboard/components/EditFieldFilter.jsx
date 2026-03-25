@@ -210,7 +210,7 @@ function EditFieldFilter({
             <div className="text-sm font-medium">Affected charts:</div>
             <div className="flex flex-row flex-wrap gap-1">
               {_getChartsWithField(fieldCondition.field).map((chart) => (
-                <Chip key={chart.id} color="primary" radius="sm" variant="flat">
+                <Chip key={chart.id} color="primary" variant="flat" className="rounded-sm">
                   {chart.name}
                 </Chip>
               ))}

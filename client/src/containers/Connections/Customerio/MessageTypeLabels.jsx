@@ -64,7 +64,7 @@ function MessageTypeLabels(props) {
               onClick={() => onSelect(message.value)}
               color="primary"
               variant="bordered"
-              css={{ cursor: "pointer" }}
+              className="cursor-pointer"
             >
               {message.text}
             </Chip>

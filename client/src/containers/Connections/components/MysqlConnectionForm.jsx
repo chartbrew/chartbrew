@@ -314,7 +314,7 @@ function MysqlConnectionForm(props) {
               />
             </Row>
             {errors.name && (
-              <Row css={{ p: 5 }}>
+              <Row className="p-5">
                 <Text small className="text-danger">
                   {errors.name}
                 </Text>
@@ -598,7 +598,7 @@ function MysqlConnectionForm(props) {
           >
             <div className="flex items-center gap-2">
               {"Use SSH Tunnel"}
-              <Chip color="secondary" size="sm" radius="sm" variant="flat">{"New!"}</Chip>
+              <Chip color="secondary" size="sm" variant="flat" className="rounded-sm">{"New!"}</Chip>
             </div>
           </Switch>
         </Row>

@@ -82,18 +82,23 @@ function KpiMode(props) {
     const formattedComparison = Math.abs(comparison % 1 === 0 ? Math.round(comparison).toFixed(0) : comparison.toFixed(2));
     return (
       <div>
-        <Tooltip content={`compared to last ${chart.timeInterval}`} placement="bottom">
-          <div className="w-full py-1">
-            <Chip
-              size="sm"
-              variant="flat"
-              radius="sm"
-              color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
-              startContent={status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : ""}
-            >
-              {`${formattedComparison}%`}
-            </Chip>
-          </div>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <div className="w-full py-1">
+              <Chip
+                size="sm"
+                variant="flat"
+                className="rounded-sm"
+                color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
+                startContent={status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : ""}
+              >
+                {`${formattedComparison}%`}
+              </Chip>
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Content placement="bottom">
+            {`compared to last ${chart.timeInterval}`}
+          </Tooltip.Content>
         </Tooltip>
       </div>
     );

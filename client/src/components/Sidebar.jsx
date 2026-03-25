@@ -196,11 +196,20 @@ function Sidebar() {
                 )}
                 onClick={() => navigate("/")}
               >
-                <Tooltip content="Dashboards" hidden={!collapsed} placement="right">
+                {collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                        <LuLayoutGrid size={20} />
+                      </div>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Dashboards</Tooltip.Content>
+                  </Tooltip>
+                ) : (
                   <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                    {collapsed ? <LuLayoutGrid size={20} /> : <span className="text-sm">Dashboards</span>}
+                    <span className="text-sm">Dashboards</span>
                   </div>
-                </Tooltip>
+                )}
               </button>
               {_canAccess("teamAdmin", team.TeamRoles) && (
                 <button
@@ -212,11 +221,20 @@ function Sidebar() {
                   )}
                   onClick={() => navigate("/connections")}
                 >
-                  <Tooltip content="Connections" hidden={!collapsed} placement="right">
+                  {collapsed ? (
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                          <LuPlug size={20} />
+                        </div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Connections</Tooltip.Content>
+                    </Tooltip>
+                  ) : (
                     <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      {collapsed ? <LuPlug size={20} /> : <span className="text-sm">Connections</span>}
+                      <span className="text-sm">Connections</span>
                     </div>
-                  </Tooltip>
+                  )}
                 </button>
               )}
               {_canAccess("projectAdmin", team.TeamRoles) && (
@@ -229,11 +247,20 @@ function Sidebar() {
                   )}
                   onClick={() => navigate("/datasets")}
                 >
-                  <Tooltip content="Datasets" hidden={!collapsed} placement="right">
+                  {collapsed ? (
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                          <LuLayers size={20} />
+                        </div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Datasets</Tooltip.Content>
+                    </Tooltip>
+                  ) : (
                     <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      {collapsed ? <LuLayers size={20} /> : <span className="text-sm">Datasets</span>}
+                      <span className="text-sm">Datasets</span>
                     </div>
-                  </Tooltip>
+                  )}
                 </button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -246,11 +273,20 @@ function Sidebar() {
                   )}
                   onClick={() => navigate("/integrations")}
                 >
-                  <Tooltip content="Integrations" hidden={!collapsed} placement="right">
+                  {collapsed ? (
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
+                          <LuPuzzle size={20} />
+                        </div>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content placement="right">Integrations</Tooltip.Content>
+                    </Tooltip>
+                  ) : (
                     <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      {collapsed ? <LuPuzzle size={20} /> : <span className="text-sm">Integrations</span>}
+                      <span className="text-sm">Integrations</span>
                     </div>
-                  </Tooltip>
+                  )}
                 </button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -278,57 +314,117 @@ function Sidebar() {
                   {collapsed ? "" : "Quick actions"}
                 </div>
                 <div className="h-2" />
-                <Tooltip content="Create a new dashboard" hidden={!collapsed} placement="right">
+                {collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => navigate("/?create=dashboard")}
+                        isIconOnly
+                        fullWidth
+                        className="justify-center"
+                      >
+                        <LuGrid2X2Plus size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Create a new dashboard</Tooltip.Content>
+                  </Tooltip>
+                ) : (
                   <Button
                     variant="tertiary"
                     size="sm"
                     onPress={() => navigate("/?create=dashboard")}
-                    isIconOnly={collapsed}
                     fullWidth
-                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                    className="justify-start"
                   >
-                    {collapsed ? <LuGrid2X2Plus size={20} /> : <><LuGrid2X2Plus size={18} />New dashboard</>}
+                    <LuGrid2X2Plus size={18} />New dashboard
                   </Button>
-                </Tooltip>
+                )}
                 <div className="h-1" />
-                <Tooltip content="Create a new dataset" hidden={!collapsed} placement="right">
+                {collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => navigate("/datasets/new")}
+                        isIconOnly
+                        fullWidth
+                        className="justify-center"
+                      >
+                        <LuLayers2 size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Create a new dataset</Tooltip.Content>
+                  </Tooltip>
+                ) : (
                   <Button
                     variant="tertiary"
                     size="sm"
                     onPress={() => navigate("/datasets/new")}
-                    isIconOnly={collapsed}
                     fullWidth
-                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                    className="justify-start"
                   >
-                    {collapsed ? <LuLayers2 size={20} /> : <><LuLayers2 size={18} />New dataset</>}
+                    <LuLayers2 size={18} />New dataset
                   </Button>
-                </Tooltip>
+                )}
                 <div className="h-1" />
-                <Tooltip content="Create a new connection" hidden={!collapsed} placement="right">
+                {collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => navigate("/connections/new")}
+                        isIconOnly
+                        fullWidth
+                        className="justify-center"
+                      >
+                        <LuUnplug size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Create a new connection</Tooltip.Content>
+                  </Tooltip>
+                ) : (
                   <Button
                     variant="tertiary"
                     size="sm"
                     onPress={() => navigate("/connections/new")}
-                    isIconOnly={collapsed}
                     fullWidth
-                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                    className="justify-start"
                   >
-                    {collapsed ? <LuUnplug size={20} /> : <><LuUnplug size={18} />New connection</>}
+                    <LuUnplug size={18} />New connection
                   </Button>
-                </Tooltip>
+                )}
                 <div className="h-1" />
-                <Tooltip content="Add a team member" hidden={!collapsed} placement="right">
+                {collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        onPress={() => navigate("/settings/members")}
+                        isIconOnly
+                        fullWidth
+                        className="justify-center"
+                      >
+                        <LuUserPlus size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Add a team member</Tooltip.Content>
+                  </Tooltip>
+                ) : (
                   <Button
                     variant="tertiary"
                     size="sm"
                     onPress={() => navigate("/settings/members")}
-                    isIconOnly={collapsed}
                     fullWidth
-                    className={cn(collapsed ? "justify-center" : "justify-start")}
+                    className="justify-start"
                   >
-                    {collapsed ? <LuUserPlus size={20} /> : <><LuUserPlus size={18} />Add team member</>}
+                    <LuUserPlus size={18} />Add team member
                   </Button>
-                </Tooltip>
+                )}
               </>
             )}
           </div>
@@ -336,17 +432,31 @@ function Sidebar() {
         
         <div className="flex flex-col">
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            <Tooltip content="Change theme" hidden={!collapsed} placement="right">
+            {collapsed ? (
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    variant="tertiary"
+                    onPress={() => _onCycleTheme()}
+                    fullWidth
+                    className="justify-center"
+                    isIconOnly
+                  >
+                    {_getTheme().icon}
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="right">Change theme</Tooltip.Content>
+              </Tooltip>
+            ) : (
               <Button
                 variant="tertiary"
                 onPress={() => _onCycleTheme()}
                 fullWidth
-                className={cn(collapsed ? "justify-center" : "justify-start")}
-                isIconOnly={collapsed}
+                className="justify-start"
               >
-                {collapsed ? _getTheme().icon : <>{_getTheme().icon}{_getTheme().name}</>}
+                {_getTheme().icon}{_getTheme().name}
               </Button>
-            </Tooltip>
+            )}
           </div>
           <div className="h-2" />
           <Separator />
