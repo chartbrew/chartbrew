@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Separator, Input, Switch, TextArea, Tooltip, RadioGroup, Radio,
-  Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent, Checkbox, Spinner,
+  Drawer, Checkbox, Spinner,
   Alert,
 } from "@heroui/react";
 import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft } from "react-icons/lu";
@@ -522,23 +522,25 @@ function SharingSettings(props) {
 
   return (
     <Drawer
-      backdrop="blur"
       isOpen={open}
-      onClose={onClose}
-      size="3xl"
-      classNames={{
-        base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
       }}
-      hideCloseButton={!onReport}
     >
-      <DrawerContent>
+      <Drawer.Backdrop variant="blur" />
+      <Drawer.Content
+        placement="right"
+        className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium max-w-3xl"
+      >
+        <Drawer.Dialog>
         {onReport && (
-          <DrawerHeader>
+          <Drawer.Header className="flex flex-row items-center justify-between gap-2">
             <Text size="h3">Sharing settings</Text>
-          </DrawerHeader>
+            <Drawer.CloseTrigger aria-label="Close" />
+          </Drawer.Header>
         )}
         {!onReport && (
-          <DrawerHeader
+          <Drawer.Header
             className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
@@ -561,9 +563,9 @@ function SharingSettings(props) {
                 Edit report visuals
               </Button>
             </div>
-          </DrawerHeader>
+          </Drawer.Header>
         )}
-        <DrawerBody>
+        <Drawer.Body>
           <div className="font-medium text-gray-500">Dashboard visibility</div>
           <div className="flex flex-row items-center justify-between flex-wrap gap-2">
             <div className="flex items-center">
@@ -790,16 +792,17 @@ function SharingSettings(props) {
               Show Chartbrew branding
             </Switch>
           </Row>
-        </DrawerBody>
-        <DrawerFooter>
+        </Drawer.Body>
+        <Drawer.Footer>
           <Button
             onPress={onClose}
             variant="flat"
           >
             Close
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
+        </Drawer.Footer>
+        </Drawer.Dialog>
+      </Drawer.Content>
     </Drawer>
   );
 }

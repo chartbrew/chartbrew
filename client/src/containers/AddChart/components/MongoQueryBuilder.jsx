@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
   Button, Checkbox, Divider, Input, Link, Modal, Popover,
-  Tab, Tabs, Tooltip, Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
-  DrawerContent, Switch, Select, Label, ListBox,
+  Tab, Tabs, Tooltip, Drawer,
+  Switch, Select, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
@@ -567,18 +567,20 @@ function MongoQueryBuilder(props) {
 
       <Drawer
         isOpen={!!variableSettings}
-        onClose={() => setVariableSettings(null)}
-        placement="right"
-        classNames={{
-          base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
+        onOpenChange={(open) => {
+          if (!open) setVariableSettings(null);
         }}
-        style={{
-          marginTop: "54px",
-        }}
-        backdrop="transparent"
       >
-        <DrawerContent>
-          <DrawerHeader
+        <Drawer.Backdrop variant="transparent" />
+        <Drawer.Content
+          placement="right"
+          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
+          style={{
+            marginTop: "54px",
+          }}
+        >
+          <Drawer.Dialog>
+          <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
@@ -597,8 +599,8 @@ function MongoQueryBuilder(props) {
                 {variableSettings?.name}
               </code>
             </div>
-          </DrawerHeader>
-          <DrawerBody>
+          </Drawer.Header>
+          <Drawer.Body>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable name</div>
               <pre className="text-primary">
@@ -664,8 +666,8 @@ function MongoQueryBuilder(props) {
                 size="sm"
               />
             </div>
-          </DrawerBody>
-          <DrawerFooter>
+          </Drawer.Body>
+          <Drawer.Footer>
             <Button
               variant="flat"
               onPress={() => setVariableSettings(null)}
@@ -679,8 +681,9 @@ function MongoQueryBuilder(props) {
             >
               Save
             </Button>
-          </DrawerFooter>
-        </DrawerContent>
+          </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
       </Drawer>
     </div>
   );

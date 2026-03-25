@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Tooltip, Chip,
   Tabs, Tab, Select, Popover,
-  Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
+  Badge, Drawer,
   Switch, Label, ListBox,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -1009,18 +1009,20 @@ function ApiBuilder(props) {
 
       <Drawer
         isOpen={!!variableSettings}
-        onClose={() => setVariableSettings(null)}
-        placement="right"
-        classNames={{
-          base: "sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium",
+        onOpenChange={(open) => {
+          if (!open) setVariableSettings(null);
         }}
-        style={{
-          marginTop: "54px",
-        }}
-        backdrop="transparent"
       >
-        <DrawerContent>
-          <DrawerHeader
+        <Drawer.Backdrop variant="transparent" />
+        <Drawer.Content
+          placement="right"
+          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
+          style={{
+            marginTop: "54px",
+          }}
+        >
+          <Drawer.Dialog>
+          <Drawer.Header
             className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-content1/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip content="Close">
@@ -1039,8 +1041,8 @@ function ApiBuilder(props) {
                 {variableSettings?.name}
               </code>
             </div>
-          </DrawerHeader>
-          <DrawerBody>
+          </Drawer.Header>
+          <Drawer.Body>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable name</div>
               <pre className="text-primary">
@@ -1106,8 +1108,8 @@ function ApiBuilder(props) {
                 size="sm"
               />
             </div>
-          </DrawerBody>
-          <DrawerFooter>
+          </Drawer.Body>
+          <Drawer.Footer>
             <Button
               variant="flat"
               onPress={() => setVariableSettings(null)}
@@ -1121,8 +1123,9 @@ function ApiBuilder(props) {
             >
               Save
             </Button>
-          </DrawerFooter>
-        </DrawerContent>
+          </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
       </Drawer>
     </div>
   );

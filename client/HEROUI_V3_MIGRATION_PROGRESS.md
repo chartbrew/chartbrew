@@ -1060,6 +1060,28 @@ Notes:
   - `npm run lint` passes
   - `rg 'PopoverTrigger|PopoverContent' client/src` returns no matches
 
+### Batch 34: Drawer v3 compound (`Drawer.Backdrop` / `Drawer.Content` / `Drawer.Dialog` / `Drawer.Header` / `Drawer.Body` / `Drawer.Footer`)
+
+Files migrated:
+- `src/components/DatasetFilters.jsx`
+- `src/containers/AddChart/components/SqlBuilder.jsx`
+- `src/containers/AddChart/components/ApiBuilder.jsx`
+- `src/containers/AddChart/components/MongoQueryBuilder.jsx`
+- `src/containers/Connections/Firestore/FirestoreBuilder.jsx`
+- `src/containers/Connections/ClickHouse/ClickHouseBuilder.jsx`
+- `src/containers/Connections/RealtimeDb/RealtimeDbBuilder.jsx`
+- `src/containers/ProjectDashboard/components/AddFilters.jsx`
+- `src/containers/PublicDashboard/components/SharingSettings.jsx`
+
+Notes:
+- Replaced flat **`DrawerContent`** / **`DrawerHeader`** / **`DrawerBody`** / **`DrawerFooter`** with **`Drawer.Backdrop`**, **`Drawer.Content`**, **`Drawer.Dialog`**, **`Drawer.Header`**, **`Drawer.Body`**, **`Drawer.Footer`**. Only **`Drawer`** is imported from `@heroui/react` for these trees (no standalone section imports).
+- Controlled drawers: **`onClose`** → **`onOpenChange`** on the root **`Drawer`** (`if (!open) …`). Former **`placement`**, **`classNames.base`**, and panel **`style`** (e.g. `marginTop`) live on **`Drawer.Content`**; **`backdrop="transparent"`** / **`backdrop="blur"`** → **`Drawer.Backdrop`** with **`variant="transparent"`** / **`variant="blur"`**.
+- **`AddFilters.jsx`**: dropped v2-only **`closeButton`** and **`size="2xl"`**; width approximated with **`max-w-2xl`** on **`Drawer.Content`**; removed invalid **`auto`** on the Close **`Button`**.
+- **`SharingSettings.jsx`**: **`placement="right"`** + **`max-w-3xl`** on content (v2 had no explicit placement); when **`onReport`**, **`Drawer.CloseTrigger`** replaces the old **`hideCloseButton`** behavior for a dismiss control next to the title.
+- Verification:
+  - `npm run lint` passes
+  - `rg 'DrawerContent|DrawerHeader|DrawerBody|DrawerFooter' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1072,7 +1094,7 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `Image` (HeroUI): 0 files in `client/src` (replaced with `<img>` in Batch 32)
 - `CircularProgress`: 0 files (replaced with `ProgressCircle` in Batch 32)
 - `PopoverTrigger` / `PopoverContent`: 0 files (migrated to `Popover.*` compounds in Batch 33)
-- `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: still in `DatasetFilters.jsx`, `RealtimeDbBuilder.jsx`, `FirestoreBuilder.jsx`, `ClickHouseBuilder.jsx`, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, and related builder files (v3 drawer compound structure)
+- `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: 0 files (migrated to `Drawer.*` compounds in Batch 34)
 - `Progress` (linear) / legacy loader components: audit remaining call sites
 
 ## Verification
@@ -1086,10 +1108,9 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Migrate **Drawer** wrappers (`DrawerContent` / `DrawerHeader` / `DrawerBody` / `DrawerFooter`) to v3 drawer compounds across filters and query builders (`DatasetFilters.jsx`, connection builders, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, etc.; same idea as `Modal.*`).
-2. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
-3. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
-4. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
+1. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
+2. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
+3. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
 
 ## Notes
 

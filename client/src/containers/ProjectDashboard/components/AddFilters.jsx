@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { v4 as uuid } from "uuid";
 import {
-  Button, Divider, Drawer, DrawerFooter,
-  DrawerContent, DrawerHeader, DrawerBody, Label, ListBox, Select,
+  Button, Divider, Drawer, Label, ListBox, Select,
 } from "@heroui/react";
 import { LuCalendarDays, LuListTree, LuPlus, LuVariable } from "react-icons/lu";
 import { toast } from "react-hot-toast";
@@ -92,12 +91,22 @@ function AddFilters(props) {
   if (!open) return null;
 
   return (
-    <Drawer isOpen={open} onClose={onClose} closeButton size="2xl" placement="left" className="dashboard-filters-modal">
-      <DrawerContent>
-        <DrawerHeader>
+    <Drawer
+      isOpen={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
+      <Drawer.Backdrop />
+      <Drawer.Content
+        placement="left"
+        className="dashboard-filters-modal max-w-2xl"
+      >
+        <Drawer.Dialog>
+        <Drawer.Header>
           <span className="font-bold text-lg">Add dashboard filter</span>
-        </DrawerHeader>
-        <DrawerBody>
+        </Drawer.Header>
+        <Drawer.Body>
           <Select
             variant="secondary"
             selectionMode="single"
@@ -169,9 +178,9 @@ function AddFilters(props) {
               onChange={_handleFilterChange}
             />
           )}
-        </DrawerBody>
-        <DrawerFooter>
-          <Button auto onPress={onClose} variant="bordered">
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Button onPress={onClose} variant="bordered">
             Close
           </Button>
           {filterType === "date" && (
@@ -199,8 +208,9 @@ function AddFilters(props) {
               Add filter
             </Button>
           )}
-        </DrawerFooter>
-      </DrawerContent>
+        </Drawer.Footer>
+        </Drawer.Dialog>
+      </Drawer.Content>
     </Drawer>
   );
 }
