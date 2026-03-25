@@ -10,6 +10,7 @@ import {
   createIntegration, deleteIntegration, updateIntegration, getTeamIntegrations,
   selectIntegrations,
 } from "../../../slices/integration";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash, LuWebhook } from "react-icons/lu";
 
 const urlRegex = /^https?:\/\/.+/;
@@ -331,7 +332,8 @@ function WebhookIntegrations({ teamId }) {
               auto
               onPress={!newIntegration.id ? _onCreate : _onEdit}
               color="primary"
-              isLoading={createLoading}
+              isPending={createLoading}
+              startContent={createLoading ? <ButtonSpinner /> : undefined}
             >
               {!newIntegration.id && "Create"}
               {newIntegration.id && "Update"}
@@ -369,7 +371,8 @@ function WebhookIntegrations({ teamId }) {
               auto
               onPress={_onDelete}
               color="danger"
-              isLoading={deleteLoading}
+              isPending={deleteLoading}
+              startContent={deleteLoading ? <ButtonSpinner /> : undefined}
             >
               Delete
             </Button>

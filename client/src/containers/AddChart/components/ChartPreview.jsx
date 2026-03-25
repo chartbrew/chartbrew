@@ -24,6 +24,7 @@ import PieChart from "../../Chart/components/PieChart";
 import MatrixChart from "../../Chart/components/MatrixChart";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
@@ -231,9 +232,10 @@ function ChartPreview(props) {
               <div className="flex items-center gap-1">
                 <Button
                   onPress={_onRefreshData}
-                  isLoading={chartLoading}
+                  isPending={chartLoading}
                   size="sm"
-                  endContent={<LuRefreshCw size={18} />}
+                  endContent={!chartLoading ? <LuRefreshCw size={18} /> : undefined}
+                  startContent={chartLoading ? <ButtonSpinner /> : undefined}
                   variant="flat"
                   color="primary"
                 >

@@ -9,6 +9,7 @@ import { cloneDeep, indexOf } from "lodash";
 
 import DraggableLabel from "../containers/AddChart/components/DraggableLabel";
 import TableDataFormattingModal from "../containers/AddChart/components/TableDataFormattingModal";
+import { ButtonSpinner } from "./ButtonSpinner";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -253,9 +254,9 @@ function TableConfiguration(props) {
                 color={isDragState ? "success" : "primary"}
                 variant="faded"
                 onPress={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
-                isLoading={loading}
+                isPending={loading}
                 size="sm"
-                startContent={<LuReplaceAll size={20} />}
+                startContent={loading ? <ButtonSpinner /> : <LuReplaceAll size={20} />}
               >
                 {isDragState ? "Confirm ordering" : "Reorder columns"}
               </Button>

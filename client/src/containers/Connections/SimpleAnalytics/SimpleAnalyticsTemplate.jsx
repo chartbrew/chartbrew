@@ -11,6 +11,7 @@ import { useNavigate } from "react-router";
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useDispatch, useSelector } from "react-redux";
 import { selectConnections } from "../../../slices/connection";
@@ -433,15 +434,16 @@ function SimpleAnalyticsTemplate(props) {
       <Row>
         <Button
           isDisabled={
-            (!formVisible && !selectedConnection)
+            loading
+            || (!formVisible && !selectedConnection)
             || !connection.website
             || (!selectedCharts || selectedCharts.length < 1)
             || (!projectId && !projectName)
           }
-          isLoading={loading}
           onClick={_onGenerateDashboard}
           color="primary"
-          endContent={<LuArrowRight />}
+          endContent={!loading ? <LuArrowRight /> : undefined}
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {"Create the charts"}
         </Button>

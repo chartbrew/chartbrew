@@ -12,6 +12,7 @@ import { useNavigation } from "react-router";
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 
 /*
@@ -375,11 +376,12 @@ function ChartMogulTemplate(props) {
       <Row>
         <Button
           isDisabled={
-            (!connection.key && formVisible) || selectedCharts.length === 0
+            loading
+            || (!connection.key && formVisible) || selectedCharts.length === 0
           }
           onClick={_onGenerateDashboard}
           color="primary"
-          isLoading={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {"Create the charts"}
         </Button>

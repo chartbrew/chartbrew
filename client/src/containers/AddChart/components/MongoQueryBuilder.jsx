@@ -20,6 +20,7 @@ import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -244,6 +245,8 @@ function MongoQueryBuilder(props) {
     }
   };
 
+  const blockResultsTabSwitch = saveLoading || testingQuery;
+
   return (
     <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
       <div className="grid grid-cols-12 gap-4">
@@ -256,7 +259,8 @@ function MongoQueryBuilder(props) {
                 auto
                 size="sm"
                 onPress={() => _onSavePressed()}
-                isLoading={saveLoading || testingQuery}
+                isPending={saveLoading || testingQuery}
+                startContent={(saveLoading || testingQuery) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
@@ -336,9 +340,10 @@ function MongoQueryBuilder(props) {
           <div className="mongobuilder-buttons-tut flex flex-row items-center">
             <Button
               color={testSuccess ? "success" : testError ? "danger" : "primary"}
-              endContent={<LuPlay />}
+              endContent={!testingQuery ? <LuPlay /> : undefined}
               onPress={() => _onTest()}
-              isLoading={testingQuery}
+              isPending={testingQuery}
+              startContent={testingQuery ? <ButtonSpinner /> : undefined}
               fullWidth
             >
               Run query
@@ -382,8 +387,9 @@ function MongoQueryBuilder(props) {
           <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
-              endContent={<LuPlus />}
-              isLoading={savingQuery}
+              endContent={!savingQuery ? <LuPlus /> : undefined}
+              isPending={savingQuery}
+              startContent={savingQuery ? <ButtonSpinner /> : undefined}
               onPress={_onSaveQueryConfirmation}
               variant="flat"
               size="sm"
@@ -396,9 +402,10 @@ function MongoQueryBuilder(props) {
               <>
                 <Button
                   variant="flat"
-                  endContent={<LuCheck />}
+                  endContent={!updatingSavedQuery ? <LuCheck /> : undefined}
                   onPress={_onUpdateSavedQuery}
-                  isLoading={updatingSavedQuery}
+                  isPending={updatingSavedQuery}
+                  startContent={updatingSavedQuery ? <ButtonSpinner /> : undefined}
                   size="sm"
                 >
                   {"Update current query"}
@@ -421,7 +428,15 @@ function MongoQueryBuilder(props) {
           <div className="h-16" />
         </div>
         <div className="col-span-12 sm:col-span-6">
-          <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
+          <Tabs
+            variant="light"
+            selectedKey={activeResultsTab}
+            aria-busy={blockResultsTabSwitch}
+            onSelectionChange={(key) => {
+              if (blockResultsTabSwitch) return;
+              setActiveResultsTab(key);
+            }}
+          >
             <Tab title="Table" key="table" />
             <Tab title="JSON" key="json" />
           </Tabs>
@@ -687,7 +702,8 @@ function MongoQueryBuilder(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

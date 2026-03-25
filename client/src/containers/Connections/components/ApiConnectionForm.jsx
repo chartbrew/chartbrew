@@ -15,6 +15,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest } from "../../../slices/connection";
@@ -416,7 +417,8 @@ function ApiConnectionForm(props) {
           <Button
             variant="ghost"
             onPress={() => _onCreateConnection(true)}
-            isLoading={testLoading}
+            isPending={testLoading}
+            startContent={testLoading ? <ButtonSpinner /> : undefined}
             auto
           >
             {"Test connection"}
@@ -424,18 +426,20 @@ function ApiConnectionForm(props) {
           <div className="w-2" />
           {!editConnection && (
             <Button
-              isLoading={loading}
+              isPending={loading}
               onPress={() => _onCreateConnection()}
               color="primary"
+              startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
             </Button>
           )}
           {editConnection && (
             <Button
-              isLoading={loading}
+              isPending={loading}
               onPress={_onCreateConnection}
               color="primary"
+              startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save changes"}
             </Button>

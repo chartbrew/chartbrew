@@ -19,6 +19,7 @@ import { I18nProvider } from "@react-aria/i18n";
 import toast from "react-hot-toast";
 
 import Row from "./Row";
+import { ButtonSpinner } from "./ButtonSpinner";
 import { operators } from "../modules/filterOperations";
 import { createDatasetVariableBinding, updateDatasetVariableBinding } from "../slices/dataset";
 
@@ -731,7 +732,8 @@ function DatasetFilters(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

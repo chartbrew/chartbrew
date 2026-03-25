@@ -23,6 +23,7 @@ import {
   getIntegrationChannels,
   deleteIntegration,
 } from "../../../slices/integration"
+import { ButtonSpinner } from "../../../components/ButtonSpinner"
 import { selectTeam } from "../../../slices/team"
 
 function SlackIntegration({ integration }) {
@@ -259,7 +260,8 @@ function SlackIntegration({ integration }) {
           <Button
             color="primary"
             onPress={handleSave}
-            isLoading={loading}
+            isPending={loading}
+            startContent={loading ? <ButtonSpinner /> : undefined}
             size="sm"
           >
             Save Changes

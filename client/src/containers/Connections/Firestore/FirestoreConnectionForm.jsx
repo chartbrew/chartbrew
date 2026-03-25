@@ -16,6 +16,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { blue } from "../../../config/colors";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -323,15 +324,17 @@ function FirestoreConnectionForm(props) {
             variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            isLoading={testLoading}
+            isPending={testLoading}
+            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
             {"Test connection"}
           </Button>
           <div className="w-2" />
           <Button
-            isLoading={loading}
+            isPending={loading}
             onClick={_onCreateConnection}
             color="primary"
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}
           </Button>

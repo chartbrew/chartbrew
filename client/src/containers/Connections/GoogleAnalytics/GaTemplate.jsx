@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Checkbox, Select, Label, ListBox,
@@ -15,6 +15,7 @@ import {
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 
 /*
@@ -37,6 +38,8 @@ function GaTemplate(props) {
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [accountsData, setAccountsData] = useState(null);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const accountsRequestId = useRef(0);
 
   const connections = useSelector(selectConnections);
 
@@ -177,8 +180,9 @@ function GaTemplate(props) {
 
   const _onSelectConnection = (value) => {
     setSelectedConnection(value);
+    const requestId = ++accountsRequestId.current;
+    setAccountsLoading(true);
 
-    // get the accounts
     const connectionObj = connections.filter((c) => c.id === parseInt(value, 10))[0];
     return dispatch(testRequest({ team_id: teamId, connection: connectionObj }))
       .then((data) => {
@@ -189,6 +193,11 @@ function GaTemplate(props) {
       })
       .catch(() => {
         //
+      })
+      .finally(() => {
+        if (accountsRequestId.current === requestId) {
+          setAccountsLoading(false);
+        }
       });
   };
 
@@ -309,6 +318,7 @@ function GaTemplate(props) {
               selectionMode="single"
               variant="secondary"
               fullWidth
+              isPending={accountsLoading}
               aria-label="Select a connection"
             >
               <Label>Select a connection</Label>
@@ -349,6 +359,7 @@ function GaTemplate(props) {
                     value={configuration.accountId || null}
                     onChange={(value) => _onAccountSelected(value)}
                     selectionMode="single"
+                    isPending={accountsLoading}
                     aria-label="Select an account"
                   >
                     <Label>Account</Label>
@@ -376,6 +387,7 @@ function GaTemplate(props) {
                     value={configuration.propertyId || null}
                     onChange={(value) => _onPropertySelected(value)}
                     selectionMode="single"
+                    isPending={accountsLoading}
                     aria-label="Select a property"
                   >
                     <Label>Property</Label>
@@ -475,10 +487,11 @@ function GaTemplate(props) {
             || !configuration.propertyId
             || (!selectedCharts || selectedCharts.length < 1)
           }
+          isPending={loading}
           onClick={_onGenerateDashboard}
           color="primary"
-          isLoading={loading}
-          endContent={<LuArrowRight />}
+          endContent={!loading ? <LuArrowRight /> : undefined}
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {"Create the charts"}
         </Button>

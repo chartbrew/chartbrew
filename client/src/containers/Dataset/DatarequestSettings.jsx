@@ -21,6 +21,7 @@ import {
 import connectionImages from "../../config/connectionImages";
 import fieldFinder from "../../modules/fieldFinder";
 import Row from "../../components/Row";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import Text from "../../components/Text";
 import { useTheme } from "../../modules/ThemeContext";
 import { selectTeam } from "../../slices/team";
@@ -541,8 +542,9 @@ function DatarequestSettings(props) {
               auto
               onPress={() => _onSaveJoins()}
               size="sm"
-              disabled={isSaved}
-              isLoading={saveLoading}
+              isDisabled={isSaved}
+              isPending={saveLoading}
+              startContent={saveLoading ? <ButtonSpinner /> : undefined}
               variant={isSaved ? "flat" : "solid"}
               color={isSaved ? "success" : "primary"}
             >
@@ -570,8 +572,9 @@ function DatarequestSettings(props) {
                 fullWidth
                 color="secondary"
                 onPress={() => _onRunDataset()}
-                endContent={<LuPlay />}
-                isLoading={isCompiling}
+                endContent={!isCompiling ? <LuPlay /> : undefined}
+                isDisabled={isCompiling}
+                startContent={isCompiling ? <ButtonSpinner /> : undefined}
               >
                 Compile dataset data
               </Button>

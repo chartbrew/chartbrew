@@ -17,6 +17,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import {
@@ -288,7 +289,8 @@ function RealtimeDbBuilder(props) {
                 color="primary"
                 size="sm"
                 onPress={() => _onSavePressed()}
-                isLoading={saveLoading || requestLoading}
+                isPending={saveLoading || requestLoading}
+                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
@@ -594,8 +596,9 @@ function RealtimeDbBuilder(props) {
           <Row className="RealtimeDb-request-tut">
             <Button
               color="primary"
-              endContent={<LuPlay />}
-              isLoading={requestLoading}
+              endContent={!requestLoading ? <LuPlay /> : undefined}
+              isPending={requestLoading}
+              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               fullWidth
               variant="ghost"
@@ -771,7 +774,8 @@ function RealtimeDbBuilder(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

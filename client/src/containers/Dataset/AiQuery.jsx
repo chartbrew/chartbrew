@@ -7,6 +7,7 @@ import { LuBrainCircuit, LuSend } from "react-icons/lu";
 import { useSelector } from "react-redux";
 
 import { API_HOST } from "../../config/settings";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { getAuthToken } from "../../modules/auth";
 import { selectTeam } from "../../slices/team";
 
@@ -144,9 +145,9 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
               isIconOnly
               color="primary"
               onPress={_onAskAi}
-              isLoading={askAiLoading}
+              isPending={askAiLoading}
             >
-              <LuSend />
+              {askAiLoading ? <ButtonSpinner /> : <LuSend />}
             </Button>
           }
         />

@@ -17,6 +17,7 @@ import {
   dark, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { selectProject, selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 
@@ -110,9 +111,13 @@ function ProjectNavigation(props) {
           <div className="flex justify-center items-center">
             <Popover>
               <Popover.Trigger>
-                <Button variant="bordered" isIconOnly={menuSize === "small"} isLoading={!project.name} fullWidth>
-                  {menuSize === "small" && <LuMenu size={24} />}
-                  {menuSize === "large" && _formatProjectName(project.name)}
+                <Button variant="bordered" isIconOnly={menuSize === "small"} isDisabled={!project.name} fullWidth>
+                  {!project.name ? <ButtonSpinner /> : (
+                    <>
+                      {menuSize === "small" && <LuMenu size={24} />}
+                      {menuSize === "large" && _formatProjectName(project.name)}
+                    </>
+                  )}
                 </Button>
               </Popover.Trigger>
               <Popover.Content className="max-w-[200px] max-h-[400px] px-2 py-4">

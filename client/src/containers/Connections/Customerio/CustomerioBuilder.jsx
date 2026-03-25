@@ -17,6 +17,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -236,7 +237,8 @@ function CustomerioBuilder(props) {
                   auto
                   size="sm"
                   onPress={() => _onSavePressed()}
-                  isLoading={saveLoading || requestLoading}
+                  isPending={saveLoading || requestLoading}
+                  startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
                 >
                   {"Save"}
                 </Button>
@@ -373,8 +375,9 @@ function CustomerioBuilder(props) {
           <Container>
             <Row className="Customerio-request-tut">
               <Button
-                endContent={<LuPlay />}
-                isLoading={requestLoading}
+                endContent={!requestLoading ? <LuPlay /> : undefined}
+                isPending={requestLoading}
+                startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={_onTest}
                 className="w-full"
                 color="primary"

@@ -19,6 +19,7 @@ import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../../Connections/Customerio/CustomerioBuilder";
 import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/useTheme";
@@ -490,7 +491,8 @@ function DatarequestModal(props) {
           <Button
             onPress={() => _onBuildChart()}
             color="primary"
-            isLoading={loading}
+            isPending={loading}
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Build the chart"}
           </Button>

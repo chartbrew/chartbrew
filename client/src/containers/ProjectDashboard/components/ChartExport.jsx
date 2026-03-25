@@ -4,6 +4,7 @@ import _ from "lodash";
 import {
   Button, Checkbox, Separator, Tooltip, Link as LinkNext,
 } from "@heroui/react";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
 
 function ChartExport(props) {
@@ -132,8 +133,9 @@ function ChartExport(props) {
       <div>
         <Button
           onPress={() => onExport(selectedIds)}
-          endContent={<LuFileDown />}
-          isLoading={loading}
+          endContent={!loading ? <LuFileDown /> : undefined}
+          isPending={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
           color="primary"
           fullWidth
         >

@@ -12,6 +12,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { testRequest } from "../../../slices/connection";
 import { selectTeam } from "../../../slices/team";
@@ -315,18 +316,20 @@ function StrapiConnectionForm(props) {
         <Row align="center">
           {!editConnection && (
             <Button
-              isLoading={loading}
+              isPending={loading}
               onClick={_onCreateConnection}
               color="primary"
+              startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
             </Button>
           )}
           {editConnection && (
             <Button
-              isLoading={loading}
+              isPending={loading}
               onClick={_onCreateConnection}
               color="primary"
+              startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
             </Button>

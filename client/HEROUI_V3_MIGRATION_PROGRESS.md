@@ -166,6 +166,16 @@ Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026
 
 Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026-03-24).
 
+### Batch 48: `Button` loading — `Spinner` via **`ButtonSpinner`**
+
+HeroUI v3 **`Button`** has no built-in loading UI (no v2 **`isLoading`**). Added **`client/src/components/ButtonSpinner.jsx`**: **`Spinner`** with **`color="current"`**, **`size="sm"`**, **`className="shrink-0"`** for use in **`startContent`** / icon-only children.
+
+Replaced **`isLoading={…}`** on **`Button`** across **`client/src`**: pair with **`isDisabled={…}`** (merged with existing disabled rules) and show **`ButtonSpinner`** while pending. For buttons with **`endContent`** icons, hide **`endContent`** when loading and use **`startContent={<ButtonSpinner />}`** so layout stays stable.
+
+**Not changed (still valid as non-Button props or need a separate pass):** **`Select` / `Autocomplete`** **`isLoading=`** (e.g. **`CampaignsQuery`**, **`DatasetBuilder`**, **`ActivitiesQuery`**); **`SlackIntegration`** channel **`Select`**. Some **`Button`** instances still use React Aria **`isPending=`** (e.g. **`Chart.jsx`**, list rows) — optional follow-up to align with **`ButtonSpinner`** for a single visual language.
+
+Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026-03-24).
+
 ---
 
 ## Remaining hard blockers
@@ -198,13 +208,15 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 47)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 48)
 
 ## Next batch
 
 1. Re-grep for legacy HeroUI patterns after large UI work (`ModalContent`, **`Dropdown*`** flat names, etc.).
 2. Keep **`npm run build`** after import-surface edits.
-3. Optional: **`Tabs`** bar width via **`TabList` / `TabListContainer` `className`**.
+3. Optional: replace remaining **`Button`** **`isPending=`** with **`ButtonSpinner`** + **`isDisabled`** for consistent loading chrome.
+4. Optional: **`Select` / `Autocomplete`** loading — confirm RAC/HeroUI pattern (e.g. **`isPending`**, slot content) vs raw **`isLoading`** on root.
+5. Optional: **`Tabs`** bar width via **`TabList` / `TabListContainer` `className`**.
 
 ## Notes
 

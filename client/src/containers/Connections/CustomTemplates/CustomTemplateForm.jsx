@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { generateDashboard } from "../../../slices/project";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { selectConnections } from "../../../slices/connection";
 import connectionImages from "../../../config/connectionImages";
@@ -322,9 +323,9 @@ function CustomTemplateForm(props) {
         <Button
           color="primary"
           onClick={_generateTemplate}
-          isDisabled={!selectedCharts.length}
-          endContent={<LuArrowRight />}
-          isLoading={isCreating}
+          isDisabled={!selectedCharts.length || isCreating}
+          endContent={!isCreating ? <LuArrowRight /> : undefined}
+          startContent={isCreating ? <ButtonSpinner /> : undefined}
         >
           Generate from template
         </Button>

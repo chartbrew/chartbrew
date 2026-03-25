@@ -11,6 +11,7 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import cbLogo from "../assets/logo_blue.png";
 import Row from "../components/Row";
+import { ButtonSpinner } from "../components/ButtonSpinner";
 import Text from "../components/Text";
 import { useTheme } from "../modules/ThemeContext";
 import Callout from "../components/Callout";
@@ -116,10 +117,11 @@ function PasswordReset(props) {
           <Button
             type="submit"
             size="lg"
-            disabled={success}
+            isDisabled={success}
+            isPending={loading}
             onClick={_onSubmit}
             color="primary"
-            isLoading={loading}
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             Change password
           </Button>

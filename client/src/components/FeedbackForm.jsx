@@ -6,6 +6,7 @@ import {
 
 import { selectUser, sendFeedback } from "../slices/user";
 import Container from "./Container";
+import { ButtonSpinner } from "./ButtonSpinner";
 import Row from "./Row";
 import Text from "./Text";
 
@@ -79,10 +80,11 @@ function FeedbackForm() {
       <div className="h-1" />
       <Row>
         <Button
-          disabled={!feedback}
+          isDisabled={!feedback}
+          isPending={loading}
           onClick={() => _onSendFeedback()}
           color="primary"
-          isLoading={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           Send feedback
         </Button>

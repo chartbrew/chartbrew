@@ -12,6 +12,7 @@ import {
 import { useTheme } from "../../modules/ThemeContext";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 
 /*
   User Profile Settings main screen
@@ -245,11 +246,12 @@ function ManageUser() {
       )}
       <div>
         <Button
-          disabled={!user.name}
+          isDisabled={!user.name}
+          isPending={loading}
           color={success ? "success" : "primary"}
           onPress={_onUpdateUser}
           variant={success ? "flat" : "solid"}
-          isLoading={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
           {success ? "Saved" : "Save" }
@@ -280,10 +282,11 @@ function ManageUser() {
       <div>
         <Button
           isDisabled={!userEmail || userEmail === userProp.email}
+          isPending={loading}
           color={successEmail ? "success" : "primary"}
           onPress={_onUpdateEmail}
           variant={successEmail ? "flat" : "solid"}
-          isLoading={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
           {successEmail ? "We sent you an email" : "Update email" }
@@ -339,7 +342,8 @@ function ManageUser() {
               color="primary"
               onPress={() => _onVerify2FA()}
               isDisabled={!appToken || !password}
-              isLoading={loading2fa}
+              isPending={loading2fa}
+              startContent={loading2fa ? <ButtonSpinner /> : undefined}
             >
               {"Confirm"}
             </Button>

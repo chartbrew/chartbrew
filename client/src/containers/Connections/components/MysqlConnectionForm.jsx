@@ -15,6 +15,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Text from "../../../components/Text";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import { useTheme } from "../../../modules/ThemeContext";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
@@ -781,15 +782,17 @@ function MysqlConnectionForm(props) {
             variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            isLoading={testLoading}
+            isPending={testLoading}
+            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
             {"Test connection"}
           </Button>
           <div className="w-2" />
           <Button
-            isLoading={loading}
+            isPending={loading}
             onClick={_onCreateConnection}
             color="primary"
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}
           </Button>

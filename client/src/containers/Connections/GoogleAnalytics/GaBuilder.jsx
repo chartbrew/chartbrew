@@ -26,6 +26,7 @@ import {
 import { getMetadata } from "./apiBoilerplate";
 import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import DataTransform from "../../Dataset/DataTransform";
@@ -451,7 +452,8 @@ function GaBuilder(props) {
                   color="primary"
                   size="sm"
                   onPress={() => _onSavePressed()}
-                  isLoading={saveLoading || requestLoading}
+                  isPending={saveLoading || requestLoading}
+                  startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
                 >
                   {"Save"}
                 </Button>
@@ -602,6 +604,7 @@ function GaBuilder(props) {
               <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="secondary"
+                isPending={collectionsLoading}
                 value={configuration.dimensions || null}
                 onChange={(value) => setConfiguration({ ...configuration, dimensions: value })}
                 selectionMode="single"
@@ -760,8 +763,9 @@ function GaBuilder(props) {
         <div className="col-span-12 sm:col-span-5">
           <Row className="gabuilder-request-tut">
             <Button
-              endContent={<LuPlay />}
-              isLoading={requestLoading}
+              endContent={!requestLoading ? <LuPlay /> : undefined}
+              isPending={requestLoading}
+              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               className="w-full"
               color="primary"

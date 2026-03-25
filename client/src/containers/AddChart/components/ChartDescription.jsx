@@ -15,6 +15,7 @@ import { selectProjects } from "../../../slices/project";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 
 const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
   ...acc,
@@ -152,8 +153,8 @@ function ChartDescription(props) {
             <Button
               color="primary"
               size="sm"
-              startContent={!creatingNewDataset ? <LuPlus size={16} /> : null}
-              isLoading={creatingNewDataset}
+              startContent={creatingNewDataset ? <ButtonSpinner /> : <LuPlus size={16} />}
+              isDisabled={creatingNewDataset}
               onPress={onCreateDataset}
             >
               Start from scratch
@@ -274,11 +275,10 @@ function ChartDescription(props) {
                         size="sm"
                         variant="light"
                         onPress={() => _onSelectDataset(dataset)}
-                        isLoading={isCreatingChart}
-                        isDisabled={isBusy && !isCreatingChart}
+                        isDisabled={(isBusy && !isCreatingChart) || isCreatingChart}
                         aria-label={`Create chart from ${getDatasetDisplayName(dataset)}`}
                       >
-                        {!isCreatingChart && <LuPlus size={16} />}
+                        {isCreatingChart ? <ButtonSpinner /> : <LuPlus size={16} />}
                       </Button>
                     </div>
                   </TableCell>

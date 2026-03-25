@@ -24,6 +24,7 @@ import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import { selectTeam } from "../../slices/team";
 import isMac from "../../modules/isMac";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 
 function TextWidget({
   chart,
@@ -379,11 +380,11 @@ function TextWidget({
                             variant="flat"
                             size="sm"
                             onPress={() => setIsPreview(true)}
-                            isLoading={chartLoading}
+                            isPending={chartLoading}
                             isIconOnly
                             onMouseDown={handleInteractiveMouseDown}
                           >
-                            <LuEye />
+                            {chartLoading ? <ButtonSpinner /> : <LuEye />}
                           </Button>
                         )}
                         description={
@@ -422,8 +423,9 @@ function TextWidget({
                   <Button
                     variant="flat"
                     onPress={_onSaveContent}
-                    isLoading={chartLoading}
+                    isPending={chartLoading}
                     color="primary"
+                    startContent={chartLoading ? <ButtonSpinner /> : undefined}
                   >
                     Save
                   </Button>
@@ -536,9 +538,10 @@ function TextWidget({
             </Button>
             <Button
               color="danger"
-              endContent={<LuTrash />}
+              endContent={!chartLoading ? <LuTrash /> : undefined}
               onPress={_onDeleteChart}
-              isLoading={chartLoading}
+              isPending={chartLoading}
+              startContent={chartLoading ? <ButtonSpinner /> : undefined}
             >
               Remove completely
             </Button>

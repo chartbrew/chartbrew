@@ -7,6 +7,7 @@ import {
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
 
+import { ButtonSpinner } from "./ButtonSpinner";
 import { generateInviteUrl } from "../slices/team";
 import { selectTeam } from "../slices/team";
 import { selectProjects } from "../slices/project";
@@ -208,10 +209,11 @@ function InviteMembersForm(props) {
       <div className="h-4" />
       <div>
         <Button
-          isLoading={loading}
+          isPending={loading}
           onPress={_onGenerateUrl}
           color="primary"
           size="sm"
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {loading ? "Generating..." : "Generate invite link"}
         </Button>

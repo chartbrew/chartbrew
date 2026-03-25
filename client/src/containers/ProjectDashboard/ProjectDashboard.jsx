@@ -41,6 +41,7 @@ import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
 import Row from "../../components/Row";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
@@ -1059,11 +1060,11 @@ function ProjectDashboard() {
                         variant="bordered"
                         className="bg-background"
                         isIconOnly
-                        isLoading={filterLoading}
+                        isPending={filterLoading}
                         onPress={_onShowFilters}
                         size="sm"
                       >
-                        <LuListFilter size={18} />
+                        {filterLoading ? <ButtonSpinner /> : <LuListFilter size={18} />}
                       </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content placement="bottom">Add dashboard filters</Tooltip.Content>
@@ -1127,9 +1128,10 @@ function ProjectDashboard() {
                       <Button
                         variant="bordered"
                         onPress={() => _onRefreshData()}
-                        isLoading={refreshLoading}
+                        isPending={refreshLoading}
                         size="sm"
                         className="rounded-tl-lg! rounded-bl-lg! bg-background"
+                        startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                       >
                         Refresh charts
                       </Button>
@@ -1159,11 +1161,11 @@ function ProjectDashboard() {
                           variant="bordered"
                           isIconOnly
                           onPress={() => _onRefreshData()}
-                          isLoading={refreshLoading}
+                          isPending={refreshLoading}
                           size="sm"
                           className="flex sm:hidden bg-background"
                         >
-                          <LuRefreshCw />
+                          {refreshLoading ? <ButtonSpinner /> : <LuRefreshCw />}
                         </Button>
                       </Tooltip.Trigger>
                       <Tooltip.Content placement="bottom end">Refresh all charts</Tooltip.Content>

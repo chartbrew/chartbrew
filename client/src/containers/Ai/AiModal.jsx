@@ -1024,17 +1024,18 @@ function AiModal({ isOpen, onClose }) {
                   {parsed.suggestions && parsed.suggestions.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {parsed.suggestions.map((suggestion) => (
-                        <Chip
+                        <Button
                           key={suggestion.id}
+                          type="button"
                           variant="flat"
                           color="secondary"
                           size="sm"
-                          className='cursor-pointer hover:bg-secondary-200 transition-colors'
-                          onClick={() => _onSuggestionClick(suggestion)}
-                          isDisabled={isLoading}
+                          className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
+                          onPress={() => _onSuggestionClick(suggestion)}
+                          isPending={isLoading}
                         >
                           {suggestion.label}
-                        </Chip>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -1186,17 +1187,18 @@ function AiModal({ isOpen, onClose }) {
                 {suggestions && suggestions.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {suggestions.map((suggestion) => (
-                      <Chip
+                      <Button
                         key={suggestion.id}
+                        type="button"
                         variant="flat"
                         color="secondary"
                         size="sm"
-                        className='cursor-pointer hover:bg-secondary-200 transition-colors'
-                        onClick={() => _onSuggestionClick(suggestion)}
-                        isDisabled={isLoading}
+                        className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
+                        onPress={() => _onSuggestionClick(suggestion)}
+                        isPending={isLoading}
                       >
                         {suggestion.label}
-                      </Chip>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -1327,7 +1329,7 @@ function AiModal({ isOpen, onClose }) {
                     variant="light"
                     size="sm"
                     startContent={selectedContext.multiSelect.length > 0 ? null : <LuAtSign size={16} />}
-                    isDisabled={isLoading}
+                    isPending={isLoading}
                     isIconOnly={selectedContext.multiSelect.length > 0}
                   >
                     {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context"}
@@ -1760,7 +1762,7 @@ function AiModal({ isOpen, onClose }) {
                         <Popover.Trigger>
                           <Button
                             variant="light"
-                            isDisabled={isLoading}
+                            isPending={isLoading}
                             isIconOnly
                           >
                             <LuAtSign size={18} />
@@ -1864,7 +1866,8 @@ function AiModal({ isOpen, onClose }) {
                         type="submit"
                         isIconOnly
                         color="primary"
-                        isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect) || isLoading}
+                        isDisabled={!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect}
+                        isPending={isLoading}
                       >
                         <LuArrowRight />
                       </Button>

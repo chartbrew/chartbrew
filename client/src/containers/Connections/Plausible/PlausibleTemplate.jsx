@@ -12,6 +12,7 @@ import { useNavigate } from "react-router";
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import { selectConnections } from "../../../slices/connection";
 
@@ -430,13 +431,14 @@ function PlausibleTemplate(props) {
       <Row>
         <Button
           isDisabled={
-            (!formVisible && !selectedConnection)
+            loading
+            || (!formVisible && !selectedConnection)
             || !connection.website
             || (!selectedCharts || selectedCharts.length < 1)
           }
           onClick={_onGenerateDashboard}
           color="primary"
-          isLoading={loading}
+          startContent={loading ? <ButtonSpinner /> : undefined}
         >
           {"Create the charts"}
         </Button>

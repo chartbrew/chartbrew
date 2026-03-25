@@ -19,6 +19,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
@@ -271,6 +272,8 @@ function SqlBuilder(props) {
     );
   }
 
+  const blockTabSwitch = saveLoading || requestLoading;
+
   return (
     <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
       <div className="grid grid-cols-12 gap-8">
@@ -283,7 +286,8 @@ function SqlBuilder(props) {
                 auto
                 size="sm"
                 onPress={() => _onSavePressed()}
-                isLoading={saveLoading || requestLoading}
+                isPending={saveLoading || requestLoading}
+                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
@@ -319,7 +323,15 @@ function SqlBuilder(props) {
           <div className="h-4" />
           <Separator />
           <div className="h-4" />
-          <Tabs variant="light" selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key)}>
+          <Tabs
+            variant="light"
+            selectedKey={activeTab}
+            aria-busy={blockTabSwitch}
+            onSelectionChange={(key) => {
+              if (blockTabSwitch) return;
+              setActiveTab(key);
+            }}
+          >
             <Tab
               title="SQL Query"
               key="sql"
@@ -373,9 +385,10 @@ function SqlBuilder(props) {
           <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
             <Button
               color={requestSuccess ? "primary" : requestError ? "danger" : "primary"}
-              endContent={<LuPlay />}
+              endContent={!requestLoading ? <LuPlay /> : undefined}
               onPress={() => _onTest()}
-              isLoading={requestLoading}
+              isPending={requestLoading}
+              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               fullWidth
             >
               Run query
@@ -420,8 +433,9 @@ function SqlBuilder(props) {
           <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
-              endContent={<LuPlus />}
-              isLoading={savingQuery}
+              endContent={!savingQuery ? <LuPlus /> : undefined}
+              isPending={savingQuery}
+              startContent={savingQuery ? <ButtonSpinner /> : undefined}
               onPress={_onSaveQueryConfirmation}
               variant="flat"
               size="sm"
@@ -434,9 +448,10 @@ function SqlBuilder(props) {
               <>
                 <Button
                   variant="flat"
-                  endContent={<LuCheck />}
+                  endContent={!updatingSavedQuery ? <LuCheck /> : undefined}
                   onPress={_onUpdateSavedQuery}
-                  isLoading={updatingSavedQuery}
+                  isPending={updatingSavedQuery}
+                  startContent={updatingSavedQuery ? <ButtonSpinner /> : undefined}
                   size="sm"
                 >
                   {"Update current query"}
@@ -459,7 +474,15 @@ function SqlBuilder(props) {
           <div className="h-16" />
         </div>
         <div className="col-span-12 sm:col-span-6 md:col-span-7">
-          <Tabs variant="light" selectedKey={activeResultsTab} onSelectionChange={(key) => setActiveResultsTab(key)}>
+          <Tabs
+            variant="light"
+            selectedKey={activeResultsTab}
+            aria-busy={blockTabSwitch}
+            onSelectionChange={(key) => {
+              if (blockTabSwitch) return;
+              setActiveResultsTab(key);
+            }}
+          >
             <Tab title="Table" key="table" />
             <Tab title="JSON" key="json" />
           </Tabs>
@@ -656,7 +679,8 @@ function SqlBuilder(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

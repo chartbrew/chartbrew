@@ -15,6 +15,7 @@ import {
   updateSharePolicy, deleteSharePolicy 
 } from "../../../slices/chart";
 import { SITE_HOST } from "../../../config/settings";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 
 function ChartSharing({ chart, isOpen, onClose }) {
   const [shareLoading, setShareLoading] = useState(false);
@@ -322,8 +323,8 @@ function ChartSharing({ chart, isOpen, onClose }) {
             variant="flat"
             color="primary"
             onPress={_onCreateNewPolicy}
-            startContent={<LuPlus />}
-            isLoading={shareLoading}
+            startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
+            isPending={shareLoading}
           >
             Enable secure links
           </Button>
@@ -339,8 +340,8 @@ function ChartSharing({ chart, isOpen, onClose }) {
             size="sm"
             variant="flat"
             onPress={_onCreateNewPolicy}
-            startContent={<LuPlus />}
-            isLoading={shareLoading}
+            startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
+            isPending={shareLoading}
           >
             New Link
           </Button>

@@ -10,6 +10,7 @@ import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, L
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateTeam } from "../../../slices/team";
 import toast from "react-hot-toast";
@@ -602,7 +603,8 @@ function SharingSettings(props) {
               <Switch
                 isSelected={project.passwordProtected}
                 onValueChange={_onTogglePassword}
-                isDisabled={passwordLoading}
+                isReadOnly={passwordLoading}
+                aria-busy={passwordLoading}
                 size="sm"
               >
                 Require password to view
@@ -671,8 +673,9 @@ function SharingSettings(props) {
             <Button
               color="primary"
               onPress={() => _onSaveBrewName(newBrewName)}
-              isDisabled={!newBrewName || urlLoading}
-              isLoading={urlLoading}
+              isDisabled={!newBrewName}
+              isPending={urlLoading}
+              startContent={urlLoading ? <ButtonSpinner /> : undefined}
               size="sm"
             >
               {onReport ? "Save URL and reload" : "Save URL"}
@@ -689,8 +692,8 @@ function SharingSettings(props) {
                 size="sm"
                 variant="flat"
                 onPress={_onCreateNewPolicy}
-                startContent={<LuPlus />}
-                isLoading={shareLoading}
+                startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
+                isPending={shareLoading}
               >
                 New Link
               </Button>
@@ -762,8 +765,8 @@ function SharingSettings(props) {
                           size="sm"
                           color="primary"
                           onPress={_onUpdatePolicy}
-                          isLoading={isUpdating}
-                          startContent={<LuRefreshCcw size={16} />}
+                          isPending={isUpdating}
+                          startContent={isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
                         >
                           Save & Regenerate links
                         </Button>

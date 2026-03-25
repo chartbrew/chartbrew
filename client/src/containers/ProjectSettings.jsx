@@ -15,6 +15,7 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
 import Row from "../components/Row";
+import { ButtonSpinner } from "../components/ButtonSpinner";
 import Text from "../components/Text";
 import Segment from "../components/Segment";
 import { selectTeam } from "../slices/team";
@@ -152,8 +153,9 @@ function ProjectSettings(props) {
             type="submit"
             color={success ? "success" : error ? "danger" : "primary"}
             isDisabled={!_canAccess("projectEditor")}
+            isPending={loading}
             onClick={_onSaveName}
-            isLoading={loading}
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save name"}
           </Button>
@@ -220,8 +222,9 @@ function ProjectSettings(props) {
       <Row>
         <Button
           isDisabled={!_canAccess("projectEditor") || !projectTimezone || projectTimezone === project.timezone}
+          isPending={loadingTimezone}
           onClick={() => _onSaveTimezone()}
-          isLoading={loadingTimezone}
+          startContent={loadingTimezone ? <ButtonSpinner /> : undefined}
           color="primary"
         >
           Save
@@ -296,7 +299,7 @@ function ProjectSettings(props) {
             </Button>
             <Button
               variant="danger"
-              isDisabled={removeLoading}
+              isPending={removeLoading}
               onPress={_onRemove}
             >
               <LuTrash size={18} />

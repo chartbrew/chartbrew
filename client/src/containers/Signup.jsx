@@ -13,6 +13,7 @@ import {
   password as passwordValidation
 } from "../config/validations";
 import Row from "../components/Row";
+import { ButtonSpinner } from "../components/ButtonSpinner";
 import Text from "../components/Text";
 import { createUser, createInvitedUser } from "../slices/user";
 import SimpleNavbar from "../components/SimpleNavbar";
@@ -181,12 +182,13 @@ function Signup() {
             <Row>
               <Button
                 onPress={submitUser}
-                isLoading={loading}
+                isDisabled={addedToTeam}
+                isPending={loading}
                 type="submit"
                 size="lg"
-                endContent={<LuArrowRight />}
+                endContent={!loading ? <LuArrowRight /> : undefined}
+                startContent={loading ? <ButtonSpinner /> : undefined}
                 color="primary"
-                isDisabled={addedToTeam}
                 fullWidth
               >
                 Continue

@@ -19,6 +19,7 @@ import { getProjects, selectProjects } from "../../slices/project";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 import { placeNewWidget } from "../../modules/autoLayout";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 
 const defaultNewChart = {
   type: "line",
@@ -386,9 +387,9 @@ function Dataset() {
               color="default"
               variant="ghost"
               onPress={() => _onSaveDataset("createChart")}
-              isLoading={saveDatasetLoading}
               isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
-              startContent={<LuChartColumn size={16} />}
+              isPending={saveDatasetLoading}
+              startContent={saveDatasetLoading ? <ButtonSpinner /> : <LuChartColumn size={16} />}
             >
               Save & create chart
             </Button>
@@ -396,8 +397,9 @@ function Dataset() {
           <Button
             color="primary"
             onPress={() => _onSaveDataset("save")}
-            isLoading={saveDatasetLoading}
             isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
+            isPending={saveDatasetLoading}
+            startContent={saveDatasetLoading ? <ButtonSpinner /> : undefined}
           >
             {fromChart ? "Save & return to chart" : "Save dataset"}
           </Button>
@@ -466,7 +468,8 @@ function Dataset() {
             </Button>
             <Button
               color="primary"
-              isLoading={saveDatasetLoading}
+              isPending={saveDatasetLoading}
+              startContent={saveDatasetLoading ? <ButtonSpinner /> : undefined}
               onPress={async () => {
                 const success = await _persistDataset(
                   selectedProjectIds,
@@ -566,8 +569,9 @@ function Dataset() {
             </Button>
             <Button
               color="primary"
-              isLoading={createChartFromDatasetLoading}
               isDisabled={projects.filter((project) => !project.ghost).length === 0}
+              isPending={createChartFromDatasetLoading}
+              startContent={createChartFromDatasetLoading ? <ButtonSpinner /> : undefined}
               onPress={_onCreateChartFromDataset}
             >
               Create chart

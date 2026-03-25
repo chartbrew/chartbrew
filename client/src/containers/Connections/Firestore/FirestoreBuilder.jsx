@@ -30,6 +30,7 @@ import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -622,7 +623,8 @@ function FirestoreBuilder(props) {
                 auto
                 size="sm"
                 onPress={() => _onSavePressed()}
-                isLoading={saveLoading || requestLoading}
+                isPending={saveLoading || requestLoading}
+                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
@@ -686,9 +688,9 @@ function FirestoreBuilder(props) {
           <Row>
             <Button
               size="sm"
-              startContent={!collectionsLoading ? <LuRefreshCw size={16} /> : null}
+              startContent={collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
               onClick={() => _onFetchCollections()}
-              isLoading={collectionsLoading}
+              isPending={collectionsLoading}
               variant="light"
               color="primary"
             >
@@ -936,8 +938,9 @@ function FirestoreBuilder(props) {
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                endContent={<LuPlay />}
-                isLoading={requestLoading}
+                endContent={!requestLoading ? <LuPlay /> : undefined}
+                isPending={requestLoading}
+                startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={() => _onTest()}
                 className={"w-full"}
                 color="primary"
@@ -1108,7 +1111,8 @@ function FirestoreBuilder(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

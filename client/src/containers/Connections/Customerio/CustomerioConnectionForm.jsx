@@ -11,6 +11,7 @@ import { LuExternalLink, LuInfo } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -246,15 +247,17 @@ function CustomerioConnectionForm(props) {
             variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            isLoading={testLoading}
+            isPending={testLoading}
+            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
             {"Test connection"}
           </Button>
           <div className="w-1" />
           <Button
-            isLoading={loading}
+            isPending={loading}
             onClick={_onCreateConnection}
             color="primary"
+            startContent={loading ? <ButtonSpinner /> : undefined}
           >
             {"Save connection"}
           </Button>

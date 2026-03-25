@@ -17,6 +17,7 @@ import { Time } from "@internationalized/date";
 import timezones from "../../../modules/timezones";
 import { getProject, selectProject, updateProject, takeSnapshot } from "../../../slices/project";
 import { selectIntegrations, getTeamIntegrations } from "../../../slices/integration";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { API_HOST } from "../../../config/settings";
 import { selectProjectMembers } from "../../../slices/team";
 import { useNavigate, useParams } from "react-router";
@@ -563,9 +564,9 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <Button
                     size="sm"
                     onPress={_onTakeSnapshot}
-                    isLoading={isLoading}
+                    isPending={isLoading}
                     variant="flat"
-                    startContent={<LuCamera size={18} />}
+                    startContent={isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
                   >
                     Take snapshot
                   </Button>
@@ -662,7 +663,12 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 Remove schedule
               </Button>
             )}
-            <Button onPress={_onSave} isPending={isLoading} isDisabled={!_canSave()}>
+            <Button
+              onPress={_onSave}
+              isDisabled={!_canSave()}
+              isPending={isLoading}
+              startContent={isLoading ? <ButtonSpinner /> : undefined}
+            >
               {project?.snapshotSchedule?.frequency ? "Update" : "Set schedule"}
             </Button>
           </Modal.Footer>

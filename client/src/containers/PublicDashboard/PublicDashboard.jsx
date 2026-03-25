@@ -41,6 +41,7 @@ import SharingSettings from "./components/SharingSettings";
 import instructionDashboard from "../../assets/instruction-dashboard-report.png";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import Container from "../../components/Container";
 import { useTheme } from "../../modules/ThemeContext";
 import TextWidget from "../Chart/TextWidget";
@@ -874,8 +875,9 @@ function PublicDashboard() {
             <div className="hidden sm:block">
               <Button
                 color="success"
-                endContent={<LuCircleCheck />}
-                isLoading={saveLoading}
+                endContent={!saveLoading ? <LuCircleCheck /> : undefined}
+                isPending={saveLoading}
+                startContent={saveLoading ? <ButtonSpinner /> : undefined}
                 onPress={_onSaveChanges}
               >
                 Save changes
@@ -899,8 +901,9 @@ function PublicDashboard() {
             <div className="hidden sm:block">
               <Button
                 onPress={() => _onRefreshCharts()}
-                endContent={<LuRefreshCw />}
-                isLoading={refreshLoading}
+                endContent={!refreshLoading ? <LuRefreshCw /> : undefined}
+                isPending={refreshLoading}
+                startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                 size="sm"
                 color="primary"
               >

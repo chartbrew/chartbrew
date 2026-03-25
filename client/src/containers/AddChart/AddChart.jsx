@@ -8,6 +8,7 @@ import _ from "lodash";
 import { LuArrowLeft, LuCheck, LuPencilLine } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router";
 
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import ChartDescription from "./components/ChartDescription";
@@ -564,7 +565,8 @@ function AddChart() {
               <Button
                 color={saveRequired ? "primary" : "success"}
                 onPress={() => _onChangeChart({})}
-                isLoading={loading}
+                isPending={loading}
+                startContent={loading ? <ButtonSpinner /> : undefined}
                 size="sm"
                 variant={saveRequired ? "solid" : "flat"}
               >

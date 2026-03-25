@@ -35,6 +35,7 @@ import {
   getConnection,
 } from "../../../slices/connection";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -520,6 +521,8 @@ function ApiBuilder(props) {
     });
   };
 
+  const blockMenuSwitch = saveLoading || requestLoading;
+
   return (
     <div className="px-4 max-w-(--breakpoint-2xl) mx-auto">
       <div className="grid grid-cols-12 gap-4">
@@ -531,7 +534,8 @@ function ApiBuilder(props) {
                 color="primary"
                 size="sm"
                 onPress={() => _onSavePressed()}
-                isLoading={saveLoading || requestLoading}
+                isPending={saveLoading || requestLoading}
+                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
                 {"Save"}
               </Button>
@@ -712,7 +716,11 @@ function ApiBuilder(props) {
           <Row className="apibuilder-menu-tut">
             <Tabs
               selectedKey={activeMenu}
-              onSelectionChange={(key) => setActiveMenu(key)}
+              aria-busy={blockMenuSwitch}
+              onSelectionChange={(key) => {
+                if (blockMenuSwitch) return;
+                setActiveMenu(key);
+              }}
               disabledKeys={apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? ["body"] : []}
             >
               <Tab key="headers" title="Headers" />
@@ -939,8 +947,9 @@ function ApiBuilder(props) {
               </Select.Popover>
             </Select>
             <Button
-              endContent={<LuPlay size={16} />}
-              isLoading={requestLoading}
+              endContent={!requestLoading ? <LuPlay size={16} /> : undefined}
+              isPending={requestLoading}
+              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               fullWidth
               color="primary"
@@ -1139,7 +1148,8 @@ function ApiBuilder(props) {
             <Button
               color="primary"
               onPress={_onVariableSave}
-              isLoading={variableLoading}
+              isPending={variableLoading}
+              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
               Save
             </Button>

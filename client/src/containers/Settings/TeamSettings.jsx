@@ -8,6 +8,7 @@ import {
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
 
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { deleteTeam, selectTeam, selectTeams, updateTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
@@ -122,7 +123,8 @@ function TeamSettings() {
         <div>
           <Button
             color={success ? "success" : "primary"}
-            isLoading={loading}
+            isPending={loading}
+            startContent={loading ? <ButtonSpinner /> : undefined}
             onPress={_onTeamUpdate}
             variant={success ? "flat" : "solid"}
             size="sm"

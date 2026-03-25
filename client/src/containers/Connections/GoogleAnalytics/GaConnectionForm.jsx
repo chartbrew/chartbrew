@@ -17,6 +17,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { API_HOST } from "../../../config/settings";
 import Container from "../../../components/Container";
+import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -156,8 +157,9 @@ function GaConnectionForm(props) {
           {!editConnection && (
             <Button
               color={"secondary"}
-              isLoading={loading}
               isDisabled={!connection.name}
+              isPending={loading}
+              startContent={loading ? <ButtonSpinner /> : undefined}
               onClick={() => _onCreateConnection()}
             >
               {"Create connection"}
@@ -219,17 +221,19 @@ function GaConnectionForm(props) {
               variant="ghost"
               auto
               onClick={() => _onCreateConnection(true)}
-              disabled={!connection.name || !connection.oauth_id}
-              isLoading={testLoading}
+              isDisabled={!connection.name || !connection.oauth_id}
+              isPending={testLoading}
+              startContent={testLoading ? <ButtonSpinner /> : undefined}
             >
               {"Test connection"}
             </Button>
             <div className="w-2" />
             <Button
-              disabled={!connection.oauth_id}
-              isLoading={loading}
+              isDisabled={!connection.oauth_id}
+              isPending={loading}
               onClick={_onCreateConnection}
               color="primary"
+              startContent={loading ? <ButtonSpinner /> : undefined}
             >
               {"Save connection"}
             </Button>
