@@ -1096,6 +1096,31 @@ Notes:
   - `npm run lint` passes
   - No **`Progress`** import from `@heroui/react` in `client/src` (`rg 'Progress' client/src` may still match aria-label copy, UI strings like “Progress bar”, or unrelated words)
 
+### Batch 36: `Divider` → `Separator`
+
+Notes:
+- v3 does not export **`Divider`**; horizontal rules use **`Separator`**. Replaced **`Divider`** imports and **`<Divider />`** usages across `client/src` (word-boundary replace). **`showDivider`** on **`DropdownItem`** and similar props were left unchanged (unrelated API).
+- **`FirestoreBuilder.jsx`**: fixed **`Button,Separator`** spacing after replace.
+
+### Batch 37: `AvatarGroup`, `TimeInput`, `Textarea`, `commonColors`, public `Navbar`
+
+Files migrated:
+- `src/modules/utils.js` — added **`displayInitials`** for stacked member avatars
+- `src/containers/UserDashboard/DashboardList.jsx` — overlapping **`Avatar`** stack (max 3 + overflow)
+- `src/containers/UserDashboard/DatasetList.jsx` — same for connection avatars (**`Avatar.Image`** / **`Avatar.Fallback`**)
+- `src/containers/ProjectDashboard/ProjectDashboard.jsx` — member stack in popover trigger
+- `src/containers/ProjectDashboard/components/UpdateSchedule.jsx` — **`TimeInput`** → **`TimeField`** compound (**`TimeField.Group`**, **`Input`**, **`Segment`**), **`hourCycle={12}`** preserved
+- `src/containers/ProjectDashboard/components/SnapshotSchedule.jsx` — same **`TimeField`** migration; **`Textarea`** → **`TextArea`**; **`maxRows`** dropped in favor of **`rows={10}`**
+- `src/containers/AddChart/components/ChartDatasetConfig.jsx` — **`commonColors`** imported from **`src/lib/themeTokens.js`** (no longer exported from **`@heroui/react`**)
+- `src/containers/PublicDashboard/Report.jsx` — **`Navbar`** / **`NavbarBrand`** → plain **`<header>`** + flex wrapper (border + layout)
+- `src/containers/PublicDashboard/PublicDashboard.jsx` — same header replacement
+
+Notes:
+- **`AvatarGroup`** is not in v3; stacks use **`-space-x-2`**, **`ring-2 ring-background`**, and overflow **`+N`** **`Avatar.Fallback`**.
+- Verification:
+  - `npm run lint` passes
+  - `npm run build` in `client/` passes (catches missing package exports)
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1110,23 +1135,27 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `PopoverTrigger` / `PopoverContent`: 0 files (migrated to `Popover.*` compounds in Batch 33)
 - `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: 0 files (migrated to `Drawer.*` compounds in Batch 34)
 - `Progress` (linear, HeroUI): 0 files (replaced with `ProgressBar` in Batch 35)
+- `Divider` (HeroUI): 0 files (replaced with `Separator` in Batch 36)
+- `AvatarGroup`: 0 files (replaced with stacked `Avatar` in Batch 37)
+- `TimeInput`: 0 files (replaced with `TimeField` compound in Batch 37)
+- `Navbar` / `NavbarBrand` from `@heroui/react`: 0 files (public dashboards use `<header>` in Batch 37)
 
 ## Verification
 
 - `npm run lint` currently passes
+- `npm run build` in `client/` currently passes (last verified after Batch 37)
 
 Important:
-- Lint in this repo does not validate package export correctness.
-- Import-surface audits are required until the remaining invalid v2-only imports are removed.
+- Lint in this repo does not validate package export correctness; use **`npm run build`** when chasing missing exports.
 
 ## Next Batch
 
 Priority order:
 1. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
-2. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
+2. Keep running **`npm run build`** after import-surface changes to catch renamed or removed exports.
 
 ## Notes
 
 - The earlier compatibility-layer approach was discarded.
 - The client is now being migrated against the real `@heroui/react` package surface.
-- I am avoiding `vite build` during migration and using lint plus direct import-surface audits first, per the migration guidance.
+- **`npm run build`** is now part of the workflow when fixing invalid `@heroui/react` imports (Rollup catches missing exports that ESLint does not).

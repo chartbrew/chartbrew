@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Tooltip, Modal, Select,
+  Button, Checkbox, Separator, Input, Tooltip, Modal, Select,
   Label, ListBox,
 } from "@heroui/react";
 import moment from "moment";
@@ -196,7 +196,7 @@ function ChartSettings({ chart, onChange }) {
       </Row>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <div className="text-sm text-gray-500">Date settings</div>
@@ -339,7 +339,7 @@ function ChartSettings({ chart, onChange }) {
       </div>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -427,7 +427,7 @@ function ChartSettings({ chart, onChange }) {
       </div>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <div className="flex flex-col gap-2">
@@ -538,7 +538,7 @@ function ChartSettings({ chart, onChange }) {
       </div>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <div className="grid grid-cols-12 gap-1">

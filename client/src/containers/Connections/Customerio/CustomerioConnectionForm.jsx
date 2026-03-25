@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Accordion, AccordionItem, ListBox, Select, Divider,
+  Button, Input, Link, Chip, Accordion, AccordionItem, ListBox, Select, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
@@ -264,7 +264,7 @@ function CustomerioConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
           <div>
             <Row align="center">

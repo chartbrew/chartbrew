@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, Button, Chip, Divider, EmptyState, Input, Label, ListBox, SearchField, Select, Tooltip, useFilter,
+  Autocomplete, Button, Chip, Separator, EmptyState, Input, Label, ListBox, SearchField, Select, Tooltip, useFilter,
 } from "@heroui/react";
 import { LuCheck, LuInfo, LuSettings } from "react-icons/lu";
 
@@ -218,7 +218,7 @@ function ChartDatasetDataSetup({
       )}
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <Text b>Data setup</Text>
@@ -367,7 +367,7 @@ function ChartDatasetDataSetup({
       </Autocomplete>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <div className="font-bold">Filters</div>

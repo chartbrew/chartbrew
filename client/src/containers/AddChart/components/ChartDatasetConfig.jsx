@@ -3,8 +3,9 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
-  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, ScrollShadow, Spinner, Tab, Tabs, Tooltip, commonColors,
+  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, ScrollShadow, Spinner, Tab, Tabs, Tooltip,
 } from "@heroui/react";
+import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router";

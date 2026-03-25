@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
-import { Autocomplete, Button, Divider, EmptyState, Input, Label, Link, ListBox, Modal, SearchField, Select, TimeInput, useFilter } from "@heroui/react";
+import { Autocomplete, Button, Separator, EmptyState, Input, Label, Link, ListBox, Modal, SearchField, Select, TimeField, useFilter } from "@heroui/react";
 import timezones from "../../../modules/timezones";
 import { LuMapPin, LuMonitorUp } from "react-icons/lu";
 import { getProject, selectProject, updateProject } from "../../../slices/project";
@@ -226,15 +226,21 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
               <>
                 <div>{"at"}</div>
-                <TimeInput
+                <TimeField
                   aria-label="Update time"
-                  variant="bordered"
                   value={schedule.time}
                   hourCycle={12}
                   onChange={(time) => {
-                    setSchedule({ ...schedule, time })
+                    setSchedule({ ...schedule, time });
                   }}
-                />
+                  className="min-w-[9rem]"
+                >
+                  <TimeField.Group variant="secondary">
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                </TimeField>
               </>
             )}
           </div>
@@ -289,7 +295,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             </div>
           )}
 
-          <Divider />
+          <Separator />
           <Link onPress={openSnapshotSchedule} className="flex flex-row items-center gap-2 cursor-pointer text-sm">
             <LuMonitorUp />
             <span>Get your reports delivered to your inbox, slack, and more.</span>

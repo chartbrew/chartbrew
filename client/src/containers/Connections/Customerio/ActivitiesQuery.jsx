@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Input, Select, Checkbox, Divider,
+  Input, Select, Checkbox, Separator,
   Chip, Autocomplete, Button, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { LuActivity, LuX, LuBox } from "react-icons/lu";
@@ -376,7 +376,7 @@ function ActivitiesQuery({
       </div>
 
       <div className="h-4" />
-      <Divider />
+      <Separator />
       <div className="h-4" />
 
       <div className="flex flex-col gap-2">
@@ -428,7 +428,7 @@ function ActivitiesQuery({
       {(activityType || eventName || customerId || deleted) && (
         <>
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
         </>
       )}
@@ -492,7 +492,7 @@ function ActivitiesQuery({
       </div>
 
       <div className="h-4" />
-      <Divider />
+      <Separator />
       <div className="h-4" />
 
       <div className="flex flex-col gap-4">

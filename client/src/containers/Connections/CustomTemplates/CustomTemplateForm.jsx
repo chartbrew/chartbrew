@@ -4,7 +4,7 @@ import _ from "lodash";
 import {
   Autocomplete,
   Avatar,
-  Button, Checkbox, Chip, Divider, EmptyState, ListBox, Modal, SearchField, Switch, useFilter,
+  Button, Checkbox, Chip, Separator, EmptyState, ListBox, Modal, SearchField, Switch, useFilter,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
@@ -154,7 +154,7 @@ function CustomTemplateForm(props) {
         </Text>
       </Row>
       <div className="h-4" />
-      <Divider />
+      <Separator />
       <div className="h-4" />
 
       {template && template.model && (

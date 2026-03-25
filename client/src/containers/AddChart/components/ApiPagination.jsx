@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Divider, Input, Switch, Tooltip, Chip, Select, Label, ListBox,
+  Separator, Input, Switch, Tooltip, Chip, Select, Label, ListBox,
 } from "@heroui/react";
 import { LuInfo } from "react-icons/lu";
 
@@ -119,7 +119,7 @@ function ApiPagination(props) {
 
       <div className="col-span-12">
         <div className="h-4" />
-        <Divider />
+        <Separator />
         <div className="h-2" />
       </div>
 

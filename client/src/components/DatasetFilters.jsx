@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import {
   Autocomplete, Button, Card,
-  Checkbox, Chip, DatePicker, Divider, Drawer,
+  Checkbox, Chip, DatePicker, Separator, Drawer,
   Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
   Modal, SearchField, Select,
   Switch, Tooltip, useFilter,
@@ -252,7 +252,7 @@ function DatasetFilters(props) {
               {index === 0 && (<div className="text-sm">{"where "}</div>)}
               {index > 0 && (<div className="text-sm">{"and "}</div>)}
             </Card.Header>
-            <Divider />
+            <Separator />
             <Card.Content>
               <Autocomplete
                 placeholder="Field"
@@ -356,7 +356,7 @@ function DatasetFilters(props) {
             </Card.Content>
             {condition.value && _renderValueWithVariables(condition.value) && _renderValueWithVariables(condition.value).some(part => part.type === "variable") && (
               <>
-                <Divider />
+                <Separator />
                 <Card.Content>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs text-gray-500">Variables:</span>
@@ -376,7 +376,7 @@ function DatasetFilters(props) {
                 </Card.Content>
               </>
             )}
-            <Divider />
+            <Separator />
             <Card.Footer className="justify-between gap-2">
               {!condition.saved && condition.field && (
                 <Tooltip content="Apply this condition">

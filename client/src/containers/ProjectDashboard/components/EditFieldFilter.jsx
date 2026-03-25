@@ -3,7 +3,7 @@ import { findIndex } from "lodash";
 import PropTypes from "prop-types";
 import {
   Select, Input, DatePicker, Autocomplete,
-  Chip, Divider, EmptyState, Label, ListBox, SearchField, useFilter,
+  Chip, Separator, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
@@ -218,7 +218,7 @@ function EditFieldFilter({
           </div>
         )}
 
-        <Divider />
+        <Separator />
 
         <div>
           <div className="mb-2 font-bold">Preview filter</div>

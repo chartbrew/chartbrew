@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Avatar, Chip, Button, Checkbox, Divider, Input, Tooltip,
+  Avatar, Chip, Button, Checkbox, Separator, Input, Tooltip,
   Label, ListBox, Select,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -493,7 +493,7 @@ function DatarequestSettings(props) {
                 </div>
                 <div className="col-span-12">
                   <div className="h-4" />
-                  <Divider />
+                  <Separator />
                   <div className="h-4" />
                 </div>
               </div>
@@ -524,7 +524,7 @@ function DatarequestSettings(props) {
           </Row>
           <>
             <div className="h-4" />
-            <Divider />
+            <Separator />
             <div className="h-2" />
           </>
           <Row>

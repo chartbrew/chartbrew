@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import {
-  Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
-  Link, ProgressCircle, Chip, NavbarBrand,
+  Button, Input, Tooltip, Popover, Separator, Modal,
+  Link, ProgressCircle, Chip,
   Spinner,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
@@ -789,15 +789,11 @@ function PublicDashboard() {
 
       <div className={editorVisible && !preview ? "ml-16" : ""}>
         {!removeHeader && (
-          <Navbar
-            isBordered
-            maxWidth={"full"}
-            isBlurred={false}
-            className={"header grow-0 justify-between"}
+          <header
+            className="header grow-0 flex w-full max-w-full flex-row items-center justify-between border-b border-divider"
             style={{ backgroundColor: removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor || project.backgroundColor || "#FFFFFF") }}
           >
-            <NavbarBrand>
-              <div className="flex flex-row items-center gap-4">
+            <div className="flex min-w-0 flex-1 flex-row items-center gap-4">
                 {editorVisible && !preview && (
                   <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
                     <img
@@ -855,8 +851,7 @@ function PublicDashboard() {
                   )}
                 </div>
               </div>
-            </NavbarBrand>
-          </Navbar>
+          </header>
         )}
 
         <div className="absolute top-4 right-4 z-50">

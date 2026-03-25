@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button, Divider, Input, Chip, Tabs, Tab, Select,
+  Button, Separator, Input, Chip, Tabs, Tab, Select,
   Alert, Label, ListBox,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
@@ -244,7 +244,7 @@ function ApiConnectionForm(props) {
           <Tab key="headers" title="Headers" />
         </Tabs>
         <div className="h-8" />
-        <Divider />
+        <Separator />
         <div className="h-8" />
 
         {menuType === "authentication" && (
@@ -410,7 +410,7 @@ function ApiConnectionForm(props) {
           </>
         )}
 
-        <Divider />
+        <Separator />
         <div className="h-8" />
         <Row align="center">
           <Button
@@ -446,7 +446,7 @@ function ApiConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <div>
             <div className="flex items-center justify-between">

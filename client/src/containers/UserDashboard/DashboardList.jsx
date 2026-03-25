@@ -1,6 +1,5 @@
 import {
   Avatar,
-  AvatarGroup,
   Button,
   Card,
   Chip,
@@ -41,7 +40,7 @@ import { Link, useNavigate } from "react-router";
 
 import ProjectForm from "../../components/ProjectForm";
 import canAccess from "../../config/canAccess";
-import { cn } from "../../modules/utils";
+import { cn, displayInitials } from "../../modules/utils";
 import { removeProject, selectProjects, updateProject } from "../../slices/project";
 import { getTeams, saveActiveTeam, selectTeam, selectTeamMembers } from "../../slices/team";
 import { getTemplates } from "../../slices/template";
@@ -410,6 +409,13 @@ function DashboardList() {
                 {filteredProjects.map((project) => {
                   const projectMembers = _getProjectMembers(project);
                   const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
+                  const memberStackMax = 3;
+                  const memberStackOverflow = projectMembers.length > memberStackMax
+                    ? projectMembers.length - (memberStackMax - 1)
+                    : 0;
+                  const memberStackVisible = memberStackOverflow > 0
+                    ? projectMembers.slice(0, memberStackMax - 1)
+                    : projectMembers.slice(0, memberStackMax);
 
                   return (
                     <TableRow key={project.id} className="group">
@@ -436,14 +442,23 @@ function DashboardList() {
                       <TableCell key="members">
                         <div className="flex flex-row items-center justify-center">
                           {projectMembers.length > 0 ? (
-                            <AvatarGroup max={3} isBordered size="sm">
-                              {projectMembers.map((projectMember) => (
+                            <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
+                              {memberStackVisible.map((projectMember, idx) => (
                                 <Avatar
                                   key={projectMember.id}
-                                  name={projectMember.name}
-                                />
+                                  size="sm"
+                                  className="ring-2 ring-background shrink-0"
+                                  style={{ zIndex: idx }}
+                                >
+                                  <Avatar.Fallback>{displayInitials(projectMember.name)}</Avatar.Fallback>
+                                </Avatar>
                               ))}
-                            </AvatarGroup>
+                              {memberStackOverflow > 0 && (
+                                <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: memberStackVisible.length }}>
+                                  <Avatar.Fallback>{`+${memberStackOverflow}`}</Avatar.Fallback>
+                                </Avatar>
+                              )}
+                            </div>
                           ) : (
                             <Chip variant="flat" size="sm">
                               Team only

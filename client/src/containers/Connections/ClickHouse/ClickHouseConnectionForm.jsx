@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Chip, Divider, Switch, Select,
+  Button, Input, Chip, Separator, Switch, Select,
   ProgressCircle, Label, ListBox,
 } from "@heroui/react";
 import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
@@ -475,7 +475,7 @@ function ClickHouseConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <div>
             <Row align="center">

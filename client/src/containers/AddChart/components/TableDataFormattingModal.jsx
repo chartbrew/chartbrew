@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Chip, Description, Divider, Input, Label, ListBox, Modal,
+  Button, Checkbox, Chip, Description, Separator, Input, Label, ListBox, Modal,
   Popover,
   Select,
 } from "@heroui/react";
@@ -356,7 +356,7 @@ function TableDataFormattingModal(props) {
             </>
           )}
 
-          <Divider />
+          <Separator />
           <Select 
             variant="secondary"
             selectionMode="single"

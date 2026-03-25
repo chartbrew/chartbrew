@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Modal, Input, Tooltip, Checkbox, Divider,
+  Button, Modal, Input, Tooltip, Checkbox, Separator,
   Tabs, Tab,
   ProgressCircle,
   Badge,
@@ -333,7 +333,7 @@ function ClickHouseBuilder(props) {
             </div>
           </Row>
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <div>
             <Row>
@@ -391,7 +391,7 @@ function ClickHouseBuilder(props) {
           </div>
 
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <Row>
             <Text b>Saved queries</Text>

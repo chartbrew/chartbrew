@@ -6,7 +6,7 @@ import {
   Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, ProgressCircle, DropdownMenu, DropdownTrigger, DropdownItem, Select,
   Badge,
-  Divider,
+  Separator,
   Kbd,
   Label,
   ListBox,
@@ -1218,7 +1218,7 @@ function Chart(props) {
 
             {alertsDatasetId && (
               <>
-                <Divider />
+                <Separator />
                 {chart?.Alerts?.length > 0 && (
                   <div className="text-sm">{"Your current alerts:"}</div>
                 )}

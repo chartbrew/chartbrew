@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
-  Button, Popover, Divider, Input, Tooltip, Chip, Checkbox,
+  Button, Popover, Separator, Input, Tooltip, Chip, Checkbox,
   Select, Autocomplete,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
@@ -479,7 +479,7 @@ function GaBuilder(props) {
               </div>
             </div>
             <div className="col-span-12">
-              <Divider />
+              <Separator />
             </div>
             <div className="col-span-12 sm:col-span-6 gabuilder-collections-tut">
               <Select

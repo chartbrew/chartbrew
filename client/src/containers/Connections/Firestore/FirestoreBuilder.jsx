@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button,Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
+  Button, Separator, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Label, ListBox, Select,
   Badge, Drawer,
 } from "@heroui/react";
@@ -652,7 +652,7 @@ function FirestoreBuilder(props) {
           </Row>
           <div className="h-4" />
           <Row>
-            <Divider />
+            <Separator />
           </Row>
           <div className="h-8" />
           <Row>
@@ -693,7 +693,7 @@ function FirestoreBuilder(props) {
           </Row>
 
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
 
           <Row align="center">
@@ -736,7 +736,7 @@ function FirestoreBuilder(props) {
             />
           </Row>
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
           <Row className="firestorebuilder-query-tut">
             <Text>
@@ -796,7 +796,7 @@ function FirestoreBuilder(props) {
           </Row>
 
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
 
           <Row>
@@ -817,7 +817,7 @@ function FirestoreBuilder(props) {
 
           {showSubUI && dataRequest && dataRequest.configuration && (
             <div className="mt-4">
-              <Divider />
+              <Separator />
               <div className="h-4" />
               <Row>
                 <Text>Fetch sub-collection data only</Text>
@@ -851,7 +851,7 @@ function FirestoreBuilder(props) {
               </Row>
 
               <div className="h-2" />
-              <Divider />
+              <Separator />
               <div className="h-2" />
 
               {dataRequest.configuration.selectedSubCollection && (
@@ -900,7 +900,7 @@ function FirestoreBuilder(props) {
                   {indexUrl && (
                     <>
                       <div className="h-2" />
-                      <Divider />
+                      <Separator />
                       <div className="h-2" />
                       <Row>
                         <Container className={"bg-blue-50 p-10 rounded-xs border-2 border-blue-300 border-solid"}>
@@ -1361,7 +1361,7 @@ function Conditions(props) {
                 </Button>
               </Tooltip>
             </Row>
-            <Divider />
+            <Separator />
           </Fragment>
         );
       })}

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Chip, Checkbox, Divider,
+  Button, Input, Chip, Checkbox, Separator,
   ProgressCircle, ListBox, Select,
 } from "@heroui/react";
 import { isEqual } from "lodash";
@@ -413,7 +413,7 @@ function CustomerQuery(props) {
       {conditions[mainOperation]?.length > 0 &&(
         <>
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-2" />
         </>
       )}
@@ -595,7 +595,7 @@ function CustomerQuery(props) {
       )}
 
       <div className="h-4" />
-      <Divider />
+      <Separator />
       <div className="h-4" />
 
       <Row>

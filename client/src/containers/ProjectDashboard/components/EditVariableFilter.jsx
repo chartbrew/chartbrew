@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Select, Input, DatePicker, Divider, Label, ListBox,
+  Select, Input, DatePicker, Separator, Label, ListBox,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
@@ -158,7 +158,7 @@ function EditVariableFilter({
           )}
         </div>
 
-        <Divider />
+        <Separator />
 
         <div>
           <div className="mb-2 font-bold">Preview filter</div>

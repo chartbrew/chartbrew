@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Button, Divider, Input, Popover, Switch, Tooltip, Select,
+  Chip, Button, Separator, Input, Popover, Switch, Tooltip, Select,
   ListBox, Tabs, Tab,
 } from "@heroui/react";
 import {
@@ -394,7 +394,7 @@ function CampaignsQuery(props) {
       )}
 
       <div className="h-2" />
-      <Divider />
+      <Separator />
       <div className="h-4" />
 
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import PropTypes from "prop-types";
 import {
-  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeInput, Textarea, ButtonGroup, Tooltip, useFilter,
+  Autocomplete, Button, EmptyState, Input, Label, ListBox, Modal, SearchField, Select, TimeField, TextArea, ButtonGroup, Tooltip, useFilter,
   Tabs, Tab,
   Checkbox,
 } from "@heroui/react";
@@ -354,15 +354,21 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
                   <>
                     <div>{"at"}</div>
-                    <TimeInput
+                    <TimeField
                       aria-label="Update time"
-                      variant="bordered"
                       value={schedule.time}
                       hourCycle={12}
                       onChange={(time) => {
-                        setSchedule({ ...schedule, time })
+                        setSchedule({ ...schedule, time });
                       }}
-                    />
+                      className="min-w-[9rem]"
+                    >
+                      <TimeField.Group variant="secondary">
+                        <TimeField.Input>
+                          {(segment) => <TimeField.Segment segment={segment} />}
+                        </TimeField.Input>
+                      </TimeField.Group>
+                    </TimeField>
                   </>
                 )}
               </div>
@@ -486,12 +492,12 @@ function SnapshotSchedule({ isOpen, onClose }) {
               {schedule.mediums.email?.enabled && (
                 <>
                   <div className="mt-2">
-                    <Textarea
+                    <TextArea
                       placeholder="Enter email address (one per line)"
                       variant="bordered"
                       value={customEmails.join("\n")}
                       onChange={(e) => setCustomEmails(e.target.value.split("\n"))}
-                      maxRows={10}
+                      rows={10}
                     />
                     <div className="flex flex-row items-center gap-2">
                       <Button

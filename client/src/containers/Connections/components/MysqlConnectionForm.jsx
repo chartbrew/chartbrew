@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Tabs, Tab, Divider, Switch, Select,
+  Button, Input, Link, Chip, Tabs, Tab, Separator, Switch, Select,
   ProgressCircle, Alert, Label, ListBox,
 } from "@heroui/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -799,7 +799,7 @@ function MysqlConnectionForm(props) {
       {testResult && !testLoading && (
         <>
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <div>
             <Row align="center">

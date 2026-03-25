@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, AvatarGroup, Button, Chip, ProgressCircle, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
 import React, { useEffect, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -532,7 +532,17 @@ function DatasetList() {
               )
             }
           >
-            {paginatedDatasets.map((dataset) => (
+            {paginatedDatasets.map((dataset) => {
+              const dataRequests = dataset?.DataRequests || [];
+              const drStackMax = 3;
+              const drStackOverflow = dataRequests.length > drStackMax
+                ? dataRequests.length - (drStackMax - 1)
+                : 0;
+              const drStackVisible = drStackOverflow > 0
+                ? dataRequests.slice(0, drStackMax - 1)
+                : dataRequests.slice(0, drStackMax);
+
+              return (
               <TableRow key={`${dataset.id}`}>
                 <TableCell key="name">
                   <div className="flex flex-row items-center gap-2">
@@ -548,18 +558,28 @@ function DatasetList() {
                 </TableCell>
                 <TableCell key="connections">
                   <div className="flex flex-row items-center">
-                    <AvatarGroup max={3} isBordered size="sm">
-                      {dataset?.DataRequests?.map((dr) => (
+                    <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
+                      {drStackVisible.map((dr, idx) => (
                         <Avatar
-                          src={dr.Connection ? connectionImages(isDark)[dr?.Connection?.subType] : null}
-                          showFallback={<LuPlug />}
-                          size="sm"
-                          isBordered
                           key={dr.id}
-                          icon={!dr.Connection ? <LuMonitorX /> : null}
-                        />
+                          size="sm"
+                          className="ring-2 ring-background shrink-0"
+                          style={{ zIndex: idx }}
+                        >
+                          {dr.Connection ? (
+                            <Avatar.Image src={connectionImages(isDark)[dr.Connection.subType]} alt="" />
+                          ) : null}
+                          <Avatar.Fallback>
+                            {!dr.Connection ? <LuMonitorX /> : <LuPlug />}
+                          </Avatar.Fallback>
+                        </Avatar>
                       ))}
-                    </AvatarGroup>
+                      {drStackOverflow > 0 && (
+                        <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: drStackVisible.length }}>
+                          <Avatar.Fallback>{`+${drStackOverflow}`}</Avatar.Fallback>
+                        </Avatar>
+                      )}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell key="tags">
@@ -664,7 +684,8 @@ function DatasetList() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>

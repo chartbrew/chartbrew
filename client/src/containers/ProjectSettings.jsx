@@ -3,7 +3,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Autocomplete,
-  Button, ProgressCircle, Divider, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
+  Button, ProgressCircle, Separator, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -161,7 +161,7 @@ function ProjectSettings(props) {
       </Row>
 
       <div className="h-8" />
-      <Divider />
+      <Separator />
       <div className="h-8" />
 
       <Row align="center" wrap={"wrap"}>
@@ -243,7 +243,7 @@ function ProjectSettings(props) {
       {_canAccess("teamAdmin") && (
         <>
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
 
           <Row>

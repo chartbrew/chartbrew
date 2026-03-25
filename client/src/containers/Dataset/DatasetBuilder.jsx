@@ -8,7 +8,7 @@ import { LuCircleCheck, LuInfo, LuWandSparkles, LuCircleX } from "react-icons/lu
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
-import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, SearchField, Select, Tooltip, useFilter } from "@heroui/react";
+import { Autocomplete, Chip, Separator, EmptyState, Input, Label, Link, ListBox, Popover, SearchField, Select, Tooltip, useFilter } from "@heroui/react";
 import Text from "../../components/Text";
 import autoFieldSelector from "../../modules/autoFieldSelector";
 import fieldFinder from "../../modules/fieldFinder";
@@ -474,7 +474,7 @@ function DatasetBuilder(props) {
           </Select.Popover>
         </Select>
         <div className="h-8" />
-        <Divider />
+        <Separator />
         <div className="h-8" />
         <Row align="center" className={"justify-between"}>
           <Autocomplete
@@ -516,7 +516,7 @@ function DatasetBuilder(props) {
         </Row>
 
         <div className="h-8" />
-        <Divider />
+        <Separator />
         <div className="h-8" />
 
         {!formula && (
@@ -583,7 +583,7 @@ function DatasetBuilder(props) {
         )}
 
         <div className="h-8" />
-        <Divider />
+        <Separator />
         <div className="h-8" />
 
         <div className="">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Tooltip, Chip,
+  Button, Checkbox, Separator, Input, Tooltip, Chip,
   Tabs, Tab, Select, Popover,
   Badge, Drawer,
   Switch, Label, ListBox,
@@ -568,7 +568,7 @@ function ApiBuilder(props) {
           </Row>
           <div className="h-4" />
           <Row>
-            <Divider />
+            <Separator />
           </Row>
           <div className="h-8" />
           <Row align="center" className="apibuilder-route-tut">
@@ -716,7 +716,7 @@ function ApiBuilder(props) {
 
           <div className="h-4" />
           <Row>
-            <Divider />
+            <Separator />
           </Row>
           <div className="h-4" />
 
@@ -758,7 +758,7 @@ function ApiBuilder(props) {
                         })}
                       </Container>
                       <div className="h-4" />
-                      <Divider />
+                      <Separator />
                       <div className="h-2" />
                     </>
                   )}

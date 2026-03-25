@@ -8,7 +8,7 @@ import {
   Label,
   ListBox,
   Select,
-  Divider,
+  Separator,
   Modal,
   Switch,
 } from "@heroui/react"
@@ -180,7 +180,7 @@ function SlackIntegration({ integration }) {
           </div>
         </div>
 
-        <Divider />
+        <Separator />
 
         <div className="flex flex-col gap-2">
           <div className="font-semibold">Integration Name</div>
@@ -198,7 +198,7 @@ function SlackIntegration({ integration }) {
           />
         </div>
 
-        <Divider />
+        <Separator />
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-row items-center justify-between">

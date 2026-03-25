@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Link, Select, Label, ListBox,
+  Button, Checkbox, Separator, Input, Link, Select, Label, ListBox,
 } from "@heroui/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -261,7 +261,7 @@ function SimpleAnalyticsTemplate(props) {
         <>
           {availableConnections && availableConnections.length > 0 && (
             <Row>
-              <Divider />
+              <Separator />
             </Row>
           )}
           <div className="h-2" />

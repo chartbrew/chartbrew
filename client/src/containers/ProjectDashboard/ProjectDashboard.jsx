@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Modal, Chip,
-  AvatarGroup, Avatar, Popover, ListBox, Separator, Dropdown, DropdownTrigger,
+  Avatar, Popover, ListBox, Separator, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
   Tabs,
   Tab,
@@ -52,6 +52,7 @@ import { exportMultipleChartsToExcel, canExportChart } from "../../modules/expor
 import { selectProject } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
+import { displayInitials } from "../../modules/utils";
 import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
@@ -957,6 +958,15 @@ function ProjectDashboard() {
     );
   }
 
+  const projectMemberStackMax = 3;
+  const projectMemberStack = projectMembers || [];
+  const projectMemberStackOverflow = projectMemberStack.length > projectMemberStackMax
+    ? projectMemberStack.length - (projectMemberStackMax - 1)
+    : 0;
+  const projectMemberStackVisible = projectMemberStackOverflow > 0
+    ? projectMemberStack.slice(0, projectMemberStackMax - 1)
+    : projectMemberStack.slice(0, projectMemberStackMax);
+
   return (
     <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>
       {charts && charts.length > 0
@@ -973,15 +983,25 @@ function ProjectDashboard() {
                         <Popover>
                           <Popover.Trigger>
                             <div className="cursor-pointer">
-                              <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer pointer-events-none">
-                                {projectMembers.map((member) => (
+                              <div className="flex flex-row -space-x-2 rtl:space-x-reverse cursor-pointer pointer-events-none">
+                                {projectMemberStackVisible.map((member, idx) => (
                                   <Avatar
                                     key={member.id}
-                                    name={member.name}
-                                    showFallback={<LuUser />}
-                                  />
+                                    size="sm"
+                                    className="ring-2 ring-background shrink-0"
+                                    style={{ zIndex: idx }}
+                                  >
+                                    <Avatar.Fallback>
+                                      {member.name ? displayInitials(member.name) : <LuUser />}
+                                    </Avatar.Fallback>
+                                  </Avatar>
                                 ))}
-                              </AvatarGroup>
+                                {projectMemberStackOverflow > 0 && (
+                                  <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: projectMemberStackVisible.length }}>
+                                    <Avatar.Fallback>{`+${projectMemberStackOverflow}`}</Avatar.Fallback>
+                                  </Avatar>
+                                )}
+                              </div>
                             </div>
                           </Popover.Trigger>
                           <Popover.Content className="pt-4">

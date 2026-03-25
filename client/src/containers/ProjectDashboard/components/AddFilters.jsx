@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { v4 as uuid } from "uuid";
 import {
-  Button, Divider, Drawer, Label, ListBox, Select,
+  Button, Separator, Drawer, Label, ListBox, Select,
 } from "@heroui/react";
 import { LuCalendarDays, LuListTree, LuPlus, LuVariable } from "react-icons/lu";
 import { toast } from "react-hot-toast";
@@ -154,7 +154,7 @@ function AddFilters(props) {
             </Select.Popover>
           </Select>
 
-          <Divider />
+          <Separator />
 
           {filterType === "date" && (
             <EditDateRangeFilter

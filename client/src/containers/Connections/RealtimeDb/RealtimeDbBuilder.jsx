@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, Divider, Chip, Checkbox, Tooltip,
+  Button, Input, Separator, Chip, Checkbox, Tooltip,
   Badge, Drawer,
   Label, ListBox, Select, Switch,
 } from "@heroui/react";
@@ -317,7 +317,7 @@ function RealtimeDbBuilder(props) {
           </Row>
           <div className="h-4" />
           <Row>
-            <Divider />
+            <Separator />
           </Row>
           <div className="h-8" />
           <Row>
@@ -384,7 +384,7 @@ function RealtimeDbBuilder(props) {
           )}
 
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
 
           <Row>
@@ -487,7 +487,7 @@ function RealtimeDbBuilder(props) {
           )}
 
           <div className="h-4" />
-          <Divider />
+          <Separator />
           <div className="h-4" />
 
           <Row>

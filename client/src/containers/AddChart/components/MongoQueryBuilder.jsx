@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
-  Button, Checkbox, Divider, Input, Link, Modal, Popover,
+  Button, Checkbox, Separator, Input, Link, Modal, Popover,
   Tab, Tabs, Tooltip, Drawer,
   Switch, Select, Label, ListBox,
 } from "@heroui/react";
@@ -286,7 +286,7 @@ function MongoQueryBuilder(props) {
           </Row>
           <div className="h-4" />
           <Row>
-            <Divider />
+            <Separator />
           </Row>
           <div className="h-8" />
           <Row align="center">
@@ -367,7 +367,7 @@ function MongoQueryBuilder(props) {
           </div>
 
           <div className="h-8" />
-          <Divider />
+          <Separator />
           <div className="h-8" />
           <Row>
             <Text b>Saved queries</Text>
