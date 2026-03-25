@@ -115,7 +115,7 @@ function PrintView(props) {
           <Row style={styles.orientationBtn}>
             <Button
               isIconOnly
-              variant="bordered"
+              variant="secondary"
               onClick={_togglePrint}
             >
               <LuCircleChevronLeft />
@@ -123,7 +123,7 @@ function PrintView(props) {
             <div className="w-0.5" />
             <Button
               startContent={<LuRedo />}
-              variant="bordered"
+              variant="secondary"
               onClick={_changeOrientation}
               auto
             >
@@ -160,7 +160,7 @@ function PrintView(props) {
                   placeholder="Enter a title"
                   value={printTitle || project.name}
                   onChange={(e) => setPrintTitle(e.target.value)}
-                  variant="bordered"
+                  variant="secondary"
                 />
                 <div className="w-0.5" />
                 <Button

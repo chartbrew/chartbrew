@@ -56,7 +56,7 @@ function FeedbackForm() {
           label="Your name"
           placeholder="Can be anonymous"
           fullWidth
-          variant="bordered"
+          variant="secondary"
         />
       </Row>
       <div className="h-1" />
@@ -67,7 +67,7 @@ function FeedbackForm() {
           label="Your Comments"
           placeholder="Tell us about your exprience with our product"
           fullWidth
-          variant="bordered"
+          variant="secondary"
         />
       </Row>
       {(success || submitError) && <div className="h-0.5" />}

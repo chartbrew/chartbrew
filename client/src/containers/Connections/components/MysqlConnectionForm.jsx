@@ -310,7 +310,7 @@ function MysqlConnectionForm(props) {
                   setConnection({ ...connection, name: e.target.value });
                 }}
                 color={errors.name ? "danger" : "default"}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -331,7 +331,7 @@ function MysqlConnectionForm(props) {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
                 description={formStrings[subType].csDescription}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -359,7 +359,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.name ? "danger" : "default"}
                   description={errors.name}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -374,7 +374,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.host ? "danger" : "default"}
                   description={errors.host}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -388,7 +388,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.port ? "danger" : "default"}
                   description={errors.port}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -402,7 +402,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.dbName ? "danger" : "default"}
                   description={errors.dbName}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -416,7 +416,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.username ? "danger" : "default"}
                   description={errors.username}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -430,7 +430,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.password ? "danger" : "default"}
                   description={errors.password}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -617,7 +617,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.sshHost ? "danger" : "default"}
                   description={errors.sshHost}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -629,7 +629,7 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, sshPort: e.target.value });
                   }}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -643,7 +643,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.sshUsername ? "danger" : "default"}
                   description={errors.sshUsername}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -658,7 +658,7 @@ function MysqlConnectionForm(props) {
                   }}
                   color={errors.sshPassword ? "danger" : "default"}
                   description={errors.sshPassword}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -701,7 +701,7 @@ function MysqlConnectionForm(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, sshPassphrase: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 className="w-full md:w-1/2"
               />
             </Row>
@@ -715,7 +715,7 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, sshJumpHost: e.target.value });
                   }}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -727,7 +727,7 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, sshJumpPort: e.target.value });
                   }}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -745,7 +745,7 @@ function MysqlConnectionForm(props) {
                   </span>
                   <div>
                     <Button
-                      variant="bordered"
+                      variant="secondary"
                       size="sm"
                       as={"a"}
                       href="mailto:support@chartbrew.com"

@@ -212,7 +212,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "default"}
             description={errors.name}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
 
@@ -225,7 +225,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.host ? "danger" : "default"}
             description={errors.host}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
 
@@ -238,7 +238,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.port ? "danger" : "default"}
             description={connection.ssl ? "Default HTTPS port: 8443" : "Default HTTP port: 8123"}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
 
@@ -250,7 +250,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.dbName ? "danger" : "default"}
             description={errors.dbName}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
 
@@ -262,7 +262,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.username ? "danger" : "default"}
             description={errors.username}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
 
@@ -275,7 +275,7 @@ function ClickHouseConnectionForm(props) {
             }}
             color={errors.password ? "danger" : "default"}
             description={errors.password}
-            variant="bordered"
+            variant="secondary"
             className="max-w-md"
           />
         </div>

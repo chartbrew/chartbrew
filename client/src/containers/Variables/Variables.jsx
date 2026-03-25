@@ -73,7 +73,7 @@ function Variables() {
         <Button
           color="primary"
           endContent={<LuPlus />}
-          onClick={_onCreateVariable}
+          onPress={_onCreateVariable}
         >
           Create variable
         </Button>
@@ -105,7 +105,7 @@ function Variables() {
               </TableCell>
               <TableCell key="createdAt">{new Date(variable.createdAt).toLocaleDateString()}</TableCell>
               <TableCell key="actions" className="flex justify-end text-end">
-                <Button isIconOnly variant="light" color="danger" onClick={() => setDeleteModal(variable.id)}>
+                <Button isIconOnly variant="danger-soft" onPress={() => setDeleteModal(variable.id)}>
                   <LuTrash />
                 </Button>
               </TableCell>

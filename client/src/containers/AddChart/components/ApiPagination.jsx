@@ -146,7 +146,7 @@ function ApiPagination(props) {
             labelPlacement="outside"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </div>
@@ -171,7 +171,7 @@ function ApiPagination(props) {
             labelPlacement="outside"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </div>
@@ -184,7 +184,7 @@ function ApiPagination(props) {
             placeholder="page"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </div>
@@ -235,7 +235,7 @@ function ApiPagination(props) {
               labelPlacement="outside"
               value={paginationField || ""}
               onChange={(e) => _onChangePaginationField(e.target.value)}
-              variant="bordered"
+              variant="secondary"
               fullWidth
               isDisabled={!pagination}
             />
@@ -270,7 +270,7 @@ function ApiPagination(props) {
             placeholder="Cursor query parameter name"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </div>
@@ -295,7 +295,7 @@ function ApiPagination(props) {
             labelPlacement="outside"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </div>
@@ -321,7 +321,7 @@ function ApiPagination(props) {
           type="number"
           value={itemsLimit}
           onChange={(e) => onPaginationChanged("itemsLimit", e.target.value)}
-          variant="bordered"
+          variant="secondary"
           fullWidth
         />
       </div>

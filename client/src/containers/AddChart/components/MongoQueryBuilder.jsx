@@ -281,7 +281,7 @@ function MongoQueryBuilder(props) {
                     isIconOnly
                     auto
                     size="sm"
-                    variant="bordered"
+                    variant="secondary"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
@@ -558,7 +558,7 @@ function MongoQueryBuilder(props) {
               fullWidth
               onChange={(e) => setSavedQuerySummary(e.target.value)}
               size="lg"
-              variant="bordered"
+              variant="secondary"
             />
             </Modal.Body>
             <Modal.Footer>
@@ -676,7 +676,7 @@ function MongoQueryBuilder(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}

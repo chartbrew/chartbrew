@@ -111,7 +111,7 @@ function Signup() {
           }}>
             <Row>
               <Input
-                variant="bordered"
+                variant="secondary"
                 startContent={<LuUser />}
                 type="text"
                 placeholder="Enter your name"
@@ -135,7 +135,7 @@ function Signup() {
             <div className="h-2" />
             <Row>
               <Input
-                variant="bordered"
+                variant="secondary"
                 startContent={<LuMail />}
                 type="email"
                 placeholder="Enter your email"
@@ -159,7 +159,7 @@ function Signup() {
             <div className="h-2" />
             <Row>
               <Input
-                variant="bordered"
+                variant="secondary"
                 startContent={<LuLock />}
                 type="password"
                 placeholder="Enter a secure password"

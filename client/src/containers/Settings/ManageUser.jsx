@@ -229,7 +229,7 @@ function ManageUser() {
         type="text"
         placeholder="Enter your name"
         onChange={(e) => setUser({ ...user, name: e.target.value })}
-        variant="bordered"
+        variant="secondary"
         fullWidth
         className="max-w-md"
       />
@@ -268,7 +268,7 @@ function ManageUser() {
         onChange={(e) => setUserEmail(e.target.value)}
         type="text"
         placeholder="Enter your email"
-        variant="bordered"
+        variant="secondary"
         fullWidth
         className="max-w-md"
       />
@@ -321,7 +321,7 @@ function ManageUser() {
           <Input
             label="Code"
             placeholder="Enter the code here"
-            variant="bordered"
+            variant="secondary"
             fullWidth
             onChange={(e) => setAppToken(e.target.value)}
             className="max-w-md"
@@ -330,7 +330,7 @@ function ManageUser() {
           <Input
             label="Password"
             placeholder="Enter your password"
-            variant="bordered"
+            variant="secondary"
             fullWidth
             type="password"
             onChange={(e) => setPassword(e.target.value)}
@@ -365,7 +365,7 @@ function ManageUser() {
           <div className="h-2" />
           <div>
             <Button
-              variant="bordered"
+              variant="secondary"
               endContent={codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
               onPress={_onCopyCodes}
             >

@@ -988,14 +988,14 @@ function Chart(props) {
             <Button
               variant="tertiary"
               color="warning"
-              onClick={() => setDeleteModal(false)}
+              onPress={() => setDeleteModal(false)}
             >
               Go back
             </Button>
             <Button
               color="danger"
               endContent={<LuTrash />}
-              onClick={_onDeleteChart}
+              onPress={_onDeleteChart}
               isPending={chartLoading}
             >
               Remove completely
@@ -1021,7 +1021,7 @@ function Chart(props) {
             <Button
               variant="tertiary"
               color="warning"
-              onClick={() => setPublicModal(false)}
+              onPress={() => setPublicModal(false)}
             >
               Go back
             </Button>
@@ -1029,7 +1029,7 @@ function Chart(props) {
               isPending={publicLoading}
               color="primary"
               endContent={<LuLockOpen />}
-              onClick={_onPublic}
+              onPress={_onPublic}
             >
               Make the chart public
             </Button>
@@ -1127,14 +1127,14 @@ function Chart(props) {
                   startContent={(<Text className={"text-default-400"}>Every</Text>)}
                   onChange={(e) => setCustomUpdateFreq(e.target.value)}
                   value={customUpdateFreq}
-                  variant="bordered"
+                  variant="secondary"
                   disableAnimation
                   min={updateFreqType === "seconds" ? 10 : 1}
                 />
                 <Dropdown aria-label="Select a time unit">
                   <Dropdown.Trigger>
                     <Button
-                      variant="bordered"
+                      variant="secondary"
                       color="default"
                       endContent={(
                         <div>
@@ -1177,7 +1177,7 @@ function Chart(props) {
             <Button
               variant="tertiary"
               color={"warning"}
-              onClick={() => setUpdateModal(false)}
+              onPress={() => setUpdateModal(false)}
               size="sm"
             >
               Cancel
@@ -1187,7 +1187,7 @@ function Chart(props) {
               variant="tertiary"
               color="danger"
               isPending={autoUpdateLoading}
-              onClick={() => {
+              onPress={() => {
                 setUpdateFrequency(0);
                 _onChangeAutoUpdate(0);
               }}
@@ -1199,7 +1199,7 @@ function Chart(props) {
               endContent={<LuCheck />}
               color="primary"
               isPending={autoUpdateLoading}
-              onClick={() => _onChangeAutoUpdate()}
+              onPress={() => _onChangeAutoUpdate()}
               size="sm"
             >
               Save
@@ -1273,7 +1273,7 @@ function Chart(props) {
           <Modal.Footer>
             <Button
               variant="secondary"
-              onClick={() => setAlertsModal(false)}
+              onPress={() => setAlertsModal(false)}
             >
               Close
             </Button>

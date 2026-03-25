@@ -325,7 +325,7 @@ function ActivitiesQuery({
           onChange={(value) => _handleActivityTypeChange(value)}
           fullWidth
           variant="secondary"
-          isLoading={loading}
+          isPending={loading}
           aria-label="Activity Type"
         >
           <Label>Activity Type</Label>
@@ -361,7 +361,7 @@ function ActivitiesQuery({
           value={eventName}
           onChange={(e) => _handleEventNameChange(e.target.value)}
           fullWidth
-          variant="bordered"
+          variant="secondary"
           endContent={hasEventNameChanges && (
             <Button
               size="sm"
@@ -386,7 +386,7 @@ function ActivitiesQuery({
           value={customerId}
           onChange={(e) => _handleCustomerIdChange(e.target.value)}
           fullWidth
-          variant="bordered"
+          variant="secondary"
           endContent={hasCustomerIdChanges && (
             <Button
               size="sm"
@@ -436,7 +436,7 @@ function ActivitiesQuery({
       <div className="flex flex-row flex-wrap items-center gap-1">
         {request?.configuration?.activityType && (
           <Chip
-            variant="bordered"
+            variant="secondary"
             startContent={<LuActivity />}
             endContent={(
               <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleActivityTypeChange("")} />
@@ -449,7 +449,7 @@ function ActivitiesQuery({
         )}
         {request?.configuration?.eventName && (
           <Chip
-            variant="bordered"
+            variant="secondary"
             startContent={<LuActivity />}
             endContent={(
               <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleEventNameChange("")} />
@@ -462,7 +462,7 @@ function ActivitiesQuery({
         )}
         {request?.configuration?.customerId && (
           <Chip
-            variant="bordered"
+            variant="secondary"
             startContent={<LuActivity />}
             endContent={(
               <LuX size={16} className="text-danger cursor-pointer" onClick={() => {
@@ -478,7 +478,7 @@ function ActivitiesQuery({
         )}
         {request?.configuration?.deleted && (
           <Chip
-            variant="bordered"
+            variant="secondary"
             startContent={<LuActivity />}
             endContent={(
               <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleDeletedChange(false)} />
@@ -511,7 +511,7 @@ function ActivitiesQuery({
           placeholder="Limit the number of records to return"
           value={limit}
           onChange={(e) => _handleLimitChange(parseInt(e.target.value, 10))}
-          variant="bordered"
+          variant="secondary"
           endContent={hasLimitChanges && (
             <Button
               size="sm"

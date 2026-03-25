@@ -379,7 +379,7 @@ function CustomerQuery(props) {
               )}
               {condition.not && condition.not.attribute && (
                 <Chip
-                  variant="bordered"
+                  variant="secondary"
                   startContent={<LuUser />}
                   endContent={(
                     <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("attribute", condition.not)} />
@@ -424,8 +424,8 @@ function CustomerQuery(props) {
           <Button
             size="sm"
             startContent={<LuFolder />}
-            onClick={() => _onConfigureSegment()}
-            variant="bordered"
+            onPress={() => _onConfigureSegment()}
+            variant="secondary"
             color="primary"
           >
             Add segment condition
@@ -434,8 +434,8 @@ function CustomerQuery(props) {
           <Button
             size="sm"
             startContent={<LuUser />}
-            onClick={() => _onConfigureAttribute()}
-            variant="bordered"
+            onPress={() => _onConfigureAttribute()}
+            variant="secondary"
             color="primary"
           >
             Add attribute condition
@@ -531,7 +531,7 @@ function CustomerQuery(props) {
             onChange={(e) => {
               setAttributeConfig({ ...attributeConfig, field: e.target.value });
             }}
-            variant="bordered"
+            variant="secondary"
           />
           <div className="w-1" />
           <Select
@@ -567,27 +567,25 @@ function CustomerQuery(props) {
                 onChange={(e) => {
                   setAttributeConfig({ ...attributeConfig, value: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
               />
             </>
           )}
           <div className="w-2" />
           <Button
             isIconOnly
-            onClick={_onAddAttributeCondition}
+            onPress={_onAddAttributeCondition}
             size="sm"
-            variant="light"
-            color="success"
+            variant="primary"
           >
             <LuCheck />
           </Button>
           <div className="w-1" />
           <Button
             isIconOnly
-            onClick={() => setAttributeConfig(null)}
+            onPress={() => setAttributeConfig(null)}
             size="sm"
-            color="danger"
-            variant="light" 
+            variant="danger-soft"
           >
             <LuX />
           </Button>
@@ -615,7 +613,7 @@ function CustomerQuery(props) {
           placeholder="Limit the number of records to return"
           value={limit}
           onChange={(e) => onUpdateLimit(e.target.value)}
-          variant="bordered"
+          variant="secondary"
         />
       </Row>
     </div>

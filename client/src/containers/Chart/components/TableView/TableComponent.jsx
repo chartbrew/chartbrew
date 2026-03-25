@@ -389,13 +389,13 @@ function TableComponent({
                   <div className="w-1" />
                   <Dropdown aria-label="Select a page size">
                     <Dropdown.Trigger>
-                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
+                      <Button variant="secondary" size="sm" endContent={<LuChevronDown size={16} />}>
                         {paginationOptions.find((option) => option.value === pageSize).text}
                       </Button>
                     </Dropdown.Trigger>
                     <Dropdown.Popover>
                       <Dropdown.Menu
-                        variant="bordered"
+                        variant="secondary"
                         selectionMode="single"
                         selectedKeys={[`${pageSize}`]}
                         onSelectionChange={(selection) => {

@@ -252,7 +252,7 @@ function MailgunTemplate(props) {
               }}
               color={errors.domain ? "danger" : "default"}
               description={errors.domain}
-              variant="bordered"
+              variant="secondary"
               fullWidth
               isDisabled={formVisible}
             />
@@ -329,7 +329,7 @@ function MailgunTemplate(props) {
               }}
               color={errors.domain ? "danger" : "default"}
               description={errors.domain}
-              variant="bordered"
+              variant="secondary"
               className="max-w-[400px]"
             />
           </Row>
@@ -344,7 +344,7 @@ function MailgunTemplate(props) {
               }}
               color={errors.apiKey ? "danger" : "default"}
               description={errors.apiKey}
-              variant="bordered"
+              variant="secondary"
               className="max-w-[400px]"
             />
           </Row>

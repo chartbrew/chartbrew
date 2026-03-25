@@ -143,7 +143,7 @@ function ProjectSettings(props) {
             value={projectName ? projectName
               : project.name ? project.name : ""}
             onChange={(e) => setProjectName(e.target.value)}
-            variant="bordered"
+            variant="secondary"
             color={nameError ? "success" : "default"}
             description={nameError ? "Dashboard name is required" : ""}
             className="max-w-md"
@@ -255,7 +255,7 @@ function ProjectSettings(props) {
               disabled={!_canAccess("teamAdmin")}
               endContent={<LuTrash />}
               onClick={_onRemoveConfirmation}
-              variant="bordered"
+              variant="secondary"
             >
               Remove project
             </Button>

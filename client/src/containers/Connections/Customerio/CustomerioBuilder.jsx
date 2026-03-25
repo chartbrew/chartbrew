@@ -259,7 +259,7 @@ function CustomerioBuilder(props) {
                       isIconOnly
                       auto
                       size="sm"
-                      variant="bordered"
+                      variant="secondary"
                       onPress={() => onDelete()}
                     >
                       <LuTrash />

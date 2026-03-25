@@ -132,7 +132,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
           }
           value={aiQuestion}
           onChange={(e) => setAiQuestion(e.target.value)}
-          variant="bordered"
+          variant="secondary"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

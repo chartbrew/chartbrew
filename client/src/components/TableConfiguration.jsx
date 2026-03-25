@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, Link } from "@heroui/react";
+import { Accordion, Button, Chip, Separator, Dropdown, Link } from "@heroui/react";
 import { LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX, LuChevronDown } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -139,8 +139,18 @@ function TableConfiguration(props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Accordion fullWidth variant="bordered" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
-        <AccordionItem key="table-columns-options" subtitle="Table columns options" className="text-default" indicator={<LuSettings />}>
+      <Accordion className="w-full" variant="surface" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
+        <Accordion.Item id="table-columns-options" className="text-default" textValue="Table columns options">
+          <Accordion.Heading>
+            <Accordion.Trigger>
+              <span className="flex-1 text-start text-default-600 text-sm">Table columns options</span>
+              <Accordion.Indicator>
+                <LuSettings />
+              </Accordion.Indicator>
+            </Accordion.Trigger>
+          </Accordion.Heading>
+          <Accordion.Panel>
+            <Accordion.Body>
           <div>
             {!isDragState && (
               <div className="flex flex-wrap gap-2">
@@ -265,7 +275,7 @@ function TableConfiguration(props) {
                   <div className="w-1" />
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="tertiary"
                     color={"danger"}
                     onPress={_onCancelColumnOrder}
                     title="Cancel ordering"
@@ -277,7 +287,9 @@ function TableConfiguration(props) {
               )}
             </div>
           </div>
-        </AccordionItem>
+            </Accordion.Body>
+          </Accordion.Panel>
+        </Accordion.Item>
       </Accordion>
 
       <TableDataFormattingModal

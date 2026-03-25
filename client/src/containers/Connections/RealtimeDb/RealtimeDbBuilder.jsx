@@ -310,7 +310,7 @@ function RealtimeDbBuilder(props) {
                     color="danger"
                     isIconOnly
                     size="sm"
-                    variant="bordered"
+                    variant="secondary"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
@@ -351,7 +351,7 @@ function RealtimeDbBuilder(props) {
               autoFocus
               value={firebaseRequest.route || ""}
               onChange={(e) => _onChangeRoute(e.target.value)}
-              variant="bordered"
+              variant="secondary"
               fullWidth
               disableAnimation
               labelPlacement="outside"
@@ -422,7 +422,7 @@ function RealtimeDbBuilder(props) {
             </Button>
             <Button
               size="sm"
-              variant="bordered"
+              variant="secondary"
               color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "key") ? "default" : "secondary"}
               onClick={() => (
                 setFirebaseRequest({
@@ -489,7 +489,7 @@ function RealtimeDbBuilder(props) {
                     }
                   })
                 )}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
                 labelPlacement="outside"
               />
@@ -586,7 +586,7 @@ function RealtimeDbBuilder(props) {
                     && !firebaseRequest.configuration.limitToFirst
                   )
               }
-              variant="bordered"
+              variant="secondary"
               fullWidth
               labelPlacement="outside"
             />
@@ -748,7 +748,7 @@ function RealtimeDbBuilder(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}

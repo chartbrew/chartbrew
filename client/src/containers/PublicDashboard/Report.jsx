@@ -584,7 +584,7 @@ function Report({ editMode = false }) {
                 onChange={(e) => setReportPassword(e.target.value)}
                 size="lg"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
               />
               <Button 
                 color="primary"
@@ -1036,7 +1036,7 @@ function Report({ editMode = false }) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, dashboardTitle: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -1048,7 +1048,7 @@ function Report({ editMode = false }) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, description: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -1060,7 +1060,7 @@ function Report({ editMode = false }) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, logoLink: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>

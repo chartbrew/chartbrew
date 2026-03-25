@@ -220,7 +220,7 @@ function ConnectionWizard() {
                   <Input
                     endContent={<LuSearch />}
                     placeholder="Search..."
-                    variant="bordered"
+                    variant="secondary"
                     labelPlacement="outside"
                     className="max-w-[300px]"
                     onChange={(e) => setConnectionSearch(e.target.value)}

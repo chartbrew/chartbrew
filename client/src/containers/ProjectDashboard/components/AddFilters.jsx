@@ -180,7 +180,7 @@ function AddFilters(props) {
           )}
         </Drawer.Body>
         <Drawer.Footer>
-          <Button onPress={onClose} variant="bordered">
+          <Button onPress={onClose} variant="secondary">
             Close
           </Button>
           {filterType === "date" && (

@@ -109,7 +109,7 @@ function ChartFilters(props) {
               {condition.type !== "date" && !condition.hideValues && (
                 <>
                   <Autocomplete
-                    variant="bordered"
+                    variant="secondary"
                     selectedKey={_getConditionValue(condition.id)}
                     onSelectionChange={(key) => {
                       _onOptionSelected(key, condition);
@@ -120,9 +120,7 @@ function ChartFilters(props) {
                       ? _getConditionValue(condition.id) || `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
                       : _getConditionValue(condition.id) || "Search here"
                     }
-                    inputProps={{
-                      classNames: { input: "placeholder:text-xs" },
-                    }}
+                    className="[&_input]:placeholder:text-xs"
                     allowsCustomValue
                     size={size}
                     aria-label="Filter"
@@ -175,10 +173,10 @@ function ChartFilters(props) {
                         ...optionFilter, [condition.id]: e.target.value
                       });
                     }}
-                    variant="bordered"
+                    variant="secondary"
                     onKeyDown={(e) => _onKeyDown(e, condition)}
                     size={size}
-                    classNames={{ input: "placeholder:text-xs" }}
+                    className="placeholder:text-xs"
                   />
                   <div className="h-2" />
                 </>
@@ -189,7 +187,7 @@ function ChartFilters(props) {
                     <I18nProvider locale="en-GB">
                       <DatePicker
                         label={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
-                        variant="bordered"
+                        variant="secondary"
                         showMonthAndYearPickers
                         value={(
                           _getConditionValue(condition.id)
@@ -222,7 +220,7 @@ function ChartFilters(props) {
                       <DatePicker
                         aria-label="Date filter"
                         placeholder={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
-                        variant="bordered"
+                        variant="secondary"
                         showMonthAndYearPickers
                         value={(
                           _getConditionValue(condition.id)

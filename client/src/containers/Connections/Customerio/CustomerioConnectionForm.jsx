@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Accordion, AccordionItem, ListBox, Select, Separator,
+  Button, Input, Link, Chip, Accordion, ListBox, Select, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
@@ -139,7 +139,7 @@ function CustomerioConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "default"}
             description={errors.name}
-            variant="bordered"
+            variant="secondary"
             fullWidth
             className="md:w-[600px]"
           />
@@ -156,15 +156,25 @@ function CustomerioConnectionForm(props) {
             }}
             color={errors.password ? "danger" : "default"}
             description={errors.password}
-            variant="bordered"
+            variant="secondary"
             fullWidth
             className="md:w-[600px]"
           />
         </Row>
         <div className="h-2" />
         <Row align="center">
-          <Accordion variant="bordered" className={"max-w-[600px]"}>
-            <AccordionItem title={<Text>How to get the API key</Text>}>
+          <Accordion variant="surface" className={"max-w-[600px]"}>
+            <Accordion.Item id="customerio-api-key-help" textValue="How to get the API key">
+              <Accordion.Heading>
+                <Accordion.Trigger>
+                  <span className="flex-1 text-start">
+                    <Text>How to get the API key</Text>
+                  </span>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
               <Row align="center">
                 <Link
                   href="https://fly.customer.io/settings/api_credentials?keyType=app"
@@ -185,7 +195,9 @@ function CustomerioConnectionForm(props) {
               <Row>
                 <Text>{"3. Copy and paste the API Key here"}</Text>
               </Row>
-            </AccordionItem>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
           </Accordion>
         </Row>
         <div className="h-4" />

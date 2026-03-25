@@ -518,7 +518,7 @@ function DatasetQuery(props) {
                   onChange={(e) => setConnectionSearch(e.target.value)}
                   className="max-w-[300px]"
                   labelPlacement="outside"
-                  variant="bordered"
+                  variant="secondary"
                   isClearable
                   value={connectionSearch}
                   onClear={() => setConnectionSearch("")}

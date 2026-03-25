@@ -225,7 +225,7 @@ function LoginForm() {
           <Input
             label="Token"
             placeholder="Enter your token here"
-            variant="bordered"
+            variant="secondary"
             onChange={(e) => setOtpToken(e.target.value)}
           />
 
@@ -271,7 +271,7 @@ function LoginForm() {
                 fullWidth
                 onChange={(e) => setResetEmail(e.target.value)}
                 contentRight={<LuMail />}
-                variant="bordered"
+                variant="secondary"
               />
               {resetDone && (
               <Row>

@@ -261,7 +261,7 @@ function ChartMogulTemplate(props) {
               }}
               color={errors.key ? "danger" : "primary"}
               description={errors.key}
-              variant="bordered"
+              variant="secondary"
               fullWidth
             />
           </Row>
@@ -311,7 +311,7 @@ function ChartMogulTemplate(props) {
           <div className="h-4" />
           <Row>
             <Button
-              variant="bordered"
+              variant="secondary"
               startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
@@ -321,7 +321,7 @@ function ChartMogulTemplate(props) {
             </Button>
             <div className="w-1" />
             <Button
-              variant="bordered"
+              variant="secondary"
               startContent={<LuX />}
               auto
               onClick={_onDeselectAll}

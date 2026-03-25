@@ -63,37 +63,40 @@ function ManageTeam() {
       <div className="h-8" />
       <Tabs
         onSelectionChange={_onMenuChange}
-        classNames={{ tabList: "border-1 border-divider" }}
         selectedKey={activeMenu}
       >
-        <Tab key="profile" title={
-          <div className="flex flex-row items-center gap-2">
-            <LuUser />
-            <div>Profile</div>
-          </div>
-        } />
-        {_canAccess("teamOwner") && (
-          <Tab key="team" title={
-            <div className="flex flex-row items-center gap-2">
-              <LuSettings />
-              <div>Team</div>
-            </div>
-          } />
-        )}
-          <Tab key="members" title={
-          <div className="flex flex-row items-center gap-2">
-            <LuUsers />
-            <div>Members</div>
-          </div>
-        } />
-        {_canAccess("teamAdmin") && (
-          <Tab key="api-keys" title={
-            <div className="flex flex-row items-center gap-2">
-              <LuCode />
-              <div>API Keys</div>
-            </div>
-          } />
-        )}
+        <Tabs.ListContainer>
+          <Tabs.List className="border-1 border-divider">
+            <Tab id="profile">
+              <div className="flex flex-row items-center gap-2">
+                <LuUser />
+                <div>Profile</div>
+              </div>
+            </Tab>
+            {_canAccess("teamOwner") && (
+              <Tab id="team">
+                <div className="flex flex-row items-center gap-2">
+                  <LuSettings />
+                  <div>Team</div>
+                </div>
+              </Tab>
+            )}
+            <Tab id="members">
+              <div className="flex flex-row items-center gap-2">
+                <LuUsers />
+                <div>Members</div>
+              </div>
+            </Tab>
+            {_canAccess("teamAdmin") && (
+              <Tab id="api-keys">
+                <div className="flex flex-row items-center gap-2">
+                  <LuCode />
+                  <div>API Keys</div>
+                </div>
+              </Tab>
+            )}
+          </Tabs.List>
+        </Tabs.ListContainer>
       </Tabs>
 
       <div className="mt-4">

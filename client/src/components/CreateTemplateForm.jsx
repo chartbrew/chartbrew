@@ -69,7 +69,7 @@ function CreateTemplateForm(props) {
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 color={validationError ? "error" : "default"}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
                 autoFocus
               />

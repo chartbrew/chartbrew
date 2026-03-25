@@ -8,7 +8,6 @@ import {
   Select,
   Switch,
   Accordion,
-  AccordionItem,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useTheme } from "../../modules/ThemeContext";
@@ -138,18 +137,22 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
 
           {transformConfig.type === "flattenNested" && (
             <div>
-              <Accordion variant="bordered">
-                <AccordionItem
-                  key="flatten-nested-help"
-                  aria-label="How to use Flatten Nested Array"
-                  title="How to use Flatten Nested Array"
-                  subtitle="Learn how to configure the flatten nested array transformation"
-                  variant="bordered"
-                  classNames={{
-                    title: "text-sm",
-                    subtitle: "text-xs",
-                  }}
+              <Accordion variant="surface">
+                <Accordion.Item
+                  id="flatten-nested-help"
+                  textValue="How to use Flatten Nested Array"
                 >
+                  <Accordion.Heading>
+                    <Accordion.Trigger>
+                      <div className="flex flex-1 flex-col items-start gap-0.5 text-start">
+                        <span className="text-sm">How to use Flatten Nested Array</span>
+                        <span className="text-xs text-default-500">Learn how to configure the flatten nested array transformation</span>
+                      </div>
+                      <Accordion.Indicator />
+                    </Accordion.Trigger>
+                  </Accordion.Heading>
+                  <Accordion.Panel>
+                    <Accordion.Body>
                   <div className="px-2 pb-2">
                     <p className="mb-4 text-sm">
                       The Flatten Nested Array transformation helps you combine data from two related arrays into a single, flat structure. This is useful when you have data like a list of orders, where each order contains a list of items.
@@ -213,7 +216,9 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
                       This will create a flat list where each item combines the order details with its product details. The &quot;from&quot; field specifies whether to get the value from the base array (&quot;base&quot;) or the nested array (&quot;nested&quot;), and &quot;path&quot; specifies the exact location of the field in the data structure.
                     </p>
                   </div>
-                </AccordionItem>
+                    </Accordion.Body>
+                  </Accordion.Panel>
+                </Accordion.Item>
               </Accordion>
             </div>
           )}

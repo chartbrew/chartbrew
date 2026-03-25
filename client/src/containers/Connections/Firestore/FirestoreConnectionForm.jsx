@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Accordion, AccordionItem, Separator,
+  Button, Input, Link, Chip, Accordion, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -217,7 +217,7 @@ function FirestoreConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "default"}
             description={errors.name}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </Row>
@@ -269,8 +269,18 @@ function FirestoreConnectionForm(props) {
 
         <div className="h-8" />
         <Row align="center">
-          <Accordion variant="bordered" className="max-w-[600px]">
-            <AccordionItem title={<Text b>How to authenticate</Text>}>
+          <Accordion variant="surface" className="max-w-[600px]">
+            <Accordion.Item id="firestore-auth-help" textValue="How to authenticate">
+              <Accordion.Heading>
+                <Accordion.Trigger>
+                  <span className="flex-1 text-start">
+                    <Text b>How to authenticate</Text>
+                  </span>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
               <Row align="center">
                 <Link
                   href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
@@ -300,7 +310,9 @@ function FirestoreConnectionForm(props) {
               <Row>
                 <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
               </Row>
-            </AccordionItem>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
           </Accordion>
         </Row>
         <div className="h-8" />

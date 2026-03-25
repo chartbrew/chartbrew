@@ -96,7 +96,7 @@ function PasswordReset(props) {
             type="password"
             value={password || ""}
             onChange={(e) => setPassword(e.target.value)}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </Row>
@@ -109,7 +109,7 @@ function PasswordReset(props) {
             value={passwordConfirm || ""}
             onChange={(e) => setPasswordConfirm(e.target.value)}
             fullWidth
-            variant="bordered"
+            variant="secondary"
           />
         </Row>
         <div className="h-4" />

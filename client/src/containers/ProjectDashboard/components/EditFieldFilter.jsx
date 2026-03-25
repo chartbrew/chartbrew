@@ -186,7 +186,7 @@ function EditFieldFilter({
                 label="Select a date"
                 value={fieldCondition.value ? parseDate(moment(fieldCondition.value).format("YYYY-MM-DD")) : today()}
                 onChange={(date) => _handleFieldChange("value", date.toString())}
-                variant="bordered"
+                variant="secondary"
                 showMonthAndYearPickers
                 calendarProps={{ color: "primary" }}
                 size="sm"
@@ -195,7 +195,7 @@ function EditFieldFilter({
             ) : (
               <Input
                 label="Enter a value"
-                variant="bordered"
+                variant="secondary"
                 value={fieldCondition.value}
                 onChange={(e) => _handleFieldChange("value", e.target.value)}
                 size="sm"

@@ -661,7 +661,7 @@ function ChartDatasetConfig(props) {
                           placeholder="Enter your formula here: {val}"
                           value={formula}
                           onChange={(event) => setFormula(event.target.value)}
-                          variant="bordered"
+                          variant="secondary"
                           fullWidth
                         />
                         {formula !== cdc.formula && (
@@ -728,7 +728,7 @@ function ChartDatasetConfig(props) {
                         placeholder="Enter your goal here"
                         value={goal}
                         onChange={(event) => setGoal(event.target.value)}
-                        variant="bordered"
+                        variant="secondary"
                         labelPlacement="outside"
                       />
                       {`${goal}` !== `${cdc.goal || ""}` && (
@@ -800,7 +800,7 @@ function ChartDatasetConfig(props) {
                       [variable.name]: event.target.value,
                     }));
                   }}
-                  variant="bordered"
+                  variant="secondary"
                   endContent={
                     _hasVariableChanged(variable) ? (
                       <div className="flex flex-row gap-1">
@@ -907,7 +907,7 @@ function ChartDatasetConfig(props) {
               </Modal.Body>
               <Modal.Footer>
                 <Button
-                  variant="bordered"
+                  variant="secondary"
                   slot="close"
                 >
                   Cancel

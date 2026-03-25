@@ -645,7 +645,7 @@ function FirestoreBuilder(props) {
                     isIconOnly
                     auto
                     size="sm"
-                    variant="bordered"
+                    variant="secondary"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
@@ -757,7 +757,7 @@ function FirestoreBuilder(props) {
               placeholder="Enter field name"
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value)}
-              variant="bordered"
+              variant="secondary"
               size="sm"
               fullWidth
             />
@@ -797,7 +797,7 @@ function FirestoreBuilder(props) {
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
               className={"max-w-[300px]"}
-              variant="bordered"
+              variant="secondary"
               size="sm"
             />
           </Row>
@@ -1085,7 +1085,7 @@ function FirestoreBuilder(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
@@ -1240,7 +1240,7 @@ function Conditions(props) {
                     value={condition.value}
                     onChange={(e) => updateCondition(condition.id, e.target.value, "value")}
                     isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                    variant="bordered"
+                    variant="secondary"
                     endContent={hasVariables && hasVariables(condition.value) && (
                       <Tooltip>
                         <Tooltip.Trigger>
@@ -1268,7 +1268,7 @@ function Conditions(props) {
                         endContent={<LuCalendarDays />}
                         value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Click to select a date"}
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                        variant="bordered"
+                        variant="secondary"
                       />
                     </Popover.Trigger>
                     <Popover.Content>
@@ -1294,7 +1294,7 @@ function Conditions(props) {
                         placeholder="Enter a value"
                         value={tempConditionValue}
                         onChange={(e) => setTempConditionValue(e.target.value)}
-                        variant="bordered"
+                        variant="secondary"
                         disableAnimation
                         endContent={(
                           <Button

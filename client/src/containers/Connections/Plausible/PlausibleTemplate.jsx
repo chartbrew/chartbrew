@@ -238,7 +238,7 @@ function PlausibleTemplate(props) {
               }}
               color={errors.website ? "danger" : "default"}
               description={errors.website}
-              variant="bordered"
+              variant="secondary"
               fullWidth
               disabled={formVisible}
             />
@@ -248,7 +248,7 @@ function PlausibleTemplate(props) {
           <Row align="center">
             {!formVisible && (
               <Button
-                variant="bordered"
+                variant="secondary"
                 startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
               >
@@ -257,7 +257,7 @@ function PlausibleTemplate(props) {
             )}
             {formVisible && (
               <Button
-                variant="bordered"
+                variant="secondary"
                 startContent={<LuArrowUp />}
                 onClick={() => setFormVisible(false)}
               >
@@ -286,7 +286,7 @@ function PlausibleTemplate(props) {
               }}
               color={errors.website ? "danger" : "default"}
               description={errors.website}
-              variant="bordered"
+              variant="secondary"
               fullWidth
             />
           </Row>
@@ -299,7 +299,7 @@ function PlausibleTemplate(props) {
               onChange={(e) => {
                 setConnection({ ...connection, apiKey: e.target.value });
               }}
-              variant="bordered"
+              variant="secondary"
               fullWidth
             />
           </Row>

@@ -196,7 +196,7 @@ function SavedQueries(props) {
                 value={savedQuerySummary ? savedQuerySummary
                   : editQuery ? editQuery.summary : ""}
                 onChange={(e) => setSavedQuerySummary(e.target.value)}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Modal.Body>

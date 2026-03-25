@@ -444,7 +444,7 @@ function SharingSettings(props) {
                     setParameters(newParameters);
                   }}
                   size="sm"
-                  variant="bordered"
+                  variant="secondary"
                   placeholder="Parameter name"
                 />
                 <Input
@@ -456,7 +456,7 @@ function SharingSettings(props) {
                     setParameters(newParameters);
                   }}
                   size="sm"
-                  variant="bordered"
+                  variant="secondary"
                   placeholder="Parameter value"
                 />
                 <Button
@@ -629,7 +629,7 @@ function SharingSettings(props) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   isDisabled={!project.passwordProtected}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </Row>
@@ -666,7 +666,7 @@ function SharingSettings(props) {
             onChange={(e) => _onChangeBrewName(e.target.value)}
             color={urlError ? "error" : "default"}
             description={urlError}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
           <Row>

@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Chip, Accordion, AccordionItem, Separator,
+  Button, Input, Link, Chip, Accordion, Separator,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -219,7 +219,7 @@ function RealtimeDbConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "primary"}
             description={errors.name}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </Row>
@@ -234,7 +234,7 @@ function RealtimeDbConnectionForm(props) {
             }}
             color={errors.connectionString ? "danger" : "primary"}
             description={errors.connectionString}
-            variant="bordered"
+            variant="secondary"
             fullWidth
           />
         </Row>
@@ -283,8 +283,18 @@ function RealtimeDbConnectionForm(props) {
         <div className="h-8" />
 
         <Row align="center">
-          <Accordion variant="bordered" className="max-w-[600px]">
-            <AccordionItem title={<Text b>How to authenticate</Text>}>
+          <Accordion variant="surface" className="max-w-[600px]">
+            <Accordion.Item id="realtime-auth-help" textValue="How to authenticate">
+              <Accordion.Heading>
+                <Accordion.Trigger>
+                  <span className="flex-1 text-start">
+                    <Text b>How to authenticate</Text>
+                  </span>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
               <Row align="center">
                 <Link
                   href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
@@ -314,8 +324,20 @@ function RealtimeDbConnectionForm(props) {
               <Row>
                 <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
               </Row>
-            </AccordionItem>
-            <AccordionItem title={<Text b>How to get the database URL</Text>}>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item id="realtime-db-url-help" textValue="How to get the database URL">
+              <Accordion.Heading>
+                <Accordion.Trigger>
+                  <span className="flex-1 text-start">
+                    <Text b>How to get the database URL</Text>
+                  </span>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
               <Container>
                 <Row align="center">
                   <Link
@@ -350,7 +372,9 @@ function RealtimeDbConnectionForm(props) {
                   <img src={realtimeDbImage} width={431} height={190} alt="Realtime database URL" className="max-w-full" />
                 </Row>
               </Container>
-            </AccordionItem>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
           </Accordion>
         </Row>
         <div className="h-8" />

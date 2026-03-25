@@ -346,7 +346,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     placeholder="X"
                     type="number"
                     aria-label="Update frequency"
-                    variant="bordered"
+                    variant="secondary"
                     value={schedule.frequencyNumber}
                     onChange={(e) => setSchedule({ ...schedule, frequencyNumber: e.target.value })}
                   />
@@ -501,7 +501,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <div className="mt-2">
                     <TextArea
                       placeholder="Enter email address (one per line)"
-                      variant="bordered"
+                      variant="secondary"
                       value={customEmails.join("\n")}
                       onChange={(e) => setCustomEmails(e.target.value.split("\n"))}
                       rows={10}
@@ -622,7 +622,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <Input
                     placeholder="Viewport width"
                     type="number"
-                    variant="bordered"
+                    variant="secondary"
                     value={schedule?.viewport?.width}
                     onChange={(e) => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: parseInt(e.target.value, 10) } })}
                     className="max-w-24"

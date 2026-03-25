@@ -513,7 +513,7 @@ function ClickHouseBuilder(props) {
               placeholder="Type a summary here"
               fullWidth
               onChange={(e) => setSavedQuerySummary(e.target.value)}
-              variant="bordered"
+              variant="secondary"
             />
           </Modal.Body>
           <Modal.Footer>
@@ -631,7 +631,7 @@ function ClickHouseBuilder(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Tooltip, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
+  Button, Tooltip, Checkbox, Input, Accordion, Radio, RadioGroup, Chip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
@@ -130,13 +130,26 @@ function InviteMembersForm(props) {
 
           {role !== "teamAdmin" && (
             <div>
-              <Accordion
-                variant="bordered"
-              >
-                <AccordionItem
-                  title="Select dashboard access"
-                  subtitle={projectAccess.length > 0 ? `${projectAccess.length} dashboard${projectAccess.length > 1 ? "s" : ""} selected` : "No dashboards selected yet"}
+              <Accordion variant="surface">
+                <Accordion.Item
+                  id="invite-dashboard-access"
+                  textValue="Select dashboard access"
                 >
+                  <Accordion.Heading>
+                    <Accordion.Trigger>
+                      <div className="flex flex-1 flex-col items-start gap-0.5 text-start">
+                        <span className="font-medium">Select dashboard access</span>
+                        <span className="text-sm text-default-500">
+                          {projectAccess.length > 0
+                            ? `${projectAccess.length} dashboard${projectAccess.length > 1 ? "s" : ""} selected`
+                            : "No dashboards selected yet"}
+                        </span>
+                      </div>
+                      <Accordion.Indicator />
+                    </Accordion.Trigger>
+                  </Accordion.Heading>
+                  <Accordion.Panel>
+                    <Accordion.Body>
                   <div className="grid grid-cols-12 gap-1 pb-4">
                     <div className="col-span-12 pb-4 flex flex-row">
                       <Button
@@ -170,7 +183,9 @@ function InviteMembersForm(props) {
                       </div>
                     ))}
                   </div>
-                </AccordionItem>
+                    </Accordion.Body>
+                  </Accordion.Panel>
+                </Accordion.Item>
               </Accordion>
             </div>
           )}
@@ -228,7 +243,7 @@ function InviteMembersForm(props) {
               id="url-text"
               value={inviteUrl}
               readOnly
-              variant="bordered"
+              variant="secondary"
               endContent={(
                 <Button
                   color={urlCopied ? "success" : "default"}

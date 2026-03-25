@@ -280,7 +280,7 @@ function WebhookIntegrations({ teamId }) {
                 onChange={(e) => {
                   setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
                 }}
-                variant="bordered"
+                variant="secondary"
                 required
                 description={`${newIntegration.name?.length || 0}/20 characters`}
               />
@@ -292,7 +292,7 @@ function WebhookIntegrations({ teamId }) {
                 fullWidth
                 value={newIntegration.url}
                 onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
-                variant="bordered"
+                variant="secondary"
                 color={urlError ? "danger" : "default"}
               />
             </div>
@@ -324,7 +324,7 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={() => setCreateOpen(false)}
-              variant="bordered"
+              variant="secondary"
             >
               Close
             </Button>
@@ -363,7 +363,7 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={() => setIntegrationToDelete(false)}
-              variant="bordered"
+              variant="secondary"
             >
               Close
             </Button>
@@ -410,7 +410,7 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={() => setSlackModalOpen(false)}
-              variant="bordered"
+              variant="secondary"
             >
               Close
             </Button>

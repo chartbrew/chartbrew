@@ -157,7 +157,7 @@ function ConnectionList() {
         <Input
           type="text"
           placeholder="Search connections"
-          variant="bordered"
+          variant="secondary"
           endContent={<LuSearch />}
           className="max-w-[300px]"
           labelPlacement="outside"

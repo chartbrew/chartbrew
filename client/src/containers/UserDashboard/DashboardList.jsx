@@ -255,7 +255,7 @@ function DashboardList() {
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
-                      variant="bordered"
+                      variant="secondary"
                       className="hidden xl:inline-flex"
                       onPress={_toggleWhatsNewPanel}
                       aria-label={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
@@ -277,7 +277,7 @@ function DashboardList() {
             <Input
               type="text"
               placeholder="Search dashboards"
-              variant="bordered"
+              variant="secondary"
               endContent={<LuSearch />}
               onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
               className="max-w-md"

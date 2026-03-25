@@ -284,7 +284,7 @@ function TableDataFormattingModal(props) {
                 <>
                   <div className="w-2" />
                   <Input
-                    variant="bordered"
+                    variant="secondary"
                     value={customDateFormat}
                     placeholder="Enter the format here"
                     onChange={(e) => setCustomDateFormat(e.target.value)}
@@ -314,7 +314,7 @@ function TableDataFormattingModal(props) {
                 <>
                   <div>
                     <Input
-                      variant="bordered"
+                      variant="secondary"
                       value={symbol}
                       placeholder="Enter symbol here $, £, €, etc."
                       onChange={(e) => setSymbol(e.target.value)}
@@ -348,7 +348,7 @@ function TableDataFormattingModal(props) {
                   max={10}
                   value={decimals}
                   onChange={(e) => setDecimals(e.target.value)}
-                  variant="bordered"
+                  variant="secondary"
                   isDisabled={!allowDecimals}
                   size="sm"
                 />
@@ -389,14 +389,14 @@ function TableDataFormattingModal(props) {
                     placeholder="Enter the original value here"
                     value={r.value}
                     onChange={(e) => setRules(rules.map((r, i) => (i === index ? { ...r, value: e.target.value } : r)))}
-                    variant="bordered"
+                    variant="secondary"
                     size="sm"
                   />
                   <Input
                     placeholder="Enter the display value here"
                     value={r.label}
                     onChange={(e) => setRules(rules.map((r, i) => (i === index ? { ...r, label: e.target.value } : r)))}
-                    variant="bordered"
+                    variant="secondary"
                     size="sm"
                   />
                   <Popover aria-label="Color picker">
@@ -460,7 +460,7 @@ function TableDataFormattingModal(props) {
                   placeholder="Min value"
                   value={progress?.min}
                   onChange={(e) => setProgress({ ...progress, min: e.target.value })}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                 />
                 <div className="text-sm text-gray-500">to</div>
@@ -469,7 +469,7 @@ function TableDataFormattingModal(props) {
                   placeholder="Max value"
                   value={progress?.max}
                   onChange={(e) => setProgress({ ...progress, max: e.target.value })}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                 />
               </div>
@@ -588,7 +588,7 @@ function TableDataFormattingModal(props) {
                   placeholder="Enter the button text here"
                   value={buttonSettings.text}
                   onChange={(e) => _onChangeButtonSettings({ text: e.target.value })}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                 />
               </div>
@@ -606,7 +606,7 @@ function TableDataFormattingModal(props) {
                   placeholder="Enter the image size here"
                   value={imageSettings.size}
                   onChange={(e) => setImageSettings({ ...imageSettings, size: e.target.value })}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                 />
                 <div className="text-sm text-gray-500">px</div>

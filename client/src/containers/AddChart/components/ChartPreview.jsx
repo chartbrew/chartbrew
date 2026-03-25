@@ -643,7 +643,7 @@ function ChartPreview(props) {
                   labelPlacement="outside"
                   value={range.min}
                   onChange={(e) => _onChangeRange(parseFloat(e.target.value), index, "min")}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                   type="number"
                   step="0.01"
@@ -654,7 +654,7 @@ function ChartPreview(props) {
                   labelPlacement="outside"
                   value={range.max}
                   onChange={(e) => _onChangeRange(parseFloat(e.target.value), index, "max")}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                   type="number"
                   step="0.01"
@@ -665,7 +665,7 @@ function ChartPreview(props) {
                   labelPlacement="outside"
                   value={range.label}
                   onChange={(e) => _onChangeRange(e.target.value, index, "label")}
-                  variant="bordered"
+                  variant="secondary"
                   size="sm"
                   className="max-w-[200px]"
                 />

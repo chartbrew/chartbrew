@@ -217,7 +217,7 @@ function ApiConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "default"}
             fullWidth
-            variant="bordered"
+            variant="secondary"
             description={errors.name}
             className="max-w-md"
           />
@@ -233,7 +233,7 @@ function ApiConnectionForm(props) {
             }}
             fullWidth
             color={errors.host ? "danger" : "default"}
-            variant="bordered"
+            variant="secondary"
             description={errors.host || "This should be the base URL of your API. Datasets can be configured for each endpoint."}
             className="max-w-md"
           />
@@ -286,7 +286,7 @@ function ApiConnectionForm(props) {
                     onChange={(e) => _onChangeAuthParams("user", e.target.value)}
                     value={connection.authentication.user}
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                   />
                 </Row>
                 <div className="h-4" />
@@ -298,7 +298,7 @@ function ApiConnectionForm(props) {
                     onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
                     value={connection.authentication.pass}
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                     endContent={(
                       <button
                         onClick={() => setPasswordVisible(!passwordVisible)}
@@ -319,7 +319,7 @@ function ApiConnectionForm(props) {
                   onChange={(e) => _onChangeAuthParams("token", e.target.value)}
                   value={connection.authentication.token}
                   fullWidth
-                  variant="bordered"
+                  variant="secondary"
                   endContent={(
                     <button
                       onClick={() => setPasswordVisible(!passwordVisible)}
@@ -360,7 +360,7 @@ function ApiConnectionForm(props) {
                   value={option.key}
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                   fullWidth
-                  variant="bordered"
+                  variant="secondary"
                   className="max-w-md"
                 />
                 <Input
@@ -369,7 +369,7 @@ function ApiConnectionForm(props) {
                   placeholder="Value"
                   labelPlacement="outside"
                   fullWidth
-                  variant="bordered"
+                  variant="secondary"
                   className="max-w-md"
                 />
                 <Button
@@ -391,7 +391,7 @@ function ApiConnectionForm(props) {
             <Button
               endContent={<LuPlus size={16} />}
               onPress={_addOption}
-              variant="bordered"
+              variant="secondary"
               size="sm"
             >
               Add a header
@@ -471,7 +471,7 @@ function ApiConnectionForm(props) {
               <>
                 <div className="h-4" />
                 <Alert
-                  variant="bordered"
+                  variant="secondary"
                   title="Connection info"
                   description="Making API requests to base URLs can sometimes fail, but it's not always an issue. Lots of APIs fail to return data when the base URL is used directly. You can configure datasets to make requests to the correct endpoints after the connection is saved."
                 />

@@ -45,7 +45,7 @@ function EditVariableFilter({
         <div className="flex flex-row gap-2 items-center">
           <Input
             label="Filter label"
-            variant="bordered"
+            variant="secondary"
             value={variableCondition.label}
             onChange={(e) => _handleVariableChange("label", e.target.value)}
             size="sm"
@@ -53,7 +53,7 @@ function EditVariableFilter({
 
           <Input
             label="Variable name (no brackets)"
-            variant="bordered"
+            variant="secondary"
             value={variableCondition.variable}
             onChange={(e) => _handleVariableChange("variable", e.target.value)}
             size="sm"
@@ -107,7 +107,7 @@ function EditVariableFilter({
               label="Select a date"
               value={variableCondition.value ? parseDate(moment(variableCondition.value).format("YYYY-MM-DD")) : today()}
               onChange={(date) => _handleVariableChange("value", date.toString())}
-              variant="bordered"
+              variant="secondary"
               showMonthAndYearPickers
               calendarProps={{ color: "primary" }}
               size="sm"
@@ -115,7 +115,7 @@ function EditVariableFilter({
           ) : variableCondition.dataType === "number" ? (
             <Input
               label="Enter a number"
-              variant="bordered"
+              variant="secondary"
               type="number"
               value={variableCondition.value}
               onChange={(e) => _handleVariableChange("value", e.target.value)}
@@ -150,7 +150,7 @@ function EditVariableFilter({
           ) : (
             <Input
               label="Enter a value"
-              variant="bordered"
+              variant="secondary"
               value={variableCondition.value}
               onChange={(e) => _handleVariableChange("value", e.target.value)}
               size="sm"

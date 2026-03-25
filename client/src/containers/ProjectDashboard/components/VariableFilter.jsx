@@ -33,18 +33,16 @@ function VariableFilter({
         return (
           <Input
             startContent={(
-              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="soft" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
-            classNames={{
-              inputWrapper: "pl-1"
-            }}
-            variant={allowValueChange ? "bordered" : "flat"}
+            className={["pl-1", className].filter(Boolean).join(" ")}
+            variant="secondary"
             value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             size="sm"
-            className={className}
+            isReadOnly={!allowValueChange}
             endContent={allowValueChange && textValue !== filter?.value && (
               <Link onPress={() => onApply?.(textValue)} className="text-foreground hover:text-foreground-500 cursor-pointer">
                 <LuArrowRight size={18} />
@@ -57,19 +55,17 @@ function VariableFilter({
         return (
           <Input
             startContent={(
-              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="soft" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
-            classNames={{
-              inputWrapper: "pl-1"
-            }}
-            variant={allowValueChange ? "bordered" : "flat"}
+            className={["pl-1", className].filter(Boolean).join(" ")}
+            variant="secondary"
             value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             type="number"
             size="sm"
-            className={className}
+            isReadOnly={!allowValueChange}
             endContent={allowValueChange && textValue !== filter?.value && (
               <Link onPress={() => onApply?.(textValue)} className="text-foreground hover:text-foreground-500 cursor-pointer">
                 <LuArrowRight size={18} />
@@ -81,18 +77,15 @@ function VariableFilter({
         return (
           <DatePicker
             startContent={(
-              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="soft" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
-            classNames={{
-              inputWrapper: "pl-1"
-            }}
+            className={["pl-1", className].filter(Boolean).join(" ")}
             value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
             onChange={(date) => setDateValue(date.toString())}
-            variant={allowValueChange ? "bordered" : "flat"}
+            variant="secondary"
             size="sm"
-            className={className}
             isDisabled={!allowValueChange}
             showMonthAndYearPickers
             calendarProps={{ color: "primary" }}
@@ -107,23 +100,21 @@ function VariableFilter({
       case "binary":
         return (
           <Select
-            variant={allowValueChange ? "secondary" : "flat"}
+            variant="secondary"
+            className={className}
             value={value || null}
             onChange={(selectedValue) => onApply?.(selectedValue)}
             selectionMode="single"
             size="sm"
             isDisabled={!allowValueChange}
             startContent={(
-              <Chip variant="flat" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
+              <Chip variant="soft" size="sm" className="rounded-sm text-xs" startContent={<LuVariable size={16} />}>
                 {label}
               </Chip>
             )}
-            classNames={{
-              value: "min-w-16 text-xs",
-            }}
             aria-label="Filter value"
           >
-            <Select.Trigger>
+            <Select.Trigger className="min-w-16 text-xs">
               <Select.Value />
               <Select.Indicator />
             </Select.Trigger>

@@ -564,7 +564,7 @@ function DatasetFilters(props) {
                   || ""
                 }
                 fullWidth
-                variant="bordered"
+                variant="secondary"
               />
             </Row>
             <Row>
@@ -576,7 +576,7 @@ function DatasetFilters(props) {
                 }}
                 value={selectedCondition.variable}
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 errorMessage={selectedCondition.variable && !_isVariableValid(selectedCondition.variable) && "Variables must start with a letter and contain only letters, numbers, and underscores"}
                 description="Variables are used to reference the filter value in when embedding the chart or filtering on the dashboard"
               />
@@ -706,7 +706,7 @@ function DatasetFilters(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value || ""}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The filter will fail if you don't provide a value."}

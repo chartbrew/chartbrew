@@ -379,7 +379,7 @@ function DatasetBuilder(props) {
           placeholder="Select a dimension"
           value={dataset.xAxis || null}
           onChange={(value) => _onUpdateDataset({ xAxis: value })}
-          isLoading={loadingFields}
+          isPending={loadingFields}
           aria-label="Select a dimension"
         >
           <Label>Dimension</Label>
@@ -418,7 +418,7 @@ function DatasetBuilder(props) {
           placeholder="Select a metric"
           value={dataset.yAxis || null}
           onChange={(value) => _onUpdateDataset({ yAxis: value })}
-          isLoading={loadingFields}
+          isPending={loadingFields}
           aria-label="Select a metric"
         >
           <Label>Metric</Label>
@@ -483,7 +483,7 @@ function DatasetBuilder(props) {
             placeholder="Select a field"
             value={dataset.dateField || null}
             onChange={(value) => _onUpdateDataset({ dateField: value })}
-            isLoading={loadingFields}
+            isPending={loadingFields}
             aria-label="Select a date field used for filtering"
           >
             <Label>Select a date field used for filtering</Label>
@@ -554,7 +554,7 @@ function DatasetBuilder(props) {
                     placeholder="Enter your formula here: {val}"
                     value={formula}
                     onChange={(e) => setFormula(e.target.value)}
-                    variant="bordered"
+                    variant="secondary"
                     fullWidth
                   />
                   {formula !== dataset.formula && (

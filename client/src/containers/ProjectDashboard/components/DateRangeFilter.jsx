@@ -132,10 +132,7 @@ function DateRangeFilter({
       onChange={_handleDateRangeChange}
       aria-label="Select a date range"
       size={size}
-      className={className}
-      classNames={{
-        input: "text-xs",
-      }}
+      className={["text-xs", className].filter(Boolean).join(" ")}
       endContent={_hasChanges() && (
         <Link
           onPress={() => _applyDateRange()}
@@ -197,7 +194,7 @@ function DateRangeFilter({
           {_hasChanges() && (
             <div className="px-2">
               <Button
-                variant="bordered"
+                variant="secondary"
                 onPress={() => _applyDateRange()}
                 endContent={<LuArrowRight size={18} />}
                 size="sm"

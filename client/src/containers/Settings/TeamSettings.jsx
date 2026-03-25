@@ -114,7 +114,7 @@ function TeamSettings() {
           onChange={(e) => {
             setTeamState({ ...teamState, name: e.target.value });
           }}
-          variant="bordered"
+          variant="secondary"
           color={submitError ? "error" : "default"}
           description={submitError ? "Error updating team" : ""}
           classNames="max-w-md"

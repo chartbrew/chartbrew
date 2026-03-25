@@ -349,7 +349,7 @@ function CampaignsQuery(props) {
           selectionMode="single"
           value={config.campaignId || null}
           onChange={(value) => _onSelectCampaign(value)}
-          isLoading={loading}
+          isPending={loading}
           aria-label="Select a campaign"
         >
           <Select.Trigger>
@@ -402,7 +402,7 @@ function CampaignsQuery(props) {
           <Select
             variant="secondary"
             label="Select an action to view the metrics"
-            isLoading={actionsLoading}
+            isPending={actionsLoading}
             selectionMode="single"
             value={config.actionId || null}
             onChange={(value) => _onSelectAction(value)}
@@ -597,7 +597,7 @@ function CampaignsQuery(props) {
                         <Select
                           variant="secondary"
                           placeholder="Select a link"
-                          isLoading={linksLoading}
+                          isPending={linksLoading}
                           selectionMode="single"
                           value={config.selectedLink || null}
                           onChange={(value) => setConfig({ ...config, selectedLink: value })}
@@ -655,10 +655,10 @@ function CampaignsQuery(props) {
                   label="Select the start and end date of the journey"
                   placeholder="Click to select a date"
                   startContent={<LuCalendarDays />}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                   value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
-                  classNames={{ input: "text-start" }}
+                  className="text-start"
                 />
               </Popover.Trigger>
               <Popover.Content>

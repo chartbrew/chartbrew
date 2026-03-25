@@ -473,7 +473,7 @@ function GaBuilder(props) {
                       color="danger"
                       isIconOnly
                       size="sm"
-                      variant="bordered"
+                      variant="secondary"
                       onPress={() => onDelete()}
                     >
                       <LuTrash />
@@ -647,7 +647,7 @@ function GaBuilder(props) {
                 onChange={(e) => {
                   setConfiguration({ ...configuration, startDate: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
               <div className="h-2" />
@@ -678,7 +678,7 @@ function GaBuilder(props) {
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="bordered"
+                  variant="secondary"
                   color={dateHelp ? "secondary" : "default"}
                   startContent={<LuInfo />}
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
@@ -698,7 +698,7 @@ function GaBuilder(props) {
                 onChange={(e) => {
                   setConfiguration({ ...configuration, endDate: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
               <div className="h-2" />
@@ -729,7 +729,7 @@ function GaBuilder(props) {
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="bordered"
+                  variant="secondary"
                   color={dateHelp ? "secondary" : "default"}
                   startContent={<LuInfo />}
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"

@@ -364,7 +364,7 @@ function Dataset() {
                 value={datasetName}
                 onChange={(e) => setDatasetName(e.target.value)}
                 placeholder="Dataset name"
-                variant="bordered"
+                variant="secondary"
                 labelPlacement="outside"
                 endContent={
                   <Button

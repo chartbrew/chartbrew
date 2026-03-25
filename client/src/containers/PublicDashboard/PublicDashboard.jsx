@@ -575,7 +575,7 @@ function PublicDashboard() {
                 onChange={(e) => setReportPassword(e.target.value)}
                 size="lg"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
               />
             </Row>
             <div className="h-4" />
@@ -1027,7 +1027,7 @@ function PublicDashboard() {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, dashboardTitle: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -1039,7 +1039,7 @@ function PublicDashboard() {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, description: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -1051,7 +1051,7 @@ function PublicDashboard() {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, logoLink: e.target.value });
                 }}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>

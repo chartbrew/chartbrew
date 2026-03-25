@@ -599,7 +599,7 @@ function ApiBuilder(props) {
               value={apiRequest.route || ""}
               onChange={(e) => _onChangeRoute(e.target.value)}
               fullWidth
-              variant="bordered"
+              variant="secondary"
               disableAnimation
             />
           </Row>
@@ -631,10 +631,10 @@ function ApiBuilder(props) {
                       <Input
                         label="{{start_date}}"
                         value={(variables?.startDate?.value && moment(variables.startDate.value).format(variables?.dateFormat?.value || "")) || ""}
-                        variant="bordered"
+                        variant="secondary"
                         endContent={<LuCalendarDays />}
                         readOnly
-                        classNames={{ input: "text-left" }}
+                        className="text-left"
                       />
                     </Popover.Trigger>
                     <Popover.Content placement="bottom">
@@ -655,10 +655,10 @@ function ApiBuilder(props) {
                       <Input
                         label="{{end_date}}"
                         value={(variables?.endDate?.value && moment(variables.endDate.value).format(variables?.dateFormat?.value || "")) || ""}
-                        variant="bordered"
+                        variant="secondary"
                         endContent={<LuCalendarDays />}
                         readOnly
-                        classNames={{ input: "text-left" }}
+                        className="text-left"
                       />
                     </Popover.Trigger>
                     <Popover.Content placement="bottom">
@@ -681,7 +681,7 @@ function ApiBuilder(props) {
                     labelPlacement="outside"
                     value={variables?.dateFormat?.value}
                     onChange={(e) => setVariables({ ...variables, dateFormat: { ...variables.dateFormat, value: e.target.value } })}
-                    variant="bordered"
+                    variant="secondary"
                     placeholder="YYYY-MM-DD"
                     description={(
                       <Text small>
@@ -757,14 +757,14 @@ function ApiBuilder(props) {
                             <Row key={header.key}>
                               <Input
                                 value={header.key}
-                                variant="bordered"
+                                variant="secondary"
                                 fullWidth
                                 disableAnimation
                               />
                               <div className="w-2" />
                               <Input
                                 value={header.value}
-                                variant="bordered"
+                                variant="secondary"
                                 fullWidth
                                 disableAnimation
                               />
@@ -791,7 +791,7 @@ function ApiBuilder(props) {
                           onChange={(e) => {
                             _onChangeHeader(header.id, e.target.value);
                           }}
-                          variant="bordered"
+                          variant="secondary"
                           endContent={_hasVariables(header.key) && (
                             <Tooltip>
                               <Tooltip.Trigger>
@@ -819,7 +819,7 @@ function ApiBuilder(props) {
                           onChange={(e) => {
                             _onChangeHeaderValue(header.id, e.target.value);
                           }}
-                          variant="bordered"
+                          variant="secondary"
                           endContent={_hasVariables(header.value) && (
                             <Tooltip>
                               <Tooltip.Trigger>
@@ -860,7 +860,7 @@ function ApiBuilder(props) {
                 endContent={<LuPlus />}
                 size="sm"
                 onPress={_addHeader}
-                variant="bordered"
+                variant="secondary"
               >
                 Add header
               </Button>
@@ -1122,7 +1122,7 @@ function ApiBuilder(props) {
               <Input
                 placeholder="Type a value here"
                 fullWidth
-                variant="bordered"
+                variant="secondary"
                 value={variableSettings?.default_value}
                 onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
                 description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}

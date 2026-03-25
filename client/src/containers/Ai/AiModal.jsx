@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, ProgressCircle, ListBox } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, ProgressCircle, ListBox } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -1292,7 +1292,7 @@ function AiModal({ isOpen, onClose }) {
                     setIsContextPopoverOpen(true);
                   }
                 }}
-                variant="bordered"
+                variant="secondary"
                 endContent={
                   <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} color="primary" onPress={() => setQuestion(question + " ")} size="sm">
                     <LuArrowRight size={18} />
@@ -1301,7 +1301,7 @@ function AiModal({ isOpen, onClose }) {
               />
               <div className="flex flex-row items-center gap-1 flex-wrap mt-2">
                 <Chip
-                  variant="flat"
+                  variant="soft"
                   size="sm"
                   onClick={() => {
                     setQuestion("What can you do?");
@@ -1311,7 +1311,7 @@ function AiModal({ isOpen, onClose }) {
                   What can you do?
                 </Chip>
                 <Chip
-                  variant="flat"
+                  variant="soft"
                   size="sm"
                   onClick={() => {
                     setQuestion("How many users I have in my database?");
@@ -1326,7 +1326,7 @@ function AiModal({ isOpen, onClose }) {
               <Popover isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
                 <Popover.Trigger>
                   <Button
-                    variant="light"
+                    variant="tertiary"
                     size="sm"
                     startContent={selectedContext.multiSelect.length > 0 ? null : <LuAtSign size={16} />}
                     isPending={isLoading}
@@ -1345,7 +1345,7 @@ function AiModal({ isOpen, onClose }) {
                       placeholder="Search projects, connections, datasets..."
                       value={contextSearch}
                       onChange={(e) => setContextSearch(e.target.value)}
-                      variant="bordered"
+                      variant="secondary"
                       size="sm"
                       className="mb-2"
                       autoFocus
@@ -1452,12 +1452,19 @@ function AiModal({ isOpen, onClose }) {
               )}
             </div>
             <Separator />
-            <Accordion variant="light">
-              <AccordionItem
-                key="previous_conversations"
-                title={`Previous Conversations (${conversations.length})`}
-                classNames={{ title: "text-sm font-medium" }}
+            <Accordion>
+              <Accordion.Item
+                id="previous_conversations"
+                textValue={`Previous Conversations (${conversations.length})`}
               >
+                <Accordion.Heading>
+                  <Accordion.Trigger>
+                    <span className="text-sm font-medium flex-1 text-start">{`Previous Conversations (${conversations.length})`}</span>
+                    <Accordion.Indicator />
+                  </Accordion.Trigger>
+                </Accordion.Heading>
+                <Accordion.Panel>
+                  <Accordion.Body>
                 <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto">
                   {conversations.map((conv) => (
                     <div
@@ -1486,7 +1493,7 @@ function AiModal({ isOpen, onClose }) {
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <Dropdown>
                           <Dropdown.Trigger>
-                            <Button isIconOnly size="sm" variant="light">
+                            <Button isIconOnly size="sm" variant="tertiary">
                               <LuEllipsis size={16} />
                             </Button>
                           </Dropdown.Trigger>
@@ -1505,7 +1512,9 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   ))}
                 </div>
-              </AccordionItem>
+                  </Accordion.Body>
+                </Accordion.Panel>
+              </Accordion.Item>
             </Accordion>
 
             <Separator />
@@ -1571,7 +1580,7 @@ function AiModal({ isOpen, onClose }) {
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Dropdown>
                             <Dropdown.Trigger>
-                              <Button isIconOnly size="sm" variant="light">
+                              <Button isIconOnly size="sm" variant="tertiary">
                                 <LuEllipsis size={16} />
                               </Button>
                             </Dropdown.Trigger>
@@ -1622,7 +1631,7 @@ function AiModal({ isOpen, onClose }) {
                         <div className="text-md text-foreground font-medium">{conversation.title}</div>
                         <Dropdown>
                           <Dropdown.Trigger>
-                            <Button isIconOnly size="sm" variant="light">
+                            <Button isIconOnly size="sm" variant="tertiary">
                               <LuEllipsis size={16} />
                             </Button>
                           </Dropdown.Trigger>
@@ -1761,7 +1770,7 @@ function AiModal({ isOpen, onClose }) {
                       <Popover isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
                         <Popover.Trigger>
                           <Button
-                            variant="light"
+                            variant="tertiary"
                             isPending={isLoading}
                             isIconOnly
                           >
@@ -1778,7 +1787,7 @@ function AiModal({ isOpen, onClose }) {
                               placeholder="Search projects, connections, datasets..."
                               value={contextSearch}
                               onChange={(e) => setContextSearch(e.target.value)}
-                              variant="bordered"
+                              variant="secondary"
                               size="sm"
                               className="mb-2"
                               autoFocus

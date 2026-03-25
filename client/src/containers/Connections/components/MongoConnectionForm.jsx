@@ -249,7 +249,7 @@ function MongoConnectionForm(props) {
                   setConnection({ ...connection, name: e.target.value });
                 }}
                 color={errors.name ? "danger" : "default"}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -270,7 +270,7 @@ function MongoConnectionForm(props) {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
                 description={"mongodb://username:password@mongodb.example.com:27017/dbname"}
-                variant="bordered"
+                variant="secondary"
                 fullWidth
               />
             </Row>
@@ -298,7 +298,7 @@ function MongoConnectionForm(props) {
                   }}
                   color={errors.name ? "danger" : "default"}
                   helperText={errors.name}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -313,7 +313,7 @@ function MongoConnectionForm(props) {
                   }}
                   color={errors.host ? "danger" : "default"}
                   description={errors.host}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -326,7 +326,7 @@ function MongoConnectionForm(props) {
                   }}
                   helperColor="error"
                   description={errors.port}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -340,7 +340,7 @@ function MongoConnectionForm(props) {
                   }}
                   color={errors.dbName ? "danger" : "default"}
                   description={errors.dbName}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -354,7 +354,7 @@ function MongoConnectionForm(props) {
                   }}
                   color={errors.username ? "danger" : "default"}
                   description={errors.username}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>
@@ -368,7 +368,7 @@ function MongoConnectionForm(props) {
                   }}
                   color={errors.password ? "danger" : "default"}
                   description={errors.password}
-                  variant="bordered"
+                  variant="secondary"
                   fullWidth
                 />
               </div>

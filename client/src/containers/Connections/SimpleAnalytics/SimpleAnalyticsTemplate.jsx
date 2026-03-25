@@ -228,7 +228,7 @@ function SimpleAnalyticsTemplate(props) {
               }}
               color={errors.website ? "danger" : "default"}
               description={errors.website}
-              variant="bordered"
+              variant="secondary"
               fullWidth
               disabled={formVisible}
             />
@@ -276,7 +276,7 @@ function SimpleAnalyticsTemplate(props) {
               }}
               color={errors.website ? "danger" : "default"}
               description={errors.website}
-              variant="bordered"
+              variant="secondary"
               fullWidth
             />
           </Row>
@@ -289,7 +289,7 @@ function SimpleAnalyticsTemplate(props) {
               onChange={(e) => {
                 setConnection({ ...connection, apiKey: e.target.value });
               }}
-              variant="bordered"
+              variant="secondary"
               fullWidth
             />
           </Row>
@@ -332,7 +332,7 @@ function SimpleAnalyticsTemplate(props) {
           <div className="h-4" />
           <Row>
             <Button
-              variant="bordered"
+              variant="secondary"
               startContent={<LuCheckCheck />}
               onClick={_onSelectAll}
               size="sm"
@@ -341,7 +341,7 @@ function SimpleAnalyticsTemplate(props) {
             </Button>
             <div className="w-1" />
             <Button
-              variant="bordered"
+              variant="secondary"
               startContent={<LuX />}
               onClick={_onDeselectAll}
               size="sm"

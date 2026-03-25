@@ -781,7 +781,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               ? "The query contains variables that may be causing parsing issues. You can try modifying the query manually or restart from here."
               : "Modify the query manually or restart the query from here."
           }
-          variant="bordered"
+          variant="secondary"
         >
           <Button
             color="primary"
@@ -1382,7 +1382,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
             <Input
               label="Value"
               placeholder="Enter value or {{variable_name}}"
-              variant="bordered"
+              variant="secondary"
               value={newFilter.value}
               onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value })}
               description="You can use variables like {{variable_name}} as values"
@@ -1529,7 +1529,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               type="number"
               label="Limit"
               placeholder="Enter limit"
-              variant="bordered"
+              variant="secondary"
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
             />

@@ -189,7 +189,7 @@ function StrapiConnectionForm(props) {
               }}
               color={errors.name ? "danger" : "default"}
               fullWidth
-              variant="bordered"
+              variant="secondary"
               className={"max-w-[500px]"}
             />
           </Row>
@@ -212,7 +212,7 @@ function StrapiConnectionForm(props) {
               }}
               fullWidth
               color={errors.host ? "danger" : "default"}
-              variant="bordered"
+              variant="secondary"
               className={"max-w-[500px]"}
             />
           </Row>
@@ -233,7 +233,7 @@ function StrapiConnectionForm(props) {
               onChange={(e) => _onChangeAuthParams("token", e.target.value)}
               fullWidth
               color={errors.authentication ? "danger" : "default"}
-              variant="bordered"
+              variant="secondary"
               className={"max-w-[500px]"}
             />
           </Row>
@@ -267,7 +267,7 @@ function StrapiConnectionForm(props) {
                     value={option.key}
                     onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                   />
                   <Input
                     onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
@@ -275,7 +275,7 @@ function StrapiConnectionForm(props) {
                     placeholder="Value"
                     labelPlacement="outside"
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                   />
                   <Button
                     isIconOnly

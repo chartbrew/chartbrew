@@ -438,7 +438,7 @@ function DatasetList() {
           </div>
           {(searchFilter.status === "draft" || searchFilter.status === "all") && (
             <Button
-              variant="bordered"
+              variant="secondary"
               size="sm"
               onPress={() => {
                 setShowDeleteAllDrafts(true);
@@ -844,7 +844,7 @@ function DatasetList() {
               placeholder="Dataset name"
               value={duplicateDatasetName}
               onChange={(e) => setDuplicateDatasetName(e.target.value)}
-              variant="bordered"
+              variant="secondary"
             />
           </Modal.Body>
           <Modal.Footer>

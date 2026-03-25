@@ -310,7 +310,7 @@ function DatasetAlerts(props) {
       <Container className={"pl-0 pr-0"}>
         <div className="flex flex-wrap items-center gap-2">
           {alerts.length === 0 && (
-            <Link onClick={_onOpen} className="flex items-center cursor-pointer">
+            <Link onPress={_onOpen} className="flex items-center cursor-pointer">
               <LuBellPlus size={24} />
               <div className="w-2" />
               <div className="text-sm text-foreground">Set up alerts</div>
@@ -320,10 +320,9 @@ function DatasetAlerts(props) {
             <Fragment key={alert.id}>
               <Button
                 color={alert.active ? "primary" : "default"}
-                auto
-                variant="bordered"
+                variant="secondary"
                 size="sm"
-                onClick={() => _onEdit(alert)}
+                onPress={() => _onEdit(alert)}
                 endContent={alert.active ? <LuBellRing /> : <LuBellOff />}
               >
                 {alert.type === "milestone" && "Milestone"}
@@ -339,11 +338,10 @@ function DatasetAlerts(props) {
         {alerts.length > 0 && (
           <div className="mt-2">
             <Button
-              auto
               startContent={<LuPlus />}
               size="sm"
-              onClick={_onOpen}
-              variant="light"
+              onPress={_onOpen}
+              variant="tertiary"
             >
               Set up new alert
             </Button>
@@ -394,7 +392,7 @@ function DatasetAlerts(props) {
                       label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
                       type="number"
                       fullWidth
-                      variant="bordered"
+                      variant="secondary"
                       value={newAlert.rules.value}
                       onChange={(e) => {
                         setNewAlert({
@@ -413,7 +411,7 @@ function DatasetAlerts(props) {
                     label="Lower threshold"
                     type="number"
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                     value={newAlert.rules.lower}
                     onChange={(e) => {
                       setNewAlert({
@@ -428,7 +426,7 @@ function DatasetAlerts(props) {
                     label="Upper threshold"
                     type="number"
                     fullWidth
-                    variant="bordered"
+                    variant="secondary"
                     value={newAlert.rules.upper}
                     onChange={(e) => {
                       setNewAlert({
@@ -455,33 +453,29 @@ function DatasetAlerts(props) {
                   <div className="h-2" />
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
-                      auto
                       startContent={<LuMail />}
-                      color="secondary"
                       size="sm"
-                      variant={!newAlert.mediums.email?.enabled ? "bordered": "solid"}
-                      onClick={() => _onChangeMediums("email")}
+                      variant={!newAlert.mediums.email?.enabled ? "outline" : "secondary"}
+                      onPress={() => _onChangeMediums("email")}
                     >
                       Email
                     </Button>
                     {integrations && integrations.map((integration) => (
                       <>
                         <Button
-                          auto
                           startContent={
                             integration.type === "webhook" ? <LuWebhook />
                               : integration.type === "slack" ? <LuSlack />
                                 : null
                           }
-                          color="secondary"
                           size="sm"
                           variant={
                             selectedIntegrations.length === 0
                             || !selectedIntegrations.find(
                               (i) => i.integration_id === integration.id && i.enabled
-                            ) ? "bordered" : "solid"
+                            ) ? "outline" : "secondary"
                           }
-                          onClick={() => _onSelectIntegration(integration)}
+                          onPress={() => _onSelectIntegration(integration)}
                         >
                           {integration.name}
                         </Button>
@@ -489,19 +483,17 @@ function DatasetAlerts(props) {
                     ))}
                     <Button
                       startContent={<LuPlus size={18} />}
-                      color="primary"
-                      variant="light"
+                      variant="tertiary"
                       size="sm"
-                      onClick={_onCreateNewIntegration}
+                      onPress={_onCreateNewIntegration}
                     >
                       Create integrations
                     </Button>
                     <Button
                       startContent={<LuRefreshCw size={18} />}
-                      color="primary"
-                      variant="light"
+                      variant="tertiary"
                       size="sm"
-                      onClick={_onRefreshIntegrationList}
+                      onPress={_onRefreshIntegrationList}
                     >
                       Refresh list
                     </Button>
@@ -515,11 +507,11 @@ function DatasetAlerts(props) {
                     <div className="h-2" />
                     <Row wrap="wrap" className={"gap-2"}>
                       {_filterTeamMembers().map((member) => (
-                        <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
+                        <Link key={member.email} onPress={() => _onChangeRecipient(member.email)}>
                           <Chip
                             color="secondary"
                             size="sm"
-                            variant={newAlert.recipients.includes(member.email) ? "solid" : "faded"}
+                            variant={newAlert.recipients.includes(member.email) ? "primary" : "soft"}
                             className="rounded-sm cursor-pointer"
                           >
                             {member.email}
@@ -547,7 +539,7 @@ function DatasetAlerts(props) {
                       label="Enter a timeout"
                       type="number"
                       fullWidth
-                      variant="bordered"
+                      variant="secondary"
                       value={displayTimeout}
                       onChange={(e) => setDisplayTimeout(e.target.value)}
                     />
@@ -602,7 +594,7 @@ function DatasetAlerts(props) {
                         <div className="text-sm">
                           {"In order for the alert to trigger, you must enable automatic dashboard or chart updates."}
                           <div className="h-1" />
-                          <Link onClick={_toggleAutoUpdate} className="text-sm">
+                          <Link onPress={_toggleAutoUpdate} className="text-sm">
                             {showAutoUpdate ? "Hide picture" : "Show how to do it"}
                           </Link>
                         </div>
@@ -635,20 +627,20 @@ function DatasetAlerts(props) {
               <Button
                 color="danger"
                 endContent={<LuTrash />}
-                variant="light"
-                onClick={() => _onDelete()}
+                variant="tertiary"
+                onPress={() => _onDelete()}
                 isPending={deleteLoading}
               >
                 Delete alert
               </Button>
             )}
-            <Button onClick={() => setOpen(false)} variant="secondary">
+            <Button onPress={() => setOpen(false)} variant="secondary">
               Close
             </Button>
             <Button
-              onClick={() => _onSaveAlert()}
+              onPress={() => _onSaveAlert()}
               color="primary"
-              disabled={newAlert.mediums.length === 0 || !newAlert.type}
+              isDisabled={newAlert.mediums.length === 0 || !newAlert.type}
               isPending={loading}
             >
               {newAlert.id ? "Update alert" : "Create alert"}

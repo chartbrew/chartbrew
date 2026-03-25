@@ -364,7 +364,7 @@ function DashboardFilters({
             )}
               </Modal.Body>
               <Modal.Footer>
-            <Button variant="bordered" onPress={() => setEditingFilter(null)}>
+            <Button variant="secondary" onPress={() => setEditingFilter(null)}>
               Cancel
             </Button>
             <Button color="primary" onPress={_handleSaveFilter}>
@@ -388,7 +388,7 @@ function DashboardFilters({
             <p>{"If you want to remove it from your dashboard only, you can clear the filter value instead."}</p>
               </Modal.Body>
               <Modal.Footer>
-            <Button variant="bordered" onPress={() => setFilterToRemove(null)}>Cancel</Button>
+            <Button variant="secondary" onPress={() => setFilterToRemove(null)}>Cancel</Button>
             <Button color="danger" onPress={() => _onRemoveFilter(filterToRemove, true)}>Remove from everyone</Button>
               </Modal.Footer>
             </Modal.Dialog>

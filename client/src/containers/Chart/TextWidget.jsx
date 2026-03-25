@@ -371,7 +371,7 @@ function TextWidget({
                         onChange={(e) => _onEditContent(e.target.value)}
                         placeholder="Enter markdown text here..."
                         className="h-full! font-mono"
-                        variant="bordered"
+                        variant="secondary"
                         onMouseDown={handleInteractiveMouseDown}
                         ref={textareaRef}
                         fullWidth
@@ -530,7 +530,7 @@ function TextWidget({
               </Modal.Body>
               <Modal.Footer>
             <Button
-              variant="bordered"
+              variant="secondary"
               onPress={() => setDeleteModal(false)}
               auto
             >

@@ -43,7 +43,7 @@ function FieldFilter({
     return (
       <Dropdown aria-label="Select an operator">
         <Dropdown.Trigger>
-          <Chip variant="flat" size="sm" className="rounded-sm text-xs cursor-pointer">
+          <Chip variant="soft" size="sm" className="rounded-sm text-xs cursor-pointer">
             {field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}
           </Chip>
         </Dropdown.Trigger>
@@ -70,14 +70,11 @@ function FieldFilter({
       return (
         <Input
           startContent={renderLabel()}
-          classNames={{
-            inputWrapper: "pl-1"
-          }}
+          className={["pl-1", className].filter(Boolean).join(" ")}
           value={currentOperator === "isNull" ? "Is null" : "Is not null"}
           isReadOnly
-          variant="bordered"
+          variant="secondary"
           size="sm"
-          className={className}
         />
       );
     }
@@ -86,14 +83,11 @@ function FieldFilter({
       return (
         <DatePicker
           startContent={renderLabel()}
-          classNames={{
-            inputWrapper: "pl-1"
-          }}
+          className={["pl-1", className].filter(Boolean).join(" ")}
           value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
           onChange={(date) => setDateValue(date.toString())}
-          variant="bordered"
+          variant="secondary"
           size="sm"
-          className={className}
           showMonthAndYearPickers
           calendarProps={{ color: "primary" }}
           endContent={dateValue !== filter?.value && (
@@ -108,14 +102,11 @@ function FieldFilter({
     return (
       <Input
         startContent={renderLabel()}
-        classNames={{
-          inputWrapper: "pl-1"
-        }}
-        variant="bordered"
+        className={["pl-1", className].filter(Boolean).join(" ")}
+        variant="secondary"
         value={textValue || ""}
         onChange={(e) => setTextValue(e.target.value)}
         size="sm"
-        className={className}
         endContent={textValue !== filter?.value && (
           <Link onPress={() => onApply?.({ ...filter, operator: currentOperator, value: textValue })} className="text-foreground hover:text-foreground-500 cursor-pointer">
             <LuArrowRight size={18} />

@@ -497,7 +497,7 @@ function DatarequestSettings(props) {
                     placeholder="Enter a unique join alias"
                     value={join.alias}
                     onChange={(e) => _onChangeJoin(join.key, { alias: e.target.value })}
-                    variant="bordered"
+                    variant="secondary"
                     size="sm"
                   />
                 </div>

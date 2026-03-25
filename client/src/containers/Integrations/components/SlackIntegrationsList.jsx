@@ -148,7 +148,7 @@ function SlackIntegrations() {
                 </Modal.Body>
           )}
               <Modal.Footer>
-                <Button onPress={() => setCreateOpen(false)} variant="bordered" size="sm">Close</Button>
+                <Button onPress={() => setCreateOpen(false)} variant="secondary" size="sm">Close</Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

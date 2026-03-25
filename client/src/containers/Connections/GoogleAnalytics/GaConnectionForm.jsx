@@ -147,7 +147,7 @@ function GaConnectionForm(props) {
             }}
             helperColor="error"
             helperText={errors.name}
-            variant="bordered"
+            variant="secondary"
             fullWidth
             className="md:w-[600px]"
           />

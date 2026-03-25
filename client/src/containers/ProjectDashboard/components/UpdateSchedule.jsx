@@ -217,7 +217,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                 placeholder="X"
                 type="number"
                 aria-label="Update frequency"
-                variant="bordered"
+                variant="secondary"
                 value={schedule.frequencyNumber}
                 onChange={(e) => setSchedule({ ...schedule, frequencyNumber: e.target.value })}
               />

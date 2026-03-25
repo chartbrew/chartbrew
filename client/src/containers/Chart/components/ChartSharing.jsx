@@ -541,7 +541,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                     setParameters(newParameters);
                   }}
                   size="sm"
-                  variant="bordered"
+                  variant="secondary"
                   placeholder="Parameter name"
                 />
                 <Input
@@ -553,7 +553,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                     setParameters(newParameters);
                   }}
                   size="sm"
-                  variant="bordered"
+                  variant="secondary"
                   placeholder="Parameter value"
                 />
                 <Button

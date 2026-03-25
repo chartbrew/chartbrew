@@ -111,7 +111,7 @@ function ProjectNavigation(props) {
           <div className="flex justify-center items-center">
             <Popover>
               <Popover.Trigger>
-                <Button variant="bordered" isIconOnly={menuSize === "small"} isDisabled={!project.name} fullWidth>
+                <Button variant="secondary" isIconOnly={menuSize === "small"} isDisabled={!project.name} fullWidth>
                   {!project.name ? <ButtonSpinner /> : (
                     <>
                       {menuSize === "small" && <LuMenu size={24} />}
@@ -127,7 +127,7 @@ function ProjectNavigation(props) {
                       placeholder="Search"
                       fullWidth
                       size="small"
-                      variant="bordered"
+                      variant="secondary"
                       endContent={<LuSearch />}
                       onChange={(e) => setProjectSearch(e.target.value)}
                       className="px-2"

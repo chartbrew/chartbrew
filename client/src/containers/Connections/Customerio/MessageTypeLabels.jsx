@@ -63,7 +63,7 @@ function MessageTypeLabels(props) {
             <Chip
               onClick={() => onSelect(message.value)}
               color="primary"
-              variant="bordered"
+              variant="secondary"
               className="cursor-pointer"
             >
               {message.text}

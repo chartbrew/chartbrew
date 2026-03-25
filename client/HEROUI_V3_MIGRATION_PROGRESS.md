@@ -176,6 +176,26 @@ Replaced **`isLoading={…}`** on **`Button`** across **`client/src`**: pair wit
 
 Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026-03-24).
 
+### Batch 49: Select / Autocomplete async — `isLoading` → `isPending`
+
+RAC/HeroUI v3 collection triggers use **`isPending`** (not v2 **`isLoading`**).
+
+**Files:** **`SlackIntegration.jsx`**, **`DatasetBuilder.jsx`**, **`CampaignsQuery.jsx`**, **`ActivitiesQuery.jsx`**.
+
+**Grep:** no **`isLoading=`** on **`Select` / `Autocomplete`** in `client/src`.
+
+Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026-03-24).
+
+### Batch 50: `variant="bordered"` → v3 variants
+
+- **`Input` / `TextArea` / `Button` / `Chip` (where used):** **`variant="bordered"` → `variant="secondary"`** (v3 outlined style).
+- **`Accordion` root** (v3 allows **`default` | `surface` only):** **`variant="bordered"` → `variant="surface"`** on **`TableConfiguration.jsx`**, **`DataTransform.jsx`**, **`RealtimeDbConnectionForm.jsx`**, **`CustomerioConnectionForm.jsx`**, **`FirestoreConnectionForm.jsx`**.
+- **`DataTransform.jsx`:** removed invalid **`variant="bordered"`** on **`AccordionItem`** (item slot has no bordered variant in v3).
+
+Repo-wide in **`client/src`**: **`rg 'variant="bordered"'`** → **0** after this batch.
+
+Verification: **`npm run lint`** and **`npm run build`** pass in `client/` (2026-03-24).
+
 ---
 
 ## Remaining hard blockers
@@ -204,19 +224,36 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 | **`Tooltip`** + Stitches **`css` z-index** | 0 — Batch 41+ |
 | Stitches / NextUI **`css={{}}`** on JSX | 0 — Batch 42 |
 | Flat **`DropdownTrigger` / `DropdownMenu` / `DropdownItem`** | 0 — Batch 46; use **`Dropdown.Trigger`**, **`Dropdown.Popover`**, **`Dropdown.Menu`**, **`Dropdown.Item`** |
+| v2 **`variant="bordered"`** on HeroUI **`Input` / `Button` / …** | 0 — Batch 50; use **`secondary`** (or **`Accordion` `surface`**) |
+| Flat **`AccordionItem`** / **`title=`** / **`subtitle=`** on accordion | 0 — Batches 51–52; use **`Accordion.Item`** + **`Heading` / `Trigger` / `Indicator` / `Panel` / `Body`** |
+
+## Batch 51 (follow-ups)
+
+- **`DataTransform.jsx`:** **`Accordion.Item`** + **`Heading` / `Trigger` / `Indicator` / `Panel` / `Body`** (surface variant); dropped flat **`AccordionItem`** import.
+- **`ManageTeam.jsx`:** **`Tabs.ListContainer`** + **`Tabs.List`** with **`className`** border (no root **`classNames.tabList`**).
+- **`Button` `onClick` → `onPress`:** **`Chart.jsx`**, **`CustomerQuery.jsx`** (HeroUI buttons only), **`Variables.jsx`**, **`DatasetAlerts.jsx`**; icon row uses **`variant="primary"`** / **`danger-soft`** where **`light` / `color`** were invalid.
+- **`DatasetAlerts.jsx`:** **`Link` `onClick` → `onPress`**; **`variant` `light` → `tertiary`**; medium toggles **`bordered`/`solid` → `outline`/`secondary`**; **`Chip` `solid`/`faded` → `primary`/`soft`**; save **`disabled` → `isDisabled`**; removed invalid **`auto`** on buttons.
+- **v2 `classNames` on fields:** **`ChartFilters`**, **`ApiBuilder`**, **`CampaignsQuery`**, **`FieldFilter`**, **`VariableFilter`**, **`DateRangeFilter`** — **`className`** (and **`Chip` `flat` → `soft`** where touched).
+- **`ProjectDashboard.jsx`:** tutorial dot via **`Badge.Anchor`** + **`Badge`** (pulse **`className`**); **`Dropdown.Trigger` `onClick` → `onPress`**.
+- **`AiModal.jsx`:** previous-conversations **`Accordion`** compounds (default variant; **`light`** invalid); **`AccordionItem`** import removed; **`Button`/`Chip`** **`light` → `tertiary`/`soft`**.
+
+## Batch 52 (accordion sweep)
+
+- **`CustomerioConnectionForm.jsx`**, **`FirestoreConnectionForm.jsx`**, **`RealtimeDbConnectionForm.jsx`:** help sections → **`Accordion.Item`** + compounds (`variant="surface"` unchanged).
+- **`InviteMembersForm.jsx`:** dashboard access → compounds; invalid root **`variant="secondary"`** → **`surface`**.
+- **`TableConfiguration.jsx`:** column options → compounds; custom **`LuSettings`** via **`Accordion.Indicator`**; **`fullWidth`** → **`className="w-full"`**; cancel reorder **`Button` `light` → `tertiary`**.
+- **`client/src`:** zero **`AccordionItem`** imports/usages (confirm: **`rg AccordionItem src`**).
 
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 48)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 52)
 
 ## Next batch
 
-1. Re-grep for legacy HeroUI patterns after large UI work (`ModalContent`, **`Dropdown*`** flat names, etc.).
-2. Keep **`npm run build`** after import-surface edits.
-3. Optional: replace remaining **`Button`** **`isPending=`** with **`ButtonSpinner`** + **`isDisabled`** for consistent loading chrome.
-4. Optional: **`Select` / `Autocomplete`** loading — confirm RAC/HeroUI pattern (e.g. **`isPending`**, slot content) vs raw **`isLoading`** on root.
-5. Optional: **`Tabs`** bar width via **`TabList` / `TabListContainer` `className`**.
+1. Re-grep for v2 **`classNames`** on HeroUI inputs / stray **`onClick`** on **`Button`**.
+2. **`TableConfiguration.jsx`:** remaining v2 patterns (**`Dropdown.Menu` `variant="flat"`**, **`Chip` `variant="flat"`**, **`Button` `variant="faded"`**) when touching that file.
+3. Keep **`npm run build`** after import-surface edits.
 
 ## Notes
 

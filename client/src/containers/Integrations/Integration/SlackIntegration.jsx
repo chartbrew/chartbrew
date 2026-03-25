@@ -193,7 +193,7 @@ function SlackIntegration({ integration }) {
             onChange={(e) => {
               setName(e.target.value.slice(0, 20))
             }}
-            variant="bordered"
+            variant="secondary"
             required
             description={`${name?.length || 0}/20 characters`}
           />
@@ -228,7 +228,7 @@ function SlackIntegration({ integration }) {
                 setSelectedChannels(value || [])
               }}
               variant="secondary"
-              isLoading={channelsLoading}
+              isPending={channelsLoading}
             >
               <Label>Select allowed channels</Label>
               <Select.Trigger>

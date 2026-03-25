@@ -1057,7 +1057,7 @@ function ProjectDashboard() {
                   <Tooltip>
                     <Tooltip.Trigger>
                       <Button
-                        variant="bordered"
+                        variant="secondary"
                         className="bg-background"
                         isIconOnly
                         isPending={filterLoading}
@@ -1083,7 +1083,7 @@ function ProjectDashboard() {
                     <Dropdown aria-label="Add widget">
                       <Dropdown.Trigger>
                         <Button
-                          variant="bordered"
+                          variant="secondary"
                           className="bg-background"
                           size="sm"
                           onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
@@ -1116,7 +1116,7 @@ function ProjectDashboard() {
                       </Dropdown.Popover>
                     </Dropdown>
                     <Button
-                      variant="bordered"
+                      variant="secondary"
                       className="bg-background"
                       size="sm"
                       onPress={() => setShowShare(true)}
@@ -1126,7 +1126,7 @@ function ProjectDashboard() {
                     </Button>
                     <ButtonGroup className="hidden sm:flex">
                       <Button
-                        variant="bordered"
+                        variant="secondary"
                         onPress={() => _onRefreshData()}
                         isPending={refreshLoading}
                         size="sm"
@@ -1139,7 +1139,7 @@ function ProjectDashboard() {
                         <Tooltip>
                           <Tooltip.Trigger>
                             <Button
-                              variant="bordered"
+                              variant="secondary"
                               isIconOnly
                               onPress={() => setScheduleVisible(true)}
                               size="sm"
@@ -1158,7 +1158,7 @@ function ProjectDashboard() {
                     <Tooltip>
                       <Tooltip.Trigger>
                         <Button
-                          variant="bordered"
+                          variant="secondary"
                           isIconOnly
                           onPress={() => _onRefreshData()}
                           isPending={refreshLoading}
@@ -1172,23 +1172,15 @@ function ProjectDashboard() {
                     </Tooltip>
                     <Dropdown aria-label="Dashboard actions">
                       {!user?.tutorials?.projectSettings && (
-                        <Badge
-                          color="secondary"
-                          shape="circle"
-                          content=""
-                          className="absolute top-[-4px] right-[-4px]"
-                          classNames={{
-                            badge: "animate-pulse",
-                          }}
-                        >
+                        <Badge.Anchor className="relative inline-flex">
                           <Dropdown.Trigger
-                            onClick={() => dispatch(completeTutorial({
+                            onPress={() => dispatch(completeTutorial({
                               user_id: user.id,
                               tutorial: { projectSettings: true },
                             }))}
                           >
                             <Button
-                              variant="bordered"
+                              variant="secondary"
                               className="bg-background"
                               isIconOnly
                               size="sm"
@@ -1200,12 +1192,18 @@ function ProjectDashboard() {
                               <LuEllipsisVertical size={20} />
                             </Button>
                           </Dropdown.Trigger>
-                        </Badge>
+                          <Badge
+                            color="secondary"
+                            size="sm"
+                            className="animate-pulse min-h-2 min-w-2 p-0"
+                            aria-label="New"
+                          />
+                        </Badge.Anchor>
                       )}
                       {user?.tutorials?.projectSettings && (
                         <Dropdown.Trigger>
                           <Button
-                            variant="bordered"
+                            variant="secondary"
                             className="bg-background"
                             isIconOnly
                             size="sm"
@@ -1286,7 +1284,7 @@ function ProjectDashboard() {
                       Save changes
                     </Button>
                     <Button
-                      variant="bordered"
+                      variant="secondary"
                       size="sm"
                       onPress={_onCancelChanges}
                     >
@@ -1493,7 +1491,7 @@ function ProjectDashboard() {
                 </Tooltip>
                 <Tabs
                   size="sm"
-                  variant="bordered"
+                  variant="secondary"
                   selectedKey={previewSize?.breakpoint}
                   onSelectionChange={(key) => _onChangePreviewSize(key)}
                 >
@@ -1538,7 +1536,7 @@ function ProjectDashboard() {
                   Save changes
                 </Button>
                 <Button
-                  variant="bordered"
+                  variant="secondary"
                   onPress={_onCancelChanges}
                   size="sm"
                 >
