@@ -283,7 +283,7 @@ function EmbeddedChart() {
               )}
               {dataLoading && !isSnapshot && (
                 <>
-                  <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
+                  <ProgressCircle className="w-4 h-4" aria-label="Updating chart" />
                   <div className="w-2" />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>

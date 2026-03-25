@@ -4,9 +4,6 @@ import {
   Spinner,
   Alert,
   Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
@@ -311,7 +308,7 @@ function SharedChart() {
               )}
               {dataLoading && !isSnapshot && (
                 <>
-                  <ProgressCircle classNames={{ svg: "w-4 h-4" }} aria-label="Updating chart" />
+                  <ProgressCircle className="w-4 h-4" aria-label="Updating chart" />
                   <div className="w-1" />
                   <span className="text-[10px] text-default-500">{"Updating..."}</span>
                 </>
@@ -358,20 +355,23 @@ function SharedChart() {
 
           {chart?.allowReportExport && (
             <Dropdown aria-label="Select an export option">
-              <DropdownTrigger>
+              <Dropdown.Trigger>
                 <Link className="text-gray-500 cursor-pointer">
                   <LuEllipsis className="text-default-500" />
                 </Link>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem
-                  startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
-                  onClick={() => _onPublicExport(chart)}
-                  textValue="Export to Excel"
-                >
-                  Export to Excel
-                </DropdownItem>
-              </DropdownMenu>
+              </Dropdown.Trigger>
+              <Dropdown.Popover>
+                <Dropdown.Menu>
+                  <Dropdown.Item
+                    id="export-excel"
+                    startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                    onPress={() => _onPublicExport(chart)}
+                    textValue="Export to Excel"
+                  >
+                    Export to Excel
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown.Popover>
             </Dropdown>
           )}
         </div>

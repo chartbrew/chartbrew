@@ -15,7 +15,7 @@ import {
   LuSmile,
   LuSquareKanban,
 } from "react-icons/lu";
-import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react";
+import { Button, Dropdown } from "@heroui/react";
 
 import { selectSidebarCollapsed, showFeedbackModal, toggleAiModal, toggleSidebar } from "../slices/ui";
 import canAccess from "../config/canAccess";
@@ -162,34 +162,57 @@ function TopNav() {
           ) : null}
 
           <Dropdown aria-label="Select a help option">
-            <DropdownTrigger>
+            <Dropdown.Trigger>
               <Button className="bg-transparent p-0" startContent={<LuHeartHandshake size={18} />} variant="ghost">
                 Resources
               </Button>
-            </DropdownTrigger>
-            <DropdownMenu onAction={(key) => onDropdownAction(key)} variant="faded">
-              <DropdownItem id="discord" key="discord" startContent={<TbBrandDiscord />} textValue="Join our Discord">
-                Join our Discord
-              </DropdownItem>
-              <DropdownItem id="roadmap" key="roadmap" startContent={<LuSquareKanban />} textValue="Roadmap">
-                Roadmap
-              </DropdownItem>
-              <DropdownItem id="tutorials" key="tutorials" startContent={<LuBook />} textValue="Blog tutorials">
-                Blog tutorials
-              </DropdownItem>
-              <DropdownItem id="documentation" key="documentation" startContent={<LuBookOpenText />} textValue="Documentation">
-                Documentation
-              </DropdownItem>
-              <DropdownItem id="api" key="api" startContent={<LuFileCode2 />} textValue="API Reference">
-                API Reference
-              </DropdownItem>
-              <DropdownItem id="github" key="github" startContent={<LuGithub />} textValue="GitHub">
-                GitHub
-              </DropdownItem>
-              <DropdownItem id="feedback" key="feedback" startContent={<LuSmile />} textValue="Feedback">
-                Feedback
-              </DropdownItem>
-            </DropdownMenu>
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu onAction={(key) => onDropdownAction(key)} variant="faded">
+                <Dropdown.Item id="discord" textValue="Join our Discord">
+                  <div className="flex flex-row items-center gap-2">
+                    <TbBrandDiscord />
+                    <span>Join our Discord</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="roadmap" textValue="Roadmap">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSquareKanban />
+                    <span>Roadmap</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="tutorials" textValue="Blog tutorials">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuBook />
+                    <span>Blog tutorials</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="documentation" textValue="Documentation">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuBookOpenText />
+                    <span>Documentation</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="api" textValue="API Reference">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuFileCode2 />
+                    <span>API Reference</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="github" textValue="GitHub">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuGithub />
+                    <span>GitHub</span>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="feedback" textValue="Feedback">
+                  <div className="flex flex-row items-center gap-2">
+                    <LuSmile />
+                    <span>Feedback</span>
+                  </div>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
 
           <Button className="changelog-trigger mr-2" isIconOnly size="sm" title="Changelog" variant="ghost">

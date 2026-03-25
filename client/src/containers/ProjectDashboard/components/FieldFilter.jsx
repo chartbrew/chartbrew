@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Input, DatePicker, Chip, Link, Dropdown, DropdownTrigger,
-  DropdownMenu, DropdownItem,
+  Input, DatePicker, Chip, Link, Dropdown,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import { LuArrowRight } from "react-icons/lu";
@@ -43,23 +42,25 @@ function FieldFilter({
   const renderLabel = () => {
     return (
       <Dropdown aria-label="Select an operator">
-        <DropdownTrigger>
+        <Dropdown.Trigger>
           <Chip variant="flat" size="sm" className="rounded-sm text-xs cursor-pointer">
             {field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}
           </Chip>
-        </DropdownTrigger>
-        <DropdownMenu
-          onSelectionChange={(keys) => _handleOperatorChange(keys.currentKey)}
-          selectedKeys={[currentOperator]}
-          selectionMode="single"
-          disallowEmptySelection
-        >
-          {operators.map((op) => (
-            <DropdownItem key={op.value} textValue={op.text}>
-              {op.text}
-            </DropdownItem>
-          ))}
-        </DropdownMenu>
+        </Dropdown.Trigger>
+        <Dropdown.Popover>
+          <Dropdown.Menu
+            onSelectionChange={(keys) => _handleOperatorChange(keys.currentKey)}
+            selectedKeys={[currentOperator]}
+            selectionMode="single"
+            disallowEmptySelection
+          >
+            {operators.map((op) => (
+              <Dropdown.Item id={op.value} key={op.value} textValue={op.text}>
+                {op.text}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Menu>
+        </Dropdown.Popover>
       </Dropdown>
     );
   };

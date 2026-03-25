@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
-import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Modal, Button } from "@heroui/react"
+import { Dropdown, Modal, Button } from "@heroui/react"
 import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import toast from "react-hot-toast"
@@ -284,45 +284,47 @@ function DashboardFilters({
               </div>
               {!onReport && (
                 <Dropdown size="sm">
-                  <DropdownTrigger>
+                  <Dropdown.Trigger>
                     <div className="cursor-pointer"><LuEllipsisVertical /></div>
-                  </DropdownTrigger>
-                  <DropdownMenu variant="flat">
-                    <DropdownItem onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />}>
-                      Edit filter
-                    </DropdownItem>
-                    {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
-                      <DropdownItem onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />}>
-                        Save for everyone
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
-                      <DropdownItem startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)}>
-                        Remove from everyone
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
-                      <DropdownItem onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />}>
-                        Hide from report
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
-                      <DropdownItem onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />}>
-                        Show on report
-                      </DropdownItem>
-                    )}
-                    {_getStateFilter(filter.id) && (
-                      <DropdownItem onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />}>
-                        Revert to server default
-                      </DropdownItem>
-                    )}
-                    <DropdownItem onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider>
-                      Clear filter value
-                    </DropdownItem>
-                    <DropdownItem onPress={() => _onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} color="danger">
-                      Remove filter
-                    </DropdownItem>
-                  </DropdownMenu>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu variant="flat">
+                      <Dropdown.Item id="edit-filter" onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />} textValue="Edit filter">
+                        Edit filter
+                      </Dropdown.Item>
+                      {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
+                        <Dropdown.Item id="save-everyone" onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />} textValue="Save for everyone">
+                          Save for everyone
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
+                        <Dropdown.Item id="remove-everyone" startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)} textValue="Remove from everyone">
+                          Remove from everyone
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
+                        <Dropdown.Item id="hide-report" onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />} textValue="Hide from report">
+                          Hide from report
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
+                        <Dropdown.Item id="show-report" onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />} textValue="Show on report">
+                          Show on report
+                        </Dropdown.Item>
+                      )}
+                      {_getStateFilter(filter.id) && (
+                        <Dropdown.Item id="revert-default" onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />} textValue="Revert to server default">
+                          Revert to server default
+                        </Dropdown.Item>
+                      )}
+                      <Dropdown.Item id="clear-value" onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider textValue="Clear filter value">
+                        Clear filter value
+                      </Dropdown.Item>
+                      <Dropdown.Item id="remove-filter" onPress={() => _onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} variant="danger" textValue="Remove filter">
+                        Remove filter
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
                 </Dropdown>
               )}
               <div className="w-2" />

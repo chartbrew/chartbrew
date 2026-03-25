@@ -4,10 +4,7 @@ import PropTypes from "prop-types";
 import {
   Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip, ProgressBar,
   TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  DropdownTrigger,
-  DropdownMenu,
   Button,
-  DropdownItem,
   Tooltip,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
@@ -391,25 +388,27 @@ function TableComponent({
                   />
                   <div className="w-1" />
                   <Dropdown aria-label="Select a page size">
-                    <DropdownTrigger>
+                    <Dropdown.Trigger>
                       <Button variant="bordered" size="sm" endContent={<LuChevronDown size={16} />}>
                         {paginationOptions.find((option) => option.value === pageSize).text}
                       </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="bordered"
-                      selectionMode="single"
-                      selectedKeys={[`${pageSize}`]}
-                      onSelectionChange={(selection) => {
-                        setPageSize(Number(Object.values(selection)[0]));
-                      }}
-                    >
-                      {paginationOptions.map((option) => (
-                        <DropdownItem key={`${option.value}`} textValue={option.text}>
-                          <Text>{option.text}</Text>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
+                    </Dropdown.Trigger>
+                    <Dropdown.Popover>
+                      <Dropdown.Menu
+                        variant="bordered"
+                        selectionMode="single"
+                        selectedKeys={[`${pageSize}`]}
+                        onSelectionChange={(selection) => {
+                          setPageSize(Number(Object.values(selection)[0]));
+                        }}
+                      >
+                        {paginationOptions.map((option) => (
+                          <Dropdown.Item id={`${option.value}`} key={option.value} textValue={option.text}>
+                            <Text>{option.text}</Text>
+                          </Dropdown.Item>
+                        ))}
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
                   </Dropdown>
                 </Row>
               </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, ListBox } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, ProgressCircle, ListBox } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -1483,16 +1483,21 @@ function AiModal({ isOpen, onClose }) {
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <Dropdown>
-                          <DropdownTrigger>
+                          <Dropdown.Trigger>
                             <Button isIconOnly size="sm" variant="light">
                               <LuEllipsis size={16} />
                             </Button>
-                          </DropdownTrigger>
-                          <DropdownMenu>
-                            <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} startContent={<LuTrash2 size={16} />}>
-                              Delete conversation
-                            </DropdownItem>
-                          </DropdownMenu>
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover>
+                            <Dropdown.Menu>
+                              <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} textValue="Delete conversation">
+                                <div className="flex flex-row items-center gap-2">
+                                  <LuTrash2 size={16} />
+                                  <span>Delete conversation</span>
+                                </div>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
                         </Dropdown>
                       </div>
                     </div>
@@ -1563,16 +1568,21 @@ function AiModal({ isOpen, onClose }) {
                         </div>
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Dropdown>
-                            <DropdownTrigger>
+                            <Dropdown.Trigger>
                               <Button isIconOnly size="sm" variant="light">
                                 <LuEllipsis size={16} />
                               </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                              <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(c.id)} startContent={<LuTrash2 size={16} />}>
-                                Delete conversation
-                              </DropdownItem>
-                            </DropdownMenu>
+                            </Dropdown.Trigger>
+                            <Dropdown.Popover>
+                              <Dropdown.Menu>
+                                <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(c.id)} textValue="Delete conversation">
+                                  <div className="flex flex-row items-center gap-2">
+                                    <LuTrash2 size={16} />
+                                    <span>Delete conversation</span>
+                                  </div>
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown.Popover>
                           </Dropdown>
                         </div>
                       </div>
@@ -1609,16 +1619,21 @@ function AiModal({ isOpen, onClose }) {
                       <div className="flex flex-row items-center gap-2">
                         <div className="text-md text-foreground font-medium">{conversation.title}</div>
                         <Dropdown>
-                          <DropdownTrigger>
+                          <Dropdown.Trigger>
                             <Button isIconOnly size="sm" variant="light">
                               <LuEllipsis size={16} />
                             </Button>
-                          </DropdownTrigger>
-                          <DropdownMenu>
-                            <DropdownItem key="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} startContent={<LuTrash2 size={16} />}>
-                              Delete conversation
-                            </DropdownItem>
-                          </DropdownMenu>
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover>
+                            <Dropdown.Menu>
+                              <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} textValue="Delete conversation">
+                                <div className="flex flex-row items-center gap-2">
+                                  <LuTrash2 size={16} />
+                                  <span>Delete conversation</span>
+                                </div>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
                         </Dropdown>
                       </div>
                       <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">

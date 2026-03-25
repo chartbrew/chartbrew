@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
-  TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
-  DropdownTrigger,
+  TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Input,
 } from "@heroui/react";
 import _ from "lodash";
@@ -313,66 +312,76 @@ function TeamMembers(props) {
                               <Tooltip.Trigger>
                                 <div>
                                   <Dropdown aria-label="Select a role">
-                                    <DropdownTrigger>
-                                      <Button variant="light" auto isIconOnly size="sm">
+                                    <Dropdown.Trigger>
+                                      <Button variant="light" isIconOnly size="sm">
                                         <LuIdCard />
                                       </Button>
-                                    </DropdownTrigger>
-                                    <DropdownMenu
-                                      onAction={(key) => _onChangeRole(key, member)}
-                                      selectedKeys={[memberRole.role]}
-                                      selectionMode="single"
-                                      aria-label="Change member role"
-                                    >
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="teamAdmin"
-                                            textValue="Team Admin"
-                                            description={"Full access, but can't delete the team"}
-                                            className="max-w-[400px]"
-                                          >
-                                            Team Admin
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectAdmin"
-                                            textValue="Client admin"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query."}
-                                            className="max-w-[400px]"
-                                          >
-                                            Client admin
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectEditor"
-                                            textValue="Client editor"
-                                            description={"Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query."}
-                                            className="max-w-[400px]"
-                                          >
-                                            Client editor
-                                          </DropdownItem>
-                                        )}
-                                      {user.id !== member.id
-                                        && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                        && (
-                                          <DropdownItem
-                                            key="projectViewer"
-                                            textValue="Client viewer"
-                                            description={"Can view charts in assigned projects, but cannot edit or remove anything."}
-                                            className="max-w-[400px]"
-                                          >
-                                            Client viewer
-                                          </DropdownItem>
-                                        )}
-                                    </DropdownMenu>
+                                    </Dropdown.Trigger>
+                                    <Dropdown.Popover>
+                                      <Dropdown.Menu
+                                        onAction={(key) => _onChangeRole(key, member)}
+                                        selectedKeys={[memberRole.role]}
+                                        selectionMode="single"
+                                        aria-label="Change member role"
+                                      >
+                                        {user.id !== member.id
+                                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                          && (
+                                            <Dropdown.Item
+                                              id="teamAdmin"
+                                              textValue="Team Admin"
+                                              className="max-w-[400px]"
+                                            >
+                                              <div className="flex flex-col gap-1 py-0.5">
+                                                <span className="font-medium">Team Admin</span>
+                                                <span className="text-xs text-default-500">Full access, but can&apos;t delete the team</span>
+                                              </div>
+                                            </Dropdown.Item>
+                                          )}
+                                        {user.id !== member.id
+                                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                          && (
+                                            <Dropdown.Item
+                                              id="projectAdmin"
+                                              textValue="Client admin"
+                                              className="max-w-[400px]"
+                                            >
+                                              <div className="flex flex-col gap-1 py-0.5">
+                                                <span className="font-medium">Client admin</span>
+                                                <span className="text-xs text-default-500">Can create, edit, and remove charts in assigned dashboards. The admins can also edit the tagged dataset configurations, including the query.</span>
+                                              </div>
+                                            </Dropdown.Item>
+                                          )}
+                                        {user.id !== member.id
+                                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                          && (
+                                            <Dropdown.Item
+                                              id="projectEditor"
+                                              textValue="Client editor"
+                                              className="max-w-[400px]"
+                                            >
+                                              <div className="flex flex-col gap-1 py-0.5">
+                                                <span className="font-medium">Client editor</span>
+                                                <span className="text-xs text-default-500">Can create, edit, and remove charts in assigned dashboards. The editors can also edit the tagged dataset configurations, but cannot edit the query.</span>
+                                              </div>
+                                            </Dropdown.Item>
+                                          )}
+                                        {user.id !== member.id
+                                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                          && (
+                                            <Dropdown.Item
+                                              id="projectViewer"
+                                              textValue="Client viewer"
+                                              className="max-w-[400px]"
+                                            >
+                                              <div className="flex flex-col gap-1 py-0.5">
+                                                <span className="font-medium">Client viewer</span>
+                                                <span className="text-xs text-default-500">Can view charts in assigned projects, but cannot edit or remove anything.</span>
+                                              </div>
+                                            </Dropdown.Item>
+                                          )}
+                                      </Dropdown.Menu>
+                                    </Dropdown.Popover>
                                   </Dropdown>
                                 </div>
                               </Tooltip.Trigger>

@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import {
   Autocomplete, Button, Card,
   Checkbox, Chip, DatePicker, Separator, Drawer,
-  Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, Link, ListBox,
+  Dropdown, EmptyState, Input, Label, Link, ListBox,
   Modal, SearchField, Select,
   Switch, Tooltip, useFilter,
 } from "@heroui/react";
@@ -296,7 +296,7 @@ function DatasetFilters(props) {
               <div className="h-1" />
               <Row warp="wrap" className={"flex gap-2"} align="center">
                 <Dropdown aria-label="Select an operator">
-                  <DropdownTrigger>
+                  <Dropdown.Trigger>
                     <Input
                       value={
                         (
@@ -309,18 +309,20 @@ function DatasetFilters(props) {
                       className="max-w-[100px]"
                       size="sm"
                     />
-                  </DropdownTrigger>
-                  <DropdownMenu
-                    onSelectionChange={(keys) => _updateCondition(condition.id, keys.currentKey, "operator")}
-                    selectedKeys={[condition.operator]}
-                    selectionMode="single"
-                  >
-                    {operators.map((operator) => (
-                      <DropdownItem key={operator.value} textValue={operator.text}>
-                        {operator.text}
-                      </DropdownItem>
-                    ))}
-                  </DropdownMenu>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu
+                      onSelectionChange={(keys) => _updateCondition(condition.id, keys.currentKey, "operator")}
+                      selectedKeys={[condition.operator]}
+                      selectionMode="single"
+                    >
+                      {operators.map((operator) => (
+                        <Dropdown.Item id={operator.value} key={operator.value} textValue={operator.text}>
+                          {operator.text}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
                 </Dropdown>
                 <div className="min-w-[150px] w-full">
                   {(!condition.field

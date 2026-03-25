@@ -61,52 +61,55 @@ function QueryResultsTable({ result }) {
   return (
     <div>
       <div className="w-full">
-        <Table
-          isStriped
-          className="sqlbuilder-result-tut"
-          aria-label="Results table"
-        >
-          {getResultHeaderRows()?.length > 0 && (
-            <TableHeader>
-              {getResultHeaderRows().map((h) => (
-                <TableColumn key={h}>{h}</TableColumn>
-              ))}
-            </TableHeader>
-          )}
-          <TableBody emptyContent={"Run a query to see the results"}>
-            {getResultBodyRows(resultsPage).map((row, i) => (
-              <TableRow key={i}>
-                {Object.keys(row).map((key) => (
-                  <TableCell key={key}>
-                    {typeof row[key] === "object" ? (
-                      <Popover>
-                        <Popover.Trigger>
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            color="primary"
-                          >
-                            {Array.isArray(row[key]) ? "Array" : "Object"}
-                          </Button>
-                        </Popover.Trigger>
-                        <Popover.Content>
-                          <Popover.Dialog>
-                            <pre>{JSON.stringify(row[key], null, 2)}</pre>
-                          </Popover.Dialog>
-                        </Popover.Content>
-                      </Popover>
-                    ) : (
-                      typeof row[key] === "string" && row[key].length > 100 ? (
-                        <div className="relative">
-                          <span className="block truncate w-[200px]">{row[key]}</span>
-                        </div>
-                      ) : row[key]
-                    )}
-                  </TableCell>
+        <Table className="sqlbuilder-result-tut border-1 border-divider rounded-lg shadow-none">
+          <Table.ScrollContainer>
+            <Table.Content
+              aria-label="Results table"
+              className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+            >
+              {getResultHeaderRows()?.length > 0 && (
+                <TableHeader>
+                  {getResultHeaderRows().map((h) => (
+                    <TableColumn key={h}>{h}</TableColumn>
+                  ))}
+                </TableHeader>
+              )}
+              <TableBody renderEmptyState={() => "Run a query to see the results"}>
+                {getResultBodyRows(resultsPage).map((row, i) => (
+                  <TableRow key={i}>
+                    {Object.keys(row).map((key) => (
+                      <TableCell key={key}>
+                        {typeof row[key] === "object" ? (
+                          <Popover>
+                            <Popover.Trigger>
+                              <Button
+                                size="sm"
+                                variant="flat"
+                                color="primary"
+                              >
+                                {Array.isArray(row[key]) ? "Array" : "Object"}
+                              </Button>
+                            </Popover.Trigger>
+                            <Popover.Content>
+                              <Popover.Dialog>
+                                <pre>{JSON.stringify(row[key], null, 2)}</pre>
+                              </Popover.Dialog>
+                            </Popover.Content>
+                          </Popover>
+                        ) : (
+                          typeof row[key] === "string" && row[key].length > 100 ? (
+                            <div className="relative">
+                              <span className="block truncate w-[200px]">{row[key]}</span>
+                            </div>
+                          ) : row[key]
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableBody>
+              </TableBody>
+            </Table.Content>
+          </Table.ScrollContainer>
         </Table>
       </div>
       <div className="h-4" />

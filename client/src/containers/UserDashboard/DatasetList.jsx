@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
 import React, { useEffect, useMemo, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -635,7 +635,7 @@ function DatasetList() {
                 <TableCell key="actions">
                   <div className="flex flex-row items-center justify-end">
                     <Dropdown aria-label="Select a dataset option">
-                      <DropdownTrigger>
+                      <Dropdown.Trigger>
                         <Button
                           isIconOnly
                           variant="light"
@@ -643,49 +643,51 @@ function DatasetList() {
                         >
                           <LuEllipsis />
                         </Button>
-                      </DropdownTrigger>
-                      <DropdownMenu
-                        variant="flat"
-                        disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
-                      >
-                        <DropdownItem
-                          onPress={() => navigate(`/datasets/${dataset.id}`)}
-                          startContent={<LuPencilLine />}
-                          key="dataset"
-                          textValue="Edit dataset"
+                      </Dropdown.Trigger>
+                      <Dropdown.Popover>
+                        <Dropdown.Menu
+                          variant="flat"
+                          disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
                         >
-                          Edit dataset
-                        </DropdownItem>
-                        <DropdownItem
-                          key="duplicate"
-                          onPress={() => {
-                            setDatasetToDuplicate(dataset);
-                            setDuplicateDatasetName(getDatasetDisplayName(dataset));
-                          }}
-                          startContent={<LuCopy />}
-                          textValue="Duplicate dataset"
-                        >
-                          Duplicate dataset
-                        </DropdownItem>
-                        <DropdownItem
-                          key="tags"
-                          onPress={() => setDatasetToEdit(dataset)}
-                          startContent={<LuTags />}
-                          showDivider
-                          textValue="Edit tags"
-                        >
-                          Edit tags
-                        </DropdownItem>
-                        <DropdownItem
-                          key="delete"
-                          onPress={() => _onPressDeleteDataset(dataset)}
-                          startContent={<LuTrash />}
-                          color="danger"
-                          textValue="Delete"
-                        >
-                          Delete
-                        </DropdownItem>
-                      </DropdownMenu>
+                          <Dropdown.Item
+                            id="dataset"
+                            onPress={() => navigate(`/datasets/${dataset.id}`)}
+                            startContent={<LuPencilLine />}
+                            textValue="Edit dataset"
+                          >
+                            Edit dataset
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            id="duplicate"
+                            onPress={() => {
+                              setDatasetToDuplicate(dataset);
+                              setDuplicateDatasetName(getDatasetDisplayName(dataset));
+                            }}
+                            startContent={<LuCopy />}
+                            textValue="Duplicate dataset"
+                          >
+                            Duplicate dataset
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            id="tags"
+                            onPress={() => setDatasetToEdit(dataset)}
+                            startContent={<LuTags />}
+                            showDivider
+                            textValue="Edit tags"
+                          >
+                            Edit tags
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            id="delete"
+                            onPress={() => _onPressDeleteDataset(dataset)}
+                            startContent={<LuTrash />}
+                            variant="danger"
+                            textValue="Delete"
+                          >
+                            Delete
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown.Popover>
                     </Dropdown>
                   </div>
                 </TableCell>

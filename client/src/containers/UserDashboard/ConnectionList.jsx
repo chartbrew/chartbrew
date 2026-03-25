@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Checkbox, Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, Checkbox, Chip, Dropdown, Input, Modal, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -231,46 +231,56 @@ function ConnectionList() {
                 </Button>
                 <div className="w-1" />
                 <Dropdown>
-                  <DropdownTrigger>
+                  <Dropdown.Trigger>
                     <Button
-                      variant="flat"
+                      variant="tertiary"
                       size="sm"
                       fullWidth
                       isIconOnly
                     >
                       <LuEllipsis />
                     </Button>
-                  </DropdownTrigger>
-                  <DropdownMenu variant="flat">
-                    <DropdownItem
-                      onPress={() => navigate(`/connections/${connection.id}`)}
-                      startContent={<LuPencilLine />}
-                    >
-                      Edit connection
-                    </DropdownItem>
-                    <DropdownItem
-                      onPress={() => setConnectionToEdit(connection)}
-                      startContent={<LuTags />}
-                    >
-                      Edit tags
-                    </DropdownItem>
-                    <DropdownItem
-                      onPress={() => {
-                        setViewingDuplicateModal(connection);
-                        setDuplicateName(connection.name);
-                      }}
-                      startContent={<LuCopy />}
-                    >
-                      Duplicate connection
-                    </DropdownItem>
-                    <DropdownItem
-                      onPress={() => setConnectionToDelete(connection)}
-                      startContent={<LuTrash />}
-                      color="danger"
-                    >
-                      Delete
-                    </DropdownItem>
-                  </DropdownMenu>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu variant="flat">
+                      <Dropdown.Item
+                        id="edit"
+                        onPress={() => navigate(`/connections/${connection.id}`)}
+                        startContent={<LuPencilLine />}
+                        textValue="Edit connection"
+                      >
+                        Edit connection
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        id="tags"
+                        onPress={() => setConnectionToEdit(connection)}
+                        startContent={<LuTags />}
+                        textValue="Edit tags"
+                      >
+                        Edit tags
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        id="duplicate"
+                        onPress={() => {
+                          setViewingDuplicateModal(connection);
+                          setDuplicateName(connection.name);
+                        }}
+                        startContent={<LuCopy />}
+                        textValue="Duplicate connection"
+                      >
+                        Duplicate connection
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        id="delete"
+                        onPress={() => setConnectionToDelete(connection)}
+                        startContent={<LuTrash />}
+                        variant="danger"
+                        textValue="Delete"
+                      >
+                        Delete
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
                 </Dropdown>
               </Card.Footer>
             </Card>

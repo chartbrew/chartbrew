@@ -4,9 +4,6 @@ import {
   Card,
   Chip,
   Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
   Input,
   Modal,
   Tab,
@@ -325,36 +322,47 @@ function DashboardList() {
                       </div>
                       {canManageDashboards && (
                         <Dropdown size="sm">
-                          <DropdownTrigger>
-                            <Button isIconOnly variant="flat" size="sm">
+                          <Dropdown.Trigger>
+                            <Button isIconOnly variant="tertiary" size="sm">
                               <LuEllipsis className="text-foreground-400" />
                             </Button>
-                          </DropdownTrigger>
-                          <DropdownMenu>
-                            <DropdownItem
-                              onPress={() => _onEditProject(project)}
-                              startContent={<LuPencilLine />}
-                              textValue="Rename"
-                            >
-                              Rename
-                            </DropdownItem>
-                            <DropdownItem
-                              onPress={() => _onPinDashboard(project.id)}
-                              startContent={isPinned ? <LuPinOff /> : <LuPin />}
-                              textValue={isPinned ? "Unpin" : "Pin"}
-                              showDivider
-                            >
-                              {isPinned ? "Unpin" : "Pin"}
-                            </DropdownItem>
-                            <DropdownItem
-                              onPress={() => _onDeleteProject(project)}
-                              startContent={<LuTrash />}
-                              color="danger"
-                              textValue="Delete"
-                            >
-                              Delete
-                            </DropdownItem>
-                          </DropdownMenu>
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover>
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                id="rename"
+                                onPress={() => _onEditProject(project)}
+                                textValue="Rename"
+                              >
+                                <div className="flex flex-row items-center gap-2">
+                                  <LuPencilLine />
+                                  <span>Rename</span>
+                                </div>
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                id="pin"
+                                onPress={() => _onPinDashboard(project.id)}
+                                textValue={isPinned ? "Unpin" : "Pin"}
+                                showDivider
+                              >
+                                <div className="flex flex-row items-center gap-2">
+                                  {isPinned ? <LuPinOff /> : <LuPin />}
+                                  <span>{isPinned ? "Unpin" : "Pin"}</span>
+                                </div>
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                id="delete"
+                                onPress={() => _onDeleteProject(project)}
+                                variant="danger"
+                                textValue="Delete"
+                              >
+                                <div className="flex flex-row items-center gap-2">
+                                  <LuTrash />
+                                  <span>Delete</span>
+                                </div>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
                         </Dropdown>
                       )}
                     </Card.Header>

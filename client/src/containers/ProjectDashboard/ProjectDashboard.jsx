@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Modal, Chip,
-  Avatar, Popover, ListBox, Separator, Dropdown, DropdownTrigger,
-  DropdownMenu, DropdownItem, Kbd, ButtonGroup,
+  Avatar, Popover, ListBox, Separator, Dropdown, Kbd, ButtonGroup,
   Tabs,
   Tab,
   Badge,
@@ -1081,7 +1080,7 @@ function ProjectDashboard() {
                 {!editingLayout && (
                   <div className="flex flex-row items-center gap-1">
                     <Dropdown aria-label="Add widget">
-                      <DropdownTrigger>
+                      <Dropdown.Trigger>
                         <Button
                           variant="bordered"
                           className="bg-background"
@@ -1091,23 +1090,29 @@ function ProjectDashboard() {
                         >
                           {"Add widget"}
                         </Button>
-                      </DropdownTrigger>
-                      <DropdownMenu>
-                        <DropdownItem
-                          startContent={<LuChartPie />}
-                          onPress={() => {
-                            navigate(`/dashboard/${params.projectId}/chart`);
-                          }}
-                        >
-                          Add chart
-                        </DropdownItem>
-                        <DropdownItem
-                          startContent={<LuLetterText />}
-                          onPress={() => _onAddMarkdown()}
-                        >
-                          Add text
-                        </DropdownItem>
-                      </DropdownMenu>
+                      </Dropdown.Trigger>
+                      <Dropdown.Popover>
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            id="add-chart"
+                            startContent={<LuChartPie />}
+                            onPress={() => {
+                              navigate(`/dashboard/${params.projectId}/chart`);
+                            }}
+                            textValue="Add chart"
+                          >
+                            Add chart
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            id="add-text"
+                            startContent={<LuLetterText />}
+                            onPress={() => _onAddMarkdown()}
+                            textValue="Add text"
+                          >
+                            Add text
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown.Popover>
                     </Dropdown>
                     <Button
                       variant="bordered"
@@ -1174,7 +1179,7 @@ function ProjectDashboard() {
                             badge: "animate-pulse",
                           }}
                         >
-                          <DropdownTrigger
+                          <Dropdown.Trigger
                             onClick={() => dispatch(completeTutorial({
                               user_id: user.id,
                               tutorial: { projectSettings: true },
@@ -1192,11 +1197,11 @@ function ProjectDashboard() {
                             >
                               <LuEllipsisVertical size={20} />
                             </Button>
-                          </DropdownTrigger>
+                          </Dropdown.Trigger>
                         </Badge>
                       )}
                       {user?.tutorials?.projectSettings && (
-                        <DropdownTrigger>
+                        <Dropdown.Trigger>
                           <Button
                             variant="bordered"
                             className="bg-background"
@@ -1205,54 +1210,66 @@ function ProjectDashboard() {
                           >
                             <LuEllipsisVertical size={20} />
                           </Button>
-                        </DropdownTrigger>
+                        </Dropdown.Trigger>
                       )}
-                      <DropdownMenu>
-                        <DropdownItem
-                          startContent={<LuLayoutDashboard />}
-                          onPress={() => _onEditLayout()}
-                          endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
-                        >
-                          {"Edit layout"}
-                        </DropdownItem>
-                        <DropdownItem
-                          startContent={<LuTvMinimal />}
-                          onPress={() => navigate(`/report/${project.brewName}/edit`)}
-                        >
-                          {"Open report"}
-                        </DropdownItem>
-                        {_canAccess("projectEditor") && (
-                          <DropdownItem
-                            startContent={<LuMonitorUp />}
-                            onPress={() => setSnapshotScheduleVisible(true)}
-                            endContent={
-                              project?.snapshotSchedule?.frequency && (
-                                <Chip size="sm" variant="flat" color="success" className="rounded-sm">
-                                  Active
-                                </Chip>
-                              )
-                            }
+                      <Dropdown.Popover>
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            id="edit-layout"
+                            startContent={<LuLayoutDashboard />}
+                            onPress={() => _onEditLayout()}
+                            endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
+                            textValue="Edit layout"
                           >
-                            {"Dashboard snapshots"}
-                          </DropdownItem>
-                        )}
-                        {_canAccess("teamAdmin") && (
-                          <DropdownItem
-                            startContent={<LuCopyPlus />} 
-                            onPress={() => setTemplateVisible(true)}
+                            {"Edit layout"}
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            id="open-report"
+                            startContent={<LuTvMinimal />}
+                            onPress={() => navigate(`/report/${project.brewName}/edit`)}
+                            textValue="Open report"
                           >
-                            {"Create a template"}
-                          </DropdownItem>
-                        )}
-                        {_canExport() && (
-                          <DropdownItem
-                            startContent={<LuFileDown />}
-                            onPress={() => _openExport()}
-                          >
-                            {"Export to Excel"}
-                          </DropdownItem>
-                        )}
-                      </DropdownMenu>
+                            {"Open report"}
+                          </Dropdown.Item>
+                          {_canAccess("projectEditor") && (
+                            <Dropdown.Item
+                              id="snapshots"
+                              startContent={<LuMonitorUp />}
+                              onPress={() => setSnapshotScheduleVisible(true)}
+                              endContent={
+                                project?.snapshotSchedule?.frequency && (
+                                  <Chip size="sm" variant="secondary" color="success" className="rounded-sm">
+                                    Active
+                                  </Chip>
+                                )
+                              }
+                              textValue="Dashboard snapshots"
+                            >
+                              {"Dashboard snapshots"}
+                            </Dropdown.Item>
+                          )}
+                          {_canAccess("teamAdmin") && (
+                            <Dropdown.Item
+                              id="template"
+                              startContent={<LuCopyPlus />}
+                              onPress={() => setTemplateVisible(true)}
+                              textValue="Create a template"
+                            >
+                              {"Create a template"}
+                            </Dropdown.Item>
+                          )}
+                          {_canExport() && (
+                            <Dropdown.Item
+                              id="export"
+                              startContent={<LuFileDown />}
+                              onPress={() => _openExport()}
+                              textValue="Export to Excel"
+                            >
+                              {"Export to Excel"}
+                            </Dropdown.Item>
+                          )}
+                        </Dropdown.Menu>
+                      </Dropdown.Popover>
                     </Dropdown>
                   </div>
                 )}
@@ -1492,17 +1509,19 @@ function ProjectDashboard() {
 
               <div className="flex gap-2 items-center">
                 <Dropdown>
-                  <DropdownTrigger>
-                    <Button size="sm" variant="flat" startContent={<LuLayoutDashboard />}>Auto-layout</Button>
-                  </DropdownTrigger>
-                  <DropdownMenu>
-                    <DropdownItem onPress={() => _applyAutoLayout("current")}>
-                      Apply to current
-                    </DropdownItem>
-                    <DropdownItem onPress={() => _applyAutoLayout("all")}>
-                      Apply to all breakpoints
-                    </DropdownItem>
-                  </DropdownMenu>
+                  <Dropdown.Trigger>
+                    <Button size="sm" variant="tertiary" startContent={<LuLayoutDashboard />}>Auto-layout</Button>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu>
+                      <Dropdown.Item id="autolayout-current" onPress={() => _applyAutoLayout("current")} textValue="Apply to current">
+                        Apply to current
+                      </Dropdown.Item>
+                      <Dropdown.Item id="autolayout-all" onPress={() => _applyAutoLayout("all")} textValue="Apply to all breakpoints">
+                        Apply to all breakpoints
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
                 </Dropdown>
               </div>
 

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import PropTypes from "prop-types"
 import {
-  Card, TextArea, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Link as LinkNext,
+  Card, TextArea, Dropdown, Link as LinkNext,
   Kbd, Modal, Button,
   ButtonGroup,
   Tooltip,
@@ -436,55 +436,71 @@ function TextWidget({
               {!isPublic && (
                 <div className={`absolute top-4 right-2 ${_canAccess("projectEditor") ? "" : "hidden"}`}>
                   <Dropdown aria-label="Select a widget option">
-                    <DropdownTrigger>
+                    <Dropdown.Trigger>
                       <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
                         <LuEllipsisVertical className="text-gray-500" />
                       </LinkNext>
-                    </DropdownTrigger>
-                    <DropdownMenu>
-                      {_canAccess("projectEditor") && (
-                        <DropdownItem
-                          startContent={<LuPencil />}
-                          onPress={() => setIsEditing(true)}
-                          textValue="Edit content"
-                        >
-                          Edit content
-                        </DropdownItem>
-                      )}
-                      {_canAccess("projectEditor") && (
-                        <DropdownItem
-                          startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
-                          onPress={onEditLayout}
-                          showDivider
-                          textValue={editingLayout ? "Complete layout" : "Edit layout"}
-                          endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
-                        >
-                          <span className={editingLayout ? "text-primary" : ""}>
-                            {editingLayout ? "Complete layout" : "Edit layout"}
-                          </span>
-                        </DropdownItem>
-                      )}
-                      {!chart.draft && _canAccess("projectEditor") && (
-                        <DropdownItem
-                          startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
-                          onPress={_onChangeReport}
-                          textValue={chart.onReport ? "Remove from report" : "Add to report"}
-                          showDivider
-                        >
-                          {chart.onReport ? "Remove from report" : "Add to report"}
-                        </DropdownItem>
-                      )}
-                      {_canAccess("projectEditor") && (
-                        <DropdownItem
-                          startContent={<LuTrash />}
-                          color="danger"
-                          onPress={_onDeleteChartConfirmation}
-                          textValue="Delete widget"
-                        >
-                          Delete widget
-                        </DropdownItem>
-                      )}
-                    </DropdownMenu>
+                    </Dropdown.Trigger>
+                    <Dropdown.Popover>
+                      <Dropdown.Menu>
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="edit-content"
+                            onPress={() => setIsEditing(true)}
+                            textValue="Edit content"
+                          >
+                            <div className="flex flex-row items-center gap-2">
+                              <LuPencil />
+                              <span>Edit content</span>
+                            </div>
+                          </Dropdown.Item>
+                        )}
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="edit-layout"
+                            onPress={onEditLayout}
+                            showDivider
+                            textValue={editingLayout ? "Complete layout" : "Edit layout"}
+                          >
+                            <div className="flex w-full flex-row items-center justify-between gap-2">
+                              <div className="flex flex-row items-center gap-2">
+                                <LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />
+                                <span className={editingLayout ? "text-primary" : ""}>
+                                  {editingLayout ? "Complete layout" : "Edit layout"}
+                                </span>
+                              </div>
+                              <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
+                            </div>
+                          </Dropdown.Item>
+                        )}
+                        {!chart.draft && _canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="report"
+                            onPress={_onChangeReport}
+                            textValue={chart.onReport ? "Remove from report" : "Add to report"}
+                            showDivider
+                          >
+                            <div className="flex flex-row items-center gap-2">
+                              {chart.onReport ? <LuMonitorX /> : <LuMonitor />}
+                              <span>{chart.onReport ? "Remove from report" : "Add to report"}</span>
+                            </div>
+                          </Dropdown.Item>
+                        )}
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="delete-widget"
+                            variant="danger"
+                            onPress={_onDeleteChartConfirmation}
+                            textValue="Delete widget"
+                          >
+                            <div className="flex flex-row items-center gap-2">
+                              <LuTrash />
+                              <span>Delete widget</span>
+                            </div>
+                          </Dropdown.Item>
+                        )}
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
                   </Dropdown>
                 </div>
               )}

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link } from "@heroui/react";
+import { Accordion, AccordionItem, Button, Chip, Separator, Dropdown, Link } from "@heroui/react";
 import { LuEye, LuEyeOff, LuReplaceAll, LuSettings, LuCircleX, LuChevronDown } from "react-icons/lu";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -152,30 +152,34 @@ function TableConfiguration(props) {
                       className="rounded-sm"
                       endContent={
                         <Dropdown aria-label="Select a data formatting option" size="sm">
-                          <DropdownTrigger>
+                          <Dropdown.Trigger>
                             <Link
                               className="flex items-center text-background cursor-pointer"
                               title="Field options"
                             >
                               <LuChevronDown className="text-background cursor-pointer" size={16} />
                             </Link>
-                          </DropdownTrigger>
-                          <DropdownMenu variant="flat">
-                            <DropdownItem
-                              startContent={<LuSettings />}
-                              textValue="Column formatting"
-                              onPress={() => _onSelectFieldForFormatting(field.accessor)}
-                            >
-                              Column formatting
-                            </DropdownItem>
-                            <DropdownItem
-                              startContent={<LuEyeOff />}
-                              textValue="Hide field"
-                              onPress={() => _onExcludeField(field.accessor)}
-                            >
-                              Hide field
-                            </DropdownItem>
-                          </DropdownMenu>
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover>
+                            <Dropdown.Menu variant="flat">
+                              <Dropdown.Item
+                                id="format"
+                                startContent={<LuSettings />}
+                                textValue="Column formatting"
+                                onPress={() => _onSelectFieldForFormatting(field.accessor)}
+                              >
+                                Column formatting
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                id="hide"
+                                startContent={<LuEyeOff />}
+                                textValue="Hide field"
+                                onPress={() => _onExcludeField(field.accessor)}
+                              >
+                                Hide field
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
                         </Dropdown>
                       }
                     >
