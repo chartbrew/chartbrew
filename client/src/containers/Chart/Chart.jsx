@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
-  Popover, Chip, ProgressCircle, PopoverTrigger,
-  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, Select,
+  Popover, Chip, ProgressCircle, DropdownMenu, DropdownTrigger, DropdownItem, Select,
   Badge,
   Divider,
   Kbd,
@@ -638,7 +637,7 @@ function Chart(props) {
                     />
                   )}
                   <Popover>
-                    <PopoverTrigger>
+                    <Popover.Trigger>
                       <LinkNext className="text-gray-500">
                         <Badge
                           color="primary"
@@ -649,15 +648,17 @@ function Chart(props) {
                           <LuListFilter className="text-default-500" />
                         </Badge>
                       </LinkNext>
-                    </PopoverTrigger>
-                    <PopoverContent className="pt-3">
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content className="pt-3">
+                      <Popover.Dialog>
+                        <ChartFilters
+                          chart={chart}
+                          onAddFilter={_onAddFilter}
+                          onClearFilter={_onClearFilter}
+                          conditions={conditions}
+                        />
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
                 </div>
               )}

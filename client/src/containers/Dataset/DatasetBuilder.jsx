@@ -8,7 +8,7 @@ import { LuCircleCheck, LuInfo, LuWandSparkles, LuCircleX } from "react-icons/lu
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
-import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, PopoverContent, PopoverTrigger, SearchField, Select, Tooltip, useFilter } from "@heroui/react";
+import { Autocomplete, Chip, Divider, EmptyState, Input, Label, Link, ListBox, Popover, SearchField, Select, Tooltip, useFilter } from "@heroui/react";
 import Text from "../../components/Text";
 import autoFieldSelector from "../../modules/autoFieldSelector";
 import fieldFinder from "../../modules/fieldFinder";
@@ -530,17 +530,19 @@ function DatasetBuilder(props) {
           <>
             <div className="flex flex-col">
               <Popover>
-                <PopoverTrigger>
+                <Popover.Trigger>
                   <div className="flex flex-row gap-1 items-center cursor-pointer">
                     <span className="text-sm">
                       {"Metric formula"}
                     </span>
                     <LuInfo size={18} className="hover:text-primary" />
                   </div>
-                </PopoverTrigger>
-                <PopoverContent>
-                  <FormulaTips />
-                </PopoverContent>
+                </Popover.Trigger>
+                <Popover.Content>
+                  <Popover.Dialog>
+                    <FormulaTips />
+                  </Popover.Dialog>
+                </Popover.Content>
               </Popover>
             </div>
             <div className="h-2" />

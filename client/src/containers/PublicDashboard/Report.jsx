@@ -3,7 +3,7 @@ import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
 import {
   Button, Input, Navbar, Tooltip, Popover, Separator, Modal,
-  Link, ProgressCircle, PopoverTrigger, PopoverContent, Chip, NavbarBrand,
+  Link, ProgressCircle, Chip, NavbarBrand,
   Spinner,
   Form,
 } from "@heroui/react";
@@ -722,53 +722,55 @@ function Report({ editMode = false }) {
                     </Tooltip>
                   </div>
                   <div>
-                    <Popover placement="right-end">
-                      <PopoverTrigger>
+                    <Popover>
+                      <Popover.Trigger>
                         <Link className="text-foreground cursor-pointer">
                           <LuPalette size={26} className="text-foreground" />
                         </Link>
-                      </PopoverTrigger>
-                      <PopoverContent>
-                        <div className="p-4">
-                          <Row>
-                            <Text b>Change background</Text>
-                          </Row>
-                          <div className="h-1" />
-                          <Row>
-                            <div>
+                      </Popover.Trigger>
+                      <Popover.Content placement="right-end">
+                        <Popover.Dialog>
+                          <div className="p-4">
+                            <Row>
+                              <Text b>Change background</Text>
+                            </Row>
+                            <div className="h-1" />
+                            <Row>
+                              <div>
+                                <TwitterPicker
+                                  color={newChanges.backgroundColor}
+                                  onChangeComplete={(color) => {
+                                    setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
+                                  }}
+                                  colors={defaultColors}
+                                  triangle="hide"
+                                  styles={{default: { card: { boxShadow: "none" } }}}
+                                />
+                              </div>
+                            </Row>
+
+                            <div className="h-2" />
+                            <Separator />
+                            <div className="h-2" />
+
+                            <Row>
+                              <Text b>Change text color</Text>
+                            </Row>
+                            <div className="h-1" />
+                            <Row>
                               <TwitterPicker
-                                color={newChanges.backgroundColor}
+                                color={newChanges.titleColor}
                                 onChangeComplete={(color) => {
-                                  setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
+                                  setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
                                 }}
                                 colors={defaultColors}
                                 triangle="hide"
-                                styles={{default: { card: { boxShadow: "none" } }}}
+                                styles={{ default: { card: { boxShadow: "none" } } }}
                               />
-                            </div>
-                          </Row>
-
-                          <div className="h-2" />
-                          <Separator />
-                          <div className="h-2" />
-
-                          <Row>
-                            <Text b>Change text color</Text>
-                          </Row>
-                          <div className="h-1" />
-                          <Row>
-                            <TwitterPicker
-                              color={newChanges.titleColor}
-                              onChangeComplete={(color) => {
-                                setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
-                              }}
-                              colors={defaultColors}
-                              triangle="hide"
-                              styles={{ default: { card: { boxShadow: "none" } } }}
-                            />
-                          </Row>
-                        </div>
-                      </PopoverContent>
+                            </Row>
+                          </div>
+                        </Popover.Dialog>
+                      </Popover.Content>
                     </Popover>
                   </div>
 

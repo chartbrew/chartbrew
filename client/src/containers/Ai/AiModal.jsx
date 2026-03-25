@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, PopoverTrigger, PopoverContent, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, ListBox } from "@heroui/react"
+import { Modal, Avatar, Input, Button, Accordion, AccordionItem, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, ProgressCircle, ListBox } from "@heroui/react"
 import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -796,8 +796,8 @@ function AiModal({ isOpen, onClose }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {parsed.tools.map((tool, idx) => (
-                  <Popover key={idx} placement="bottom" className="max-w-md" aria-label="Tool call arguments">
-                    <PopoverTrigger>
+                  <Popover key={idx} aria-label="Tool call arguments">
+                    <Popover.Trigger>
                       <Chip
                         variant="flat"
                         color="primary"
@@ -807,15 +807,17 @@ function AiModal({ isOpen, onClose }) {
                       >
                         Tool: {tool.name}
                       </Chip>
-                    </PopoverTrigger>
-                    <PopoverContent className="max-w-md">
-                      <div className="p-2">
-                        <div className="text-xs font-semibold mb-2">Arguments:</div>
-                        <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                          {JSON.stringify(tool.args, null, 2)}
-                        </code>
-                      </div>
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content placement="bottom" className="max-w-md">
+                      <Popover.Dialog>
+                        <div className="p-2">
+                          <div className="text-xs font-semibold mb-2">Arguments:</div>
+                          <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
+                            {JSON.stringify(tool.args, null, 2)}
+                          </code>
+                        </div>
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
                 ))}
               </div>
@@ -836,19 +838,21 @@ function AiModal({ isOpen, onClose }) {
                   Result: {parsed.name}
                 </Chip>
               </div>
-              <Popover placement="bottom" aria-label="Tool result">
-                <PopoverTrigger>
+              <Popover aria-label="Tool result">
+                <Popover.Trigger>
                   <Button size="sm" variant="flat" endContent={<LuChevronDown size={14} />}>
                     View result
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="max-w-2xl">
-                  <div className="p-2">
-                    <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                      {JSON.stringify(parsed.content, null, 2)}
-                    </code>
-                  </div>
-                </PopoverContent>
+                </Popover.Trigger>
+                <Popover.Content placement="bottom" className="max-w-2xl">
+                  <Popover.Dialog>
+                    <div className="p-2">
+                      <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
+                        {JSON.stringify(parsed.content, null, 2)}
+                      </code>
+                    </div>
+                  </Popover.Dialog>
+                </Popover.Content>
               </Popover>
             </div>
           </div>
@@ -1145,8 +1149,8 @@ function AiModal({ isOpen, onClose }) {
                     <div className="text-xs font-medium text-foreground-500 mb-2">Operations performed:</div>
                     <div className="space-y-1">
                       {operations.map((op, idx) => (
-                        <Popover key={idx} placement="bottom" aria-label="Tool call arguments">
-                          <PopoverTrigger>
+                        <Popover key={idx} aria-label="Tool call arguments">
+                          <Popover.Trigger>
                             <div className="text-xs text-gray-500 cursor-pointer hover:underline flex items-center gap-1">
                               <span><LuWrench size={12} /></span>
                               <span className="font-medium">
@@ -1154,17 +1158,19 @@ function AiModal({ isOpen, onClose }) {
                               </span>
                               <LuChevronDown size={14} className="opacity-60" />
                             </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="max-w-2xl">
-                            <div className="p-2">
-                              <div className="text-xs font-semibold mb-2">
-                                {op.type === "call" ? "Arguments:" : "Result:"}
+                          </Popover.Trigger>
+                          <Popover.Content placement="bottom" className="max-w-2xl">
+                            <Popover.Dialog>
+                              <div className="p-2">
+                                <div className="text-xs font-semibold mb-2">
+                                  {op.type === "call" ? "Arguments:" : "Result:"}
+                                </div>
+                                <code className="block max-h-96 overflow-auto rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
+                                  {JSON.stringify(op.data, null, 2)}
+                                </code>
                               </div>
-                              <code className="block max-h-96 overflow-auto rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                                {JSON.stringify(op.data, null, 2)}
-                              </code>
-                            </div>
-                          </PopoverContent>
+                            </Popover.Dialog>
+                          </Popover.Content>
                         </Popover>
                       ))}
                     </div>
@@ -1315,8 +1321,8 @@ function AiModal({ isOpen, onClose }) {
               </div>
             </form>
             <div className="flex flex-row items-center gap-1 flex-wrap">
-              <Popover placement="bottom" isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
-                <PopoverTrigger>
+              <Popover isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
+                <Popover.Trigger>
                   <Button
                     variant="light"
                     size="sm"
@@ -1326,8 +1332,9 @@ function AiModal({ isOpen, onClose }) {
                   >
                     {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context"}
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
+                </Popover.Trigger>
+                <Popover.Content placement="bottom" className="w-80">
+                  <Popover.Dialog>
                   <div className="p-2 w-full">
                     <div className="text-xs text-foreground-500 mb-2">
                       Context helps our AI to understand your intentions better.
@@ -1402,7 +1409,8 @@ function AiModal({ isOpen, onClose }) {
                       </ListBox>
                     </div>
                   </div>
-                </PopoverContent>
+                  </Popover.Dialog>
+                </Popover.Content>
               </Popover>
 
               {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
@@ -1725,8 +1733,8 @@ function AiModal({ isOpen, onClose }) {
                       </div>
                     )}
                     <div className="flex flex-row gap-2 items-center">
-                      <Popover placement="top-start" isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
-                        <PopoverTrigger>
+                      <Popover isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
+                        <Popover.Trigger>
                           <Button
                             variant="light"
                             isDisabled={isLoading}
@@ -1734,8 +1742,9 @@ function AiModal({ isOpen, onClose }) {
                           >
                             <LuAtSign size={18} />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
+                        </Popover.Trigger>
+                        <Popover.Content placement="top-start" className="w-80">
+                          <Popover.Dialog>
                           <div className="p-2 w-full">
                             <div className="text-xs text-foreground-500 mb-2">
                               Context helps our AI to understand your intentions better.
@@ -1810,7 +1819,8 @@ function AiModal({ isOpen, onClose }) {
                               </ListBox>
                             </div>
                           </div>
-                        </PopoverContent>
+                          </Popover.Dialog>
+                        </Popover.Content>
                       </Popover>
                       <Input
                         ref={inputRef}

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Divider, Input, Popover, Switch, Tooltip, Select,
-  ListBox, Tabs, Tab, PopoverTrigger, PopoverContent,
+  ListBox, Tabs, Tab,
 } from "@heroui/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
@@ -648,7 +648,7 @@ function CampaignsQuery(props) {
           <div className="h-2" />
           <Row>
             <Popover>
-              <PopoverTrigger>
+              <Popover.Trigger>
                 <Input
                   label="Select the start and end date of the journey"
                   placeholder="Click to select a date"
@@ -658,18 +658,20 @@ function CampaignsQuery(props) {
                   value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
                   classNames={{ input: "text-start" }}
                 />
-              </PopoverTrigger>
-              <PopoverContent>
-                <DateRangePicker
-                  locale={enGB}
-                  direction="horizontal"
-                  rangeColors={[secondary, primary]}
-                  ranges={[{ startDate: journeyStart, endDate: journeyEnd, key: "selection" }]}
-                  onChange={_onChangeJourneyRange}
-                  staticRanges={defaultStaticRanges}
-                  inputRanges={defaultInputRanges}
-                />
-              </PopoverContent>
+              </Popover.Trigger>
+              <Popover.Content>
+                <Popover.Dialog>
+                  <DateRangePicker
+                    locale={enGB}
+                    direction="horizontal"
+                    rangeColors={[secondary, primary]}
+                    ranges={[{ startDate: journeyStart, endDate: journeyEnd, key: "selection" }]}
+                    onChange={_onChangeJourneyRange}
+                    staticRanges={defaultStaticRanges}
+                    inputRanges={defaultInputRanges}
+                  />
+                </Popover.Dialog>
+              </Popover.Content>
             </Popover>
             <div className="w-1" />
             <Select

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Tooltip,
+  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
@@ -256,19 +256,21 @@ function ChartPreview(props) {
 
               {_checkIfFilters() && (
                 <Popover>
-                  <PopoverTrigger>
+                  <Popover.Trigger>
                     <Link className="text-gray-500">
                       <LuListFilter />
                     </Link>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <ChartFilters
-                      chart={chart}
-                      onAddFilter={_onAddFilter}
-                      onClearFilter={_onClearFilter}
-                      conditions={conditions}
-                    />
-                  </PopoverContent>
+                  </Popover.Trigger>
+                  <Popover.Content>
+                    <Popover.Dialog>
+                      <ChartFilters
+                        chart={chart}
+                        onAddFilter={_onAddFilter}
+                        onClearFilter={_onClearFilter}
+                        conditions={conditions}
+                      />
+                    </Popover.Dialog>
+                  </Popover.Content>
                 </Popover>
               )}
             </Row>
@@ -631,21 +633,23 @@ function ChartPreview(props) {
                   className="max-w-[200px]"
                 />
                 <Popover>
-                  <PopoverTrigger>
+                  <Popover.Trigger>
                     <div
                       style={{ backgroundColor: range.color }}
                       className="min-w-[30px] h-[30px] rounded-lg cursor-pointer border-2 border-divider"
                       aria-label="Select color"
                     />
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <TwitterPicker
-                      triangle={"hide"}
-                      color={range.color}
-                      onChange={(color) => _onChangeColor(color, index)}
-                      colors={Object.values(chartColors).map((c) => c.hex)}
-                    />
-                  </PopoverContent>
+                  </Popover.Trigger>
+                  <Popover.Content>
+                    <Popover.Dialog>
+                      <TwitterPicker
+                        triangle={"hide"}
+                        color={range.color}
+                        onChange={(color) => _onChangeColor(color, index)}
+                        colors={Object.values(chartColors).map((c) => c.hex)}
+                      />
+                    </Popover.Dialog>
+                  </Popover.Content>
                 </Popover>
                 {ranges.length > 1 && (
                   <Button

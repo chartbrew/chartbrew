@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button,Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
-  Label, ListBox, Select, PopoverTrigger, PopoverContent,
+  Label, ListBox, Select,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -1241,7 +1241,7 @@ function Conditions(props) {
               {_.find(fieldOptions, { value: condition.field })
                 && _.find(fieldOptions, { value: condition.field }).type === "date" && (
                   <Popover>
-                    <PopoverTrigger>
+                    <Popover.Trigger>
                       <Input
                         placeholder="Enter a value"
                         endContent={<LuCalendarDays />}
@@ -1249,15 +1249,17 @@ function Conditions(props) {
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         variant="bordered"
                       />
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <Calendar
-                        date={(condition.value && new Date(condition.value)) || new Date()}
-                        onChange={(date) => updateCondition(condition.id, formatISO(date), "value")}
-                        locale={enGB}
-                        color={secondary}
-                      />
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content>
+                      <Popover.Dialog>
+                        <Calendar
+                          date={(condition.value && new Date(condition.value)) || new Date()}
+                          onChange={(date) => updateCondition(condition.id, formatISO(date), "value")}
+                          locale={enGB}
+                          color={secondary}
+                        />
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
               )}
 

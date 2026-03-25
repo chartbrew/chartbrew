@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Chip, Description, Divider, Input, Label, ListBox, Modal,
   Popover,
-  PopoverContent,
-  PopoverTrigger,
   Select,
 } from "@heroui/react";
 import { LuPlus, LuX } from "react-icons/lu";
@@ -402,7 +400,7 @@ function TableDataFormattingModal(props) {
                     size="sm"
                   />
                   <Popover aria-label="Color picker">
-                    <PopoverTrigger>
+                    <Popover.Trigger>
                       <Chip
                         size="sm"
                         variant="light"
@@ -413,24 +411,26 @@ function TableDataFormattingModal(props) {
                           backgroundColor: r.color || "transparent",
                         }}
                       />
-                    </PopoverTrigger>
-                    <PopoverContent className="flex flex-col items-start py-2">
-                      <TwitterPicker
-                        triangle={"hide"}
-                        color={r.color || "rgba(0,0,0,0)"}
-                        onChange={(color) => setRules(rules.map((r, i) => (i === index ? { ...r, color: color.hex } : r)))}
-                        colors={Object.values(chartColors).map((c) => c.hex)}
-                        styles={{ default: { card: { boxShadow: "none" } } }}
-                      />
-                      <Button
-                        variant="light"
-                        onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: null } : r)))}
-                        size="sm"
-                        startContent={<LuX />}
-                      >
-                        Remove color
-                      </Button>
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content className="flex flex-col items-start py-2">
+                      <Popover.Dialog>
+                        <TwitterPicker
+                          triangle={"hide"}
+                          color={r.color || "rgba(0,0,0,0)"}
+                          onChange={(color) => setRules(rules.map((r, i) => (i === index ? { ...r, color: color.hex } : r)))}
+                          colors={Object.values(chartColors).map((c) => c.hex)}
+                          styles={{ default: { card: { boxShadow: "none" } } }}
+                        />
+                        <Button
+                          variant="light"
+                          onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: null } : r)))}
+                          size="sm"
+                          startContent={<LuX />}
+                        >
+                          Remove color
+                        </Button>
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
                   <Button
                     isIconOnly

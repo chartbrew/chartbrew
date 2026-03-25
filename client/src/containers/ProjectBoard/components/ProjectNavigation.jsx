@@ -4,7 +4,7 @@ import { useWindowSize } from "react-use";
 import { Link, useNavigate } from "react-router";
 import ReactMarkdown from "react-markdown";
 import {
-  Link as LinkNext, Tooltip, Button, Modal, Popover, PopoverTrigger, PopoverContent, ListBox, Input,
+  Link as LinkNext, Tooltip, Button, Modal, Popover, ListBox, Input,
 } from "@heroui/react";
 import {
   LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
@@ -109,42 +109,44 @@ function ProjectNavigation(props) {
         <div className="p-2">
           <div className="flex justify-center items-center">
             <Popover>
-              <PopoverTrigger>
+              <Popover.Trigger>
                 <Button variant="bordered" isIconOnly={menuSize === "small"} isLoading={!project.name} fullWidth>
                   {menuSize === "small" && <LuMenu size={24} />}
                   {menuSize === "large" && _formatProjectName(project.name)}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="max-w-[200px] max-h-[400px] px-2 py-4">
-                <div className="flex flex-col gap-2 overflow-y-auto">
-                  <Input
-                    placeholder="Search"
-                    fullWidth
-                    size="small"
-                    variant="bordered"
-                    endContent={<LuSearch />}
-                    onChange={(e) => setProjectSearch(e.target.value)}
-                    className="px-2"
-                  />
-                  <ListBox aria-label="Dashboard switch list" selectionMode="none">
-                    {_getFilteredProjects().map((p) => (
-                      <ListBox.Item
-                        key={p.id}
-                        id={String(p.id)}
-                        textValue={p.name}
-                        onAction={() => onChangeProject(p.id)}
-                      >
-                        <div className="flex items-center gap-2">
-                          {pinnedDashboards.find((pd) => pd.project_id === p.id) && (
-                            <LuPin className="text-gray-500 shrink-0" size={18} />
-                          )}
-                          <span>{p.name}</span>
-                        </div>
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </div>
-              </PopoverContent>
+              </Popover.Trigger>
+              <Popover.Content className="max-w-[200px] max-h-[400px] px-2 py-4">
+                <Popover.Dialog>
+                  <div className="flex flex-col gap-2 overflow-y-auto">
+                    <Input
+                      placeholder="Search"
+                      fullWidth
+                      size="small"
+                      variant="bordered"
+                      endContent={<LuSearch />}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      className="px-2"
+                    />
+                    <ListBox aria-label="Dashboard switch list" selectionMode="none">
+                      {_getFilteredProjects().map((p) => (
+                        <ListBox.Item
+                          key={p.id}
+                          id={String(p.id)}
+                          textValue={p.name}
+                          onAction={() => onChangeProject(p.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            {pinnedDashboards.find((pd) => pd.project_id === p.id) && (
+                              <LuPin className="text-gray-500 shrink-0" size={18} />
+                            )}
+                            <span>{p.name}</span>
+                          </div>
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </div>
+                </Popover.Dialog>
+              </Popover.Content>
             </Popover>
           </div>
 

@@ -10,8 +10,6 @@ import {
   Pagination,
   Button,
   Popover,
-  PopoverTrigger,
-  PopoverContent,
 } from "@heroui/react";
 
 function QueryResultsTable({ result }) {
@@ -82,7 +80,7 @@ function QueryResultsTable({ result }) {
                   <TableCell key={key}>
                     {typeof row[key] === "object" ? (
                       <Popover>
-                        <PopoverTrigger>
+                        <Popover.Trigger>
                           <Button
                             size="sm"
                             variant="flat"
@@ -90,10 +88,12 @@ function QueryResultsTable({ result }) {
                           >
                             {Array.isArray(row[key]) ? "Array" : "Object"}
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent>
-                          <pre>{JSON.stringify(row[key], null, 2)}</pre>
-                        </PopoverContent>
+                        </Popover.Trigger>
+                        <Popover.Content>
+                          <Popover.Dialog>
+                            <pre>{JSON.stringify(row[key], null, 2)}</pre>
+                          </Popover.Dialog>
+                        </Popover.Content>
                       </Popover>
                     ) : (
                       typeof row[key] === "string" && row[key].length > 100 ? (

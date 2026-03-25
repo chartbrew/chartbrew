@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, Button, Chip, EmptyState, Input, Label, ListBox, Modal, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, SearchField, Select, useFilter } from "@heroui/react"
+import { Alert, Autocomplete, Button, Chip, EmptyState, Input, Label, ListBox, Modal, Popover, Radio, RadioGroup, SearchField, Select, useFilter } from "@heroui/react"
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import { LuPlus, LuVariable, LuX } from "react-icons/lu"
@@ -948,7 +948,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">Select columns</code>
           {ast.columns.map((col) => (
             <Popover key={typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column}>
-              <PopoverTrigger>
+              <Popover.Trigger>
                 <Button
                   size="sm"
                   color="primary"
@@ -959,18 +959,20 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                     : (col.expr.column === "*" ? "All" : col.expr.column)
                   }
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent>
-                <Button
-                  size="sm"
-                  color="danger"
-                  variant="light"
-                  endContent={<LuX />}
-                  onPress={() => _onRemoveColumn(typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column)}
-                >
-                  Remove
-                </Button>
-              </PopoverContent>
+              </Popover.Trigger>
+              <Popover.Content>
+                <Popover.Dialog>
+                  <Button
+                    size="sm"
+                    color="danger"
+                    variant="light"
+                    endContent={<LuX />}
+                    onPress={() => _onRemoveColumn(typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column)}
+                  >
+                    Remove
+                  </Button>
+                </Popover.Dialog>
+              </Popover.Content>
             </Popover>
           ))}
           <Button

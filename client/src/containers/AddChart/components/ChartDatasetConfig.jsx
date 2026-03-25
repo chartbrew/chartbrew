@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar,
-  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, PopoverContent,
-  PopoverTrigger, ScrollShadow, Spinner, Tab, Tabs, Tooltip, commonColors,
+  Button, Checkbox, Chip, Separator, Input, Link, Modal, Popover, ScrollShadow, Spinner, Tab, Tabs, Tooltip, commonColors,
 } from "@heroui/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
@@ -397,22 +396,24 @@ function ChartDatasetConfig(props) {
                   <div className="text-sm">Primary color</div>
                   <div>
                     <Popover>
-                      <PopoverTrigger>
+                      <Popover.Trigger>
                         <Chip
                           style={_getDatasetColor(cdc.datasetColor)}
                           size="lg"
                           radius="sm"
                           className="pl-[100px]"
                         />
-                      </PopoverTrigger>
-                      <PopoverContent className="border-none bg-transparent shadow-none">
-                        <TwitterPicker
-                          triangle={"hide"}
-                          color={cdc.datasetColor}
-                          colors={Object.values(chartColors).map((color) => color.hex)}
-                          onChangeComplete={_onChangeDatasetColor}
-                        />
-                      </PopoverContent>
+                      </Popover.Trigger>
+                      <Popover.Content className="border-none bg-transparent shadow-none">
+                        <Popover.Dialog>
+                          <TwitterPicker
+                            triangle={"hide"}
+                            color={cdc.datasetColor}
+                            colors={Object.values(chartColors).map((color) => color.hex)}
+                            onChangeComplete={_onChangeDatasetColor}
+                          />
+                        </Popover.Dialog>
+                      </Popover.Content>
                     </Popover>
                   </div>
                 </div>
@@ -433,21 +434,23 @@ function ChartDatasetConfig(props) {
                     {cdc.fill && !cdc.multiFill && (
                       <div>
                         <Popover>
-                          <PopoverTrigger>
+                          <Popover.Trigger>
                             <Chip
                               style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
                               size="lg"
                               radius="sm"
                               className="pl-[100px]"
                             />
-                          </PopoverTrigger>
-                          <PopoverContent className="border-none bg-transparent shadow-none">
-                            <SketchPicker
-                              color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
-                              presetColors={Object.values(chartColors).map((color) => color.hex)}
-                              onChangeComplete={(color) => _onChangeFillColor(color)}
-                            />
-                          </PopoverContent>
+                          </Popover.Trigger>
+                          <Popover.Content className="border-none bg-transparent shadow-none">
+                            <Popover.Dialog>
+                              <SketchPicker
+                                color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
+                                presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                onChangeComplete={(color) => _onChangeFillColor(color)}
+                              />
+                            </Popover.Dialog>
+                          </Popover.Content>
                         </Popover>
                       </div>
                     )}
@@ -476,20 +479,22 @@ function ChartDatasetConfig(props) {
                           <Text size="sm">{label}</Text>
                           <div>
                             <Popover>
-                              <PopoverTrigger>
+                              <Popover.Trigger>
                                 <Chip
                                   style={_getDatasetColor(cdc.fillColor[index] || "white")}
                                   radius="sm"
                                 />
-                              </PopoverTrigger>
-                              <PopoverContent className="border-none bg-transparent shadow-none">
-                                <TwitterPicker
-                                  triangle={"hide"}
-                                  color={cdc.fillColor[index] || "white"}
-                                  colors={Object.values(chartColors).map((color) => color.hex)}
-                                  onChangeComplete={(color) => _onChangeFillColor(color, index)}
-                                />
-                              </PopoverContent>
+                              </Popover.Trigger>
+                              <Popover.Content className="border-none bg-transparent shadow-none">
+                                <Popover.Dialog>
+                                  <TwitterPicker
+                                    triangle={"hide"}
+                                    color={cdc.fillColor[index] || "white"}
+                                    colors={Object.values(chartColors).map((color) => color.hex)}
+                                    onChangeComplete={(color) => _onChangeFillColor(color, index)}
+                                  />
+                                </Popover.Dialog>
+                              </Popover.Content>
                             </Popover>
                           </div>
                         </Row>
@@ -622,15 +627,17 @@ function ChartDatasetConfig(props) {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-col">
                       <Popover>
-                        <PopoverTrigger>
+                        <Popover.Trigger>
                           <div className="flex flex-row gap-1 items-center cursor-pointer">
                             <div className="text-sm">{"Metric formula"}</div>
                             <LuInfo size={16} />
                           </div>
-                        </PopoverTrigger>
-                        <PopoverContent>
-                          <FormulaTips />
-                        </PopoverContent>
+                        </Popover.Trigger>
+                        <Popover.Content>
+                          <Popover.Dialog>
+                            <FormulaTips />
+                          </Popover.Dialog>
+                        </Popover.Content>
                       </Popover>
                     </div>
                     <div className="flex flex-col">

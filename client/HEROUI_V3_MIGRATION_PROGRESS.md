@@ -1028,6 +1028,38 @@ Notes:
   - `rg 'Image' client/src` should show no `Image` in `@heroui/react` import lists (only unrelated matches like `LuImage` or UI copy such as "Image size" in `TableDataFormattingModal.jsx`)
   - `rg 'CircularProgress' client/src` returns no matches
 
+### Batch 33: Popover v3 compound (`Popover.Trigger` / `Popover.Content` / `Popover.Dialog`)
+
+Files migrated:
+- `src/containers/Chart/Chart.jsx`
+- `src/containers/Chart/components/TableView/TableComponent.jsx`
+- `src/containers/PublicDashboard/PublicDashboard.jsx`
+- `src/containers/PublicDashboard/Report.jsx`
+- `src/containers/EmbeddedChart.jsx`
+- `src/containers/SharedChart.jsx`
+- `src/containers/Ai/AiModal.jsx`
+- `src/containers/ProjectBoard/components/ProjectNavigation.jsx`
+- `src/containers/ProjectDashboard/ProjectDashboard.jsx`
+- `src/containers/Dataset/DatasetBuilder.jsx`
+- `src/containers/Connections/Firestore/FirestoreBuilder.jsx`
+- `src/containers/Connections/GoogleAnalytics/GaBuilder.jsx`
+- `src/containers/Connections/Customerio/CampaignsQuery.jsx`
+- `src/containers/AddChart/components/ChartPreview.jsx`
+- `src/containers/AddChart/components/ApiBuilder.jsx`
+- `src/containers/AddChart/components/MongoQueryBuilder.jsx`
+- `src/containers/AddChart/components/VisualSQL.jsx`
+- `src/containers/AddChart/components/TableDataFormattingModal.jsx`
+- `src/containers/AddChart/components/QueryResultsTable.jsx`
+- `src/containers/AddChart/components/ChartDatasetConfig.jsx`
+
+Notes:
+- Replaced flat **`PopoverTrigger`** / **`PopoverContent`** imports and JSX with **`Popover.Trigger`**, **`Popover.Content`**, and **`Popover.Dialog`** (react-aria `Dialog` inside the positioned overlay). Dropped standalone `PopoverTrigger` / `PopoverContent` imports everywhere.
+- **`placement`** (and width/max-width **`className`** that lived on the v2 root) moved to **`Popover.Content`** where applicable. **`isOpen`** / **`onOpenChange`** stay on the root **`Popover`** (`DialogTrigger`).
+- **`TableComponent.jsx`**: long-text and image popovers no longer wrap **`Button`** inside **`Popover.Trigger`** (avoids nested interactive controls); triggers use **`Popover.Trigger`** + Tailwind for icon / thumbnail affordance.
+- Verification:
+  - `npm run lint` passes
+  - `rg 'PopoverTrigger|PopoverContent' client/src` returns no matches
+
 ## Remaining Hard Blockers
 
 Direct import-surface audit after revalidation still shows these invalid or stale v2 surfaces:
@@ -1039,7 +1071,7 @@ Direct import-surface audit after revalidation still shows these invalid or stal
 - `Listbox` / `ListboxItem`: 0 files (migrated to `ListBox` / `ListBox.Item`)
 - `Image` (HeroUI): 0 files in `client/src` (replaced with `<img>` in Batch 32)
 - `CircularProgress`: 0 files (replaced with `ProgressCircle` in Batch 32)
-- `PopoverTrigger` / `PopoverContent`: still used in multiple files (v3 uses `Popover` compound parts; migrate in a dedicated pass)
+- `PopoverTrigger` / `PopoverContent`: 0 files (migrated to `Popover.*` compounds in Batch 33)
 - `DrawerBody` / `DrawerContent` / `DrawerHeader` / `DrawerFooter`: still in `DatasetFilters.jsx`, `RealtimeDbBuilder.jsx`, `FirestoreBuilder.jsx`, `ClickHouseBuilder.jsx`, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, and related builder files (v3 drawer compound structure)
 - `Progress` (linear) / legacy loader components: audit remaining call sites
 
@@ -1054,11 +1086,10 @@ Important:
 ## Next Batch
 
 Priority order:
-1. Finish **Popover** v3 compound migration: replace `PopoverTrigger` / `PopoverContent` with the v3 `Popover.*` surface everywhere (chart shell, `TableComponent`, public dashboards, `AiModal`, `ChartPreview`, etc.).
-2. Migrate **Drawer** wrappers (`DrawerContent` / `DrawerHeader` / `DrawerBody` / `DrawerFooter`) to v3 drawer compounds across filters and query builders (`DatasetFilters.jsx`, connection builders, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, etc.; same idea as `Modal.*`).
-3. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
-4. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
-5. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
+1. Migrate **Drawer** wrappers (`DrawerContent` / `DrawerHeader` / `DrawerBody` / `DrawerFooter`) to v3 drawer compounds across filters and query builders (`DatasetFilters.jsx`, connection builders, `MongoQueryBuilder.jsx`, `SqlBuilder.jsx`, etc.; same idea as `Modal.*`).
+2. Audit **linear `Progress`** in `TableComponent.jsx` (and any other call sites) against the v3 progress API or plain progress markup if the export changed.
+3. Align root **`Card`** props with v3-only APIs where v2-only props remain (`shadow`, `radius`, `isPressable`, `onClick` vs `onPress`, etc.).
+4. Run `npm run build` in `client/` when the import-surface audit is clean enough to catch missing exports (lint alone does not validate package surface).
 
 ## Notes
 

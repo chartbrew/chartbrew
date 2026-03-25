@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Badge,
-  Button, Checkbox, Divider, Input, Link, Modal, Popover, PopoverContent, PopoverTrigger,
+  Button, Checkbox, Divider, Input, Link, Modal, Popover,
   Tab, Tabs, Tooltip, Drawer, DrawerHeader, DrawerBody, DrawerFooter, 
   DrawerContent, Switch, Select, Label, ListBox,
 } from "@heroui/react";
@@ -454,67 +454,69 @@ function MongoQueryBuilder(props) {
 
           <Row>
             <Popover>
-              <PopoverTrigger>
+              <Popover.Trigger>
                 <Link className="text-secondary flex items-center cursor-pointer">
                   <div className="flex flex-row items-center gap-1">
                     <div className="text-sm text-default-500">Are your queries slow? Read here</div>
                     <LuInfo className="text-default-500" />
                   </div>
                 </Link>
-              </PopoverTrigger>
-              <PopoverContent className="max-w-[600px] p-10">
-                <Container className={"w-full"}>
-                  <Row>
-                    <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
-                  </Row>
-                  <div className="h-4" />
-                  <Row>
-                    <Link
-                      href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start"
-                    >
-                      <div><LuChevronRight /></div>
-                      <div className="w-1" />
-                      <Text color="primary">
-                        {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
-                      </Text>
-                    </Link>
-                  </Row>
-                  <div className="h-2" />
-                  <div className="flex flex-row items-center gap-1">
-                    <Link
-                      as="a"
-                      href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start"
-                    >
-                      <div><LuChevronRight /></div>
-                      <Text color="primary">
-                        {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
-                      </Text>
-                    </Link>
-                  </div>
-                  <div className="h-2" />
-                  <Row>
-                    <Link
-                      as="a"
-                      href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start"
-                    >
-                      <div><LuChevronRight /></div>
-                      <div className="w-2" />
-                      <Text color="primary">
-                        {"If you store files encoded in base64, make sure you exclude them using the method above"}
-                      </Text>
-                    </Link>
-                  </Row>
-                </Container>
-              </PopoverContent>
+              </Popover.Trigger>
+              <Popover.Content className="max-w-[600px] p-10">
+                <Popover.Dialog>
+                  <Container className={"w-full"}>
+                    <Row>
+                      <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
+                    </Row>
+                    <div className="h-4" />
+                    <Row>
+                      <Link
+                        href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start"
+                      >
+                        <div><LuChevronRight /></div>
+                        <div className="w-1" />
+                        <Text color="primary">
+                          {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
+                        </Text>
+                      </Link>
+                    </Row>
+                    <div className="h-2" />
+                    <div className="flex flex-row items-center gap-1">
+                      <Link
+                        as="a"
+                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start"
+                      >
+                        <div><LuChevronRight /></div>
+                        <Text color="primary">
+                          {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
+                        </Text>
+                      </Link>
+                    </div>
+                    <div className="h-2" />
+                    <Row>
+                      <Link
+                        as="a"
+                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start"
+                      >
+                        <div><LuChevronRight /></div>
+                        <div className="w-2" />
+                        <Text color="primary">
+                          {"If you store files encoded in base64, make sure you exclude them using the method above"}
+                        </Text>
+                      </Link>
+                    </Row>
+                  </Container>
+                </Popover.Dialog>
+              </Popover.Content>
             </Popover>
           </Row>
         </div>

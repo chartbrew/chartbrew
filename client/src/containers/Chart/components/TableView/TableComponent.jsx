@@ -3,8 +3,7 @@ import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
   Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip,
-  TableHeader, TableColumn, TableBody, TableRow, TableCell, PopoverTrigger,
-  PopoverContent,
+  TableHeader, TableColumn, TableBody, TableRow, TableCell,
   DropdownTrigger,
   DropdownMenu,
   Button,
@@ -94,26 +93,29 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
       baseContent = (
         <div className="flex flex-row items-center gap-1">
           <Popover>
-            <PopoverTrigger>
-              <Button isIconOnly variant="flat" size="sm">
-                <LuExpand size={16} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <div className="p-4 max-w-[500px] max-h-[300px] overflow-auto">
-                <div className="flex justify-between items-center mb-2">
-                  <Text className="text-sm font-medium">Full Text</Text>
-                  <Button
-                    size="sm"
-                    variant="flat"
-                    onPress={() => navigator.clipboard.writeText(value)}
-                  >
-                    Copy
-                  </Button>
+            <Popover.Trigger
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-default-100 text-default-600 hover:bg-default-200"
+              aria-label="Show full text"
+            >
+              <LuExpand size={16} />
+            </Popover.Trigger>
+            <Popover.Content>
+              <Popover.Dialog>
+                <div className="p-4 max-w-[500px] max-h-[300px] overflow-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <Text className="text-sm font-medium">Full Text</Text>
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      onPress={() => navigator.clipboard.writeText(value)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <pre className="text-sm whitespace-pre-wrap">{value}</pre>
                 </div>
-                <pre className="text-sm whitespace-pre-wrap">{value}</pre>
-              </div>
-            </PopoverContent>
+              </Popover.Dialog>
+            </Popover.Content>
           </Popover>
           <span>{value}</span>
         </div>
@@ -155,18 +157,18 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
     } else if (columnConfig.display?.image?.variant === "popup") {
       return (
         <Popover>
-          <PopoverTrigger>
-            <Button variant="flat" size="sm">
-              <img src={value} alt="" width={columnConfig.display?.image?.size} className="h-auto max-w-full object-contain" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <img
-              src={value}
-              alt=""
-              className="max-w-lg object-contain"
-            />
-          </PopoverContent>
+          <Popover.Trigger className="inline-flex max-w-full items-center justify-center rounded-md bg-default-100 p-1 hover:bg-default-200">
+            <img src={value} alt="" width={columnConfig.display?.image?.size} className="h-auto max-w-full object-contain" />
+          </Popover.Trigger>
+          <Popover.Content>
+            <Popover.Dialog>
+              <img
+                src={value}
+                alt=""
+                className="max-w-lg object-contain"
+              />
+            </Popover.Dialog>
+          </Popover.Content>
         </Popover>
       );
     }
@@ -360,14 +362,16 @@ function TableComponent({
                           )}
                           {(isObject || isArray) && (
                             <Popover aria-label="Object details">
-                              <PopoverTrigger>
+                              <Popover.Trigger>
                                 <LinkNext>
                                   <Chip color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
                                 </LinkNext>
-                              </PopoverTrigger>
-                              <PopoverContent>
-                                <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
-                              </PopoverContent>
+                              </Popover.Trigger>
+                              <Popover.Content>
+                                <Popover.Dialog>
+                                  <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
+                                </Popover.Dialog>
+                              </Popover.Content>
                             </Popover>
                           )}
                         </TableCell>

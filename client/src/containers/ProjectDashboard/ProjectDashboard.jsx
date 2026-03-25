@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Modal, Chip,
-  AvatarGroup, Avatar, Popover, PopoverTrigger,
-  PopoverContent, ListBox, Separator, Dropdown, DropdownTrigger,
+  AvatarGroup, Avatar, Popover, ListBox, Separator, Dropdown, DropdownTrigger,
   DropdownMenu, DropdownItem, Kbd, ButtonGroup,
   Tabs,
   Tab,
@@ -972,7 +971,7 @@ function ProjectDashboard() {
                     <>
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3 pl-1">
                         <Popover>
-                          <PopoverTrigger>
+                          <Popover.Trigger>
                             <div className="cursor-pointer">
                               <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer pointer-events-none">
                                 {projectMembers.map((member) => (
@@ -984,49 +983,51 @@ function ProjectDashboard() {
                                 ))}
                               </AvatarGroup>
                             </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="pt-4">
-                            {_canAccess("teamAdmin") && (
-                              <div className="w-full">
-                                <Link to={"/settings/members"}>
-                                  <Button
-                                    endContent={<LuUsers />}
-                                    color="primary"
-                                    size="sm"
-                                    fullWidth
-                                    className="pointer-events-none"
+                          </Popover.Trigger>
+                          <Popover.Content className="pt-4">
+                            <Popover.Dialog>
+                              {_canAccess("teamAdmin") && (
+                                <div className="w-full">
+                                  <Link to={"/settings/members"}>
+                                    <Button
+                                      endContent={<LuUsers />}
+                                      color="primary"
+                                      size="sm"
+                                      fullWidth
+                                      className="pointer-events-none"
+                                    >
+                                      Edit access
+                                    </Button>
+                                  </Link>
+                                  <div className="h-2" />
+                                  <Separator />
+                                  <div className="h-2" />
+                                </div>
+                              )}
+                              <Text>
+                                {"Users with project access"}
+                              </Text>
+                              <ListBox aria-label="Select a user" selectionMode="none">
+                                {projectMembers.map((member) => (
+                                  <ListBox.Item
+                                    key={member.id}
+                                    id={String(member.id)}
+                                    textValue={member.name}
                                   >
-                                    Edit access
-                                  </Button>
-                                </Link>
-                                <div className="h-2" />
-                                <Separator />
-                                <div className="h-2" />
-                              </div>
-                            )}
-                            <Text>
-                              {"Users with project access"}
-                            </Text>
-                            <ListBox aria-label="Select a user" selectionMode="none">
-                              {projectMembers.map((member) => (
-                                <ListBox.Item
-                                  key={member.id}
-                                  id={String(member.id)}
-                                  textValue={member.name}
-                                >
-                                  <div className="flex w-full items-center justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                      <div className="font-medium">{member.name}</div>
-                                      <div className="text-xs text-default-500">{member.email}</div>
+                                    <div className="flex w-full items-center justify-between gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="font-medium">{member.name}</div>
+                                        <div className="text-xs text-default-500">{member.email}</div>
+                                      </div>
+                                      <Chip size="sm" variant="flat">
+                                        {member.TeamRoles?.find((r) => r.team_id === team?.id)?.role}
+                                      </Chip>
                                     </div>
-                                    <Chip size="sm" variant="flat">
-                                      {member.TeamRoles?.find((r) => r.team_id === team?.id)?.role}
-                                    </Chip>
-                                  </div>
-                                </ListBox.Item>
-                              ))}
-                            </ListBox>
-                          </PopoverContent>
+                                  </ListBox.Item>
+                                ))}
+                              </ListBox>
+                            </Popover.Dialog>
+                          </Popover.Content>
                         </Popover>
                         <div className="w-3" />
                       </div>

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Chip, Checkbox,
-  Select, PopoverTrigger, PopoverContent, Autocomplete,
+  Select, Autocomplete,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -373,7 +373,7 @@ function GaBuilder(props) {
   const _renderCalendar = (type) => (
     <div>
       <Popover>
-        <PopoverTrigger>
+        <Popover.Trigger>
           <Button
             isIconOnly
             variant="light"
@@ -382,17 +382,19 @@ function GaBuilder(props) {
           >
             <LuCalendarDays />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent>
-          <Calendar
-            date={_getDateForCalendar(configuration[type])}
-            onChange={(date) => {
-              setConfiguration({ ...configuration, [type]: format(date, "yyyy-MM-dd") });
-            }}
-            locale={enGB}
-            color={secondary}
-          />
-        </PopoverContent>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Dialog>
+            <Calendar
+              date={_getDateForCalendar(configuration[type])}
+              onChange={(date) => {
+                setConfiguration({ ...configuration, [type]: format(date, "yyyy-MM-dd") });
+              }}
+              locale={enGB}
+              color={secondary}
+            />
+          </Popover.Dialog>
+        </Popover.Content>
       </Popover>
     </div>
   );

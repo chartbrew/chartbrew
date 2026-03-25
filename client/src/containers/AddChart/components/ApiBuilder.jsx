@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Tooltip, Chip,
-  Tabs, Tab, Select, PopoverTrigger, Popover, PopoverContent,
+  Tabs, Tab, Select, Popover,
   Badge, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter,
   Switch, Label, ListBox,
 } from "@heroui/react";
@@ -615,8 +615,8 @@ function ApiBuilder(props) {
                 <p>Configure variables</p>
                 <div className="h-4" />
                 <div className="flex flex-row items-center gap-2">
-                  <Popover placement="bottom">
-                    <PopoverTrigger>
+                  <Popover>
+                    <Popover.Trigger>
                       <Input
                         label="{{start_date}}"
                         value={(variables?.startDate?.value && moment(variables.startDate.value).format(variables?.dateFormat?.value || "")) || ""}
@@ -625,20 +625,22 @@ function ApiBuilder(props) {
                         readOnly
                         classNames={{ input: "text-left" }}
                       />
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <div className="p-2">
-                        <Calendar
-                          date={variables?.startDate?.value || new Date()}
-                          onChange={(date) => setVariables({ ...variables, startDate: { ...variables.startDate, value: startOfDay(date) } })}
-                          locale={enGB}
-                        />
-                      </div>
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content placement="bottom">
+                      <Popover.Dialog>
+                        <div className="p-2">
+                          <Calendar
+                            date={variables?.startDate?.value || new Date()}
+                            onChange={(date) => setVariables({ ...variables, startDate: { ...variables.startDate, value: startOfDay(date) } })}
+                            locale={enGB}
+                          />
+                        </div>
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
 
-                  <Popover placement="bottom">
-                    <PopoverTrigger>
+                  <Popover>
+                    <Popover.Trigger>
                       <Input
                         label="{{end_date}}"
                         value={(variables?.endDate?.value && moment(variables.endDate.value).format(variables?.dateFormat?.value || "")) || ""}
@@ -647,16 +649,18 @@ function ApiBuilder(props) {
                         readOnly
                         classNames={{ input: "text-left" }}
                       />
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <div className="p-2">
-                        <Calendar
-                          date={variables?.endDate?.value || new Date()}
-                          onChange={(date) => setVariables({ ...variables, endDate: { ...variables.endDate, value: endOfDay(date) } })}
-                          locale={enGB}
-                        />
-                      </div>
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content placement="bottom">
+                      <Popover.Dialog>
+                        <div className="p-2">
+                          <Calendar
+                            date={variables?.endDate?.value || new Date()}
+                            onChange={(date) => setVariables({ ...variables, endDate: { ...variables.endDate, value: endOfDay(date) } })}
+                            locale={enGB}
+                          />
+                        </div>
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
                 </div>
                 <div className="h-4" />

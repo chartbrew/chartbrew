@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Popover, Link, ProgressCircle, PopoverTrigger, PopoverContent,
+  Popover, Link, ProgressCircle,
   Spinner,
   Alert,
   cn,
@@ -307,19 +307,21 @@ function EmbeddedChart() {
                     />
                   )}
                   <Popover>
-                    <PopoverTrigger>
+                    <Popover.Trigger>
                       <Link className="text-gray-500">
                         <LuListFilter />
                       </Link>
-                    </PopoverTrigger>
-                    <PopoverContent className="pt-2">
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    </PopoverContent>
+                    </Popover.Trigger>
+                    <Popover.Content className="pt-2">
+                      <Popover.Dialog>
+                        <ChartFilters
+                          chart={chart}
+                          onAddFilter={_onAddFilter}
+                          onClearFilter={_onClearFilter}
+                          conditions={conditions}
+                        />
+                      </Popover.Dialog>
+                    </Popover.Content>
                   </Popover>
                 </div>
               )}
