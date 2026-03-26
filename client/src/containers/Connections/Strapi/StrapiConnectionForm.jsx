@@ -291,10 +291,10 @@ function StrapiConnectionForm(props) {
           {connection.optionsArray?.length > 0 && (<div className="h-4" />)}
           <Button
             size="sm"
-            startContent={<LuCirclePlus />}
             onPress={_addOption}
             variant="primary"
           >
+            <LuCirclePlus />
             Add a header
           </Button>
         </div>
@@ -317,8 +317,8 @@ function StrapiConnectionForm(props) {
               isPending={loading}
               onPress={_onCreateConnection}
               variant="primary"
-              startContent={loading ? <ButtonSpinner /> : undefined}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Save connection"}
             </Button>
           )}
@@ -327,8 +327,8 @@ function StrapiConnectionForm(props) {
               isPending={loading}
               onPress={_onCreateConnection}
               variant="primary"
-              startContent={loading ? <ButtonSpinner /> : undefined}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Save connection"}
             </Button>
           )}

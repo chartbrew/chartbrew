@@ -121,8 +121,8 @@ function PasswordReset(props) {
             isPending={loading}
             onClick={_onSubmit}
             color="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             Change password
           </Button>
         </Row>

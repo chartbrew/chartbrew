@@ -323,7 +323,6 @@ function DatasetAlerts(props) {
                 variant="secondary"
                 size="sm"
                 onPress={() => _onEdit(alert)}
-                endContent={alert.active ? <LuBellRing /> : <LuBellOff />}
               >
                 {alert.type === "milestone" && "Milestone"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -331,6 +330,7 @@ function DatasetAlerts(props) {
                 {alert.type === "threshold_between" && "Between thresholds"}
                 {alert.type === "threshold_outside" && "Outside thresholds"}
                 {alert.type === "anomaly" && "Anomaly detection"}
+                {alert.active ? <LuBellRing /> : <LuBellOff />}
               </Button>
             </Fragment>
           ))}
@@ -338,11 +338,11 @@ function DatasetAlerts(props) {
         {alerts.length > 0 && (
           <div className="mt-2">
             <Button
-              startContent={<LuPlus />}
               size="sm"
               onPress={_onOpen}
               variant="tertiary"
             >
+              <LuPlus />
               Set up new alert
             </Button>
           </div>
@@ -453,21 +453,16 @@ function DatasetAlerts(props) {
                   <div className="h-2" />
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
-                      startContent={<LuMail />}
                       size="sm"
                       variant={!newAlert.mediums.email?.enabled ? "outline" : "secondary"}
                       onPress={() => _onChangeMediums("email")}
                     >
+                      <LuMail />
                       Email
                     </Button>
                     {integrations && integrations.map((integration) => (
                       <>
                         <Button
-                          startContent={
-                            integration.type === "webhook" ? <LuWebhook />
-                              : integration.type === "slack" ? <LuSlack />
-                                : null
-                          }
                           size="sm"
                           variant={
                             selectedIntegrations.length === 0
@@ -477,24 +472,27 @@ function DatasetAlerts(props) {
                           }
                           onPress={() => _onSelectIntegration(integration)}
                         >
+                          {integration.type === "webhook" ? <LuWebhook />
+                            : integration.type === "slack" ? <LuSlack />
+                              : null}
                           {integration.name}
                         </Button>
                       </>
                     ))}
                     <Button
-                      startContent={<LuPlus size={18} />}
                       variant="tertiary"
                       size="sm"
                       onPress={_onCreateNewIntegration}
                     >
+                      <LuPlus size={18} />
                       Create integrations
                     </Button>
                     <Button
-                      startContent={<LuRefreshCw size={18} />}
                       variant="tertiary"
                       size="sm"
                       onPress={_onRefreshIntegrationList}
                     >
+                      <LuRefreshCw size={18} />
                       Refresh list
                     </Button>
                   </div>
@@ -622,22 +620,30 @@ function DatasetAlerts(props) {
           </Modal.Body>
           <Modal.Footer>
             <Switch
+              id="dataset-alert-active"
               isSelected={newAlert.active}
-              onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
+              onChange={(selected) => setNewAlert({ ...newAlert, active: selected })}
               size="sm"
             >
-              <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.Content>
+                <Label htmlFor="dataset-alert-active">
+                  {newAlert.active ? "Alert enabled" : "Alert disabled"}
+                </Label>
+              </Switch.Content>
             </Switch>
             <div className="w-2" />
             {newAlert.id && (
               <Button
                 color="danger"
-                endContent={<LuTrash />}
                 variant="tertiary"
                 onPress={() => _onDelete()}
                 isPending={deleteLoading}
               >
                 Delete alert
+                <LuTrash />
               </Button>
             )}
             <Button onPress={() => setOpen(false)} variant="secondary">

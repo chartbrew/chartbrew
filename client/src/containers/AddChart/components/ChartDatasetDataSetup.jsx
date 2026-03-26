@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, Button, Chip, Separator, EmptyState, Input, Label, ListBox, SearchField, Select, Tooltip, useFilter,
+  Autocomplete, Button, Chip, EmptyState, InputGroup, Label, ListBox, SearchField, Select, Separator, TextField, Tooltip, useFilter,
 } from "@heroui/react";
 import { LuCheck, LuInfo, LuSettings } from "react-icons/lu";
 
@@ -179,46 +179,50 @@ function ChartDatasetDataSetup({
 
   return (
     <div>
-      <Input
-        placeholder="Enter a name for your series"
-        label="Series name"
-        value={legend}
-        onChange={onSaveLegend.onChange}
-        endContent={(
-          <Row align="center" className="gap-2">
-            {legend && legend !== cdc.legend && (
+      <TextField className="w-full max-w-xl" name="series-name">
+        <Label>Series name</Label>
+        <InputGroup fullWidth>
+          <InputGroup.Input
+            placeholder="Enter a name for your series"
+            value={legend}
+            onChange={onSaveLegend.onChange}
+          />
+          <InputGroup.Suffix className="pr-1">
+            <Row align="center" className="gap-2">
+              {legend && legend !== cdc.legend && (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      color="primary"
+                      size="sm"
+                      onPress={onSaveLegend.onSave}
+                    >
+                      <LuCheck />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Save series name</Tooltip.Content>
+                </Tooltip>
+              )}
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button
-                    isIconOnly
-                    color="primary"
-                    size="sm"
-                    onPress={onSaveLegend.onSave}
-                  >
-                    <LuCheck />
-                  </Button>
+                  <div><LuInfo size={18} className="text-default-400" /></div>
                 </Tooltip.Trigger>
-                <Tooltip.Content>Save series name</Tooltip.Content>
+                <Tooltip.Content>{`Dataset: ${getDatasetDisplayName(dataset)}`}</Tooltip.Content>
               </Tooltip>
-            )}
-            <Tooltip>
-              <Tooltip.Trigger>
-                <div><LuInfo size={18} className="text-default-400" /></div>
-              </Tooltip.Trigger>
-              <Tooltip.Content>{`Dataset: ${getDatasetDisplayName(dataset)}`}</Tooltip.Content>
-            </Tooltip>
-          </Row>
-        )}
-      />
+            </Row>
+          </InputGroup.Suffix>
+        </InputGroup>
+      </TextField>
       <div className="h-4" />
 
       {_canAccess("projectAdmin") && (
         <Button
           variant="ghost"
           fullWidth
-          endContent={<LuSettings size={18} />}
           onPress={onEditDataset}
         >
+          <LuSettings size={18} />
           Edit dataset
         </Button>
       )}

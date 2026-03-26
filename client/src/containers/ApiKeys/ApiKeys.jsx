@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
-  Button, ProgressCircle, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, EmptyState, Input, Modal, ProgressCircle, Table,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
-import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
+import { LuClipboard, LuClipboardCheck, LuKeyRound, LuPlus, LuTrash } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
@@ -116,54 +116,61 @@ function ApiKeys() {
       <div>
         <Button
           onPress={_onCreateRequested}
-          endContent={<LuPlus />} >
+        >
           Create a new API Key
+          <LuPlus />
         </Button>
       </div>
       <div className="h-2" />
 
-      <Table className="shadow-none">
+      <Table className="shadow-none min-h-[200px]">
         <Table.ScrollContainer>
           <Table.Content
             aria-label="API keys"
             className="min-w-full even:[&_tbody>tr]:bg-content2/30"
           >
-            <TableHeader>
-              <TableColumn key="token" isRowHeader textValue="API Tokens list">
+            <Table.Header>
+              <Table.Column id="token" isRowHeader>
                 API Tokens list
-              </TableColumn>
-              <TableColumn key="created" className="text-end" textValue="Date created">
+              </Table.Column>
+              <Table.Column id="created" className="text-end">
                 Date created
-              </TableColumn>
-              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
-            </TableHeader>
+              </Table.Column>
+              <Table.Column id="actions" className="w-12 text-end">
+                <span className="sr-only">Actions</span>
+              </Table.Column>
+            </Table.Header>
 
-            <TableBody
+            <Table.Body
               renderEmptyState={() => (
-                <i>{"You don't have any API Keys yet"}</i>
+                <EmptyState className="flex h-full w-full min-h-[160px] flex-col items-center justify-center gap-2 text-center">
+                  <LuKeyRound className="size-6 text-muted" aria-hidden />
+                  <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
+                </EmptyState>
               )}
             >
               {apiKeys.map((key) => (
-                <TableRow key={key.id}>
-              <TableCell key="token">
-                {key.name}
-              </TableCell>
-              <TableCell key="created">
-                {formatRelative(new Date(key.createdAt), new Date())}
-              </TableCell>
-              <TableCell key="actions">
-                <Button
-                  isIconOnly
-                  variant="danger-soft"
-                  onPress={() => _onRemoveConfirmation(key)}
-                  size="sm"
-                >
-                  <LuTrash />
-                </Button>
-              </TableCell>
-                </TableRow>
+                <Table.Row key={key.id} id={String(key.id)}>
+                  <Table.Cell>
+                    {key.name}
+                  </Table.Cell>
+                  <Table.Cell className="text-end">
+                    {formatRelative(new Date(key.createdAt), new Date())}
+                  </Table.Cell>
+                  <Table.Cell className="text-end">
+                    <Button
+                      isIconOnly
+                      variant="danger-soft"
+                      onPress={() => _onRemoveConfirmation(key)}
+                      size="sm"
+                      aria-label={`Delete API key ${key.name}`}
+                    >
+                      <LuTrash />
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </TableBody>
+            </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
       </Table>
@@ -177,7 +184,7 @@ function ApiKeys() {
                   Your new API Key
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="p-6">
                 <div className="text-success">{"Congrats! your new API key has been created."}</div>
                 <div className="text-gray-500">{"This is the only time we show you the code, so please copy it before closing this window."}</div>
                 <div className="h-1" />
@@ -218,7 +225,7 @@ function ApiKeys() {
                   Create a new API Key
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="p-2">
                 <div className="text-gray-500">{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</div>
                 <div className="h-1" />
                 <div>

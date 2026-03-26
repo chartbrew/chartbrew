@@ -397,8 +397,8 @@ function RealtimeDbConnectionForm(props) {
             variant="ghost"
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
+            {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
           </Button>
           <div className="w-2" />
@@ -406,8 +406,8 @@ function RealtimeDbConnectionForm(props) {
             isPending={loading}
             onPress={_onCreateConnection}
             variant="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
           </Button>
         </Row>

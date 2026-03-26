@@ -1,15 +1,21 @@
-import React, { useEffect } from "react";
-import { getPaginationRowModel, getSortedRowModel, useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import PropTypes from "prop-types";
 import {
-  Dropdown, Link as LinkNext, Table, Popover, Pagination, Chip, ProgressBar,
-  TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Dropdown, Link as LinkNext, Table, Popover, Chip, ProgressBar,
   Button,
   Tooltip,
 } from "@heroui/react";
 import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
 
 import Row from "../../../../components/Row";
+import HeroPaginationNav from "../../../../components/HeroPaginationNav";
 import Text from "../../../../components/Text";
 import { cn } from "../../../../modules/utils";
 
@@ -31,10 +37,28 @@ const tableDisplayButtonVariant = (buttonSettings) => {
   return "primary";
 };
 
+/** Convert react-table v7-style column defs from the server to TanStack Table v8 defs. */
+function toTanStackColumnDefinition(col) {
+  if (Array.isArray(col.columns) && col.columns.length > 0) {
+    return {
+      header: col.Header,
+      columns: col.columns.map(toTanStackColumnDefinition),
+    };
+  }
+  const accessor = col.accessor;
+  const id = typeof accessor === "string" ? accessor : `col_${String(col.Header)}`;
+  return {
+    id,
+    ...(typeof accessor === "string" ? { accessorKey: accessor } : { accessorFn: accessor }),
+    header: col.Header,
+    enableSorting: true,
+  };
+}
+
 // Add URL detection function
 const isUrl = (str) => {
   if (typeof str !== "string") return false;
-  
+
   // Check for common URL patterns
   const urlPatterns = [
     /^https?:\/\//i,  // http:// or https://
@@ -52,7 +76,7 @@ const isUrl = (str) => {
       return false;
     }
   }
-  
+
   return false;
 };
 
@@ -209,201 +233,190 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
   return baseContent;
 };
 
+function formatHeaderLabel(header) {
+  const def = header.column.columnDef.header;
+  if (typeof def === "string") {
+    return def.replace("__cb_group", "");
+  }
+  const rendered = flexRender(def, header.getContext());
+  return typeof rendered === "string" ? rendered.replace("__cb_group", "") : rendered;
+}
+
 function TableComponent({
   columns, data, embedded, dataset, defaultRowsPerPage = 10,
 }) {
   const columnsFormatting = dataset?.configuration?.columnsFormatting;
-  
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
-    pageCount,
-    gotoPage,
-    setPageSize,
-    state: { pageSize },
-  } = useReactTable({
-    columns,
-    data,
-    initialState: { pageIndex: 0, pageSize: defaultRowsPerPage },
+
+  const columnDefs = useMemo(
+    () => (columns || []).map(toTanStackColumnDefinition),
+    [columns]
+  );
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: defaultRowsPerPage,
+  });
+
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageSize: defaultRowsPerPage }));
+  }, [defaultRowsPerPage]);
+
+  const table = useReactTable({
+    data: data || [],
+    columns: columnDefs,
+    state: { pagination },
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+  });
 
-  })
+  const headerGroups = table.getHeaderGroups();
+  const leafHeaderGroup = headerGroups[headerGroups.length - 1];
+  const headerCount = leafHeaderGroup?.headers?.length ?? 0;
+  const rows = table.getRowModel().rows;
+  const pageCount = table.getPageCount();
+  const { pageIndex, pageSize } = table.getState().pagination;
 
-  useEffect(() => {
-    setPageSize(defaultRowsPerPage);
-  }, [defaultRowsPerPage]);
-
-  const tableProps = getTableProps();
-  const {
-    className: tablePropsClassName,
-    style: tablePropsStyle,
-    ...tablePropsRest
-  } = tableProps;
-  const mergedTableStyle = { ...styles.table, ...tablePropsStyle };
-
-  const headerGroup = headerGroups && headerGroups[headerGroups.length - 1];
-  const headerCount = headerGroup?.headers?.length ?? 0;
+  const mergedTableStyle = { ...styles.table };
 
   return (
     <div style={styles.mainBody(embedded)}>
-      {(!headerGroups
-        || !headerGroups[headerGroups.length - 1]
-        || !headerGroups[headerGroups.length - 1].headers
-      ) && (
+      {(!leafHeaderGroup || !leafHeaderGroup.headers?.length) && (
         <Text i>No results in this table</Text>
       )}
 
-      {headerGroups
-        && headerGroups[headerGroups.length - 1]
-        && headerGroups[headerGroups.length - 1].headers
-        && (
+      {leafHeaderGroup?.headers?.length > 0 && (
         <>
           <Table className="bg-content1 w-full min-w-0">
             <Table.ScrollContainer>
               <Table.Content
-                {...tablePropsRest}
                 aria-label="Table data"
-                className={cn(
-                  "min-w-full shadow-none even:[&_tbody>tr]:bg-default-100/40",
-                  tablePropsClassName
-                )}
+                className="min-w-full shadow-none even:[&_tbody>tr]:bg-default-100/40"
                 style={mergedTableStyle}
               >
-                <TableHeader>
-                  {headerGroups[headerGroups.length - 1].headers.map((column, colIdx) => {
-                return (
-                  <TableColumn
-                    key={column.getHeaderProps(column.getSortByToggleProps()).key}
-                    isRowHeader={colIdx === 0}
-                    style={{ whiteSpace: "unset" }}
-                    className="pl-10 pr-10 max-w-[400px]"
-                  >
-                    <Row align="center">
-                      {column.isSorted
-                        ? column.isSortedDesc
-                          ? (<LuCircleChevronDown size={16} />)
-                          : (<LuCircleChevronUp size={16} />)
-                        : ""}
-
-                      {(column.isSorted || column.isSortedDesc) && <div className="w-2" />}
-                      <LinkNext
-                        className="text-sm cursor-pointer hover:text-secondary"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          column.getSortByToggleProps().onClick(e);
-                        }}
+                <Table.Header>
+                  {leafHeaderGroup.headers.map((header, colIdx) => {
+                    const sorted = header.column.getIsSorted();
+                    const canSort = header.column.getCanSort();
+                    const toggleHandler = header.column.getToggleSortingHandler();
+                    return (
+                      <Table.Column
+                        key={header.id}
+                        id={header.column.id}
+                        isRowHeader={colIdx === 0}
+                        style={{ whiteSpace: "unset" }}
+                        className="pl-10 pr-10 max-w-[400px]"
                       >
-                        <Text className={"text-foreground-500"}>
-                          {typeof column.render("Header") === "object"
-                            ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
-                        </Text>
-                      </LinkNext>
-                    </Row>
-                  </TableColumn>
-                );
-                  })}
-                </TableHeader>
-                <TableBody {...getTableBodyProps()}>
-              {page.length < 1 && (
-                <TableRow>
-                  <TableCell key="noresult" colSpan={Math.max(1, headerCount)}>
-                    No Results
-                  </TableCell>
-                </TableRow>
-              )}
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <TableRow key={row.getRowProps().key} {...row.getRowProps()}>
-                    {row.cells.map((cell, cellIndex) => {
-                      // identify collections to render them differently
-                      const cellObj = cell.render("Cell");
-                      // console.log("cellObj.key", cellObj.props.column.Header);
-
-                      const isObject = (cellObj.props.value && cellObj.props.value.indexOf && cellObj.props.value.indexOf("__cb_object") > -1) || false;
-                      const isArray = (cellObj.props.value && cellObj.props.value.indexOf && cellObj.props.value.indexOf("__cb_array") > -1) || false;
-                      const objDetails = (isObject || isArray)
-                        && JSON.parse(cellObj.props.value.replace("__cb_object", "").replace("__cb_array", ""));
-
-                      // this is to check if the object has only one key
-                      // to display the value directly
-                      const isShort = isObject && Object.keys(objDetails).length === 1;
-
-                      const { className: cellPropsClassName, ...cellPropsRest } = cell.getCellProps();
-                      return (
-                        <TableCell
-                          key={`${row.id}-${cell.column.Header}`}
-                          {...cellPropsRest}
-                          className={cn(
-                            "max-w-[300px] pr-10 pl-10 truncate select-text",
-                            cellIndex !== row.cells.length - 1 && "border-e border-content3",
-                            cellPropsClassName
-                          )}
-                          title={cellObj.props.value}
-                        >
-                          {(!isObject && !isArray) && (
-                            <div
-                              title={cellObj.props.value}
-                              className="text-sm truncate"
+                        <Row align="center">
+                          {sorted === "desc" && (<LuCircleChevronDown size={16} />)}
+                          {sorted === "asc" && (<LuCircleChevronUp size={16} />)}
+                          {sorted && <div className="w-2" />}
+                          {canSort ? (
+                            <LinkNext
+                              className="text-sm cursor-pointer hover:text-secondary"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleHandler(e);
+                              }}
                             >
-                              <span
-                                style={{ cursor: "text", WebkitUserSelect: "text", whiteSpace: "nowrap" }}
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                role="presentation"
+                              <Text className={"text-foreground-500"}>
+                                {formatHeaderLabel(header)}
+                              </Text>
+                            </LinkNext>
+                          ) : (
+                            <Text className={"text-foreground-500"}>
+                              {formatHeaderLabel(header)}
+                            </Text>
+                          )}
+                        </Row>
+                      </Table.Column>
+                    );
+                  })}
+                </Table.Header>
+                <Table.Body>
+                  {rows.length < 1 && (
+                    <Table.Row id="no-results">
+                      <Table.Cell colSpan={Math.max(1, headerCount)}>
+                        No Results
+                      </Table.Cell>
+                    </Table.Row>
+                  )}
+                  {rows.map((row) => (
+                    <Table.Row key={row.id} id={row.id}>
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        const value = cell.getValue();
+                        const strValue = value == null ? "" : String(value);
+                        const isObject = (strValue && strValue.indexOf && strValue.indexOf("__cb_object") > -1) || false;
+                        const isArray = (strValue && strValue.indexOf && strValue.indexOf("__cb_array") > -1) || false;
+                        const objDetails = (isObject || isArray)
+                          && JSON.parse(strValue.replace("__cb_object", "").replace("__cb_array", ""));
+
+                        const isShort = isObject && Object.keys(objDetails).length === 1;
+
+                        const accessorKey = cell.column.id;
+                        return (
+                          <Table.Cell
+                            key={cell.id}
+                            className={cn(
+                              "max-w-[300px] pr-10 pl-10 truncate select-text",
+                              cellIndex !== row.getVisibleCells().length - 1 && "border-e border-content3",
+                            )}
+                            title={strValue}
+                          >
+                            {(!isObject && !isArray) && (
+                              <div
+                                title={strValue}
+                                className="text-sm truncate"
                               >
-                                {(() => {
-                                  const accessorKey = cell?.column?.id || cell?.column?.accessor || cell?.column?.Header;
-                                  return renderCellContent(cellObj.props.value, accessorKey, columnsFormatting);
-                                })()}
-                              </span>
-                            </div>
-                          )}
-                          {(isObject || isArray) && (
-                            <Popover aria-label="Object details">
-                              <Popover.Trigger>
-                                <LinkNext>
-                                  <Chip variant="primary">{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
-                                </LinkNext>
-                              </Popover.Trigger>
-                              <Popover.Content>
-                                <Popover.Dialog>
-                                  <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
-                                </Popover.Dialog>
-                              </Popover.Content>
-                            </Popover>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
-                </TableBody>
+                                <span
+                                  style={{ cursor: "text", WebkitUserSelect: "text", whiteSpace: "nowrap" }}
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  role="presentation"
+                                >
+                                  {renderCellContent(value, accessorKey, columnsFormatting)}
+                                </span>
+                              </div>
+                            )}
+                            {(isObject || isArray) && (
+                              <Popover aria-label="Object details">
+                                <Popover.Trigger>
+                                  <LinkNext>
+                                    <Chip variant="primary">{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
+                                  </LinkNext>
+                                </Popover.Trigger>
+                                <Popover.Content>
+                                  <Popover.Dialog>
+                                    <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
+                                  </Popover.Dialog>
+                                </Popover.Content>
+                              </Popover>
+                            )}
+                          </Table.Cell>
+                        );
+                      })}
+                    </Table.Row>
+                  ))}
+                </Table.Body>
               </Table.Content>
             </Table.ScrollContainer>
             <Table.Footer>
               <div>
                 <Row align="center">
-                  <Pagination
-                    total={pageCount}
-                    initialPage={1}
-                    onChange={(page) => {
-                      gotoPage(page - 1);
-                    }}
+                  <HeroPaginationNav
+                    page={pageIndex + 1}
+                    totalPages={Math.max(1, pageCount)}
+                    onPageChange={(p) => table.setPageIndex(p - 1)}
                     size="sm"
-                    aria-label="Pagination"
+                    ariaLabel="Table pagination"
                   />
                   <div className="w-1" />
                   <Dropdown aria-label="Select a page size">
                     <Dropdown.Trigger>
-                      <Button variant="secondary" size="sm" endContent={<LuChevronDown size={16} />}>
-                        {paginationOptions.find((option) => option.value === pageSize).text}
+                      <Button variant="secondary" size="sm">
+                        {(paginationOptions.find((option) => option.value === pageSize) || { text: `Show ${pageSize}` }).text}
+                        <LuChevronDown size={16} />
                       </Button>
                     </Dropdown.Trigger>
                     <Dropdown.Popover>
@@ -412,7 +425,8 @@ function TableComponent({
                         selectionMode="single"
                         selectedKeys={[`${pageSize}`]}
                         onSelectionChange={(selection) => {
-                          setPageSize(Number(Object.values(selection)[0]));
+                          const next = Number(Object.values(selection)[0]);
+                          table.setPageSize(next);
                         }}
                       >
                         {paginationOptions.map((option) => (
@@ -428,7 +442,7 @@ function TableComponent({
             </Table.Footer>
           </Table>
         </>
-        )}
+      )}
     </div>
   );
 }

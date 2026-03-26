@@ -84,8 +84,8 @@ function FeedbackForm() {
           isPending={loading}
           onClick={() => _onSendFeedback()}
           color="primary"
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           Send feedback
         </Button>
       </Row>

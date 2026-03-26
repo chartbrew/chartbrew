@@ -138,10 +138,10 @@ function WhatsNewItemCard({ item, onAction }) {
           {item.action && (
             <Button
               className={cn("font-medium", tone.tipButton)}
-              endContent={isExternalAction ? <LuExternalLink size={16} /> : <LuChevronRight size={16} />}
               onPress={() => onAction(item.action)} variant="tertiary"
             >
               {actionLabel}
+              {isExternalAction ? <LuExternalLink size={16} /> : <LuChevronRight size={16} />}
             </Button>
           )}
         </Card.Content>
@@ -184,10 +184,10 @@ function WhatsNewItemCard({ item, onAction }) {
                     size="sm"
                     variant="ghost"
                     color={tone.badge}
-                    endContent={isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
                     onPress={() => onAction(item.action)}
                   >
                     {actionLabel}
+                    {isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
                   </Button>
                 )}
               </div>

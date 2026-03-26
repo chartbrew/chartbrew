@@ -278,37 +278,30 @@ function CustomerQuery(props) {
               {condition.segment && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<LuFolder />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.segment.id)} />
-                  )}
                 >
+                  <LuFolder />
                   <span className="text-primary">
                     {`in ${_getSegmentName(condition.segment.id)}`}
                   </span>
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.segment.id)} />
                 </Chip>
               )}
               {condition.not && condition.not.segment && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<LuFolder />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} />
-                  )}
                 >
+                  <LuFolder />
                   <span className="text-primary">
                     {`not in  ${_getSegmentName(condition.not.segment.id)}`}
                   </span>
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} />
                 </Chip>
               )}
               {condition.or && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<LuFolder />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.or)} />
-                  )}
                 >
+                  <LuFolder />
                   <span className="mr-1">{"in"}</span>
                   {condition.or.map((sub, index) => {
                     if (sub.segment && sub.segment.id) {
@@ -323,16 +316,14 @@ function CustomerQuery(props) {
                     }
                     return (<span />); // eslint-disable-line
                   })}
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.or)} />
                 </Chip>
               )}
               {condition.not && condition.not.or && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<LuFolder />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not)} />
-                  )}
                 >
+                  <LuFolder />
                   <span className="mr-1">{"not in"}</span>
                   {condition.not.or.map((sub, index) => {
                     if (sub.segment && sub.segment.id) {
@@ -345,6 +336,7 @@ function CustomerQuery(props) {
                     }
                     return (<span />); // eslint-disable-line
                   })}
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not)} />
                 </Chip>
               )}
 
@@ -352,11 +344,8 @@ function CustomerQuery(props) {
               {condition.attribute && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<LuUser />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} />
-                  )}
                 >
+                  <LuUser />
                   <span className="text-primary mr-1">
                     {`${condition.attribute.field}`}
                   </span>
@@ -375,16 +364,14 @@ function CustomerQuery(props) {
                       </span>
                     </>
                   )}
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} />
                 </Chip>
               )}
               {condition.not && condition.not.attribute && (
                 <Chip
                   variant="secondary"
-                  startContent={<LuUser />}
-                  endContent={(
-                    <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("attribute", condition.not)} />
-                  )}
                 >
+                  <LuUser />
                   <span className="text-primary mr-1">
                     {`${condition.not.attribute.field}`}
                   </span>
@@ -403,6 +390,7 @@ function CustomerQuery(props) {
                       </span>
                     </>
                   )}
+                  <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("attribute", condition.not)} />
                 </Chip>
               )}
             </Fragment>
@@ -423,17 +411,17 @@ function CustomerQuery(props) {
         <Row align="center">
           <Button
             size="sm"
-            startContent={<LuFolder />}
             onPress={() => _onConfigureSegment()}
             variant="secondary" >
+            <LuFolder />
             Add segment condition
           </Button>
           <div className="w-0.5" />
           <Button
             size="sm"
-            startContent={<LuUser />}
             onPress={() => _onConfigureAttribute()}
             variant="secondary" >
+            <LuUser />
             Add attribute condition
           </Button>
         </Row>

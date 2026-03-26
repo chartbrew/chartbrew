@@ -74,18 +74,19 @@ function ChartSharing({ chart, isOpen, onClose }) {
     }
   };
 
-  const _onToggleShareable = async () => {
-    // first, check if the chart has a share string
-    if (!chart.Chartshares || chart.Chartshares.length === 0) {
-      setShareLoading(true);
-      await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
-      _onGenerateShareToken();
+  const _onToggleShareable = async (selected) => {
+    if (selected) {
+      if (!chart.Chartshares || chart.Chartshares.length === 0) {
+        setShareLoading(true);
+        await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
+        _onGenerateShareToken();
+      }
     }
 
     await dispatch(updateChart({
       project_id: params.projectId,
       chart_id: chart.id,
-      data: { shareable: !chart.shareable },
+      data: { shareable: selected },
       justUpdates: true,
     }));
 
@@ -321,9 +322,9 @@ function ChartSharing({ chart, isOpen, onClose }) {
           <Button
             size="sm"
             variant="tertiary" onPress={_onCreateNewPolicy}
-            startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
             isPending={shareLoading}
           >
+            {shareLoading ? <ButtonSpinner /> : <LuPlus />}
             Enable secure links
           </Button>
         </div>
@@ -338,9 +339,9 @@ function ChartSharing({ chart, isOpen, onClose }) {
             size="sm"
             variant="tertiary"
             onPress={_onCreateNewPolicy}
-            startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
             isPending={shareLoading}
           >
+            {shareLoading ? <ButtonSpinner /> : <LuPlus />}
             New Link
           </Button>
         </div>
@@ -519,8 +520,8 @@ function ChartSharing({ chart, isOpen, onClose }) {
               onPress={() => {
                 setParameters([...parameters, { key: "", value: "" }]);
               }}
-              startContent={<LuPlus />}
             >
+              <LuPlus />
               Add parameter
             </Button>
           </div>
@@ -612,8 +613,8 @@ function ChartSharing({ chart, isOpen, onClose }) {
               onPress={() => {
                 setExpirationDate("");
               }}
-              startContent={<LuX size={16} />}
             >
+              <LuX size={16} />
               Clear expiration date
             </Button>
           )}
@@ -632,12 +633,18 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 Embed & share your chart
               </Modal.Heading>
               <Switch
+                id="chart-sharing-enable"
                 isSelected={chart.shareable}
                 onChange={_onToggleShareable}
                 size="sm"
                 className="mr-4"
               >
-                Enable sharing
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Content>
+                  <Label htmlFor="chart-sharing-enable">Enable sharing</Label>
+                </Switch.Content>
               </Switch>
             </Modal.Header>
             <Modal.Body>

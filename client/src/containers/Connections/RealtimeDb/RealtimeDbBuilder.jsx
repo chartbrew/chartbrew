@@ -288,8 +288,8 @@ function RealtimeDbBuilder(props) {
               <Button size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
-                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
+                {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                 {"Save"}
               </Button>
               <Tooltip>
@@ -459,7 +459,6 @@ function RealtimeDbBuilder(props) {
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
               <>
                 <Button variant="ghost"
-                  startContent={<LuX />}
                   onPress={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
@@ -471,6 +470,7 @@ function RealtimeDbBuilder(props) {
                   )}
                   size="sm"
                 >
+                  <LuX />
                   {"Disable ordering"}
                 </Button>
               </>
@@ -545,7 +545,6 @@ function RealtimeDbBuilder(props) {
                 || firebaseRequest.configuration.limitToFirst)
               && (
                 <Button
-                  startContent={<LuX />}
                   onPress={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
@@ -559,6 +558,7 @@ function RealtimeDbBuilder(props) {
                   variant="danger-soft"
                   size="sm"
                 >
+                  <LuX />
                   Disable limit
                 </Button>
               )}
@@ -585,14 +585,15 @@ function RealtimeDbBuilder(props) {
         </div>
         <div className="col-span-12 sm:col-span-5">
           <Row className="RealtimeDb-request-tut">
-            <Button endContent={!requestLoading ? <LuPlay /> : undefined}
+            <Button
               isPending={requestLoading}
-              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               fullWidth
               variant="ghost"
             >
+              {requestLoading ? <ButtonSpinner /> : null}
               Make the request
+              {!requestLoading ? <LuPlay /> : null}
             </Button>
           </Row>
           <div className="h-4" />
@@ -753,9 +754,14 @@ function RealtimeDbBuilder(props) {
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
                 isSelected={variableSettings?.required}
-                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
                 size="sm"
-              />
+                aria-label="Required"
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
           </Drawer.Body>
           <Drawer.Footer>
@@ -769,8 +775,8 @@ function RealtimeDbBuilder(props) {
               variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
-              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
+              {variableLoading ? <ButtonSpinner /> : null}
               Save
             </Button>
           </Drawer.Footer>

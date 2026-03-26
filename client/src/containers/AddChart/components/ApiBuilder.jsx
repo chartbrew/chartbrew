@@ -536,8 +536,8 @@ function ApiBuilder(props) {
               <Button size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
-                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
+                {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                 {"Save"}
               </Button>
               <Tooltip>
@@ -857,12 +857,12 @@ function ApiBuilder(props) {
 
               <div className="h-4" />
               <Button
-                endContent={<LuPlus />}
                 size="sm"
                 onPress={_addHeader}
                 variant="secondary"
               >
                 Add header
+                <LuPlus />
               </Button>
             </div>
           )}
@@ -892,9 +892,9 @@ function ApiBuilder(props) {
                     <Button
                       size="sm"
                       variant="tertiary"
-                      startContent={<LuVariable />}
                       onPress={() => _onVariableClick(_getFirstVariable(apiRequest.body))}
                     >
+                      <LuVariable />
                       Configure Variables
                     </Button>
                   </div>
@@ -946,14 +946,14 @@ function ApiBuilder(props) {
               </Select.Popover>
             </Select>
             <Button
-              endContent={!requestLoading ? <LuPlay size={16} /> : undefined}
               isPending={requestLoading}
-              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               fullWidth size="sm"
               variant="ghost"
             >
+              {requestLoading ? <ButtonSpinner /> : null}
               {"Send the request"}
+              {!requestLoading ? <LuPlay size={16} /> : null}
             </Button>
           </div>
           <div className="h-4" />
@@ -1135,9 +1135,14 @@ function ApiBuilder(props) {
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
                 isSelected={variableSettings?.required}
-                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
                 size="sm"
-              />
+                aria-label="Required"
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
           </Drawer.Body>
           <Drawer.Footer>
@@ -1151,8 +1156,8 @@ function ApiBuilder(props) {
               variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
-              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
+              {variableLoading ? <ButtonSpinner /> : null}
               Save
             </Button>
           </Drawer.Footer>

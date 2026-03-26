@@ -54,8 +54,8 @@ function KpiChartSegment(props) {
                           variant="soft"
                           className="rounded-sm"
                           color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
-                          startContent={c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : ""}
                         >
+                          {c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : null}
                           {`${formattedComparison}%`}
                         </Chip>
                       </div>

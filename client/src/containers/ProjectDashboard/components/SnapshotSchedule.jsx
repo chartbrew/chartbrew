@@ -443,21 +443,16 @@ function SnapshotSchedule({ isOpen, onClose }) {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Button
-                  startContent={<LuMail />}
                   size="sm"
                   variant={!schedule.mediums.email?.enabled ? "tertiary" : "primary"}
                   onPress={() => _onChangeMediums("email")}
                 >
+                  <LuMail />
                   Email
                 </Button>
                 {integrations && integrations.map((integration) => (
                   <Button
                     key={integration.id}
-                    startContent={
-                      integration.config?.slackMode ? <LuSlack />
-                        : integration.type === "webhook" ? <LuWebhook />
-                          : null
-                    }
                     size="sm"
                     variant={
                       selectedIntegrations.length === 0
@@ -467,6 +462,9 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     }
                     onPress={() => _onSelectIntegration(integration)}
                   >
+                    {integration.config?.slackMode ? <LuSlack />
+                      : integration.type === "webhook" ? <LuWebhook />
+                        : null}
                     {integration.name}
                   </Button>
                 ))}
@@ -513,8 +511,8 @@ function SnapshotSchedule({ isOpen, onClose }) {
                         size="sm"
                         onPress={_onAddProjectMembers}
                         variant="ghost"
-                        startContent={<LuMailPlus size={18} />}
                       >
+                        <LuMailPlus size={18} />
                         Add dashboard members
                       </Button>
                     </div>
@@ -533,16 +531,16 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     variant="tertiary"
                     size="sm"
                     onPress={_onCopyToClipboard}
-                    startContent={<LuCopy size={18} />}
                   >
+                    <LuCopy size={18} />
                     Copy image
                   </Button>
                   <Button
                     variant="tertiary"
                     size="sm"
                     onPress={() => navigate(`/report/${project.brewName}/edit`)}
-                    startContent={<LuSettings size={18} />}
                   >
+                    <LuSettings size={18} />
                     Edit visuals
                   </Button>
                 </div>
@@ -568,8 +566,8 @@ function SnapshotSchedule({ isOpen, onClose }) {
                     onPress={_onTakeSnapshot}
                     isPending={isLoading}
                     variant="tertiary"
-                    startContent={isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
                   >
+                    {isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
                     Take snapshot
                   </Button>
                   <div className="w-4" />
@@ -686,8 +684,8 @@ function SnapshotSchedule({ isOpen, onClose }) {
               onPress={_onSave}
               isDisabled={!_canSave()}
               isPending={isLoading}
-              startContent={isLoading ? <ButtonSpinner /> : undefined}
             >
+              {isLoading ? <ButtonSpinner /> : null}
               {project?.snapshotSchedule?.frequency ? "Update" : "Set schedule"}
             </Button>
           </Modal.Footer>

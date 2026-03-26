@@ -249,18 +249,18 @@ function PlausibleTemplate(props) {
             {!formVisible && (
               <Button
                 variant="secondary"
-                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
               >
+                <LuPlus />
                 Or create a new connection
               </Button>
             )}
             {formVisible && (
               <Button
                 variant="secondary"
-                startContent={<LuArrowUp />}
                 onClick={() => setFormVisible(false)}
               >
+                <LuArrowUp />
                 Use an existing connection instead
               </Button>
             )}
@@ -354,21 +354,21 @@ function PlausibleTemplate(props) {
           <Row>
             <Button
               variant="ghost"
-              startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
               size="sm"
             >
+              <LuCheckCheck />
               Select all
             </Button>
             <div className="w-1" />
             <Button
               variant="ghost"
-              startContent={<LuX />}
               auto
               onClick={_onDeselectAll}
               size="sm"
             >
+              <LuX />
               Deselect all
             </Button>
           </Row>
@@ -444,8 +444,8 @@ function PlausibleTemplate(props) {
           }
           onClick={_onGenerateDashboard}
           color="primary"
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           {"Create the charts"}
         </Button>
       </Row>

@@ -367,10 +367,10 @@ function SharedChart() {
                 <Dropdown.Menu>
                   <Dropdown.Item
                     id="export-excel"
-                    startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                     onPress={() => _onPublicExport(chart)}
                     textValue="Export to Excel"
                   >
+                    {exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                     Export to Excel
                   </Dropdown.Item>
                 </Dropdown.Menu>

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
   Autocomplete, EmptyState, Label, ListBox, SearchField, useFilter,
-  Button, Chip, Input, Link, Modal,
+  Button, Chip, InputGroup, Link, Modal, TextField,
 } from "@heroui/react";
 import { LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -360,23 +360,26 @@ function Dataset() {
 
           {editDatasetName && (
             <>
-              <Input
-                value={datasetName}
-                onChange={(e) => setDatasetName(e.target.value)}
-                placeholder="Dataset name"
-                variant="secondary"
-                labelPlacement="outside"
-                endContent={
-                  <Button
-                    variant="tertiary"
-                    isIconOnly
-                    onPress={() => _onSaveDataset("save")}
-                    size="sm"
-                  >
-                    <LuCheck size={16} />
-                  </Button>
-                }
-              />
+              <TextField variant="secondary" className="min-w-[200px]" aria-label="Dataset name" name="dataset-name">
+                <InputGroup variant="secondary" fullWidth>
+                  <InputGroup.Input
+                    value={datasetName}
+                    onChange={(e) => setDatasetName(e.target.value)}
+                    placeholder="Dataset name"
+                  />
+                  <InputGroup.Suffix className="pr-0">
+                    <Button
+                      variant="tertiary"
+                      isIconOnly
+                      onPress={() => _onSaveDataset("save")}
+                      size="sm"
+                      aria-label="Save dataset name"
+                    >
+                      <LuCheck size={16} />
+                    </Button>
+                  </InputGroup.Suffix>
+                </InputGroup>
+              </TextField>
             </>
           )}
         </div>
@@ -388,8 +391,8 @@ function Dataset() {
               onPress={() => _onSaveDataset("createChart")}
               isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
               isPending={saveDatasetLoading}
-              startContent={saveDatasetLoading ? <ButtonSpinner /> : <LuChartColumn size={16} />}
             >
+              {saveDatasetLoading ? <ButtonSpinner /> : <LuChartColumn size={16} />}
               Save & create chart
             </Button>
           )}
@@ -398,8 +401,8 @@ function Dataset() {
             onPress={() => _onSaveDataset("save")}
             isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
             isPending={saveDatasetLoading}
-            startContent={saveDatasetLoading ? <ButtonSpinner /> : undefined}
           >
+            {saveDatasetLoading ? <ButtonSpinner /> : null}
             {fromChart ? "Save & return to chart" : "Save dataset"}
           </Button>
         </div>
@@ -422,13 +425,16 @@ function Dataset() {
             <Modal.Heading>Save dataset</Modal.Heading>
           </Modal.Header>
           <Modal.Body>
-            <Input
-              value={datasetName}
-              onChange={(event) => setDatasetName(event.target.value)}
-              placeholder="Dataset name"
-              label="Dataset name"
-              labelPlacement="outside"
-            />
+            <TextField className="w-full" name="modal-dataset-name">
+              <Label>Dataset name</Label>
+              <InputGroup variant="secondary" fullWidth>
+                <InputGroup.Input
+                  value={datasetName}
+                  onChange={(event) => setDatasetName(event.target.value)}
+                  placeholder="Dataset name"
+                />
+              </InputGroup>
+            </TextField>
 
             <div className="h-2" />
 
@@ -467,7 +473,6 @@ function Dataset() {
             <Button
               variant="primary"
               isPending={saveDatasetLoading}
-              startContent={saveDatasetLoading ? <ButtonSpinner /> : undefined}
               onPress={async () => {
                 const success = await _persistDataset(
                   selectedProjectIds,
@@ -479,6 +484,7 @@ function Dataset() {
                 }
               }}
             >
+              {saveDatasetLoading ? <ButtonSpinner /> : null}
               {fromChart ? "Save & return to chart" : "Save dataset"}
             </Button>
           </Modal.Footer>
@@ -569,9 +575,9 @@ function Dataset() {
               color="primary"
               isDisabled={projects.filter((project) => !project.ghost).length === 0}
               isPending={createChartFromDatasetLoading}
-              startContent={createChartFromDatasetLoading ? <ButtonSpinner /> : undefined}
               onPress={_onCreateChartFromDataset}
             >
+              {createChartFromDatasetLoading ? <ButtonSpinner /> : null}
               Create chart
             </Button>
           </Modal.Footer>

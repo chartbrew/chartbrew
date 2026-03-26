@@ -44,6 +44,13 @@ function Sidebar() {
     return window.location.pathname.split("/")[1];
   };
 
+  const pathMenu = _getActiveMenu();
+  const isDashboardActive = pathMenu === "" || window.location.pathname.indexOf("dashboard") > -1;
+  const isConnectionsActive = pathMenu === "connections";
+  const isDatasetsActive = pathMenu === "datasets";
+  const isIntegrationsActive = pathMenu === "integrations";
+  const isSettingsActive = pathMenu === "settings";
+
   const _getTeamRole = (teamRoles) => {
     if (!teamRoles) return "";
     return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
@@ -126,7 +133,7 @@ function Sidebar() {
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <div className={cn(collapsed ? "" : "px-2")}>
               <Dropdown>
-                <Dropdown.Trigger>
+                <Dropdown.Trigger className="w-full">
                   {collapsed ? (
                     <Avatar size="sm" className="cursor-pointer rounded-md" color="accent">
                       <Avatar.Fallback>{teamInitials || <LuUsers size={18} />}</Avatar.Fallback>
@@ -134,7 +141,7 @@ function Sidebar() {
                   ) : (
                     <Button
                       variant="outline"
-                      className="justify-between border-1"
+                      className="justify-between border"
                       fullWidth
                     >
                       <span>{team?.name}</span>
@@ -187,120 +194,153 @@ function Sidebar() {
             <div className="h-2" />
 
             <div className={cn("flex flex-col gap-1", collapsed && "items-center")}>
-              <button
-                type="button"
-                className={cn(
-                  "w-full rounded-large px-3 py-2 text-left",
-                  collapsed && "max-w-min text-center",
-                  _getActiveMenu() === "" || window.location.pathname.indexOf("dashboard") > -1 ? "bg-content2 text-primary" : "text-foreground"
-                )}
-                onClick={() => navigate("/")}
-              >
-                {collapsed ? (
+              {collapsed ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={isDashboardActive ? "secondary" : "ghost"}
+                      fullWidth
+                      isIconOnly
+                      size="sm"
+                      className="justify-center"
+                      onPress={() => navigate("/")}
+                    >
+                      <LuLayoutGrid size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">Dashboards</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant={isDashboardActive ? "secondary" : "ghost"}
+                  fullWidth
+                  size="sm"
+                  className="justify-start"
+                  onPress={() => navigate("/")}
+                >
+                  <LuLayoutGrid size={18} />
+                  Dashboards
+                </Button>
+              )}
+              {_canAccess("teamAdmin", team.TeamRoles) && (
+                collapsed ? (
                   <Tooltip>
                     <Tooltip.Trigger>
-                      <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                        <LuLayoutGrid size={20} />
-                      </div>
+                      <Button
+                        variant={isConnectionsActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className={cn("justify-center", "connection-tutorial")}
+                        onPress={() => navigate("/connections")}
+                      >
+                        <LuPlug size={20} />
+                      </Button>
                     </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Dashboards</Tooltip.Content>
+                    <Tooltip.Content placement="right">Connections</Tooltip.Content>
                   </Tooltip>
                 ) : (
-                  <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                    <span className="text-sm">Dashboards</span>
-                  </div>
-                )}
-              </button>
-              {_canAccess("teamAdmin", team.TeamRoles) && (
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full rounded-large px-3 py-2 text-left",
-                    collapsed && "max-w-min text-center",
-                    _getActiveMenu() === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial"
-                  )}
-                  onClick={() => navigate("/connections")}
-                >
-                  {collapsed ? (
-                    <Tooltip>
-                      <Tooltip.Trigger>
-                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                          <LuPlug size={20} />
-                        </div>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content placement="right">Connections</Tooltip.Content>
-                    </Tooltip>
-                  ) : (
-                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      <span className="text-sm">Connections</span>
-                    </div>
-                  )}
-                </button>
+                  <Button
+                    variant={isConnectionsActive ? "secondary" : "ghost"}
+                    fullWidth
+                    size="sm"
+                    className={cn("justify-start", "connection-tutorial")}
+                    onPress={() => navigate("/connections")}
+                  >
+                    <LuPlug size={18} />
+                    Connections
+                  </Button>
+                )
               )}
               {_canAccess("projectAdmin", team.TeamRoles) && (
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full rounded-large px-3 py-2 text-left",
-                    collapsed && "max-w-min text-center",
-                    _getActiveMenu() === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"
-                  )}
-                  onClick={() => navigate("/datasets")}
-                >
-                  {collapsed ? (
-                    <Tooltip>
-                      <Tooltip.Trigger>
-                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                          <LuLayers size={20} />
-                        </div>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content placement="right">Datasets</Tooltip.Content>
-                    </Tooltip>
-                  ) : (
-                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      <span className="text-sm">Datasets</span>
-                    </div>
-                  )}
-                </button>
+                collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant={isDatasetsActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className={cn("justify-center", "dataset-tutorial")}
+                        onPress={() => navigate("/datasets")}
+                      >
+                        <LuLayers size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Datasets</Tooltip.Content>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant={isDatasetsActive ? "secondary" : "ghost"}
+                    fullWidth
+                    size="sm"
+                    className={cn("justify-start", "dataset-tutorial")}
+                    onPress={() => navigate("/datasets")}
+                  >
+                    <LuLayers size={18} />
+                    Datasets
+                  </Button>
+                )
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full rounded-large px-3 py-2 text-left",
-                    collapsed && "max-w-min text-center",
-                    _getActiveMenu() === "integrations" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"
-                  )}
-                  onClick={() => navigate("/integrations")}
-                >
-                  {collapsed ? (
-                    <Tooltip>
-                      <Tooltip.Trigger>
-                        <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                          <LuPuzzle size={20} />
-                        </div>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content placement="right">Integrations</Tooltip.Content>
-                    </Tooltip>
-                  ) : (
-                    <div className="flex flex-row items-center gap-1 justify-start cursor-pointer">
-                      <span className="text-sm">Integrations</span>
-                    </div>
-                  )}
-                </button>
+                collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant={isIntegrationsActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className={cn("justify-center", "dataset-tutorial")}
+                        onPress={() => navigate("/integrations")}
+                      >
+                        <LuPuzzle size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Integrations</Tooltip.Content>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant={isIntegrationsActive ? "secondary" : "ghost"}
+                    fullWidth
+                    size="sm"
+                    className={cn("justify-start", "dataset-tutorial")}
+                    onPress={() => navigate("/integrations")}
+                  >
+                    <LuPuzzle size={18} />
+                    Integrations
+                  </Button>
+                )
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full rounded-large px-3 py-2 text-left",
-                    collapsed && "max-w-min text-center",
-                    _getActiveMenu() === "settings" ? "bg-content2 text-primary team-settings-tutorial" : "text-foreground team-settings-tutorial"
-                  )}
-                  onClick={() => navigate("/settings/members")}
-                >
-                  {collapsed ? <LuSettings size={20} /> : <span className="text-sm">Settings</span>}
-                </button>
+                collapsed ? (
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        variant={isSettingsActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className={cn("justify-center", "team-settings-tutorial")}
+                        onPress={() => navigate("/settings/members")}
+                      >
+                        <LuSettings size={20} />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content placement="right">Settings</Tooltip.Content>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant={isSettingsActive ? "secondary" : "ghost"}
+                    fullWidth
+                    size="sm"
+                    className={cn("justify-start", "team-settings-tutorial")}
+                    onPress={() => navigate("/settings/members")}
+                  >
+                    <LuSettings size={18} />
+                    Settings
+                  </Button>
+                )
               )}
             </div>
           </div>
@@ -436,11 +476,12 @@ function Sidebar() {
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    variant="tertiary"
                     onPress={() => _onCycleTheme()}
+                    variant="tertiary"
+                    size="sm"
+                    isIconOnly
                     fullWidth
                     className="justify-center"
-                    isIconOnly
                   >
                     {_getTheme().icon}
                   </Button>

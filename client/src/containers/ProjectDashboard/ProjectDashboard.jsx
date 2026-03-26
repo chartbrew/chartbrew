@@ -1018,13 +1018,13 @@ function ProjectDashboard() {
                                 <div className="w-full">
                                   <Link to={"/settings/members"}>
                                     <Button
-                                      endContent={<LuUsers />}
                                       variant="primary"
                                       size="sm"
                                       fullWidth
                                       className="pointer-events-none"
                                     >
                                       Edit access
+                                      <LuUsers />
                                     </Button>
                                   </Link>
                                   <div className="h-2" />
@@ -1095,8 +1095,8 @@ function ProjectDashboard() {
                           className="bg-background"
                           size="sm"
                           onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
-                          startContent={<LuGrid2X2Plus size={18} />}
                         >
+                          <LuGrid2X2Plus size={18} />
                           {"Add widget"}
                         </Button>
                       </Dropdown.Trigger>
@@ -1104,20 +1104,20 @@ function ProjectDashboard() {
                         <Dropdown.Menu>
                           <Dropdown.Item
                             id="add-chart"
-                            startContent={<LuChartPie />}
                             onPress={() => {
                               navigate(`/dashboard/${params.projectId}/chart`);
                             }}
                             textValue="Add chart"
                           >
+                            <LuChartPie />
                             Add chart
                           </Dropdown.Item>
                           <Dropdown.Item
                             id="add-text"
-                            startContent={<LuLetterText />}
                             onPress={() => _onAddMarkdown()}
                             textValue="Add text"
                           >
+                            <LuLetterText />
                             Add text
                           </Dropdown.Item>
                         </Dropdown.Menu>
@@ -1128,8 +1128,8 @@ function ProjectDashboard() {
                       className="bg-background"
                       size="sm"
                       onPress={() => setShowShare(true)}
-                      startContent={<LuShare size={18} />}
                     >
+                      <LuShare size={18} />
                       Share
                     </Button>
                     <ButtonGroup className="hidden sm:flex">
@@ -1139,8 +1139,8 @@ function ProjectDashboard() {
                         isPending={refreshLoading}
                         size="sm"
                         className="rounded-tl-lg! rounded-bl-lg! bg-background"
-                        startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                       >
+                        {refreshLoading ? <ButtonSpinner /> : null}
                         Refresh charts
                       </Button>
                       {_canAccess("projectEditor") && (
@@ -1224,55 +1224,53 @@ function ProjectDashboard() {
                         <Dropdown.Menu>
                           <Dropdown.Item
                             id="edit-layout"
-                            startContent={<LuLayoutDashboard />}
                             onPress={() => _onEditLayout()}
-                            endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
                             textValue="Edit layout"
                           >
+                            <LuLayoutDashboard />
                             {"Edit layout"}
+                            <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
                           </Dropdown.Item>
                           <Dropdown.Item
                             id="open-report"
-                            startContent={<LuTvMinimal />}
                             onPress={() => navigate(`/report/${project.brewName}/edit`)}
                             textValue="Open report"
                           >
+                            <LuTvMinimal />
                             {"Open report"}
                           </Dropdown.Item>
                           {_canAccess("projectEditor") && (
                             <Dropdown.Item
                               id="snapshots"
-                              startContent={<LuMonitorUp />}
                               onPress={() => setSnapshotScheduleVisible(true)}
-                              endContent={
-                                project?.snapshotSchedule?.frequency && (
-                                  <Chip size="sm" variant="soft" color="success" className="rounded-sm">
-                                    Active
-                                  </Chip>
-                                )
-                              }
                               textValue="Dashboard snapshots"
                             >
+                              <LuMonitorUp />
                               {"Dashboard snapshots"}
+                              {project?.snapshotSchedule?.frequency && (
+                                <Chip size="sm" variant="soft" color="success" className="rounded-sm">
+                                  Active
+                                </Chip>
+                              )}
                             </Dropdown.Item>
                           )}
                           {_canAccess("teamAdmin") && (
                             <Dropdown.Item
                               id="template"
-                              startContent={<LuCopyPlus />}
                               onPress={() => setTemplateVisible(true)}
                               textValue="Create a template"
                             >
+                              <LuCopyPlus />
                               {"Create a template"}
                             </Dropdown.Item>
                           )}
                           {_canExport() && (
                             <Dropdown.Item
                               id="export"
-                              startContent={<LuFileDown />}
                               onPress={() => _openExport()}
                               textValue="Export to Excel"
                             >
+                              <LuFileDown />
                               {"Export to Excel"}
                             </Dropdown.Item>
                           )}
@@ -1338,20 +1336,20 @@ function ProjectDashboard() {
                 <div className="h-4" />
                 <div className="flex flex-row justify-center gap-2">
                   <Button
-                    endContent={<LuPlug size={22} />}
                     size="lg"
                     variant={connections.length > 0 ? "tertiary" : "primary"}
                     onPress={() => navigate("/connections/new")}
                   >
                     Create a connection
+                    <LuPlug size={22} />
                   </Button>
                   {connections.length > 0 && (
                     <Button
-                      endContent={<LuChartPie size={22} />}
                       size="lg"
                       onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
                     >
                       Create a chart
+                      <LuChartPie size={22} />
                     </Button>
                   )}
                 </div>
@@ -1520,7 +1518,10 @@ function ProjectDashboard() {
               <div className="flex gap-2 items-center">
                 <Dropdown>
                   <Dropdown.Trigger>
-                    <Button size="sm" variant="tertiary" startContent={<LuLayoutDashboard />}>Auto-layout</Button>
+                    <Button size="sm" variant="tertiary">
+                      <LuLayoutDashboard />
+                      Auto-layout
+                    </Button>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
                     <Dropdown.Menu>

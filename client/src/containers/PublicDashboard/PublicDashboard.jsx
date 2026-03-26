@@ -616,8 +616,8 @@ function PublicDashboard() {
               onPress={() => window.history.back()}
               variant="primary"
               size="lg"
-              startContent={<LuChevronLeft />}
             >
+              <LuChevronLeft />
               Go back
             </Button>
           </Row>
@@ -875,12 +875,12 @@ function PublicDashboard() {
             <div className="hidden sm:block">
               <Button
                 variant="primary"
-                endContent={!saveLoading ? <LuCircleCheck /> : undefined}
                 isPending={saveLoading}
-                startContent={saveLoading ? <ButtonSpinner /> : undefined}
                 onPress={_onSaveChanges}
               >
+                {saveLoading ? <ButtonSpinner /> : null}
                 Save changes
+                {!saveLoading ? <LuCircleCheck /> : null}
               </Button>
             </div>
           )}
@@ -888,10 +888,10 @@ function PublicDashboard() {
             <div>
               <Button
                 onPress={() => setPreview(false)}
-                endContent={<LuCircleX />}
                 variant="tertiary"
               >
                 Exit preview
+                <LuCircleX />
               </Button>
             </div>
           )}
@@ -900,13 +900,13 @@ function PublicDashboard() {
             <div className="hidden sm:block">
               <Button
                 onPress={() => _onRefreshCharts()}
-                endContent={!refreshLoading ? <LuRefreshCw /> : undefined}
                 isPending={refreshLoading}
-                startContent={refreshLoading ? <ButtonSpinner /> : undefined}
                 size="sm"
                 variant="primary"
               >
+                {refreshLoading ? <ButtonSpinner /> : null}
                 Refresh charts
+                {!refreshLoading ? <LuRefreshCw /> : null}
               </Button>
             </div>
           )}

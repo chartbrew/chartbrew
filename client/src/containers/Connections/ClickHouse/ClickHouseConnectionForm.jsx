@@ -283,13 +283,17 @@ function ClickHouseConnectionForm(props) {
         <div className="h-8" />
         <div className="flex items-center gap-2">
           <Switch
-            label="SSL"
+            id="clickhouse-connection-ssl"
             isSelected={connection.ssl || false}
-            checked={connection.ssl || false}
-            onChange={(e) => _onChangeSSL(e.target.checked)}
+            onChange={(selected) => _onChangeSSL(selected)}
             size="sm"
           >
-            {"Enable SSL"}
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="clickhouse-connection-ssl">{"Enable SSL"}</Label>
+            </Switch.Content>
           </Switch>
         </div>
         {connection.ssl && (
@@ -351,9 +355,9 @@ function ClickHouseConnectionForm(props) {
                   />
                   <Button
                     variant="ghost"
-                    startContent={<LuUpload />}
                     onPress={() => document.getElementById("rootCertInput").click()}
                   >
+                    <LuUpload />
                     {"Certificate authority"}
                   </Button>
                   <div className="w-4" />
@@ -379,9 +383,9 @@ function ClickHouseConnectionForm(props) {
                   />
                   <Button
                     variant="ghost"
-                    startContent={<LuUpload />}
                     onPress={() => document.getElementById("clientCertInput").click()}
                   >
+                    <LuUpload />
                     {"SSL certificate"}
                   </Button>
                   <div className="w-4" />
@@ -407,9 +411,9 @@ function ClickHouseConnectionForm(props) {
                   />
                   <Button
                     variant="ghost"
-                    startContent={<LuUpload />}
                     onPress={() => document.getElementById("clientKeyInput").click()}
                   >
+                    <LuUpload />
                     {"SSL key"}
                   </Button>
                   <div className="w-4" />
@@ -457,17 +461,18 @@ function ClickHouseConnectionForm(props) {
           <Button
             variant="ghost"
             auto
-            onClick={() => _onCreateConnection(true)}
+            onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
+            {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
           </Button>
           <div className="w-2" />
           <Button
             isPending={loading}
-            onPress={_onCreateConnection} startContent={loading ? <ButtonSpinner /> : undefined}
+            onPress={_onCreateConnection}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
           </Button>
         </Row>

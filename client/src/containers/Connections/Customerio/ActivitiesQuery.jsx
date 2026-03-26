@@ -437,56 +437,48 @@ function ActivitiesQuery({
         {request?.configuration?.activityType && (
           <Chip
             variant="secondary"
-            startContent={<LuActivity />}
-            endContent={(
-              <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleActivityTypeChange("")} />
-            )}
           >
+            <LuActivity />
             <span className="text-primary">
               {`Activity Type: ${_getActivityTypeName(request?.configuration?.activityType)}`}
             </span>
+            <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleActivityTypeChange("")} />
           </Chip>
         )}
         {request?.configuration?.eventName && (
           <Chip
             variant="secondary"
-            startContent={<LuActivity />}
-            endContent={(
-              <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleEventNameChange("")} />
-            )}
           >
+            <LuActivity />
             <span className="text-primary">
               {`Event Name: ${request?.configuration?.eventName}`}
             </span>
+            <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleEventNameChange("")} />
           </Chip>
         )}
         {request?.configuration?.customerId && (
           <Chip
             variant="secondary"
-            startContent={<LuActivity />}
-            endContent={(
-              <LuX size={16} className="text-danger cursor-pointer" onClick={() => {
-                _handleCustomerIdChange("");
-                _handleIdTypeChange("id");
-              }} />
-            )}
           >
+            <LuActivity />
             <span className="text-primary">
               {`Customer ID (${_getIdTypeName(request?.configuration?.idType)}): ${request?.configuration?.customerId}`}
             </span>
+            <LuX size={16} className="text-danger cursor-pointer" onClick={() => {
+              _handleCustomerIdChange("");
+              _handleIdTypeChange("id");
+            }} />
           </Chip>
         )}
         {request?.configuration?.deleted && (
           <Chip
             variant="secondary"
-            startContent={<LuActivity />}
-            endContent={(
-              <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleDeletedChange(false)} />
-            )}
           >
+            <LuActivity />
             <span className="text-primary">
               Include deleted people
             </span>
+            <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleDeletedChange(false)} />
           </Chip>
         )}
       </div>

@@ -158,8 +158,8 @@ function SlackIntegration({ integration }) {
           color="danger"
           onPress={() => setDeleteModalOpen(true)}
           size="sm"
-          startContent={<LuTrash size={18} />}
         >
+          <LuTrash size={18} />
           Delete Integration
         </Button>
       </div>
@@ -211,9 +211,14 @@ function SlackIntegration({ integration }) {
             </div>
             <Switch
               isSelected={allowAllChannels}
-              onValueChange={setAllowAllChannels}
+              onChange={setAllowAllChannels}
               size="sm"
-            />
+              aria-label="Allow all channels"
+            >
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+            </Switch>
           </div>
         </div>
 
@@ -261,9 +266,9 @@ function SlackIntegration({ integration }) {
             color="primary"
             onPress={handleSave}
             isPending={loading}
-            startContent={loading ? <ButtonSpinner /> : undefined}
             size="sm"
           >
+            {loading ? <ButtonSpinner /> : null}
             Save Changes
           </Button>
         </div>

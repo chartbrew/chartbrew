@@ -161,40 +161,38 @@ function TableConfiguration(props) {
                       key={field.accessor}
                       color="primary"
                       className="rounded-sm"
-                      endContent={
-                        <Dropdown aria-label="Select a data formatting option" size="sm">
-                          <Dropdown.Trigger>
-                            <Link
-                              className="flex items-center text-background cursor-pointer"
-                              title="Field options"
-                            >
-                              <LuChevronDown className="text-background cursor-pointer" size={16} />
-                            </Link>
-                          </Dropdown.Trigger>
-                          <Dropdown.Popover>
-                            <Dropdown.Menu>
-                              <Dropdown.Item
-                                id="format"
-                                startContent={<LuSettings />}
-                                textValue="Column formatting"
-                                onPress={() => _onSelectFieldForFormatting(field.accessor)}
-                              >
-                                Column formatting
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                id="hide"
-                                startContent={<LuEyeOff />}
-                                textValue="Hide field"
-                                onPress={() => _onExcludeField(field.accessor)}
-                              >
-                                Hide field
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown.Popover>
-                        </Dropdown>
-                      }
                     >
                       {`${field.accessor.replace("?", ".")}`}
+                      <Dropdown aria-label="Select a data formatting option" size="sm">
+                        <Dropdown.Trigger>
+                          <Link
+                            className="flex items-center text-background cursor-pointer"
+                            title="Field options"
+                          >
+                            <LuChevronDown className="text-background cursor-pointer" size={16} />
+                          </Link>
+                        </Dropdown.Trigger>
+                        <Dropdown.Popover>
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              id="format"
+                              textValue="Column formatting"
+                              onPress={() => _onSelectFieldForFormatting(field.accessor)}
+                            >
+                              <LuSettings />
+                              Column formatting
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              id="hide"
+                              textValue="Hide field"
+                              onPress={() => _onExcludeField(field.accessor)}
+                            >
+                              <LuEyeOff />
+                              Hide field
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown.Popover>
+                      </Dropdown>
                     </Chip>
                   );
                 })}
@@ -246,12 +244,10 @@ function TableConfiguration(props) {
                     onClick={() => _onShowField(field)}
                     variant="soft"
                     className="rounded-sm"
-                    startContent={(
-                      <Link className="flex items-center" onPress={() => _onShowField(field)}>
-                        <LuEye className="text-gray-500 cursor-pointer" size={16} />
-                      </Link>
-                    )}
                   >
+                    <Link className="flex items-center" onPress={() => _onShowField(field)}>
+                      <LuEye className="text-gray-500 cursor-pointer" size={16} />
+                    </Link>
                     {field.replace("?", ".")}
                   </Chip>
                 ))}
@@ -265,8 +261,8 @@ function TableConfiguration(props) {
                 onPress={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
                 isPending={loading}
                 size="sm"
-                startContent={loading ? <ButtonSpinner /> : <LuReplaceAll size={20} />}
               >
+                {loading ? <ButtonSpinner /> : <LuReplaceAll size={20} />}
                 {isDragState ? "Confirm ordering" : "Reorder columns"}
               </Button>
               {isDragState && (

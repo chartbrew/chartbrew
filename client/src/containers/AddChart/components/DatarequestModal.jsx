@@ -500,8 +500,8 @@ function DatarequestModal(props) {
             onPress={() => _onBuildChart()}
             variant="primary"
             isPending={loading}
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Build the chart"}
           </Button>
             </Modal.Footer>

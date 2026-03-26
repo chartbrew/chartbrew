@@ -238,9 +238,9 @@ function SimpleAnalyticsTemplate(props) {
             {!formVisible && (
               <Button
                 variant="primary"
-                endContent={<LuPlus />}
                 onPress={() => setFormVisible(true)}
               >
+                <LuPlus />
                 Or create a new connection
               </Button>
             )}
@@ -337,20 +337,20 @@ function SimpleAnalyticsTemplate(props) {
           <Row>
             <Button
               variant="secondary"
-              startContent={<LuCheckCheck />}
               onPress={_onSelectAll}
               size="sm"
             >
               Select all
+              <LuCheckCheck />
             </Button>
             <div className="w-1" />
             <Button
               variant="secondary"
-              startContent={<LuX />}
               onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
+              <LuX />
             </Button>
           </Row>
         </>
@@ -446,10 +446,10 @@ function SimpleAnalyticsTemplate(props) {
           }
           onPress={_onGenerateDashboard}
           variant="primary"
-          endContent={!loading ? <LuArrowRight /> : undefined}
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           {"Create the charts"}
+          {!loading ? <LuArrowRight /> : null}
         </Button>
       </Row>
     </div>

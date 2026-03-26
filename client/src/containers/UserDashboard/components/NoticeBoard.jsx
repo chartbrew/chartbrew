@@ -50,10 +50,10 @@ function NoticeBoard() {
                   variant="tertiary"
                   color="primary"
                   onPress={() => setShowQuickStart(true)}
-                  endContent={<LuCirclePlay />}
                   size="lg"
                 >
                   Watch video
+                  <LuCirclePlay />
                 </Button>
               </div>
             </div>
@@ -85,11 +85,11 @@ function NoticeBoard() {
             <Link to="/user/profile" className="w-full">
               <Button
                 color="primary"
-                endContent={<LuShieldCheck />}
                 fullWidth
                 className="pointer-events-none"
               >
                 Set up 2FA
+                <LuShieldCheck />
               </Button>
             </Link>
           </Card.Footer>

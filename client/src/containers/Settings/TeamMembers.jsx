@@ -3,12 +3,13 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
-  TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Input, Label,
+  TextField, InputGroup,
+  Label,
+  EmptyState,
 } from "@heroui/react";
 import _ from "lodash";
 import toast from "react-hot-toast";
-import { LuFolderKey, LuInfo, LuStar, LuUser, LuX, LuCircleX, LuKeyRound, LuIdCard, LuCircleCheck } from "react-icons/lu";
+import { LuFolderKey, LuInfo, LuStar, LuUser, LuUsers, LuX, LuCircleX, LuKeyRound, LuIdCard, LuCircleCheck } from "react-icons/lu";
 
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
@@ -207,30 +208,35 @@ function TeamMembers(props) {
         <div className="h-4" />
 
         {_canAccess("teamAdmin") && (
-          <Table className="shadow-none">
+          <Table className="shadow-none min-h-[200px]">
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Team members"
                 className="min-w-full even:[&_tbody>tr]:bg-content2/30"
               >
-                <TableHeader>
-                  <TableColumn key="member" isRowHeader textValue="Member">
+                <Table.Header>
+                  <Table.Column id="member" isRowHeader>
                     Member
-                  </TableColumn>
-                  <TableColumn key="role" textValue="Role">
+                  </Table.Column>
+                  <Table.Column id="role">
                     Role
-                  </TableColumn>
-                  <TableColumn key="projectAccess" textValue="Projects">
+                  </Table.Column>
+                  <Table.Column id="projectAccess">
                     Projects
-                  </TableColumn>
-                  <TableColumn key="export" textValue="Can export">
+                  </Table.Column>
+                  <Table.Column id="export">
                     Can export
-                  </TableColumn>
-                  <TableColumn key="actions" className="w-12" textValue="Actions" />
-                </TableHeader>
-                <TableBody
+                  </Table.Column>
+                  <Table.Column id="actions" className="w-12">
+                    <span className="sr-only">Actions</span>
+                  </Table.Column>
+                </Table.Header>
+                <Table.Body
                   renderEmptyState={() => (
-                    <span className="text-default-500">No team members</span>
+                    <EmptyState className="flex h-full w-full min-h-[160px] flex-col items-center justify-center gap-2 text-center">
+                      <LuUsers className="size-6 text-muted" aria-hidden />
+                      <span className="text-sm text-muted">No team members</span>
+                    </EmptyState>
                   )}
                 >
                   {(teamMembers || []).map((member) => {
@@ -243,27 +249,27 @@ function TeamMembers(props) {
                 }
 
                 return (
-                  <TableRow key={member.id}>
-                    <TableCell key="member" className="flex flex-col">
+                  <Table.Row key={member.id} id={String(member.id)}>
+                    <Table.Cell className="flex flex-col">
                       <div className="font-bold">{member.name}</div>
                       <div className="text-sm text-gray-500">{member.email}</div>
-                    </TableCell>
-                    <TableCell key="role">
-                      {memberRole.role === "teamOwner" && <Chip variant="primary" size="sm" startContent={<LuStar size={14} />}>Team Owner</Chip>}
-                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="soft" size="sm" startContent={<LuStar size={14} />}>Team Admin</Chip>}
-                      {memberRole.role === "projectAdmin" && <Chip variant="secondary" size="sm" startContent={<LuUser size={14} />}>Client admin</Chip>}
-                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="soft" size="sm" startContent={<LuUser size={14} />}>Client editor</Chip>}
-                      {memberRole.role === "projectViewer" && <Chip color="default" variant="soft" size="sm" startContent={<LuUser size={14} />}>Client viewer</Chip>}
-                    </TableCell>
-                    <TableCell key="projectAccess">
+                    </Table.Cell>
+                    <Table.Cell>
+                      {memberRole.role === "teamOwner" && <Chip variant="primary" size="sm"><LuStar size={14} />Team Owner</Chip>}
+                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="soft" size="sm"><LuStar size={14} />Team Admin</Chip>}
+                      {memberRole.role === "projectAdmin" && <Chip variant="secondary" size="sm"><LuUser size={14} />Client admin</Chip>}
+                      {memberRole.role === "projectEditor" && <Chip color="warning" variant="soft" size="sm"><LuUser size={14} />Client editor</Chip>}
+                      {memberRole.role === "projectViewer" && <Chip color="default" variant="soft" size="sm"><LuUser size={14} />Client viewer</Chip>}
+                    </Table.Cell>
+                    <Table.Cell>
                       {memberRole?.role !== "teamOwner" && memberRole?.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
                       {memberRole?.role === "teamOwner" || memberRole?.role === "teamAdmin" ? "All" : ""}
-                    </TableCell>
-                    <TableCell key="export">
+                    </Table.Cell>
+                    <Table.Cell>
                       {(memberRole?.canExport || (memberRole?.role?.indexOf("team") > -1)) && <Chip color="success" variant="soft" size="sm">Yes</Chip>}
                       {(!memberRole?.canExport && memberRole?.role?.indexOf("team") === -1) && <Chip color="danger" variant="soft" size="sm">No</Chip>}
-                    </TableCell>
-                    <TableCell key="actions">
+                    </Table.Cell>
+                    <Table.Cell>
                       <div className="flex flex-row items-center gap-1">
                         {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (
                           <>
@@ -408,11 +414,11 @@ function TeamMembers(props) {
                             </Tooltip>
                           )}
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 );
                   })}
-                </TableBody>
+                </Table.Body>
               </Table.Content>
             </Table.ScrollContainer>
           </Table>
@@ -560,13 +566,22 @@ function TeamMembers(props) {
                   {`This action will make ${transferOwnershipMember?.name} the new owner of the team. They will have full access to the team and all its resources, while you will become an admin.`}
                 </div>
                 <div>
-                  <Input
-                    label={<div>Type <span className="font-bold">transfer</span> to confirm</div>}
-                    value={transferConfirmation}
-                    onChange={(e) => setTransferConfirmation(e.target.value)}
-                    variant="secondary"
-                    endContent={transferConfirmation === "transfer" && <LuCircleCheck size={18} className="text-success" />}
-                  />
+                  <TextField className="w-full" name="transfer-confirmation">
+                    <Label>
+                      Type <span className="font-bold">transfer</span> to confirm
+                    </Label>
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        value={transferConfirmation}
+                        onChange={(e) => setTransferConfirmation(e.target.value)}
+                      />
+                      {transferConfirmation === "transfer" && (
+                        <InputGroup.Suffix className="pr-2">
+                          <LuCircleCheck size={18} className="text-success" aria-hidden />
+                        </InputGroup.Suffix>
+                      )}
+                    </InputGroup>
+                  </TextField>
                 </div>
               </Modal.Body>
               <Modal.Footer>

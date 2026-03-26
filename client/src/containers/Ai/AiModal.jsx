@@ -801,10 +801,10 @@ function AiModal({ isOpen, onClose }) {
                       <Chip
                         variant="primary"
                         size="sm"
-                        endContent={<LuChevronDown size={14} />}
                         className="cursor-pointer"
                       >
                         Tool: {tool.name}
+                        <LuChevronDown size={14} />
                       </Chip>
                     </Popover.Trigger>
                     <Popover.Content placement="bottom" className="max-w-md">
@@ -839,8 +839,9 @@ function AiModal({ isOpen, onClose }) {
               </div>
               <Popover aria-label="Tool result">
                 <Popover.Trigger>
-                  <Button size="sm" variant="tertiary" endContent={<LuChevronDown size={14} />}>
+                  <Button size="sm" variant="tertiary">
                     View result
+                    <LuChevronDown size={14} />
                   </Button>
                 </Popover.Trigger>
                 <Popover.Content placement="bottom" className="max-w-2xl">
@@ -1323,11 +1324,17 @@ function AiModal({ isOpen, onClose }) {
                   <Button
                     variant="tertiary"
                     size="sm"
-                    startContent={selectedContext.multiSelect.length > 0 ? null : <LuAtSign size={16} />}
                     isPending={isLoading}
                     isIconOnly={selectedContext.multiSelect.length > 0}
                   >
-                    {selectedContext.multiSelect.length > 0 ? <LuAtSign size={16} /> : "Add extra context"}
+                    {selectedContext.multiSelect.length > 0 ? (
+                      <LuAtSign size={16} />
+                    ) : (
+                      <>
+                        <LuAtSign size={16} />
+                        Add extra context
+                      </>
+                    )}
                   </Button>
                 </Popover.Trigger>
                 <Popover.Content placement="bottom" className="w-80">
@@ -1525,7 +1532,6 @@ function AiModal({ isOpen, onClose }) {
                   <div className="w-full px-4 pt-4 border-r border-divider rounded-tl-2xl">
                     <Button
                       variant="primary"
-                      startContent={<LuPlus size={18} />}
                       onPress={() => {
                         setConversation(null);
                         setLocalMessages([]);
@@ -1540,6 +1546,7 @@ function AiModal({ isOpen, onClose }) {
                       }}
                       fullWidth
                     >
+                      <LuPlus size={18} />
                       New Conversation
                     </Button>
                     <div className="h-4" />

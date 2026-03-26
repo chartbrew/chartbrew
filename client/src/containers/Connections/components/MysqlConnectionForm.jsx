@@ -454,13 +454,17 @@ function MysqlConnectionForm(props) {
         <div className="h-4" />
         <Row align="center">
           <Switch
-            label="SSL"
+            id="mysql-connection-ssl"
             isSelected={connection.ssl || false}
-            checked={connection.ssl || false}
-            onChange={(e) => _onChangeSSL(e.target.checked)}
+            onChange={(selected) => _onChangeSSL(selected)}
             size="sm"
           >
-            {"Enable SSL"}
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="mysql-connection-ssl">{"Enable SSL"}</Label>
+            </Switch.Content>
           </Switch>
         </Row>
         {connection.ssl && (
@@ -519,9 +523,9 @@ function MysqlConnectionForm(props) {
               />
               <Button
                 variant="ghost"
-                startContent={<LuUpload />}
                 onPress={() => document.getElementById("rootCertInput").click()}
               >
+                <LuUpload />
                 {"Certificate authority"}
               </Button>
               <div className="w-4" />
@@ -547,9 +551,9 @@ function MysqlConnectionForm(props) {
               />
               <Button
                 variant="ghost"
-                startContent={<LuUpload />}
                 onPress={() => document.getElementById("clientCertInput").click()}
               >
+                <LuUpload />
                 {"SSL certificate"}
               </Button>
               <div className="w-4" />
@@ -575,9 +579,9 @@ function MysqlConnectionForm(props) {
               />
               <Button
                 variant="ghost"
-                startContent={<LuUpload />}
                 onPress={() => document.getElementById("clientKeyInput").click()}
               >
+                <LuUpload />
                 {"SSL key"}
               </Button>
               <div className="w-4" />
@@ -605,16 +609,22 @@ function MysqlConnectionForm(props) {
         <div className="h-8" />
         <Row align="center">
           <Switch
-            label="SSH Tunnel"
+            id="mysql-connection-ssh-tunnel"
             isSelected={connection.useSsh || false}
-            checked={connection.useSsh || false}
-            onChange={(e) => setConnection({ ...connection, useSsh: e.target.checked })}
+            onChange={(selected) => setConnection({ ...connection, useSsh: selected })}
             size="sm"
           >
-            <div className="flex items-center gap-2">
-              {"Use SSH Tunnel"}
-              <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
-            </div>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="mysql-connection-ssh-tunnel">
+                <div className="flex items-center gap-2">
+                  {"Use SSH Tunnel"}
+                  <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
+                </div>
+              </Label>
+            </Switch.Content>
           </Switch>
         </Row>
         {connection.useSsh && (
@@ -687,9 +697,9 @@ function MysqlConnectionForm(props) {
               />
               <Button
                 variant="ghost"
-                startContent={<LuUpload />}
                 onPress={() => document.getElementById("sshPrivateKeyInput").click()}
               >
+                <LuUpload />
                 {"SSH Private Key"}
               </Button>
               <div className="w-4" />
@@ -795,8 +805,8 @@ function MysqlConnectionForm(props) {
             auto
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
+            {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
           </Button>
           <div className="w-2" />
@@ -804,8 +814,8 @@ function MysqlConnectionForm(props) {
             isPending={loading}
             onPress={_onCreateConnection}
             variant="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
           </Button>
         </Row>

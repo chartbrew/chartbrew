@@ -190,22 +190,22 @@ function AddFilters(props) {
           )}
           {filterType === "variables" && (
             <Button
-              endContent={<LuPlus />}
               isDisabled={!variableCondition.variable}
               onPress={_onAddVariableFilter}
               variant="primary"
             >
               Add filter
+              <LuPlus />
             </Button>
           )}
           {filterType === "field" && (
             <Button
-              endContent={<LuPlus />}
               onPress={_onAddFilter}
               variant="primary"
               isDisabled={!filter.field}
             >
               Add filter
+              <LuPlus />
             </Button>
           )}
         </Drawer.Footer>

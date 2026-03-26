@@ -1,10 +1,11 @@
-import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, Input, Label, ListBox, Modal, Pagination, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, InputGroup, Label, ListBox, Modal, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, TextField, useFilter } from "@heroui/react";
 import React, { useEffect, useMemo, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
+import HeroPaginationNav from "../../components/HeroPaginationNav";
 import connectionImages from "../../config/connectionImages";
 import { selectTeam } from "../../slices/team";
 import { selectConnections } from "../../slices/connection";
@@ -267,11 +268,12 @@ function DatasetList() {
           </div>
         </div>
         {_canAccess("teamAdmin", team.TeamRoles) && (
-          <Button endContent={<LuPlus />}
+          <Button
             onPress={() => _onCreateDataset()}
             isDisabled={connections.length === 0}
           >
             Create dataset
+            <LuPlus />
           </Button>
         )}
       </div>
@@ -293,8 +295,8 @@ function DatasetList() {
               variant="ghost"
               size="sm"
               onPress={_onClearAllFilters}
-              startContent={<LuX size={14} />}
             >
+              <LuX size={14} />
               Clear all
             </Button>
           )}
@@ -302,16 +304,21 @@ function DatasetList() {
         <div className="h-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <div>
-            <Input
-              label="Search"
-              type="text"
-              placeholder="Search datasets"
-              endContent={<LuSearch />}
-              labelPlacement="outside"
-              onChange={(e) => setSearchFilter({ ...searchFilter, search: e.target.value })}
-              value={searchFilter.search}
-              size="sm"
-            />
+            <TextField className="w-full" name="dataset-list-search">
+              <Label>Search</Label>
+              <InputGroup fullWidth>
+                <InputGroup.Input
+                  type="text"
+                  placeholder="Search datasets"
+                  className="text-sm"
+                  onChange={(e) => setSearchFilter({ ...searchFilter, search: e.target.value })}
+                  value={searchFilter.search}
+                />
+                <InputGroup.Suffix className="pr-2">
+                  <LuSearch className="size-4 text-muted" aria-hidden />
+                </InputGroup.Suffix>
+              </InputGroup>
+            </TextField>
           </div>
           <div>
             <Autocomplete
@@ -457,8 +464,8 @@ function DatasetList() {
             variant="danger-soft"
             size="sm"
             onPress={() => setShowDeleteDatasets(true)}
-            startContent={<LuTrash size={16} />}
           >
+            <LuTrash size={16} />
             Delete selected
           </Button>
           <div className="h-4" />
@@ -610,7 +617,6 @@ function DatasetList() {
                   {_getDatasetTags(dataset.project_ids).length === 0 && (
                     <Button
                       variant="ghost"
-                      startContent={<LuPlus size={18} />}
                       size="sm"
                       className="opacity-0 hover:opacity-100"
                       onPress={() => {
@@ -619,6 +625,7 @@ function DatasetList() {
                         }
                       }}
                     >
+                      <LuPlus size={18} />
                       Add tag
                     </Button>
                   )}
@@ -645,9 +652,9 @@ function DatasetList() {
                           <Dropdown.Item
                             id="dataset"
                             onPress={() => navigate(`/datasets/${dataset.id}`)}
-                            startContent={<LuPencilLine />}
                             textValue="Edit dataset"
                           >
+                            <LuPencilLine />
                             Edit dataset
                           </Dropdown.Item>
                           <Dropdown.Item
@@ -656,27 +663,27 @@ function DatasetList() {
                               setDatasetToDuplicate(dataset);
                               setDuplicateDatasetName(getDatasetDisplayName(dataset));
                             }}
-                            startContent={<LuCopy />}
                             textValue="Duplicate dataset"
                           >
+                            <LuCopy />
                             Duplicate dataset
                           </Dropdown.Item>
                           <Dropdown.Item
                             id="tags"
                             onPress={() => setDatasetToEdit(dataset)}
-                            startContent={<LuTags />}
                             showDivider
                             textValue="Edit tags"
                           >
+                            <LuTags />
                             Edit tags
                           </Dropdown.Item>
                           <Dropdown.Item
                             id="delete"
                             onPress={() => _onPressDeleteDataset(dataset)}
-                            startContent={<LuTrash />}
                             variant="danger"
                             textValue="Delete"
                           >
+                            <LuTrash />
                             Delete
                           </Dropdown.Item>
                         </Dropdown.Menu>
@@ -696,12 +703,13 @@ function DatasetList() {
         <>
           <div className="h-3" />
           <div className="flex justify-start px-4 py-2 border-1 border-solid border-content3 rounded-lg bg-content1">
-            <Pagination
-              total={totalPages}
+            <HeroPaginationNav
               page={currentPage}
-              onChange={setCurrentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
               size="sm"
-              aria-label="Dataset list pagination"
+              className="justify-start"
+              ariaLabel="Dataset list pagination"
             />
           </div>
         </>
@@ -830,13 +838,16 @@ function DatasetList() {
             <Modal.Heading>Duplicate dataset</Modal.Heading>
           </Modal.Header>
           <Modal.Body>
-            <Input
-              label="New dataset name"
-              placeholder="Dataset name"
-              value={duplicateDatasetName}
-              onChange={(e) => setDuplicateDatasetName(e.target.value)}
-              variant="secondary"
-            />
+            <TextField className="w-full" name="duplicate-dataset-name">
+              <Label>New dataset name</Label>
+              <InputGroup variant="secondary" fullWidth>
+                <InputGroup.Input
+                  placeholder="Dataset name"
+                  value={duplicateDatasetName}
+                  onChange={(e) => setDuplicateDatasetName(e.target.value)}
+                />
+              </InputGroup>
+            </TextField>
           </Modal.Body>
           <Modal.Footer>
             <Button

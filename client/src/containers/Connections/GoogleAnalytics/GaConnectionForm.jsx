@@ -159,29 +159,29 @@ function GaConnectionForm(props) {
               color={"secondary"}
               isDisabled={!connection.name}
               isPending={loading}
-              startContent={loading ? <ButtonSpinner /> : undefined}
               onClick={() => _onCreateConnection()}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Create connection"}
             </Button>
           )}
           {editConnection && !connection.OAuth && (
             <Button
               color={"secondary"}
-              endContent={<FaGoogle size={20} />}
               onClick={_onGoogleAuth}
             >
               {"Authenticate with Google"}
+              <FaGoogle size={20} />
             </Button>
           )}
           {editConnection && connection.OAuth && (
             <Button
               color={"secondary"}
-              endContent={<LuRefreshCw />}
               onClick={_onGoogleAuth}
               size="sm"
             >
               {"Click here to re-authenticate"}
+              <LuRefreshCw />
             </Button>
           )}
         </Row>
@@ -223,8 +223,8 @@ function GaConnectionForm(props) {
               onClick={() => _onCreateConnection(true)}
               isDisabled={!connection.name || !connection.oauth_id}
               isPending={testLoading}
-              startContent={testLoading ? <ButtonSpinner /> : undefined}
             >
+              {testLoading ? <ButtonSpinner /> : null}
               {"Test connection"}
             </Button>
             <div className="w-2" />
@@ -233,8 +233,8 @@ function GaConnectionForm(props) {
               isPending={loading}
               onClick={_onCreateConnection}
               color="primary"
-              startContent={loading ? <ButtonSpinner /> : undefined}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Save connection"}
             </Button>
           </Row>

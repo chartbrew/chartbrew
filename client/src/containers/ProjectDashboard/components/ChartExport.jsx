@@ -49,18 +49,18 @@ function ChartExport(props) {
         <Button
           variant="ghost"
           onPress={_onSelectAll}
-          endContent={<LuCheckCheck />}
           size="sm"
         >
           Select all
+          <LuCheckCheck />
         </Button>
         <Button
           variant="ghost"
           onPress={_onDeselectAll}
           size="sm"
-          endContent={<LuX />}
         >
           Deselect all
+          <LuX />
         </Button>
       </div>
       <div className="h-4" />
@@ -141,13 +141,13 @@ function ChartExport(props) {
       <div>
         <Button
           onPress={() => onExport(selectedIds)}
-          endContent={!loading ? <LuFileDown /> : undefined}
           isPending={loading}
-          startContent={loading ? <ButtonSpinner /> : undefined}
           color="primary"
           fullWidth
         >
+          {loading ? <ButtonSpinner /> : null}
           {"Export"}
+          {!loading ? <LuFileDown /> : null}
         </Button>
       </div>
       <div className="h-8" />

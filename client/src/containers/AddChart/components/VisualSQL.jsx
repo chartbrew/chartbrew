@@ -961,10 +961,10 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
                 <Popover.Dialog>
                   <Button
                     size="sm" variant="ghost"
-                    endContent={<LuX />}
                     onPress={() => _onRemoveColumn(typeof col.expr.column === "object" ? col.expr.column.expr.value : col.expr.column)}
                   >
                     Remove
+                    <LuX />
                   </Button>
                 </Popover.Dialog>
               </Popover.Content>

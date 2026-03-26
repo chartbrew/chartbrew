@@ -196,11 +196,11 @@ function DateRangeFilter({
               <Button
                 variant="secondary"
                 onPress={() => _applyDateRange()}
-                endContent={<LuArrowRight size={18} />}
                 size="sm"
                 fullWidth
               >
                 Apply
+                <LuArrowRight size={18} />
               </Button>
             </div>
           )}

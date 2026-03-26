@@ -237,11 +237,11 @@ function DatasetFilters(props) {
       {conditions && conditions.length === 0 && (
         <div className="datasetdata-filters-tut">
           <Button
-            startContent={<LuListFilter />}
             onPress={_onAddCondition}
             variant="tertiary"
             size="sm"
           >
+            <LuListFilter />
             Add data filters
           </Button>
         </div>
@@ -384,13 +384,14 @@ function DatasetFilters(props) {
               {!condition.saved && condition.field && (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button endContent={<LuCircleCheck size={18} />}
+                    <Button
                       variant="ghost"
                       size="sm"
                       onPress={() => _onApplyCondition(condition.id, condition.exposed)}
                       fullWidth
                     >
                       Apply
+                      <LuCircleCheck size={18} />
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Apply this condition</Tooltip.Content>
@@ -399,13 +400,14 @@ function DatasetFilters(props) {
 
               <Tooltip>
                 <Tooltip.Trigger>
-                  <Button endContent={<LuCircleX size={18} />}
+                  <Button
                     variant="ghost"
                     size="sm"
                     onPress={() => _onRemoveCondition(condition.id)}
                     fullWidth
                   >
                     Remove
+                    <LuCircleX size={18} />
                   </Button>
                 </Tooltip.Trigger>
                 <Tooltip.Content>Remove filter</Tooltip.Content>
@@ -415,7 +417,7 @@ function DatasetFilters(props) {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      endContent={<LuEye size={18} />} variant="ghost"
+                      variant="ghost"
                       size="sm"
                       onPress={() => _onApplyCondition(
                         condition.id,
@@ -426,6 +428,7 @@ function DatasetFilters(props) {
                       fullWidth
                     >
                       Expose
+                      <LuEye size={18} />
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Expose filter to viewers</Tooltip.Content>
@@ -437,7 +440,6 @@ function DatasetFilters(props) {
                   <Tooltip.Trigger>
                     <Button variant="ghost"
                       size="sm"
-                      endContent={<LuEyeOff size={18} />}
                       onPress={() => _onApplyCondition(
                         condition.id,
                         false,
@@ -447,6 +449,7 @@ function DatasetFilters(props) {
                       fullWidth
                     >
                       Hide
+                      <LuEyeOff size={18} />
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Hide this filter from viewers</Tooltip.Content>
@@ -456,13 +459,14 @@ function DatasetFilters(props) {
               {!condition.saved && condition.value && (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button endContent={<LuRedo size={18} />}
+                    <Button
                       variant="ghost"
                       size="sm"
                       onPress={() => _onRevertCondition(condition.id)}
                       fullWidth
                     >
                       Undo
+                      <LuRedo size={18} />
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Undo changes</Tooltip.Content>
@@ -474,11 +478,11 @@ function DatasetFilters(props) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      endContent={<LuSettings size={18} />}
                       onPress={() => _onEditConditionSettings(condition)}
                       fullWidth
                     >
                       Config
+                      <LuSettings size={18} />
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Filter settings</Tooltip.Content>
@@ -493,10 +497,10 @@ function DatasetFilters(props) {
           <Button
             variant="tertiary"
             onPress={_onAddCondition}
-            endContent={<LuPlus />}
             size="sm"
           >
             Add a new filter
+            <LuPlus />
           </Button>
           <div className="h-2" />
         </div>
@@ -512,20 +516,18 @@ function DatasetFilters(props) {
                   key={condition.id}
                   variant="soft"
                   className="rounded-sm"
-                  endContent={(
-                    <Link
-                      onPress={() => _onApplyCondition(
-                        condition.id,
-                        false,
-                        find(fieldOptions, { value: condition.field })
-                        && find(fieldOptions, { value: condition.field }).type
-                      )}
-                    >
-                      <LuCircleX size={16} />
-                    </Link>
-                  )}
                 >
                   {condition.field.replace("root[].", "")}
+                  <Link
+                    onPress={() => _onApplyCondition(
+                      condition.id,
+                      false,
+                      find(fieldOptions, { value: condition.field })
+                      && find(fieldOptions, { value: condition.field }).type
+                    )}
+                  >
+                    <LuCircleX size={16} />
+                  </Link>
                 </Chip>
               );
             })}
@@ -711,9 +713,14 @@ function DatasetFilters(props) {
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
                 isSelected={variableSettings?.required}
-                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
                 size="sm"
-              />
+                aria-label="Required"
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
           </Drawer.Body>
           <Drawer.Footer>
@@ -727,8 +734,8 @@ function DatasetFilters(props) {
               variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
-              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
+              {variableLoading ? <ButtonSpinner /> : null}
               Save
             </Button>
           </Drawer.Footer>

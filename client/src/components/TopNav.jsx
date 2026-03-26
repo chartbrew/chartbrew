@@ -154,16 +154,17 @@ function TopNav() {
               className="bg-linear-to-tr from-primary-300 via-violet-200 to-secondary-300 shadow-md transition-all duration-300 hover:bg-linear-to-br dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500"
               onPress={() => dispatch(toggleAiModal())}
               size="sm"
-              startContent={<LuBrainCircuit size={18} />}
               variant="primary"
             >
+              <LuBrainCircuit size={18} />
               Ask your data
             </Button>
           ) : null}
 
           <Dropdown aria-label="Select a help option">
             <Dropdown.Trigger>
-              <Button className="bg-transparent p-0" startContent={<LuHeartHandshake size={18} />} variant="ghost">
+              <Button className="bg-transparent p-0" variant="ghost">
+                <LuHeartHandshake size={18} />
                 Resources
               </Button>
             </Dropdown.Trigger>

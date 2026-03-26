@@ -35,10 +35,10 @@ function SlackIntegrations() {
           onPress={() => {
             setCreateOpen(true);
           }}
-          startContent={<LuPlus />}
           variant="primary"
           size="sm"
         >
+          <LuPlus />
           Add a new Slack integration
         </Button>
       </div>

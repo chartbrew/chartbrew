@@ -242,8 +242,8 @@ function CustomerioBuilder(props) {
                   size="sm"
                   onPress={() => _onSavePressed()}
                   isPending={saveLoading || requestLoading}
-                  startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
                 >
+                  {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                   {"Save"}
                 </Button>
                 <Tooltip>
@@ -386,14 +386,14 @@ function CustomerioBuilder(props) {
           <Container>
             <Row className="Customerio-request-tut">
               <Button
-                endContent={!requestLoading ? <LuPlay /> : undefined}
                 isPending={requestLoading}
-                startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={_onTest}
                 className="w-full"
                 variant="primary"
               >
+                {requestLoading ? <ButtonSpinner /> : null}
                 Make the request
+                {!requestLoading ? <LuPlay /> : null}
               </Button>
             </Row>
             <div className="h-2" />

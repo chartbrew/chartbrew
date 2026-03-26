@@ -441,12 +441,12 @@ function MongoConnectionForm(props) {
               <div className="col-span-12">
                 <Button
                   size="sm"
-                  endContent={<LuPlus />}
                   onClick={_addOption}
                   variant="ghost"
                   auto
                 >
                   Add options
+                  <LuPlus />
                 </Button>
               </div>
             </div>
@@ -535,8 +535,8 @@ function MongoConnectionForm(props) {
             auto
             onClick={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
+            {testLoading ? <ButtonSpinner /> : null}
             Test connection
           </Button>
           <div className="w-2" />
@@ -544,8 +544,8 @@ function MongoConnectionForm(props) {
             isPending={loading}
             onClick={_onCreateConnection}
             color="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
           </Button>
         </Row>

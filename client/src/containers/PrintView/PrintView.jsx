@@ -122,19 +122,19 @@ function PrintView(props) {
             </Button>
             <div className="w-0.5" />
             <Button
-              startContent={<LuRedo />}
               variant="secondary"
               onClick={_changeOrientation}
               auto
             >
+              <LuRedo />
               {orientation === "portrait" ? "Switch to Landscape" : "Switch to Portrait"}
             </Button>
             <div className="w-0.5" />
             <Button
-              startContent={<LuPrinter />}
               onClick={_onStartPrint}
               auto
             >
+              <LuPrinter />
               Print
             </Button>
           </Row>
@@ -165,9 +165,9 @@ function PrintView(props) {
                 <div className="w-0.5" />
                 <Button
                   color="secondary"
-                  startContent={<LuCheck />}
                   onClick={() => setEditingTitle(false)}
                 >
+                  <LuCheck />
                   Save
                 </Button>
               </Row>

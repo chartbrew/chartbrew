@@ -425,8 +425,8 @@ function TextWidget({
                     onPress={_onSaveContent}
                     isPending={chartLoading}
                     color="primary"
-                    startContent={chartLoading ? <ButtonSpinner /> : undefined}
                   >
+                    {chartLoading ? <ButtonSpinner /> : null}
                     Save
                   </Button>
                 </ButtonGroup>
@@ -538,12 +538,12 @@ function TextWidget({
             </Button>
             <Button
               color="danger"
-              endContent={!chartLoading ? <LuTrash /> : undefined}
               onPress={_onDeleteChart}
               isPending={chartLoading}
-              startContent={chartLoading ? <ButtonSpinner /> : undefined}
             >
+              {chartLoading ? <ButtonSpinner /> : null}
               Remove completely
+              {!chartLoading ? <LuTrash /> : null}
             </Button>
               </Modal.Footer>
             </Modal.Dialog>

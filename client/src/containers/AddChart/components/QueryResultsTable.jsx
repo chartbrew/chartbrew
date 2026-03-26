@@ -7,10 +7,11 @@ import {
   TableColumn,
   TableRow,
   TableCell,
-  Pagination,
   Button,
   Popover,
 } from "@heroui/react";
+
+import HeroPaginationNav from "../../../components/HeroPaginationNav";
 
 function QueryResultsTable({ result }) {
   const [resultsPage, setResultsPage] = useState(1);
@@ -114,12 +115,12 @@ function QueryResultsTable({ result }) {
       </div>
       <div className="h-4" />
       <div>
-        <Pagination
-          total={getResultBodyRows().length > 0 ? Math.ceil(getResultBodyRows().length / 10) : 1}
-          onChange={(page) => setResultsPage(page)}
+        <HeroPaginationNav
           page={resultsPage}
+          totalPages={getResultBodyRows().length > 0 ? Math.ceil(getResultBodyRows().length / 10) : 1}
+          onPageChange={setResultsPage}
           size="sm"
-          aria-label="Pagination"
+          ariaLabel="Query results pagination"
         />
       </div>
     </div>

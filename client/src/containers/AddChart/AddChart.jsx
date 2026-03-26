@@ -469,8 +469,8 @@ function AddChart() {
           onPress={() => navigate(`/dashboard/${params.projectId}`)}
           variant="tertiary"
           size="sm"
-          startContent={<LuArrowLeft size={16} />}
         >
+          <LuArrowLeft size={16} />
           Back to dashboard
         </Button>
         <div className="h-4" />
@@ -559,18 +559,24 @@ function AddChart() {
               <div className="flex items-center gap-2">
                 <div className="text-sm text-foreground">Draft</div>
                 <Switch
+                  id="addchart-draft"
                   isSelected={newChart.draft}
-                  onChange={() => _onChangeChart({ draft: !newChart.draft })}
+                  onChange={(selected) => _onChangeChart({ draft: selected })}
                   size="sm"
-                />
+                  aria-label="Draft mode"
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
               </div>
               <Button
                 onPress={() => _onChangeChart({})}
                 isPending={loading}
-                startContent={loading ? <ButtonSpinner /> : undefined}
                 size="sm"
                 variant={saveRequired ? "primary" : "secondary"}
               >
+                {loading ? <ButtonSpinner /> : null}
                 {saveRequired && "Save chart"}
                 {!saveRequired && "Chart saved"}
               </Button>

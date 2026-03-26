@@ -222,19 +222,19 @@ function ChartMogulTemplate(props) {
             {!formVisible && (
               <Button
                 variant="primary"
-                startContent={<LuPlus />}
                 onPress={() => setFormVisible(true)}
               >
+                <LuPlus />
                 Or create a new connection
               </Button>
             )}
             {formVisible && (
               <Button
-                endContent={<LuArrowUp />}
                 variant="tertiary"
                 onPress={() => setFormVisible(false)}
               >
                 Use an existing connection
+                <LuArrowUp />
               </Button>
             )}
           </Row>
@@ -316,20 +316,20 @@ function ChartMogulTemplate(props) {
           <Row>
             <Button
               variant="secondary"
-              startContent={<LuCheckCheck />}
               onPress={_onSelectAll}
               size="sm"
             >
               Select all
+              <LuCheckCheck />
             </Button>
             <div className="w-1" />
             <Button
               variant="secondary"
-              startContent={<LuX />}
               onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
+              <LuX />
             </Button>
           </Row>
         </>
@@ -383,8 +383,8 @@ function ChartMogulTemplate(props) {
           }
           onPress={_onGenerateDashboard}
           variant="primary"
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           {"Create the charts"}
         </Button>
       </Row>

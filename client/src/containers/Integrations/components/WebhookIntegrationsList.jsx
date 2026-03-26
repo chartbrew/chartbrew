@@ -165,9 +165,9 @@ function WebhookIntegrations({ teamId }) {
           onPress={() => {
             setCreateOpen(true);
           }}
-          startContent={<LuPlus />}
           variant="tertiary" size="sm"
         >
+          <LuPlus />
           Add a new webhook
         </Button>
       </div>
@@ -331,8 +331,8 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={!newIntegration.id ? _onCreate : _onEdit} isPending={createLoading}
-              startContent={createLoading ? <ButtonSpinner /> : undefined}
             >
+              {createLoading ? <ButtonSpinner /> : null}
               {!newIntegration.id && "Create"}
               {newIntegration.id && "Update"}
             </Button>
@@ -368,8 +368,8 @@ function WebhookIntegrations({ teamId }) {
             <Button
               auto
               onPress={_onDelete} isPending={deleteLoading}
-              startContent={deleteLoading ? <ButtonSpinner /> : undefined}
             >
+              {deleteLoading ? <ButtonSpinner /> : null}
               Delete
             </Button>
               </Modal.Footer>

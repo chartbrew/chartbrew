@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import moment from "moment";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, ProgressCircle, Input, Pagination, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, cn,
+  Button, Chip, ProgressCircle, EmptyState, InputGroup, Table, TextField, cn,
 } from "@heroui/react";
 import {
   LuLayers, LuPlus, LuSearch,
@@ -16,6 +16,7 @@ import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
+import HeroPaginationNav from "../../../components/HeroPaginationNav";
 
 const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
   ...acc,
@@ -151,22 +152,28 @@ function ChartDescription(props) {
         <div>
           {canCreateDataset && (
             <Button size="sm"
-              startContent={creatingNewDataset ? <ButtonSpinner /> : <LuPlus size={16} />}
               isDisabled={creatingNewDataset}
               onPress={onCreateDataset}
             >
+              {creatingNewDataset ? <ButtonSpinner /> : <LuPlus size={16} />}
               Start from scratch
             </Button>
           )}
         </div>
         <div className="w-full md:max-w-sm">
-          <Input
-            placeholder="Search datasets"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            endContent={<LuSearch size={16} />}
-            size="sm"
-          />
+          <TextField aria-label="Search datasets" className="w-full" name="dataset-search">
+            <InputGroup fullWidth>
+              <InputGroup.Input
+                placeholder="Search datasets"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="text-sm"
+              />
+              <InputGroup.Suffix className="pr-2">
+                <LuSearch size={16} className="text-muted" aria-hidden />
+              </InputGroup.Suffix>
+            </InputGroup>
+          </TextField>
         </div>
       </div>
       <div className="h-8" />
@@ -177,7 +184,7 @@ function ChartDescription(props) {
       <div className="h-6" />
 
       <div className="rounded-lg border border-solid border-content3">
-        <Table className="shadow-none rounded-sm">
+        <Table className="shadow-none min-h-[200px] rounded-sm">
           <Table.ScrollContainer>
             <Table.Content
               aria-label="Dataset picker"
@@ -185,27 +192,27 @@ function ChartDescription(props) {
               selectionMode="single"
               onRowAction={(key) => _onSelectDataset(key)}
             >
-              <TableHeader>
-                <TableColumn key="name" isRowHeader textValue="Dataset">Dataset</TableColumn>
-                <TableColumn key="source" textValue="Source">Source</TableColumn>
-                <TableColumn key="tags" textValue="Tags">Tags</TableColumn>
-                <TableColumn key="createdBy" textValue="Created by">Created by</TableColumn>
-                <TableColumn key="modified" textValue="Last modified">Last modified</TableColumn>
-                <TableColumn key="actions" className="w-12 text-center" textValue="Actions">
+              <Table.Header>
+                <Table.Column id="name" isRowHeader>Dataset</Table.Column>
+                <Table.Column id="source">Source</Table.Column>
+                <Table.Column id="tags">Tags</Table.Column>
+                <Table.Column id="createdBy">Created by</Table.Column>
+                <Table.Column id="modified">Last modified</Table.Column>
+                <Table.Column id="actions" className="w-12 text-center">
                   <span className="sr-only">Actions</span>
-                </TableColumn>
-              </TableHeader>
-              <TableBody
+                </Table.Column>
+              </Table.Header>
+              <Table.Body
                 renderEmptyState={() => (
                   datasetLoading ? (
-                    <div className="flex min-h-40 items-center justify-center">
+                    <div className="flex min-h-40 w-full items-center justify-center">
                       <ProgressCircle aria-label="Loading datasets" />
                     </div>
                   ) : (
-                    <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-sm text-foreground-500">
-                      <LuLayers size={20} />
-                      <span>No datasets found</span>
-                    </div>
+                    <EmptyState className="flex min-h-40 w-full flex-col items-center justify-center gap-2 text-center">
+                      <LuLayers className="size-6 text-muted" aria-hidden />
+                      <span className="text-sm text-muted">No datasets found</span>
+                    </EmptyState>
                   )
                 )}
               >
@@ -215,15 +222,15 @@ function ChartDescription(props) {
               const isCreatingChart = creatingDatasetId === dataset.id;
 
               return (
-                <TableRow key={dataset.id} id={String(dataset.id)}>
-                  <TableCell key="name">
+                <Table.Row key={dataset.id} id={String(dataset.id)}>
+                  <Table.Cell>
                     <div className={cn(`min-w-0 ${isBusy && !isCreatingChart ? "opacity-60" : ""} cursor-pointer hover:underline`)}>
                         <div className="truncate text-sm font-medium text-foreground text-wrap min-w-[200px]">
                         {getDatasetDisplayName(dataset)}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell key="source">
+                  </Table.Cell>
+                  <Table.Cell>
                     <div className={`flex flex-wrap gap-1 ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
                       {connectionTypes.length > 0 && connectionTypes.map((connectionType) => (
                         <Chip
@@ -238,8 +245,8 @@ function ChartDescription(props) {
                         <span className="text-sm text-foreground-400">Unknown source</span>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell key="tags">
+                  </Table.Cell>
+                  <Table.Cell>
                     <div className={`flex flex-wrap gap-1 ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
                       {tags.length > 0 && tags.slice(0, 3).map((tag) => (
                         <Chip key={`${dataset.id}-${tag}`} size="sm" variant="soft" >
@@ -255,18 +262,18 @@ function ChartDescription(props) {
                         <span className="text-sm text-foreground-400">No tags</span>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell key="createdBy">
+                  </Table.Cell>
+                  <Table.Cell>
                     <div className={`text-sm text-foreground ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
                       you
                     </div>
-                  </TableCell>
-                  <TableCell key="modified">
+                  </Table.Cell>
+                  <Table.Cell>
                     <div className={`text-sm text-foreground ${isBusy && !isCreatingChart ? "opacity-60" : ""}`}>
                       {_formatLastModified(dataset.updatedAt || dataset.createdAt)}
                     </div>
-                  </TableCell>
-                  <TableCell key="actions">
+                  </Table.Cell>
+                  <Table.Cell>
                     <div className="flex justify-end">
                       <Button
                         isIconOnly
@@ -279,11 +286,11 @@ function ChartDescription(props) {
                         {isCreatingChart ? <ButtonSpinner /> : <LuPlus size={16} />}
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </Table.Cell>
+                </Table.Row>
               );
                 })}
-              </TableBody>
+              </Table.Body>
             </Table.Content>
           </Table.ScrollContainer>
         </Table>
@@ -293,12 +300,13 @@ function ChartDescription(props) {
         <>
           <div className="h-6" />
           <div className="flex justify-center">
-            <Pagination
-              total={totalPages}
+            <HeroPaginationNav
               page={currentPage}
-              onChange={setCurrentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
               size="sm"
-              aria-label="Dataset pagination"
+              className="justify-center"
+              ariaLabel="Dataset pagination"
             />
           </div>
         </>

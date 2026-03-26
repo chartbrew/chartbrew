@@ -7,7 +7,7 @@ import moment from "moment";
 
 import { createCdc, runQuery, selectChart, updateCdc } from "../../../slices/chart";
 import {
-  Avatar, Button, Card, Chip, Separator, Input, ScrollShadow, Tooltip
+  Avatar, Button, Card, Chip, InputGroup, ScrollShadow, Separator, TextField, Tooltip
 } from "@heroui/react";
 import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasetsNoDrafts } from "../../../slices/dataset";
@@ -179,8 +179,8 @@ function ChartDatasets(props) {
               size="sm"
               onPress={() => setAddMode(!addMode)}
               className="chart-cdc-add"
-              startContent={!addMode ? <LuPlus /> : null}
             >
+              {!addMode ? <LuPlus /> : null}
               {!addMode && "Add series"}
               {addMode && <LuMinus />}
             </Button>
@@ -191,12 +191,18 @@ function ChartDatasets(props) {
 
       {(chart?.ChartDatasetConfigs?.length === 0 || addMode) && (
         <>
-          <Input
-            placeholder="Search datasets"
-            value={datasetSearch}
-            onChange={(e) => setDatasetSearch(e.target.value)}
-            startContent={<LuSearch />}
-          />
+          <TextField aria-label="Search datasets" className="w-full max-w-md" name="dataset-search">
+            <InputGroup fullWidth>
+              <InputGroup.Prefix>
+                <LuSearch className="size-4 text-muted" aria-hidden />
+              </InputGroup.Prefix>
+              <InputGroup.Input
+                placeholder="Search datasets"
+                value={datasetSearch}
+                onChange={(e) => setDatasetSearch(e.target.value)}
+              />
+            </InputGroup>
+          </TextField>
           <div className="h-4" />
           <div className="flex flex-row gap-1 items-center">
             <Chip
@@ -283,12 +289,12 @@ function ChartDatasets(props) {
                           className="z-50"
                           size="sm"
                           variant="ghost"
-                          endContent={<LuExternalLink size={16} />}
                           as={Link}
                           to={`/datasets/${dataset.id}`}
                           target="_blank"
                         >
                           Edit
+                          <LuExternalLink size={16} />
                         </Button>
                       </div>
                     )}
@@ -336,12 +342,10 @@ function ChartDatasets(props) {
               onClick={() => setActiveCdc(cdc)}
               className={`rounded-sm cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
               size="lg"
-              endContent={<LuGripVertical size={16} className="cursor-grab" />}
-              startContent={(
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cdc.datasetColor }} />
-              )}
             >
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cdc.datasetColor }} />
               {cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}
+              <LuGripVertical size={16} className="cursor-grab" />
             </Chip>
           )}
         />

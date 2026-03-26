@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, Chip, Separator, Input, Modal, Tooltip } from "@heroui/react";
+import { Button, Card, Chip, Input, InputGroup, Modal, Separator, TextField, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -217,14 +217,17 @@ function ConnectionWizard() {
               <div className="h-8" />
               <Segment>
                 <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-                  <Input
-                    endContent={<LuSearch />}
-                    placeholder="Search..."
-                    variant="secondary"
-                    labelPlacement="outside"
-                    className="max-w-[300px]"
-                    onChange={(e) => setConnectionSearch(e.target.value)}
-                  />
+                  <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-search">
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        placeholder="Search..."
+                        onChange={(e) => setConnectionSearch(e.target.value)}
+                      />
+                      <InputGroup.Suffix className="pr-2">
+                        <LuSearch className="size-4 text-muted" aria-hidden />
+                      </InputGroup.Suffix>
+                    </InputGroup>
+                  </TextField>
                 </div>
                 <div className="h-8" />
                 <div className="grid grid-cols-12 gap-4">
@@ -253,7 +256,8 @@ function ConnectionWizard() {
                           {conn.ai && (
                             <Tooltip>
                               <Tooltip.Trigger>
-                                <Chip variant="secondary" size="sm" className="rounded-sm" startContent={<LuBrainCircuit size={14} />}>
+                                <Chip variant="secondary" size="sm" className="rounded-sm">
+                                  <LuBrainCircuit size={14} />
                                   {"AI-powered"}
                                 </Chip>
                               </Tooltip.Trigger>
@@ -416,10 +420,10 @@ function ConnectionWizard() {
                     size="sm"
                     variant={inviteCopied ? "tertiary" : "primary"}
                     fullWidth
-                    endContent={inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
                     onPress={() => _onCopyInviteUrl()}
                   >
                     {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
+                    {inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
                   </Button>
                 </Card.Footer>
               </Card>
@@ -440,9 +444,9 @@ function ConnectionWizard() {
                     size="sm"
                     variant="primary"
                     fullWidth
-                    endContent={<LuCompass />}
                   >
                     Open the tutorials
+                    <LuCompass />
                   </Button>
                 </Card.Footer>
               </Card>

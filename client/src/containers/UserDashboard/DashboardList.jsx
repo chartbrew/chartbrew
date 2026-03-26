@@ -239,11 +239,11 @@ function DashboardList() {
             <div className="flex flex-row items-center gap-2">
               {canManageDashboards && (
                 <Button onPress={() => _onNewProject(team)}
-                  endContent={<LuPlus />}
                   className="create-dashboard-tutorial"
                 >
                   <span className="hidden md:block">Create dashboard</span>
                   <span className="md:hidden">Create</span>
+                  <LuPlus />
                 </Button>
               )}
 
@@ -307,7 +307,7 @@ function DashboardList() {
                     key={project.id}
                     role="button"
                     tabIndex={0}
-                    className="cursor-pointer rounded-sm border-1 border-solid border-divider p-2 shadow-none transition-colors hover:bg-content2/60"
+                    className="cursor-pointer transition-colors hover:bg-content2/60"
                     onClick={() => directToProject(project.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {

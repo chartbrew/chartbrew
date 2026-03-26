@@ -315,8 +315,8 @@ function ClickHouseBuilder(props) {
                 size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
-                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
+                {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                 {"Save"}
               </Button>
               <Tooltip>
@@ -381,13 +381,14 @@ function ClickHouseBuilder(props) {
           </div>
           <div className="h-4" />
           <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
-            <Button endContent={!requestLoading ? <LuPlay /> : undefined}
+            <Button
               onPress={() => _onTest()}
               isPending={requestLoading}
-              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               fullWidth
             >
+              {requestLoading ? <ButtonSpinner /> : null}
               Run query
+              {!requestLoading ? <LuPlay /> : null}
             </Button>
           </div>
           <div className="h-4" />
@@ -432,28 +433,28 @@ function ClickHouseBuilder(props) {
           <div className="h-4" />
           <div className="flex flex-row gap-2">
             <Button
-              endContent={!savingQuery ? <LuPlus /> : undefined}
               isPending={savingQuery}
-              startContent={savingQuery ? <ButtonSpinner /> : undefined}
               onPress={_onSaveQueryConfirmation}
               variant="tertiary"
               size="sm"
             >
+              {savingQuery ? <ButtonSpinner /> : null}
               {!savedQuery && "Save this query"}
               {savedQuery && "Save as new"}
+              {!savingQuery ? <LuPlus /> : null}
             </Button>
 
             {savedQuery && (
               <>
                 <Button
                   variant="tertiary"
-                  endContent={!updatingSavedQuery ? <LuCheck /> : undefined}
                   onPress={_onUpdateSavedQuery}
                   isPending={updatingSavedQuery}
-                  startContent={updatingSavedQuery ? <ButtonSpinner /> : undefined}
                   size="sm"
                 >
+                  {updatingSavedQuery ? <ButtonSpinner /> : null}
                   {"Update current query"}
+                  {!updatingSavedQuery ? <LuCheck /> : null}
                 </Button>
               </>
             )}
@@ -550,10 +551,10 @@ function ClickHouseBuilder(props) {
             </Button>
             <Button
               isDisabled={!savedQuerySummary}
-              endContent={<LuCheck />}
               onPress={_onSaveQuery}
             >
               Save the query
+              <LuCheck />
             </Button>
           </Modal.Footer>
           </Modal.Dialog>
@@ -667,9 +668,14 @@ function ClickHouseBuilder(props) {
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
                 isSelected={variableSettings?.required}
-                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
                 size="sm"
-              />
+                aria-label="Required"
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
           </Drawer.Body>
           <Drawer.Footer>
@@ -683,8 +689,8 @@ function ClickHouseBuilder(props) {
               variant="primary"
               onPress={_onVariableSave}
               isPending={variableLoading}
-              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
+              {variableLoading ? <ButtonSpinner /> : null}
               Save
             </Button>
           </Drawer.Footer>

@@ -2,15 +2,17 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button,
-  Separator,
-  Input,
-  Chip,
-  Tabs,
-  Select,
   Alert,
+  Button,
+  Chip,
+  Input,
+  InputGroup,
   Label,
-  ListBox
+  ListBox,
+  Separator,
+  Select,
+  Tabs,
+  TextField,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
@@ -302,43 +304,55 @@ function ApiConnectionForm(props) {
                 </Row>
                 <div className="h-4" />
                 <Row align="center">
-                  <Input
-                    type={passwordVisible ? "text" : "password"}
-                    label="Enter a Password or API Key Value"
-                    placeholder="Password or API Key Value"
-                    onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
-                    value={connection.authentication.pass}
-                    fullWidth
-                    variant="secondary"
-                    endContent={(
-                      <button
-                        onClick={() => setPasswordVisible(!passwordVisible)}
-                      >
-                        {passwordVisible ? <LuEyeOff /> : <LuEye />}
-                      </button>
-                    )}
-                  />
+                  <TextField fullWidth variant="secondary" className="w-full" name="api-auth-pass">
+                    <Label>Enter a Password or API Key Value</Label>
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="Password or API Key Value"
+                        onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
+                        value={connection.authentication.pass}
+                      />
+                      <InputGroup.Suffix className="pr-0">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="ghost"
+                          aria-label={passwordVisible ? "Hide password" : "Show password"}
+                          onPress={() => setPasswordVisible(!passwordVisible)}
+                        >
+                          {passwordVisible ? <LuEyeOff /> : <LuEye />}
+                        </Button>
+                      </InputGroup.Suffix>
+                    </InputGroup>
+                  </TextField>
                 </Row>
               </div>
             )}
             {connection.authentication && connection.authentication.type === "bearer_token" && (
               <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
-                <Input
-                  type={passwordVisible ? "text" : "password"}
-                  label="Enter the token"
-                  placeholder="Authentication token"
-                  onChange={(e) => _onChangeAuthParams("token", e.target.value)}
-                  value={connection.authentication.token}
-                  fullWidth
-                  variant="secondary"
-                  endContent={(
-                    <button
-                      onClick={() => setPasswordVisible(!passwordVisible)}
-                    >
-                      {passwordVisible ? <LuEyeOff /> : <LuEye />}
-                    </button>
-                  )}
-                />
+                <TextField fullWidth variant="secondary" className="w-full" name="api-bearer-token">
+                  <Label>Enter the token</Label>
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Input
+                      type={passwordVisible ? "text" : "password"}
+                      placeholder="Authentication token"
+                      onChange={(e) => _onChangeAuthParams("token", e.target.value)}
+                      value={connection.authentication.token}
+                    />
+                    <InputGroup.Suffix className="pr-0">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="ghost"
+                        aria-label={passwordVisible ? "Hide token" : "Show token"}
+                        onPress={() => setPasswordVisible(!passwordVisible)}
+                      >
+                        {passwordVisible ? <LuEyeOff /> : <LuEye />}
+                      </Button>
+                    </InputGroup.Suffix>
+                  </InputGroup>
+                </TextField>
               </div>
             )}
           </div>
@@ -400,12 +414,12 @@ function ApiConnectionForm(props) {
           <>
             <div className="h-4" />
             <Button
-              endContent={<LuPlus size={16} />}
               onPress={_addOption}
               variant="secondary"
               size="sm"
             >
               Add a header
+              <LuPlus size={16} />
             </Button>
             <div className="h-8" />
           </>
@@ -429,9 +443,9 @@ function ApiConnectionForm(props) {
             variant="ghost"
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
             auto
           >
+            {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
           </Button>
           <div className="w-2" />
@@ -440,8 +454,8 @@ function ApiConnectionForm(props) {
               isPending={loading}
               onPress={() => _onCreateConnection()}
               variant="primary"
-              startContent={loading ? <ButtonSpinner /> : undefined}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Save connection"}
             </Button>
           )}
@@ -450,8 +464,8 @@ function ApiConnectionForm(props) {
               isPending={loading}
               onPress={_onCreateConnection}
               variant="primary"
-              startContent={loading ? <ButtonSpinner /> : undefined}
             >
+              {loading ? <ButtonSpinner /> : null}
               {"Save changes"}
             </Button>
           )}

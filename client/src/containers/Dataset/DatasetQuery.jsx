@@ -4,10 +4,11 @@ import {
   Button,
   Avatar,
   Card,
-  Input,
+  InputGroup,
   Separator,
   Chip,
-  Tabs
+  Tabs,
+  TextField,
 } from "@heroui/react";
 import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -517,17 +518,31 @@ function DatasetQuery(props) {
             <div className="h-4" />
             {connections.length > 0 && (
               <div>
-                <Input
-                  startContent={<LuSearch />}
-                  placeholder="Search connections"
-                  onChange={(e) => setConnectionSearch(e.target.value)}
-                  className="max-w-[300px]"
-                  labelPlacement="outside"
-                  variant="secondary"
-                  isClearable
-                  value={connectionSearch}
-                  onClear={() => setConnectionSearch("")}
-                />
+                <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-search">
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Prefix>
+                      <LuSearch className="size-4 text-muted" aria-hidden />
+                    </InputGroup.Prefix>
+                    <InputGroup.Input
+                      placeholder="Search connections"
+                      onChange={(e) => setConnectionSearch(e.target.value)}
+                      value={connectionSearch}
+                    />
+                    {connectionSearch ? (
+                      <InputGroup.Suffix className="pr-0">
+                        <Button
+                          isIconOnly
+                          aria-label="Clear search"
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => setConnectionSearch("")}
+                        >
+                          <LuX />
+                        </Button>
+                      </InputGroup.Suffix>
+                    ) : null}
+                  </InputGroup>
+                </TextField>
               </div>
             )}
             <div className="h-8" />
@@ -555,9 +570,9 @@ function DatasetQuery(props) {
                     <Button
                       onPress={() => setConnectionSearch("")}
                       variant="tertiary"
-                      endContent={<LuX />}
                     >
                       Clear search
+                      <LuX />
                     </Button>
                   </div>
                 </div>
@@ -583,7 +598,8 @@ function DatasetQuery(props) {
                           <div className="flex flex-col gap-1">
                             <Text size="h4">{c.name}</Text>
                             {(c.type === "mysql" || c.type === "postgres" || c.type === "mongodb" || c.type === "clickhouse") && (
-                              <Chip variant="secondary" size="sm" startContent={<LuBrainCircuit />}>
+                              <Chip variant="secondary" size="sm">
+                                <LuBrainCircuit />
                                 {"AI-powered"}
                               </Chip>
                             )}

@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Checkbox, Chip, Dropdown, Input, Label, Modal, Tooltip } from "@heroui/react"
+import { Avatar, Button, Card, Checkbox, Chip, Dropdown, InputGroup, Label, Modal, TextField, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
 import { LuCopy, LuEllipsis, LuInfo, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
@@ -144,25 +144,28 @@ function ConnectionList() {
         {_canAccess("teamAdmin", team.TeamRoles) && (
           <Button
             variant="primary"
-            endContent={<LuPlus />}
             onPress={() => navigate("/connections/new")}
             isDisabled={user.temporary}
           >
             Create connection
+            <LuPlus />
           </Button>
         )}
       </div>
       <div className="h-2" />
       <div className={"flex flex-row items-center gap-4"}>
-        <Input
-          type="text"
-          placeholder="Search connections"
-          variant="secondary"
-          endContent={<LuSearch />}
-          className="max-w-[300px]"
-          labelPlacement="outside"
-          onChange={(e) => setConnectionSearch(e.target.value)}
-        />
+        <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-list-search">
+          <InputGroup variant="secondary" fullWidth>
+            <InputGroup.Input
+              type="text"
+              placeholder="Search connections"
+              onChange={(e) => setConnectionSearch(e.target.value)}
+            />
+            <InputGroup.Suffix className="pr-2">
+              <LuSearch className="size-4 text-muted" aria-hidden />
+            </InputGroup.Suffix>
+          </InputGroup>
+        </TextField>
       </div>
       <div className="h-4" />
 
@@ -170,12 +173,17 @@ function ConnectionList() {
         {_getFilteredConnections()?.map((connection) => (
           <div key={connection.id}>
             <Card
-              className="h-full w-full border-1 border-solid border-content3 p-4 shadow-none transition-colors hover:bg-content2/40"
+              className="h-full w-full border border-solid border-content3 p-4 shadow-none transition-colors hover:bg-content2/40"
             >
               <Card.Content>
                 <div className="flex flex-row items-center justify-between">
                   <div className="flex flex-row items-center gap-2">
-                    <Avatar src={connectionImages(isDark)[connection.subType]} />
+                    <Avatar size="sm" className="rounded-sm">
+                      <Avatar.Image src={connectionImages(isDark)[connection.subType]} alt={`${connection.subType} logo`} />
+                      <Avatar.Fallback>
+                        <LuPlug />
+                      </Avatar.Fallback>
+                    </Avatar>
                     <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tw cursor-pointer">{connection.name}</Link>
                   </div>
                   <div>
@@ -246,17 +254,17 @@ function ConnectionList() {
                       <Dropdown.Item
                         id="edit"
                         onPress={() => navigate(`/connections/${connection.id}`)}
-                        startContent={<LuPencilLine />}
                         textValue="Edit connection"
                       >
+                        <LuPencilLine />
                         Edit connection
                       </Dropdown.Item>
                       <Dropdown.Item
                         id="tags"
                         onPress={() => setConnectionToEdit(connection)}
-                        startContent={<LuTags />}
                         textValue="Edit tags"
                       >
+                        <LuTags />
                         Edit tags
                       </Dropdown.Item>
                       <Dropdown.Item
@@ -265,18 +273,18 @@ function ConnectionList() {
                           setViewingDuplicateModal(connection);
                           setDuplicateName(connection.name);
                         }}
-                        startContent={<LuCopy />}
                         textValue="Duplicate connection"
                       >
+                        <LuCopy />
                         Duplicate connection
                       </Dropdown.Item>
                       <Dropdown.Item
                         id="delete"
                         onPress={() => setConnectionToDelete(connection)}
-                        startContent={<LuTrash />}
                         variant="danger"
                         textValue="Delete"
                       >
+                        <LuTrash />
                         Delete
                       </Dropdown.Item>
                     </Dropdown.Menu>
@@ -446,12 +454,16 @@ function ConnectionList() {
                 </Modal.Heading>
               </Modal.Header>
               <Modal.Body>
-                <Input
-                  placeholder="New connection name"
-                  value={duplicateName}
-                  onChange={(e) => setDuplicateName(e.target.value)}
-                  variant="secondary"
-                />
+                <TextField className="w-full" name="duplicate-connection-name">
+                  <Label>New connection name</Label>
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Input
+                      placeholder="New connection name"
+                      value={duplicateName}
+                      onChange={(e) => setDuplicateName(e.target.value)}
+                    />
+                  </InputGroup>
+                </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button

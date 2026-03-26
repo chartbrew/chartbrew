@@ -434,8 +434,8 @@ function TableDataFormattingModal(props) {
                           variant="ghost"
                           onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: null } : r)))}
                           size="sm"
-                          startContent={<LuX />}
                         >
+                          <LuX />
                           Remove color
                         </Button>
                       </Popover.Dialog>
@@ -455,8 +455,8 @@ function TableDataFormattingModal(props) {
                 variant="ghost"
                 onPress={() => setRules([...rules, { value: "", label: "" }])}
                 size="sm"
-                startContent={<LuPlus className="text-gray-500" size={16} />}
               >
+                <LuPlus className="text-gray-500" size={16} />
                 Add rule
               </Button>
             </div>

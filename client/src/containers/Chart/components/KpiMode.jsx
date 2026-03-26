@@ -90,8 +90,8 @@ function KpiMode(props) {
                 variant="soft"
                 className="rounded-sm"
                 color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
-                startContent={status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : ""}
               >
+                {status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : null}
                 {`${formattedComparison}%`}
               </Chip>
             </div>

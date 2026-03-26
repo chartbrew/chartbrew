@@ -260,8 +260,8 @@ function CustomerioConnectionForm(props) {
             auto
             onClick={() => _onCreateConnection(true)}
             isPending={testLoading}
-            startContent={testLoading ? <ButtonSpinner /> : undefined}
           >
+            {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
           </Button>
           <div className="w-1" />
@@ -269,8 +269,8 @@ function CustomerioConnectionForm(props) {
             isPending={loading}
             onClick={_onCreateConnection}
             color="primary"
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
           </Button>
         </Row>

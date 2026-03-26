@@ -79,8 +79,8 @@ function DraggableLabel({ field, index, onMove }) {
       <Chip
         color="secondary"
         className="rounded-sm"
-        startContent={<LuGripVertical size={16} />}
       >
+        <LuGripVertical size={16} />
         {`${field.Header.replace("?", ".")}  `}
       </Chip>
     </div>

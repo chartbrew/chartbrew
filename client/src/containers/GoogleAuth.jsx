@@ -96,9 +96,9 @@ function GoogleAuth() {
             <Link to="/connections">
               <Button
                 color="success"
-                endContent={<LuArrowRight />}
               >
                 Go to connections
+                <LuArrowRight />
               </Button>
             </Link>
           </Row>
@@ -122,10 +122,10 @@ function GoogleAuth() {
             <Link to="/connections">
               <Button
                 color="secondary"
-                endContent={<LuArrowRight />}
                 auto
               >
                 Back to the dashboard
+                <LuArrowRight />
               </Button>
             </Link>
           </Row>

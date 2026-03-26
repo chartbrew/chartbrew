@@ -692,121 +692,120 @@ function Chart(props) {
                   <Dropdown.Menu disabledKeys={["status"]}>
                     <Dropdown.Item
                       id="refresh"
-                      startContent={(chartLoading || chart.loading) ? <ProgressCircle className="w-5 h-5" size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       onPress={_onGetChartData}
                       textValue="Refresh chart"
                     >
+                      {(chartLoading || chart.loading) ? <ProgressCircle className="w-5 h-5" size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
                       Refresh chart
                     </Dropdown.Item>
                     {_canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="edit"
-                        startContent={<LuSettings />}
                         onPress={() => navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`)}
                         textValue="Edit chart"
                       >
+                        <LuSettings />
                         Edit chart
                       </Dropdown.Item>
                     )}
                     {_canAccess("projectEditor") && chart.draft && (
                       <Dropdown.Item
                         id="publish"
-                        startContent={<LuCircleCheck />}
                         onPress={_onPublishChart}
                         textValue="Publish chart"
                       >
+                        <LuCircleCheck />
                         Publish chart
                       </Dropdown.Item>
                     )}
                     {_canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="layout"
-                        startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
                         onPress={onEditLayout}
                         showDivider
                         textValue={editingLayout ? "Complete layout" : "Edit layout"}
-                        endContent={<Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>}
                       >
+                        <LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />
                         <span className={editingLayout ? "text-primary" : ""}>
                           {editingLayout ? "Complete layout" : "Edit layout"}
                         </span>
+                        <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
                       </Dropdown.Item>
                     )}
                     {_canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="autoupdate"
-                        startContent={<LuCalendarClock />}
                         onPress={_openUpdateModal}
                         textValue="Auto-update"
                       >
+                        <LuCalendarClock />
                         Auto-update
                       </Dropdown.Item>
                     )}
                     {_canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="alerts"
-                        startContent={<LuBell />}
                         onPress={_openAlertsModal}
                         textValue="Alerts"
-                        endContent={
-                          chart?.Alerts?.length > 0 && (
+                        showDivider
+                      >
+                        <LuBell />
+                        Alerts
+                        {chart?.Alerts?.length > 0 && (
                           <Chip color="default" size="sm" variant="secondary">
                             {chart?.Alerts?.length}
                           </Chip>
                         )}
-                        showDivider
-                      >
-                        Alerts
                       </Dropdown.Item>
                     )}
                     {!chart.draft && _canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="report"
-                        startContent={chart.onReport ? <LuMonitorX /> : <LuMonitor />}
                         onPress={_onChangeReport}
                         textValue={chart.onReport ? "Remove from report" : "Add to report"}
                       >
+                        {chart.onReport ? <LuMonitorX /> : <LuMonitor />}
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </Dropdown.Item>
                     )}
                     {!chart.draft && chart.public && _canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="private"
-                        startContent={chart.public ? <LuLockOpen /> : <LuLock />}
                         onPress={_onPublicConfirmation}
                         textValue={chart.public ? "Make private" : "Make public"}
                       >
+                        {chart.public ? <LuLockOpen /> : <LuLock />}
                         {"Make private"}
                       </Dropdown.Item>
                     )}
                     {!chart.draft && _canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="embed"
-                        startContent={<LuShare />}
                         onPress={_onEmbed}
                         textValue="Embed & Share"
                       >
+                        <LuShare />
                         {"Embed & Share"}
                       </Dropdown.Item>
                     )}
                     <Dropdown.Item
                       id="export"
-                      startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onPress={_onExport}
                       textValue="Export to Excel"
                       showDivider
                     >
+                      {exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       Export to Excel
                     </Dropdown.Item>
                     {_canAccess("projectEditor") && (
                       <Dropdown.Item
                         id="delete"
-                        startContent={<LuTrash />}
                         variant="danger"
                         onPress={_onDeleteChartConfirmation}
                         textValue="Delete chart"
                         showDivider
                       >
+                        <LuTrash />
                         Delete chart
                       </Dropdown.Item>
                     )}
@@ -861,10 +860,10 @@ function Chart(props) {
                   <Dropdown.Menu>
                     <Dropdown.Item
                       id="export-excel"
-                      startContent={exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       onPress={() => _onPublicExport(chart)}
                       textValue="Export to Excel"
                     >
+                      {exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
                       <Text>Export to Excel</Text>
                     </Dropdown.Item>
                   </Dropdown.Menu>
@@ -994,11 +993,11 @@ function Chart(props) {
             </Button>
             <Button
               color="danger"
-              endContent={<LuTrash />}
               onPress={_onDeleteChart}
               isPending={chartLoading}
             >
               Remove completely
+              <LuTrash />
             </Button>
           </Modal.Footer>
           </Modal.Dialog>
@@ -1028,10 +1027,10 @@ function Chart(props) {
             <Button
               isPending={publicLoading}
               color="primary"
-              endContent={<LuLockOpen />}
               onPress={_onPublic}
             >
               Make the chart public
+              <LuLockOpen />
             </Button>
           </Modal.Footer>
           </Modal.Dialog>
@@ -1136,13 +1135,11 @@ function Chart(props) {
                     <Button
                       variant="secondary"
                       color="default"
-                      endContent={(
-                        <div>
-                          <LuChevronDown />
-                        </div>
-                      )}
                     >
                       {updateFreqType}
+                      <div>
+                        <LuChevronDown />
+                      </div>
                     </Button>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
@@ -1183,7 +1180,6 @@ function Chart(props) {
               Cancel
             </Button>
             <Button
-              endContent={<LuX />}
               variant="tertiary"
               color="danger"
               isPending={autoUpdateLoading}
@@ -1194,15 +1190,16 @@ function Chart(props) {
               size="sm"
             >
               Stop auto-updating
+              <LuX />
             </Button>
             <Button
-              endContent={<LuCheck />}
               color="primary"
               isPending={autoUpdateLoading}
               onPress={() => _onChangeAutoUpdate()}
               size="sm"
             >
               Save
+              <LuCheck />
             </Button>
           </Modal.Footer>
           </Modal.Dialog>

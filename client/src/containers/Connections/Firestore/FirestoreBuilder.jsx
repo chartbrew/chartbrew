@@ -511,16 +511,16 @@ function FirestoreBuilder(props) {
     setConditions(newConditions);
   };
 
-  const _toggleSubCollections = () => {
+  const _toggleSubCollections = (selected) => {
     let newRequest = _.clone(dataRequest);
     if (!dataRequest.configuration) {
-      newRequest = { ...newRequest, configuration: { showSubCollections: false } };
+      newRequest = { ...newRequest, configuration: { showSubCollections: selected } };
     } else {
       newRequest = {
         ...newRequest,
         configuration: {
           ...newRequest.configuration,
-          showSubCollections: !newRequest.configuration.showSubCollections,
+          showSubCollections: selected,
         }
       };
     }
@@ -622,8 +622,8 @@ function FirestoreBuilder(props) {
                 size="sm"
                 onPress={() => _onSavePressed()}
                 isPending={saveLoading || requestLoading}
-                startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
               >
+                {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                 {"Save"}
               </Button>
               <Tooltip>
@@ -696,11 +696,11 @@ function FirestoreBuilder(props) {
           <Row>
             <Button
               size="sm"
-              startContent={collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
               onPress={() => _onFetchCollections()}
               isPending={collectionsLoading}
               variant="ghost"
             >
+              {collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
               Refresh collections
             </Button>
           </Row>
@@ -819,13 +819,19 @@ function FirestoreBuilder(props) {
           <div className="h-2" />
           <Row className="firestorebuilder-settings-tut" align="flex-start">
             <Switch
+              id="firestore-subcollections"
               onChange={_toggleSubCollections}
               isSelected={
-                firestoreRequest?.configuration?.showSubCollections
+                !!firestoreRequest?.configuration?.showSubCollections
               }
               size="sm"
             >
-              Add sub-collections to the response
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.Content>
+                <Label htmlFor="firestore-subcollections">Add sub-collections to the response</Label>
+              </Switch.Content>
             </Switch>
           </Row>
 
@@ -852,11 +858,11 @@ function FirestoreBuilder(props) {
 
                 <Button
                   onPress={() => _onSelectSubCollection("")}
-                  startContent={<LuX />}
                   isDisabled={!dataRequest.configuration.selectedSubCollection}
                   variant="ghost"
                   size="sm"
                 >
+                  <LuX />
                   Clear selection
                 </Button>
               </Row>
@@ -943,13 +949,13 @@ function FirestoreBuilder(props) {
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                endContent={!requestLoading ? <LuPlay /> : undefined}
                 isPending={requestLoading}
-                startContent={requestLoading ? <ButtonSpinner /> : undefined}
                 onPress={() => _onTest()}
                 className={"w-full"} variant="ghost"
               >
+                {requestLoading ? <ButtonSpinner /> : null}
                 Get Firestore data
+                {!requestLoading ? <LuPlay /> : null}
               </Button>
             </Row>
             <div className="h-4" />
@@ -1104,9 +1110,14 @@ function FirestoreBuilder(props) {
               <div className="text-sm font-bold text-gray-500">Required</div>
               <Switch
                 isSelected={variableSettings?.required}
-                onValueChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
+                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
                 size="sm"
-              />
+                aria-label="Required"
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
           </Drawer.Body>
           <Drawer.Footer>
@@ -1118,8 +1129,8 @@ function FirestoreBuilder(props) {
             </Button>
             <Button onPress={_onVariableSave}
               isPending={variableLoading}
-              startContent={variableLoading ? <ButtonSpinner /> : undefined}
             >
+              {variableLoading ? <ButtonSpinner /> : null}
               Save
             </Button>
           </Drawer.Footer>
@@ -1319,12 +1330,12 @@ function Conditions(props) {
                       {condition.values && condition.values.map((v) => (
                         <Chip
                           key={v}
-                          endContent={<LuCircleX />}
                           size="sm"
                           onClick={() => _onRemoveConditionValue(condition, v)}
                           variant="tertiary"
                         >
                           {v}
+                          <LuCircleX />
                         </Chip>
                       ))}
                     </div>
@@ -1391,11 +1402,11 @@ function Conditions(props) {
       })}
       <Row>
         <Button
-          startContent={<LuPlus />}
           onPress={onAddCondition}
           size="sm"
           variant="ghost"
         >
+          <LuPlus />
           {"Add a new filter"}
         </Button>
       </Row>

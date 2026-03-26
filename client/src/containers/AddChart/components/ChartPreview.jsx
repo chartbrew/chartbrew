@@ -231,10 +231,10 @@ function ChartPreview(props) {
                   onPress={_onRefreshData}
                   isPending={chartLoading}
                   size="sm"
-                  endContent={!chartLoading ? <LuRefreshCw size={18} /> : undefined}
-                  startContent={chartLoading ? <ButtonSpinner /> : undefined}
                   variant="tertiary" >
+                  {chartLoading ? <ButtonSpinner /> : null}
                   {"Refresh chart"}
+                  {!chartLoading ? <LuRefreshCw size={18} /> : null}
                 </Button>
                 <div className="w-2" />
                 <Checkbox
@@ -286,16 +286,14 @@ function ChartPreview(props) {
                       variant="primary"
                       key={c.id}
                       size="sm"
-                      endContent={(
-                        <Link onPress={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                          <LuCircleX size={14} />
-                        </Link>
-                      )}
                     >
                       <Text size="sm">
                         {c.type !== "date" && `${c.value}`}
                         {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
                       </Text>
+                      <Link onPress={() => _onClearFilter(c)} className="text-default-500 flex items-center">
+                        <LuCircleX size={14} />
+                      </Link>
                     </Chip>
                   ))}
                 </div>
@@ -694,9 +692,9 @@ function ChartPreview(props) {
                 onPress={_onAddRange}
                 variant="tertiary"
                 size="sm"
-                endContent={<LuPlus />}
               >
                 Add range
+                <LuPlus />
               </Button>
               {!isEqual(ranges, chart.ranges) && (
                 <Button

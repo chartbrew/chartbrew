@@ -4,6 +4,7 @@ import {
   Input, Button, ProgressCircle,
   Separator, Switch, Tooltip,
   Modal,
+  Label,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
@@ -123,11 +124,11 @@ function TeamSettings() {
         <div>
           <Button
             isPending={loading}
-            startContent={loading ? <ButtonSpinner /> : undefined}
             onPress={_onTeamUpdate}
             variant={success ? "secondary" : "primary"}
             size="sm"
           >
+            {loading ? <ButtonSpinner /> : null}
             {success ? "Saved" : "Save"}
           </Button>
         </div>
@@ -140,11 +141,17 @@ function TeamSettings() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-row items-center gap-2">
           <Switch
+            id="team-settings-allow-report-export"
             isSelected={team.allowReportExport}
-            onValueChange={(selected) => _onToggleReportExport(selected)}
+            onChange={(selected) => _onToggleReportExport(selected)}
             size="sm"
           >
-            Allow public exports
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="team-settings-allow-report-export">Allow public exports</Label>
+            </Switch.Content>
           </Switch>
           <Tooltip>
             <Tooltip.Trigger>
@@ -156,11 +163,17 @@ function TeamSettings() {
 
         <div className="flex flex-row items-center gap-2">
           <Switch
+            id="team-settings-allow-report-refresh"
             isSelected={team.allowReportRefresh}
-            onValueChange={(selected) => _onToggleReportRefresh(selected)}
+            onChange={(selected) => _onToggleReportRefresh(selected)}
             size="sm"
           >
-            Allow report refresh
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="team-settings-allow-report-refresh">Allow report refresh</Label>
+            </Switch.Content>
           </Switch>
           <Tooltip>
             <Tooltip.Trigger>
@@ -174,11 +187,17 @@ function TeamSettings() {
 
         <div className="flex flex-row items-center gap-2">
           <Switch
+            id="team-settings-show-branding"
             isSelected={team.showBranding}
-            onValueChange={(selected) => _onToggleBranding(selected)}
+            onChange={(selected) => _onToggleBranding(selected)}
             size="sm"
           >
-            Show Chartbrew branding
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="team-settings-show-branding">Show Chartbrew branding</Label>
+            </Switch.Content>
           </Switch>
           <Tooltip>
             <Tooltip.Trigger>
@@ -198,10 +217,10 @@ function TeamSettings() {
             <Button
               color="danger"
               onPress={() => setDeleteConfirm(true)}
-              startContent={<LuTrash size={18} />}
               size="sm"
               isDisabled={_teamsOwned()?.length < 2}
             >
+              <LuTrash size={18} />
               Delete team
             </Button>
             {_teamsOwned()?.length < 2 && (

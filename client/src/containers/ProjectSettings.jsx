@@ -146,8 +146,8 @@ function ProjectSettings(props) {
             type="submit" isDisabled={!_canAccess("projectEditor")}
             isPending={loading}
             onPress={_onSaveName}
-            startContent={loading ? <ButtonSpinner /> : undefined}
           >
+            {loading ? <ButtonSpinner /> : null}
             {"Save name"}
           </Button>
         </form>
@@ -200,8 +200,8 @@ function ProjectSettings(props) {
         <Button variant="ghost"
           isDisabled={!_canAccess("projectEditor")}
           onPress={() => _onGetMachineTimezone()}
-          startContent={<LuClock4 />}
         >
+          <LuClock4 />
           <Text hideIn={"xs"}>
             Get current timezone
           </Text>
@@ -213,9 +213,9 @@ function ProjectSettings(props) {
           isDisabled={!_canAccess("projectEditor") || !projectTimezone || projectTimezone === project.timezone}
           isPending={loadingTimezone}
           onPress={() => _onSaveTimezone()}
-          startContent={loadingTimezone ? <ButtonSpinner /> : undefined}
           color="primary"
         >
+          {loadingTimezone ? <ButtonSpinner /> : null}
           Save
         </Button>
         <div className="w-1" />
@@ -224,10 +224,10 @@ function ProjectSettings(props) {
             color="warning"
             variant="tertiary"
             isDisabled={!_canAccess("projectEditor")}
-            endContent={<LuX />}
             onPress={() => _onSaveTimezone(true)}
           >
             Clear
+            <LuX />
           </Button>
         )}
       </Row>
@@ -242,11 +242,11 @@ function ProjectSettings(props) {
             <Button
               color="danger"
               isDisabled={!_canAccess("teamAdmin")}
-              endContent={<LuTrash />}
               onPress={_onRemoveConfirmation}
               variant="secondary"
             >
               Remove project
+              <LuTrash />
             </Button>
           </Row>
         </>

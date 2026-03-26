@@ -124,15 +124,20 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
           )}
 
           <Switch
-            title="Enable transformation"
+            id="data-transform-enabled"
             isSelected={transformConfig.enabled}
-            onValueChange={(value) => {
+            onChange={(value) => {
               setTransformConfig({ ...transformConfig, enabled: value });
               setEditorValue(JSON.stringify({ ...transformConfig, enabled: value }, null, 2));
             }}
             size="sm"
           >
-            Enable transformation
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.Content>
+              <Label htmlFor="data-transform-enabled">Enable transformation</Label>
+            </Switch.Content>
           </Switch>
 
           {transformConfig.type === "flattenNested" && (

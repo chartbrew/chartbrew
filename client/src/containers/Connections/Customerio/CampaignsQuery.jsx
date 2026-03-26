@@ -5,6 +5,7 @@ import {
   Button,
   Separator,
   Input,
+  Label,
   Popover,
   Switch,
   Tooltip,
@@ -588,11 +589,17 @@ function CampaignsQuery(props) {
                   </div>
                   <div>
                     <Switch
+                      id="campaigns-query-unique"
                       isSelected={config.unique}
-                      onChange={() => setConfig({ ...config, unique: !config.unique })}
+                      onChange={(selected) => setConfig({ ...config, unique: selected })}
                       size="sm"
                     >
-                      Unique clicks per customer
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <Switch.Content>
+                        <Label htmlFor="campaigns-query-unique">Unique clicks per customer</Label>
+                      </Switch.Content>
                     </Switch>
                   </div>
                 </div>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Button, Input, Separator, Alert,
+  Button, InputGroup, Separator, Alert, TextField,
 } from "@heroui/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
@@ -110,20 +110,23 @@ function Signup() {
             submitUser();
           }}>
             <Row>
-              <Input
-                variant="secondary"
-                startContent={<LuUser />}
-                type="text"
-                placeholder="Enter your name"
-                labelPlacement="outside"
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setErrors({ ...errors, name: "" });
-                }}
-                value={name}
-                fullWidth
-                size="lg"
-              />
+              <TextField fullWidth variant="secondary" className="w-full" name="name" aria-label="Your name">
+                <InputGroup variant="secondary" fullWidth>
+                  <InputGroup.Prefix>
+                    <LuUser className="size-5 text-muted" aria-hidden />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="text"
+                    placeholder="Enter your name"
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setErrors({ ...errors, name: "" });
+                    }}
+                    value={name}
+                    className="text-base"
+                  />
+                </InputGroup>
+              </TextField>
             </Row>
             {errors.name && (
               <Row>
@@ -134,20 +137,23 @@ function Signup() {
             )}
             <div className="h-2" />
             <Row>
-              <Input
-                variant="secondary"
-                startContent={<LuMail />}
-                type="email"
-                placeholder="Enter your email"
-                labelPlacement="outside"
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setErrors({ ...errors, email: "" });
-                }}
-                value={email}
-                fullWidth
-                size="lg"
-              />
+              <TextField fullWidth variant="secondary" className="w-full" name="email" aria-label="Your email">
+                <InputGroup variant="secondary" fullWidth>
+                  <InputGroup.Prefix>
+                    <LuMail className="size-5 text-muted" aria-hidden />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="email"
+                    placeholder="Enter your email"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrors({ ...errors, email: "" });
+                    }}
+                    value={email}
+                    className="text-base"
+                  />
+                </InputGroup>
+              </TextField>
             </Row>
             {errors.email && (
               <Row>
@@ -158,20 +164,23 @@ function Signup() {
             )}
             <div className="h-2" />
             <Row>
-              <Input
-                variant="secondary"
-                startContent={<LuLock />}
-                type="password"
-                placeholder="Enter a secure password"
-                labelPlacement="outside"
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrors({ ...errors, password: "" });
-                }}
-                value={password}
-                fullWidth
-                size="lg"
-              />
+              <TextField fullWidth variant="secondary" className="w-full" name="password" aria-label="Your password">
+                <InputGroup variant="secondary" fullWidth>
+                  <InputGroup.Prefix>
+                    <LuLock className="size-5 text-muted" aria-hidden />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="password"
+                    placeholder="Enter a secure password"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrors({ ...errors, password: "" });
+                    }}
+                    value={password}
+                    className="text-base"
+                  />
+                </InputGroup>
+              </TextField>
             </Row>
             {errors.password && (
               <div className="text-danger">
@@ -186,12 +195,12 @@ function Signup() {
                 isPending={loading}
                 type="submit"
                 size="lg"
-                endContent={!loading ? <LuArrowRight /> : undefined}
-                startContent={loading ? <ButtonSpinner /> : undefined}
                 variant="primary"
                 fullWidth
               >
+                {loading ? <ButtonSpinner /> : null}
                 Continue
+                {!loading ? <LuArrowRight /> : null}
               </Button>
             </Row>
             {signupError && (

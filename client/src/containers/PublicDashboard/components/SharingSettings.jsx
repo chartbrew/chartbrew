@@ -426,8 +426,8 @@ function SharingSettings(props) {
               onPress={() => {
                 setParameters([...parameters, { key: "", value: "" }]);
               }}
-              startContent={<LuPlus />}
             >
+              <LuPlus />
               Add parameter
             </Button>
           </div>
@@ -519,8 +519,8 @@ function SharingSettings(props) {
               onPress={() => {
                 setExpirationDate("");
               }}
-              startContent={<LuX size={16} />}
             >
+              <LuX size={16} />
               Clear expiration date
             </Button>
           )}
@@ -569,10 +569,10 @@ function SharingSettings(props) {
               <Button
                 size="sm"
                 variant="primary"
-                endContent={<LuPalette size={18} />}
                 onPress={() => navigate(`/report/${newBrewName}/edit`)}
               >
                 Edit report visuals
+                <LuPalette size={18} />
               </Button>
             </div>
           </Drawer.Header>
@@ -582,11 +582,17 @@ function SharingSettings(props) {
           <div className="flex flex-row items-center justify-between flex-wrap gap-2">
             <div className="flex items-center">
               <Switch
+                id="sharing-settings-allow-public"
                 isSelected={project.public}
-                onValueChange={_onTogglePublic}
+                onChange={_onTogglePublic}
                 size="sm"
               >
-                Allow sharing
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Content>
+                  <Label htmlFor="sharing-settings-allow-public">Allow sharing</Label>
+                </Switch.Content>
               </Switch>
               <div className="w-1" />
               <Tooltip>
@@ -604,13 +610,19 @@ function SharingSettings(props) {
             </div>
             <div className="flex items-center">
               <Switch
+                id="sharing-settings-require-password"
                 isSelected={project.passwordProtected}
-                onValueChange={_onTogglePassword}
+                onChange={_onTogglePassword}
                 isReadOnly={passwordLoading}
                 aria-busy={passwordLoading}
                 size="sm"
               >
-                Require password to view
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Content>
+                  <Label htmlFor="sharing-settings-require-password">Require password to view</Label>
+                </Switch.Content>
               </Switch>
               <div className="w-1" />
               <Tooltip>
@@ -678,9 +690,9 @@ function SharingSettings(props) {
               onPress={() => _onSaveBrewName(newBrewName)}
               isDisabled={!newBrewName}
               isPending={urlLoading}
-              startContent={urlLoading ? <ButtonSpinner /> : undefined}
               size="sm"
             >
+              {urlLoading ? <ButtonSpinner /> : null}
               {onReport ? "Save URL and reload" : "Save URL"}
             </Button>
           </Row>
@@ -695,9 +707,9 @@ function SharingSettings(props) {
                 size="sm"
                 variant="tertiary"
                 onPress={_onCreateNewPolicy}
-                startContent={shareLoading ? <ButtonSpinner /> : <LuPlus />}
                 isPending={shareLoading}
               >
+                {shareLoading ? <ButtonSpinner /> : <LuPlus />}
                 New Link
               </Button>
             </div>
@@ -768,8 +780,8 @@ function SharingSettings(props) {
                           variant="primary"
                           onPress={_onUpdatePolicy}
                           isPending={isUpdating}
-                          startContent={isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
                         >
+                          {isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
                           Save & Regenerate links
                         </Button>
                       </div>
@@ -802,11 +814,17 @@ function SharingSettings(props) {
           
           <Row align="center">
             <Switch
+              id="sharing-settings-branding"
               isSelected={project.Team && project.Team.showBranding}
-              onValueChange={_onToggleBranding}
+              onChange={_onToggleBranding}
               size="sm"
             >
-              Show Chartbrew branding
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.Content>
+                <Label htmlFor="sharing-settings-branding">Show Chartbrew branding</Label>
+              </Switch.Content>
             </Switch>
           </Row>
         </Drawer.Body>

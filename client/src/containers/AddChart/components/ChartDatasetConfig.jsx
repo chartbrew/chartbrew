@@ -8,6 +8,7 @@ import {
   Chip,
   Separator,
   Input,
+  InputGroup,
   Link,
   Modal,
   Popover,
@@ -15,7 +16,8 @@ import {
   Spinner,
   Tabs,
   Tooltip,
-  Label
+  Label,
+  TextField,
 } from "@heroui/react";
 import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
@@ -555,10 +557,10 @@ function ChartDatasetConfig(props) {
                       <Button
                         variant={cdc.sort === "asc" ? "secondary" : "tertiary"}
                         onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
-                        startContent={<LuArrowDown01 />}
                         fullWidth
                         size="sm"
                       >
+                        <LuArrowDown01 />
                         Asc
                       </Button>
                     </Tooltip.Trigger>
@@ -569,10 +571,10 @@ function ChartDatasetConfig(props) {
                       <Button
                         variant={cdc.sort === "desc" ? "secondary" : "tertiary"}
                         onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
-                        startContent={<LuArrowDown10 />}
                         fullWidth
                         size="sm"
                       >
+                        <LuArrowDown10 />
                         Desc
                       </Button>
                     </Tooltip.Trigger>
@@ -814,68 +816,71 @@ function ChartDatasetConfig(props) {
             <div className="font-bold">{"Variables"}</div>
             {variables.map((variable) => (
               <div key={variable.id} className="flex flex-col gap-1">
-                <Input
-                  startContent={(
-                    <div className="flex flex-row gap-1 items-center">
-                      <LuVariable size={18} />
-                      <div className="text-sm text-gray-400">{variable.name}</div>
-                    </div>
-                  )}
-                  placeholder={`Default: ${variable.default_value || "No default"}`}
-                  value={_getVariableCurrentValue(variable)}
-                  onChange={(event) => {
-                    setVariableValues((prev) => ({
-                      ...prev,
-                      [variable.name]: event.target.value,
-                    }));
-                  }}
-                  variant="secondary"
-                  endContent={
-                    _hasVariableChanged(variable) ? (
-                      <div className="flex flex-row gap-1">
-                        <Tooltip>
-                          <Tooltip.Trigger>
-                            <Link
-                              onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
-                              className="text-success"
-                            >
-                              <LuCircleCheck className="text-success" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Save variable value</Tooltip.Content>
-                        </Tooltip>
-                        <Tooltip>
-                          <Tooltip.Trigger>
-                            <Link
-                              onClick={() => {
-                                const originalValue = _getVariableOriginalValue(variable);
-                                setVariableValues((prev) => ({
-                                  ...prev,
-                                  [variable.name]: originalValue,
-                                }));
-                              }}
-                              className="text-warning"
-                            >
-                              <LuCircleX className="text-warning" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Reset to saved value</Tooltip.Content>
-                        </Tooltip>
+                <TextField className="w-full" name={`chart-var-${variable.name}`}>
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Prefix>
+                      <div className="flex flex-row items-center gap-1">
+                        <LuVariable size={18} aria-hidden />
+                        <span className="text-sm text-gray-400">{variable.name}</span>
                       </div>
-                    ) : cdc.configuration?.variables?.find((item) => item.name === variable.name) && (
-                      <div className="flex flex-row gap-1">
-                        <Tooltip>
-                          <Tooltip.Trigger>
-                            <Link onPress={() => _onClearVariableOverride(variable.name)}>
-                              <LuCircleX className="text-warning" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Remove override and use default value</Tooltip.Content>
-                        </Tooltip>
-                      </div>
-                    )
-                  }
-                />
+                    </InputGroup.Prefix>
+                    <InputGroup.Input
+                      placeholder={`Default: ${variable.default_value || "No default"}`}
+                      value={_getVariableCurrentValue(variable)}
+                      onChange={(event) => {
+                        setVariableValues((prev) => ({
+                          ...prev,
+                          [variable.name]: event.target.value,
+                        }));
+                      }}
+                    />
+                    <InputGroup.Suffix className="pr-1">
+                      {_hasVariableChanged(variable) ? (
+                        <div className="flex flex-row gap-1">
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Link
+                                onClick={() => _onSaveVariableValue(variable.name, variableValues[variable.name] || "")}
+                                className="text-success"
+                              >
+                                <LuCircleCheck className="text-success" />
+                              </Link>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Save variable value</Tooltip.Content>
+                          </Tooltip>
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Link
+                                onClick={() => {
+                                  const originalValue = _getVariableOriginalValue(variable);
+                                  setVariableValues((prev) => ({
+                                    ...prev,
+                                    [variable.name]: originalValue,
+                                  }));
+                                }}
+                                className="text-warning"
+                              >
+                                <LuCircleX className="text-warning" />
+                              </Link>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Reset to saved value</Tooltip.Content>
+                          </Tooltip>
+                        </div>
+                      ) : cdc.configuration?.variables?.find((item) => item.name === variable.name) ? (
+                        <div className="flex flex-row gap-1">
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Link onPress={() => _onClearVariableOverride(variable.name)}>
+                                <LuCircleX className="text-warning" />
+                              </Link>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Remove override and use default value</Tooltip.Content>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </InputGroup.Suffix>
+                  </InputGroup>
+                </TextField>
               </div>
             ))}
             {variables.length === 0 && (

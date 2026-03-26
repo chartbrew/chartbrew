@@ -450,8 +450,8 @@ function GaBuilder(props) {
                 <Button size="sm"
                   onPress={() => _onSavePressed()}
                   isPending={saveLoading || requestLoading}
-                  startContent={(saveLoading || requestLoading) ? <ButtonSpinner /> : undefined}
                 >
+                  {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
                   {"Save"}
                 </Button>
                 <Tooltip>
@@ -676,9 +676,10 @@ function GaBuilder(props) {
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="secondary" startContent={<LuInfo />}
+                  variant="secondary"
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
+                  <LuInfo />
                   info
                 </Chip>
               </div>
@@ -719,9 +720,10 @@ function GaBuilder(props) {
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="secondary" startContent={<LuInfo />}
+                  variant="secondary"
                   className="cursor-pointer hover:shadow-xs hover:saturate-200 transition-all"
                 >
+                  <LuInfo />
                   info
                 </Chip>
               </div>
@@ -751,13 +753,13 @@ function GaBuilder(props) {
         <div className="col-span-12 sm:col-span-5">
           <Row className="gabuilder-request-tut">
             <Button
-              endContent={!requestLoading ? <LuPlay /> : undefined}
               isPending={requestLoading}
-              startContent={requestLoading ? <ButtonSpinner /> : undefined}
               onPress={() => _onTest()}
               className="w-full" variant="ghost"
             >
+              {requestLoading ? <ButtonSpinner /> : null}
               Get analytics data
+              {!requestLoading ? <LuPlay /> : null}
             </Button>
           </Row>
           <div className="h-4" />

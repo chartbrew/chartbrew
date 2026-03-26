@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Tooltip, Checkbox, Input, Accordion, Radio, RadioGroup, Chip, Label,
+  Accordion, Button, Checkbox, Chip, InputGroup, Label, Radio, RadioGroup, TextField, Tooltip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
@@ -155,18 +155,18 @@ function InviteMembersForm(props) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        startContent={<LuCheckCheck />}
                         onPress={_onSelectAllProjects}
                       >
+                        <LuCheckCheck />
                         Select all
                       </Button>
                       <div className="w-1" />
                       <Button
                         size="sm"
                         variant="ghost"
-                        startContent={<LuX />}
                         onPress={_onDeselectAllProjects}
                       >
+                        <LuX />
                         Deselect all
                       </Button>
                     </div>
@@ -241,8 +241,8 @@ function InviteMembersForm(props) {
           onPress={_onGenerateUrl}
           color="primary"
           size="sm"
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           {loading ? "Generating..." : "Generate invite link"}
         </Button>
       </div>
@@ -251,24 +251,23 @@ function InviteMembersForm(props) {
         <>
           <div className="h-4" />
           <div>
-            <Input
-              label="Share this link with your team"
-              id="url-text"
-              value={inviteUrl}
-              readOnly
-              variant="secondary"
-              endContent={(
-                <Button
-                  onPress={_onCopyUrl}
-                  size="sm"
-                  isIconOnly
-                  variant={urlCopied ? "primary" : "tertiary"}
-                >
-                  {urlCopied ? <LuCheck /> : <LuCopy />}
-                </Button>
-              )}
-              className="max-w-md"
-            />
+            <TextField className="max-w-md" name="invite-url">
+              <Label htmlFor="url-text">Share this link with your team</Label>
+              <InputGroup variant="secondary" fullWidth>
+                <InputGroup.Input id="url-text" value={inviteUrl} readOnly />
+                <InputGroup.Suffix className="pr-0">
+                  <Button
+                    onPress={_onCopyUrl}
+                    size="sm"
+                    isIconOnly
+                    variant={urlCopied ? "primary" : "tertiary"}
+                    aria-label="Copy invite link"
+                  >
+                    {urlCopied ? <LuCheck /> : <LuCopy />}
+                  </Button>
+                </InputGroup.Suffix>
+              </InputGroup>
+            </TextField>
           </div>
           <div className="h-2" />
           <div className="flex flex-wrap items-center gap-1">

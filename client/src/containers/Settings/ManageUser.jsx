@@ -251,9 +251,9 @@ function ManageUser() {
           isDisabled={!user.name}
           isPending={loading} onPress={_onUpdateUser}
           variant={success ? "tertiary" : "primary"}
-          startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
+          {loading ? <ButtonSpinner /> : null}
           {success ? "Saved" : "Save" }
         </Button>
       </div>
@@ -283,9 +283,9 @@ function ManageUser() {
           isDisabled={!userEmail || userEmail === userProp.email}
           isPending={loading} onPress={_onUpdateEmail}
           variant={successEmail ? "tertiary" : "primary"}
-          startContent={loading ? <ButtonSpinner /> : undefined}
           size="sm"
         >
+          {loading ? <ButtonSpinner /> : null}
           {successEmail ? "We sent you an email" : "Update email" }
         </Button>
       </div>
@@ -300,9 +300,9 @@ function ManageUser() {
       {!qrCode && authMethods?.length === 0 && (
         <div>
           <Button onPress={() => _onSetup2FA()}
-            endContent={<LuShieldCheck />}
           >
             {"Enable 2FA"}
+            <LuShieldCheck />
           </Button>
         </div>
       )}
@@ -336,8 +336,8 @@ function ManageUser() {
             <Button onPress={() => _onVerify2FA()}
               isDisabled={!appToken || !password}
               isPending={loading2fa}
-              startContent={loading2fa ? <ButtonSpinner /> : undefined}
             >
+              {loading2fa ? <ButtonSpinner /> : null}
               {"Confirm"}
             </Button>
           </div>
@@ -359,10 +359,10 @@ function ManageUser() {
           <div>
             <Button
               variant="secondary"
-              endContent={codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
               onPress={_onCopyCodes}
             >
               {codesCopied ? "Copied" : "Copy codes"}
+              {codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
             </Button>
           </div>
           <div className="h-2" />
@@ -409,11 +409,11 @@ function ManageUser() {
 
       <div>
         <Button
-          endContent={<LuTrash />}
           variant="danger"
           onPress={() => setOpenDeleteModal(true)}
         >
           Delete account
+          <LuTrash />
         </Button>
       </div>
 

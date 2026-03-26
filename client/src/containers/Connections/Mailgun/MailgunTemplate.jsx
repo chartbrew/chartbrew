@@ -262,10 +262,10 @@ function MailgunTemplate(props) {
             {!formVisible && (
               <Button
                 variant="ghost"
-                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 auto
               >
+                <LuPlus />
                 Or create a new connection
               </Button>
             )}
@@ -274,9 +274,9 @@ function MailgunTemplate(props) {
                 variant="ghost"
                 auto
                 onClick={() => setFormVisible(false)}
-                startContent={<LuArrowUp />}
               >
                 Use an existing connection instead
+                <LuArrowUp />
               </Button>
             )}
           </Row>
@@ -401,21 +401,21 @@ function MailgunTemplate(props) {
           <Row>
             <Button
               variant="ghost"
-              startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
               size="sm"
             >
               Select all
+              <LuCheckCheck />
             </Button>
             <div className="w-1" />
             <Button
               variant="ghost"
-              startContent={<LuX />}
               onClick={_onDeselectAll}
               size="sm"
             >
               Deselect all
+              <LuX />
             </Button>
           </Row>
         </>
@@ -473,10 +473,10 @@ function MailgunTemplate(props) {
           }
           onClick={_onGenerateDashboard}
           color="primary"
-          endContent={!loading ? <LuArrowRight /> : undefined}
-          startContent={loading ? <ButtonSpinner /> : undefined}
         >
+          {loading ? <ButtonSpinner /> : null}
           {"Create the charts"}
+          {!loading ? <LuArrowRight /> : null}
         </Button>
       </Row>
     </div>

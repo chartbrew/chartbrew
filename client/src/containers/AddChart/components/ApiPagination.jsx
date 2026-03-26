@@ -84,10 +84,16 @@ function ApiPagination(props) {
     <div className="grid grid-cols-12 gap-4">
       <div className="col-span-12">
         <Switch
+          id="api-pagination-enable"
           isSelected={pagination}
-          onChange={() => onPaginationChanged("pagination", !pagination)}
+          onChange={(selected) => onPaginationChanged("pagination", selected)}
         >
-          Enable pagination on this request
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Switch.Content>
+            <Label htmlFor="api-pagination-enable">Enable pagination on this request</Label>
+          </Switch.Content>
         </Switch>
       </div>
       <div className="col-span-12">

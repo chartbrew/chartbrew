@@ -289,38 +289,46 @@ function DashboardFilters({
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
                     <Dropdown.Menu>
-                      <Dropdown.Item id="edit-filter" onPress={() => _handleEditFilter(filter)} startContent={<LuPencil />} textValue="Edit filter">
+                      <Dropdown.Item id="edit-filter" onPress={() => _handleEditFilter(filter)} textValue="Edit filter">
+                        <LuPencil />
                         Edit filter
                       </Dropdown.Item>
                       {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
-                        <Dropdown.Item id="save-everyone" onPress={() => _saveForEveryone(filter)} startContent={<LuUsers />} textValue="Save for everyone">
+                        <Dropdown.Item id="save-everyone" onPress={() => _saveForEveryone(filter)} textValue="Save for everyone">
+                          <LuUsers />
                           Save for everyone
                         </Dropdown.Item>
                       )}
                       {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
-                        <Dropdown.Item id="remove-everyone" startContent={<LuUsers />} onPress={() => _removeFromEveryone(filter)} textValue="Remove from everyone">
+                        <Dropdown.Item id="remove-everyone" onPress={() => _removeFromEveryone(filter)} textValue="Remove from everyone">
+                          <LuUsers />
                           Remove from everyone
                         </Dropdown.Item>
                       )}
                       {_canAccess("projectEditor") && _getStateFilter(filter.id)?.onReport && (
-                        <Dropdown.Item id="hide-report" onPress={() => _updateReportVisibility(filter, false)} startContent={<LuTvMinimal />} textValue="Hide from report">
+                        <Dropdown.Item id="hide-report" onPress={() => _updateReportVisibility(filter, false)} textValue="Hide from report">
+                          <LuTvMinimal />
                           Hide from report
                         </Dropdown.Item>
                       )}
                       {_canAccess("projectEditor") && !_getStateFilter(filter.id)?.onReport && (
-                        <Dropdown.Item id="show-report" onPress={() => _updateReportVisibility(filter, true)} startContent={<LuTvMinimal />} textValue="Show on report">
+                        <Dropdown.Item id="show-report" onPress={() => _updateReportVisibility(filter, true)} textValue="Show on report">
+                          <LuTvMinimal />
                           Show on report
                         </Dropdown.Item>
                       )}
                       {_getStateFilter(filter.id) && (
-                        <Dropdown.Item id="revert-default" onPress={() => _onRevertToServerDefault(filter)} startContent={<LuIterationCw />} textValue="Revert to server default">
+                        <Dropdown.Item id="revert-default" onPress={() => _onRevertToServerDefault(filter)} textValue="Revert to server default">
+                          <LuIterationCw />
                           Revert to server default
                         </Dropdown.Item>
                       )}
-                      <Dropdown.Item id="clear-value" onPress={() => _onClearFilterValue(filter)} startContent={<LuCircleMinus />} showDivider textValue="Clear filter value">
+                      <Dropdown.Item id="clear-value" onPress={() => _onClearFilterValue(filter)} showDivider textValue="Clear filter value">
+                        <LuCircleMinus />
                         Clear filter value
                       </Dropdown.Item>
-                      <Dropdown.Item id="remove-filter" onPress={() => _onRemoveFilter(filter.id)} startContent={<LuCircleX className="text-danger" />} variant="danger" textValue="Remove filter">
+                      <Dropdown.Item id="remove-filter" onPress={() => _onRemoveFilter(filter.id)} variant="danger" textValue="Remove filter">
+                        <LuCircleX className="text-danger" />
                         Remove filter
                       </Dropdown.Item>
                     </Dropdown.Menu>

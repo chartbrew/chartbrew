@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { Button, Input, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
+import { Button, EmptyState, Input, Modal, Table } from "@heroui/react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createVariable, deleteVariable, selectProject } from "../../slices/project"
@@ -72,10 +72,10 @@ function Variables() {
         <div className="text-lg font-bold">Variables</div>
         <Button
           color="primary"
-          endContent={<LuPlus />}
           onPress={_onCreateVariable}
         >
           Create variable
+          <LuPlus />
         </Button>
       </div>
       <div className="h-4" />
@@ -85,33 +85,41 @@ function Variables() {
       </div>
 
       <div className="h-4" />
-      <Table className="border-1 border-divider rounded-lg shadow-none">
+      <Table className="border-1 border-divider min-h-[160px] rounded-lg shadow-none">
         <Table.ScrollContainer>
           <Table.Content aria-label="Variables" className="min-w-full">
-            <TableHeader>
-              <TableColumn key="name" isRowHeader textValue="Name">
+            <Table.Header>
+              <Table.Column id="name" isRowHeader>
                 Name
-              </TableColumn>
-              <TableColumn key="createdAt" textValue="Created At">
+              </Table.Column>
+              <Table.Column id="createdAt">
                 Created At
-              </TableColumn>
-              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
-            </TableHeader>
-            <TableBody renderEmptyState={() => "No variables yet"}>
+              </Table.Column>
+              <Table.Column id="actions" className="w-12 text-end">
+                <span className="sr-only">Actions</span>
+              </Table.Column>
+            </Table.Header>
+            <Table.Body
+              renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-2 py-8 text-center">
+                  <span className="text-sm text-muted">No variables yet</span>
+                </EmptyState>
+              )}
+            >
               {project?.Variables?.map((variable) => (
-                <TableRow key={variable.id}>
-              <TableCell key="name">
-                <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{variable.name}</code>
-              </TableCell>
-              <TableCell key="createdAt">{new Date(variable.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell key="actions" className="flex justify-end text-end">
-                <Button isIconOnly variant="danger-soft" onPress={() => setDeleteModal(variable.id)}>
-                  <LuTrash />
-                </Button>
-              </TableCell>
-                </TableRow>
+                <Table.Row key={variable.id} id={String(variable.id)}>
+                  <Table.Cell>
+                    <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{variable.name}</code>
+                  </Table.Cell>
+                  <Table.Cell>{new Date(variable.createdAt).toLocaleDateString()}</Table.Cell>
+                  <Table.Cell className="flex justify-end text-end">
+                    <Button isIconOnly variant="danger-soft" onPress={() => setDeleteModal(variable.id)}>
+                      <LuTrash />
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </TableBody>
+            </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
       </Table>

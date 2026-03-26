@@ -512,18 +512,20 @@ function DatarequestSettings(props) {
           <Row className="drsettings-join-tut gap-2">
             <Button
               size="sm"
-              variant="ghost" startContent={<LuPlus />}
+              variant="ghost"
               onPress={() => _onAddJoin()}
             >
+              <LuPlus />
               Join with another source
             </Button>
 
             {joins.length > 0 && (
               <Button
                 size="sm"
-                variant="ghost" startContent={<LuX />}
+                variant="ghost"
                 onPress={() => _onRemoveLastJoin()}
               >
+                <LuX />
                 Remove last join
               </Button>
             )}
@@ -539,9 +541,9 @@ function DatarequestSettings(props) {
               size="sm"
               isDisabled={isSaved}
               isPending={saveLoading}
-              startContent={saveLoading ? <ButtonSpinner /> : undefined}
               variant={isSaved ? "tertiary" : "primary"}
             >
+              {saveLoading ? <ButtonSpinner /> : null}
               {!isSaved && "Save"}
               {isSaved && "Saved"}
             </Button>
@@ -564,11 +566,11 @@ function DatarequestSettings(props) {
                 fullWidth
                 color="secondary"
                 onPress={() => _onRunDataset()}
-                endContent={!isCompiling ? <LuPlay /> : undefined}
                 isDisabled={isCompiling}
-                startContent={isCompiling ? <ButtonSpinner /> : undefined}
               >
+                {isCompiling ? <ButtonSpinner /> : null}
                 Compile dataset data
+                {!isCompiling ? <LuPlay /> : null}
               </Button>
             </Row>
             <Row align="center">

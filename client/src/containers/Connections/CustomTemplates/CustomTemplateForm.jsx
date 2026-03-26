@@ -233,12 +233,18 @@ function CustomTemplateForm(props) {
               <div className="h-2" />
               <Row>
                 <Switch
+                  id="custom-template-new-datasets"
                   isSelected={newDatasets}
-                  onChange={() => setNewDatasets(!newDatasets)}
+                  onChange={(selected) => setNewDatasets(selected)}
                   isDisabled={!canChangeNewDatasets}
                   size="sm"
                 >
-                  {"Create new datasets"}
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Content>
+                    <Label htmlFor="custom-template-new-datasets">{"Create new datasets"}</Label>
+                  </Switch.Content>
                 </Switch>
               </Row>
               {!canChangeNewDatasets && (
@@ -293,21 +299,21 @@ function CustomTemplateForm(props) {
           <div className="h-8" />
           <Row>
             <Button
-              endContent={<LuCheckCheck />}
               variant="ghost"
               onPress={_onSelectAll}
               size="sm"
             >
               Select all
+              <LuCheckCheck />
             </Button>
             <div className="w-1" />
             <Button
-              endContent={<LuX />}
               variant="ghost"
               onPress={_onDeselectAll}
               size="sm"
             >
               Deselect all
+              <LuX />
             </Button>
           </Row>
         </>
@@ -317,10 +323,10 @@ function CustomTemplateForm(props) {
       <Row justify="flex-end">
         {isAdmin && (
           <Button variant="danger-soft"
-            endContent={<LuTrash />}
             onPress={() => setDeleteConfimation(true)}
           >
             Delete template
+            <LuTrash />
           </Button>
         )}
         <div className="w-1" />
@@ -328,10 +334,10 @@ function CustomTemplateForm(props) {
           variant="primary"
           onPress={_generateTemplate}
           isDisabled={!selectedCharts.length || isCreating}
-          endContent={!isCreating ? <LuArrowRight /> : undefined}
-          startContent={isCreating ? <ButtonSpinner /> : undefined}
         >
+          {isCreating ? <ButtonSpinner /> : null}
           Generate from template
+          {!isCreating ? <LuArrowRight /> : null}
         </Button>
       </Row>
 
@@ -355,7 +361,6 @@ function CustomTemplateForm(props) {
               </Button>
               <Button
                 variant="danger"
-                endContent={<LuTrash />}
                 onPress={() => {
                   setDeleteLoading(true);
                   onDelete(template.id);
@@ -363,6 +368,7 @@ function CustomTemplateForm(props) {
                 isPending={deleteLoading}
               >
                 Delete template
+                <LuTrash />
               </Button>
             </Modal.Footer>
             </Modal.Dialog>
