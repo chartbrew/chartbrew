@@ -12,7 +12,7 @@ import {
   Button,
   Tooltip,
 } from "@heroui/react";
-import { LuChevronDown, LuCircleChevronDown, LuCircleChevronUp, LuExpand } from "react-icons/lu";
+import { LuArrowDown, LuArrowUp, LuChevronDown, LuExpand } from "react-icons/lu";
 
 import Row from "../../../../components/Row";
 import HeroPaginationNav from "../../../../components/HeroPaginationNav";
@@ -292,7 +292,7 @@ function TableComponent({
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Table data"
-                className="min-w-full shadow-none even:[&_tbody>tr]:bg-default-100/40"
+                className="min-w-full"
                 style={mergedTableStyle}
               >
                 <Table.Header>
@@ -306,30 +306,29 @@ function TableComponent({
                         id={header.column.id}
                         isRowHeader={colIdx === 0}
                         style={{ whiteSpace: "unset" }}
-                        className="pl-10 pr-10 max-w-[400px]"
+                        className="max-w-[300px]"
                       >
-                        <Row align="center">
-                          {sorted === "desc" && (<LuCircleChevronDown size={16} />)}
-                          {sorted === "asc" && (<LuCircleChevronUp size={16} />)}
-                          {sorted && <div className="w-2" />}
+                        <div className="flex items-center gap-1">
                           {canSort ? (
                             <LinkNext
-                              className="text-sm cursor-pointer hover:text-secondary"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                toggleHandler(e);
-                              }}
+                            className="cursor-pointer hover:text-secondary"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleHandler(e);
+                            }}
                             >
-                              <Text className={"text-foreground-500"}>
+                              <Text className={"text-sm text-foreground-500"}>
                                 {formatHeaderLabel(header)}
                               </Text>
                             </LinkNext>
                           ) : (
-                            <Text className={"text-foreground-500"}>
+                            <Text className={"text-sm text-foreground-500"}>
                               {formatHeaderLabel(header)}
                             </Text>
                           )}
-                        </Row>
+                          {sorted === "desc" && (<LuArrowDown size={14} />)}
+                          {sorted === "asc" && (<LuArrowUp size={14} />)}
+                        </div>
                       </Table.Column>
                     );
                   })}
@@ -344,7 +343,7 @@ function TableComponent({
                   )}
                   {rows.map((row) => (
                     <Table.Row key={row.id} id={row.id}>
-                      {row.getVisibleCells().map((cell, cellIndex) => {
+                      {row.getVisibleCells().map((cell) => {
                         const value = cell.getValue();
                         const strValue = value == null ? "" : String(value);
                         const isObject = (strValue && strValue.indexOf && strValue.indexOf("__cb_object") > -1) || false;
@@ -359,8 +358,7 @@ function TableComponent({
                           <Table.Cell
                             key={cell.id}
                             className={cn(
-                              "max-w-[300px] pr-10 pl-10 truncate select-text",
-                              cellIndex !== row.getVisibleCells().length - 1 && "border-e border-content3",
+                              "max-w-[300px] truncate select-text",
                             )}
                             title={strValue}
                           >

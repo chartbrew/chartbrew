@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, Separator, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Chip, Separator, Modal, Table,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuPlus, LuSettings, LuSlack } from "react-icons/lu";
@@ -54,59 +54,59 @@ function SlackIntegrations() {
             aria-label="Slack integrations"
             className="min-w-full even:[&_tbody>tr]:bg-content2/30"
           >
-            <TableHeader>
-              <TableColumn key="name" isRowHeader textValue="Name">
+            <Table.Header>
+              <Table.Column id="name" isRowHeader textValue="Name">
                 Name
-              </TableColumn>
-              <TableColumn key="slack_team_name" textValue="Slack workspace">
+              </Table.Column>
+              <Table.Column id="slack_team_name" textValue="Slack workspace">
                 Slack workspace
-              </TableColumn>
-              <TableColumn key="installer_slack_user_id" textValue="Channels access">
+              </Table.Column>
+              <Table.Column id="installer_slack_user_id" textValue="Channels access">
                 Channels access
-              </TableColumn>
-              <TableColumn key="created" className="text-end" textValue="Date created">
+              </Table.Column>
+              <Table.Column id="created" className="text-end" textValue="Date created">
                 Date created
-              </TableColumn>
-              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
-            </TableHeader>
+              </Table.Column>
+              <Table.Column id="actions" className="w-12 text-end" textValue="Actions" />
+            </Table.Header>
 
-            <TableBody renderEmptyState={() => "No Slack integrations"}>
+            <Table.Body renderEmptyState={() => "No Slack integrations"}>
               {slackIntegrations.map((i) => (
-                <TableRow key={i.id}>
-              <TableCell key="name">
-                <Link
-                  to={`/integrations/${i.id}`}
-                  className="hover:underline hover:decoration-2 cursor-pointer"
-                >
-                  <div className="text-foreground-700">{i.name}</div>
-                </Link>
-              </TableCell>
-              <TableCell key="slack_team_name">
-                {i.config?.slack_team_name || "No Slack workspace"}
-              </TableCell>
-              <TableCell key="installer_slack_user_id" className="max-w-[300px] truncate">
-                <div className="truncate">
-                  {i.config?.allowedChannels?.length ? `${i.config?.allowedChannels?.length} ${i.config?.allowedChannels?.length === 1 ? "channel" : "channels"}` : "No channels"}
-                </div>
-              </TableCell>
-              <TableCell key="created">
-                {formatRelative(new Date(i.createdAt), new Date())}
-              </TableCell>
-              <TableCell key="actions">
-                <Link to={`/integrations/${i.id}`}>
-                  <Button
-                    isIconOnly
-                    variant="ghost"
-                    size="sm"
-                    className="pointer-events-none"
-                  >
-                    <LuSettings size={18} />
-                  </Button>
-                </Link>
-              </TableCell>
-                </TableRow>
+                <Table.Row key={i.id} id={String(i.id)}>
+                  <Table.Cell>
+                    <Link
+                      to={`/integrations/${i.id}`}
+                      className="hover:underline hover:decoration-2 cursor-pointer"
+                    >
+                      <div className="text-foreground-700">{i.name}</div>
+                    </Link>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {i.config?.slack_team_name || "No Slack workspace"}
+                  </Table.Cell>
+                  <Table.Cell className="max-w-[300px] truncate">
+                    <div className="truncate">
+                      {i.config?.allowedChannels?.length ? `${i.config?.allowedChannels?.length} ${i.config?.allowedChannels?.length === 1 ? "channel" : "channels"}` : "No channels"}
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {formatRelative(new Date(i.createdAt), new Date())}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Link to={`/integrations/${i.id}`}>
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        size="sm"
+                        className="pointer-events-none"
+                      >
+                        <LuSettings size={18} />
+                      </Button>
+                    </Link>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </TableBody>
+            </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
       </Table>

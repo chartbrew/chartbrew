@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Separator, Input, Link, Label, Modal, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
+  Button, Checkbox, Separator, Input, Link, Label, Modal, Table,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -203,55 +203,55 @@ function WebhookIntegrations({ teamId }) {
             aria-label="Webhook integrations"
             className="min-w-full even:[&_tbody>tr]:bg-content2/30"
           >
-            <TableHeader>
-              <TableColumn key="name" isRowHeader textValue="Name">
+            <Table.Header>
+              <Table.Column id="name" isRowHeader textValue="Name">
                 Name
-              </TableColumn>
-              <TableColumn key="url" textValue="URL">
+              </Table.Column>
+              <Table.Column id="url" textValue="URL">
                 URL
-              </TableColumn>
-              <TableColumn key="created" className="text-end" textValue="Date created">
+              </Table.Column>
+              <Table.Column id="created" className="text-end" textValue="Date created">
                 Date created
-              </TableColumn>
-              <TableColumn key="actions" className="w-12 text-end" textValue="Actions" />
-            </TableHeader>
+              </Table.Column>
+              <Table.Column id="actions" className="w-12 text-end" textValue="Actions" />
+            </Table.Header>
 
-            <TableBody renderEmptyState={() => "No webhook integrations"}>
+            <Table.Body renderEmptyState={() => "No webhook integrations"}>
               {webhookIntegrations.map((i) => (
-                <TableRow key={i.id}>
-              <TableCell key="name">
-                {i.name}
-              </TableCell>
-              <TableCell key="url" className="max-w-[300px] truncate">
-                <div className="truncate">
-                  {i.config?.url || "No URL"}
-                </div>
-              </TableCell>
-              <TableCell key="created">
-                {formatRelative(new Date(i.createdAt), new Date())}
-              </TableCell>
-              <TableCell key="actions">
-                <div className="flex items-center">
-                  <Button
-                    isIconOnly
-                    variant="ghost"
-                    onPress={() => _onEditOpen(i)}
-                    size="sm"
-                  >
-                    <LuPencilLine size={18} />
-                  </Button>
-                  <Button
-                    isIconOnly
-                    variant="ghost" onPress={() => setIntegrationToDelete(i.id)}
-                    size="sm"
-                  >
-                    <LuTrash size={18} />
-                  </Button>
-                </div>
-              </TableCell>
-                </TableRow>
+                <Table.Row key={i.id} id={String(i.id)}>
+                  <Table.Cell>
+                    {i.name}
+                  </Table.Cell>
+                  <Table.Cell className="max-w-[300px] truncate">
+                    <div className="truncate">
+                      {i.config?.url || "No URL"}
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {formatRelative(new Date(i.createdAt), new Date())}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center">
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        onPress={() => _onEditOpen(i)}
+                        size="sm"
+                      >
+                        <LuPencilLine size={18} />
+                      </Button>
+                      <Button
+                        isIconOnly
+                        variant="ghost" onPress={() => setIntegrationToDelete(i.id)}
+                        size="sm"
+                      >
+                        <LuTrash size={18} />
+                      </Button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </TableBody>
+            </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
       </Table>

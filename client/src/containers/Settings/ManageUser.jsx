@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Separator, Input, ProgressCircle, Modal, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Button, Separator, Input, ProgressCircle, Modal, Chip, Table,
   Alert,
 } from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -370,33 +370,39 @@ function ManageUser() {
       )}
 
       {authMethods?.length > 0 && (
-        <Table aria-label="Two-factor authentication methods">
-          <TableHeader>
-            <TableColumn key="method" align="center">Method</TableColumn>
-            <TableColumn key="isEnabled" align="center">Enabled</TableColumn>
-            <TableColumn key="actions" align="end" hideHeader />
-          </TableHeader>
-          <TableBody>
-            {authMethods.map((method) => (
-              <TableRow key={method.id}>
-                <TableCell key="method">{method.method}</TableCell>
-                <TableCell key="isEnabled">
-                  {method.isEnabled
-                    ? <Chip size="sm" variant="soft">Yes</Chip>
-                    : <Chip size="sm" variant="soft">No</Chip>
-                  }
-                </TableCell>
-                <TableCell key="actions" align="right" className="flex justify-end">
-                  <Button variant="ghost"
-                    isIconOnly
-                    onPress={() => setRemoveMethod(method.id)}
-                  >
-                    <LuTrash />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+        <Table>
+          <Table.ScrollContainer>
+            <Table.Content aria-label="Two-factor authentication methods" className="min-w-full">
+              <Table.Header>
+                <Table.Column id="method" className="text-center" textValue="Method">Method</Table.Column>
+                <Table.Column id="isEnabled" className="text-center" textValue="Enabled">Enabled</Table.Column>
+                <Table.Column id="actions" className="text-end">
+                  <span className="sr-only">Actions</span>
+                </Table.Column>
+              </Table.Header>
+              <Table.Body>
+                {authMethods.map((method) => (
+                  <Table.Row key={method.id} id={String(method.id)}>
+                    <Table.Cell>{method.method}</Table.Cell>
+                    <Table.Cell>
+                      {method.isEnabled
+                        ? <Chip size="sm" variant="soft">Yes</Chip>
+                        : <Chip size="sm" variant="soft">No</Chip>
+                      }
+                    </Table.Cell>
+                    <Table.Cell className="flex justify-end text-end">
+                      <Button variant="ghost"
+                        isIconOnly
+                        onPress={() => setRemoveMethod(method.id)}
+                      >
+                        <LuTrash />
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Content>
+          </Table.ScrollContainer>
         </Table>
       )}
 

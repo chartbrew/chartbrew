@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, InputGroup, Label, ListBox, Modal, SearchField, Select, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, TextField, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, InputGroup, Label, ListBox, Modal, SearchField, Select, Table, TextField, useFilter } from "@heroui/react";
 import React, { useEffect, useMemo, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
 import { Link, useNavigate } from "react-router";
@@ -499,31 +499,31 @@ function DatasetList() {
                 }
               }}
             >
-              <TableHeader>
-                <TableColumn key="name" isRowHeader textValue="Dataset name">
+              <Table.Header>
+                <Table.Column id="name" isRowHeader textValue="Dataset name">
                   Dataset name
-                </TableColumn>
-                <TableColumn key="connections" textValue="Connections" className="text-center">
+                </Table.Column>
+                <Table.Column id="connections" textValue="Connections" className="text-center">
                   <div className="flex flex-row items-center justify-center gap-1">
                     <LuPlug />
                     <span>Connections</span>
                   </div>
-                </TableColumn>
-                <TableColumn key="tags" textValue="Tags">
+                </Table.Column>
+                <Table.Column id="tags" textValue="Tags">
                   <div className="flex flex-row items-center gap-1">
                     <LuTags />
                     <span>Tags</span>
                   </div>
-                </TableColumn>
-                <TableColumn key="createdAt" textValue="Created at" className="text-center">
+                </Table.Column>
+                <Table.Column id="createdAt" textValue="Created at" className="text-center">
                   <div className="flex flex-row items-center justify-center gap-1">
                     <LuCalendarDays />
                     <span>Created</span>
                   </div>
-                </TableColumn>
-                <TableColumn key="actions" className="w-12 text-center" textValue="Actions" />
-              </TableHeader>
-              <TableBody
+                </Table.Column>
+                <Table.Column id="actions" className="w-12 text-center" textValue="Actions" />
+              </Table.Header>
+              <Table.Body
                 renderEmptyState={() => (
                   connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
                     <div className="flex flex-col items-center gap-1">
@@ -551,8 +551,8 @@ function DatasetList() {
                 : dataRequests.slice(0, drStackMax);
 
               return (
-              <TableRow key={`${dataset.id}`} id={`${dataset.id}`}>
-                <TableCell key="name">
+              <Table.Row key={`${dataset.id}`} id={`${dataset.id}`}>
+                <Table.Cell>
                   <div className="flex flex-row items-center gap-2">
                     <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
                       <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
@@ -563,8 +563,8 @@ function DatasetList() {
                       </Chip>
                     )}
                   </div>
-                </TableCell>
-                <TableCell key="connections">
+                </Table.Cell>
+                <Table.Cell>
                   <div className="flex flex-row items-center">
                     <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
                       {drStackVisible.map((dr, idx) => (
@@ -589,8 +589,8 @@ function DatasetList() {
                       )}
                     </div>
                   </div>
-                </TableCell>
-                <TableCell key="tags">
+                </Table.Cell>
+                <Table.Cell>
                   {_getDatasetTags(dataset.project_ids).length > 0 && (
                     <div
                       className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
@@ -629,11 +629,11 @@ function DatasetList() {
                       Add tag
                     </Button>
                   )}
-                </TableCell>
-                <TableCell key="createdAt">
+                </Table.Cell>
+                <Table.Cell>
                     <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
-                </TableCell>
-                <TableCell key="actions">
+                </Table.Cell>
+                <Table.Cell>
                   <div className="flex flex-row items-center justify-end">
                     <Dropdown aria-label="Select a dataset option">
                       <Dropdown.Trigger>
@@ -690,11 +690,11 @@ function DatasetList() {
                       </Dropdown.Popover>
                     </Dropdown>
                   </div>
-                </TableCell>
-              </TableRow>
+                </Table.Cell>
+              </Table.Row>
               );
                 })}
-              </TableBody>
+              </Table.Body>
             </Table.Content>
           </Table.ScrollContainer>
         </Table>

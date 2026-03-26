@@ -7,11 +7,6 @@ import {
   Input,
   Modal,
   Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
   Tabs,
   Tooltip
 } from "@heroui/react";
@@ -411,25 +406,25 @@ function DashboardList() {
                   aria-label="Dashboard list"
                   className="min-w-full even:[&_tbody>tr]:bg-content2/30"
                 >
-                  <TableHeader>
-                    <TableColumn key="name" isRowHeader>
+                  <Table.Header>
+                    <Table.Column id="name" isRowHeader textValue="Dashboard name">
                       Dashboard name
-                    </TableColumn>
-                    <TableColumn key="members" className="text-center">
+                    </Table.Column>
+                    <Table.Column id="members" className="text-center" textValue="Dashboard members">
                       <div className="flex flex-row items-end justify-center gap-1">
                         <LuUsers />
                         <span>Dashboard members</span>
                       </div>
-                    </TableColumn>
-                    <TableColumn key="charts" className="text-center">
+                    </Table.Column>
+                    <Table.Column id="charts" className="text-center" textValue="Charts">
                       <div className="flex flex-row items-end justify-center gap-1">
                         <LuChartNoAxesColumnIncreasing />
                         <span>Charts</span>
                       </div>
-                    </TableColumn>
-                    <TableColumn key="actions" className="w-12 text-center" textValue="Actions" />
-                  </TableHeader>
-                  <TableBody
+                    </Table.Column>
+                    <Table.Column id="actions" className="w-12 text-center" textValue="Actions" />
+                  </Table.Header>
+                  <Table.Body
                     renderEmptyState={() => (
                       <span className="italic text-default-500">No dashboards here</span>
                     )}
@@ -446,8 +441,8 @@ function DashboardList() {
                     : projectMembers.slice(0, memberStackMax);
 
                   return (
-                    <TableRow key={project.id} className="group">
-                      <TableCell key="name">
+                    <Table.Row key={project.id} id={String(project.id)} className="group">
+                      <Table.Cell>
                         <div className="flex flex-row items-center gap-2">
                           {isPinned ? (
                             <Tooltip>
@@ -472,8 +467,8 @@ function DashboardList() {
                             <span className="text-foreground font-medium">{project.name}</span>
                           </Link>
                         </div>
-                      </TableCell>
-                      <TableCell key="members">
+                      </Table.Cell>
+                      <Table.Cell>
                         <div className="flex flex-row items-center justify-center">
                           {projectMembers.length > 0 ? (
                             <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
@@ -499,15 +494,15 @@ function DashboardList() {
                             </Chip>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell key="charts">
+                      </Table.Cell>
+                      <Table.Cell>
                         <div className="flex flex-row items-center justify-center">
                           <span className="font-bold">
                             {project?.Charts?.length || 0}
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell key="actions">
+                      </Table.Cell>
+                      <Table.Cell>
                         {canManageDashboards && (
                           <div className="flex flex-row items-center justify-end gap-1">
                             <Tooltip>
@@ -539,11 +534,11 @@ function DashboardList() {
                             </Tooltip>
                           </div>
                         )}
-                      </TableCell>
-                    </TableRow>
+                      </Table.Cell>
+                    </Table.Row>
                   );
                     })}
-                  </TableBody>
+                  </Table.Body>
                 </Table.Content>
               </Table.ScrollContainer>
             </Table>

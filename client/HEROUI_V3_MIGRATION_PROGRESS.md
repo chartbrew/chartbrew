@@ -368,7 +368,7 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 ## Verification
 
 - **`npm run lint`** — passes
-- **`npm run build`** (`client/`) — passes (last verified after Batch 60)
+- **`npm run build`** (`client/`) — passes (last verified after Batch 61)
 
 ## Batch 59 (**`Tabs` / connection footers / **`Button` sweep** / **`Badge` / `Link`**)
 
@@ -389,6 +389,18 @@ Expect **zero** legacy surfaces below in `client/src` (confirm with **`rg`** whe
 - **`Chip`:** unchanged — v3 **`Chip`** has no **`onPress`**; **`ConnectionList`** tag chip keeps **`onClick`**.
 
 **Grep:** no **`disabled=`** on **`client/src` `*.jsx`** after this batch (native **`disabled`** on raw **`<input>`** / **`<button>`** not used in these call sites).
+
+## Batch 61 (Table compound sweep — flat **`TableHeader` / `TableColumn` / …**)
+
+- Replaced remaining flat **`TableHeader`**, **`TableBody`**, **`TableColumn`**, **`TableRow`**, **`TableCell`** imports and JSX with v3 **`Table.Header`**, **`Table.Body`**, **`Table.Column`** (**`id=`** + **`textValue`** where needed), **`Table.Row`** (**`id=`** for RAC rows), **`Table.Cell`**.
+- **`QueryResultsTable.jsx`:** dynamic columns use **`id={h}`**, first column **`isRowHeader`**; row **`id={`${resultsPage}-${i}`}`**.
+- **`DatasetList.jsx`**, **`DashboardList.jsx`:** selection tables unchanged logically; flat tags → compounds.
+- **`ManageUser.jsx`:** 2FA methods table wrapped in **`Table.ScrollContainer`** + **`Table.Content`**; **`aria-label`** on **`Table.Content`**; v2 **`align` / `hideHeader`** → **`className`** + **`sr-only`** actions header.
+- **`SlackIntegrationsList.jsx`**, **`WebhookIntegrationsList.jsx`:** same compound pass + row **`id`**.
+
+**Grep:** **`client/src`** — no **`TableHeader`**, **`TableColumn`**, **`TableRow`**, **`TableCell`** as **`@heroui/react`** imports or JSX (only unrelated identifiers like **`joinTableColumns`** / state **`tableColumns`**).
+
+Verification: **`npm run lint`** and **`npm run build`** pass in **`client/`** (2026-03-26).
 
 ## Next batch
 

@@ -2,11 +2,6 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
   Button,
   Popover,
 } from "@heroui/react";
@@ -69,17 +64,19 @@ function QueryResultsTable({ result }) {
               className="min-w-full even:[&_tbody>tr]:bg-content2/30"
             >
               {getResultHeaderRows()?.length > 0 && (
-                <TableHeader>
-                  {getResultHeaderRows().map((h) => (
-                    <TableColumn key={h}>{h}</TableColumn>
+                <Table.Header>
+                  {getResultHeaderRows().map((h, colIndex) => (
+                    <Table.Column key={h} id={h} isRowHeader={colIndex === 0} textValue={String(h)}>
+                      {h}
+                    </Table.Column>
                   ))}
-                </TableHeader>
+                </Table.Header>
               )}
-              <TableBody renderEmptyState={() => "Run a query to see the results"}>
+              <Table.Body renderEmptyState={() => "Run a query to see the results"}>
                 {getResultBodyRows(resultsPage).map((row, i) => (
-                  <TableRow key={i}>
+                  <Table.Row key={`${resultsPage}-${i}`} id={`${resultsPage}-${i}`}>
                     {Object.keys(row).map((key) => (
-                      <TableCell key={key}>
+                      <Table.Cell key={key}>
                         {typeof row[key] === "object" ? (
                           <Popover>
                             <Popover.Trigger>
@@ -104,11 +101,11 @@ function QueryResultsTable({ result }) {
                             </div>
                           ) : row[key]
                         )}
-                      </TableCell>
+                      </Table.Cell>
                     ))}
-                  </TableRow>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table.Content>
           </Table.ScrollContainer>
         </Table>
