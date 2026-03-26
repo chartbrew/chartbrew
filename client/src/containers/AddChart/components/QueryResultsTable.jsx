@@ -4,6 +4,7 @@ import {
   Table,
   Button,
   Popover,
+  EmptyState,
 } from "@heroui/react";
 
 import HeroPaginationNav from "../../../components/HeroPaginationNav";
@@ -57,7 +58,7 @@ function QueryResultsTable({ result }) {
   return (
     <div>
       <div className="w-full">
-        <Table className="sqlbuilder-result-tut border-1 border-divider rounded-lg shadow-none">
+        <Table className="sqlbuilder-result-tut border border-divider rounded-lg shadow-none">
           <Table.ScrollContainer>
             <Table.Content
               aria-label="Results table"
@@ -72,7 +73,11 @@ function QueryResultsTable({ result }) {
                   ))}
                 </Table.Header>
               )}
-              <Table.Body renderEmptyState={() => "Run a query to see the results"}>
+              <Table.Body renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center">
+                  <span className="text-sm text-muted">Run a query to see the results</span>
+                </EmptyState>
+              )}>
                 {getResultBodyRows(resultsPage).map((row, i) => (
                   <Table.Row key={`${resultsPage}-${i}`} id={`${resultsPage}-${i}`}>
                     {Object.keys(row).map((key) => (

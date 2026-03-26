@@ -280,7 +280,7 @@ function CustomerQuery(props) {
                   variant={"bordered"}
                 >
                   <LuFolder />
-                  <span className="text-primary">
+                  <span className="text-accent">
                     {`in ${_getSegmentName(condition.segment.id)}`}
                   </span>
                   <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.segment.id)} />
@@ -291,7 +291,7 @@ function CustomerQuery(props) {
                   variant={"bordered"}
                 >
                   <LuFolder />
-                  <span className="text-primary">
+                  <span className="text-accent">
                     {`not in  ${_getSegmentName(condition.not.segment.id)}`}
                   </span>
                   <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} />
@@ -307,7 +307,7 @@ function CustomerQuery(props) {
                     if (sub.segment && sub.segment.id) {
                       return (
                         <span key={sub.segment.id}>
-                          <span className="text-primary">{`${_getSegmentName(sub.segment.id)} `}</span>
+                          <span className="text-accent">{`${_getSegmentName(sub.segment.id)} `}</span>
                           {index < condition.or.length - 1 && (
                             <span className="mr-1">or</span>
                           )}
@@ -329,7 +329,7 @@ function CustomerQuery(props) {
                     if (sub.segment && sub.segment.id) {
                       return (
                         <span key={sub.segment.id}>
-                          <span className="text-primary">{`${_getSegmentName(sub.segment.id)}`}</span>
+                          <span className="text-accent">{`${_getSegmentName(sub.segment.id)}`}</span>
                           {`${index < condition.not.or.length - 1 ? " or- " : ""}`}
                         </span>
                       );
@@ -346,7 +346,7 @@ function CustomerQuery(props) {
                   variant={"bordered"}
                 >
                   <LuUser />
-                  <span className="text-primary mr-1">
+                  <span className="text-accent mr-1">
                     {`${condition.attribute.field}`}
                   </span>
                   {condition.attribute.operator === "eq" && (
@@ -359,7 +359,7 @@ function CustomerQuery(props) {
                   </span>
                   {condition.attribute.operator === "eq" && (
                     <>
-                      <span className="text-primary">
+                      <span className="text-accent">
                         {`to ${condition.attribute.value}`}
                       </span>
                     </>
@@ -372,7 +372,7 @@ function CustomerQuery(props) {
                   variant="secondary"
                 >
                   <LuUser />
-                  <span className="text-primary mr-1">
+                  <span className="text-accent mr-1">
                     {`${condition.not.attribute.field}`}
                   </span>
                   {condition.not.attribute.operator === "eq" && (
@@ -385,7 +385,7 @@ function CustomerQuery(props) {
                   </span>
                   {condition.not.attribute.operator === "eq" && (
                     <>
-                      <span className="text-primary">
+                      <span className="text-accent">
                         {`to ${condition.not.attribute.value}`}
                       </span>
                     </>

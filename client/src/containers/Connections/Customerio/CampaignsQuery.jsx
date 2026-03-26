@@ -754,7 +754,7 @@ function CampaignsQuery(props) {
           <div className="h-4" />
           <Text>
             Looking good! You can now press the
-            <strong className="text-primary">{" \"Make the request\" "}</strong>
+            <strong className="text-accent">{" \"Make the request\" "}</strong>
             button
           </Text>
         </>

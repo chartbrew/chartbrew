@@ -28,7 +28,7 @@ function Text(props) {
     h1: "text-3xl font-bold",
   }[size] || "text-base";
   const colorClass = {
-    primary: "text-primary",
+    primary: "text-accent",
     secondary: "text-secondary",
     success: "text-success",
     warning: "text-warning",

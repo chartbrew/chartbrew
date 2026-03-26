@@ -657,12 +657,12 @@ function ChartSharing({ chart, isOpen, onClose }) {
               {/* Enable/Disable Sharing Toggle */}
               <div>
                 {chart.public && !chart.shareable && (
-                  <div className="text-primary text-sm mt-2">
+                  <div className="text-accent text-sm mt-2">
                     The chart is public. A public chart can be shared even if the sharing toggle is disabled.
                   </div>
                 )}
                 {!chart.public && !chart.shareable && (
-                  <div className="text-primary text-sm mt-2">
+                  <div className="text-accent text-sm mt-2">
                     The chart is private. Enable sharing to allow others outside your team to see the chart.
                   </div>
                 )}

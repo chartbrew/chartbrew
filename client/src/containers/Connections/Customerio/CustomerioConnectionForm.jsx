@@ -180,9 +180,9 @@ function CustomerioConnectionForm(props) {
                   href="https://fly.customer.io/settings/api_credentials?keyType=app"
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="align-middle text-primary"
+                  className="align-middle text-accent"
                 >
-                  <Text className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
+                  <Text className="text-accent">{"1. Create a Customer.io App API Key "}</Text>
                   <div className="w-1" />
                   <LuExternalLink size={14} />
                 </Link>
@@ -232,7 +232,7 @@ function CustomerioConnectionForm(props) {
             target="_blank"
             rel="noopener noreferrer"
             title="Locate the region"
-            className={"text-primary"}
+            className={"text-accent"}
           >
             <LuInfo />
           </Link>

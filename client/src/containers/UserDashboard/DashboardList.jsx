@@ -5,6 +5,7 @@ import {
   Chip,
   Dropdown,
   Input,
+  InputGroup,
   Modal,
   Table,
   Tabs,
@@ -265,24 +266,27 @@ function DashboardList() {
 
           <div className="h-2" />
 
-          <div className="flex flex-row items-center gap-2">
-            <Input
-              type="text"
-              placeholder="Search dashboards"
-              variant="secondary"
-              endContent={<LuSearch />}
-              onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
-              className="max-w-md"
-              labelPlacement="outside"
-            />
+          <div className="flex flex-row items-center justify-between gap-2">
+            <InputGroup fullWidth className="max-w-lg">
+              <InputGroup.Input
+                type="text"
+                placeholder="Search dashboards"
+                onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+              />
+              <InputGroup.Suffix className="pr-2">
+                <LuSearch className="size-4 text-muted" aria-hidden />
+              </InputGroup.Suffix>
+            </InputGroup>
             <Tabs selectedKey={viewMode} onSelectionChange={(key) => _changeViewMode(key)}>
               <Tabs.ListContainer>
                 <Tabs.List>
                   <Tabs.Tab id="grid">
-                    <LuLayoutGrid />
+                    <LuLayoutGrid size={16} />
+                    <Tabs.Indicator />
                   </Tabs.Tab>
                   <Tabs.Tab id="table">
-                    <LuTable />
+                    <LuTable size={16} />
+                    <Tabs.Indicator />
                   </Tabs.Tab>
                 </Tabs.List>
               </Tabs.ListContainer>
@@ -302,7 +306,7 @@ function DashboardList() {
                     key={project.id}
                     role="button"
                     tabIndex={0}
-                    className="cursor-pointer transition-colors hover:bg-content2/60"
+                    className="cursor-pointer transition-colors hover:bg-default-50/60 shadow-none border border-divider"
                     onClick={() => directToProject(project.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {

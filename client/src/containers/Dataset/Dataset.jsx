@@ -347,7 +347,7 @@ function Dataset() {
 
   return (
     <div>
-      <div className="flex flex-row justify-between flex-wrap gap-2 items-center bg-background px-4 rounded-lg border-1 border-divider py-2">
+      <div className="flex flex-row justify-between flex-wrap gap-2 items-center bg-surface px-4 rounded-3xl border border-divider py-2">
         <div className="flex flex-row gap-2 items-center">
           {!editDatasetName && (
             <>
@@ -387,7 +387,7 @@ function Dataset() {
         <div className="flex flex-row gap-2 flex-wrap">
           {!fromChart && (
             <Button
-              variant="ghost"
+              variant="outline"
               onPress={() => _onSaveDataset("createChart")}
               isDisabled={!dataset?.id || dataset?.DataRequests?.length === 0}
               isPending={saveDatasetLoading}

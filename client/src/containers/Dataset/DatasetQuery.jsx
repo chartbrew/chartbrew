@@ -256,18 +256,6 @@ function DatasetQuery(props) {
     return tags;
   };
 
-  const _getSelectedTab = () => {
-    if (createMode) {
-      return "add";
-    }
-    
-    if (selectedRequest?.id) {
-      return `${selectedRequest?.id}`;
-    }
-
-    return "add";
-  };
-
   const _getJoinSettingsJoinCount = () => dataset?.joinSettings?.joins?.length || 0;
 
   const _hasJoinConfiguration = () => {
@@ -330,16 +318,19 @@ function DatasetQuery(props) {
               setSelectedTab(key);
               setCreateMode(false);
             }}
+            className="w-full max-w-md"
           >
             <Tabs.ListContainer>
               <Tabs.List>
                 <Tabs.Tab id="queryBuilder">
+                  <Tabs.Indicator />
                   <div className="flex flex-row items-center gap-2">
                     <LuLayers size={16} />
                     <span>Query builder</span>
                   </div>
                 </Tabs.Tab>
                 <Tabs.Tab id="joinSettings">
+                  <Tabs.Indicator />
                   <div className="flex flex-row items-center gap-2">
                     <LuGitMerge size={16} />
                     <span>Join settings</span>
@@ -366,50 +357,48 @@ function DatasetQuery(props) {
           </div>
         )}
         {!createMode && selectedTab === "queryBuilder" && (
-          <div className="col-span-12 bg-background rounded-lg border-1 border-divider p-4">
+          <div className="col-span-12 bg-surface rounded-3xl border border-divider p-4">
             {dataRequests && dataRequests.length > 0 && (
-              <div className="bg-content2 rounded-lg p-2">
-                <Tabs
-                  key={dataRequests.map((dr) => dr.id).join("-")}
-                  selectedKey={_getSelectedTab()}
-                  onSelectionChange={(key) => {
-                    if (key === "add") {
-                      setCreateMode(true);
-                      return;
-                    }
-                    const dr = dataRequests.find((d) => `${d.id}` === `${key}`);
-                    if (dr) _onSelectDataRequest(dr);
-                  }}
-                  variant="secondary"
-                >
-                  <Tabs.ListContainer>
-                    <Tabs.List>
-                      {dataRequests.map((dr) => (
-                        <Tabs.Tab key={dr.id} id={`${dr.id}`}>
-                          <div className="flex flex-row items-center gap-2">
-                            <div className="w-6 h-6">
-                              <img
-                                src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
-                                alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                                className="h-full w-full rounded-sm border-1 border-divider object-contain"
-                              />
-                            </div>
-                            <span>{dr?.Connection?.name}</span>
-                            {_renderDataRequestTabChip(dr)}
+              <div className="bg-surface-secondary rounded-3xl p-2">
+                <div className="flex w-full flex-row flex-wrap items-center gap-2">
+                  {dataRequests.map((dr) => {
+                    const isActive = !createMode && `${selectedRequest?.id}` === `${dr.id}`;
+                    return (
+                      <Button
+                        key={dr.id}
+                        size="sm"
+                        variant={isActive ? "primary" : "ghost"}
+                        onPress={() => _onSelectDataRequest(dr)}
+                        className="shrink-0"
+                      >
+                        <div className="flex flex-row items-center gap-2">
+                          <div className="h-6 w-6 shrink-0">
+                            <img
+                              src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
+                              alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                              className="h-full w-full rounded-sm border-1 border-divider object-contain"
+                            />
                           </div>
-                        </Tabs.Tab>
-                      ))}
-                      {_canAccess("teamAdmin") && (
-                        <Tabs.Tab id="add">
-                          <div className="flex flex-row items-center gap-2">
-                            <LuPlus size={16} />
-                            <span>Add data request</span>
-                          </div>
-                        </Tabs.Tab>
-                      )}
-                    </Tabs.List>
-                  </Tabs.ListContainer>
-                </Tabs>
+                          <span className="max-w-md truncate">{dr?.Connection?.name}</span>
+                          {_renderDataRequestTabChip(dr)}
+                        </div>
+                      </Button>
+                    );
+                  })}
+                  {_canAccess("teamAdmin") && (
+                    <Button
+                      size="sm"
+                      variant={createMode ? "primary" : "outline"}
+                      onPress={() => setCreateMode(true)}
+                      className="shrink-0"
+                    >
+                      <div className="flex flex-row items-center gap-2">
+                        <LuPlus size={16} />
+                        <span>Add data request</span>
+                      </div>
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
             <div className="h-8" />
@@ -507,7 +496,7 @@ function DatasetQuery(props) {
           </div>
         )}
         {createMode && (
-          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20 bg-background rounded-lg border-1 border-divider p-4">
+          <div className="col-span-12 md:col-span-12 w-full max-w-(--breakpoint-2xl) mx-auto pb-20 bg-surface rounded-lg border border-divider p-4">
             <div className="h-2" />
             <div className="flex flex-row items-center gap-2">
               <Button variant="tertiary" isIconOnly onPress={() => setCreateMode(false)} size="sm">
@@ -519,9 +508,9 @@ function DatasetQuery(props) {
             {connections.length > 0 && (
               <div>
                 <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-search">
-                  <InputGroup variant="secondary" fullWidth>
-                    <InputGroup.Prefix>
-                      <LuSearch className="size-4 text-muted" aria-hidden />
+                  <InputGroup fullWidth>
+                    <InputGroup.Prefix className="border-0">
+                      <LuSearch size={16} className="text-muted" aria-hidden />
                     </InputGroup.Prefix>
                     <InputGroup.Input
                       placeholder="Search connections"
@@ -529,7 +518,7 @@ function DatasetQuery(props) {
                       value={connectionSearch}
                     />
                     {connectionSearch ? (
-                      <InputGroup.Suffix className="pr-0">
+                      <InputGroup.Suffix className="pr-2">
                         <Button
                           isIconOnly
                           aria-label="Clear search"
@@ -537,7 +526,7 @@ function DatasetQuery(props) {
                           variant="ghost"
                           onPress={() => setConnectionSearch("")}
                         >
-                          <LuX />
+                          <LuX size={16} />
                         </Button>
                       </InputGroup.Suffix>
                     ) : null}

@@ -1076,7 +1076,7 @@ function ApiBuilder(props) {
           <Drawer.Body>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-primary">
+              <pre className="text-accent">
                 {variableSettings?.name}
               </pre>
             </div>

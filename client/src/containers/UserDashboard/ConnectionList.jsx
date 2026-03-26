@@ -154,18 +154,16 @@ function ConnectionList() {
       </div>
       <div className="h-2" />
       <div className={"flex flex-row items-center gap-4"}>
-        <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-list-search">
-          <InputGroup variant="secondary" fullWidth>
-            <InputGroup.Input
-              type="text"
-              placeholder="Search connections"
-              onChange={(e) => setConnectionSearch(e.target.value)}
-            />
-            <InputGroup.Suffix className="pr-2">
-              <LuSearch className="size-4 text-muted" aria-hidden />
-            </InputGroup.Suffix>
-          </InputGroup>
-        </TextField>
+        <InputGroup fullWidth className="max-w-lg">
+          <InputGroup.Input
+            type="text"
+            placeholder="Search connections"
+            onChange={(e) => setConnectionSearch(e.target.value)}
+          />
+          <InputGroup.Suffix className="pr-2">
+            <LuSearch className="size-4 text-muted" aria-hidden />
+          </InputGroup.Suffix>
+        </InputGroup>
       </div>
       <div className="h-4" />
 

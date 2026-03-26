@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Button,
   Chip,
-  Link as LinkNext,
 } from "@heroui/react";
 import { LuSquareCheck, LuX } from "react-icons/lu";
 import DateRangeFilter from "./DateRangeFilter";
@@ -50,7 +49,7 @@ function EditDateRangeFilter({
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-2">
       <div className="font-bold">
         Configure the date filter
       </div>
@@ -79,14 +78,15 @@ function EditDateRangeFilter({
       <div className="flex flex-row flex-wrap gap-1">
         {charts.filter(c => c.type !== "markdown").map((chart) => (
           <Fragment key={chart.id}>
-            <LinkNext onPress={() => _handleChartSelection(chart.id)}>
+            <div onClick={() => _handleChartSelection(chart.id)}>
               <Chip
                 className="rounded-sm cursor-pointer"
                 variant={selectedCharts.includes(chart.id) ? "primary" : "soft"}
+                color={selectedCharts.includes(chart.id) ? "accent" : "default"}
               >
                 {chart.name}
               </Chip>
-            </LinkNext>
+            </div>
           </Fragment>
         ))}
       </div>
@@ -103,13 +103,13 @@ function EditDateRangeFilter({
       <div className="flex flex-row">
         <span className="text-sm">
           {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{start_date}}"}</code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-xs text-default-700">{"{{start_date}}"}</code>
           {" and "}
-          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">{"{{end_date}}"}</code>
+          <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-xs text-default-700">{"{{end_date}}"}</code>
           {" variables in the queries."}
         </span>
       </div>
-    </>
+    </div>
   );
 }
 

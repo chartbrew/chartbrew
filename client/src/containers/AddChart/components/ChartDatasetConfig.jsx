@@ -716,7 +716,7 @@ function ChartDatasetConfig(props) {
                         <Tooltip>
                           <Tooltip.Trigger>
                             <Link onPress={_onExampleFormula}>
-                              <LuWandSparkles className="text-primary" />
+                              <LuWandSparkles className="text-accent" />
                             </Link>
                           </Tooltip.Trigger>
                           <Tooltip.Content>Click for an example</Tooltip.Content>

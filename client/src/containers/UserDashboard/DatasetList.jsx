@@ -1,7 +1,7 @@
-import { Autocomplete, Avatar, Button, Chip, ProgressCircle, Dropdown, EmptyState, InputGroup, Label, ListBox, Modal, SearchField, Select, Table, TextField, useFilter } from "@heroui/react";
+import { Autocomplete, Avatar, Button, Checkbox, Chip, ProgressCircle, Dropdown, EmptyState, InputGroup, Label, ListBox, Modal, SearchField, Select, Table, TextField, useFilter, Surface } from "@heroui/react";
 import React, { useEffect, useMemo, useState } from "react"
 import { LuCalendarDays, LuCopy, LuEllipsis, LuInfo, LuLayers, LuListFilter, LuMonitorX, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash, LuX } from "react-icons/lu";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
@@ -30,6 +30,7 @@ function DatasetList() {
   const [duplicateDatasetName, setDuplicateDatasetName] = useState("");
   const [duplicateDatasetLoading, setDuplicateDatasetLoading] = useState(false);
   const [selectedDatasets, setSelectedDatasets] = useState([]);
+  const [selectionModeEnabled, setSelectionModeEnabled] = useState(false);
   const [showDeleteAllDrafts, setShowDeleteAllDrafts] = useState(false);
   const [deletingDatasets, setDeletingDatasets] = useState(false);
   const [showDeleteDatasets, setShowDeleteDatasets] = useState(false);
@@ -52,6 +53,16 @@ function DatasetList() {
 
   const _onCreateDataset = () => {
     navigate("/datasets/new");
+  };
+
+  const _onToggleSelectionMode = () => {
+    setSelectionModeEnabled((prev) => {
+      if (prev) {
+        setSelectedDatasets([]);
+      }
+
+      return !prev;
+    });
   };
 
   const _getActiveFilterCount = () => {
@@ -226,6 +237,7 @@ function DatasetList() {
       toast.success("Datasets deleted successfully");
       await dispatch(getDatasets({ team_id: team.id }));
       setSelectedDatasets([]);
+      setSelectionModeEnabled(false);
       setShowDeleteDatasets(false);
     }
 
@@ -279,7 +291,7 @@ function DatasetList() {
       </div>
       <div className="h-8" />
 
-      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+      <Surface className="bg-surface p-4 border border-divider rounded-3xl">
         <div className="flex flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-2">
             <LuListFilter strokeWidth={1.5} />
@@ -326,7 +338,6 @@ function DatasetList() {
               onChange={(value) => setSearchFilter({ ...searchFilter, project_id: value })}
               value={searchFilter.project_id || null}
               selectionMode="single"
-              variant="secondary"
               aria-label="Search datasets by dashboard"
               size="sm"
             >
@@ -366,7 +377,6 @@ function DatasetList() {
               onChange={(value) => setSearchFilter({ ...searchFilter, connection_id: value })}
               value={searchFilter.connection_id || null}
               selectionMode="single"
-              variant="secondary"
               aria-label="Search datasets by connection"
               size="sm"
             >
@@ -406,7 +416,6 @@ function DatasetList() {
               onChange={(value) => setSearchFilter({ ...searchFilter, status: value })}
               value={searchFilter.status || null}
               selectionMode="single"
-              variant="secondary"
               aria-label="Search datasets by status"
               size="sm"
               isClearable={false}
@@ -441,164 +450,202 @@ function DatasetList() {
           <div className="text-sm text-foreground-500">
             {`Showing ${pageStart}-${pageEnd} of ${filteredDatasets.length} datasets`}
           </div>
-          {(searchFilter.status === "draft" || searchFilter.status === "all") && (
+          <div className="flex flex-row items-center gap-2">
+            {(searchFilter.status === "draft" || searchFilter.status === "all") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onPress={() => {
+                  setShowDeleteAllDrafts(true);
+                }}
+                className="border"
+              >
+                Delete all drafts
+              </Button>
+            )}
             <Button
-              variant="secondary"
+              variant={selectionModeEnabled ? "secondary" : "outline"}
               size="sm"
-              onPress={() => {
-                setShowDeleteAllDrafts(true);
-              }}
-              className="border-1"
+              onPress={_onToggleSelectionMode}
             >
-              Delete all drafts
+              {selectionModeEnabled ? "Cancel selection" : "Select datasets"}
             </Button>
-          )}
+          </div>
         </div>
-      </div>
+      </Surface>
 
       <div className="h-4" />
 
-      {selectedDatasets.length > 0 && (
+      {selectionModeEnabled && (
         <div>
-          <Button
-            variant="danger-soft"
-            size="sm"
-            onPress={() => setShowDeleteDatasets(true)}
-          >
-            <LuTrash size={16} />
-            Delete selected
-          </Button>
+          <div className="flex flex-row items-center gap-3">
+            <div className="text-sm text-foreground-500">
+              {selectedDatasets.length === 0
+                ? "Select one or more datasets"
+                : `${selectedDatasets.length} dataset${selectedDatasets.length === 1 ? "" : "s"} selected`}
+            </div>
+            {selectedDatasets.length > 0 && (
+              <Button
+                variant="danger-soft"
+                size="sm"
+                onPress={() => setShowDeleteDatasets(true)}
+              >
+                <LuTrash size={16} />
+                Delete selected
+              </Button>
+            )}
+          </div>
           <div className="h-4" />
         </div>
       )}
 
-      <div className="border-1 border-solid border-content3 rounded-lg">
-        <Table className="shadow-none rounded-sm">
-          <Table.ScrollContainer>
-            <Table.Content
-              aria-label="Dataset list"
-              className="min-w-full even:[&_tbody>tr]:bg-content2/30"
-              selectionMode="multiple"
-              selectedKeys={selectedDatasetKeys}
-              onSelectionChange={(keys) => {
-                const paginatedDatasetIds = paginatedDatasets.map((dataset) => `${dataset.id}`);
-                if (keys === "all") {
-                  setSelectedDatasets((prev) => {
-                    const prevIds = prev.map((id) => `${id}`);
-                    return [...new Set([...prevIds, ...paginatedDatasetIds])];
-                  });
-                } else {
-                  const nextPageSelection = Array.from(keys).map((key) => `${key}`);
-                  setSelectedDatasets((prev) => {
-                    const offPageSelections = prev
-                      .map((id) => `${id}`)
-                      .filter((id) => !paginatedDatasetIds.includes(id));
+      <Table className="shadow-none border borde-divider">
+        <Table.ScrollContainer>
+          <Table.Content
+            aria-label="Dataset list"
+            className=""
+            selectionMode={selectionModeEnabled ? "multiple" : "none"}
+            selectedKeys={selectedDatasetKeys}
+            onRowAction={selectionModeEnabled ? undefined : (key) => navigate(`/datasets/${key}`)}
+            onSelectionChange={(keys) => {
+              if (!selectionModeEnabled) return;
 
-                    return [...new Set([...offPageSelections, ...nextPageSelection])];
-                  });
-                }
-              }}
+              const paginatedDatasetIds = paginatedDatasets.map((dataset) => `${dataset.id}`);
+              if (keys === "all") {
+                setSelectedDatasets((prev) => {
+                  const prevIds = prev.map((id) => `${id}`);
+                  return [...new Set([...prevIds, ...paginatedDatasetIds])];
+                });
+              } else {
+                const nextPageSelection = Array.from(keys).map((key) => `${key}`);
+                setSelectedDatasets((prev) => {
+                  const offPageSelections = prev
+                    .map((id) => `${id}`)
+                    .filter((id) => !paginatedDatasetIds.includes(id));
+
+                  return [...new Set([...offPageSelections, ...nextPageSelection])];
+                });
+              }
+            }}
+          >
+            <Table.Header>
+              {selectionModeEnabled && (
+                <Table.Column className="w-12 pr-0">
+                  <Checkbox aria-label="Select all datasets" slot="selection" variant="secondary">
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox>
+                </Table.Column>
+              )}
+              <Table.Column id="name" isRowHeader textValue="Dataset name">
+                Dataset name
+              </Table.Column>
+              <Table.Column id="connections" textValue="Connections" className="text-center">
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <LuPlug />
+                  <span>Connections</span>
+                </div>
+              </Table.Column>
+              <Table.Column id="tags" textValue="Tags">
+                <div className="flex flex-row items-center gap-1">
+                  <LuTags />
+                  <span>Tags</span>
+                </div>
+              </Table.Column>
+              <Table.Column id="createdAt" textValue="Created at" className="text-center">
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <LuCalendarDays />
+                  <span>Created</span>
+                </div>
+              </Table.Column>
+              <Table.Column id="actions" className="w-12 text-center" textValue="Actions" />
+            </Table.Header>
+            <Table.Body
+              renderEmptyState={() => (
+                connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <LuLayers size={24} />
+                    <span>You need to create a connection to get started</span>
+                    <div className="h-1" />
+                    <Button
+                      onPress={() => navigate("/connections/new")} >
+                      Create your first connection
+                    </Button>
+                  </div>
+                ) : (
+                  "No datasets found"
+                )
+              )}
             >
-              <Table.Header>
-                <Table.Column id="name" isRowHeader textValue="Dataset name">
-                  Dataset name
-                </Table.Column>
-                <Table.Column id="connections" textValue="Connections" className="text-center">
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <LuPlug />
-                    <span>Connections</span>
-                  </div>
-                </Table.Column>
-                <Table.Column id="tags" textValue="Tags">
-                  <div className="flex flex-row items-center gap-1">
-                    <LuTags />
-                    <span>Tags</span>
-                  </div>
-                </Table.Column>
-                <Table.Column id="createdAt" textValue="Created at" className="text-center">
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <LuCalendarDays />
-                    <span>Created</span>
-                  </div>
-                </Table.Column>
-                <Table.Column id="actions" className="w-12 text-center" textValue="Actions" />
-              </Table.Header>
-              <Table.Body
-                renderEmptyState={() => (
-                  connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
-                    <div className="flex flex-col items-center gap-1">
-                      <LuLayers size={24} />
-                      <span>You need to create a connection to get started</span>
-                      <div className="h-1" />
-                      <Button
-                        onPress={() => navigate("/connections/new")} >
-                        Create your first connection
-                      </Button>
-                    </div>
-                  ) : (
-                    "No datasets found"
-                  )
-                )}
-              >
-                {paginatedDatasets.map((dataset) => {
-              const dataRequests = dataset?.DataRequests || [];
-              const drStackMax = 3;
-              const drStackOverflow = dataRequests.length > drStackMax
-                ? dataRequests.length - (drStackMax - 1)
-                : 0;
-              const drStackVisible = drStackOverflow > 0
-                ? dataRequests.slice(0, drStackMax - 1)
-                : dataRequests.slice(0, drStackMax);
+              {paginatedDatasets.map((dataset) => {
+            const dataRequests = dataset?.DataRequests || [];
+            const drStackMax = 3;
+            const drStackOverflow = dataRequests.length > drStackMax
+              ? dataRequests.length - (drStackMax - 1)
+              : 0;
+            const drStackVisible = drStackOverflow > 0
+              ? dataRequests.slice(0, drStackMax - 1)
+              : dataRequests.slice(0, drStackMax);
 
-              return (
-              <Table.Row key={`${dataset.id}`} id={`${dataset.id}`}>
-                <Table.Cell>
-                  <div className="flex flex-row items-center gap-2">
-                    <Link to={`/datasets/${dataset.id}`} className="cursor-pointer">
-                      <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
-                    </Link>
-                    {dataset.draft && (
-                      <Chip size="sm" variant="secondary">
-                        Draft
-                      </Chip>
+            return (
+            <Table.Row
+              key={`${dataset.id}`}
+              id={`${dataset.id}`}
+              className={selectionModeEnabled ? undefined : "cursor-pointer"}
+            >
+              {selectionModeEnabled && (
+                <Table.Cell className="pr-0">
+                  <Checkbox aria-label={`Select ${getDatasetDisplayName(dataset)}`} slot="selection" variant="secondary">
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox>
+                </Table.Cell>
+              )}
+              <Table.Cell>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
+                  {dataset.draft && (
+                    <Chip size="sm" variant="secondary">
+                      Draft
+                    </Chip>
+                  )}
+                </div>
+              </Table.Cell>
+              <Table.Cell>
+                <div className="flex flex-row items-center">
+                  <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
+                    {drStackVisible.map((dr, idx) => (
+                      <Avatar
+                        key={dr.id}
+                        size="sm"
+                        className="ring-2 ring-background shrink-0"
+                        style={{ zIndex: idx }}
+                      >
+                        {dr.Connection ? (
+                          <Avatar.Image src={connectionImages(isDark)[dr.Connection.subType]} alt="" />
+                        ) : null}
+                        <Avatar.Fallback>
+                          {!dr.Connection ? <LuMonitorX /> : <LuPlug />}
+                        </Avatar.Fallback>
+                      </Avatar>
+                    ))}
+                    {drStackOverflow > 0 && (
+                      <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: drStackVisible.length }}>
+                        <Avatar.Fallback>{`+${drStackOverflow}`}</Avatar.Fallback>
+                      </Avatar>
                     )}
                   </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex flex-row items-center">
-                    <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
-                      {drStackVisible.map((dr, idx) => (
-                        <Avatar
-                          key={dr.id}
-                          size="sm"
-                          className="ring-2 ring-background shrink-0"
-                          style={{ zIndex: idx }}
-                        >
-                          {dr.Connection ? (
-                            <Avatar.Image src={connectionImages(isDark)[dr.Connection.subType]} alt="" />
-                          ) : null}
-                          <Avatar.Fallback>
-                            {!dr.Connection ? <LuMonitorX /> : <LuPlug />}
-                          </Avatar.Fallback>
-                        </Avatar>
-                      ))}
-                      {drStackOverflow > 0 && (
-                        <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: drStackVisible.length }}>
-                          <Avatar.Fallback>{`+${drStackOverflow}`}</Avatar.Fallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  {_getDatasetTags(dataset.project_ids).length > 0 && (
-                    <div
+                </div>
+              </Table.Cell>
+              <Table.Cell>
+                {_getDatasetTags(dataset.project_ids).length > 0 && (
+                  _canAccess("teamAdmin", team.TeamRoles) ? (
+                    <button
+                      type="button"
                       className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
-                      onClick={() => {
-                        if (_canAccess("teamAdmin", team.TeamRoles)) {
-                          setDatasetToEdit(dataset);
-                        }
-                      }}
+                      onClick={() => setDatasetToEdit(dataset)}
                     >
                       {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
                         <Chip
@@ -612,97 +659,112 @@ function DatasetList() {
                       {_getDatasetTags(dataset.project_ids).length > 3 && (
                         <span className="text-xs">{`+${_getDatasetTags(dataset.project_ids).length - 3} more`}</span>
                       )}
-                    </div>
-                  )}
-                  {_getDatasetTags(dataset.project_ids).length === 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 hover:opacity-100"
-                      onPress={() => {
-                        if (_canAccess("teamAdmin", team.TeamRoles)) {
-                          setDatasetToEdit(dataset);
-                        }
-                      }}
-                    >
-                      <LuPlus size={18} />
-                      Add tag
-                    </Button>
-                  )}
-                </Table.Cell>
-                <Table.Cell>
-                    <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex flex-row items-center justify-end">
-                    <Dropdown aria-label="Select a dataset option">
-                      <Dropdown.Trigger>
-                        <Button
-                          isIconOnly
-                          variant="ghost"
+                    </button>
+                  ) : (
+                    <div className="flex flex-row flex-wrap items-center gap-1">
+                      {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
+                        <Chip
+                          key={tag}
                           size="sm"
+                          variant="primary"
                         >
-                          <LuEllipsis />
-                        </Button>
-                      </Dropdown.Trigger>
-                      <Dropdown.Popover>
-                        <Dropdown.Menu
-                          disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
+                          {tag}
+                        </Chip>
+                      ))}
+                      {_getDatasetTags(dataset.project_ids).length > 3 && (
+                        <span className="text-xs">{`+${_getDatasetTags(dataset.project_ids).length - 3} more`}</span>
+                      )}
+                    </div>
+                  )
+                )}
+                {_getDatasetTags(dataset.project_ids).length === 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 hover:opacity-100"
+                    onPress={() => {
+                      if (_canAccess("teamAdmin", team.TeamRoles)) {
+                        setDatasetToEdit(dataset);
+                      }
+                    }}
+                  >
+                    <LuPlus size={18} />
+                    Add tag
+                  </Button>
+                )}
+              </Table.Cell>
+              <Table.Cell>
+                  <div>{new Date(dataset.createdAt).toLocaleDateString()}</div>
+              </Table.Cell>
+              <Table.Cell>
+                <div className="flex flex-row items-center justify-end">
+                  <Dropdown aria-label="Select a dataset option">
+                    <Dropdown.Trigger>
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <LuEllipsis />
+                      </Button>
+                    </Dropdown.Trigger>
+                    <Dropdown.Popover>
+                      <Dropdown.Menu
+                        disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
+                      >
+                        <Dropdown.Item
+                          id="dataset"
+                          onPress={() => navigate(`/datasets/${dataset.id}`)}
+                          textValue="Edit dataset"
                         >
-                          <Dropdown.Item
-                            id="dataset"
-                            onPress={() => navigate(`/datasets/${dataset.id}`)}
-                            textValue="Edit dataset"
-                          >
-                            <LuPencilLine />
-                            Edit dataset
-                          </Dropdown.Item>
-                          <Dropdown.Item
-                            id="duplicate"
-                            onPress={() => {
-                              setDatasetToDuplicate(dataset);
-                              setDuplicateDatasetName(getDatasetDisplayName(dataset));
-                            }}
-                            textValue="Duplicate dataset"
-                          >
-                            <LuCopy />
-                            Duplicate dataset
-                          </Dropdown.Item>
-                          <Dropdown.Item
-                            id="tags"
-                            onPress={() => setDatasetToEdit(dataset)}
-                            showDivider
-                            textValue="Edit tags"
-                          >
-                            <LuTags />
-                            Edit tags
-                          </Dropdown.Item>
-                          <Dropdown.Item
-                            id="delete"
-                            onPress={() => _onPressDeleteDataset(dataset)}
-                            variant="danger"
-                            textValue="Delete"
-                          >
-                            <LuTrash />
-                            Delete
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown.Popover>
-                    </Dropdown>
-                  </div>
-                </Table.Cell>
-              </Table.Row>
-              );
-                })}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
-      </div>
+                          <LuPencilLine />
+                          Edit dataset
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          id="duplicate"
+                          onPress={() => {
+                            setDatasetToDuplicate(dataset);
+                            setDuplicateDatasetName(getDatasetDisplayName(dataset));
+                          }}
+                          textValue="Duplicate dataset"
+                        >
+                          <LuCopy />
+                          Duplicate dataset
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          id="tags"
+                          onPress={() => setDatasetToEdit(dataset)}
+                          showDivider
+                          textValue="Edit tags"
+                        >
+                          <LuTags />
+                          Edit tags
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          id="delete"
+                          onPress={() => _onPressDeleteDataset(dataset)}
+                          variant="danger"
+                          textValue="Delete"
+                        >
+                          <LuTrash />
+                          Delete
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
+                  </Dropdown>
+                </div>
+              </Table.Cell>
+            </Table.Row>
+            );
+              })}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+      </Table>
       {filteredDatasets.length > DATASETS_PER_PAGE && (
         <>
           <div className="h-3" />
-          <div className="flex justify-start px-4 py-2 border-1 border-solid border-content3 rounded-lg bg-content1">
+          <Surface className="flex justify-start px-4 py-2 border border-divider rounded-3xl">
             <HeroPaginationNav
               page={currentPage}
               totalPages={totalPages}
@@ -711,7 +773,7 @@ function DatasetList() {
               className="justify-start"
               ariaLabel="Dataset list pagination"
             />
-          </div>
+          </Surface>
         </>
       )}
       <Modal.Backdrop isOpen={!!datasetToDelete?.id} onOpenChange={(open) => {

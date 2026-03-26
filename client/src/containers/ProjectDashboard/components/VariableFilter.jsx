@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import {
-  Input,
-  Select,
-  DatePicker,
+  Calendar,
   Chip,
+  DateField,
+  DatePicker,
+  Input,
   Link,
   ListBox,
+  Select,
 } from "@heroui/react";
 import { LuArrowRight, LuVariable } from "react-icons/lu";
 import { parseDate, today } from "@internationalized/date";
@@ -77,28 +79,68 @@ function VariableFilter({
         );
       case "date":
         return (
-          <DatePicker
-            startContent={(
-              <Chip variant="soft" size="sm" className="rounded-sm text-xs">
-                <LuVariable size={16} />
-                {label}
-              </Chip>
-            )}
-            className={["pl-1", className].filter(Boolean).join(" ")}
-            value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
-            onChange={(date) => setDateValue(date.toString())}
-            variant="secondary"
-            size="sm"
-            isDisabled={!allowValueChange}
-            showMonthAndYearPickers
-            calendarProps={{ color: "primary" }}
-            endContent={allowValueChange && dateValue !== filter?.value && (
-              <Link onPress={() => onApply?.(dateValue)} className="text-foreground hover:text-foreground-500 cursor-pointer">
-                <LuArrowRight size={18} />
-              </Link>
-            )}
-            aria-label="Filter value"
-          />
+          <div className={["flex flex-row items-center gap-1", className].filter(Boolean).join(" ")}>
+            <Chip variant="soft" size="sm" className="shrink-0 rounded-sm text-xs">
+              <LuVariable size={16} />
+              {label}
+            </Chip>
+            <DatePicker
+              aria-label="Filter value"
+              name="variableFilterDate"
+              className="min-w-0 flex-1 pl-1 text-xs"
+              value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
+              onChange={(date) => {
+                if (date) {
+                  setDateValue(date.toString());
+                }
+              }}
+              isDisabled={!allowValueChange}
+            >
+              <DateField.Group fullWidth variant="secondary" size="sm">
+                <DateField.Input>
+                  {(segment) => <DateField.Segment segment={segment} />}
+                </DateField.Input>
+                <DateField.Suffix>
+                  {allowValueChange && dateValue !== filter?.value && (
+                    <Link
+                      onPress={() => onApply?.(dateValue)}
+                      className="flex shrink-0 cursor-pointer items-center px-1 text-foreground hover:text-foreground-500"
+                    >
+                      <LuArrowRight size={18} />
+                    </Link>
+                  )}
+                  <DatePicker.Trigger>
+                    <DatePicker.TriggerIndicator />
+                  </DatePicker.Trigger>
+                </DateField.Suffix>
+              </DateField.Group>
+              <DatePicker.Popover>
+                <Calendar aria-label="Filter value">
+                  <Calendar.Header>
+                    <Calendar.YearPickerTrigger>
+                      <Calendar.YearPickerTriggerHeading />
+                      <Calendar.YearPickerTriggerIndicator />
+                    </Calendar.YearPickerTrigger>
+                    <Calendar.NavButton slot="previous" />
+                    <Calendar.NavButton slot="next" />
+                  </Calendar.Header>
+                  <Calendar.Grid>
+                    <Calendar.GridHeader>
+                      {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                    </Calendar.GridHeader>
+                    <Calendar.GridBody>
+                      {(date) => <Calendar.Cell date={date} />}
+                    </Calendar.GridBody>
+                  </Calendar.Grid>
+                  <Calendar.YearPickerGrid>
+                    <Calendar.YearPickerGridBody>
+                      {({ year }) => <Calendar.YearPickerCell year={year} />}
+                    </Calendar.YearPickerGridBody>
+                  </Calendar.YearPickerGrid>
+                </Calendar>
+              </DatePicker.Popover>
+            </DatePicker>
+          </div>
         );
       case "binary":
         return (

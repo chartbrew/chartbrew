@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import {
-  Autocomplete, Button, Card,
-  Checkbox, Chip, DatePicker, Separator, Drawer,
+  Autocomplete, Button, Calendar, Card,
+  Checkbox, Chip, DateField, DatePicker, Drawer,
   Dropdown, EmptyState, Input, Label, Link, ListBox,
-  Modal, SearchField, Select,
+  Modal, SearchField, Select, Separator,
   Switch, Tooltip, useFilter,
 } from "@heroui/react";
 import {
@@ -344,14 +344,60 @@ function DatasetFilters(props) {
                     && find(fieldOptions, { value: condition.field }).type === "date" && (
                       <I18nProvider locale="en-GB">
                         <DatePicker
-                          showMonthAndYearPickers
+                          aria-label="Dataset filter date value"
+                          name={`dataset-filter-date-${condition.id}`}
+                          className="w-full"
                           value={(
                             condition.value
                             && parseDate(condition.value)
                           ) || null}
-                          onChange={(date) => _updateCondition(condition.id, date.toString(), "value", find(fieldOptions, { value: condition.field }).type)}
-                          size="sm"
-                        />
+                          onChange={(date) => {
+                            if (date) {
+                              _updateCondition(
+                                condition.id,
+                                date.toString(),
+                                "value",
+                                find(fieldOptions, { value: condition.field }).type,
+                              );
+                            }
+                          }}
+                        >
+                          <DateField.Group fullWidth variant="secondary" size="sm">
+                            <DateField.Input>
+                              {(segment) => <DateField.Segment segment={segment} />}
+                            </DateField.Input>
+                            <DateField.Suffix>
+                              <DatePicker.Trigger>
+                                <DatePicker.TriggerIndicator />
+                              </DatePicker.Trigger>
+                            </DateField.Suffix>
+                          </DateField.Group>
+                          <DatePicker.Popover>
+                            <Calendar aria-label="Dataset filter date value">
+                              <Calendar.Header>
+                                <Calendar.YearPickerTrigger>
+                                  <Calendar.YearPickerTriggerHeading />
+                                  <Calendar.YearPickerTriggerIndicator />
+                                </Calendar.YearPickerTrigger>
+                                <Calendar.NavButton slot="previous" />
+                                <Calendar.NavButton slot="next" />
+                              </Calendar.Header>
+                              <Calendar.Grid>
+                                <Calendar.GridHeader>
+                                  {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                                </Calendar.GridHeader>
+                                <Calendar.GridBody>
+                                  {(date) => <Calendar.Cell date={date} />}
+                                </Calendar.GridBody>
+                              </Calendar.Grid>
+                              <Calendar.YearPickerGrid>
+                                <Calendar.YearPickerGridBody>
+                                  {({year}) => <Calendar.YearPickerCell year={year} />}
+                                </Calendar.YearPickerGridBody>
+                              </Calendar.YearPickerGrid>
+                            </Calendar>
+                          </DatePicker.Popover>
+                        </DatePicker>
                       </I18nProvider>
                     )}
                 </div>
@@ -654,7 +700,7 @@ function DatasetFilters(props) {
           <Drawer.Body>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-primary">
+              <pre className="text-accent">
                 {variableSettings?.name}
               </pre>
             </div>

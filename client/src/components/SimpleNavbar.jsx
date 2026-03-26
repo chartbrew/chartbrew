@@ -9,16 +9,16 @@ function SimpleNavbar() {
   const { isDark } = useTheme();
 
   return (
-    <header className="z-50 border-b border-divider bg-background">
+    <header className="z-50 border-b border-divider bg-surface">
       <div className="flex items-center justify-between px-4 py-3">
         <a href={`${SITE_HOST}`}>
           <img alt="Chartbrew Logo" src={isDark ? cbLogoDark : cbLogoLight} width={150} />
         </a>
         <nav className="flex items-center gap-4 text-sm">
-          <a className="text-foreground hover:text-primary" href="/login">
+          <a className="text-foreground hover:text-accent" href="/login">
             Login
           </a>
-          <a className="text-foreground hover:text-primary" href="/signup">
+          <a className="text-foreground hover:text-accent" href="/signup">
             Sign Up
           </a>
         </nav>

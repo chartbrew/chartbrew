@@ -119,7 +119,7 @@ function RealtimeDbConnectionForm(props) {
       <div style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <Link className="flex items-center text-primary">
+          <Link className="flex items-center text-accent">
             <LuFileCode2 size={24} />
             <div className="w-1" />
             {" Drag and drop your JSON authentication file here"}
@@ -299,9 +299,9 @@ function RealtimeDbConnectionForm(props) {
                   href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="align-middle text-primary"
+                  className="align-middle text-accent"
                 >
-                  <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
+                  <Text b className={"text-accent"}>{"1. Create a Firebase Service Account "}</Text>
                   <div className="w-2" />
                   <LuExternalLink size={18} />
                 </Link>
@@ -343,7 +343,7 @@ function RealtimeDbConnectionForm(props) {
                     href="https://console.firebase.google.com/project"
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="align-middle text-primary"
+                    className="align-middle text-accent"
                   >
                     <Text b>{"1. Select your project from here "}</Text>
                     <div className="w-2" />

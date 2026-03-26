@@ -208,7 +208,7 @@ function NavbarContainer() {
               className="changelog-trigger flex flex-row items-center text-foreground cursor-pointer"
               title="Changelog"
             >
-              <span className="changelog-badge text-primary-500">
+              <span className="changelog-badge text-accent-500">
                 {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
               </span>
               <div className={"hidden sm:block text-sm"}>Updates</div>

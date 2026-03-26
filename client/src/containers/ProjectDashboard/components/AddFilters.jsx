@@ -97,120 +97,122 @@ function AddFilters(props) {
         if (!isOpen) onClose();
       }}
     >
-      <Drawer.Backdrop />
-      <Drawer.Content
-        placement="left"
-        className="dashboard-filters-modal max-w-2xl"
-      >
-        <Drawer.Dialog>
-        <Drawer.Header>
-          <span className="font-bold text-lg">Add dashboard filter</span>
-        </Drawer.Header>
-        <Drawer.Body>
-          <Select
-            variant="secondary"
-            selectionMode="single"
-            value={filterType}
-            onChange={(value) => setFilterType(value)}
-          >
-            <Label>Select a filter type</Label>
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="date" textValue="Date">
-                  <div className="flex flex-row items-start gap-2">
-                    <LuCalendarDays className="mt-0.5" />
-                    <div className="flex flex-col">
-                      <span>Date range</span>
-                      <span className="text-xs text-foreground-500">A filter that targets dataset date fields and {"{{start_date}}"} and {"{{end_date}}"} variables</span>
-                    </div>
-                  </div>
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="variables" textValue="Variables">
-                  <div className="flex flex-row items-start gap-2">
-                    <LuVariable className="mt-0.5" />
-                    <div className="flex flex-col">
-                      <span>Variables</span>
-                      <span className="text-xs text-foreground-500">A filter that targets dataset variables</span>
-                    </div>
-                  </div>
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="field" textValue="Matching field">
-                  <div className="flex flex-row items-start gap-2">
-                    <LuListTree className="mt-0.5" />
-                    <div className="flex flex-col">
-                      <span>Matching field</span>
-                      <span className="text-xs text-foreground-500">A filter that applies to all datasets that contain a specific field</span>
-                    </div>
-                  </div>
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
+      <Drawer.Backdrop>
+        <Drawer.Content
+          placement="left"
+          className="dashboard-filters-modal"
+        >
+          <Drawer.Dialog className="min-w-lg">
+            <Drawer.CloseTrigger />
+            <Drawer.Header>
+              <Drawer.Heading>Add dashboard filter</Drawer.Heading>
+            </Drawer.Header>
+            <Drawer.Body>
+              <Select
+                variant="secondary"
+                selectionMode="single"
+                value={filterType}
+                onChange={(value) => setFilterType(value)}
+              >
+                <Label>Select a filter type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="date" textValue="Date">
+                      <div className="flex flex-row items-start gap-2">
+                        <LuCalendarDays className="mt-0.5" />
+                        <div className="flex flex-col">
+                          <span>Date range</span>
+                          <span className="text-xs text-foreground-500">A filter that targets dataset date fields and {"{{start_date}}"} and {"{{end_date}}"} variables</span>
+                        </div>
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="variables" textValue="Variables">
+                      <div className="flex flex-row items-start gap-2">
+                        <LuVariable className="mt-0.5" />
+                        <div className="flex flex-col">
+                          <span>Variables</span>
+                          <span className="text-xs text-foreground-500">A filter that targets dataset variables</span>
+                        </div>
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="field" textValue="Matching field">
+                      <div className="flex flex-row items-start gap-2">
+                        <LuListTree className="mt-0.5" />
+                        <div className="flex flex-col">
+                          <span>Matching field</span>
+                          <span className="text-xs text-foreground-500">A filter that applies to all datasets that contain a specific field</span>
+                        </div>
+                      </div>
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-          <Separator />
+              <Separator className="my-4" />
 
-          {filterType === "date" && (
-            <EditDateRangeFilter
-              charts={charts}
-              filter={filter}
-              onChange={_handleFilterChange}
-            />
-          )}
+              {filterType === "date" && (
+                <EditDateRangeFilter
+                  charts={charts}
+                  filter={filter}
+                  onChange={_handleFilterChange}
+                />
+              )}
 
-          {filterType === "variables" && (
-            <EditVariableFilter
-              filter={variableCondition}
-              onChange={(newFilter) => setVariableCondition(newFilter)}
-              project={project}
-            />
-          )}
+              {filterType === "variables" && (
+                <EditVariableFilter
+                  filter={variableCondition}
+                  onChange={(newFilter) => setVariableCondition(newFilter)}
+                  project={project}
+                />
+              )}
 
-          {filterType === "field" && (
-            <EditFieldFilter
-              filter={filter}
-              onChange={_handleFilterChange}
-            />
-          )}
-        </Drawer.Body>
-        <Drawer.Footer>
-          <Button onPress={onClose} variant="secondary">
-            Close
-          </Button>
-          {filterType === "date" && (
-            <Button variant="primary" onPress={_onApplyFilter}>
-              Add filter
-            </Button>
-          )}
-          {filterType === "variables" && (
-            <Button
-              isDisabled={!variableCondition.variable}
-              onPress={_onAddVariableFilter}
-              variant="primary"
-            >
-              Add filter
-              <LuPlus />
-            </Button>
-          )}
-          {filterType === "field" && (
-            <Button
-              onPress={_onAddFilter}
-              variant="primary"
-              isDisabled={!filter.field}
-            >
-              Add filter
-              <LuPlus />
-            </Button>
-          )}
-        </Drawer.Footer>
-        </Drawer.Dialog>
-      </Drawer.Content>
+              {filterType === "field" && (
+                <EditFieldFilter
+                  filter={filter}
+                  onChange={_handleFilterChange}
+                />
+              )}
+            </Drawer.Body>
+            <Drawer.Footer>
+              <Button onPress={onClose} variant="secondary">
+                Close
+              </Button>
+              {filterType === "date" && (
+                <Button variant="primary" onPress={_onApplyFilter}>
+                  Add filter
+                </Button>
+              )}
+              {filterType === "variables" && (
+                <Button
+                  isDisabled={!variableCondition.variable}
+                  onPress={_onAddVariableFilter}
+                  variant="primary"
+                >
+                  Add filter
+                  <LuPlus />
+                </Button>
+              )}
+              {filterType === "field" && (
+                <Button
+                  onPress={_onAddFilter}
+                  variant="primary"
+                  isDisabled={!filter.field}
+                >
+                  Add filter
+                  <LuPlus />
+                </Button>
+              )}
+            </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
     </Drawer>
   );
 }

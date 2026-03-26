@@ -439,7 +439,7 @@ function ActivitiesQuery({
             variant="secondary"
           >
             <LuActivity />
-            <span className="text-primary">
+            <span className="text-accent">
               {`Activity Type: ${_getActivityTypeName(request?.configuration?.activityType)}`}
             </span>
             <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleActivityTypeChange("")} />
@@ -450,7 +450,7 @@ function ActivitiesQuery({
             variant="secondary"
           >
             <LuActivity />
-            <span className="text-primary">
+            <span className="text-accent">
               {`Event Name: ${request?.configuration?.eventName}`}
             </span>
             <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleEventNameChange("")} />
@@ -461,7 +461,7 @@ function ActivitiesQuery({
             variant="secondary"
           >
             <LuActivity />
-            <span className="text-primary">
+            <span className="text-accent">
               {`Customer ID (${_getIdTypeName(request?.configuration?.idType)}): ${request?.configuration?.customerId}`}
             </span>
             <LuX size={16} className="text-danger cursor-pointer" onClick={() => {
@@ -475,7 +475,7 @@ function ActivitiesQuery({
             variant="secondary"
           >
             <LuActivity />
-            <span className="text-primary">
+            <span className="text-accent">
               Include deleted people
             </span>
             <LuX size={16} className="text-danger cursor-pointer" onClick={() => _handleDeletedChange(false)} />

@@ -334,7 +334,7 @@ function EmbeddedChart() {
       </div>
       <div className="h-2" />
       {chart && (
-        <div className={cn("h-[calc(100vh-100px)]", isSnapshot && "bg-background")}>
+        <div className={cn("h-[calc(100vh-100px)]", isSnapshot && "bg-surface")}>
           {chart.type === "line" && (
             <LineChart
               chart={chart}

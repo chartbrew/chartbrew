@@ -78,7 +78,7 @@ export const COLOR_SCHEMES = {
     card: "border-divider",
   },
   primary: {
-    icon: "bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300",
+    icon: "bg-primary-50 text-accent-600 dark:bg-primary-500/15 dark:text-accent-300",
     badge: "primary",
     card: "border-divider/70",
   },

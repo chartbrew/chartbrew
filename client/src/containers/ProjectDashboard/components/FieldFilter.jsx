@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Input, DatePicker, Chip, Link, Dropdown,
+  Calendar,
+  Chip,
+  DateField,
+  DatePicker,
+  Dropdown,
+  Input,
+  Link,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import { LuArrowRight } from "react-icons/lu";
@@ -81,21 +87,65 @@ function FieldFilter({
 
     if (isDateField && field) {
       return (
-        <DatePicker
-          startContent={renderLabel()}
-          className={["pl-1", className].filter(Boolean).join(" ")}
-          value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
-          onChange={(date) => setDateValue(date.toString())}
-          variant="secondary"
-          size="sm"
-          showMonthAndYearPickers
-          calendarProps={{ color: "primary" }}
-          endContent={dateValue !== filter?.value && (
-            <Link onPress={() => onApply?.({ ...filter, operator: currentOperator, value: dateValue })} className="text-foreground hover:text-foreground-500 cursor-pointer">
-              <LuArrowRight size={18} />
-            </Link>
-          )}
-        />
+        <div className={["flex flex-row items-center gap-1", className].filter(Boolean).join(" ")}>
+          <DatePicker
+            className="min-w-0 flex-1 pl-1 text-xs"
+            name="fieldFilterDate"
+            value={dateValue ? parseDate(moment(dateValue).format("YYYY-MM-DD")) : today()}
+            onChange={(date) => {
+              if (date) {
+                setDateValue(date.toString());
+              }
+            }}
+          >
+            <DateField.Group fullWidth variant="secondary" size="sm">
+              <DateField.Prefix>
+                {renderLabel()}
+              </DateField.Prefix>
+              <DateField.Input>
+                {(segment) => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+              <DateField.Suffix>
+                {dateValue !== filter?.value && (
+                  <Link
+                    onPress={() => onApply?.({ ...filter, operator: currentOperator, value: dateValue })}
+                    className="flex shrink-0 cursor-pointer items-center px-1 text-foreground hover:text-foreground-500"
+                  >
+                    <LuArrowRight size={18} />
+                  </Link>
+                )}
+                <DatePicker.Trigger>
+                  <DatePicker.TriggerIndicator />
+                </DatePicker.Trigger>
+              </DateField.Suffix>
+            </DateField.Group>
+            <DatePicker.Popover>
+              <Calendar aria-label="Filter date value">
+                <Calendar.Header>
+                  <Calendar.YearPickerTrigger>
+                    <Calendar.YearPickerTriggerHeading />
+                    <Calendar.YearPickerTriggerIndicator />
+                  </Calendar.YearPickerTrigger>
+                  <Calendar.NavButton slot="previous" />
+                  <Calendar.NavButton slot="next" />
+                </Calendar.Header>
+                <Calendar.Grid>
+                  <Calendar.GridHeader>
+                    {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                  </Calendar.GridHeader>
+                  <Calendar.GridBody>
+                    {(date) => <Calendar.Cell date={date} />}
+                  </Calendar.GridBody>
+                </Calendar.Grid>
+                <Calendar.YearPickerGrid>
+                  <Calendar.YearPickerGridBody>
+                    {({year}) => <Calendar.YearPickerCell year={year} />}
+                  </Calendar.YearPickerGridBody>
+                </Calendar.YearPickerGrid>
+              </Calendar>
+            </DatePicker.Popover>
+          </DatePicker>
+        </div>
       );
     }
 

@@ -6,7 +6,7 @@ function Badge({ children, type = "neutral" }) {
     success: "bg-success/15 text-success",
     error: "bg-danger/15 text-danger",
     warning: "bg-warning/15 text-warning",
-    primary: "bg-primary/15 text-primary",
+    primary: "bg-primary/15 text-accent",
     secondary: "bg-secondary/15 text-secondary",
     neutral: "bg-content3 text-default-800",
   }[type] || "bg-content3 text-default-800";

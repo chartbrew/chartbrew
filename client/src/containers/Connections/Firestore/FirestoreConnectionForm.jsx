@@ -117,7 +117,7 @@ function FirestoreConnectionForm(props) {
       <div style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <a className={"text-primary flex items-center"}>
+          <a className={"text-accent flex items-center"}>
             <LuFileCode2 size={24} />
             <div className="w-4" />
             {" Drag and drop your JSON authentication file here"}
@@ -285,9 +285,9 @@ function FirestoreConnectionForm(props) {
                   href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="align-middle text-primary"
+                  className="align-middle text-accent"
                 >
-                  <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
+                  <Text b className={"text-accent"}>{"1. Create a Firebase Service Account "}</Text>
                   <div className="w-2" />
                   <LuExternalLink size={18} />
                 </Link>

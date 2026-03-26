@@ -100,7 +100,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
       if (columnConfig?.display?.format === "button") {
         const buttonSettings = columnConfig.display.button || { color: "primary", variant: "solid" };
         baseContent = (
-          <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline">
             <Button
               size="sm"
               variant={tableDisplayButtonVariant(buttonSettings)}
@@ -115,7 +115,7 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
             href={value}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-accent hover:underline"
           >
             {value}
           </LinkNext>

@@ -83,7 +83,7 @@ function FeedbackForm() {
           isDisabled={!feedback}
           isPending={loading}
           onClick={() => _onSendFeedback()}
-          color="primary"
+          variant="primary"
         >
           {loading ? <ButtonSpinner /> : null}
           Send feedback

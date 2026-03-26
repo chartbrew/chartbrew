@@ -126,7 +126,7 @@ function TopNav() {
           <React.Fragment key={`${item.label}-${index}`}>
             {index > 0 ? <span className="text-default-400">/</span> : null}
             {item.onPress ? (
-              <button className="hover:text-primary" onClick={item.onPress} type="button">
+              <button className="hover:text-accent" onClick={item.onPress} type="button">
                 {item.label}
               </button>
             ) : (
@@ -151,7 +151,7 @@ function TopNav() {
         <div className="flex flex-row items-center gap-4">
           {canUserAccess("teamAdmin", team) ? (
             <Button
-              className="bg-linear-to-tr from-primary-300 via-violet-200 to-secondary-300 shadow-md transition-all duration-300 hover:bg-linear-to-br dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500"
+              className="text-foreground bg-linear-to-tr from-primary-300 via-violet-200 to-secondary-300 shadow-md transition-all duration-300 hover:bg-linear-to-br dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500"
               onPress={() => dispatch(toggleAiModal())}
               size="sm"
               variant="primary"

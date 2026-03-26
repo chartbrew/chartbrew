@@ -77,6 +77,7 @@ function ChartExport(props) {
                       const wasSelected = _.indexOf(selectedIds, chart.id) > -1;
                       if (selected !== wasSelected) _onSelectChart(chart.id);
                     }}
+                    variant="secondary"
                   >
                     <Checkbox.Control className="size-4 shrink-0">
                       <Checkbox.Indicator />

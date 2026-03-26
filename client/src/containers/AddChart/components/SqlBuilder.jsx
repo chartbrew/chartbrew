@@ -318,7 +318,7 @@ function SqlBuilder(props) {
                     )}
                   </Badge.Anchor>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Apply transformations to the data
                 </Tooltip.Content>
               </Tooltip>
@@ -332,7 +332,7 @@ function SqlBuilder(props) {
                     <LuTrash />
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Delete this data request
                 </Tooltip.Content>
               </Tooltip>
@@ -621,7 +621,7 @@ function SqlBuilder(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
+              <code className="rounded-sm bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
               </code>
             </div>
@@ -629,7 +629,7 @@ function SqlBuilder(props) {
           <Drawer.Body>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-primary">
+              <pre className="text-accent">
                 {variableSettings?.name}
               </pre>
             </div>

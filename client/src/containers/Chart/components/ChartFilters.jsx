@@ -1,7 +1,17 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Autocomplete, DatePicker, EmptyState, Label, ListBox, SearchField, useFilter,
+  Autocomplete,
+  Button,
+  Calendar,
+  DateField,
+  DatePicker,
+  EmptyState,
+  Input,
+  Label,
+  ListBox,
+  SearchField,
+  useFilter,
 } from "@heroui/react";
 import { I18nProvider } from "@react-aria/i18n";
 import { LuX } from "react-icons/lu";
@@ -186,17 +196,58 @@ function ChartFilters(props) {
                   <div className="flex items-center gap-1">
                     <I18nProvider locale="en-GB">
                       <DatePicker
-                        label={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
-                        variant="secondary"
-                        showMonthAndYearPickers
+                        aria-label="Date filter"
+                        name={`chart-filter-date-${condition.id}`}
+                        className="min-w-0 flex-1"
                         value={(
                           _getConditionValue(condition.id)
                           && parseDate(_getConditionValue(condition.id))
                         ) || null}
-                        onChange={(date) => _onOptionSelected(date.toString(), condition)}
-                        size="sm"
-                        aria-label="Date filter"
-                      />
+                        onChange={(date) => {
+                          if (date) {
+                            _onOptionSelected(date.toString(), condition);
+                          }
+                        }}
+                      >
+                        <Label>
+                          {`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
+                        </Label>
+                        <DateField.Group fullWidth variant="secondary" size="sm">
+                          <DateField.Input>
+                            {(segment) => <DateField.Segment segment={segment} />}
+                          </DateField.Input>
+                          <DateField.Suffix>
+                            <DatePicker.Trigger>
+                              <DatePicker.TriggerIndicator />
+                            </DatePicker.Trigger>
+                          </DateField.Suffix>
+                        </DateField.Group>
+                        <DatePicker.Popover>
+                          <Calendar aria-label="Date filter">
+                            <Calendar.Header>
+                              <Calendar.YearPickerTrigger>
+                                <Calendar.YearPickerTriggerHeading />
+                                <Calendar.YearPickerTriggerIndicator />
+                              </Calendar.YearPickerTrigger>
+                              <Calendar.NavButton slot="previous" />
+                              <Calendar.NavButton slot="next" />
+                            </Calendar.Header>
+                            <Calendar.Grid>
+                              <Calendar.GridHeader>
+                                {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                              </Calendar.GridHeader>
+                              <Calendar.GridBody>
+                                {(date) => <Calendar.Cell date={date} />}
+                              </Calendar.GridBody>
+                            </Calendar.Grid>
+                            <Calendar.YearPickerGrid>
+                              <Calendar.YearPickerGridBody>
+                                {({year}) => <Calendar.YearPickerCell year={year} />}
+                              </Calendar.YearPickerGridBody>
+                            </Calendar.YearPickerGrid>
+                          </Calendar>
+                        </DatePicker.Popover>
+                      </DatePicker>
                     </I18nProvider>
 
                     {_getConditionValue(condition.id) && (
@@ -218,17 +269,58 @@ function ChartFilters(props) {
                   <div className="flex flex-row items-center gap-1">
                     <I18nProvider locale="en-GB">
                       <DatePicker
-                        aria-label="Date filter"
-                        placeholder={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
-                        variant="secondary"
-                        showMonthAndYearPickers
+                        aria-label={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
+                        name={`chart-filter-date-inline-${condition.id}`}
+                        className="min-w-0 flex-1"
                         value={(
                           _getConditionValue(condition.id)
                           && parseDate(_getConditionValue(condition.id))
                         ) || null}
-                        onChange={(date) => _onOptionSelected(date.toString(), condition)}
-                        size="sm"
-                      />
+                        onChange={(date) => {
+                          if (date) {
+                            _onOptionSelected(date.toString(), condition);
+                          }
+                        }}
+                      >
+                        <Label className="sr-only">
+                          {`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
+                        </Label>
+                        <DateField.Group fullWidth variant="secondary" size="sm">
+                          <DateField.Input>
+                            {(segment) => <DateField.Segment segment={segment} />}
+                          </DateField.Input>
+                          <DateField.Suffix>
+                            <DatePicker.Trigger>
+                              <DatePicker.TriggerIndicator />
+                            </DatePicker.Trigger>
+                          </DateField.Suffix>
+                        </DateField.Group>
+                        <DatePicker.Popover>
+                          <Calendar aria-label="Date filter">
+                            <Calendar.Header>
+                              <Calendar.YearPickerTrigger>
+                                <Calendar.YearPickerTriggerHeading />
+                                <Calendar.YearPickerTriggerIndicator />
+                              </Calendar.YearPickerTrigger>
+                              <Calendar.NavButton slot="previous" />
+                              <Calendar.NavButton slot="next" />
+                            </Calendar.Header>
+                            <Calendar.Grid>
+                              <Calendar.GridHeader>
+                                {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                              </Calendar.GridHeader>
+                              <Calendar.GridBody>
+                                {(date) => <Calendar.Cell date={date} />}
+                              </Calendar.GridBody>
+                            </Calendar.Grid>
+                            <Calendar.YearPickerGrid>
+                              <Calendar.YearPickerGridBody>
+                                {({year}) => <Calendar.YearPickerCell year={year} />}
+                              </Calendar.YearPickerGridBody>
+                            </Calendar.YearPickerGrid>
+                          </Calendar>
+                        </DatePicker.Popover>
+                      </DatePicker>
                     </I18nProvider>
                     {_getConditionValue(condition.id) && (
                       <Button
@@ -264,7 +356,7 @@ ChartFilters.propTypes = {
 ChartFilters.defaultProps = {
   conditions: [],
   inline: false,
-  size: "md",
+  size: "sm",
   amount: 0,
 };
 

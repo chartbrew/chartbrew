@@ -2,8 +2,19 @@ import React, { useState, useEffect } from "react";
 import { findIndex } from "lodash";
 import PropTypes from "prop-types";
 import {
-  Select, Input, DatePicker, Autocomplete,
-  Chip, Separator, EmptyState, Label, ListBox, SearchField, useFilter,
+  Autocomplete,
+  Calendar,
+  Chip,
+  DateField,
+  DatePicker,
+  EmptyState,
+  Input,
+  Label,
+  ListBox,
+  SearchField,
+  Select,
+  Separator,
+  useFilter,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import moment from "moment";
@@ -113,7 +124,7 @@ function EditFieldFilter({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-row gap-2 items-center">
+        <div className="flex flex-col gap-2">
           <Autocomplete
             value={fieldCondition.field || null}
             onChange={(value) => _handleFieldChange("field", value)}
@@ -124,7 +135,7 @@ function EditFieldFilter({
           >
             <Label>Select a field</Label>
             <Autocomplete.Trigger>
-              <Autocomplete.Value />
+              <Autocomplete.Value className={"flex flex-row gap-2 items-center"} />
               <Autocomplete.Indicator />
             </Autocomplete.Trigger>
             <Autocomplete.Popover>
@@ -143,7 +154,7 @@ function EditFieldFilter({
                       id={field.value}
                       textValue={field.text}
                     >
-                      <Chip variant="soft" size="sm" color={field.label.color} className="min-w-[70px] text-center">
+                      <Chip variant="soft" size="sm" color={field.label.color}>
                         {field.type}
                       </Chip>
                       {field.text}
@@ -183,15 +194,53 @@ function EditFieldFilter({
           {fieldCondition.field && (
             isDateField ? (
               <DatePicker
-                label="Select a date"
-                value={fieldCondition.value ? parseDate(moment(fieldCondition.value).format("YYYY-MM-DD")) : today()}
-                onChange={(date) => _handleFieldChange("value", date.toString())}
-                variant="secondary"
-                showMonthAndYearPickers
-                calendarProps={{ color: "primary" }}
-                size="sm"
+                name="editFieldFilterDate"
                 aria-label="Select a date"
-              />
+                value={fieldCondition.value ? parseDate(moment(fieldCondition.value).format("YYYY-MM-DD")) : today()}
+                onChange={(date) => {
+                  if (date) {
+                    _handleFieldChange("value", date.toString());
+                  }
+                }}
+                className="min-w-0"
+              >
+                <Label>Select a date</Label>
+                <DateField.Group fullWidth variant="secondary" size="sm">
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar aria-label="Select a date">
+                    <Calendar.Header>
+                      <Calendar.YearPickerTrigger>
+                        <Calendar.YearPickerTriggerHeading />
+                        <Calendar.YearPickerTriggerIndicator />
+                      </Calendar.YearPickerTrigger>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
+                    </Calendar.Grid>
+                    <Calendar.YearPickerGrid>
+                      <Calendar.YearPickerGridBody>
+                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                      </Calendar.YearPickerGridBody>
+                    </Calendar.YearPickerGrid>
+                  </Calendar>
+                </DatePicker.Popover>
+              </DatePicker>
             ) : (
               <Input
                 label="Enter a value"

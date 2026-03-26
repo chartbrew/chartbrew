@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Modal, Avatar, Input, Button, Accordion, Separator, Kbd, Popover, Chip, Tooltip, Dropdown, ProgressCircle, ListBox } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack } from "react-icons/lu"
+import { Accordion, Avatar, Button, Chip, Dropdown, Input, InputGroup, Kbd, Label, ListBox, Modal, Popover, ProgressCircle, Separator, TextField, Tooltip } from "@heroui/react"
+import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
@@ -773,7 +773,7 @@ function AiModal({ isOpen, onClose }) {
     if (message.role === "user") {
       return (
         <div key={index} className="flex justify-end mb-4 px-4">
-          <div className="max-w-[70%] bg-primary text-primary-foreground px-4 py-3 rounded-lg">
+          <div className="max-w-[70%] bg-primary text-accent-foreground px-4 py-3 rounded-lg">
             <div className="text-sm whitespace-pre-wrap">{message.content}</div>
           </div>
         </div>
@@ -788,10 +788,13 @@ function AiModal({ isOpen, onClose }) {
             <div className="px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
                 <Avatar
-                  icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
                   color="accent"
-                />
+                >
+                  <Avatar.Fallback>
+                    <LuBrainCircuit size={16} className="text-background" />
+                  </Avatar.Fallback>
+                </Avatar>
                 <span className="text-sm font-medium">AI is working...</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -872,10 +875,13 @@ function AiModal({ isOpen, onClose }) {
             }`}>
               <div className="flex items-start gap-3">
                 <Avatar
-                  icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
                   color={parsed.type === "chart_created" ? "success" : "warning"}
-                />
+                >
+                  <Avatar.Fallback>
+                    <LuBrainCircuit size={16} className="text-accent" />
+                  </Avatar.Fallback>
+                </Avatar>
                 <div className="w-full">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-medium">
@@ -943,10 +949,13 @@ function AiModal({ isOpen, onClose }) {
             <div className="px-6 py-4 rounded-lg border border-primary-200 bg-primary-50/50">
               <div className="flex items-start gap-3">
                 <Avatar
-                  icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color="accent"
-                />
+                  variant="soft"
+                >
+                  <Avatar.Fallback>
+                    <LuBrainCircuit size={16} className="text-accent" />
+                  </Avatar.Fallback>
+                </Avatar>
                 <div className="w-full">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-medium">
@@ -1005,13 +1014,17 @@ function AiModal({ isOpen, onClose }) {
             }`}>
               <div className="flex items-start gap-3">
                 <Avatar
-                  icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color={isError ? "danger" : "primary"}
-                />
+                  color={isError ? "danger" : "accent"}
+                  variant="soft"
+                >
+                  <Avatar.Fallback>
+                    <LuBrainCircuit size={16} className="text-foreground" />
+                  </Avatar.Fallback>
+                </Avatar>
                 <div className="flex-1">
                   {parsed.content && (
-                    <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
+                    <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
                       isError ? "text-danger" : "text-foreground"
                     }`}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
@@ -1057,12 +1070,16 @@ function AiModal({ isOpen, onClose }) {
             }`}>
               <div className="flex items-start gap-3">
                 <Avatar
-                  icon={<LuBrainCircuit size={16} className="text-background" />}
                   size="sm"
-                  color={isError ? "danger" : "primary"}
-                />
+                  color={isError ? "danger" : "accent"}
+                  variant="soft"
+                >
+                  <Avatar.Fallback>
+                    <LuBrainCircuit size={16} className="text-foreground" />
+                  </Avatar.Fallback>
+                </Avatar>
                 <div className="flex-1">
-                  <div className={`text-sm prose prose-xs md:prose-lg dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
+                  <div className={`text-sm prose prose-xs md:prose-lg dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
                     isError ? "text-danger" : "text-foreground"
                   }`}>
                     <ReactMarkdown
@@ -1137,10 +1154,14 @@ function AiModal({ isOpen, onClose }) {
           <div className="px-6 py-4">
             <div className="flex items-start gap-3">
               <Avatar
-                icon={<LuBrainCircuit size={16} className="text-background" />}
                 size="sm"
                 color="accent"
-              />
+                variant="soft"
+              >
+                <Avatar.Fallback>
+                  <LuBrainCircuit size={16} className="text-foreground" />
+                </Avatar.Fallback>
+              </Avatar>
               <div className="flex-1">
                 {operations.length > 0 && (
                   <div className="mb-3">
@@ -1175,7 +1196,7 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 )}
                 {finalMessage && (
-                  <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-primary prose-a:hover:text-primary-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
+                  <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
                       {finalMessage.content}
                     </ReactMarkdown>
@@ -1215,16 +1236,20 @@ function AiModal({ isOpen, onClose }) {
           <div className="px-4 py-3">
             <div className="flex items-center gap-2 mb-2">
               <Avatar
-                icon={<LuBrainCircuit size={16} className="text-background" />}
                 size="sm"
                 color="accent"
-              />
+                variant="soft"
+              >
+                <Avatar.Fallback>
+                  <LuBrainCircuit size={16} className="text-foreground" />
+                </Avatar.Fallback>
+              </Avatar>
               <LuLoader size={16} className="animate-spin" />
               <span className="text-sm">Working...</span>
             </div>
             <div className="space-y-1">
               {progressEvents.map((event) => (
-                <div key={event.id} className="text-xs text-primary-700 flex items-center gap-2">
+                <div key={event.id} className="text-xs text-accent-700 flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${
                     event.type === "processing" ? "bg-blue-500" :
                     event.type === "connection" ? "bg-green-500" :
@@ -1254,637 +1279,705 @@ function AiModal({ isOpen, onClose }) {
       >
         <Modal.Container className={conversation ? "sm:mt-4" : ""} scroll="outside">
           <Modal.Dialog className={conversation ? "sm:max-w-6xl" : "sm:max-w-xl"}>
-        {!conversation && (
-          <Modal.Body className="pt-8">
-            <div className="flex flex-col gap-2 items-center justify-center">
-              <Avatar
-                icon={<LuBrainCircuit size={24} className="text-background" />}
-                size="lg"
-                color="accent"
-              />
-              <div className="flex flex-col items-center justify-center">
-                <div className="flex flex-row items-center gap-2">
-                  <div className="font-tw font-medium text-lg">Chartbrew AI</div>
-                  <Chip variant="primary" size="sm" className="rounded-sm shadow-sm">
-                    Beta
-                  </Chip>
-                </div>
-                <div className="text-sm text-foreground-500">Ask me anything about your data</div>
-                <div className="flex flex-row items-center gap-1 mt-2">
-                  <Kbd keys={isMac() ? ["command"] : ["ctrl"]}>K</Kbd>
-                </div>
-              </div>
-            </div>
-            <div className="h-2" />
-            <form onSubmit={_onAskAi} id="ai-form">
-              <Input
-                placeholder="Ask me a question"
-                value={question}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setQuestion(value);
-                  // Open context popover when "@" is typed
-                  if (value.endsWith("@") && !isContextPopoverOpen) {
-                    setIsContextPopoverOpen(true);
-                  }
-                }}
-                variant="secondary"
-                endContent={
-                  <Button type="submit" isIconOnly isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)} variant="primary" onPress={() => setQuestion(question + " ")} size="sm">
-                    <LuArrowRight size={18} />
-                  </Button>
-                }
-              />
-              <div className="flex flex-row items-center gap-1 flex-wrap mt-2">
-                <Chip
-                  variant="soft"
-                  size="sm"
-                  onClick={() => {
-                    setQuestion("What can you do?");
-                  }}
-                  className="cursor-pointer"
-                >
-                  What can you do?
-                </Chip>
-                <Chip
-                  variant="soft"
-                  size="sm"
-                  onClick={() => {
-                    setQuestion("How many users I have in my database?");
-                  }}
-                  className="cursor-pointer"
-                >
-                  How many users I have in my database?
-                </Chip>
-              </div>
-            </form>
-            <div className="flex flex-row items-center gap-1 flex-wrap">
-              <Popover isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
-                <Popover.Trigger>
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    isPending={isLoading}
-                    isIconOnly={selectedContext.multiSelect.length > 0}
+            <Modal.CloseTrigger />
+            {!conversation && (
+              <Modal.Body className="pt-8">
+                <div className="flex flex-col gap-2 items-center justify-center">
+                  <Avatar
+                    size="lg"
+                    color="accent"
+                    variant="soft"
                   >
-                    {selectedContext.multiSelect.length > 0 ? (
-                      <LuAtSign size={16} />
-                    ) : (
-                      <>
-                        <LuAtSign size={16} />
-                        Add extra context
-                      </>
-                    )}
-                  </Button>
-                </Popover.Trigger>
-                <Popover.Content placement="bottom" className="w-80">
-                  <Popover.Dialog>
-                  <div className="p-2 w-full">
-                    <div className="text-xs text-foreground-500 mb-2">
-                      Context helps our AI to understand your intentions better.
+                    <Avatar.Fallback>
+                      <LuBrainCircuit size={24} className="text-accent" />
+                    </Avatar.Fallback>
+                  </Avatar>
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="flex flex-row items-center gap-2">
+                      <div className="font-tw font-medium text-lg">Chartbrew AI</div>
+                      <Chip variant="soft" color="accent" size="sm" className="">
+                        Beta
+                      </Chip>
                     </div>
-                    <Input
-                      placeholder="Search projects, connections, datasets..."
-                      value={contextSearch}
-                      onChange={(e) => setContextSearch(e.target.value)}
-                      variant="secondary"
-                      size="sm"
-                      className="mb-2"
-                      autoFocus
-                    />
-                    <div className="max-h-64 overflow-y-auto w-full">
-                      <ListBox
-                        aria-label="Context entities"
-                        selectionMode="none"
-                        className="w-full"
-                        renderEmptyState={() => (
-                          <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
-                        )}
-                      >
-                        {filteredContextEntities.map((entity) => {
-                          const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                          const rowId = `${entity.entity_type}-${entity.id}`;
-                          return (
-                            <ListBox.Item
-                              key={rowId}
-                              id={rowId}
-                              textValue={getContextLabel(entity)}
-                              className={isSelected ? "bg-primary-50" : ""}
-                              onAction={() => {
-                                setSelectedContext((prev) => {
-                                  const newEntity = {
-                                    ...entity,
-                                    label: getContextLabel(entity)
-                                  };
-                                  const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                  if (isAlreadySelected) {
-                                    return {
-                                      ...prev,
-                                      multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                                    };
-                                  }
-                                  return {
-                                    ...prev,
-                                    multiSelect: [...prev.multiSelect, newEntity]
-                                  };
-                                });
-                                setContextSearch("");
-                              }}
-                            >
-                              <div className="flex w-full items-center justify-between gap-2">
-                                <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
-                                    entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
-                                      entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
-                                  <div className="flex min-w-0 flex-col">
-                                    <span className="text-sm">{entity.name || entity.legend}</span>
-                                    <span className="text-xs text-foreground-500">
-                                      {entity.entity_type === "project" ? "Project" :
-                                        entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                          "Dataset"}
-                                    </span>
-                                  </div>
-                                </div>
-                                {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
-                              </div>
-                            </ListBox.Item>
-                          );
-                        })}
-                      </ListBox>
+                    <div className="text-sm text-foreground-500">Ask me anything about your data</div>
+                    <div className="flex flex-row items-center gap-1 mt-2">
+                      <Kbd>
+                        <Kbd.Abbr keyValue={isMac() ? "command" : "ctrl"} />
+                        <Kbd.Content>K</Kbd.Content>
+                      </Kbd>
                     </div>
                   </div>
-                  </Popover.Dialog>
-                </Popover.Content>
-              </Popover>
-
-              {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                <>
-                  {selectedContext.multiSelect.map((entity) => (
-                    <Chip
-                      key={`${entity.entity_type}-${entity.id}`}
-                      variant="primary"
-                      size="sm"
-                      onClose={() => {
-                        setSelectedContext(prev => ({
-                          ...prev,
-                          multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                        }));
-                      }}
-                    >
-                      {entity.label}
-                    </Chip>
-                  ))}
-                  {selectedContext.singleSelect && (
-                    <Chip
-                      variant="secondary"
-                      size="sm"
-                      onClose={() => {
-                        setSelectedContext(prev => ({
-                          ...prev,
-                          singleSelect: null
-                        }));
-                      }}
-                    >
-                      {selectedContext.singleSelect.label}
-                    </Chip>
-                  )}
-                </>
-              )}
-            </div>
-            <Separator />
-            <Accordion>
-              <Accordion.Item
-                id="previous_conversations"
-                textValue={`Previous Conversations (${conversations.length})`}
-              >
-                <Accordion.Heading>
-                  <Accordion.Trigger>
-                    <span className="text-sm font-medium flex-1 text-start">{`Previous Conversations (${conversations.length})`}</span>
-                    <Accordion.Indicator />
-                  </Accordion.Trigger>
-                </Accordion.Heading>
-                <Accordion.Panel>
-                  <Accordion.Body>
-                <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto">
-                  {conversations.map((conv) => (
-                    <div
-                      key={conv.id}
-                      className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
-                      onClick={() => _onSelectConversation(conv.id)}
-                    >
-                      <div className="pt-1">
-                        {conv.source === "slack" ? <LuSlack size={16} /> : <LuMessageSquare size={16} />}
-                      </div>
-                      <div className="flex flex-col gap-1 flex-1">
-                        <div className="text-sm text-foreground font-medium">{conv.title}</div>
-                        <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
-                          <div className="flex items-center gap-1">
-                            <LuClock size={12} />
-                            <span>{formatDate(conv.createdAt)}</span>
-                          </div>
-                          {conv.total_tokens > 0 && (
-                            <div className="flex items-center gap-1">
-                              <LuCoins size={12} />
-                              <span>{formatTokens(conv.total_tokens)} tokens</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Dropdown>
-                          <Dropdown.Trigger>
-                            <Button isIconOnly size="sm" variant="tertiary">
-                              <LuEllipsis size={16} />
-                            </Button>
-                          </Dropdown.Trigger>
-                          <Dropdown.Popover>
-                            <Dropdown.Menu>
-                              <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} textValue="Delete conversation">
-                                <div className="flex flex-row items-center gap-2">
-                                  <LuTrash2 size={16} />
-                                  <span>Delete conversation</span>
-                                </div>
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown.Popover>
-                        </Dropdown>
-                      </div>
-                    </div>
-                  ))}
                 </div>
-                  </Accordion.Body>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
-
-            <Separator />
-            <div className="text-xs text-foreground-500 mb-2">
-              <span className="font-medium">Note:</span> We are still in beta. Some features may not work as expected. Please let us know if you encounter any issues or have any feedback at <a href="mailto:support@chartbrew.com" className="text-primary-500 hover:text-primary-600">support@chartbrew.com</a>
-            </div>
-          </Modal.Body>
-        )}
-
-        {conversation && (
-          <Modal.Body className="p-0">
-            <div className="flex flex-row">
-              <div className="flex-none w-60">
-                <div className="flex flex-col relative h-full bg-content2 rounded-tl-2xl rounded-bl-2xl">
-                  <div className="w-full px-4 pt-4 border-r border-divider rounded-tl-2xl">
-                    <Button
-                      variant="primary"
-                      onPress={() => {
-                        setConversation(null);
-                        setLocalMessages([]);
-                        setProgressEvents([]);
-                        setCreatedCharts([]);
-                        fetchedChartsRef.current.clear();
-                        setSelectedContext({
-                          multiSelect: [],
-                          singleSelect: null
-                        });
-                        setContextSearch("");
+                <div className="h-2" />
+                <form onSubmit={_onAskAi} id="ai-form">
+                  <TextField fullWidth name="aiQuestion" aria-label="Ask me a question" className="w-full">
+                    <Label className="sr-only">Ask me a question</Label>
+                    <InputGroup fullWidth>
+                      <InputGroup.Input
+                        placeholder="Ask me a question"
+                        value={question}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setQuestion(value);
+                          // Open context popover when "@" is typed
+                          if (value.endsWith("@") && !isContextPopoverOpen) {
+                            setIsContextPopoverOpen(true);
+                          }
+                        }}
+                      />
+                      <InputGroup.Suffix className="pr-1 border-none">
+                        <Button
+                          type="submit"
+                          isIconOnly
+                          isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)}
+                          variant="primary"
+                          onPress={() => setQuestion(question + " ")}
+                          size="sm"
+                          aria-label="Submit question"
+                        >
+                          <LuArrowRight size={18} />
+                        </Button>
+                      </InputGroup.Suffix>
+                    </InputGroup>
+                  </TextField>
+                  <div className="flex flex-row items-center gap-1 flex-wrap mt-2">
+                    <Chip
+                      variant="soft"
+                      size="sm"
+                      onClick={() => {
+                        setQuestion("What can you do?");
                       }}
-                      fullWidth
+                      className="cursor-pointer"
                     >
-                      <LuPlus size={18} />
-                      New Conversation
-                    </Button>
-                    <div className="h-4" />
-                    <Separator />
+                      What can you do?
+                    </Chip>
+                    <Chip
+                      variant="soft"
+                      size="sm"
+                      onClick={() => {
+                        setQuestion("How many users I have in my database?");
+                      }}
+                      className="cursor-pointer"
+                    >
+                      How many users I have in my database?
+                    </Chip>
                   </div>
-                  <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto border-r border-divider py-4">
-                    {conversations.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`flex flex-row gap-2 cursor-pointer px-2 py-2 rounded-lg transition-colors group relative ${c.id === conversation.id ? "bg-background shadow-sm" : "hover:bg-background/50"}`}
-                        onClick={() => _onSelectConversation(c.id)}
+                </form>
+
+                <div className="h-2" />
+
+                <div className="flex flex-row items-center gap-1 flex-wrap">
+                  <Popover isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
+                    <Popover.Trigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isPending={isLoading}
+                        isIconOnly={selectedContext.multiSelect.length > 0}
                       >
-                        <div className="pt-1">
-                          {c.source === "slack" ? <LuSlack size={14} /> : <LuMessageSquare size={14} />}
+                        {selectedContext.multiSelect.length > 0 ? (
+                          <LuAtSign size={16} />
+                        ) : (
+                          <>
+                            <LuAtSign size={16} />
+                            Add extra context
+                          </>
+                        )}
+                      </Button>
+                    </Popover.Trigger>
+                    <Popover.Content placement="bottom" className="w-80">
+                      <Popover.Dialog>
+                      <div className="p-2 w-full">
+                        <div className="text-xs text-foreground-500 mb-2">
+                          Context helps our AI to understand your intentions better.
                         </div>
-                        <div className="flex flex-col gap-1 flex-1 min-w-0">
-                          <div className="text-sm text-foreground truncate pr-6">{c.title}</div>
-                          <div className="flex flex-col gap-1">
-                            <div className="text-xs text-foreground-500 flex items-center gap-1">
-                              <LuClock size={10} />
-                              <span className="truncate">{formatDate(c.createdAt)}</span>
-                            </div>
-                            {c.total_tokens > 0 && (
-                              <div className="text-xs text-foreground-500 flex items-center gap-1">
-                                <LuCoins size={10} />
-                                <span>{formatTokens(c.total_tokens)}</span>
-                              </div>
+                        <Input
+                          placeholder="Search projects, connections, datasets..."
+                          value={contextSearch}
+                          onChange={(e) => setContextSearch(e.target.value)}
+                          size="sm"
+                          className="mb-2"
+                          autoFocus
+                          fullWidth
+                        />
+                        <div className="max-h-64 overflow-y-auto w-full">
+                          <ListBox
+                            aria-label="Context entities"
+                            selectionMode="none"
+                            className="w-full"
+                            renderEmptyState={() => (
+                              <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
                             )}
-                          </div>
-                        </div>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Dropdown>
-                            <Dropdown.Trigger>
-                              <Button isIconOnly size="sm" variant="tertiary">
-                                <LuEllipsis size={16} />
-                              </Button>
-                            </Dropdown.Trigger>
-                            <Dropdown.Popover>
-                              <Dropdown.Menu>
-                                <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(c.id)} textValue="Delete conversation">
-                                  <div className="flex flex-row items-center gap-2">
-                                    <LuTrash2 size={16} />
-                                    <span>Delete conversation</span>
+                          >
+                            {filteredContextEntities.map((entity) => {
+                              const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                              const rowId = `${entity.entity_type}-${entity.id}`;
+                              return (
+                                <ListBox.Item
+                                  key={rowId}
+                                  id={rowId}
+                                  textValue={getContextLabel(entity)}
+                                  className={isSelected ? "bg-primary-50" : ""}
+                                  onAction={() => {
+                                    setSelectedContext((prev) => {
+                                      const newEntity = {
+                                        ...entity,
+                                        label: getContextLabel(entity)
+                                      };
+                                      const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                      if (isAlreadySelected) {
+                                        return {
+                                          ...prev,
+                                          multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                        };
+                                      }
+                                      return {
+                                        ...prev,
+                                        multiSelect: [...prev.multiSelect, newEntity]
+                                      };
+                                    });
+                                    setContextSearch("");
+                                  }}
+                                >
+                                  <div className="flex w-full items-center justify-between gap-2">
+                                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                                      {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
+                                        entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
+                                          entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
+                                      <div className="flex min-w-0 flex-col">
+                                        <span className="text-sm">{entity.name || entity.legend}</span>
+                                        <span className="text-xs text-foreground-500">
+                                          {entity.entity_type === "project" ? "Project" :
+                                            entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                              "Dataset"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
                                   </div>
-                                </Dropdown.Item>
-                              </Dropdown.Menu>
-                            </Dropdown.Popover>
-                          </Dropdown>
+                                </ListBox.Item>
+                              );
+                            })}
+                          </ListBox>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      </Popover.Dialog>
+                    </Popover.Content>
+                  </Popover>
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4 border-r border-t border-divider bg-content2 rounded-bl-2xl">
-                    <Tooltip>
-                      <Tooltip.Trigger>
-                        <div className="flex flex-row items-center justify-center gap-2 cursor-help">
-                          <div><LuCoins size={14} /></div>
-                          <div className="text-sm text-foreground-500">{formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
-                        </div>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>
-                        <div className="flex flex-col gap-1">
-                          <div className="text-xs text-foreground-500">Total tokens used: {formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
-                          <div className="text-xs text-foreground-500">Total API calls: {teamUsage?.total?.api_calls || 0}</div>
-                          <div className="text-xs text-foreground-500">Total models used: {teamUsage?.byModel?.length || 0}</div>
-                        </div>
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-              <div className="relative flex-1 h-full rounded-lg">
-                <div className="py-4 border-b border-divider">
-                  <div className="flex flex-row gap-3 pl-4 pr-4 items-start">
-                    <Avatar
-                      icon={<LuBrainCircuit size={24} className="text-background" />}
-                      color="accent"
-                    />
-                    <div className="flex flex-col gap-1 flex-1">
-                      <div className="flex flex-row items-center gap-2">
-                        <div className="text-md text-foreground font-medium">{conversation.title}</div>
-                        <Dropdown>
-                          <Dropdown.Trigger>
-                            <Button isIconOnly size="sm" variant="tertiary">
-                              <LuEllipsis size={16} />
-                            </Button>
-                          </Dropdown.Trigger>
-                          <Dropdown.Popover>
-                            <Dropdown.Menu>
-                              <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} textValue="Delete conversation">
-                                <div className="flex flex-row items-center gap-2">
-                                  <LuTrash2 size={16} />
-                                  <span>Delete conversation</span>
-                                </div>
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown.Popover>
-                        </Dropdown>
-                      </div>
-                      <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
-                        <div className="flex items-center gap-1">
-                          <LuClock size={12} />
-                          <span>{formatDate(conversation.createdAt)}</span>
-                        </div>
-                        {conversation.message_count > 0 && (
-                          <div className="flex items-center gap-1">
-                            <LuMessageSquare size={12} />
-                            <span>{conversation.message_count} {conversation.message_count === 1 ? "message" : "messages"}</span>
-                          </div>
-                        )}
-                        {conversation.total_tokens > 0 && (
-                          <Tooltip>
-                            <Tooltip.Trigger>
-                              <div className="flex items-center gap-1 cursor-help">
-                                <LuCoins size={12} />
-                                <span>{formatTokens(conversation.total_tokens)}</span>
-                              </div>
-                            </Tooltip.Trigger>
-                            <Tooltip.Content>
-                              {`${conversation.total_tokens.toLocaleString()} tokens used`}
-                            </Tooltip.Content>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-24">
-                  {conversation?.full_history?.length > 0 ? (
+                  {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
                     <>
-                      {(() => {
-                        // Show grouped view for all conversations
-                        const groups = _groupMessages(conversation.full_history);
-                        return groups.map((group, index) => _renderGroupedMessages(group, index));
-                      })()}
-                      {_renderProgressEvents()}
-                      {isLoading && progressEvents.length === 0 && (
-                        <div className="flex justify-center mb-4 px-4">
-                          <div className="w-full max-w-[90%]">
-                            <div className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <Avatar
-                                  icon={<LuBrainCircuit size={16} className="text-background" />}
-                                  size="sm"
-                                  color="accent"
-                                />
-                                <LuLoader size={16} className="animate-spin" />
-                                <span className="text-sm">Thinking...</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </>
-                  ) : progressEvents.length > 0 ? (
-                    <>
-                      {localMessages.length > 0 && (
-                        <div className="flex justify-end mb-4 px-4">
-                          <div className="max-w-[70%] bg-primary text-primary-foreground px-4 py-3 rounded-lg">
-                            <div className="text-sm whitespace-pre-wrap">{localMessages[0].content}</div>
-                          </div>
-                        </div>
-                      )}
-                      {_renderProgressEvents()}
-                      <div ref={messagesEndRef} />
-                    </>
-                  ) : isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <div className="flex items-center gap-2">
-                        <LuLoader size={24} className="animate-spin text-primary" />
-                        <span className="text-sm text-foreground-500">Loading conversation...</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-foreground-500 text-sm">No messages yet</div>
-                    </div>
-                  )}
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-background z-10 rounded-b-2xl">
-                  <form onSubmit={_onAskAi} id="ai-conversation-form">
-                    {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        {selectedContext.multiSelect.map((entity) => (
-                          <Chip
-                            key={`${entity.entity_type}-${entity.id}`}
-                            variant="primary"
-                            size="sm"
-                            onClose={() => {
+                      {selectedContext.multiSelect.map((entity) => (
+                        <Chip
+                          key={`${entity.entity_type}-${entity.id}`}
+                          variant="primary"
+                          size="sm"
+                        >
+                          <Chip.Label>{entity.label}</Chip.Label>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${entity.label}`}
+                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            onClick={() => {
                               setSelectedContext(prev => ({
                                 ...prev,
                                 multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
                               }));
                             }}
                           >
-                            {entity.label}
-                          </Chip>
-                        ))}
-                        {selectedContext.singleSelect && (
-                          <Chip
-                            variant="secondary"
-                            size="sm"
-                            onClose={() => {
+                            <LuX size={14} aria-hidden />
+                          </button>
+                        </Chip>
+                      ))}
+                      {selectedContext.singleSelect && (
+                        <Chip variant="secondary" size="sm">
+                          <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${selectedContext.singleSelect.label}`}
+                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            onClick={() => {
                               setSelectedContext(prev => ({
                                 ...prev,
                                 singleSelect: null
                               }));
                             }}
                           >
-                            {selectedContext.singleSelect.label}
-                          </Chip>
-                        )}
-                        <span className="text-xs text-foreground-500">+ add more details</span>
-                      </div>
-                    )}
-                    <div className="flex flex-row gap-2 items-center">
-                      <Popover isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
-                        <Popover.Trigger>
-                          <Button
-                            variant="tertiary"
-                            isPending={isLoading}
-                            isIconOnly
-                          >
-                            <LuAtSign size={18} />
-                          </Button>
-                        </Popover.Trigger>
-                        <Popover.Content placement="top-start" className="w-80">
-                          <Popover.Dialog>
-                          <div className="p-2 w-full">
-                            <div className="text-xs text-foreground-500 mb-2">
-                              Context helps our AI to understand your intentions better.
-                            </div>
-                            <Input
-                              placeholder="Search projects, connections, datasets..."
-                              value={contextSearch}
-                              onChange={(e) => setContextSearch(e.target.value)}
-                              variant="secondary"
-                              size="sm"
-                              className="mb-2"
-                              autoFocus
-                            />
-                            <div className="max-h-64 overflow-y-auto w-full">
-                              <ListBox
-                                aria-label="Context entities"
-                                selectionMode="none"
-                                className="w-full"
-                                renderEmptyState={() => (
-                                  <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
-                                )}
-                              >
-                                {filteredContextEntities.map((entity) => {
-                                  const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                  const rowId = `${entity.entity_type}-${entity.id}`;
-                                  return (
-                                    <ListBox.Item
-                                      key={rowId}
-                                      id={rowId}
-                                      textValue={getContextLabel(entity)}
-                                      className={isSelected ? "bg-primary-50" : ""}
-                                      onAction={() => {
-                                        setSelectedContext((prev) => {
-                                          const newEntity = {
-                                            ...entity,
-                                            label: getContextLabel(entity)
-                                          };
-                                          const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                          if (isAlreadySelected) {
-                                            return {
-                                              ...prev,
-                                              multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                                            };
-                                          }
-                                          return {
-                                            ...prev,
-                                            multiSelect: [...prev.multiSelect, newEntity]
-                                          };
-                                        });
-                                        setContextSearch("");
-                                      }}
-                                    >
-                                      <div className="flex w-full items-center justify-between gap-2">
-                                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                                          {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
-                                            entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
-                                              entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
-                                          <div className="flex min-w-0 flex-col">
-                                            <span className="text-sm">{entity.name || entity.legend}</span>
-                                            <span className="text-xs text-foreground-500">
-                                              {entity.entity_type === "project" ? "Project" :
-                                                entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                                  "Dataset"}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
-                                      </div>
-                                    </ListBox.Item>
-                                  );
-                                })}
-                              </ListBox>
+                            <LuX size={14} aria-hidden />
+                          </button>
+                        </Chip>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="h-2" />
+                <Separator />
+                <div className="h-2" />
+                <Accordion>
+                  <Accordion.Item
+                    id="previous_conversations"
+                    textValue={`Previous Conversations (${conversations.length})`}
+                  >
+                    <Accordion.Heading>
+                      <Accordion.Trigger>
+                        <span className="text-sm font-medium flex-1 text-start">{`Previous Conversations (${conversations.length})`}</span>
+                        <Accordion.Indicator />
+                      </Accordion.Trigger>
+                    </Accordion.Heading>
+                    <Accordion.Panel>
+                      <Accordion.Body>
+                    <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto">
+                      {conversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
+                          onClick={() => _onSelectConversation(conv.id)}
+                        >
+                          <div className="pt-1">
+                            {conv.source === "slack" ? <LuSlack size={16} /> : <LuMessageSquare size={16} />}
+                          </div>
+                          <div className="flex flex-col gap-1 flex-1">
+                            <div className="text-sm text-foreground font-medium">{conv.title}</div>
+                            <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
+                              <div className="flex items-center gap-1">
+                                <LuClock size={12} />
+                                <span>{formatDate(conv.createdAt)}</span>
+                              </div>
+                              {conv.total_tokens > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <LuCoins size={12} />
+                                  <span>{formatTokens(conv.total_tokens)} tokens</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          </Popover.Dialog>
-                        </Popover.Content>
-                      </Popover>
-                      <Input
-                        ref={inputRef}
-                        placeholder="Ask me anything about your data..."
-                        value={question}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setQuestion(value);
-                          // Open context popover when "@" is typed
-                          if (value.endsWith("@") && !isSecondContextPopoverOpen) {
-                            setIsSecondContextPopoverOpen(true);
-                          }
-                        }}
-                        isDisabled={isLoading}
-                        endContent={<Kbd keys={["enter"]} />}
-                      />
-                      <Button
-                        type="submit"
-                        isIconOnly
-                        variant="primary"
-                        isDisabled={!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect}
-                        isPending={isLoading}
-                      >
-                        <LuArrowRight />
-                      </Button>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Dropdown>
+                              <Dropdown.Trigger>
+                                <Button isIconOnly size="sm" variant="tertiary">
+                                  <LuEllipsis size={16} />
+                                </Button>
+                              </Dropdown.Trigger>
+                              <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                  <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} textValue="Delete conversation">
+                                    <div className="flex flex-row items-center gap-2">
+                                      <LuTrash2 size={16} />
+                                      <span>Delete conversation</span>
+                                    </div>
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </form>
+                      </Accordion.Body>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                </Accordion>
+
+                <div className="h-2" />
+                <Separator />
+                <div className="h-2" />
+                <div className="text-xs text-foreground-500 mb-2">
+                  <span className="font-medium">Note:</span> We are still in beta. Some features may not work as expected. Please let us know if you encounter any issues or have any feedback at <a href="mailto:support@chartbrew.com" className="text-accent-500 hover:text-accent-600">support@chartbrew.com</a>
                 </div>
-              </div>
-            </div>
-          </Modal.Body>
-        )}
+              </Modal.Body>
+            )}
+
+            {conversation && (
+              <Modal.Body className="p-0">
+                <div className="flex flex-row">
+                  <div className="flex-none w-60 pr-4">
+                    <div className="flex flex-col relative h-full bg-surface-secondary rounded-3xl rounded-bl-2xl">
+                      <div className="w-full px-4 pt-4">
+                        <Button
+                          variant="primary"
+                          onPress={() => {
+                            setConversation(null);
+                            setLocalMessages([]);
+                            setProgressEvents([]);
+                            setCreatedCharts([]);
+                            fetchedChartsRef.current.clear();
+                            setSelectedContext({
+                              multiSelect: [],
+                              singleSelect: null
+                            });
+                            setContextSearch("");
+                          }}
+                          fullWidth
+                        >
+                          <LuPlus size={18} />
+                          New Conversation
+                        </Button>
+                        <div className="h-4" />
+                        <Separator />
+                      </div>
+                      <div className="flex flex-col h-full max-h-[calc(100vh-200px)] gap-2 px-2 overflow-y-auto py-4 pb-10">
+                        {conversations.map((c) => (
+                          <div
+                            key={c.id}
+                            className={`flex flex-row gap-2 cursor-pointer px-2 py-2 rounded-lg transition-colors group relative ${c.id === conversation.id ? "bg-surface border border-divider" : "hover:bg-surface/50"}`}
+                            onClick={() => _onSelectConversation(c.id)}
+                          >
+                            <div className="pt-1">
+                              {c.source === "slack" ? <LuSlack size={14} /> : <LuMessageSquare size={14} />}
+                            </div>
+                            <div className="flex flex-col gap-1 flex-1 min-w-0">
+                              <div className="text-sm text-foreground truncate pr-6">{c.title}</div>
+                              <div className="flex flex-col gap-1">
+                                <div className="text-xs text-foreground-500 flex items-center gap-1">
+                                  <LuClock size={10} />
+                                  <span className="truncate">{formatDate(c.createdAt)}</span>
+                                </div>
+                                {c.total_tokens > 0 && (
+                                  <div className="text-xs text-foreground-500 flex items-center gap-1">
+                                    <LuCoins size={10} />
+                                    <span>{formatTokens(c.total_tokens)}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Dropdown>
+                                <Dropdown.Trigger>
+                                  <Button isIconOnly size="sm" variant="tertiary">
+                                    <LuEllipsis size={16} />
+                                  </Button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Popover>
+                                  <Dropdown.Menu>
+                                    <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(c.id)} textValue="Delete conversation">
+                                      <div className="flex flex-row items-center gap-2">
+                                        <LuTrash2 size={16} />
+                                        <span>Delete conversation</span>
+                                      </div>
+                                    </Dropdown.Item>
+                                  </Dropdown.Menu>
+                                </Dropdown.Popover>
+                              </Dropdown>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-surface-secondary rounded-3xl">
+                        <Tooltip>
+                          <Tooltip.Trigger>
+                            <div className="flex flex-row items-center justify-center gap-2 cursor-help">
+                              <div><LuCoins size={14} /></div>
+                              <div className="text-sm text-foreground-500">{formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                            </div>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>
+                            <div className="flex flex-col gap-1">
+                              <div className="text-xs text-foreground-500">Total tokens used: {formatTokens(teamUsage?.total?.total_tokens || 0)}</div>
+                              <div className="text-xs text-foreground-500">Total API calls: {teamUsage?.total?.api_calls || 0}</div>
+                              <div className="text-xs text-foreground-500">Total models used: {teamUsage?.byModel?.length || 0}</div>
+                            </div>
+                          </Tooltip.Content>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative flex-1 h-full rounded-lg">
+                    <div className="py-4 border-b border-divider">
+                      <div className="flex flex-row gap-3 pl-4 pr-4 items-start">
+                        <Avatar
+                          color="accent"
+                          variant="soft"
+                        >
+                          <Avatar.Fallback>
+                            <LuBrainCircuit size={24} className="text-foreground" />
+                          </Avatar.Fallback>
+                        </Avatar>
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex flex-row items-center gap-2">
+                            <div className="text-md text-foreground font-medium">{conversation.title}</div>
+                            <Dropdown>
+                              <Dropdown.Trigger>
+                                <Button isIconOnly size="sm" variant="tertiary">
+                                  <LuEllipsis size={16} />
+                                </Button>
+                              </Dropdown.Trigger>
+                              <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                  <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} textValue="Delete conversation">
+                                    <div className="flex flex-row items-center gap-2">
+                                      <LuTrash2 size={16} />
+                                      <span>Delete conversation</span>
+                                    </div>
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
+                          </div>
+                          <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
+                            <div className="flex items-center gap-1">
+                              <LuClock size={12} />
+                              <span>{formatDate(conversation.createdAt)}</span>
+                            </div>
+                            {conversation.message_count > 0 && (
+                              <div className="flex items-center gap-1">
+                                <LuMessageSquare size={12} />
+                                <span>{conversation.message_count} {conversation.message_count === 1 ? "message" : "messages"}</span>
+                              </div>
+                            )}
+                            {conversation.total_tokens > 0 && (
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <div className="flex items-center gap-1 cursor-help">
+                                    <LuCoins size={12} />
+                                    <span>{formatTokens(conversation.total_tokens)}</span>
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>
+                                  {`${conversation.total_tokens.toLocaleString()} tokens used`}
+                                </Tooltip.Content>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-24">
+                      {conversation?.full_history?.length > 0 ? (
+                        <>
+                          {(() => {
+                            // Show grouped view for all conversations
+                            const groups = _groupMessages(conversation.full_history);
+                            return groups.map((group, index) => _renderGroupedMessages(group, index));
+                          })()}
+                          {_renderProgressEvents()}
+                          {isLoading && progressEvents.length === 0 && (
+                            <div className="flex justify-center mb-4 px-4">
+                              <div className="w-full max-w-[90%]">
+                                <div className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <Avatar
+                                      icon={<LuBrainCircuit size={16} className="text-background" />}
+                                      size="sm"
+                                      color="accent"
+                                    />
+                                    <LuLoader size={16} className="animate-spin" />
+                                    <span className="text-sm">Thinking...</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          <div ref={messagesEndRef} />
+                        </>
+                      ) : progressEvents.length > 0 ? (
+                        <>
+                          {localMessages.length > 0 && (
+                            <div className="flex justify-end mb-4 px-4">
+                              <div className="max-w-[70%] bg-primary text-accent-foreground px-4 py-3 rounded-lg">
+                                <div className="text-sm whitespace-pre-wrap">{localMessages[0].content}</div>
+                              </div>
+                            </div>
+                          )}
+                          {_renderProgressEvents()}
+                          <div ref={messagesEndRef} />
+                        </>
+                      ) : isLoading ? (
+                        <div className="flex justify-center items-center h-full">
+                          <div className="flex items-center gap-2">
+                            <LuLoader size={24} className="animate-spin text-accent" />
+                            <span className="text-sm text-foreground-500">Loading conversation...</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-foreground-500 text-sm">No messages yet</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-surface z-10">
+                      <form onSubmit={_onAskAi} id="ai-conversation-form">
+                        {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {selectedContext.multiSelect.map((entity) => (
+                              <Chip
+                                key={`${entity.entity_type}-${entity.id}`}
+                                variant="soft"
+                                color="accent"
+                                size="sm"
+                              >
+                                <Chip.Label>{entity.label}</Chip.Label>
+                                <button
+                                  type="button"
+                                  aria-label={`Remove ${entity.label}`}
+                                  className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                  onClick={() => {
+                                    setSelectedContext(prev => ({
+                                      ...prev,
+                                      multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                    }));
+                                  }}
+                                >
+                                  <LuX size={14} aria-hidden />
+                                </button>
+                              </Chip>
+                            ))}
+                            {selectedContext.singleSelect && (
+                              <Chip variant="soft" color="accent" size="sm">
+                                <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
+                                <button
+                                  type="button"
+                                  aria-label={`Remove ${selectedContext.singleSelect.label}`}
+                                  className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                  onClick={() => {
+                                    setSelectedContext(prev => ({
+                                      ...prev,
+                                      singleSelect: null
+                                    }));
+                                  }}
+                                >
+                                  <LuX size={14} aria-hidden />
+                                </button>
+                              </Chip>
+                            )}
+                            <span className="text-xs text-foreground-500">+ add more details</span>
+                          </div>
+                        )}
+                        <div className="flex flex-row gap-2 items-center">
+                          <Popover isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              isPending={isLoading}
+                              isIconOnly
+                              aria-label="Add context"
+                            >
+                              <LuAtSign size={18} />
+                            </Button>
+                            <Popover.Content placement="top" className="z-[100] w-80">
+                              <Popover.Dialog>
+                              <div className="p-2 w-full">
+                                <div className="text-xs text-foreground-500 mb-2">
+                                  Context helps our AI to understand your intentions better.
+                                </div>
+                                <Input
+                                  placeholder="Search projects, connections, datasets..."
+                                  value={contextSearch}
+                                  onChange={(e) => setContextSearch(e.target.value)}
+                                  size="sm"
+                                  className="mb-2"
+                                  autoFocus
+                                  fullWidth
+                                />
+                                <div className="max-h-64 overflow-y-auto w-full">
+                                  <ListBox
+                                    aria-label="Context entities"
+                                    selectionMode="none"
+                                    className="w-full"
+                                    renderEmptyState={() => (
+                                      <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
+                                    )}
+                                  >
+                                    {filteredContextEntities.map((entity) => {
+                                      const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                      const rowId = `${entity.entity_type}-${entity.id}`;
+                                      return (
+                                        <ListBox.Item
+                                          key={rowId}
+                                          id={rowId}
+                                          textValue={getContextLabel(entity)}
+                                          className={isSelected ? "bg-primary-50" : ""}
+                                          onAction={() => {
+                                            setSelectedContext((prev) => {
+                                              const newEntity = {
+                                                ...entity,
+                                                label: getContextLabel(entity)
+                                              };
+                                              const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
+                                              if (isAlreadySelected) {
+                                                return {
+                                                  ...prev,
+                                                  multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                                                };
+                                              }
+                                              return {
+                                                ...prev,
+                                                multiSelect: [...prev.multiSelect, newEntity]
+                                              };
+                                            });
+                                            setContextSearch("");
+                                          }}
+                                        >
+                                          <div className="flex w-full items-center justify-between gap-2">
+                                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                                              {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
+                                                entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
+                                                  entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
+                                              <div className="flex min-w-0 flex-col">
+                                                <span className="text-sm">{entity.name || entity.legend}</span>
+                                                <span className="text-xs text-foreground-500">
+                                                  {entity.entity_type === "project" ? "Project" :
+                                                    entity.entity_type === "connection" ? `Connection (${entity.type})` :
+                                                      "Dataset"}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+                                          </div>
+                                        </ListBox.Item>
+                                      );
+                                    })}
+                                  </ListBox>
+                                </div>
+                              </div>
+                              </Popover.Dialog>
+                            </Popover.Content>
+                          </Popover>
+                          <TextField
+                            fullWidth
+                            className="min-w-0 flex-1"
+                            name="aiConversationQuestion"
+                            aria-label="Ask me anything about your data"
+                            isDisabled={isLoading}
+                          >
+                            <Label className="sr-only">Ask me anything about your data</Label>
+                            <InputGroup fullWidth>
+                              <InputGroup.Input
+                                ref={inputRef}
+                                placeholder="Ask me anything about your data..."
+                                value={question}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setQuestion(value);
+                                  // Open context popover when "@" is typed
+                                  if (value.endsWith("@") && !isSecondContextPopoverOpen) {
+                                    setIsSecondContextPopoverOpen(true);
+                                  }
+                                }}
+                              />
+                              <InputGroup.Suffix className="pr-2">
+                                <Kbd>
+                                  <Kbd.Abbr keyValue="enter" />
+                                </Kbd>
+                              </InputGroup.Suffix>
+                            </InputGroup>
+                          </TextField>
+                          <Button
+                            type="submit"
+                            isIconOnly
+                            variant="primary"
+                            isDisabled={!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect}
+                            isPending={isLoading}
+                          >
+                            <LuArrowRight />
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </Modal.Body>
+            )}
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

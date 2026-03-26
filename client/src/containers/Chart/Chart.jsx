@@ -16,6 +16,7 @@ import {
   LuLayoutDashboard, LuListFilter, LuLock, LuLockOpen,
   LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck, LuVariable,
+  LuEllipsisVertical,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -154,13 +155,6 @@ function Chart(props) {
       resizeObserver.disconnect();
     };
   }, []);
-
-  const _shouldCompact = () => {
-    if (isCompact && (chart.type === "kpi" || chart.type === "gauge" || chart.type === "bar")) {
-      return true;
-    }
-    return false;
-  }
 
   const _onGetChartData = () => {
     const { projectId } = params;
@@ -539,10 +533,10 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          className={`h-full bg-content1 border-solid border-1 border-divider shadow-none ${print && "min-h-[350px] border-solid border-1 border-content4"}`}
+          className={`h-full bg-content1 border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
-          <Card.Header className={`pb-0 grid grid-cols-12 items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
-            <div className={`col-span-6 sm:col-span-8 flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
+          <Card.Header className={`pb-0 flex flex-row justify-between items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
+            <div className={`flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
               <div>
                 <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
@@ -620,7 +614,7 @@ function Chart(props) {
                     {chart?.Alerts?.length > 0 && (
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="hover:text-primary cursor-pointer" onClick={_openAlertsModal}>
+                          <div className="hover:text-accent cursor-pointer" onClick={_openAlertsModal}>
                             <LuBell size={12} />
                           </div>
                         </Tooltip.Trigger>
@@ -641,9 +635,9 @@ function Chart(props) {
                 )}
               </div>
             </div>
-            <div className={`col-span-6 sm:col-span-4 flex items-start justify-end gap-1 ${isCompact ? "absolute right-2 top-2" : ""}`}>
+            <div className={`flex items-center justify-end gap-1 ${isCompact ? "absolute right-2 top-2" : ""}`}>
               {_checkIfFilters() && (
-                <div className="flex items-start gap-1">
+                <div className="flex items-center gap-1">
                   {chartSize?.[2] > 3 && (
                     <ChartFilters
                       chart={chart}
@@ -658,14 +652,16 @@ function Chart(props) {
                   <Popover>
                     <Popover.Trigger>
                       <LinkNext className="text-gray-500">
-                        <Badge
-                          color="primary"
-                          content={conditions.length}
-                          size="sm"
-                          isInvisible={!conditions || conditions.length === 0}
-                        >
+                        <Badge.Anchor>
                           <LuListFilter className="text-default-500" />
-                        </Badge>
+                          <Badge
+                            color="accent"
+                            size="sm"
+                            isInvisible={!conditions || conditions.length === 0}
+                          >
+                            {conditions.length}
+                          </Badge>
+                        </Badge.Anchor>
                       </LinkNext>
                     </Popover.Trigger>
                     <Popover.Content className="pt-3">
@@ -685,166 +681,181 @@ function Chart(props) {
                 <Dropdown aria-label="Select a chart option">
                   <Dropdown.Trigger>
                     <LinkNext className="cursor-pointer chart-settings-tutorial">
-                      <LuEllipsis className="text-default-500" />
+                      <LuEllipsisVertical className="text-default-500" />
                     </LinkNext>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
-                  <Dropdown.Menu disabledKeys={["status"]}>
-                    <Dropdown.Item
-                      id="refresh"
-                      onPress={_onGetChartData}
-                      textValue="Refresh chart"
-                    >
-                      {(chartLoading || chart.loading) ? <ProgressCircle className="w-5 h-5" size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
-                      Refresh chart
-                    </Dropdown.Item>
-                    {_canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="edit"
-                        onPress={() => navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`)}
-                        textValue="Edit chart"
-                      >
-                        <LuSettings />
-                        Edit chart
-                      </Dropdown.Item>
-                    )}
-                    {_canAccess("projectEditor") && chart.draft && (
-                      <Dropdown.Item
-                        id="publish"
-                        onPress={_onPublishChart}
-                        textValue="Publish chart"
-                      >
-                        <LuCircleCheck />
-                        Publish chart
-                      </Dropdown.Item>
-                    )}
-                    {_canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="layout"
-                        onPress={onEditLayout}
-                        showDivider
-                        textValue={editingLayout ? "Complete layout" : "Edit layout"}
-                      >
-                        <LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />
-                        <span className={editingLayout ? "text-primary" : ""}>
-                          {editingLayout ? "Complete layout" : "Edit layout"}
-                        </span>
-                        <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
-                      </Dropdown.Item>
-                    )}
-                    {_canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="autoupdate"
-                        onPress={_openUpdateModal}
-                        textValue="Auto-update"
-                      >
-                        <LuCalendarClock />
-                        Auto-update
-                      </Dropdown.Item>
-                    )}
-                    {_canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="alerts"
-                        onPress={_openAlertsModal}
-                        textValue="Alerts"
-                        showDivider
-                      >
-                        <LuBell />
-                        Alerts
-                        {chart?.Alerts?.length > 0 && (
-                          <Chip color="default" size="sm" variant="secondary">
-                            {chart?.Alerts?.length}
-                          </Chip>
+                    <Dropdown.Menu disabledKeys={["status"]}>
+                      <Dropdown.Section>
+                        <Dropdown.Item
+                          id="refresh"
+                          onPress={_onGetChartData}
+                          textValue="Refresh chart"
+                        >
+                          {(chartLoading || chart.loading) ? <ProgressCircle className="w-5 h-5" size="sm" aria-label="Refreshing chart" /> : <LuRefreshCw />}
+                          Refresh chart
+                        </Dropdown.Item>
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="edit"
+                            onPress={() => navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`)}
+                            textValue="Edit chart"
+                          >
+                            <LuSettings />
+                            Edit chart
+                          </Dropdown.Item>
                         )}
-                      </Dropdown.Item>
-                    )}
-                    {!chart.draft && _canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="report"
-                        onPress={_onChangeReport}
-                        textValue={chart.onReport ? "Remove from report" : "Add to report"}
-                      >
-                        {chart.onReport ? <LuMonitorX /> : <LuMonitor />}
-                        {chart.onReport ? "Remove from report" : "Add to report"}
-                      </Dropdown.Item>
-                    )}
-                    {!chart.draft && chart.public && _canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="private"
-                        onPress={_onPublicConfirmation}
-                        textValue={chart.public ? "Make private" : "Make public"}
-                      >
-                        {chart.public ? <LuLockOpen /> : <LuLock />}
-                        {"Make private"}
-                      </Dropdown.Item>
-                    )}
-                    {!chart.draft && _canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="embed"
-                        onPress={_onEmbed}
-                        textValue="Embed & Share"
-                      >
-                        <LuShare />
-                        {"Embed & Share"}
-                      </Dropdown.Item>
-                    )}
-                    <Dropdown.Item
-                      id="export"
-                      onPress={_onExport}
-                      textValue="Export to Excel"
-                      showDivider
-                    >
-                      {exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
-                      Export to Excel
-                    </Dropdown.Item>
-                    {_canAccess("projectEditor") && (
-                      <Dropdown.Item
-                        id="delete"
-                        variant="danger"
-                        onPress={_onDeleteChartConfirmation}
-                        textValue="Delete chart"
-                        showDivider
-                      >
-                        <LuTrash />
-                        Delete chart
-                      </Dropdown.Item>
-                    )}
-                    <Dropdown.Item id="status" isReadOnly className="opacity-100" textValue="Chart details">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {chart.autoUpdate > 0 && (
-                            <div className="flex items-center gap-1">
-                              <LuCalendarClock size={12} />
-                              <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
+                        {_canAccess("projectEditor") && chart.draft && (
+                          <Dropdown.Item
+                            id="publish"
+                            onPress={_onPublishChart}
+                            textValue="Publish chart"
+                          >
+                            <LuCircleCheck />
+                            Publish chart
+                          </Dropdown.Item>
+                        )}
+                      </Dropdown.Section>
+                      <Separator />
+                      <Dropdown.Section>
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="layout"
+                            onPress={onEditLayout}
+                            showDivider
+                            textValue={editingLayout ? "Complete layout" : "Edit layout"}
+                          >
+                            <LuLayoutDashboard className={editingLayout ? "text-accent" : ""} />
+                            <span className={editingLayout ? "text-accent" : ""}>
+                              {editingLayout ? "Complete layout" : "Edit layout"}
+                            </span>
+                            <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
+                          </Dropdown.Item>
+                        )}
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="autoupdate"
+                            onPress={_openUpdateModal}
+                            textValue="Auto-update"
+                          >
+                            <LuCalendarClock />
+                            Auto-update
+                          </Dropdown.Item>
+                        )}
+                      </Dropdown.Section>
+                      <Separator />
+                      <Dropdown.Section>
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="alerts"
+                            onPress={_openAlertsModal}
+                            textValue="Alerts"
+                            showDivider
+                          >
+                            <LuBell />
+                            Alerts
+                            {chart?.Alerts?.length > 0 && (
+                              <Chip color="default" size="sm" variant="secondary">
+                                {chart?.Alerts?.length}
+                              </Chip>
+                            )}
+                          </Dropdown.Item>
+                        )}
+                        {!chart.draft && _canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="report"
+                            onPress={_onChangeReport}
+                            textValue={chart.onReport ? "Remove from report" : "Add to report"}
+                          >
+                            {chart.onReport ? <LuMonitorX /> : <LuMonitor />}
+                            {chart.onReport ? "Remove from report" : "Add to report"}
+                          </Dropdown.Item>
+                        )}
+                        {!chart.draft && chart.public && _canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="private"
+                            onPress={_onPublicConfirmation}
+                            textValue={chart.public ? "Make private" : "Make public"}
+                          >
+                            {chart.public ? <LuLockOpen /> : <LuLock />}
+                            {"Make private"}
+                          </Dropdown.Item>
+                        )}
+                        {!chart.draft && _canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="embed"
+                            onPress={_onEmbed}
+                            textValue="Embed & Share"
+                          >
+                            <LuShare />
+                            {"Embed & Share"}
+                          </Dropdown.Item>
+                        )}
+                      </Dropdown.Section>
+                      <Dropdown.Section>
+                        <Dropdown.Item
+                          id="export"
+                          onPress={_onExport}
+                          textValue="Export to Excel"
+                          showDivider
+                        >
+                          {exportLoading ? <ProgressCircle size="sm" aria-label="Exporting chart" /> : <LuFileDown />}
+                          Export to Excel
+                        </Dropdown.Item>
+                      </Dropdown.Section>
+                      <Separator />
+                      <Dropdown.Section>
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="delete"
+                            variant="danger"
+                            onPress={_onDeleteChartConfirmation}
+                            textValue="Delete chart"
+                          >
+                            <LuTrash />
+                            Delete chart
+                          </Dropdown.Item>
+                        )}
+                      </Dropdown.Section>
+                      <Separator />
+                      <Dropdown.Section>
+                        <Dropdown.Item id="status" isReadOnly className="opacity-100" textValue="Chart details">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {chart.public && !isPublic && !print && (
-                            <div className="flex items-center gap-1">
-                              <LuLockOpen size={12} />
-                              <span className="text-[10px] text-default-500">Public chart</span>
+                            <div className="flex items-center gap-2">
+                              {chart.autoUpdate > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <LuCalendarClock size={12} />
+                                  <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {(!chart.onReport || chart.draft) && (
-                            <div className="flex items-center gap-1">
-                              <LuMonitorX size={12} />
-                              <span className="text-[10px] text-default-500">{chart.draft ? "Draft" : "Hidden on report"}</span>
+                            <div className="flex items-center gap-2">
+                              {chart.public && !isPublic && !print && (
+                                <div className="flex items-center gap-1">
+                                  <LuLockOpen size={12} />
+                                  <span className="text-[10px] text-default-500">Public chart</span>
+                                </div>
+                              )}
+                              {(!chart.onReport || chart.draft) && (
+                                <div className="flex items-center gap-1">
+                                  <LuMonitorX size={12} />
+                                  <span className="text-[10px] text-default-500">{chart.draft ? "Draft" : "Hidden on report"}</span>
+                                </div>
+                              )}
+                              {chart?.Alerts?.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <LuBell size={12} />
+                                  <span className="text-[10px] text-default-500">Has alerts</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {chart?.Alerts?.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <LuBell size={12} />
-                              <span className="text-[10px] text-default-500">Has alerts</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
+                          </div>
+                        </Dropdown.Item>
+                      </Dropdown.Section>
+                    </Dropdown.Menu>
                   </Dropdown.Popover>
                 </Dropdown>
               )}
@@ -873,7 +884,7 @@ function Chart(props) {
             </div>
           </Card.Header>
           <Card.Content
-            className={`${_shouldCompact() ? "pt-0 pb-0" : "pt-2 pb-4"} overflow-y-hidden`}
+            className="overflow-y-hidden"
           >
             {chart.chartData && (
               <div className="h-full">

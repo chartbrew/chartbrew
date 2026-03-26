@@ -167,7 +167,7 @@ function ProjectNavigation(props) {
               id="dashboard"
               textValue="Dashboard"
               onAction={() => navigate(`/${team.id}/${project.id}/dashboard`)}
-              className={`${_checkIfActive("dashboard") ? "text-primary" : "text-foreground"}`}
+              className={`${_checkIfActive("dashboard") ? "text-accent" : "text-foreground"}`}
             >
               <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                 {menuSize === "large" && <LuLayoutGrid size={24} />}
@@ -187,7 +187,7 @@ function ProjectNavigation(props) {
               id="public"
               textValue="Dashboard report"
               onAction={() => navigate(`/report/${project.brewName}/edit`)}
-              className={_checkIfActive("public") ? "text-primary" : "text-foreground"}
+              className={_checkIfActive("public") ? "text-accent" : "text-foreground"}
             >
               <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                 {menuSize === "large" && <LuTvMinimal size={24} />}
@@ -208,7 +208,7 @@ function ProjectNavigation(props) {
                 id="members"
                 textValue="Members"
                 onAction={() => navigate(`/${team.id}/${project.id}/members`)}
-                className={_checkIfActive("members") ? "text-primary" : "text-foreground"}
+                className={_checkIfActive("members") ? "text-accent" : "text-foreground"}
               >
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuUser size={24} />}
@@ -230,7 +230,7 @@ function ProjectNavigation(props) {
                 id="settings"
                 textValue="Settings"
                 onAction={() => navigate(`/${team.id}/${project.id}/settings`)}
-                className={_checkIfActive("settings") ? "text-primary" : "text-foreground"}
+                className={_checkIfActive("settings") ? "text-accent" : "text-foreground"}
               >
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuSettings size={24} />}
@@ -252,7 +252,7 @@ function ProjectNavigation(props) {
                 id="integrations"
                 textValue="Integrations"
                 onAction={() => navigate(`/${team.id}/${project.id}/integrations`)}
-                className={_checkIfActive("integrations") ? "text-primary" : "text-foreground"}
+                className={_checkIfActive("integrations") ? "text-accent" : "text-foreground"}
               >
                 <div className={`flex items-center gap-2 ${menuSize === "small" ? "flex-row justify-center" : ""}`}>
                   {menuSize === "large" && <LuPuzzle size={24} />}

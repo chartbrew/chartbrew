@@ -760,7 +760,7 @@ function SharingSettings(props) {
                   <div>
                     <div
                       key={selectedPolicy.id}
-                      className="flex flex-row items-center gap-1 hover:cursor-pointer text-primary mt-2"
+                      className="flex flex-row items-center gap-1 hover:cursor-pointer text-accent mt-2"
                       onClick={() => setSelectedPolicy(null)}
                     >
                       <div><LuArrowLeft size={16} /></div>

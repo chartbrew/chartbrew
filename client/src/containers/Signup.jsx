@@ -234,7 +234,7 @@ function Signup() {
               {" "}
               Already have an account?
               {" "}
-              <Link to={"/login"} className="text-primary">Login here</Link>
+              <Link to={"/login"} className="text-accent">Login here</Link>
               {" "}
             </Text>
           </div>

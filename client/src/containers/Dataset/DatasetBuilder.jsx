@@ -535,7 +535,7 @@ function DatasetBuilder(props) {
                     <span className="text-sm">
                       {"Metric formula"}
                     </span>
-                    <LuInfo size={18} className="hover:text-primary" />
+                    <LuInfo size={18} className="hover:text-accent" />
                   </div>
                 </Popover.Trigger>
                 <Popover.Content>
@@ -578,7 +578,7 @@ function DatasetBuilder(props) {
                   <Tooltip>
                     <Tooltip.Trigger>
                       <Link onPress={_onExampleFormula}>
-                        <LuWandSparkles className="text-primary" />
+                        <LuWandSparkles className="text-accent" />
                       </Link>
                     </Tooltip.Trigger>
                     <Tooltip.Content>Click for an example</Tooltip.Content>
