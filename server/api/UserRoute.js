@@ -122,6 +122,14 @@ module.exports = (app) => {
   */
   app.post("/user/invited", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
+    if (!req.body.token) return res.status(400).send("invitation token is required");
+
+    // Verify the invitation token before allowing account creation
+    try {
+      jwt.verify(req.body.token, app.settings.encryptionKey);
+    } catch (err) {
+      return res.status(401).send("Invalid or expired invitation token");
+    }
 
     const icon = req.body.name.substring(0, 2);
 
