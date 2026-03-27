@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Button,
   Card,
   Chip,
@@ -112,33 +113,35 @@ function WhatsNewItemCard({ item, onAction }) {
   if (item.variant === "tip") {
     return (
       <Card
-        className={cn("overflow-hidden rounded-lg shadow-none", tone.tipCard)}
+        className={cn("overflow-hidden shadow-none", tone.tipCard)}
       >
-        <Card.Content className="gap-4 p-5">
-          <div className="flex items-start gap-3">
+        <Card.Content className="gap-4">
+          <Card.Header>
             {Icon && (
               <div className={cn("mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl", tone.icon)}>
                 <Icon size={18} />
               </div>
             )}
-            <div className="flex-1">
-              {item.eyebrow && (
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-400">
-                  {item.eyebrow}
-                </p>
-              )}
-              <h3 className="mt-1 text-lg font-semibold leading-tight text-foreground">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-foreground-600">
-                {item.body}
+            {item.eyebrow && (
+              <p className="text-xs mt-2 font-semibold uppercase tracking-[0.18em] text-foreground-400">
+                {item.eyebrow}
               </p>
-            </div>
-          </div>
+            )}
+            <Card.Title className="text-lg mt-2 font-semibold leading-tight text-foreground">
+              {item.title}
+            </Card.Title>
+          </Card.Header>
+          <Card.Description>
+            <p className="text-sm leading-6 text-foreground-600">
+              {item.body}
+            </p>
+          </Card.Description>
+
           {item.action && (
             <Button
               className={cn("font-medium", tone.tipButton)}
               onPress={() => onAction(item.action)} variant="tertiary"
+              fullWidth
             >
               {actionLabel}
               {isExternalAction ? <LuExternalLink size={16} /> : <LuChevronRight size={16} />}
@@ -151,49 +154,50 @@ function WhatsNewItemCard({ item, onAction }) {
 
   return (
     <Card
-      className={cn("rounded-lg border-1 bg-content1 shadow-none", tone.card)}
+      className={cn("border bg-surface shadow-none", tone.card)}
     >
-      <Card.Content className="gap-4 p-4">
-        <div className="flex items-start gap-3">
-          {Icon && (
-            <div className={cn("mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", tone.icon)}>
-              <Icon size={18} />
-            </div>
+      <Card.Content className="">
+        {Icon && (
+          <div className={cn("rounded-full p-2 max-w-10", tone.icon)}>
+            <Icon size={24} className="" />
+          </div>
+        )}
+        <Card.Header>
+          {item.badge && (
+            <Chip size="sm" variant="soft" color={tone.badge}>
+              {item.badge}
+            </Chip>
           )}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-semibold text-foreground">
-                {item.title}
-              </h3>
-              {item.badge && (
-                <Chip size="sm" variant="soft" >
-                  {item.badge}
-                </Chip>
-              )}
-            </div>
+          <Card.Title>
+            {item.title}
+          </Card.Title>
+          <Card.Description>
             <p className="mt-2 text-sm leading-6 text-foreground-600">
               {item.body}
             </p>
-            {(item.timestampLabel || item.action) && (
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span className="text-xs text-foreground-400">
-                  {item.timestampLabel}
-                </span>
-                {item.action && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    color={tone.badge}
-                    onPress={() => onAction(item.action)}
-                  >
-                    {actionLabel}
-                    {isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+          </Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          {(item.timestampLabel || item.action) && (
+            <div className="mt-3 flex flex-row items-center justify-between w-full">
+              <span className="text-xs text-foreground-400">
+                {item.timestampLabel}
+              </span>
+              {item.action && (
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  color={tone.badge}
+                  onPress={() => onAction(item.action)}
+                  className={"w-auto"}
+                >
+                  {actionLabel}
+                  {isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
+                </Button>
+              )}
+            </div>
+          )}
+        </Card.Footer>
       </Card.Content>
     </Card>
   );
@@ -234,22 +238,22 @@ function WhatsNewPanel({ onCollapse }) {
 
   return (
     <aside className="sticky top-[88px]">
-      <Card className="rounded-lg border-1 border-divider bg-content1 shadow-none">
-        <Card.Header className="flex items-start justify-between gap-3 px-5 py-4">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">
-              Discover more
-            </h2>
-            <p className="mt-1 text-sm text-foreground-500">
-              New features, tips, and shortcuts for Chartbrew.
-            </p>
-          </div>
-          <Button isIconOnly size="sm" variant="ghost" onPress={onCollapse}>
+      <Card className="border border-divider bg-surface shadow-none">
+        <div className="absolute top-3 right-3 z-10">
+          <Button isIconOnly size="sm" variant="tertiary" onPress={onCollapse}>
             <LuX size={16} />
           </Button>
+        </div>
+        <Card.Header className="flex items-start justify-between gap-3 px-5 py-4">
+          <Card.Title className="text-xl font-semibold text-foreground">
+            Discover more
+          </Card.Title>
+          <Card.Description>
+            New features, tips, and shortcuts for Chartbrew.
+          </Card.Description>
         </Card.Header>
         <Separator />
-        <Card.Content className="flex flex-col gap-4 px-4 py-5">
+        <Card.Content className="flex flex-col gap-4 px-4 pb-4 pt-2">
           {groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3">

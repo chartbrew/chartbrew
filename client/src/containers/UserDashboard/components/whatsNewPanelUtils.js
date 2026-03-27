@@ -73,27 +73,27 @@ export const ICON_REGISTRY = {
 
 export const COLOR_SCHEMES = {
   default: {
-    icon: "bg-content2 text-foreground-700",
+    icon: "bg-surface-secondary text-foreground-700",
     badge: "default",
     card: "border-divider",
   },
   primary: {
-    icon: "bg-primary-50 text-accent-600 dark:bg-primary-500/15 dark:text-accent-300",
-    badge: "primary",
+    icon: "bg-accent/20 text-accent-600 dark:bg-accent/50 dark:text-accent-300",
+    badge: "accent",
     card: "border-divider/70",
   },
   secondary: {
-    icon: "bg-secondary-50 text-secondary-600 dark:bg-secondary-500/15 dark:text-secondary-300",
-    badge: "secondary",
+    icon: "bg-secondary/20 text-secondary-600 dark:bg-secondary-500/15 dark:text-secondary-300",
+    badge: "warning",
     card: "border-divider/70",
   },
   success: {
-    icon: "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-300",
+    icon: "bg-success/20 text-success-600 dark:bg-success/50 dark:text-success-300",
     badge: "success",
     card: "border-divider/70",
   },
   warning: {
-    icon: "bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300",
+    icon: "bg-warning/10 text-warning-700 dark:bg-warning/50 dark:text-warning-300",
     badge: "warning",
     card: "border-divider/70",
   },
@@ -101,8 +101,8 @@ export const COLOR_SCHEMES = {
     icon: "bg-foreground/15 text-foreground",
     badge: "secondary",
     card: "border-transparent",
-    tipCard: "border-0 bg-linear-to-br from-primary/20 via-background to-primary/10 text-foreground-700 shadow-lg",
-    tipButton: "",
+    tipCard: "border-0 bg-linear-to-br from-accent/20 via-background to-accent/10 text-foreground-700 shadow-lg",
+    tipButton: "bg-linear-to-br from-accent/50 via-accent/20 to-warning/40 text-accent-600",
   },
 };
 

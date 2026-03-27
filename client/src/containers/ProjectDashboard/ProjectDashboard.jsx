@@ -1415,17 +1415,17 @@ function ProjectDashboard() {
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-2xl">
               <Modal.Header>
-            <div className="font-bold">Export to Excel (.xlsx)</div>
+                <div className="font-bold">Export to Excel (.xlsx)</div>
               </Modal.Header>
               <Modal.Body>
-            <ChartExport
-              charts={charts}
-              onExport={_onExport}
-              loading={exportLoading}
-              error={exportError}
-              onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
-              showDisabled={_canAccess("projectEditor")}
-            />
+                <ChartExport
+                  charts={charts}
+                  onExport={_onExport}
+                  loading={exportLoading}
+                  error={exportError}
+                  onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
+                  showDisabled={_canAccess("projectEditor")}
+                />
               </Modal.Body>
             </Modal.Dialog>
           </Modal.Container>

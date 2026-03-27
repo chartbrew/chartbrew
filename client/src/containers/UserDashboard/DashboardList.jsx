@@ -248,7 +248,7 @@ function DashboardList() {
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
-                      variant="secondary"
+                      variant="outline"
                       className="hidden xl:inline-flex"
                       onPress={_toggleWhatsNewPanel}
                       aria-label={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
