@@ -39,7 +39,7 @@ function Integrations() {
 
       <div className="h-4" />
 
-      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+      <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
         <WebhookIntegrationsList
           teamId={team?.id}
         />

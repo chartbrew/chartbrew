@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Button, Chip, Separator, Modal, Table,
+  EmptyState,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import { LuPlus, LuSettings, LuSlack } from "react-icons/lu";
@@ -70,7 +71,12 @@ function SlackIntegrations() {
               <Table.Column id="actions" className="w-12 text-end" textValue="Actions" />
             </Table.Header>
 
-            <Table.Body renderEmptyState={() => "No Slack integrations"}>
+            <Table.Body renderEmptyState={() => (
+              <EmptyState className="flex h-auto min-h-[160px] w-full flex-col items-center justify-center gap-4 text-center">
+                <LuSlack size={24} className="text-muted" />
+                <span className="text-sm text-muted">No Slack integrations</span>
+              </EmptyState>
+            )}>
               {slackIntegrations.map((i) => (
                 <Table.Row key={i.id} id={String(i.id)}>
                   <Table.Cell>
@@ -116,35 +122,36 @@ function SlackIntegrations() {
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-xl">
               <Modal.Header className="font-bold">
-            {"Install Chartbrew in your Slack workspace"}
+                {"Install Chartbrew in your Slack workspace"}
               </Modal.Header>
-          {SLACK_CLIENT_ID && (
-                <Modal.Body>
-              <div>
-                1. Click the install button below to install Chartbrew in your Slack workspace.
-              </div>
-              <div>
-                <a href={`${API_HOST}/apps/slack/oauth/start`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
-              </div>
-              <div>
-                2. Once installed, you can use the <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew</code> command in your Slack workspace to start using Chartbrew.
-              </div>
-              <div>
-                3. Use <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew connect</code> to connect your Slack workspace to a Chartbrew team.
-              </div>
-              <div>
-                4. Mention <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">@Chartbrew</code> in a channel and ask any question about your data.
-              </div>
+              {SLACK_CLIENT_ID && (
+                <Modal.Body className="flex flex-col gap-4">
+                  <div>
+                    1. Click the install button below to install Chartbrew in your Slack workspace.
+                  </div>
+                  <div>
+                    <a href={`${API_HOST}/apps/slack/oauth/start`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+                  </div>
+                  <div>
+                    2. Once installed, you can use the <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew</code> command in your Slack workspace to start using Chartbrew.
+                  </div>
+                  <div>
+                    3. Use <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">/chartbrew connect</code> to connect your Slack workspace to a Chartbrew team.
+                  </div>
+                  <div>
+                    4. Mention <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-sm text-default-700">@Chartbrew</code> in a channel and ask any question about your data.
+                  </div>
                 </Modal.Body>
-          )}
-          {!SLACK_CLIENT_ID && (
+              )}
+              {!SLACK_CLIENT_ID && (
                 <Modal.Body>
-              <div>
-                No Slack client ID found. Have a look at our docs to learn how to set up the Slack integration.
-              </div>
-              <a href="https://docs.chartbrew.com/integrations/slack" target="_blank" rel="noopener noreferrer" className="font-bold underline">Set up the Slack integration</a>
+                  <EmptyState className="flex h-auto min-h-[160px] w-full flex-col items-center justify-center gap-4 text-center">
+                    <LuSlack size={24} className="text-muted" />
+                    <span className="text-sm text-muted">No Slack client ID found. Have a look at our docs to learn how to set up the Slack integration.</span>
+                    <a href="https://docs.chartbrew.com/integrations/slack" target="_blank" rel="noopener noreferrer" className="font-bold underline">Set up the Slack integration</a>
+                  </EmptyState>
                 </Modal.Body>
-          )}
+              )}
               <Modal.Footer>
                 <Button onPress={() => setCreateOpen(false)} variant="secondary" size="sm">Close</Button>
               </Modal.Footer>

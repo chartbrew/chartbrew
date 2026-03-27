@@ -11,7 +11,7 @@ import {
   selectIntegrations,
 } from "../../../slices/integration";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
-import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash, LuWebhook } from "react-icons/lu";
+import { LuExternalLink, LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash, LuWebhook } from "react-icons/lu";
 
 const urlRegex = /^https?:\/\/.+/;
 
@@ -161,11 +161,11 @@ function WebhookIntegrations({ teamId }) {
         </div>
         <div className="w-2" />
         <Button
-          auto
           onPress={() => {
             setCreateOpen(true);
           }}
-          variant="tertiary" size="sm"
+          variant="primary"
+          size="sm"
         >
           <LuPlus />
           Add a new webhook
@@ -179,8 +179,8 @@ function WebhookIntegrations({ teamId }) {
       <div className="h-2" />
       <div>
         <div className="text-sm">
-          <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener" className="text-sm">
-            <LuInfo size={16} />
+          <Link className="text-sm text-foreground/80!" href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
+            <LuExternalLink size={16} />
             <div className="w-1" />
             {"Click to see what Chartbrew sends over the webhook"}
           </Link>
@@ -189,7 +189,7 @@ function WebhookIntegrations({ teamId }) {
       <div className="h-1" />
       <div>
         <div className="text-sm">
-          <Link onPress={() => setSlackModalOpen(true)} className="text-sm">
+          <Link className="text-sm text-foreground/80!" onPress={() => setSlackModalOpen(true)}>
             <LuSlack size={16} />
             <div className="w-1" />
             {"Want to send events to Slack? Check out how to do it here"}
@@ -266,59 +266,59 @@ function WebhookIntegrations({ teamId }) {
               {newIntegration.id && "Update the webhook"}
             </div>
               </Modal.Header>
-              <Modal.Body>
-            <div>
-              <Input
-                label="A name to recognize this integration"
-                placeholder="Webhook name"
-                fullWidth
-                value={newIntegration.name}
-                onChange={(e) => {
-                  setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
-                }}
-                variant="secondary"
-                required
-                description={`${newIntegration.name?.length || 0}/20 characters`}
-              />
-            </div>
-            <div>
-              <Input
-                label="The URL where Chartbrew sends a POST request to"
-                placeholder="Webhook URL"
-                fullWidth
-                value={newIntegration.url}
-                onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
-                variant="secondary"
-                color={urlError ? "danger" : "default"}
-              />
-            </div>
-            <div className="flex items-center">
-              <Checkbox
-                id="webhook-slack-mode"
-                isSelected={newIntegration.slackMode}
-                onChange={(isSelected) => {
-                  setNewIntegration({ ...newIntegration, slackMode: isSelected });
-                }}
-              >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Checkbox.Content>
-                  <Label htmlFor="webhook-slack-mode" className="text-sm">This is a Slack webhook</Label>
-                </Checkbox.Content>
-              </Checkbox>
-              <div className="w-3" />
-              <Link onPress={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
-                <LuInfo size={16} />
-                <div className="w-1" />
-                {"What is this?"}
-              </Link>
-            </div>
-            {error && (
-              <div className="text-danger text-sm">
-                There was an error creating the integration. Please try again.
-              </div>
-            )}
+              <Modal.Body className="flex flex-col gap-2 p-1">
+                <div>
+                  <Input
+                    label="A name to recognize this integration"
+                    placeholder="Webhook name"
+                    fullWidth
+                    value={newIntegration.name}
+                    onChange={(e) => {
+                      setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
+                    }}
+                    variant="secondary"
+                    required
+                    description={`${newIntegration.name?.length || 0}/20 characters`}
+                  />
+                </div>
+                <div>
+                  <Input
+                    label="The URL where Chartbrew sends a POST request to"
+                    placeholder="Webhook URL"
+                    fullWidth
+                    value={newIntegration.url}
+                    onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
+                    variant="secondary"
+                    color={urlError ? "danger" : "default"}
+                  />
+                </div>
+                <div className="flex items-center">
+                  <Checkbox
+                    id="webhook-slack-mode"
+                    isSelected={newIntegration.slackMode}
+                    onChange={(isSelected) => {
+                      setNewIntegration({ ...newIntegration, slackMode: isSelected });
+                    }}
+                  >
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Label htmlFor="webhook-slack-mode" className="text-sm">This is a Slack webhook</Label>
+                    </Checkbox.Content>
+                  </Checkbox>
+                  <div className="w-3" />
+                  <Link onPress={() => setSlackModalOpen(true)} className="text-sm cursor-pointer">
+                    <LuInfo size={16} />
+                    <div className="w-1" />
+                    {"What is this?"}
+                  </Link>
+                </div>
+                {error && (
+                  <div className="text-danger text-sm">
+                    There was an error creating the integration. Please try again.
+                  </div>
+                )}
               </Modal.Body>
               <Modal.Footer>
             <Button
