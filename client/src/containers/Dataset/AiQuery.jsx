@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import PropTypes from "prop-types";
-import { TextArea, Button, Alert } from "@heroui/react";
+import { Button, Alert, TextField, InputGroup } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import { LuBrainCircuit, LuSend } from "react-icons/lu";
@@ -94,7 +94,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
 
       <div className="max-h-[300px] overflow-y-auto">
         {askAiLoading ? (
-          <Alert status="accent">
+          <Alert status="accent" className="shadow-none border border-divider">
             <Alert.Indicator>
               <LuBrainCircuit />
             </Alert.Indicator>
@@ -110,7 +110,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
             </Alert.Content>
           </Alert>
         ) : conversation.length === 0 ? (
-          <Alert status="accent">
+          <Alert status="accent" className="shadow-none border border-divider">
             <Alert.Indicator>
               <LuBrainCircuit />
             </Alert.Indicator>
@@ -121,7 +121,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
             </Alert.Content>
           </Alert>
         ) : (
-          <Alert status="accent" className="text-sm">
+          <Alert status="accent" className="text-sm shadow-none border border-divider">
             <Alert.Indicator>
               <LuBrainCircuit />
             </Alert.Indicator>
@@ -135,31 +135,40 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
       <div className="h-4" />
 
       <div className="flex flex-row items-center gap-2">
-        <TextArea
-          placeholder={
-            _getLastUserMessage() || "What data do you want to see? (e.g. 'Top 10 users by number of orders')"
-          }
-          value={aiQuestion}
-          onChange={(e) => setAiQuestion(e.target.value)}
-          variant="secondary"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              _onAskAi();
-            }
-          }}
-          minRows={1}
-          endContent={
-            <Button
-              isIconOnly
-              variant="primary"
-              onPress={_onAskAi}
-              isPending={askAiLoading}
-            >
-              {askAiLoading ? <ButtonSpinner /> : <LuSend />}
-            </Button>
-          }
-        />
+        <TextField
+          fullWidth
+          name="dataset-ai-query"
+          aria-label="Ask the AI to generate a query"
+        >
+          <InputGroup fullWidth variant="secondary">
+            <InputGroup.TextArea
+              rows={2}
+              className="resize-none"
+              placeholder={
+                _getLastUserMessage()
+                || "What data do you want to see? (e.g. 'Top 10 users by number of orders')"
+              }
+              value={aiQuestion}
+              onChange={(e) => setAiQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  _onAskAi();
+                }
+              }}
+            />
+            <InputGroup.Suffix className="pr-2 pb-1">
+              <Button
+                isIconOnly
+                variant="primary"
+                onPress={_onAskAi}
+                isPending={askAiLoading}
+              >
+                {askAiLoading ? <ButtonSpinner /> : <LuSend />}
+              </Button>
+            </InputGroup.Suffix>
+          </InputGroup>
+        </TextField>
       </div>
     </div>
   )

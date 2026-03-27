@@ -266,7 +266,7 @@ function DashboardList() {
 
           <div className="h-2" />
 
-          <div className="flex flex-row items-center justify-between gap-2">
+          <div className="flex flex-row items-center gap-2">
             <InputGroup fullWidth className="max-w-lg">
               <InputGroup.Input
                 type="text"
@@ -370,6 +370,7 @@ function DashboardList() {
                         </Dropdown>
                       )}
                     </Card.Header>
+                    <div className="h-2" />
                     <Card.Content>
                       <div className="flex flex-row justify-between items-center">
                         {projectMembers.length > 0 ? (
@@ -404,7 +405,7 @@ function DashboardList() {
           )}
 
           {projects && viewMode === "table" && (
-            <Table className="h-auto min-w-full border-1 border-solid border-content3 rounded-xl shadow-none">
+            <Table className="h-auto min-w-full border border-content3 rounded-xl shadow-none">
               <Table.ScrollContainer>
                 <Table.Content
                   aria-label="Dashboard list"

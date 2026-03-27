@@ -62,7 +62,7 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
         if (!nextOpen) onClose();
       }}
     >
-      <Modal.Container size="4xl" scroll="inside">
+      <Modal.Container size="lg" scroll="inside">
         <Modal.Dialog>
           <Modal.Header className="flex flex-col gap-1">
             <Modal.Heading>Transform data</Modal.Heading>
@@ -106,6 +106,8 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
             </Select.Popover>
           </Select>
 
+          <div className="h-4" />
+
           {transformConfig.type && (
             <div className="w-full">
               <AceEditor
@@ -118,10 +120,11 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
                 onChange={handleEditorChange}
                 name="transformEditor"
                 editorProps={{ $blockScrolling: true }}
-                className="rounded-md border-1 border-solid border-content3"
+                className="rounded-md border border-content3"
               />
             </div>
           )}
+          <div className="h-4" />
 
           <Switch
             id="data-transform-enabled"
@@ -130,7 +133,6 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
               setTransformConfig({ ...transformConfig, enabled: value });
               setEditorValue(JSON.stringify({ ...transformConfig, enabled: value }, null, 2));
             }}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -140,9 +142,11 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
             </Switch.Content>
           </Switch>
 
+          <div className="h-4" />
+
           {transformConfig.type === "flattenNested" && (
             <div>
-              <Accordion variant="surface">
+              <Accordion variant="surface" className="bg-surface-secondary">
                 <Accordion.Item
                   id="flatten-nested-help"
                   textValue="How to use Flatten Nested Array"
@@ -158,28 +162,28 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
                   </Accordion.Heading>
                   <Accordion.Panel>
                     <Accordion.Body>
-                  <div className="px-2 pb-2">
-                    <p className="mb-4 text-sm">
-                      The Flatten Nested Array transformation helps you combine data from two related arrays into a single, flat structure. This is useful when you have data like a list of orders, where each order contains a list of items.
-                    </p>
+                      <div className="px-2 pb-2">
+                        <p className="mb-4 text-sm">
+                          The Flatten Nested Array transformation helps you combine data from two related arrays into a single, flat structure. This is useful when you have data like a list of orders, where each order contains a list of items.
+                        </p>
 
-                    <h4 className="font-semibold mb-2 text-sm">Configuration Fields:</h4>
-                    <ul className="list-disc pl-6 space-y-2 text-sm">
-                      <li>
-                        <span className="font-medium">baseArrayPath:</span> The path to your main array (e.g., &quot;orders&quot;)
-                      </li>
-                      <li>
-                        <span className="font-medium">nestedArrayPath:</span> The path to the nested array within each main item (e.g., &quot;items&quot;)
-                      </li>
-                      <li>
-                        <span className="font-medium">outputFields:</span> Define how to combine the fields from both arrays
-                      </li>
-                    </ul>
+                        <h4 className="font-semibold mb-2 text-sm">Configuration Fields:</h4>
+                        <ul className="list-disc pl-6 space-y-2 text-sm">
+                          <li>
+                            <span className="font-medium">baseArrayPath:</span> The path to your main array (e.g., &quot;orders&quot;)
+                          </li>
+                          <li>
+                            <span className="font-medium">nestedArrayPath:</span> The path to the nested array within each main item (e.g., &quot;items&quot;)
+                          </li>
+                          <li>
+                            <span className="font-medium">outputFields:</span> Define how to combine the fields from both arrays
+                          </li>
+                        </ul>
 
-                    <h4 className="font-semibold mt-4 mb-2 text-sm">Example:</h4>
-                    <p className="mb-2 text-sm">If your data looks like this:</p>
-                    <pre className="bg-default-100 p-3 rounded-md text-xs mb-4">
-                      {`{
+                        <h4 className="font-semibold mt-4 mb-2 text-sm">Example:</h4>
+                        <p className="mb-2 text-sm">If your data looks like this:</p>
+                        <pre className="bg-default-100 p-3 rounded-md text-xs mb-4">
+                          {`{
   "orders": [
     {
       "id": "123",

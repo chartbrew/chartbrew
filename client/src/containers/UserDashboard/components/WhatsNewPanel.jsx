@@ -243,7 +243,7 @@ function WhatsNewPanel({ onCollapse }) {
             <LuX size={16} />
           </Button>
         </div>
-        <Card.Header className="flex items-start justify-between gap-3 px-5 py-4">
+        <Card.Header className="flex items-start justify-between gap-3 px-2 py-4">
           <Card.Title className="text-xl font-semibold text-foreground">
             Discover more
           </Card.Title>
@@ -252,7 +252,7 @@ function WhatsNewPanel({ onCollapse }) {
           </Card.Description>
         </Card.Header>
         <Separator />
-        <Card.Content className="flex flex-col gap-4 px-4 pb-4 pt-2">
+        <Card.Content className="flex flex-col gap-4 pb-4 pt-2">
           {groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3">

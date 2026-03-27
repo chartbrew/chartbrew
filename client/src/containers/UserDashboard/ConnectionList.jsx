@@ -188,7 +188,7 @@ function ConnectionList() {
                     {_getRelatedDatasets(connection.id).length > 0 && (
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <Chip size="sm" variant="soft" color="success" className="rounded-sm">
+                          <Chip size="sm" variant="soft" color="success">
                             Active
                           </Chip>
                         </Tooltip.Trigger>
@@ -198,7 +198,7 @@ function ConnectionList() {
                     {_getRelatedDatasets(connection.id).length === 0 && (
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <Chip size="sm" variant="soft" color="danger" className="rounded-sm">
+                          <Chip size="sm" variant="soft" color="danger">
                             Inactive
                           </Chip>
                         </Tooltip.Trigger>

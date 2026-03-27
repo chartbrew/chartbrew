@@ -318,7 +318,7 @@ function DatasetList() {
           <div>
             <TextField className="w-full" name="dataset-list-search">
               <Label>Search</Label>
-              <InputGroup fullWidth>
+              <InputGroup fullWidth variant="secondary">
                 <InputGroup.Input
                   type="text"
                   placeholder="Search datasets"
@@ -339,7 +339,7 @@ function DatasetList() {
               value={searchFilter.project_id || null}
               selectionMode="single"
               aria-label="Search datasets by dashboard"
-              size="sm"
+              variant="secondary"
             >
               <Label>Dashboard (Tags)</Label>
               <Autocomplete.Trigger>
@@ -378,7 +378,7 @@ function DatasetList() {
               value={searchFilter.connection_id || null}
               selectionMode="single"
               aria-label="Search datasets by connection"
-              size="sm"
+              variant="secondary"
             >
               <Label>Connection</Label>
               <Autocomplete.Trigger>
@@ -417,7 +417,7 @@ function DatasetList() {
               value={searchFilter.status || null}
               selectionMode="single"
               aria-label="Search datasets by status"
-              size="sm"
+              variant="secondary"
               isClearable={false}
             >
               <Label>Status</Label>
@@ -607,7 +607,7 @@ function DatasetList() {
                 <div className="flex flex-row items-center gap-2">
                   <span className="text-foreground font-medium">{getDatasetDisplayName(dataset)}</span>
                   {dataset.draft && (
-                    <Chip size="sm" variant="secondary">
+                    <Chip size="sm" variant="soft" color="accent">
                       Draft
                     </Chip>
                   )}

@@ -897,7 +897,7 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
           {fromItem.table && (
             <Select
               size="sm"
-              variant="primary"
+              variant="secondary"
               value={fromItem.table || null}
               selectionMode="single"
               aria-label="Select main database table"

@@ -226,8 +226,13 @@ function DatasetQuery(props) {
         .then(() => {
           // update the dataRequests array
           const newDrArray = cloneDeep(dataRequests);
-          setDataRequests(newDrArray.filter((dr) => dr.id !== drId));
-          setSelectedRequest(newDrArray[0]);
+          const newDrs = newDrArray.filter((dr) => dr.id !== drId)
+          setDataRequests(newDrs);
+          if (newDrs.length === 0) {
+            setCreateMode(true);
+          } else {
+            setSelectedRequest(newDrs[0]);
+          }
         })
         .catch((e) => {
           return e;
@@ -357,9 +362,9 @@ function DatasetQuery(props) {
           </div>
         )}
         {!createMode && selectedTab === "queryBuilder" && (
-          <div className="col-span-12 bg-surface rounded-3xl border border-divider p-4">
+          <div className="col-span-12 bg-surface rounded-3xl border border-divider pb-4">
             {dataRequests && dataRequests.length > 0 && (
-              <div className="bg-surface-secondary rounded-3xl p-2">
+              <div className="bg-surface-secondary rounded-t-3xl p-4">
                 <div className="flex w-full flex-row flex-wrap items-center gap-2">
                   {dataRequests.map((dr) => {
                     const isActive = !createMode && `${selectedRequest?.id}` === `${dr.id}`;
@@ -376,7 +381,7 @@ function DatasetQuery(props) {
                             <img
                               src={connectionImages(theme === "dark")[dr?.Connection?.subType || dr?.Connection?.type]}
                               alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                              className="h-full w-full rounded-sm border-1 border-divider object-contain"
+                              className="h-full w-full rounded-sm border border-divider object-contain"
                             />
                           </div>
                           <span className="max-w-md truncate">{dr?.Connection?.name}</span>
@@ -508,7 +513,7 @@ function DatasetQuery(props) {
             {connections.length > 0 && (
               <div>
                 <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-search">
-                  <InputGroup fullWidth>
+                  <InputGroup fullWidth variant="secondary">
                     <InputGroup.Prefix className="border-0">
                       <LuSearch size={16} className="text-muted" aria-hidden />
                     </InputGroup.Prefix>
@@ -534,7 +539,7 @@ function DatasetQuery(props) {
                 </TextField>
               </div>
             )}
-            <div className="h-8" />
+            <div className="h-4" />
             <div className="grid grid-cols-12 gap-4">
               {_filteredConnections().length === 0 && connections.length === 0 && (
                 <div className="col-span-12 flex flex-col">
@@ -580,7 +585,7 @@ function DatasetQuery(props) {
                           _onCreateNewRequest(c);
                         }
                       }}
-                      className="h-full w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
+                      className="h-full w-full cursor-pointer border border-content3 shadow-none transition-colors hover:bg-content2/40"
                     >
                       <Card.Content className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">

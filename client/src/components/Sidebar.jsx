@@ -120,7 +120,7 @@ function Sidebar() {
     >
       <div className="flex flex-col h-full justify-between">
         <div className="flex flex-col">
-          <Link to="/" className="flex items-center justify-start h-16 px-4">
+          <Link to="/" className="flex items-center justify-center h-16 px-4">
             {collapsed ? (
               <img src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={40} />
             ) : (
