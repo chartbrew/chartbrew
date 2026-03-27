@@ -7,25 +7,32 @@ import {
   Input,
   InputGroup,
   Modal,
+  Separator,
   Table,
   Tabs,
   Tooltip
 } from "@heroui/react";
+import moment from "moment";
 import React, { useEffect, useState } from "react";
 import {
+  LuCalendarClock,
   LuChartNoAxesColumnIncreasing,
+  LuClock3,
   LuEllipsis,
   LuLayoutGrid,
+  LuMapPin,
   LuPanelLeftClose,
   LuPanelLeftOpen,
   LuPencilLine,
   LuPin,
   LuPinOff,
   LuPlus,
+  LuRefreshCw,
   LuSearch,
   LuTable,
   LuTrash,
   LuUsers,
+  LuCoffee,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router";
@@ -46,6 +53,94 @@ const getInitialWhatsNewPanelState = () => {
     return window.localStorage.getItem(WHATS_NEW_PANEL_STORAGE_KEY) === "true";
   } catch (error) {
     return false;
+  }
+};
+
+const hasScheduleConfigured = (schedule) => {
+  return !!schedule?.frequency;
+};
+
+const capitalizeWord = (value = "") => {
+  if (!value) return value;
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+};
+
+const formatRelativeUpdateTime = (dateValue) => {
+  if (!dateValue) {
+    return "Not updated";
+  }
+
+  const updatedMoment = moment(dateValue);
+  const minutesSinceUpdate = Math.max(moment().diff(updatedMoment, "minutes"), 0);
+
+  if (minutesSinceUpdate < 60) {
+    return `${Math.max(minutesSinceUpdate, 1)}m ago`;
+  }
+
+  const hoursSinceUpdate = moment().diff(updatedMoment, "hours");
+  if (hoursSinceUpdate < 24) {
+    return `${hoursSinceUpdate}h ago`;
+  }
+
+  const daysSinceUpdate = moment().diff(updatedMoment, "days");
+  if (daysSinceUpdate < 7) {
+    return `${daysSinceUpdate}d ago`;
+  }
+
+  if (daysSinceUpdate < 30) {
+    return `${Math.floor(daysSinceUpdate / 7)}w ago`;
+  }
+
+  return updatedMoment.format("MMM D");
+};
+
+const getLastUpdatedChipColor = (dateValue) => {
+  if (!dateValue) return "default";
+
+  const hoursSinceUpdate = moment().diff(moment(dateValue), "hours");
+
+  if (hoursSinceUpdate < 24) return "success";
+  if (hoursSinceUpdate < 24 * 7) return "default";
+  return "warning";
+};
+
+const formatScheduleFrequency = (schedule) => {
+  if (!hasScheduleConfigured(schedule)) {
+    return null;
+  }
+
+  switch (schedule.frequency) {
+    case "daily":
+      return "Daily";
+    case "weekly":
+      return schedule.dayOfWeek ? `Weekly on ${capitalizeWord(schedule.dayOfWeek)}` : "Weekly";
+    case "every_x_days":
+      return `Every ${schedule.frequencyNumber || 1} day${`${schedule.frequencyNumber}` === "1" ? "" : "s"}`;
+    case "every_x_hours":
+      return `Every ${schedule.frequencyNumber || 1} hour${`${schedule.frequencyNumber}` === "1" ? "" : "s"}`;
+    case "every_x_minutes":
+      return `Every ${schedule.frequencyNumber || 1} minute${`${schedule.frequencyNumber}` === "1" ? "" : "s"}`;
+    default:
+      return null;
+  }
+};
+
+const getProjectTimezoneLabel = (project) => {
+  const timezone = project.timezone || project?.updateSchedule?.timezone || project?.snapshotSchedule?.timezone;
+
+  if (!timezone) {
+    return "Default timezone";
+  }
+
+  try {
+    const timeZoneName = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      timeZoneName: "short",
+    }).formatToParts(new Date()).find((part) => part.type === "timeZoneName")?.value;
+
+    return timeZoneName ? `${timezone} (${timeZoneName})` : timezone;
+  } catch (error) {
+    return timezone;
   }
 };
 
@@ -298,15 +393,18 @@ function DashboardList() {
           {projects && viewMode === "grid" && (
             <div className={gridClassName}>
               {filteredProjects.map((project) => {
-                const projectMembers = _getProjectMembers(project);
+                const projectMembers = project.members || _getProjectMembers(project);
                 const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
+                const updateScheduleLabel = formatScheduleFrequency(project.updateSchedule);
+                const snapshotScheduleLabel = formatScheduleFrequency(project.snapshotSchedule);
+                const timezoneLabel = getProjectTimezoneLabel(project);
 
                 return (
                   <Card
                     key={project.id}
                     role="button"
                     tabIndex={0}
-                    className="cursor-pointer transition-colors hover:bg-default-50/60 shadow-none border border-divider"
+                    className="cursor-pointer gap-0 border border-divider shadow-none transition-[border-color,background-color,box-shadow] duration-200 hover:border-default-300 hover:bg-default-50/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
                     onClick={() => directToProject(project.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -315,14 +413,20 @@ function DashboardList() {
                       }
                     }}
                   >
-                    <Card.Header className="flex flex-row justify-between items-center">
-                      <div className="flex flex-row items-center gap-2">
-                        {isPinned && (
-                          <LuPin className="text-secondary" size={18} fill="currentColor" />
-                        )}
-                        <Link to={`/dashboard/${project.id}`} className="cursor-pointer text-foreground! hover:underline">
-                          <span className="font-tw font-semibold">{project.name}</span>
-                        </Link>
+                    <Card.Header className="flex flex-row justify-between items-start gap-3 pb-2">
+                      <div className="min-w-0 flex flex-row items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-row items-center gap-2">
+                            {isPinned && (
+                              <LuPin className="shrink-0 text-secondary" size={16} fill="currentColor" />
+                            )}
+                            <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer text-foreground! hover:underline">
+                              <Card.Title className="truncate font-tw text-lg font-semibold">
+                                {project.name}
+                              </Card.Title>
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                       {canManageDashboards && (
                         <Dropdown size="sm">
@@ -370,26 +474,74 @@ function DashboardList() {
                         </Dropdown>
                       )}
                     </Card.Header>
-                    <div className="h-2" />
                     <Card.Content>
-                      <div className="flex flex-row justify-between items-center">
-                        {projectMembers.length > 0 ? (
-                          <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
-                            <LuUsers size={16} />
-                            <span>{projectMembers.length} {projectMembers.length === 1 ? "member" : "members"}</span>
-                          </div>
-                        ) : (
-                          <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
-                            <LuUsers size={16} />
-                            Team only
+                      <div className="flex flex-col gap-3 pb-2">
+                        <Card.Description className="line-clamp-2 text-sm leading-5 text-foreground-500">
+                          {project.description || ""}
+                        </Card.Description>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Tooltip delay={0}>
+                            <Tooltip.Trigger className="pt-1">
+                              <Chip color={getLastUpdatedChipColor(project.lastUpdatedAt)} size="sm" variant="soft">
+                                <LuClock3 size={14} />
+                                <span>{formatRelativeUpdateTime(project.lastUpdatedAt)}</span>
+                              </Chip>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>
+                              {project.lastUpdatedAt
+                                ? `Last dashboard refresh ${moment(project.lastUpdatedAt).calendar()}`
+                                : "This dashboard has not been refreshed yet"}
+                            </Tooltip.Content>
+                          </Tooltip>
+                          {updateScheduleLabel && (
+                            <Chip color="accent" size="sm" variant="soft">
+                              <LuRefreshCw size={14} />
+                              <span>{`${updateScheduleLabel} refresh`}</span>
+                            </Chip>
+                          )}
+                          {snapshotScheduleLabel && (
+                            <Chip color="default" size="sm" variant="soft">
+                              <LuCalendarClock size={14} />
+                              <span>{`${snapshotScheduleLabel} snapshot`}</span>
+                            </Chip>
+                          )}
+                          {!updateScheduleLabel && !snapshotScheduleLabel && (
+                            <Chip color="default" size="sm" variant="soft">
+                              <LuRefreshCw size={14} />
+                              <span>No schedule</span>
+                            </Chip>
+                          )}
+                        </div>
+
+                        {timezoneLabel && (updateScheduleLabel || snapshotScheduleLabel) && (
+                          <div className="flex flex-row items-center gap-2 text-xs text-foreground-500">
+                            <LuMapPin size={14} />
+                            <span className="truncate">{timezoneLabel}</span>
                           </div>
                         )}
-                        <div className="flex flex-row items-center gap-1 text-sm text-foreground-500">
-                          <LuChartNoAxesColumnIncreasing size={16} />
-                          <span>{project?.Charts?.length || 0} {project?.Charts?.length === 1 ? "chart" : "charts"}</span>
-                        </div>
                       </div>
                     </Card.Content>
+                    <Separator variant="secondary" />
+                    <Card.Footer className="flex flex-row items-center justify-between gap-3 pt-3">
+                      {projectMembers.length > 0 ? (
+                        <div className="flex min-w-0 flex-row items-center gap-2">
+                          <LuUsers size={16} />
+                          <span className="truncate text-sm text-foreground-500">
+                            {projectMembers.length} {projectMembers.length === 1 ? "member" : "members"}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex min-w-0 flex-row items-center gap-2 text-sm text-foreground-500">
+                          <LuCoffee size={16} />
+                          <span>Team only</span>
+                        </div>
+                      )}
+                      <div className="flex shrink-0 flex-row items-center gap-1 text-sm text-foreground-500">
+                        <LuChartNoAxesColumnIncreasing size={16} />
+                        <span>{project?.Charts?.length || 0} {project?.Charts?.length === 1 ? "chart" : "charts"}</span>
+                      </div>
+                    </Card.Footer>
                   </Card>
                 );
               })}
@@ -417,13 +569,13 @@ function DashboardList() {
                     </Table.Column>
                     <Table.Column id="members" className="text-center" textValue="Dashboard members">
                       <div className="flex flex-row items-end justify-center gap-1">
-                        <LuUsers />
+                        <LuUsers size={16} />
                         <span>Dashboard members</span>
                       </div>
                     </Table.Column>
                     <Table.Column id="charts" className="text-center" textValue="Charts">
                       <div className="flex flex-row items-end justify-center gap-1">
-                        <LuChartNoAxesColumnIncreasing />
+                        <LuChartNoAxesColumnIncreasing size={16} />
                         <span>Charts</span>
                       </div>
                     </Table.Column>
@@ -435,113 +587,145 @@ function DashboardList() {
                     )}
                   >
                     {filteredProjects.map((project) => {
-                  const projectMembers = _getProjectMembers(project);
-                  const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
-                  const memberStackMax = 3;
-                  const memberStackOverflow = projectMembers.length > memberStackMax
-                    ? projectMembers.length - (memberStackMax - 1)
-                    : 0;
-                  const memberStackVisible = memberStackOverflow > 0
-                    ? projectMembers.slice(0, memberStackMax - 1)
-                    : projectMembers.slice(0, memberStackMax);
+                      const projectMembers = project.members || _getProjectMembers(project);
+                      const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
+                      const updateScheduleLabel = formatScheduleFrequency(project.updateSchedule);
+                      const snapshotScheduleLabel = formatScheduleFrequency(project.snapshotSchedule);
+                      const memberStackMax = 3;
+                      const memberStackOverflow = projectMembers.length > memberStackMax
+                        ? projectMembers.length - (memberStackMax - 1)
+                        : 0;
+                      const memberStackVisible = memberStackOverflow > 0
+                        ? projectMembers.slice(0, memberStackMax - 1)
+                        : projectMembers.slice(0, memberStackMax);
 
-                  return (
-                    <Table.Row key={project.id} id={String(project.id)} className="group">
-                      <Table.Cell>
-                        <div className="flex flex-row items-center gap-2">
-                          {isPinned ? (
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost">
-                                  <LuPin className="text-secondary" size={18} fill="currentColor" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content placement="left start">Unpin dashboard</Tooltip.Content>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  <LuPin className="text-secondary" size={18} />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content placement="left start">Pin dashboard</Tooltip.Content>
-                            </Tooltip>
-                          )}
-                          <Link to={`/dashboard/${project.id}`} className="cursor-pointer flex flex-row items-center select-none">
-                            <span className="text-foreground font-medium">{project.name}</span>
-                          </Link>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex flex-row items-center justify-center">
-                          {projectMembers.length > 0 ? (
-                            <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
-                              {memberStackVisible.map((projectMember, idx) => (
-                                <Avatar
-                                  key={projectMember.id}
-                                  size="sm"
-                                  className="ring-2 ring-background shrink-0"
-                                  style={{ zIndex: idx }}
-                                >
-                                  <Avatar.Fallback>{displayInitials(projectMember.name)}</Avatar.Fallback>
-                                </Avatar>
-                              ))}
-                              {memberStackOverflow > 0 && (
-                                <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: memberStackVisible.length }}>
-                                  <Avatar.Fallback>{`+${memberStackOverflow}`}</Avatar.Fallback>
-                                </Avatar>
+                      return (
+                        <Table.Row key={project.id} id={String(project.id)} className="group">
+                          <Table.Cell>
+                            <div className="flex min-w-0 flex-col gap-2 py-1">
+                              <div className="flex flex-row items-center gap-2">
+                                {isPinned ? (
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost">
+                                        <LuPin className="text-secondary" size={18} fill="currentColor" />
+                                      </Button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content placement="left start">Unpin dashboard</Tooltip.Content>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <LuPin className="text-secondary" size={18} />
+                                      </Button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content placement="left start">Pin dashboard</Tooltip.Content>
+                                  </Tooltip>
+                                )}
+                                <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer flex flex-row items-center select-none">
+                                  <span className="truncate text-foreground font-medium">{project.name}</span>
+                                </Link>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-1.5 pl-10">
+                                <Tooltip delay={0}>
+                                  <Tooltip.Trigger>
+                                    <Chip color={getLastUpdatedChipColor(project.lastUpdatedAt)} size="sm" variant="soft">
+                                      <LuClock3 size={14} />
+                                      <span>{formatRelativeUpdateTime(project.lastUpdatedAt)}</span>
+                                    </Chip>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content>
+                                    {project.lastUpdatedAt
+                                      ? `Last dashboard refresh ${moment(project.lastUpdatedAt).calendar()}`
+                                      : "This dashboard has not been refreshed yet"}
+                                  </Tooltip.Content>
+                                </Tooltip>
+                                {updateScheduleLabel && (
+                                  <Chip color="accent" size="sm" variant="soft">
+                                    <LuRefreshCw size={14} />
+                                    <span>{`${updateScheduleLabel} refresh`}</span>
+                                  </Chip>
+                                )}
+                                {snapshotScheduleLabel && (
+                                  <Chip color="default" size="sm" variant="soft">
+                                    <LuCalendarClock size={14} />
+                                    <span>{`${snapshotScheduleLabel} snapshot`}</span>
+                                  </Chip>
+                                )}
+                              </div>
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex flex-row items-center justify-center">
+                              {projectMembers.length > 0 ? (
+                                <div className="flex flex-row -space-x-2 rtl:space-x-reverse">
+                                  {memberStackVisible.map((projectMember, idx) => (
+                                    <Avatar
+                                      key={projectMember.id}
+                                      size="sm"
+                                      className="ring-2 ring-background shrink-0"
+                                      style={{ zIndex: idx }}
+                                    >
+                                      <Avatar.Fallback>{displayInitials(projectMember.name)}</Avatar.Fallback>
+                                    </Avatar>
+                                  ))}
+                                  {memberStackOverflow > 0 && (
+                                    <Avatar size="sm" className="ring-2 ring-background shrink-0" style={{ zIndex: memberStackVisible.length }}>
+                                      <Avatar.Fallback>{`+${memberStackOverflow}`}</Avatar.Fallback>
+                                    </Avatar>
+                                  )}
+                                </div>
+                              ) : (
+                                <Chip variant="soft" size="sm">
+                                  Team only
+                                </Chip>
                               )}
                             </div>
-                          ) : (
-                            <Chip variant="soft" size="sm">
-                              Team only
-                            </Chip>
-                          )}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex flex-row items-center justify-center">
-                          <span className="font-bold">
-                            {project?.Charts?.length || 0}
-                          </span>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {canManageDashboards && (
-                          <div className="flex flex-row items-center justify-end gap-1">
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  isIconOnly
-                                  variant="ghost"
-                                  size="sm"
-                                  className="min-w-fit"
-                                  onPress={() => _onEditProject(project)}
-                                >
-                                  <LuPencilLine />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Rename dashboard</Tooltip.Content>
-                            </Tooltip>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  isIconOnly variant="ghost"
-                                  size="sm"
-                                  className="min-w-fit"
-                                  onPress={() => _onDeleteProject(project)}
-                                >
-                                  <LuTrash />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Delete dashboard</Tooltip.Content>
-                            </Tooltip>
-                          </div>
-                        )}
-                      </Table.Cell>
-                    </Table.Row>
-                  );
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex flex-row items-center justify-center">
+                              <span className="font-bold">
+                                {project?.Charts?.length || 0}
+                              </span>
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {canManageDashboards && (
+                              <div className="flex flex-row items-center justify-end gap-1">
+                                <Tooltip>
+                                  <Tooltip.Trigger>
+                                    <Button
+                                      isIconOnly
+                                      variant="ghost"
+                                      size="sm"
+                                      className="min-w-fit"
+                                      onPress={() => _onEditProject(project)}
+                                    >
+                                      <LuPencilLine />
+                                    </Button>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content>Rename dashboard</Tooltip.Content>
+                                </Tooltip>
+                                <Tooltip>
+                                  <Tooltip.Trigger>
+                                    <Button
+                                      isIconOnly variant="ghost"
+                                      size="sm"
+                                      className="min-w-fit"
+                                      onPress={() => _onDeleteProject(project)}
+                                    >
+                                      <LuTrash />
+                                    </Button>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content>Delete dashboard</Tooltip.Content>
+                                </Tooltip>
+                              </div>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      );
                     })}
                   </Table.Body>
                 </Table.Content>
