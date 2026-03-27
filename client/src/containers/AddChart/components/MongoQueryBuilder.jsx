@@ -463,8 +463,14 @@ function MongoQueryBuilder(props) {
           >
             <Tabs.ListContainer>
               <Tabs.List>
-                <Tabs.Tab id="table">Table</Tabs.Tab>
-                <Tabs.Tab id="json">JSON</Tabs.Tab>
+                <Tabs.Tab id="table">
+                  <Tabs.Indicator />
+                  Table
+                </Tabs.Tab>
+                <Tabs.Tab id="json">
+                  <Tabs.Indicator />
+                  JSON
+                </Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>
           </Tabs>

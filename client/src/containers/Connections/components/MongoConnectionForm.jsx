@@ -9,13 +9,16 @@ import {
   Button,
   Chip,
   Tabs,
-  Separator
+  Separator,
+  TextField,
+  Description,
+  FieldError,
+  Alert,
 } from "@heroui/react";
 
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
-import { LuChevronRight, LuInfo, LuPlus, LuCircleX } from "react-icons/lu";
+import { LuChevronRight, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -224,217 +227,220 @@ function MongoConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-solid border-divider rounded-3xl">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to a MongoDB database"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
-        <Row align="center" style={styles.formStyle}>
-          <Tabs selectedKey={formStyle} onSelectionChange={(key) => setFormStyle(key)}>
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="string">Connection string</Tabs.Tab>
-                <Tabs.Tab id="form">Connection form</Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
-        </Row>
+        <div className="h-4" />
+        <Tabs selectedKey={formStyle} onSelectionChange={(key) => setFormStyle(key)}>
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="string">
+                <Tabs.Indicator />
+                Connection string
+              </Tabs.Tab>
+              <Tabs.Tab id="form">
+                <Tabs.Indicator />
+                Connection form
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
         <div className="h-4" />
         {formStyle === "string" && (
           <>
             <Row align="center">
-              <Input
-                label="Name your connection"
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, name: e.target.value });
-                }}
-                color={errors.name ? "danger" : "default"}
-                variant="secondary"
-                fullWidth
-              />
+              <TextField fullWidth name="mongo-string-name" isInvalid={Boolean(errors.name)}>
+                <Label>Name your connection</Label>
+                <Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, name: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+              </TextField>
             </Row>
-            {errors.name && (
-              <Row>
-                <Text className={"text-danger"}>
-                  {errors.name}
-                </Text>
-              </Row>
-            )}
             <div className="h-4" />
             <Row align="center">
-              <Input
-                label="Enter your MongoDB connection string"
-                placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
-                value={connection.connectionString || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, connectionString: e.target.value });
-                }}
-                description={"mongodb://username:password@mongodb.example.com:27017/dbname"}
-                variant="secondary"
-                fullWidth
-              />
+              <TextField fullWidth name="mongo-string-uri" isInvalid={Boolean(errors.connectionString)}>
+                <Label>Enter your MongoDB connection string</Label>
+                <Input
+                  placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
+                  value={connection.connectionString || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, connectionString: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.connectionString ? (
+                  <FieldError>{errors.connectionString}</FieldError>
+                ) : (
+                  <Description>
+                    mongodb://username:password@mongodb.example.com:27017/dbname
+                  </Description>
+                )}
+              </TextField>
             </Row>
-            {errors.connectionString && (
-              <Row>
-                <Text color="danger">
-                  {errors.connectionString}
-                </Text>
-              </Row>
-            )}
             <div className="h-1" />
           </>
         )}
 
         {formStyle === "form" && (
           <Row>
-            <div className="grid grid-cols-12 gap-2">
+            <div className="grid grid-cols-12 gap-3">
               <div className="col-span-12 md:col-span-8">
-                <Input
-                  label="Name your connection"
-                  placeholder="Enter a name that you can recognise later"
-                  value={connection.name || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, name: e.target.value });
-                  }}
-                  color={errors.name ? "danger" : "default"}
-                  helperText={errors.name}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-name" isInvalid={Boolean(errors.name)}>
+                  <Label>Name your connection</Label>
+                  <Input
+                    placeholder="Enter a name that you can recognise later"
+                    value={connection.name || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, name: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="col-span-12 md:col-span-10">
-                <Input
-                  label="Hostname or IP address"
-                  placeholder="'yourmongodomain.com' or '0.0.0.0' "
-                  value={connection.host || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, host: e.target.value });
-                  }}
-                  color={errors.host ? "danger" : "default"}
-                  description={errors.host}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-host" isInvalid={Boolean(errors.host)}>
+                  <Label>Hostname or IP address</Label>
+                  <Input
+                    placeholder="'yourmongodomain.com' or '0.0.0.0' "
+                    value={connection.host || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, host: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.host ? <FieldError>{errors.host}</FieldError> : null}
+                </TextField>
               </div>
               <div className="col-span-12 md:col-span-2">
-                <Input
-                  label="Port"
-                  value={connection.port || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, port: e.target.value });
-                  }}
-                  helperColor="error"
-                  description={errors.port}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-port" isInvalid={Boolean(errors.port)}>
+                  <Label>Port</Label>
+                  <Input
+                    value={connection.port || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, port: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.port ? <FieldError>{errors.port}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="col-span-12 md:col-span-4">
-                <Input
-                  label="Database name"
-                  value={connection.dbName || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, dbName: e.target.value });
-                  }}
-                  color={errors.dbName ? "danger" : "default"}
-                  description={errors.dbName}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-db" isInvalid={Boolean(errors.dbName)}>
+                  <Label>Database name</Label>
+                  <Input
+                    value={connection.dbName || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, dbName: e.target.value });
+                    }}
+                    placeholder="Enter your database name"
+                    variant="secondary"
+                  />
+                  {errors.dbName ? <FieldError>{errors.dbName}</FieldError> : null}
+                </TextField>
               </div>
               
               <div className="col-span-12 md:col-span-4">
-                <Input
-                  label="Database username"
-                  value={connection.username || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, username: e.target.value });
-                  }}
-                  color={errors.username ? "danger" : "default"}
-                  description={errors.username}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-user" isInvalid={Boolean(errors.username)}>
+                  <Label>Database username</Label>
+                  <Input
+                    value={connection.username || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, username: e.target.value });
+                    }}
+                    placeholder="Enter your database username"
+                    variant="secondary"
+                  />
+                  {errors.username ? <FieldError>{errors.username}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="col-span-12 md:col-span-4">
-                <Input
-                  type="password"
-                  label="Database password"
-                  onChange={(e) => {
-                    setConnection({ ...connection, password: e.target.value });
-                  }}
-                  color={errors.password ? "danger" : "default"}
-                  description={errors.password}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mongo-form-pass" isInvalid={Boolean(errors.password)}>
+                  <Label>Database password</Label>
+                  <Input
+                    type="password"
+                    value={connection.password || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, password: e.target.value });
+                    }}
+                    placeholder="Enter your database password"
+                    variant="secondary"
+                  />
+                  {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+                </TextField>
               </div>
 
-              <div className="col-span-12 flex flex-row">
+              <div className="col-span-12 flex flex-row items-center">
                 <Checkbox
                   id="mongo-connection-srv"
                   isSelected={!!connection.srv}
                   onChange={(selected) => setConnection({ ...connection, srv: selected })}
+                  variant="secondary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="mongo-connection-srv" className="text-sm">Use MongoDB 3.6 SRV URI connection string</Label>
+                    <Label htmlFor="mongo-connection-srv">Use MongoDB 3.6 SRV URI connection string</Label>
                   </Checkbox.Content>
                 </Checkbox>
-                <Tooltip>
+                <Tooltip delay={0}>
                   <Tooltip.Trigger>
-                    <div><LuInfo /></div>
+                    <div className="ml-2"><LuInfo size={16} /></div>
                   </Tooltip.Trigger>
-                  <Tooltip.Content placement="left">
+                  <Tooltip.Content placement="bottom" className="max-w-[400px]">
                     {"Tick this if your connection URI contains 'mongodb+srv://'"}
                   </Tooltip.Content>
                 </Tooltip>
               </div>
 
               {connection.optionsArray.length > 0 && (
-                <div className="col-span-12">
-                  <Text b>Connection options</Text>
+                <div className="col-span-12 mt-2">
+                  <Label>Connection options</Label>
                 </div>
               )}
               {connection.optionsArray.map((option) => {
                 return (
                   <>
                     <div className="sm:col-span-12 md:col-span-4">
-                      <Input
-                        placeholder="Key"
-                        value={option.key}
-                        onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
-                        fullWidth
-                      />
+                      <TextField fullWidth aria-label="Connection option key" name={`mongo-opt-key-${option.id}`}>
+                        <Input
+                          placeholder="Key"
+                          value={option.key}
+                          onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                          variant="secondary"
+                        />
+                      </TextField>
                     </div>
-                    <div className="sm:col-span-12 md:col-span-8">
-                      <Input
-                        onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
-                        value={option.value}
-                        placeholder="Value"
-                        fullWidth
-                      />
-                      <div className="w-4" />
+                    <div className="sm:col-span-12 md:col-span-8 flex flex-row items-center gap-2">
+                      <TextField fullWidth aria-label="Connection option value" name={`mongo-opt-val-${option.id}`}>
+                        <Input
+                          onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                          value={option.value}
+                          placeholder="Value"
+                          variant="secondary"
+                        />
+                      </TextField>
                       <Button
                         isIconOnly
                         onClick={() => _removeOption(option.id)}
-                        auto
-                        variant="tertiary"
-                        color="danger"
+                        variant="ghost"
                       >
-                        <LuCircleX />
+                        <LuX size={16} />
                       </Button>
                     </div>
-                    <div className="md:col-span-4" />
                   </>
                 );
               })}
@@ -442,8 +448,7 @@ function MongoConnectionForm(props) {
                 <Button
                   size="sm"
                   onClick={_addOption}
-                  variant="ghost"
-                  auto
+                  variant="tertiary"
                 >
                   Add options
                   <LuPlus />
@@ -453,56 +458,61 @@ function MongoConnectionForm(props) {
           </Row>
         )}
 
-        <div className="h-16" />
-        <Row>
-          <div className={"bg-primary-50 rounded-md p-5"}>
-            <Row>
-              <Text b>Avoid using credentials that can write data</Text>
-            </Row>
-            <Row>
-              <Text>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</Text>
-            </Row>
-            <Row>
+        <div className="h-4" />
+        <Separator />
+        <div className="h-4" />
+        <Alert status="warning" className="shadow-none border border-divider">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Avoid using credentials that can write data</Alert.Title>
+            <Alert.Description className="block text-sm">
+              Out of abundance of caution, we recommend all our users to connect only with read permissions. Don&apos;t use mongo users with readWrite permissions.
+            </Alert.Description>
+            <div className="mt-2">
               <Link href="https://docs.mongodb.com/manual/reference/method/db.createUser/" target="_blank" rel="noopener noreferrer">
                 Check this link on how to do it
               </Link>
-            </Row>
-          </div>
-        </Row>
-        <div className="h-16" />
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
-          <Link
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://docs.mongodb.com/manual/reference/connection-string/"
-          >
-            <Text>Find out more about MongoDB connection strings</Text>
-          </Link>
-          <div className="w-2" />
-          <FaExternalLinkSquareAlt size={12} />
-        </Row>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
-          <Link
-            href="https://docs.mongodb.com/guides/cloud/connectionstring/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Text>Find out how to get your MongoDB Atlas connection string</Text>
-          </Link>
-          <div className="w-2" />
-          <FaExternalLinkSquareAlt size={12} />
-        </Row>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
-          <Link onPress={() => setShowIp(!showIp)}>
-            <Text>Front-end and back-end on different servers?</Text>
-          </Link>
-        </Row>
+            </div>
+          </Alert.Content>
+        </Alert>
+        <div className="h-4" />
+        <div className="flex flex-col gap-2">
+          <Row align="center">
+            <LuChevronRight size={16} />
+            <div className="w-2" />
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://docs.mongodb.com/manual/reference/connection-string/"
+              className="text-foreground/70!"
+            >
+              Find out more about MongoDB connection strings
+              <Link.Icon />
+            </Link>
+            <div className="w-2" />
+            
+          </Row>
+          <Row align="center">
+            <LuChevronRight size={16} />
+            <div className="w-2" />
+            <Link
+              href="https://docs.mongodb.com/guides/cloud/connectionstring/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground/70!"
+            >
+              Find out how to get your MongoDB Atlas connection string
+              <Link.Icon />
+            </Link>
+          </Row>
+          <Row align="center">
+            <LuChevronRight size={16} />
+            <div className="w-2" />
+            <Link onPress={() => setShowIp(!showIp)} className="text-foreground/70!">
+              Front-end and back-end on different servers?
+            </Link>
+          </Row>
+        </div>
         <div className="h-4" />
         {showIp && (
           <Row>
@@ -531,7 +541,7 @@ function MongoConnectionForm(props) {
         <div className="h-8" />
         <Row>
           <Button
-            variant="ghost"
+            variant="outline"
             auto
             onClick={() => _onCreateConnection(true)}
             isPending={testLoading}
@@ -553,9 +563,9 @@ function MongoConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <Text>
@@ -570,7 +580,7 @@ function MongoConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <div className="h-8" />
+            <div className="h-4" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -587,25 +597,6 @@ function MongoConnectionForm(props) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  helpList: {
-    display: "inline-block",
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-};
 
 MongoConnectionForm.defaultProps = {
   onComplete: () => {},

@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuBrainCircuit, LuChartArea, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
-import { Button, Card, Chip, Input, InputGroup, Modal, Separator, TextField, Tooltip } from "@heroui/react";
+import { Button, Card, Chip, Input, InputGroup, Modal, Separator, Surface, TextField, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
 import { Link, useSearchParams } from "react-router";
 
-import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
 import connectionImages from "../../config/connectionImages";
 import { useTheme } from "../../modules/ThemeContext";
@@ -215,10 +214,10 @@ function ConnectionWizard() {
                 <span className="text-xl font-semibold">Select your datasource type</span>
               </div>
               <div className="h-8" />
-              <Segment>
+              <Surface className="rounded-3xl bg-surface border border-divider p-4">
                 <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-                  <TextField aria-label="Search connections" className="max-w-[300px]" name="connection-search">
-                    <InputGroup variant="secondary" fullWidth>
+                  <TextField aria-label="Search connections" className="max-w-lg" name="connection-search">
+                    <InputGroup fullWidth>
                       <InputGroup.Input
                         placeholder="Search..."
                         onChange={(e) => setConnectionSearch(e.target.value)}
@@ -229,14 +228,14 @@ function ConnectionWizard() {
                     </InputGroup>
                   </TextField>
                 </div>
-                <div className="h-8" />
+                <div className="h-4" />
                 <div className="grid grid-cols-12 gap-4">
                   {_filteredConnections.map((conn) => (
                     <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
                       <Card
                         role="button"
                         tabIndex={0}
-                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-content2/40 ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
+                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-content2/40 ${selectedType === conn.type ? "border border-primary" : "border border-content3"}`}
                         onClick={() => setSelectedType(conn.type)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -277,9 +276,9 @@ function ConnectionWizard() {
                     </div>
                   )}
                 </div>
-              </Segment>
+              </Surface>
 
-              <div className="h-16" />
+              <div className="h-8" />
               {selectedType && (
                 <div className="flex flex-row items-center gap-2">
                   <span className="text-xl text-secondary font-semibold">Step 2:</span>
@@ -315,6 +314,7 @@ function ConnectionWizard() {
             <PostgresConnectionForm
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
+              subType="postgres"
             />
           )}
           {selectedType === "mysql" && (
@@ -392,11 +392,11 @@ function ConnectionWizard() {
           <div ref={bottomRef} />
         </div>
         <aside className="hidden sm:block fixed top-0 right-0 z-40 w-96 h-screen" aria-label="Sidebar">
-          <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+          <div className="h-full px-3 py-4 overflow-y-auto bg-surface dark:bg-gray-800">
             <div className="flex flex-col gap-2 p-2">
-              <div className="h-20" />
+              <div className="h-10" />
 
-              <Card>
+              <Card className="border border-divider shadow-none">
                 <Card.Header className="flex flex-col items-start">
                   <p className="font-semibold">Missing the data source credentials?</p>
                 </Card.Header>
@@ -430,7 +430,7 @@ function ConnectionWizard() {
 
               <div className="h-2" />
 
-              <Card>
+              <Card className="border border-divider shadow-none">
                 <Card.Header className="flex flex-col items-start">
                   <p className="font-semibold">Check out our tutorials</p>
                 </Card.Header>

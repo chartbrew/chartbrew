@@ -117,27 +117,27 @@ function HelpBanner(props) {
           _onOpenHelp();
         }
       }}
-      className="max-w-[400px] cursor-pointer shadow-sm transition-opacity hover:opacity-90"
+      className="max-w-[400px] cursor-pointer transition-opacity hover:opacity-90 border border-divider shadow-none"
     >
-      <Card.Header className="flex gap-3">
-        <div>
+      <Card.Header>
+        <div className="mb-1">
           <img
             src={imageUrl}
-            width={100}
-            height={80}
-            className="rounded-lg"
+            width={60}
+            height={60}
+            className="rounded-2xl border border-divider"
           />
         </div>
-        <div>
+        <Card.Title>
           <Link
-            className={"font-bold text-start"}
+            className="font-semibold"
             href={bannerData[type].url}
             target="_blank"
             rel="noopener"
           >
             {bannerData[type].title}
           </Link>
-        </div>
+        </Card.Title>
       </Card.Header>
       <Separator />
       <Card.Content>
@@ -148,7 +148,7 @@ function HelpBanner(props) {
       <Separator />
       <Card.Footer>
         <Row align="center">
-          <LuGraduationCap size={24} />
+          <LuGraduationCap size={20} />
           <div className="w-1" />
           <div className="text-sm text-gray-500">
             {bannerData[type].info}

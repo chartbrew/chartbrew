@@ -383,9 +383,18 @@ function ChartDatasetConfig(props) {
       >
         <Tabs.ListContainer>
           <Tabs.List className="w-full">
-            <Tabs.Tab id="data-setup">Data setup</Tabs.Tab>
-            <Tabs.Tab id="display">Display</Tabs.Tab>
-            <Tabs.Tab id="automation">Automation</Tabs.Tab>
+            <Tabs.Tab id="data-setup">
+              <Tabs.Indicator />
+              Data setup
+            </Tabs.Tab>
+            <Tabs.Tab id="display">
+              <Tabs.Indicator />
+              Display
+            </Tabs.Tab>
+            <Tabs.Tab id="automation">
+              <Tabs.Indicator />
+              Automation
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel id="data-setup">

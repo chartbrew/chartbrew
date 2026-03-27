@@ -397,9 +397,18 @@ function CampaignsQuery(props) {
           >
             <Tabs.ListContainer>
               <Tabs.List>
-                <Tabs.Tab id="metrics">Metrics</Tabs.Tab>
-                <Tabs.Tab id="actions">Actions</Tabs.Tab>
-                <Tabs.Tab id="journey_metrics">Journey metrics</Tabs.Tab>
+                <Tabs.Tab id="metrics">
+                  <Tabs.Indicator />
+                  Metrics
+                </Tabs.Tab>
+                <Tabs.Tab id="actions">
+                  <Tabs.Indicator />
+                  Actions
+                </Tabs.Tab>
+                <Tabs.Tab id="journey_metrics">
+                  <Tabs.Indicator />
+                  Journey metrics
+                </Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>
           </Tabs>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Separator, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Label, ListBox, Select,
-  Badge, Drawer,
+  Badge, Drawer, TextField, InputGroup, Description,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -645,7 +645,7 @@ function FirestoreBuilder(props) {
                     )}
                   </Badge.Anchor>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Apply transformations to the data
                 </Tooltip.Content>
               </Tooltip>
@@ -660,7 +660,7 @@ function FirestoreBuilder(props) {
                     <LuTrash />
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Delete this data request
                 </Tooltip.Content>
               </Tooltip>
@@ -759,15 +759,15 @@ function FirestoreBuilder(props) {
           </Row>
           <div className="h-2" />
           <Row align="center">
-            <Input
-              label="Order by"
-              placeholder="Enter field name"
-              value={orderBy}
-              onChange={(e) => setOrderBy(e.target.value)}
-              variant="secondary"
-              size="sm"
-              fullWidth
-            />
+            <TextField fullWidth name="firestore-order-by">
+              <Label>Order by</Label>
+              <Input
+                placeholder="Enter field name"
+                value={orderBy}
+                onChange={(e) => setOrderBy(e.target.value)}
+                variant="secondary"
+              />
+            </TextField>
             <div className="w-1" />
             <Select
               variant="secondary"
@@ -798,15 +798,15 @@ function FirestoreBuilder(props) {
           </Row>
           <div className="h-4" />
           <Row>
-            <Input
-              label="Limit (leave empty or 0 for unlimited)"
-              placeholder="Enter limit"
-              value={limit}
-              onChange={(e) => setLimit(e.target.value)}
-              className={"max-w-[300px]"}
-              variant="secondary"
-              size="sm"
-            />
+            <TextField className="max-w-[300px]" name="firestore-limit">
+              <Label>Limit (leave empty or 0 for unlimited)</Label>
+              <Input
+                placeholder="Enter limit"
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+                variant="secondary"
+              />
+            </TextField>
           </Row>
 
           <div className="h-4" />
@@ -1043,7 +1043,7 @@ function FirestoreBuilder(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
+              <code className="rounded-sm bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
               </code>
             </div>
@@ -1096,14 +1096,19 @@ function FirestoreBuilder(props) {
             <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="text-sm font-bold text-gray-500">Default value</div>
-              <Input
-                placeholder="Type a value here"
-                fullWidth
-                variant="secondary"
-                value={variableSettings?.default_value}
-                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
-                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
-              />
+              <TextField fullWidth name="firestore-variable-default" aria-label="Default value">
+                <Input
+                  placeholder="Enter a value"
+                  variant="secondary"
+                  value={variableSettings?.default_value ?? ""}
+                  onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
+                />
+                {variableSettings?.required && !variableSettings?.default_value ? (
+                  <Description>
+                    {"This variable is required. The request will fail if you don't provide a value."}
+                  </Description>
+                ) : null}
+              </TextField>
             </div>
             <div className="h-2" />
             <div className="flex flex-col gap-2">
@@ -1252,39 +1257,58 @@ function Conditions(props) {
                   && condition.operator !== "in"
                   && condition.operator !== "not-in")
                 && (
-                  <Input
-                    placeholder="Enter a value"
-                    value={condition.value}
-                    onChange={(e) => updateCondition(condition.id, e.target.value, "value")}
-                    isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                    variant="secondary"
-                    endContent={hasVariables && hasVariables(condition.value) && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <Button
-                            isIconOnly
-                            onPress={() => onVariableClick(getFirstVariable(condition.value))} variant="ghost"
-                            size="sm"
-                          >
-                            <LuVariable />
-                          </Button>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Configure variable</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                  />
+                  <TextField
+                    aria-label="Condition value"
+                    isDisabled={condition.operator === "isNotNull" || condition.operator === "isNull"}
+                  >
+                    <InputGroup variant="secondary">
+                      <InputGroup.Input
+                        placeholder="Enter a value"
+                        value={condition.value}
+                        onChange={(e) => updateCondition(condition.id, e.target.value, "value")}
+                      />
+                      {hasVariables && hasVariables(condition.value) ? (
+                        <InputGroup.Suffix className="pr-0">
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <Button
+                                isIconOnly
+                                onPress={() => onVariableClick(getFirstVariable(condition.value))}
+                                variant="ghost"
+                                size="sm"
+                              >
+                                <LuVariable />
+                              </Button>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Configure variable</Tooltip.Content>
+                          </Tooltip>
+                        </InputGroup.Suffix>
+                      ) : null}
+                    </InputGroup>
+                  </TextField>
                 )}
               {_.find(fieldOptions, { value: condition.field })
                 && _.find(fieldOptions, { value: condition.field }).type === "date" && (
                   <Popover>
                     <Popover.Trigger>
-                      <Input
-                        placeholder="Enter a value"
-                        endContent={<LuCalendarDays />}
-                        value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Click to select a date"}
-                        isDisabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                        variant="secondary"
-                      />
+                      <TextField
+                        aria-label="Condition date value"
+                        isDisabled={condition.operator === "isNotNull" || condition.operator === "isNull"}
+                      >
+                        <InputGroup variant="secondary">
+                          <InputGroup.Input
+                            readOnly
+                            placeholder="Click to select a date"
+                            value={
+                              (condition.value && format(new Date(condition.value), "Pp", { locale: enGB }))
+                              || "Click to select a date"
+                            }
+                          />
+                          <InputGroup.Suffix>
+                            <LuCalendarDays />
+                          </InputGroup.Suffix>
+                        </InputGroup>
+                      </TextField>
                     </Popover.Trigger>
                     <Popover.Content>
                       <Popover.Dialog>
@@ -1305,25 +1329,27 @@ function Conditions(props) {
                 && (
                   <div className="flex flex-col">
                     <form id="condition-values" onSubmit={(e) => e.preventDefault()}>
-                      <Input
-                        placeholder="Enter a value"
-                        value={tempConditionValue}
-                        onChange={(e) => setTempConditionValue(e.target.value)}
-                        variant="secondary"
-                        disableAnimation
-                        endContent={(
-                          <Button
-                            variant="ghost"
-                            isIconOnly
-                            onPress={() => _onAddConditionValue(condition)}
-                            type="submit"
-                            form="condition-values"
-                            size="sm"
-                          >
-                            <LuCirclePlus />
-                          </Button>
-                        )}
-                      />
+                      <TextField aria-label="Add value to condition">
+                        <InputGroup variant="secondary">
+                          <InputGroup.Input
+                            placeholder="Enter a value"
+                            value={tempConditionValue}
+                            onChange={(e) => setTempConditionValue(e.target.value)}
+                          />
+                          <InputGroup.Suffix className="pr-0">
+                            <Button
+                              variant="ghost"
+                              isIconOnly
+                              onPress={() => _onAddConditionValue(condition)}
+                              type="submit"
+                              form="condition-values"
+                              size="sm"
+                            >
+                              <LuCirclePlus />
+                            </Button>
+                          </InputGroup.Suffix>
+                        </InputGroup>
+                      </TextField>
                     </form>
                     <div className="h-2" />
                     <div className="flex flex-row flex-wrap gap-1">

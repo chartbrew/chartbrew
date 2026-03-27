@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Chip, Separator, Switch, Select,
   ProgressCircle, Label, ListBox,
+  TextField, Description, FieldError,
 } from "@heroui/react";
-import { LuCircleCheck, LuCopy, LuCopyCheck, LuUpload } from "react-icons/lu";
+import { LuChevronRight, LuCircleCheck, LuUpload } from "react-icons/lu";
 import AceEditor from "react-ace";
 import { useDispatch, useSelector } from "react-redux";
-import { RiArrowRightSLine } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -194,7 +194,7 @@ function ClickHouseConnectionForm(props) {
   }
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Add a new ClickHouse connection"}
@@ -203,81 +203,90 @@ function ClickHouseConnectionForm(props) {
         <div className="h-8" />
 
         <div className="flex flex-col gap-2">
-          <Input
-            label="Name your connection"
-            placeholder="Enter a name that you can recognise later"
-            value={connection.name || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, name: e.target.value });
-            }}
-            color={errors.name ? "danger" : "default"}
-            description={errors.name}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-name" isInvalid={Boolean(errors.name)}>
+            <Label>Name your connection</Label>
+            <Input
+              variant="secondary"
+              placeholder="Enter a name that you can recognise later"
+              value={connection.name || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, name: e.target.value });
+              }}
+            />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+          </TextField>
 
-          <Input
-            label="Hostname or IP address"
-            placeholder="clickhouse.example.com"
-            value={connection.host || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, host: e.target.value });
-            }}
-            color={errors.host ? "danger" : "default"}
-            description={errors.host}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-host" isInvalid={Boolean(errors.host)}>
+            <Label>Hostname or IP address</Label>
+            <Input
+              variant="secondary"
+              placeholder="clickhouse.example.com"
+              value={connection.host || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, host: e.target.value });
+              }}
+            />
+            {errors.host ? <FieldError>{errors.host}</FieldError> : null}
+          </TextField>
 
-          <Input
-            label="Port"
-            placeholder={connection.ssl ? "8443" : "8123"}
-            value={connection.port || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, port: e.target.value });
-            }}
-            color={errors.port ? "danger" : "default"}
-            description={connection.ssl ? "Default HTTPS port: 8443" : "Default HTTP port: 8123"}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-port" isInvalid={Boolean(errors.port)}>
+            <Label>Port</Label>
+            <Input
+              variant="secondary"
+              placeholder={connection.ssl ? "8443" : "8123"}
+              value={connection.port || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, port: e.target.value });
+              }}
+            />
+            {errors.port ? (
+              <FieldError>{errors.port}</FieldError>
+            ) : (
+              <Description>
+                {connection.ssl ? "Default HTTPS port: 8443" : "Default HTTP port: 8123"}
+              </Description>
+            )}
+          </TextField>
 
-          <Input
-            label="Database name"
-            value={connection.dbName || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, dbName: e.target.value });
-            }}
-            color={errors.dbName ? "danger" : "default"}
-            description={errors.dbName}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-db" isInvalid={Boolean(errors.dbName)}>
+            <Label>Database name</Label>
+            <Input
+              placeholder="Enter your database name"
+              variant="secondary"
+              value={connection.dbName || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, dbName: e.target.value });
+              }}
+            />
+            {errors.dbName ? <FieldError>{errors.dbName}</FieldError> : null}
+          </TextField>
 
-          <Input
-            label="Database username"
-            value={connection.username || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, username: e.target.value });
-            }}
-            color={errors.username ? "danger" : "default"}
-            description={errors.username}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-user" isInvalid={Boolean(errors.username)}>
+            <Label>Database username</Label>
+            <Input
+              placeholder="Enter your database username"
+              variant="secondary"
+              value={connection.username || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, username: e.target.value });
+              }}
+            />
+            {errors.username ? <FieldError>{errors.username}</FieldError> : null}
+          </TextField>
 
-          <Input
-            type="password"
-            label="Database password"
-            value={connection.password || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, password: e.target.value });
-            }}
-            color={errors.password ? "danger" : "default"}
-            description={errors.password}
-            variant="secondary"
-            className="max-w-md"
-          />
+          <TextField className="max-w-md" fullWidth name="ch-pass" isInvalid={Boolean(errors.password)}>
+            <Label>Database password</Label>
+            <Input
+              type="password"
+              placeholder="Enter your database password"
+              variant="secondary"
+              value={connection.password || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, password: e.target.value });
+              }}
+            />
+            {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+          </TextField>
         </div>
 
         <div className="h-8" />
@@ -286,7 +295,6 @@ function ClickHouseConnectionForm(props) {
             id="clickhouse-connection-ssl"
             isSelected={connection.ssl || false}
             onChange={(selected) => _onChangeSSL(selected)}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -354,7 +362,7 @@ function ClickHouseConnectionForm(props) {
                     onChange={_selectRootCert}
                   />
                   <Button
-                    variant="ghost"
+                    variant="tertiary"
                     onPress={() => document.getElementById("rootCertInput").click()}
                   >
                     <LuUpload />
@@ -382,7 +390,7 @@ function ClickHouseConnectionForm(props) {
                     onChange={_selectClientCert}
                   />
                   <Button
-                    variant="ghost"
+                    variant="tertiary"
                     onPress={() => document.getElementById("clientCertInput").click()}
                   >
                     <LuUpload />
@@ -410,7 +418,7 @@ function ClickHouseConnectionForm(props) {
                     onChange={_selectClientKey}
                   />
                   <Button
-                    variant="ghost"
+                    variant="tertiary"
                     onPress={() => document.getElementById("clientKeyInput").click()}
                   >
                     <LuUpload />
@@ -440,7 +448,7 @@ function ClickHouseConnectionForm(props) {
           </>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
         <FormGuides />
 
         {addError && (
@@ -459,7 +467,7 @@ function ClickHouseConnectionForm(props) {
         <div className="h-8" />
         <Row>
           <Button
-            variant="ghost"
+            variant="outline"
             auto
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
@@ -469,6 +477,7 @@ function ClickHouseConnectionForm(props) {
           </Button>
           <div className="w-2" />
           <Button
+            variant="primary"
             isPending={loading}
             onPress={_onCreateConnection}
           >
@@ -480,9 +489,9 @@ function ClickHouseConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <div className="font-bold text-sm">
@@ -496,7 +505,7 @@ function ClickHouseConnectionForm(props) {
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <div className="h-8" />
+            <div className="h-2" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -515,33 +524,14 @@ function ClickHouseConnectionForm(props) {
 }
 
 function FormGuides() {
-  const [copiedIP, setCopiedIP] = useState(false);
-
   return (
     <>
       <Row align="center">
-        <RiArrowRightSLine />
+        <LuChevronRight size={16} />
         <div className="w-2" />
         <div>
-          {"You can add our IP address to the allow list to allow remote connections: "}
-          <span className="font-bold">{"89.39.106.86"}</span>
+          {"You might need to whitelist your server's IP address to allow remote connections"}
         </div>
-        <div className="w-2" />
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          color={copiedIP ? "success" : "default"}
-          onPress={() => {
-            navigator.clipboard.writeText("89.39.106.86");
-            setCopiedIP(true);
-            setTimeout(() => {
-              setCopiedIP(false);
-            }, 2000);
-          }}
-        >
-          {copiedIP ? <LuCopyCheck /> : <LuCopy />}
-        </Button>
       </Row>
     </>
   );

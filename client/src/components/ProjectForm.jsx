@@ -96,9 +96,18 @@ function ProjectForm(props) {
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
                         <Tabs.ListContainer>
                           <Tabs.List className="w-full">
-                            <Tabs.Tab id="empty">Empty dashboard</Tabs.Tab>
-                            <Tabs.Tab id="communityTemplates">Community templates</Tabs.Tab>
-                            <Tabs.Tab id="template">Custom templates</Tabs.Tab>
+                            <Tabs.Tab id="empty">
+                              <Tabs.Indicator />
+                              Empty dashboard
+                            </Tabs.Tab>
+                            <Tabs.Tab id="communityTemplates">
+                              <Tabs.Indicator />
+                              Community templates
+                            </Tabs.Tab>
+                            <Tabs.Tab id="template">
+                              <Tabs.Indicator />
+                              Custom templates
+                            </Tabs.Tab>
                           </Tabs.List>
                         </Tabs.ListContainer>
                       </Tabs>

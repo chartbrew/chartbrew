@@ -1484,13 +1484,34 @@ function ProjectDashboard() {
                 >
                   <Tabs.ListContainer>
                     <Tabs.List>
-                      <Tabs.Tab id="xxxl">4K</Tabs.Tab>
-                      <Tabs.Tab id="xxl">2K</Tabs.Tab>
-                      <Tabs.Tab id="xl">Large screen</Tabs.Tab>
-                      <Tabs.Tab id="lg">Desktop</Tabs.Tab>
-                      <Tabs.Tab id="md">Laptop</Tabs.Tab>
-                      <Tabs.Tab id="sm">Tablet</Tabs.Tab>
-                      <Tabs.Tab id="xs">Mobile</Tabs.Tab>
+                      <Tabs.Tab id="xxxl">
+                        <Tabs.Indicator />
+                        4K
+                      </Tabs.Tab>
+                      <Tabs.Tab id="xxl">
+                        <Tabs.Indicator />
+                        2K
+                      </Tabs.Tab>
+                      <Tabs.Tab id="xl">
+                        <Tabs.Indicator />
+                        Large screen
+                      </Tabs.Tab>
+                      <Tabs.Tab id="lg">
+                        <Tabs.Indicator />
+                        Desktop
+                      </Tabs.Tab>
+                      <Tabs.Tab id="md">
+                        <Tabs.Indicator />
+                        Laptop
+                      </Tabs.Tab>
+                      <Tabs.Tab id="sm">
+                        <Tabs.Indicator />
+                        Tablet
+                      </Tabs.Tab>
+                      <Tabs.Tab id="xs">
+                        <Tabs.Indicator />
+                        Mobile
+                      </Tabs.Tab>
                     </Tabs.List>
                   </Tabs.ListContainer>
                 </Tabs>

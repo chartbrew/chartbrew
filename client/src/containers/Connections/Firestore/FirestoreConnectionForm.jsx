@@ -4,11 +4,12 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Chip, Accordion, Separator,
+  TextField, Label, FieldError,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
-import { LuExternalLink, LuFileCode2 } from "react-icons/lu";
+import { LuCode, LuExternalLink, LuFileCode2 } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -62,7 +63,7 @@ function FirestoreConnectionForm(props) {
     alignItems: "center",
     padding: "20px",
     borderWidth: 2,
-    borderRadius: 2,
+    borderRadius: 10,
     borderColor: semanticColors[isDark ? "dark" : "light"].content3.DEFAULT,
     borderStyle: "dashed",
     backgroundColor: semanticColors[isDark ? "dark" : "light"].content2.DEFAULT,
@@ -200,45 +201,44 @@ function FirestoreConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Firestore"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
-        <Row align="center">
+        <div className="h-4" />
+        <TextField fullWidth name="firestore-name" isInvalid={Boolean(errors.name)}>
+          <Label>Name your connection</Label>
           <Input
-            label="Name your connection"
             placeholder="Enter a name that you can recognise later"
             value={connection.name || ""}
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            isInvalid={!!errors.name}
-            errorMessage={errors.name || undefined}
             variant="secondary"
-            fullWidth
           />
-        </Row>
-        <div className="h-8" />
+          {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+        </TextField>
+        <div className="h-4" />
 
         <Row align="center">
           <StyledDropzone />
         </Row>
 
-        <div className="h-8" />
+        <div className="h-4" />
 
         {!jsonVisible && (
-          <Row>
+          <div>
             <Button
               onPress={() => setJsonVisible(true)}
               size="sm"
               variant="tertiary"
             >
+              <LuCode size={16} />
               Click here to copy the JSON manually
             </Button>
-          </Row>
+          </div>
         )}
 
         {jsonVisible && (
@@ -266,55 +266,44 @@ function FirestoreConnectionForm(props) {
           </>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
+        <Separator />
+        <div className="h-4" />
         <Row align="center">
-          <Accordion variant="surface" className="max-w-[600px]">
+          <Accordion variant="surface" className="w-full bg-surface-secondary">
             <Accordion.Item id="firestore-auth-help" textValue="How to authenticate">
               <Accordion.Heading>
                 <Accordion.Trigger>
-                  <span className="flex-1 text-start">
-                    <Text b>How to authenticate</Text>
-                  </span>
+                  <div className="flex-1 text-start">
+                    <div className="text-sm font-bold">How to authenticate</div>
+                  </div>
                   <Accordion.Indicator />
                 </Accordion.Trigger>
               </Accordion.Heading>
               <Accordion.Panel>
                 <Accordion.Body>
-              <Row align="center">
-                <Link
-                  href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="align-middle text-accent"
-                >
-                  <Text b className={"text-accent"}>{"1. Create a Firebase Service Account "}</Text>
-                  <div className="w-2" />
-                  <LuExternalLink size={18} />
-                </Link>
-              </Row>
-              <Row align="center">
-                <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
-              </Row>
-              <div className="h-4" />
-              <Row>
-                <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
-              </Row>
-              <Row>
-                <Text>{"This will start a download with a JSON file on your computer."}</Text>
-              </Row>
-              <div className="h-4" />
-              <Row>
-                <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
-              </Row>
-              <Row>
-                <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
-              </Row>
+                  <Link
+                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-accent flex items-center"
+                  >
+                    <div className="text-sm font-bold">{"1. Create a Firebase Service Account "}</div>
+                    <div className="w-2" />
+                    <LuExternalLink size={18} />
+                  </Link>
+                  <div className="text-sm">{"Log in with your Google account and select the project you want to connect to."}</div>
+                  <div className="h-2" />
+                  <div className="text-sm font-bold">{"2. Once authenticated, press on 'Generate new private key'"}</div>
+                  <div className="text-sm">{"This will start a download with a JSON file on your computer."}</div>
+                  <div className="h-2" />
+                  <div className="text-sm font-bold">{"3. Drag and drop the file below or copy the contents in the text editor."}</div>
+                  <div className="text-sm">{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</div>
                 </Accordion.Body>
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
         </Row>
-        <div className="h-8" />
 
         {addError && (
           <Row>
@@ -329,10 +318,10 @@ function FirestoreConnectionForm(props) {
           </Row>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
         <Row>
           <Button
-            variant="ghost"
+            variant="outline"
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
           >
@@ -353,19 +342,18 @@ function FirestoreConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
-              <Text>
-                {"Test Result "}
-              </Text>
+              <div className="text-sm font-bold">Test Result</div>
+              <div className="w-2" />
               <Chip color={testResult.status < 400 ? "success" : "danger"} variant="soft" size="sm">
                 {`Status code: ${testResult.status}`}
               </Chip>
             </Row>
-            <div className="h-2" />
+            <div className="h-4" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

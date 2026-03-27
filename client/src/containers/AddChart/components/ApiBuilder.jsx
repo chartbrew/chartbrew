@@ -722,9 +722,18 @@ function ApiBuilder(props) {
             >
               <Tabs.ListContainer>
                 <Tabs.List>
-                  <Tabs.Tab id="headers">Headers</Tabs.Tab>
-                  <Tabs.Tab id="body">Body</Tabs.Tab>
-                  <Tabs.Tab id="pagination">Pagination</Tabs.Tab>
+                  <Tabs.Tab id="headers">
+                    <Tabs.Indicator />
+                    Headers
+                  </Tabs.Tab>
+                  <Tabs.Tab id="body">
+                    <Tabs.Indicator />
+                    Body
+                  </Tabs.Tab>
+                  <Tabs.Tab id="pagination">
+                    <Tabs.Indicator />
+                    Pagination
+                  </Tabs.Tab>
                 </Tabs.List>
               </Tabs.ListContainer>
             </Tabs>

@@ -4,6 +4,7 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Button, Input, Chip, Separator,
+  TextField, Label, FieldError,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -130,33 +131,31 @@ function GaConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Google Analytics"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
+        <div className="h-4" />
         <Row align="center">
-          <Input
-            label="Name your connection"
-            placeholder="Enter a name that you can recognise later"
-            value={connection.name || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, name: e.target.value });
-            }}
-            helperColor="error"
-            helperText={errors.name}
-            variant="secondary"
-            fullWidth
-            className="md:w-[600px]"
-          />
+          <TextField fullWidth className="md:w-[600px]" name="ga-name" isInvalid={Boolean(errors.name)}>
+            <Label>Name your connection</Label>
+            <Input
+              placeholder="Enter a name that you can recognise later"
+              value={connection.name || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, name: e.target.value });
+              }}
+              variant="secondary"
+            />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+          </TextField>
         </Row>
-        <div className="h-8" />
+        <div className="h-4" />
         <Row>
           {!editConnection && (
             <Button
-              color={"secondary"}
               isDisabled={!connection.name}
               isPending={loading}
               onClick={() => _onCreateConnection()}
@@ -167,7 +166,7 @@ function GaConnectionForm(props) {
           )}
           {editConnection && !connection.OAuth && (
             <Button
-              color={"secondary"}
+              variant="secondary"
               onClick={_onGoogleAuth}
             >
               {"Authenticate with Google"}
@@ -176,7 +175,7 @@ function GaConnectionForm(props) {
           )}
           {editConnection && connection.OAuth && (
             <Button
-              color={"secondary"}
+              variant="secondary"
               onClick={_onGoogleAuth}
               size="sm"
             >
@@ -200,7 +199,7 @@ function GaConnectionForm(props) {
             <Text className="textdanger">{errors.auth}</Text>
           </Row>
         )}
-        <div className="h-8" />
+        <div className="h-4" />
 
         {addError && (
           <Row>
@@ -218,7 +217,7 @@ function GaConnectionForm(props) {
         {editConnection && (
           <Row>
             <Button
-              variant="ghost"
+              variant="outline"
               auto
               onClick={() => _onCreateConnection(true)}
               isDisabled={!connection.name || !connection.oauth_id}
@@ -232,7 +231,7 @@ function GaConnectionForm(props) {
               isDisabled={!connection.oauth_id}
               isPending={loading}
               onClick={_onCreateConnection}
-              color="primary"
+              variant="primary"
             >
               {loading ? <ButtonSpinner /> : null}
               {"Save connection"}
@@ -243,9 +242,9 @@ function GaConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <Text>
@@ -257,7 +256,7 @@ function GaConnectionForm(props) {
                 </Chip>
               </Text>
             </Row>
-            <div className="h-8" />
+            <div className="h-2" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

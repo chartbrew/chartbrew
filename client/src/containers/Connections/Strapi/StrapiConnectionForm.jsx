@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input,
+  TextField, Label, FieldError,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
-import { LuCirclePlus, LuCircleX } from "react-icons/lu";
+import { LuCirclePlus, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -171,128 +172,102 @@ function StrapiConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Strapi"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
         <div style={styles.formStyle}>
           <Row>
-            <Input
-              label="Enter a name for your connection"
-              placeholder="Enter a name you can recognize later"
-              value={connection.name || ""}
-              onChange={(e) => {
-                setConnection({ ...connection, name: e.target.value });
-              }}
-              color={errors.name ? "danger" : "default"}
-              fullWidth
-              variant="secondary"
-              className={"max-w-[500px]"}
-            />
+            <TextField fullWidth className="max-w-[500px]" name="strapi-name" isInvalid={Boolean(errors.name)}>
+              <Label>Enter a name for your connection</Label>
+              <Input
+                placeholder="Enter a name you can recognize later"
+                value={connection.name || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, name: e.target.value });
+                }}
+                variant="secondary"
+              />
+              {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+            </TextField>
           </Row>
-          {errors.name && (
-            <Row>
-              <Text color="danger">
-                {errors.name}
-              </Text>
-            </Row>
-          )}
 
           <div className="h-2" />
           <Row>
-            <Input
-              label="Strapi API URL"
-              placeholder="https://yourstrapi.com/api"
-              value={connection.host || ""}
-              onChange={(e) => {
-                setConnection({ ...connection, host: e.target.value });
-              }}
-              fullWidth
-              color={errors.host ? "danger" : "default"}
-              variant="secondary"
-              className={"max-w-[500px]"}
-            />
+            <TextField fullWidth className="max-w-[500px]" name="strapi-host" isInvalid={Boolean(errors.host)}>
+              <Label>Strapi API URL</Label>
+              <Input
+                placeholder="https://yourstrapi.com/api"
+                value={connection.host || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, host: e.target.value });
+                }}
+                variant="secondary"
+              />
+              {errors.host ? <FieldError>{errors.host}</FieldError> : null}
+            </TextField>
           </Row>
-          {errors.host && (
-            <Row>
-              <Text color="danger">
-                {errors.host}
-              </Text>
-            </Row>
-          )}
 
           <div className="h-4" />
           <Row>
-            <Input
-              label="Strapi API token"
-              placeholder="Enter the API token"
-              value={connection?.authentication?.token || ""}
-              onChange={(e) => _onChangeAuthParams("token", e.target.value)}
-              fullWidth
-              color={errors.authentication ? "danger" : "default"}
-              variant="secondary"
-              className={"max-w-[500px]"}
-            />
+            <TextField fullWidth className="max-w-[500px]" name="strapi-token" isInvalid={Boolean(errors.authentication)}>
+              <Label>Strapi API token</Label>
+              <Input
+                placeholder="Enter the API token"
+                value={connection?.authentication?.token || ""}
+                onChange={(e) => _onChangeAuthParams("token", e.target.value)}
+                variant="secondary"
+              />
+              {errors.authentication ? <FieldError>{errors.authentication}</FieldError> : null}
+            </TextField>
           </Row>
-          {errors.host && (
-            <Row>
-              <Text color="danger">
-                {errors.host}
-              </Text>
-            </Row>
-          )}
 
-          <div className="h-8" />
-          <Row>
-            <Text b>
-              Global headers to send with the requests
-            </Text>
-          </Row>
-          <Row>
-            <Text size="sm">
-              {"These headers are optional and will be included with all the data requests that go to Strapi"}
-            </Text>
-          </Row>
           <div className="h-4" />
+          <div className="text-sm font-bold">
+            Global headers to send with the requests
+          </div>
+          <div className="text-sm">
+            {"These headers are optional and will be included with all the data requests that go to Strapi"}
+          </div>
+          <div className="h-2" />
           <div className="flex flex-col gap-2">
             {connection.optionsArray && connection.optionsArray.map((option) => {
               return (
                 <Row key={option.id} className={"gap-2"}>
-                  <Input
-                    placeholder="Header name"
-                    labelPlacement="outside"
-                    value={option.key}
-                    onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
-                    fullWidth
-                    variant="secondary"
-                  />
-                  <Input
-                    onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
-                    value={option.value}
-                    placeholder="Value"
-                    labelPlacement="outside"
-                    fullWidth
-                    variant="secondary"
-                  />
+                  <TextField fullWidth aria-label="Header name" name={`strapi-hdr-key-${option.id}`}>
+                    <Input
+                      placeholder="Header name"
+                      value={option.key}
+                      onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                      variant="secondary"
+                    />
+                  </TextField>
+                  <TextField fullWidth aria-label="Header value" name={`strapi-hdr-val-${option.id}`}>
+                    <Input
+                      onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                      value={option.value}
+                      placeholder="Value"
+                      variant="secondary"
+                    />
+                  </TextField>
                   <Button
                     isIconOnly
                     onPress={() => _removeOption(option.id)}
-                    variant="tertiary"
+                    variant="ghost"
                   >
-                    <LuCircleX />
+                    <LuX />
                   </Button>
                 </Row>
               );
             })}
           </div>
-          {connection.optionsArray?.length > 0 && (<div className="h-4" />)}
+          {connection.optionsArray?.length > 0 && (<div className="h-2" />)}
           <Button
             size="sm"
             onPress={_addOption}
-            variant="primary"
+            variant="tertiary"
           >
             <LuCirclePlus />
             Add a header
@@ -310,7 +285,7 @@ function StrapiConnectionForm(props) {
           </>
         )}
 
-        <div className="h-16" />
+        <div className="h-4" />
         <Row align="center">
           {!editConnection && (
             <Button
@@ -334,7 +309,6 @@ function StrapiConnectionForm(props) {
           )}
         </Row>
       </div>
-      <div className="h-4" />
     </div>
   );
 }

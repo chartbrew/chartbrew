@@ -11,7 +11,10 @@ import {
   Select,
   Alert,
   Label,
-  ListBox
+  ListBox,
+  TextField,
+  Description,
+  FieldError,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import { useDispatch, useSelector } from "react-redux";
@@ -62,7 +65,7 @@ function PostgresConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "postgres" });
+  const [connection, setConnection] = useState({ type: "postgres", subType: "postgres" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
   const [testResult, setTestResult] = useState(null);
@@ -299,173 +302,171 @@ function PostgresConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-solid border-divider rounded-3xl">
       <div>
         <p className="font-bold">
           {!editConnection && "Add a new connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
-        <Row align="center">
-          <Tabs
-            aria-label="Connection options"
-            selectedKey={formStyle}
-            onSelectionChange={(selected) => setFormStyle(selected)}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="string">Connection string</Tabs.Tab>
-                <Tabs.Tab id="form">Connection form</Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
-        </Row>
+        <div className="h-4" />
+        <Tabs
+          aria-label="Connection options"
+          selectedKey={formStyle}
+          onSelectionChange={(selected) => setFormStyle(selected)}
+          className="max-w-lg"
+        >
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="string">
+                <Tabs.Indicator />
+                Connection string
+              </Tabs.Tab>
+              <Tabs.Tab id="form">
+                <Tabs.Indicator />
+                Connection form
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
         <div className="h-4" />
 
         {formStyle === "string" && (
           <>
             <Row align="center">
-              <Input
-                label="Name your connection"
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, name: e.target.value });
-                }}
-                color={errors.name ? "danger" : "default"}
-                variant="secondary"
-                fullWidth
-              />
-            </Row>
-            {errors.name && (
-              <Row className={"p-5"}>
-                <Text small className={"text-danger"}>
-                  {errors.name}
-                </Text>
-              </Row>
-            )}
-            <div className="h-4" />
-            <Row align="center">
-              <Input
-                label="Enter your Postgres connection string"
-                placeholder={formStrings[subType].csPlaceholder}
-                value={connection.connectionString || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, connectionString: e.target.value });
-                }}
-                description={formStrings[subType].csDescription}
-                variant="secondary"
-                fullWidth
-              />
-            </Row>
-            {errors.connectionString && (
-              <Row className={"p-5"}>
-                <Text small className="text-danger">
-                  {errors.connectionString}
-                </Text>
-              </Row>
-            )}
-            <div className="h-4" />
-          </>
-        )}
-
-        {formStyle === "form" && (
-          <Row>
-            <div className="grid grid-cols-12 gap-2">
-              <div className="sm:col-span-12 md:col-span-8">
+              <TextField fullWidth name="pg-string-name" isInvalid={Boolean(errors.name)}>
+                <Label>Name your connection</Label>
                 <Input
-                  label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
                   value={connection.name || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, name: e.target.value });
                   }}
-                  color={errors.name ? "danger" : "default"}
-                  description={errors.name}
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
-
-              <div className="sm:col-span-12 md:col-span-10">
+                {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+              </TextField>
+            </Row>
+            <div className="h-4" />
+            <Row align="center">
+              <TextField fullWidth name="pg-string-uri" isInvalid={Boolean(errors.connectionString)}>
+                <Label>Enter your Postgres connection string</Label>
                 <Input
-                  label="Hostname or IP address"
-                  placeholder={formStrings[subType].hostname}
+                  placeholder={formStrings[subType]?.csPlaceholder || ""}
+                  value={connection.connectionString || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, connectionString: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.connectionString ? (
+                  <FieldError>{errors.connectionString}</FieldError>
+                ) : (
+                  <Description>{formStrings[subType]?.csDescription}</Description>
+                )}
+              </TextField>
+            </Row>
+            <div className="h-2" />
+          </>
+        )}
+
+        {formStyle === "form" && (
+          <div className="grid grid-cols-12 gap-2">
+            <div className="sm:col-span-12 md:col-span-8">
+              <TextField fullWidth name="pg-form-name" isInvalid={Boolean(errors.name)}>
+                <Label>Name your connection</Label>
+                <Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, name: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+              </TextField>
+            </div>
+
+            <div className="sm:col-span-12 md:col-span-10">
+              <TextField fullWidth name="pg-form-host" isInvalid={Boolean(errors.host)}>
+                <Label>Hostname or IP address</Label>
+                <Input
+                  placeholder={formStrings[subType]?.hostname}
                   value={connection.host || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, host: e.target.value });
                   }}
-                  color={errors.host ? "danger" : "default"}
-                  description={errors.host}
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
-              <div className="sm:col-span-12 md:col-span-2">
+                {errors.host ? <FieldError>{errors.host}</FieldError> : null}
+              </TextField>
+            </div>
+            <div className="sm:col-span-12 md:col-span-2">
+              <TextField fullWidth name="pg-form-port" isInvalid={Boolean(errors.port)}>
+                <Label>Port</Label>
                 <Input
-                  label="Port"
                   value={connection.port || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, port: e.target.value });
                   }}
-                  color={errors.port ? "danger" : "default"}
-                  description={errors.port}
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
+                {errors.port ? <FieldError>{errors.port}</FieldError> : null}
+              </TextField>
+            </div>
 
-              <div className="sm:col-span-12 md:col-span-4">
+            <div className="sm:col-span-12 md:col-span-4">
+              <TextField fullWidth name="pg-form-db" isInvalid={Boolean(errors.dbName)}>
+                <Label>Database name</Label>
                 <Input
-                  label="Database name"
                   value={connection.dbName || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
                   }}
-                  color={errors.dbName ? "danger" : "default"}
-                  description={errors.dbName}
+                  placeholder="Enter your database name"
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
+                {errors.dbName ? <FieldError>{errors.dbName}</FieldError> : null}
+              </TextField>
+            </div>
 
-              <div className="sm:col-span-12 md:col-span-4">
+            <div className="sm:col-span-12 md:col-span-4">
+              <TextField fullWidth name="pg-form-user" isInvalid={Boolean(errors.username)}>
+                <Label>Database username</Label>
                 <Input
-                  label="Database username"
                   value={connection.username || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
                   }}
-                  color={errors.username ? "danger" : "default"}
-                  description={errors.username}
+                  placeholder="Enter your database username"
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
+                {errors.username ? <FieldError>{errors.username}</FieldError> : null}
+              </TextField>
+            </div>
 
-              <div className="sm:col-span-12 md:col-span-4">
+            <div className="sm:col-span-12 md:col-span-4">
+              <TextField fullWidth name="pg-form-pass" isInvalid={Boolean(errors.password)}>
+                <Label>Database password</Label>
                 <Input
                   type="password"
-                  label="Database password"
+                  value={connection.password || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
-                  color={errors.password ? "danger" : "default"}
-                  description={errors.password}
+                  placeholder="Enter your database password"
                   variant="secondary"
-                  fullWidth
                 />
-              </div>
+                {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+              </TextField>
             </div>
-          </Row>
+          </div>
         )}
-        <div className="h-4" />
+        <div className="h-2" />
         <Row align="center">
           <Switch
             id="postgres-connection-ssl"
             isSelected={connection.ssl || false}
             onChange={(selected) => _onChangeSSL(selected)}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -531,7 +532,7 @@ function PostgresConnectionForm(props) {
                 onChange={_selectRootCert}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("rootCertInput").click()}
               >
                 <LuUpload />
@@ -559,7 +560,7 @@ function PostgresConnectionForm(props) {
                 onChange={_selectClientCert}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("clientCertInput").click()}
               >
                 <LuUpload />
@@ -587,7 +588,7 @@ function PostgresConnectionForm(props) {
                 onChange={_selectClientKey}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("clientKeyInput").click()}
               >
                 <LuUpload />
@@ -615,13 +616,12 @@ function PostgresConnectionForm(props) {
           </>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
         <Row align="center">
           <Switch
             id="postgres-connection-ssh-tunnel"
             isSelected={connection.useSsh || false}
             onChange={(selected) => setConnection({ ...connection, useSsh: selected })}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -641,59 +641,60 @@ function PostgresConnectionForm(props) {
             <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
-                <Input
-                  label="SSH Host"
-                  placeholder="ssh.example.com"
-                  value={connection.sshHost || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshHost: e.target.value });
-                  }}
-                  color={errors.sshHost ? "danger" : "default"}
-                  description={errors.sshHost}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-host" isInvalid={Boolean(errors.sshHost)}>
+                  <Label>SSH Host</Label>
+                  <Input
+                    placeholder="ssh.example.com"
+                    value={connection.sshHost || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshHost: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshHost ? <FieldError>{errors.sshHost}</FieldError> : null}
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="SSH Port"
-                  placeholder="22"
-                  value={connection.sshPort || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshPort: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-port">
+                  <Label>SSH Port</Label>
+                  <Input
+                    placeholder="22"
+                    value={connection.sshPort || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshPort: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-6">
-                <Input
-                  label="SSH Username"
-                  placeholder="username"
-                  value={connection.sshUsername || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshUsername: e.target.value });
-                  }}
-                  color={errors.sshUsername ? "danger" : "default"}
-                  description={errors.sshUsername}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-user" isInvalid={Boolean(errors.sshUsername)}>
+                  <Label>SSH Username</Label>
+                  <Input
+                    placeholder="username"
+                    value={connection.sshUsername || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshUsername: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshUsername ? <FieldError>{errors.sshUsername}</FieldError> : null}
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-6">
-                <Input
-                  type="password"
-                  label="SSH Password"
-                  placeholder="Leave empty if using private key"
-                  value={connection.sshPassword || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshPassword: e.target.value });
-                  }}
-                  color={errors.sshPassword ? "danger" : "default"}
-                  description={errors.sshPassword}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-pass" isInvalid={Boolean(errors.sshPassword)}>
+                  <Label>SSH Password</Label>
+                  <Input
+                    type="password"
+                    placeholder="Leave empty if using private key"
+                    value={connection.sshPassword || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshPassword: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshPassword ? <FieldError>{errors.sshPassword}</FieldError> : null}
+                </TextField>
               </div>
             </div>
             <div className="h-4" />
@@ -705,7 +706,7 @@ function PostgresConnectionForm(props) {
                 onChange={_selectSshPrivateKey}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("sshPrivateKeyInput").click()}
               >
                 <LuUpload />
@@ -726,43 +727,46 @@ function PostgresConnectionForm(props) {
             </Row>
             <div className="h-4" />
             <Row align="center">
-              <Input
-                type="password"
-                label="Private Key Passphrase"
-                placeholder="Leave empty if not needed"
-                value={connection.sshPassphrase || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, sshPassphrase: e.target.value });
-                }}
-                variant="secondary"
-                className="w-full md:w-1/2"
-              />
+              <TextField className="w-full md:w-1/2" name="pg-ssh-passphrase">
+                <Label>Private Key Passphrase</Label>
+                <Input
+                  type="password"
+                  placeholder="Leave empty if not needed"
+                  value={connection.sshPassphrase || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshPassphrase: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+              </TextField>
             </Row>
             <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
-                <Input
-                  label="Jump Host (Bastion Server)"
-                  placeholder="bastion.example.com (optional)"
-                  value={connection.sshJumpHost || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshJumpHost: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-jump-host">
+                  <Label>Jump Host (Bastion Server)</Label>
+                  <Input
+                    placeholder="bastion.example.com (optional)"
+                    value={connection.sshJumpHost || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshJumpHost: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="Jump Host Port"
-                  placeholder="22"
-                  value={connection.sshJumpPort || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshJumpPort: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="pg-ssh-jump-port">
+                  <Label>Jump Host Port</Label>
+                  <Input
+                    placeholder="22"
+                    value={connection.sshJumpPort || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshJumpPort: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
             </div>
             <div className="h-4" />
@@ -812,8 +816,7 @@ function PostgresConnectionForm(props) {
         <div className="h-8" />
         <Row>
           <Button
-            variant="ghost"
-            auto
+            variant="outline"
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
           >
@@ -834,9 +837,9 @@ function PostgresConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <Text>
@@ -850,7 +853,7 @@ function PostgresConnectionForm(props) {
                 </Chip>
               </Text>
             </Row>
-            <div className="h-8" />
+            <div className="h-4" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}
@@ -887,9 +890,8 @@ function FormGuides({ subType }) {
   if (subType === "timescaledb") {
     return (
       <>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={14} />
           <Link
             href="https://docs.timescale.com/timescaledb/latest/how-to-guides/connecting/about-connecting/#find-connection-details-in-timescale-cloud"
             target="_blank"
@@ -898,8 +900,8 @@ function FormGuides({ subType }) {
             <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
           </Link>
           <div className="w-2" />
-          <LuExternalLink />
-        </Row>
+          <LuExternalLink size={14} />
+        </div>
       </>
     )
   }
@@ -907,19 +909,18 @@ function FormGuides({ subType }) {
   if (subType === "supabasedb") {
     return (
       <>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={14} />
           <Link
             target="_blank"
             rel="noopener"
             href="https://chartbrew.com/blog/connect-and-visualize-supabase-database-with-chartbrew/#create-a-read-only-user"
+            className="text-foreground/70!"
           >
-            <Text>{"For security reasons, connect to your Supabase database with read-only credentials"}</Text>
+            {"For security reasons, connect to your Supabase database with read-only credentials"}
           </Link>
-          <div className="w-2" />
-          <LuExternalLink />
-        </Row>
+          <LuExternalLink size={14} />
+        </div>
       </>
     );
   }
@@ -927,64 +928,62 @@ function FormGuides({ subType }) {
   if (subType === "rdsPostgres") {
     return (
       <>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={14} />
           <Link
             target="_blank"
             rel="noopener noreferrer"
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#ensure-your-database-user-has-read-only-access-optional-but-recommended"
+            className="text-foreground/70!"
           >
-            <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
+            {"For security reasons, connect to your PostgreSQL database with read-only credentials"}
           </Link>
-          <div className="w-2" />
-          <LuExternalLink />
-        </Row>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+          <LuExternalLink size={14} />
+        </div>
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={14} />
           <Link
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
             target="_blank"
             rel="noopener noreferrer"
+            className="text-foreground/70!"
           >
-            <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
+            {"Find out how to allow remote connections to your PostgreSQL database"}
           </Link>
-          <div className="w-2" />
-          <LuExternalLink />
-        </Row>
+          <LuExternalLink size={14} />
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <Row align="center">
-        <LuChevronRight />
+      <div className="flex items-center gap-2">
+        <LuChevronRight size={14} />
         <div className="w-2" />
         <Link
           target="_blank"
           rel="noopener noreferrer"
           href="https://gist.github.com/oinopion/4a207726edba8b99fd0be31cb28124d0"
+          className="text-foreground/70!"
         >
-          <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
+          {"For security reasons, connect to your PostgreSQL database with read-only credentials"}
         </Link>
-        <div className="w-2" />
-        <LuExternalLink />
-      </Row>
-      <Row align="center">
-        <LuChevronRight />
+        <LuExternalLink size={14} />
+      </div>
+      <div className="flex items-center gap-2">
+        <LuChevronRight size={14} />
         <div className="w-2" />
         <Link
           href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
           target="_blank"
           rel="noopener noreferrer"
+          className="text-foreground/70!"
         >
-          <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
+          {"Find out how to allow remote connections to your PostgreSQL database"}
         </Link>
-        <div className="w-2" />
-        <LuExternalLink />
-      </Row>
+        <LuExternalLink size={14} />
+      </div>
     </>
   );
 }

@@ -12,11 +12,13 @@ import {
   ProgressCircle,
   Alert,
   Label,
-  ListBox
+  ListBox,
+  TextField,
+  Description,
+  FieldError,
 } from "@heroui/react";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
-import { LuChevronRight, LuCircleCheck, LuUpload } from "react-icons/lu";
+import { LuChevronRight, LuCircleCheck, LuExternalLink, LuUpload } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -291,72 +293,70 @@ function MysqlConnectionForm(props) {
   }
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Add a new MySQL connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
-        <div className="h-8" />
-        <Row align="center" style={styles.formStyle}>
-          <Tabs
-            selectedKey={formStyle}
-            onSelectionChange={(key) => setFormStyle(key)}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="string">Connection string</Tabs.Tab>
-                <Tabs.Tab id="form">Connection form</Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
-        </Row>
+        <div className="h-4" />
+        <Tabs
+          aria-label="Connection options"
+          selectedKey={formStyle}
+          onSelectionChange={(key) => setFormStyle(key)}
+          className="max-w-lg"
+        >
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="string">
+                <Tabs.Indicator />
+                Connection string
+              </Tabs.Tab>
+              <Tabs.Tab id="form">
+                <Tabs.Indicator />
+                Connection form
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
         <div className="h-4" />
 
         {formStyle === "string" && (
           <>
             <Row align="center">
-              <Input
-                label="Name your connection"
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, name: e.target.value });
-                }}
-                color={errors.name ? "danger" : "default"}
-                variant="secondary"
-                fullWidth
-              />
+              <TextField fullWidth name="mysql-string-name" isInvalid={Boolean(errors.name)}>
+                <Label>Name your connection</Label>
+                <Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, name: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+              </TextField>
             </Row>
-            {errors.name && (
-              <Row className="p-5">
-                <Text small className="text-danger">
-                  {errors.name}
-                </Text>
-              </Row>
-            )}
             <div className="h-4" />
             <Row align="center">
-              <Input
-                label="Enter your MySQL connection string"
-                placeholder={formStrings[subType].csPlaceholder}
-                value={connection.connectionString || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, connectionString: e.target.value });
-                }}
-                description={formStrings[subType].csDescription}
-                variant="secondary"
-                fullWidth
-              />
+              <TextField fullWidth name="mysql-string-uri" isInvalid={Boolean(errors.connectionString)}>
+                <Label>Enter your MySQL connection string</Label>
+                <Input
+                  placeholder={formStrings[subType].csPlaceholder}
+                  value={connection.connectionString || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, connectionString: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+                {errors.connectionString ? (
+                  <FieldError>{errors.connectionString}</FieldError>
+                ) : (
+                  <Description>{formStrings[subType].csDescription}</Description>
+                )}
+              </TextField>
             </Row>
-            {errors.connectionString && (
-              <Row className={"p-5"}>
-                <Text small className="text-danger">
-                  {errors.connectionString}
-                </Text>
-              </Row>
-            )}
-            <div className="h-4" />
+            <div className="h-2" />
           </>
         )}
 
@@ -364,115 +364,115 @@ function MysqlConnectionForm(props) {
           <Row>
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
-                <Input
-                  label="Name your connection"
-                  placeholder="Enter a name that you can recognise later"
-                  value={connection.name || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, name: e.target.value });
-                  }}
-                  color={errors.name ? "danger" : "default"}
-                  description={errors.name}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-name" isInvalid={Boolean(errors.name)}>
+                  <Label>Name your connection</Label>
+                  <Input
+                    placeholder="Enter a name that you can recognise later"
+                    value={connection.name || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, name: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="sm:col-span-12 md:col-span-10">
-                <Input
-                  label="Hostname or IP address"
-                  placeholder={formStrings[subType].hostname}
-                  value={connection.host || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, host: e.target.value });
-                  }}
-                  color={errors.host ? "danger" : "default"}
-                  description={errors.host}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-host" isInvalid={Boolean(errors.host)}>
+                  <Label>Hostname or IP address</Label>
+                  <Input
+                    placeholder={formStrings[subType].hostname}
+                    value={connection.host || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, host: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.host ? <FieldError>{errors.host}</FieldError> : null}
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-2">
-                <Input
-                  label="Port"
-                  placeholder="Optional, defaults to 3306"
-                  value={connection.port || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, port: e.target.value });
-                  }}
-                  color={errors.port ? "danger" : "default"}
-                  description={errors.port}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-port" isInvalid={Boolean(errors.port)}>
+                  <Label>Port</Label>
+                  <Input
+                    placeholder="Optional, defaults to 3306"
+                    value={connection.port || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, port: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.port ? <FieldError>{errors.port}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="Database name"
-                  value={connection.dbName || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, dbName: e.target.value });
-                  }}
-                  color={errors.dbName ? "danger" : "default"}
-                  description={errors.dbName}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-db" isInvalid={Boolean(errors.dbName)}>
+                  <Label>Database name</Label>
+                  <Input
+                    placeholder="Enter your database name"
+                    value={connection.dbName || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, dbName: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.dbName ? <FieldError>{errors.dbName}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="Database username"
-                  value={connection.username || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, username: e.target.value });
-                  }}
-                  color={errors.username ? "danger" : "default"}
-                  description={errors.username}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-user" isInvalid={Boolean(errors.username)}>
+                  <Label>Database username</Label>
+                  <Input
+                    placeholder="Enter your database username"
+                    value={connection.username || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, username: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.username ? <FieldError>{errors.username}</FieldError> : null}
+                </TextField>
               </div>
 
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  type="password"
-                  label="Database password"
-                  onChange={(e) => {
-                    setConnection({ ...connection, password: e.target.value });
-                  }}
-                  color={errors.password ? "danger" : "default"}
-                  description={errors.password}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-form-pass" isInvalid={Boolean(errors.password)}>
+                  <Label>Database password</Label>
+                  <Input
+                    type="password"
+                    placeholder="Enter your database password"
+                    value={connection.password || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, password: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+                </TextField>
               </div>
             </div>
           </Row>
         )}
         <div className="h-4" />
-        <Row align="center">
-          <Switch
-            id="mysql-connection-ssl"
-            isSelected={connection.ssl || false}
-            onChange={(selected) => _onChangeSSL(selected)}
-            size="sm"
-          >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            <Switch.Content>
-              <Label htmlFor="mysql-connection-ssl">{"Enable SSL"}</Label>
-            </Switch.Content>
-          </Switch>
-        </Row>
+        <Switch
+          id="mysql-connection-ssl"
+          isSelected={connection.ssl || false}
+          onChange={(selected) => _onChangeSSL(selected)}
+        >
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Switch.Content>
+            <Label htmlFor="mysql-connection-ssl">{"Enable SSL"}</Label>
+          </Switch.Content>
+        </Switch>
         {connection.ssl && (
           <>
             <div className="h-4" />
             <Row align="center">
               <Select
-                variant="secondary"
                 value={connection.sslMode || null}
                 onChange={(value) => {
                   setConnection({ ...connection, sslMode: value });
@@ -481,6 +481,7 @@ function MysqlConnectionForm(props) {
                 size="sm"
                 selectionMode="single"
                 disallowEmptySelection
+                variant="secondary"
               >
                 <Label>SSL Mode</Label>
                 <Select.Trigger>
@@ -522,7 +523,7 @@ function MysqlConnectionForm(props) {
                 onChange={_selectRootCert}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("rootCertInput").click()}
               >
                 <LuUpload />
@@ -550,7 +551,7 @@ function MysqlConnectionForm(props) {
                 onChange={_selectClientCert}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("clientCertInput").click()}
               >
                 <LuUpload />
@@ -578,7 +579,7 @@ function MysqlConnectionForm(props) {
                 onChange={_selectClientKey}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("clientKeyInput").click()}
               >
                 <LuUpload />
@@ -606,85 +607,83 @@ function MysqlConnectionForm(props) {
           </>
         )}
 
-        <div className="h-8" />
-        <Row align="center">
+        <div className="h-2" />
           <Switch
             id="mysql-connection-ssh-tunnel"
             isSelected={connection.useSsh || false}
             onChange={(selected) => setConnection({ ...connection, useSsh: selected })}
-            size="sm"
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            <Switch.Content>
-              <Label htmlFor="mysql-connection-ssh-tunnel">
-                <div className="flex items-center gap-2">
-                  {"Use SSH Tunnel"}
-                  <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
-                </div>
-              </Label>
-            </Switch.Content>
-          </Switch>
-        </Row>
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Switch.Content>
+            <Label htmlFor="mysql-connection-ssh-tunnel">
+              <div className="flex items-center gap-2">
+                {"Use SSH Tunnel"}
+                <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
+              </div>
+            </Label>
+          </Switch.Content>
+        </Switch>
         {connection.useSsh && (
           <>
             <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
-                <Input
-                  label="SSH Host"
-                  placeholder="ssh.example.com"
-                  value={connection.sshHost || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshHost: e.target.value });
-                  }}
-                  color={errors.sshHost ? "danger" : "default"}
-                  description={errors.sshHost}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-host" isInvalid={Boolean(errors.sshHost)}>
+                  <Label>SSH Host</Label>
+                  <Input
+                    placeholder="ssh.example.com"
+                    value={connection.sshHost || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshHost: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshHost ? <FieldError>{errors.sshHost}</FieldError> : null}
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="SSH Port"
-                  placeholder="22"
-                  value={connection.sshPort || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshPort: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-port">
+                  <Label>SSH Port</Label>
+                  <Input
+                    placeholder="22"
+                    value={connection.sshPort || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshPort: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-6">
-                <Input
-                  label="SSH Username"
-                  placeholder="username"
-                  value={connection.sshUsername || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshUsername: e.target.value });
-                  }}
-                  color={errors.sshUsername ? "danger" : "default"}
-                  description={errors.sshUsername}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-user" isInvalid={Boolean(errors.sshUsername)}>
+                  <Label>SSH Username</Label>
+                  <Input
+                    placeholder="username"
+                    value={connection.sshUsername || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshUsername: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshUsername ? <FieldError>{errors.sshUsername}</FieldError> : null}
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-6">
-                <Input
-                  type="password"
-                  label="SSH Password"
-                  placeholder="Leave empty if using private key"
-                  value={connection.sshPassword || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshPassword: e.target.value });
-                  }}
-                  color={errors.sshPassword ? "danger" : "default"}
-                  description={errors.sshPassword}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-pass" isInvalid={Boolean(errors.sshPassword)}>
+                  <Label>SSH Password</Label>
+                  <Input
+                    type="password"
+                    placeholder="Leave empty if using private key"
+                    value={connection.sshPassword || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshPassword: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                  {errors.sshPassword ? <FieldError>{errors.sshPassword}</FieldError> : null}
+                </TextField>
               </div>
             </div>
             <div className="h-4" />
@@ -696,7 +695,7 @@ function MysqlConnectionForm(props) {
                 onChange={_selectSshPrivateKey}
               />
               <Button
-                variant="ghost"
+                variant="tertiary"
                 onPress={() => document.getElementById("sshPrivateKeyInput").click()}
               >
                 <LuUpload />
@@ -717,43 +716,46 @@ function MysqlConnectionForm(props) {
             </Row>
             <div className="h-4" />
             <Row align="center">
-              <Input
-                type="password"
-                label="Private Key Passphrase"
-                placeholder="Leave empty if not needed"
-                value={connection.sshPassphrase || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, sshPassphrase: e.target.value });
-                }}
-                variant="secondary"
-                className="w-full md:w-1/2"
-              />
+              <TextField className="w-full md:w-1/2" name="mysql-ssh-passphrase">
+                <Label>Private Key Passphrase</Label>
+                <Input
+                  type="password"
+                  placeholder="Leave empty if not needed"
+                  value={connection.sshPassphrase || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, sshPassphrase: e.target.value });
+                  }}
+                  variant="secondary"
+                />
+              </TextField>
             </Row>
             <div className="h-4" />
             <div className="grid grid-cols-12 gap-2">
               <div className="sm:col-span-12 md:col-span-8">
-                <Input
-                  label="Jump Host (Bastion Server)"
-                  placeholder="bastion.example.com (optional)"
-                  value={connection.sshJumpHost || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshJumpHost: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-jump-host">
+                  <Label>Jump Host (Bastion Server)</Label>
+                  <Input
+                    placeholder="bastion.example.com (optional)"
+                    value={connection.sshJumpHost || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshJumpHost: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
               <div className="sm:col-span-12 md:col-span-4">
-                <Input
-                  label="Jump Host Port"
-                  placeholder="22"
-                  value={connection.sshJumpPort || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, sshJumpPort: e.target.value });
-                  }}
-                  variant="secondary"
-                  fullWidth
-                />
+                <TextField fullWidth name="mysql-ssh-jump-port">
+                  <Label>Jump Host Port</Label>
+                  <Input
+                    placeholder="22"
+                    value={connection.sshJumpPort || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, sshJumpPort: e.target.value });
+                    }}
+                    variant="secondary"
+                  />
+                </TextField>
               </div>
             </div>
             <div className="h-4" />
@@ -782,7 +784,7 @@ function MysqlConnectionForm(props) {
           </>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
         <FormGuides subType={subType} />
 
         {addError && (
@@ -798,10 +800,10 @@ function MysqlConnectionForm(props) {
           </Row>
         )}
 
-        <div className="h-8" />
+        <div className="h-4" />
         <Row>
           <Button
-            variant="ghost"
+            variant="outline"
             auto
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
@@ -823,9 +825,9 @@ function MysqlConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <Row align="center">
               <Text>
@@ -863,89 +865,66 @@ function FormGuides({ subType }) {
   if (subType === "rdsMysql") {
     return (
       <>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={16} />
           <Link
             target="_blank"
             rel="noopener noreferrer"
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#ensure-your-database-user-has-read-only-access-optional-but-recommended"
+            className="text-foreground/70!"
           >
-            <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
+            {"For security reasons, connect to your MySQL database with read-only credentials"}
           </Link>
-          <div className="w-2" />
-          <FaExternalLinkSquareAlt size={12} />
-        </Row>
-        <Row align="center">
-          <LuChevronRight />
-          <div className="w-2" />
+          <LuExternalLink size={14} />
+        </div>
+        <div className="flex items-center gap-2">
+          <LuChevronRight size={16} />
           <Link
             href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
             target="_blank"
             rel="noopener noreferrer"
+            className="text-foreground/70!"
           >
-            <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
+            {"Find out how to allow remote connections to your MySQL database"}
           </Link>
-          <div className="w-2" />
-          <FaExternalLinkSquareAlt size={12} />
-        </Row>
+          <LuExternalLink size={14} />
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <Row align="center">
-        <LuChevronRight />
-        <div className="w-2" />
+      <div className="flex items-center gap-2">
+        <LuChevronRight size={16} />
         <Link
           target="_blank"
           rel="noopener noreferrer"
           href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql"
+          className="text-foreground/70!"
         >
-          <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
+          {"For security reasons, connect to your MySQL database with read-only credentials"}
         </Link>
-        <div className="w-2" />
-        <FaExternalLinkSquareAlt size={12} />
-      </Row>
-      <Row align="center">
-        <LuChevronRight />
-        <div className="w-2" />
+        <LuExternalLink size={14} />
+      </div>
+      <div className="flex items-center gap-2">
+        <LuChevronRight size={16} />
         <Link
           href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
           target="_blank"
           rel="noopener noreferrer"
+          className="text-foreground/70!"
         >
-          <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
+          {"Find out how to allow remote connections to your MySQL database"}
         </Link>
-        <div className="w-2" />
-        <FaExternalLinkSquareAlt size={12} />
-      </Row>
+        <LuExternalLink size={14} />
+      </div>
     </>
   )
 }
 
 FormGuides.propTypes = {
   subType: PropTypes.string.isRequired,
-};
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  helpList: {
-    display: "inline-block",
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
 };
 
 MysqlConnectionForm.defaultProps = {

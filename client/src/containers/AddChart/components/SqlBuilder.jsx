@@ -352,8 +352,12 @@ function SqlBuilder(props) {
           >
             <Tabs.ListContainer>
               <Tabs.List>
-                <Tabs.Tab id="sql">SQL Query</Tabs.Tab>
+                <Tabs.Tab id="sql">
+                  <Tabs.Indicator />
+                  SQL Query
+                </Tabs.Tab>
                 <Tabs.Tab id="visual">
+                  <Tabs.Indicator />
                   <div className="flex items-center gap-1">
                     <Text>Visual Query</Text>
                   </div>
@@ -505,8 +509,14 @@ function SqlBuilder(props) {
           >
             <Tabs.ListContainer>
               <Tabs.List>
-                <Tabs.Tab id="table">Table</Tabs.Tab>
-                <Tabs.Tab id="json">JSON</Tabs.Tab>
+                <Tabs.Tab id="table">
+                  <Tabs.Indicator />
+                  Table
+                </Tabs.Tab>
+                <Tabs.Tab id="json">
+                  <Tabs.Indicator />
+                  JSON
+                </Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>
           </Tabs>

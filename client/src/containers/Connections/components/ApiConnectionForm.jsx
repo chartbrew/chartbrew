@@ -5,6 +5,8 @@ import {
   Alert,
   Button,
   Chip,
+  Description,
+  FieldError,
   Input,
   InputGroup,
   Label,
@@ -207,7 +209,7 @@ function ApiConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border border-solid border-content3 rounded-lg pb-10">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <div className="flex items-center">
           <p className="font-semibold">
@@ -215,105 +217,124 @@ function ApiConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </p>
         </div>
-        <div className="h-8" />
+        <div className="h-4" />
         <div className="flex items-center">
-          <Input
-            label="Enter a name for your connection"
-            placeholder="Enter a name you can recognize later"
-            value={connection.name || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, name: e.target.value });
-            }}
-            color={errors.name ? "danger" : "default"}
+          <TextField
             fullWidth
-            variant="secondary"
-            description={errors.name}
             className="max-w-md"
-          />
+            name="api-connection-name"
+            isInvalid={Boolean(errors.name)}
+          >
+            <Label>Enter a name for your connection</Label>
+            <Input
+              placeholder="Enter a name you can recognize later"
+              value={connection.name || ""}
+              onChange={(e) => setConnection({ ...connection, name: e.target.value })}
+              variant="secondary"
+            />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+          </TextField>
         </div>
-        <div className="h-8" />
+        <div className="h-2" />
         <div className="flex items-center">
-          <Input
-            label="The hostname of your API"
-            placeholder="https://api.example.com"
-            value={connection.host || ""}
-            onChange={(e) => {
-              setConnection({ ...connection, host: e.target.value });
-            }}
+          <TextField
             fullWidth
-            color={errors.host ? "danger" : "default"}
-            variant="secondary"
-            description={errors.host || "This should be the base URL of your API. Datasets can be configured for each endpoint."}
             className="max-w-md"
-          />
+            name="api-connection-host"
+            isInvalid={Boolean(errors.host)}
+          >
+            <Label>The hostname of your API</Label>
+            <Input
+              placeholder="https://api.example.com"
+              value={connection.host || ""}
+              onChange={(e) => setConnection({ ...connection, host: e.target.value })}
+              variant="secondary"
+            />
+            {errors.host ? (
+              <FieldError>{errors.host}</FieldError>
+            ) : (
+              <Description>
+                This should be the base URL of your API. Datasets can be configured for each endpoint.
+              </Description>
+            )}
+          </TextField>
         </div>
-        <div className="h-8" />
-
-        <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
-          <Tabs.ListContainer>
-            <Tabs.List>
-              <Tabs.Tab id="authentication">Authentication</Tabs.Tab>
-              <Tabs.Tab id="headers">Headers</Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
-        <div className="h-8" />
+        <div className="h-4" />
         <Separator />
-        <div className="h-8" />
+        <div className="h-4" />
+
+        <div>
+          <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)} className="max-w-lg">
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="authentication">
+                  Authentication
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab id="headers">
+                  Headers
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
+          </Tabs>
+        </div>
+
+        <div className="h-4" />
 
         {menuType === "authentication" && (
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
-              <Row>
-                <Select
-                  placeholder="Select an authentication type"
-                  value={connection?.authentication?.type || null}
-                  onChange={(value) => _onChangeAuthParams("type", value)}
-                  selectionMode="single"
-                  variant="secondary"
-                >
-                  <Label>Authentication type</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {authTypes.map((type) => (
-                        <ListBox.Item key={type.value} id={type.value} textValue={type.text}>
-                          {type.text}
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </Row>
+              <Select
+                placeholder="Select an authentication type"
+                value={connection?.authentication?.type || null}
+                onChange={(value) => _onChangeAuthParams("type", value)}
+                selectionMode="single"
+                variant="secondary"
+              >
+                <Label>Authentication type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {authTypes.map((type) => (
+                      <ListBox.Item key={type.value} id={type.value} textValue={type.text}>
+                        {type.text}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             </div>
             {connection.authentication && connection.authentication.type === "basic_auth" && (
               <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
                 <Row align="center">
-                  <Input
-                    label="Enter a Username or API Key"
-                    placeholder="Username or API Key"
-                    onChange={(e) => _onChangeAuthParams("user", e.target.value)}
-                    value={connection.authentication.user}
-                    fullWidth
-                    variant="secondary"
-                  />
+                  <TextField fullWidth className="w-full" name="api-auth-user">
+                    <Label>Enter a Username or API Key</Label>
+                    <Input
+                      placeholder="Username or API Key"
+                      onChange={(e) => _onChangeAuthParams("user", e.target.value)}
+                      value={connection.authentication.user}
+                      fullWidth
+                      variant="secondary"
+                    />
+                  </TextField>
                 </Row>
                 <div className="h-4" />
                 <Row align="center">
-                  <TextField fullWidth variant="secondary" className="w-full" name="api-auth-pass">
+                  <TextField fullWidth className="w-full" name="api-auth-pass">
                     <Label>Enter a Password or API Key Value</Label>
-                    <InputGroup variant="secondary" fullWidth>
+                    <InputGroup fullWidth variant="secondary">
                       <InputGroup.Input
                         type={passwordVisible ? "text" : "password"}
                         placeholder="Password or API Key Value"
                         onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
                         value={connection.authentication.pass}
                       />
-                      <InputGroup.Suffix className="pr-0">
+                      <InputGroup.Suffix className="pr-2 border-none">
                         <Button
                           isIconOnly
                           size="sm"
@@ -331,9 +352,9 @@ function ApiConnectionForm(props) {
             )}
             {connection.authentication && connection.authentication.type === "bearer_token" && (
               <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
-                <TextField fullWidth variant="secondary" className="w-full" name="api-bearer-token">
+                <TextField fullWidth className="w-full" name="api-bearer-token">
                   <Label>Enter the token</Label>
-                  <InputGroup variant="secondary" fullWidth>
+                  <InputGroup fullWidth variant="secondary">
                     <InputGroup.Input
                       type={passwordVisible ? "text" : "password"}
                       placeholder="Authentication token"
@@ -357,20 +378,12 @@ function ApiConnectionForm(props) {
             )}
           </div>
         )}
-        <div className="h-8" />
+        <div className="h-4" />
 
         {menuType === "headers" && (
           <>
-            <Row>
-              <Text b>
-                Global headers to send with the requests
-              </Text>
-            </Row>
-            <Row>
-              <Text>
-                {"These headers will be included with all the future requests"}
-              </Text>
-            </Row>
+            <p className="font-semibold">Global headers to send with the requests</p>
+            <p className="text-sm text-foreground-500">These headers will be included with all the future requests</p>
             <div className="h-4" />
           </>
         )}
@@ -385,8 +398,8 @@ function ApiConnectionForm(props) {
                   value={option.key}
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                   fullWidth
-                  variant="secondary"
                   className="max-w-md"
+                  variant="secondary"
                 />
                 <Input
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
@@ -394,18 +407,19 @@ function ApiConnectionForm(props) {
                   placeholder="Value"
                   labelPlacement="outside"
                   fullWidth
-                  variant="secondary"
                   className="max-w-md"
+                  variant="secondary"
                 />
                 <Button
                   isIconOnly
                   onPress={() => _removeOption(option.id)}
                   variant="ghost"
+                  className="min-w-10"
                 >
                   <LuX />
                 </Button>
               </div>
-              <div className="h-4" />
+              <div className="h-2" />
             </Fragment>
           );
         })}
@@ -415,10 +429,10 @@ function ApiConnectionForm(props) {
             <div className="h-4" />
             <Button
               onPress={_addOption}
-              variant="secondary"
+              variant="tertiary"
               size="sm"
             >
-              Add a header
+              Add header
               <LuPlus size={16} />
             </Button>
             <div className="h-8" />
@@ -437,13 +451,12 @@ function ApiConnectionForm(props) {
         )}
 
         <Separator />
-        <div className="h-8" />
+        <div className="h-4" />
         <Row align="center">
           <Button
-            variant="ghost"
+            variant="outline"
             onPress={() => _onCreateConnection(true)}
             isPending={testLoading}
-            auto
           >
             {testLoading ? <ButtonSpinner /> : null}
             {"Test connection"}
@@ -474,12 +487,12 @@ function ApiConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div>
             <div className="flex items-center justify-between">
-              <div className="text-sm">
+              <div className="text-sm font-semibold">
                 {"Test Result "}
               </div>
               <div>
@@ -506,7 +519,7 @@ function ApiConnectionForm(props) {
                 </Alert>
               </>
             )}
-            <div className="h-8" />
+            <div className="h-4" />
             <AceEditor
               mode="json"
               theme={isDark ? "one_dark" : "tomorrow"}

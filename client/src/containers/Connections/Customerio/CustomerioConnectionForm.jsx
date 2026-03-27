@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Link, Chip, Accordion, ListBox, Select, Separator,
+  TextField, Label, FieldError,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
-import { LuExternalLink, LuInfo } from "react-icons/lu";
+import { LuExternalLink } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
 import Container from "../../../components/Container";
@@ -122,7 +123,7 @@ function CustomerioConnectionForm(props) {
   };
 
   return (
-    <div className="p-4 bg-content1 border-1 border-solid border-content3 rounded-lg">
+    <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
         <p className="font-semibold">
           {!editConnection && "Connect to Customer.io"}
@@ -130,88 +131,81 @@ function CustomerioConnectionForm(props) {
         </p>
         <div className="h-4" />
         <Row align="center">
-          <Input
-            label="Name your connection"
-            placeholder="Enter a name that you can recognise later"
-            value={connection.name}
-            onChange={(e) => {
-              setConnection({ ...connection, name: e.target.value });
-            }}
-            color={errors.name ? "danger" : "default"}
-            description={errors.name}
-            variant="secondary"
-            fullWidth
-            className="md:w-[600px]"
-          />
+          <TextField fullWidth className="md:w-[600px]" name="customerio-name" isInvalid={Boolean(errors.name)}>
+            <Label>Name your connection</Label>
+            <Input
+              placeholder="Enter a name that you can recognise later"
+              value={connection.name}
+              onChange={(e) => {
+                setConnection({ ...connection, name: e.target.value });
+              }}
+              variant="secondary"
+            />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+          </TextField>
         </Row>
         <div className="h-4" />
         <Row align="center">
-          <Input
-            type="password"
-            label="Your Customer.io API key"
-            placeholder="Enter your Customer.io API key"
-            value={connection.password}
-            onChange={(e) => {
-              setConnection({ ...connection, password: e.target.value });
-            }}
-            color={errors.password ? "danger" : "default"}
-            description={errors.password}
-            variant="secondary"
-            fullWidth
-            className="md:w-[600px]"
-          />
+          <TextField fullWidth className="md:w-[600px]" name="customerio-api-key" isInvalid={Boolean(errors.password)}>
+            <Label>Your Customer.io API key</Label>
+            <Input
+              type="password"
+              placeholder="Enter your Customer.io API key"
+              value={connection.password}
+              onChange={(e) => {
+                setConnection({ ...connection, password: e.target.value });
+              }}
+              variant="secondary"
+            />
+            {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+          </TextField>
         </Row>
         <div className="h-2" />
         <Row align="center">
-          <Accordion variant="surface" className={"max-w-[600px]"}>
+          <Accordion variant="surface" className="max-w-[600px] bg-surface-secondary">
             <Accordion.Item id="customerio-api-key-help" textValue="How to get the API key">
               <Accordion.Heading>
                 <Accordion.Trigger>
-                  <span className="flex-1 text-start">
-                    <Text>How to get the API key</Text>
-                  </span>
+                  <div className="text-sm font-bold">How to get the API key</div>
                   <Accordion.Indicator />
                 </Accordion.Trigger>
               </Accordion.Heading>
               <Accordion.Panel>
                 <Accordion.Body>
-              <Row align="center">
-                <Link
-                  href="https://fly.customer.io/settings/api_credentials?keyType=app"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="align-middle text-accent"
-                >
-                  <Text className="text-accent">{"1. Create a Customer.io App API Key "}</Text>
-                  <div className="w-1" />
-                  <LuExternalLink size={14} />
-                </Link>
-              </Row>
-              <div className="h-2" />
-              <Row>
-                <Text>{"2. (Optional) Add your server's IP address to the allowlist"}</Text>
-              </Row>
-              <div className="h-2" />
-              <Row>
-                <Text>{"3. Copy and paste the API Key here"}</Text>
-              </Row>
+                  <Row align="center">
+                    <Link
+                      href="https://fly.customer.io/settings/api_credentials?keyType=app"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-accent flex items-center"
+                    >
+                      <div className="text-sm font-bold">{"1. Create a Customer.io App API Key "}</div>
+                      <div className="w-1" />
+                      <LuExternalLink size={14} />
+                    </Link>
+                  </Row>
+                  <div className="h-2" />
+                  <div className="text-sm">{"2. (Optional) Add your server's IP address to the allowlist"}</div>
+                  <div className="h-2" />
+                  <div className="text-sm">{"3. Copy and paste the API Key here"}</div>
                 </Accordion.Body>
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
         </Row>
         <div className="h-4" />
-        <Row align="flex-start" className={"max-w-[600px] items-center"}>
+        <div className="flex items-start max-w-[600px]">
           <Select
             variant="secondary"
-            label="Where is your Customer.io data located?"
             selectionMode="single"
             value={connection.host || null}
             onChange={(value) => setConnection({ ...connection, host: value })}
             aria-label="Select a region"
+            isInvalid={Boolean(errors.host)}
           >
+            <Label>Where is your Customer.io data located?</Label>
             <Select.Trigger>
-              <Select.Value />
+              <Select.Value className="flex items-center gap-2" />
               <Select.Indicator />
             </Select.Trigger>
             <Select.Popover>
@@ -234,9 +228,14 @@ function CustomerioConnectionForm(props) {
             title="Locate the region"
             className={"text-accent"}
           >
-            <LuInfo />
+            <LuExternalLink size={16} />
           </Link>
-        </Row>
+        </div>
+        {errors.host && (
+          <Row className="max-w-[600px]">
+            <Text className="text-sm text-danger">{errors.host}</Text>
+          </Row>
+        )}
 
         <div className="h-4" />
 
@@ -256,7 +255,7 @@ function CustomerioConnectionForm(props) {
         <div className="h-4" />
         <Row>
           <Button
-            variant="ghost"
+            variant="outline"
             auto
             onClick={() => _onCreateConnection(true)}
             isPending={testLoading}
@@ -268,7 +267,7 @@ function CustomerioConnectionForm(props) {
           <Button
             isPending={loading}
             onClick={_onCreateConnection}
-            color="primary"
+            variant="primary"
           >
             {loading ? <ButtonSpinner /> : null}
             {"Save connection"}
