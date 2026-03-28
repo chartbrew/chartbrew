@@ -372,7 +372,7 @@ function DatasetBuilder(props) {
 
   return (
     <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4 mt-4">
-      <div className="col-span-12 md:col-span-4 bg-content1 rounded-lg border-1 border-divider p-4">
+      <div className="col-span-12 md:col-span-4 bg-surface rounded-lg border-1 border-divider p-4">
         <Autocomplete
           selectionMode="single"
           variant="secondary"

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   Button, Separator, Input, ProgressCircle, Modal, Chip, Table,
   Alert,
+  TextField,
+  Label,
 } from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
 import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react-icons/lu";
@@ -212,7 +214,7 @@ function ManageUser() {
   }
 
   return (
-    <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+    <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
       <div className="flex flex-col gap-1">
         <div className="text-lg font-semibold font-tw">
           Profile settings
@@ -222,18 +224,18 @@ function ManageUser() {
         </div>
       </div>
       <div className="h-8" />
-      <Input
-        label="Name"
-        name="name"
-        value={user.name || ""}
-        type="text"
-        placeholder="Enter your name"
-        onChange={(e) => setUser({ ...user, name: e.target.value })}
-        variant="secondary"
-        fullWidth
-        className="max-w-md"
-      />
-      <div className="h-4" />
+      <TextField name="name" isInvalid={Boolean(submitError)} className="max-w-md">
+        <Label>Name</Label>
+        <Input
+          placeholder="Enter your name"
+          fullWidth
+          value={user.name || ""}
+          onChange={(e) => setUser({ ...user, name: e.target.value })}
+          variant="secondary"
+          required
+        />
+      </TextField>
+      <div className="h-2" />
       {submitError && (
         <>
           <Alert status="danger">
@@ -251,30 +253,38 @@ function ManageUser() {
           isDisabled={!user.name}
           isPending={loading} onPress={_onUpdateUser}
           variant={success ? "tertiary" : "primary"}
-          size="sm"
         >
           {loading ? <ButtonSpinner /> : null}
           {success ? "Saved" : "Save" }
         </Button>
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
+      <Separator />
+      <div className="h-4" />
 
-      <Input
-        label="Your email"
-        name="email"
-        value={userEmail || ""}
-        onChange={(e) => setUserEmail(e.target.value)}
-        type="text"
-        placeholder="Enter your email"
-        variant="secondary"
-        fullWidth
-        className="max-w-md"
-      />
+      <TextField name="email" isInvalid={Boolean(submitError)} className="max-w-md">
+        <Label>Your email</Label>
+        <Input
+          placeholder="Enter your email"
+          fullWidth
+          value={userEmail || ""}
+          onChange={(e) => setUserEmail(e.target.value)}
+          variant="secondary"
+          required
+          description={userEmail ? userEmail : ""}
+        />
+      </TextField>
       {userEmail !== userProp.email && (
         <>
-          <div className="h-4" />
-          <div>{"We will send you an email to confirm your new email address."}</div>
+          <div className="h-2" />
+          <Alert status="info">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>We will send you an email to confirm your new email address.</Alert.Title>
+              <Alert.Description>Please check your email for the confirmation link.</Alert.Description>
+            </Alert.Content>
+          </Alert>
         </>
       )}
       <div className="h-4" />
@@ -290,9 +300,9 @@ function ManageUser() {
         </Button>
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
       <div className="h-2" />
@@ -406,12 +416,9 @@ function ManageUser() {
         </Table>
       )}
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
-
-      <div className="text-lg font-semibold font-tw">Danger zone</div>
-      <div className="h-2" />
+      <div className="h-4" />
 
       <div>
         <Button
@@ -423,7 +430,7 @@ function ManageUser() {
         </Button>
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
 
       <Modal>
         <Modal.Backdrop variant="blur" isOpen={openDeleteModal} onOpenChange={setOpenDeleteModal}>
@@ -434,10 +441,11 @@ function ManageUser() {
                   Delete Account
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="flex flex-col gap-2 p-1">
                 <div>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</div>
                 <div>{"We cannot reverse this action as all the content is deleted immediately."}</div>
                 <div>{"We recommend you to transfer the ownership of your team to another user before deleting your account."}</div>
+                <div className="h-2" />
                 <div className="flex flex-col gap-1">
                   <Input
                     label="Confirm your email"

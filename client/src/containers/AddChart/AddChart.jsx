@@ -464,7 +464,7 @@ function AddChart() {
 
   if (newChart.ChartDatasetConfigs?.length === 0 || datasets.length === 0) {
     return (
-      <div className="mt-4 max-w-xl mx-auto border-1 border-divider rounded-lg p-4 bg-content1">
+      <div className="mt-4 max-w-xl mx-auto border-1 border-divider rounded-lg p-4 bg-surface">
         <Button
           onPress={() => navigate(`/dashboard/${params.projectId}`)}
           variant="tertiary"
@@ -506,12 +506,12 @@ function AddChart() {
       )}
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-5 add-dataset-tut">
-          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full border-1 border-solid border-divider"}>
+          <div className={"bg-surface rounded-lg mx-auto p-4 w-full border-1 border-solid border-divider"}>
             <ChartDatasets chartId={newChart.id} />
           </div>
         </div>
         <div className="col-span-12 md:col-span-7">
-          <div className="flex items-center justify-between flex-wrap gap-2 py-4 px-4 border-1 border-divider bg-content1 rounded-lg">
+          <div className="flex items-center justify-between flex-wrap gap-2 py-4 px-4 border-1 border-divider bg-surface rounded-lg">
             <div className="flex items-center gap-2">
               {!editingTitle
                 && (
@@ -583,7 +583,7 @@ function AddChart() {
             </div>
           </div>
           <div className="h-2" />
-          <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
+          <div className="bg-surface rounded-lg border-1 border-solid border-divider">
             <ChartPreview
               chart={newChart}
               onChange={_onChangeChart}
@@ -597,7 +597,7 @@ function AddChart() {
             />
           </div>
           <div className="h-4" />
-          <div className="bg-content1 rounded-lg border-1 border-solid border-divider">
+          <div className="bg-surface rounded-lg border-1 border-solid border-divider">
             {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings
                 chart={newChart}

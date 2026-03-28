@@ -114,7 +114,7 @@ function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-content1 border-r border-divider transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-screen bg-surface border-r border-divider transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >

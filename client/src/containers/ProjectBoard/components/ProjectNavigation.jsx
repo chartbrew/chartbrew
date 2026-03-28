@@ -106,7 +106,7 @@ function ProjectNavigation(props) {
 
   return (
     <div>
-      <div className={"hidden md:flex bg-content1 flex-col justify-between"} style={styles.mainSideMenu(height)}>
+      <div className={"hidden md:flex bg-surface flex-col justify-between"} style={styles.mainSideMenu(height)}>
         <div className="p-2">
           <div className="flex justify-center items-center">
             <Popover>
@@ -345,7 +345,7 @@ function ProjectNavigation(props) {
         </div>
       </div>
 
-      <nav className="flex md:hidden fixed bottom-0 z-10 h-12 w-full items-center justify-center shadow-md bg-content1 backdrop-blur-[10px] backdrop-saturate-180">
+      <nav className="flex md:hidden fixed bottom-0 z-10 h-12 w-full items-center justify-center shadow-md bg-surface backdrop-blur-[10px] backdrop-saturate-180">
         <div className="flex flex-row flex-nowrap justify-around w-full p-2">
           <Link to={`/${team.id}/${project.id}/dashboard`}>
             <LinkNext className="pointer-events-none">

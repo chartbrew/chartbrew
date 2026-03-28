@@ -137,7 +137,7 @@ function ChartDescription(props) {
   };
 
   return (
-    <div className="flex flex-col rounded-lg border border-divider bg-content1 p-4">
+    <div className="flex flex-col rounded-lg border border-divider bg-surface p-4">
       <div className="flex flex-col gap-1">
         <div className="font-tw text-2xl font-semibold">
           Create chart from dataset

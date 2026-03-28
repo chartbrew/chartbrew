@@ -102,7 +102,7 @@ function TeamSettings() {
   }
 
   return (
-    <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+    <div className="flex flex-col bg-surface p-4 rounded-lg border border-divider">
       <div className="text-lg font-semibold font-tw">Team settings</div>
       <div className="text-sm text-gray-500">Manage your team settings and controls</div>
       <div className="h-8" />

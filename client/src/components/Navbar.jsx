@@ -166,7 +166,7 @@ function NavbarContainer() {
   }
   return (
     <>
-      <header className="sticky top-0 z-[999] flex h-12 items-center justify-between border-b border-divider bg-content1 px-4">
+      <header className="sticky top-0 z-[999] flex h-12 items-center justify-between border-b border-divider bg-surface px-4">
         <div className="flex items-center">
           {params.teamId && (
             <Link to="/">

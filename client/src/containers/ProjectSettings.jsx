@@ -112,7 +112,7 @@ function ProjectSettings(props) {
   };
 
   return (
-    <Segment style={style} className="container mx-auto mt-4 bg-content1">
+    <Segment style={style} className="container mx-auto mt-4 bg-surface">
       <Row>
         <span className="text-lg font-bold">Dashboard settings</span>
       </Row>

@@ -67,7 +67,7 @@ function Variables() {
   };
 
   return (
-    <Segment className="container mx-auto bg-content1 mt-4 max-w-xl">
+    <Segment className="container mx-auto bg-surface mt-4 max-w-xl">
       <div className="flex flex-row justify-between">
         <div className="text-lg font-bold">Variables</div>
         <Button

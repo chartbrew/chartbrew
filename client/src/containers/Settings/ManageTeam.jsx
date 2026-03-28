@@ -65,8 +65,9 @@ function ManageTeam() {
         selectedKey={activeMenu}
       >
         <Tabs.ListContainer>
-          <Tabs.List className="border-1 border-divider">
+          <Tabs.List className="border border-divider">
             <Tabs.Tab id="profile">
+              <Tabs.Indicator />
               <div className="flex flex-row items-center gap-2">
                 <LuUser />
                 <div>Profile</div>
@@ -74,6 +75,7 @@ function ManageTeam() {
             </Tabs.Tab>
             {_canAccess("teamOwner") && (
               <Tabs.Tab id="team">
+                <Tabs.Indicator />
                 <div className="flex flex-row items-center gap-2">
                   <LuSettings />
                   <div>Team</div>
@@ -81,6 +83,7 @@ function ManageTeam() {
               </Tabs.Tab>
             )}
             <Tabs.Tab id="members">
+              <Tabs.Indicator />
               <div className="flex flex-row items-center gap-2">
                 <LuUsers />
                 <div>Members</div>
@@ -88,6 +91,7 @@ function ManageTeam() {
             </Tabs.Tab>
             {_canAccess("teamAdmin") && (
               <Tabs.Tab id="api-keys">
+                <Tabs.Indicator />
                 <div className="flex flex-row items-center gap-2">
                   <LuCode />
                   <div>API Keys</div>

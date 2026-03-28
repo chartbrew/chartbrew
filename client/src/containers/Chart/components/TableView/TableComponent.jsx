@@ -288,7 +288,7 @@ function TableComponent({
 
       {leafHeaderGroup?.headers?.length > 0 && (
         <>
-          <Table className="bg-content1 w-full min-w-0">
+          <Table className="bg-surface w-full min-w-0">
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Table data"

@@ -56,7 +56,7 @@ function SlackCallback() {
 
       <div className="h-2" />
 
-      <div className="bg-content1 p-4 rounded-lg border border-divider">
+      <div className="bg-surface p-4 rounded-lg border border-divider">
         {loading && (
           <div className="flex flex-col items-center justify-center gap-2">
             <Spinner variant="simple" aria-label="Loading..." />

@@ -20,7 +20,7 @@ function Auth() {
 
       <div className="h-4" />
 
-      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider">
+      <div className="flex flex-col bg-surface p-4 rounded-lg border border-divider">
         {integrationType === "slack" && <SlackAuth />}
       </div>
     </div>

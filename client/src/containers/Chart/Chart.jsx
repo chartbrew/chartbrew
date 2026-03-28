@@ -533,7 +533,7 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          className={`h-full bg-content1 border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
+          className={`h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
           <Card.Header className={`pb-0 flex flex-row justify-between items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
             <div className={`flex items-start justify-start ${isCompact ? "hidden" : ""}`}>

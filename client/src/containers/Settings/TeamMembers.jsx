@@ -27,7 +27,7 @@ import { selectUser } from "../../slices/user";
 function TeamMembers(props) {
   const { style = {} } = props;
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [changedMember, setChangedMember] = useState(null);
   const [deleteMember, setDeleteMember] = useState("");
   const [projectModal, setProjectModal] = useState(false);
@@ -195,14 +195,14 @@ function TeamMembers(props) {
   return (
     <div style={style}>
       {_canAccess("teamAdmin") && (
-        <div className="bg-content1 p-4 rounded-lg border border-divider">
+        <div className="bg-surface p-4 rounded-3xl border border-divider">
           <InviteMembersForm />
         </div>
       )}
 
       <div className="h-8" />
 
-      <div className="bg-content1 p-4 rounded-lg border border-divider">
+      <div className="bg-surface p-4 rounded-3xl border border-divider">
         <div className="text-lg font-semibold font-tw">{"Team members"}</div>
         <div className="text-sm text-gray-500">{"Manage your team members and their roles"}</div>
         <div className="h-4" />
@@ -491,6 +491,7 @@ function TeamMembers(props) {
                               const wasSelected = _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1;
                               if (selected !== wasSelected) _onChangeProjectAccess(project.id);
                             }}
+                            variant="secondary"
                           >
                             <Checkbox.Control className="size-4 shrink-0">
                               <Checkbox.Indicator />
@@ -523,6 +524,7 @@ function TeamMembers(props) {
                         id={`team-member-export-${changedMember.id}`}
                         isSelected={changedRole.canExport}
                         onChange={_onChangeExport}
+                        variant="secondary"
                       >
                         <Checkbox.Control className="size-4 shrink-0">
                           <Checkbox.Indicator />

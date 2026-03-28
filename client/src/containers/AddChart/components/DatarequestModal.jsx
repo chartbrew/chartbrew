@@ -489,7 +489,7 @@ function DatarequestModal(props) {
             )}
           </div>
             </Modal.Body>
-            <Modal.Footer className="bg-content1">
+            <Modal.Footer className="bg-surface">
           <Button
             onPress={() => onClose()}
             variant="tertiary"

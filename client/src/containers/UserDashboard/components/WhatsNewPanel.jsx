@@ -17,6 +17,11 @@ import {
   getTone,
 } from "./whatsNewPanelUtils";
 
+const panelGlassSurfaceClassName = "relative overflow-hidden rounded-[28px] border border-white/50 bg-surface/72 shadow-[0_26px_60px_-42px_rgba(4,139,222,0.55)] backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-surface/80 dark:shadow-[0_26px_80px_-42px_rgba(4,139,222,0.35)]";
+const itemGlassSurfaceClassName = "relative overflow-hidden rounded-[24px] border bg-surface/58 shadow-none backdrop-blur-xl backdrop-saturate-150 dark:bg-surface/58";
+const itemGlassOverlayClassName = "pointer-events-none absolute inset-0 rounded-[inherit] bg-linear-to-br from-white/55 via-white/8 to-transparent dark:from-white/8 dark:via-white/[0.04] dark:to-transparent";
+const separatorClassName = "bg-white/55 dark:bg-white/8";
+
 function getWhatsNewContent({ navigate, dispatch }) {
   return {
     groups: [
@@ -112,12 +117,19 @@ function WhatsNewItemCard({ item, onAction }) {
   if (item.variant === "tip") {
     return (
       <Card
-        className={cn("overflow-hidden shadow-none", tone.tipCard)}
+        className={cn(
+          itemGlassSurfaceClassName,
+          "border-white/45 shadow-[0_18px_48px_-36px_rgba(4,139,222,0.45)] dark:border-white/8",
+          tone.tipCard,
+        )}
       >
-        <Card.Content className="gap-4">
+        <div className={itemGlassOverlayClassName} />
+        <div className="pointer-events-none absolute -right-8 top-0 h-28 w-28 rounded-full bg-secondary/18 blur-3xl dark:bg-secondary/12" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 rounded-full bg-primary/18 blur-3xl dark:bg-primary/18" />
+        <Card.Content className="relative z-10 gap-4">
           <Card.Header>
             {Icon && (
-              <div className={cn("mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl", tone.icon)}>
+              <div className={cn("mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-white/50 shadow-sm dark:border-white/10", tone.icon)}>
                 <Icon size={18} />
               </div>
             )}
@@ -138,7 +150,11 @@ function WhatsNewItemCard({ item, onAction }) {
 
           {item.action && (
             <Button
-              className={cn("font-medium", tone.tipButton)}
+              className={cn(
+                "font-medium backdrop-blur-md backdrop-saturate-150",
+                "border border-white/50 bg-white/55 dark:border-white/10 dark:bg-white/5",
+                tone.tipButton,
+              )}
               onPress={() => onAction(item.action)} variant="tertiary"
               fullWidth
             >
@@ -153,12 +169,18 @@ function WhatsNewItemCard({ item, onAction }) {
 
   return (
     <Card
-      className={cn("border bg-surface shadow-none", tone.card)}
+      className={cn(
+        itemGlassSurfaceClassName,
+        "border-white/55 dark:border-white/8",
+        tone.card,
+      )}
     >
-      <Card.Content className="">
+      <div className={itemGlassOverlayClassName} />
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-white/80 to-transparent dark:via-white/15" />
+      <Card.Content className="relative z-10">
         {Icon && (
-          <div className={cn("rounded-full p-2 max-w-10", tone.icon)}>
-            <Icon size={24} className="" />
+          <div className={cn("rounded-full border border-white/50 p-2 max-w-10 shadow-sm dark:border-white/10", tone.icon)}>
+            <Icon size={24} className="pr-0.5" />
           </div>
         )}
         <Card.Header>
@@ -188,7 +210,6 @@ function WhatsNewItemCard({ item, onAction }) {
                   variant="tertiary"
                   color={tone.badge}
                   onPress={() => onAction(item.action)}
-                  className={"w-auto"}
                 >
                   {actionLabel}
                   {isExternalAction ? <LuExternalLink size={14} /> : <LuChevronRight size={14} />}
@@ -237,13 +258,26 @@ function WhatsNewPanel({ onCollapse }) {
 
   return (
     <aside className="sticky top-[88px]">
-      <Card className="border border-divider bg-surface shadow-none">
-        <div className="absolute top-3 right-3 z-10">
-          <Button isIconOnly size="sm" variant="tertiary" onPress={onCollapse}>
+      <Card className={panelGlassSurfaceClassName}>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-12 top-16 h-40 w-40 rounded-full bg-primary/22 blur-3xl dark:bg-primary/20" />
+          <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-secondary/20 blur-3xl dark:bg-secondary/16" />
+          <div className="absolute bottom-12 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full bg-primary/14 blur-3xl dark:bg-primary/12" />
+          <div className="absolute inset-px rounded-[27px] bg-linear-to-b from-white/45 via-white/8 to-transparent dark:from-white/8 dark:via-white/2 dark:to-transparent" />
+          <div className="absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-white/85 to-transparent dark:via-white/15" />
+        </div>
+        <div className="absolute top-3 right-3 z-20">
+          <Button
+            isIconOnly
+            size="sm"
+            variant="tertiary"
+            onPress={onCollapse}
+            className="border border-white/55 bg-white/60 backdrop-blur-md dark:border-white/10 dark:bg-white/5"
+          >
             <LuX size={16} />
           </Button>
         </div>
-        <Card.Header className="flex items-start justify-between gap-3 px-2 py-4">
+        <Card.Header className="relative z-10 flex items-start justify-between gap-3 px-2 py-4">
           <Card.Title className="text-xl font-semibold text-foreground">
             Discover more
           </Card.Title>
@@ -251,8 +285,7 @@ function WhatsNewPanel({ onCollapse }) {
             New features, tips, and shortcuts for Chartbrew.
           </Card.Description>
         </Card.Header>
-        <Separator />
-        <Card.Content className="flex flex-col gap-4 pb-4 pt-2">
+        <Card.Content className="relative z-10 flex flex-col gap-4 pb-4 pt-2">
           {groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3">
@@ -269,7 +302,7 @@ function WhatsNewPanel({ onCollapse }) {
 
           {tip && (
             <>
-              <Separator />
+              <Separator className={separatorClassName} />
               <section className="flex flex-col gap-3">
                 <WhatsNewItemCard item={tip} onAction={handleAction} />
               </section>

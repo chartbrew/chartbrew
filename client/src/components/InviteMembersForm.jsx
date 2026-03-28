@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Accordion, Button, Checkbox, Chip, InputGroup, Label, Radio, RadioGroup, TextField, Tooltip,
+  Accordion, Button, Checkbox, Chip, Description, InputGroup, Label, Radio, RadioGroup, TextField, Tooltip,
 } from "@heroui/react";
 import _ from "lodash";
 import { LuCheck, LuCheckCheck, LuCopy, LuInfo, LuX } from "react-icons/lu";
@@ -89,6 +89,29 @@ function InviteMembersForm(props) {
     }, 2000);
   };
 
+  const roleOptions = [
+    {
+      value: "teamAdmin",
+      label: "Team Admin",
+      description: "Access to all projects, connections, datasets, but can't delete the team or interact with the team's billing",
+    },
+    {
+      value: "projectAdmin",
+      label: "Client Admin",
+      description: "Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and queries.",
+    },
+    {
+      value: "projectEditor",
+      label: "Client Editor",
+      description: "Can view and edit all charts and reports in the selected dashboard. Cannot view or edit any dataset queries.",
+    },
+    {
+      value: "projectViewer",
+      label: "Client Viewer",
+      description: "Can view all charts and reports in the selected dashboard",
+    },
+  ];
+
   return (
     <div>
       <div className="text-lg font-semibold font-tw">Invite team members</div>
@@ -96,41 +119,34 @@ function InviteMembersForm(props) {
       {!selectedProjects && (
         <>
           <div className="h-4" />
-          <div className="font-bold">{"Select a role"}</div>
-          <div className="h-2" />
           <div>
-            <RadioGroup size="sm" defaultValue="teamAdmin" value={role} onValueChange={(option) => setRole(option)}>
-              <Radio
-                value="teamAdmin"
-                description={"Access to all projects, connections, datasets, but can't delete the team or interact with the team's billing"}
-              >
-                Team Admin
-              </Radio>
-              <Radio
-                value="projectAdmin"
-                description={"Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and queries."}
-              >
-                Client Admin
-              </Radio>
-              <Radio
-                value="projectEditor"
-                description={"Can view and edit all charts and reports in the selected dashboard. Cannot view or edit any dataset queries."}
-              >
-                Client Editor
-              </Radio>
-              <Radio
-                value="projectViewer"
-                description={"Can view all charts and reports in the selected dashboard"}
-              >
-                Client Viewer
-              </Radio>
+            <RadioGroup
+              defaultValue="teamAdmin"
+              name="invite-role"
+              value={role}
+              onChange={setRole}
+            >
+              <Label className="font-bold">Select a role</Label>
+              {roleOptions.map((option) => (
+                <Radio key={option.value} value={option.value}>
+                  <Radio.Control>
+                    <Radio.Indicator />
+                  </Radio.Control>
+                  <Radio.Content>
+                    <div className="flex flex-col gap-0.5">
+                      <Label className="text-sm font-medium">{option.label}</Label>
+                      <Description className="text-sm text-default-500">{option.description}</Description>
+                    </div>
+                  </Radio.Content>
+                </Radio>
+              ))}
             </RadioGroup>
           </div>
           <div className="h-4" />
 
           {role !== "teamAdmin" && (
             <div>
-              <Accordion variant="surface">
+              <Accordion variant="surface" className="bg-surface-secondary">
                 <Accordion.Item
                   id="invite-dashboard-access"
                   textValue="Select dashboard access"
@@ -150,46 +166,46 @@ function InviteMembersForm(props) {
                   </Accordion.Heading>
                   <Accordion.Panel>
                     <Accordion.Body>
-                  <div className="grid grid-cols-12 gap-1 pb-4">
-                    <div className="col-span-12 pb-4 flex flex-row">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={_onSelectAllProjects}
-                      >
-                        <LuCheckCheck />
-                        Select all
-                      </Button>
-                      <div className="w-1" />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={_onDeselectAllProjects}
-                      >
-                        <LuX />
-                        Deselect all
-                      </Button>
-                    </div>
-                    {projects && projects.filter((p) => !p.ghost).map((project) => (
-                      <div className="col-span-12 sm:col-span-4" key={project.id}>
-                        <Checkbox
-                          id={`invite-project-${project.id}`}
-                          isSelected={_.indexOf(projectAccess, project.id) > -1}
-                          onChange={(selected) => {
-                            const wasSelected = _.indexOf(projectAccess, project.id) > -1;
-                            if (selected !== wasSelected) _onChangeProjectAccess(project.id);
-                          }}
-                        >
-                          <Checkbox.Control className="size-4 shrink-0">
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                          <Checkbox.Content>
-                            <Label htmlFor={`invite-project-${project.id}`} className="text-sm">{project.name}</Label>
-                          </Checkbox.Content>
-                        </Checkbox>
+                      <div className="grid grid-cols-12 gap-1 pb-4">
+                        <div className="col-span-12 pb-4 flex flex-row">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onPress={_onSelectAllProjects}
+                          >
+                            <LuCheckCheck />
+                            Select all
+                          </Button>
+                          <div className="w-1" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onPress={_onDeselectAllProjects}
+                          >
+                            <LuX />
+                            Deselect all
+                          </Button>
+                        </div>
+                        {projects && projects.filter((p) => !p.ghost).map((project) => (
+                          <div className="col-span-12 sm:col-span-4" key={project.id}>
+                            <Checkbox
+                              id={`invite-project-${project.id}`}
+                              isSelected={_.indexOf(projectAccess, project.id) > -1}
+                              onChange={(selected) => {
+                                const wasSelected = _.indexOf(projectAccess, project.id) > -1;
+                                if (selected !== wasSelected) _onChangeProjectAccess(project.id);
+                              }}
+                            >
+                              <Checkbox.Control className="size-4 shrink-0">
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <Checkbox.Content>
+                                <Label htmlFor={`invite-project-${project.id}`} className="text-sm">{project.name}</Label>
+                              </Checkbox.Content>
+                            </Checkbox>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
                     </Accordion.Body>
                   </Accordion.Panel>
                 </Accordion.Item>
@@ -222,6 +238,7 @@ function InviteMembersForm(props) {
               id="invite-export-allowed"
               isSelected={exportAllowed}
               onChange={(isSelected) => setExportAllowed(isSelected)}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />

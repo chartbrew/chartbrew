@@ -482,10 +482,10 @@ function DashboardList() {
 
                         <div className="flex flex-wrap items-center gap-2">
                           <Tooltip delay={0}>
-                            <Tooltip.Trigger className="pt-1">
+                            <Tooltip.Trigger className="pt-0.5">
                               <Chip color={getLastUpdatedChipColor(project.lastUpdatedAt)} size="sm" variant="soft">
-                                <LuClock3 size={14} />
-                                <span>{formatRelativeUpdateTime(project.lastUpdatedAt)}</span>
+                                <LuClock3 size={12} />
+                                <Chip.Label>{formatRelativeUpdateTime(project.lastUpdatedAt)}</Chip.Label>
                               </Chip>
                             </Tooltip.Trigger>
                             <Tooltip.Content>
@@ -496,20 +496,20 @@ function DashboardList() {
                           </Tooltip>
                           {updateScheduleLabel && (
                             <Chip color="accent" size="sm" variant="soft">
-                              <LuRefreshCw size={14} />
-                              <span>{`${updateScheduleLabel} refresh`}</span>
+                              <LuRefreshCw size={12} />
+                              <Chip.Label>{`${updateScheduleLabel} refresh`}</Chip.Label>
                             </Chip>
                           )}
                           {snapshotScheduleLabel && (
                             <Chip color="default" size="sm" variant="soft">
-                              <LuCalendarClock size={14} />
-                              <span>{`${snapshotScheduleLabel} snapshot`}</span>
+                              <LuCalendarClock size={12} />
+                              <Chip.Label>{`${snapshotScheduleLabel} snapshot`}</Chip.Label>
                             </Chip>
                           )}
                           {!updateScheduleLabel && !snapshotScheduleLabel && (
                             <Chip color="default" size="sm" variant="soft">
-                              <LuRefreshCw size={14} />
-                              <span>No schedule</span>
+                              <LuRefreshCw size={12} />
+                              <Chip.Label>No schedule</Chip.Label>
                             </Chip>
                           )}
                         </div>

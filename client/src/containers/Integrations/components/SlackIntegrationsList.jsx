@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Button, Chip, Separator, Modal, Table,
+  Button, Chip, Modal, Table,
   EmptyState,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
@@ -27,7 +27,7 @@ function SlackIntegrations() {
         <div className="flex items-center gap-1">
           <LuSlack size={24} />
           <div className="text-lg font-semibold">Slack</div>
-          <Chip variant="secondary" size="sm" className="rounded-sm">
+          <Chip variant="secondary" size="sm" color="accent">
             New!
           </Chip>
         </div>
@@ -46,10 +46,8 @@ function SlackIntegrations() {
       <div className="text-sm text-foreground-500">
         {"Add Chartbrew's AI assistant to your Slack workspaces"}
       </div>
-      <div className="h-2" />
-      <Separator />
-      <div className="h-2" />
-      <Table className="border-1 border-divider rounded-lg shadow-none">
+      <div className="h-4" />
+      <Table className="border border-divider shadow-none">
         <Table.ScrollContainer>
           <Table.Content
             aria-label="Slack integrations"

@@ -139,7 +139,7 @@ function TopNav() {
   };
 
   return (
-    <div className="sticky top-0 z-50 w-full border-b border-divider bg-content1 p-2">
+    <div className="sticky top-0 z-50 w-full border-b border-divider bg-surface p-2">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-3">
           <Button isIconOnly onPress={() => dispatch(toggleSidebar())} variant="ghost">

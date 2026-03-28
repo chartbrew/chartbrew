@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-} from "@heroui/react";
+import { Separator } from "@heroui/react";
 
 
 import WebhookIntegrationsList from "./components/WebhookIntegrationsList";
@@ -43,7 +42,9 @@ function Integrations() {
         <WebhookIntegrationsList
           teamId={team?.id}
         />
-        <div className="h-4" />
+        <div className="h-8" />
+        <Separator />
+        <div className="h-8" />
         <SlackIntegrationsList
           teamId={team?.id}
         />

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Separator, Input, Link, Label, Modal, Table,
+  Button, Checkbox, Input, Link, Label, Modal, Table,
+  TextField,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -174,9 +175,7 @@ function WebhookIntegrations({ teamId }) {
       <div className="text-sm text-foreground-500">
         {"Create webhooks to send alerts and reports to external services"}
       </div>
-      <div className="h-2" />
-      <Separator />
-      <div className="h-2" />
+      <div className="h-4" />
       <div>
         <div className="text-sm">
           <Link className="text-sm text-foreground/80!" href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
@@ -197,7 +196,7 @@ function WebhookIntegrations({ teamId }) {
         </div>
       </div>
       <div className="h-2" />
-      <Table className="border-1 border-divider rounded-lg shadow-none">
+      <Table className="border border-divider shadow-none">
         <Table.ScrollContainer>
           <Table.Content
             aria-label="Webhook integrations"
@@ -268,29 +267,32 @@ function WebhookIntegrations({ teamId }) {
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-2 p-1">
                 <div>
-                  <Input
-                    label="A name to recognize this integration"
-                    placeholder="Webhook name"
-                    fullWidth
-                    value={newIntegration.name}
-                    onChange={(e) => {
-                      setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
-                    }}
-                    variant="secondary"
-                    required
-                    description={`${newIntegration.name?.length || 0}/20 characters`}
-                  />
+                  <TextField name="webhook-name" isInvalid={Boolean(newIntegration.nameError)}>
+                    <Label>A name to recognize this integration</Label>
+                    <Input
+                      placeholder="Webhook name"
+                      fullWidth
+                      value={newIntegration.name}
+                      onChange={(e) => {
+                        setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
+                      }}
+                      variant="secondary"
+                      required
+                      description={`${newIntegration.name?.length || 0}/20 characters`}
+                    />
+                  </TextField>
                 </div>
                 <div>
-                  <Input
-                    label="The URL where Chartbrew sends a POST request to"
-                    placeholder="Webhook URL"
-                    fullWidth
-                    value={newIntegration.url}
-                    onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
-                    variant="secondary"
-                    color={urlError ? "danger" : "default"}
-                  />
+                  <TextField name="webhook-url" isInvalid={urlError}>
+                    <Label>The URL where Chartbrew sends a POST request to</Label>
+                    <Input
+                      placeholder="Webhook URL"
+                      fullWidth
+                      value={newIntegration.url}
+                      onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
+                      variant="secondary"
+                    />
+                  </TextField>
                 </div>
                 <div className="flex items-center">
                   <Checkbox
@@ -299,6 +301,7 @@ function WebhookIntegrations({ teamId }) {
                     onChange={(isSelected) => {
                       setNewIntegration({ ...newIntegration, slackMode: isSelected });
                     }}
+                    variant="secondary"
                   >
                     <Checkbox.Control className="size-4 shrink-0">
                       <Checkbox.Indicator />

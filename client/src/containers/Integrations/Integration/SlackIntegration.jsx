@@ -166,7 +166,7 @@ function SlackIntegration({ integration }) {
 
       <div className="h-4" />
 
-      <div className="flex flex-col bg-content1 p-4 rounded-lg border border-divider gap-4">
+      <div className="flex flex-col bg-surface p-4 rounded-lg border border-divider gap-4">
         <div className="flex flex-col gap-2">
           <div className="font-semibold">Slack Workspace</div>
           <div className="flex flex-row items-center justify-between">
