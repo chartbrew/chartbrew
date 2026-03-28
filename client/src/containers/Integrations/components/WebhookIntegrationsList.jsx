@@ -369,7 +369,7 @@ function WebhookIntegrations({ teamId }) {
               Close
             </Button>
             <Button
-              auto
+              variant="danger"
               onPress={_onDelete} isPending={deleteLoading}
             >
               {deleteLoading ? <ButtonSpinner /> : null}

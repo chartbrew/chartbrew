@@ -194,14 +194,6 @@ function TeamMembers(props) {
 
   return (
     <div style={style}>
-      {_canAccess("teamAdmin") && (
-        <div className="bg-surface p-4 rounded-3xl border border-divider">
-          <InviteMembersForm />
-        </div>
-      )}
-
-      <div className="h-8" />
-
       <div className="bg-surface p-4 rounded-3xl border border-divider">
         <div className="text-lg font-semibold font-tw">{"Team members"}</div>
         <div className="text-sm text-gray-500">{"Manage your team members and their roles"}</div>
@@ -424,6 +416,14 @@ function TeamMembers(props) {
           </Table>
         )}
       </div>
+
+      <div className="h-4" />
+      
+      {_canAccess("teamAdmin") && (
+        <div className="bg-surface p-4 rounded-3xl border border-divider">
+          <InviteMembersForm />
+        </div>
+      )}
 
       {/* Remove user modal */}
       <Modal>

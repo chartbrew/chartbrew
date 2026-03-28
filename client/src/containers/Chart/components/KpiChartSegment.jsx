@@ -40,25 +40,21 @@ function KpiChartSegment(props) {
               }}
               key={c.label}
             >
-              <div className="flex flex-row items-center">
+              <div className="flex flex-row items-center gap-2">
                 <div className="text-xl text-default-800 font-bold font-tw">
                   {`${c.value?.toLocaleString()}`}
                 </div>
-                <div className="w-4" />
                 {chart.showGrowth && (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <div>
-                        <Chip
-                          size="sm"
-                          variant="soft"
-                          className="rounded-sm"
-                          color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
-                        >
-                          {c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : null}
-                          {`${formattedComparison}%`}
-                        </Chip>
-                      </div>
+                  <Tooltip delay={0} placement="bottom">
+                    <Tooltip.Trigger className="flex justify-center">
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                      >
+                        {c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : null}
+                        <Chip.Label>{`${formattedComparison}%`}</Chip.Label>
+                      </Chip>
                     </Tooltip.Trigger>
                     <Tooltip.Content>
                       {`compared to last ${chart.timeInterval}`}

@@ -139,7 +139,7 @@ function TableConfiguration(props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Accordion className="w-full" variant="surface" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
+      <Accordion className="w-full bg-surface-secondary" variant="surface" aria-label="Table columns options" defaultExpandedKeys={["table-columns-options"]}>
         <Accordion.Item id="table-columns-options" className="text-default" textValue="Table columns options">
           <Accordion.Heading>
             <Accordion.Trigger>
@@ -159,17 +159,17 @@ function TableConfiguration(props) {
                   return (
                     <Chip
                       key={field.accessor}
-                      color="primary"
-                      className="rounded-sm"
+                      color="accent"
+                      variant="soft"
                     >
-                      {`${field.accessor.replace("?", ".")}`}
+                      <Chip.Label>{`${field.accessor.replace("?", ".")}`}</Chip.Label>
                       <Dropdown aria-label="Select a data formatting option" size="sm">
                         <Dropdown.Trigger>
                           <Link
-                            className="flex items-center text-background cursor-pointer"
+                            className="flex items-center cursor-pointer"
                             title="Field options"
                           >
-                            <LuChevronDown className="text-background cursor-pointer" size={16} />
+                            <LuChevronDown className="text-foreground cursor-pointer" size={16} />
                           </Link>
                         </Dropdown.Trigger>
                         <Dropdown.Popover>
@@ -243,7 +243,7 @@ function TableConfiguration(props) {
                     key={field}
                     onClick={() => _onShowField(field)}
                     variant="soft"
-                    className="rounded-sm"
+                    color="warning"
                   >
                     <Link className="flex items-center" onPress={() => _onShowField(field)}>
                       <LuEye className="text-gray-500 cursor-pointer" size={16} />

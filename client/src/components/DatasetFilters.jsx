@@ -2,15 +2,16 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import {
-  Autocomplete, Button, Calendar, Card,
+  Autocomplete, Button, ButtonGroup, Calendar, Card,
   Checkbox, Chip, DateField, DatePicker, Drawer,
-  Dropdown, EmptyState, Input, Label, Link, ListBox,
+  Dropdown, EmptyState, Input, InputGroup, Label, Link, ListBox,
   Modal, SearchField, Select, Separator,
-  Switch, Tooltip, useFilter,
+  Switch, TextField, Tooltip, useFilter,
 } from "@heroui/react";
 import {
   LuCircleCheck, LuEye, LuEyeOff, LuListFilter, LuPlus, LuRedo,
   LuSettings, LuCircleX, LuChevronsRight,
+  LuChevronDown,
 } from "react-icons/lu";
 import { find } from "lodash";
 import { nanoid } from "@reduxjs/toolkit";
@@ -248,7 +249,7 @@ function DatasetFilters(props) {
       )}
       {conditions.map((condition, index) => {
         return (
-          <Card key={condition.id} className="datasetdata-filters-tut shadow-none border-1 border-content3 border-solid rounded-lg">
+          <Card key={condition.id} className="datasetdata-filters-tut shadow-none border border-divider">
             <Card.Header>
               {index === 0 && (<div className="text-sm">{"where "}</div>)}
               {index > 0 && (<div className="text-sm">{"and "}</div>)}
@@ -285,7 +286,7 @@ function DatasetFilters(props) {
                           id={field.value}
                           textValue={field.text}
                         >
-                          <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} >{field.label.content}</Chip>
+                          <Chip size="sm" variant="soft" className={"mr-2 min-w-[70px] justify-center"} color={field.label.color}>{field.label.content}</Chip>
                           <span>{field.text}</span>
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
@@ -298,18 +299,24 @@ function DatasetFilters(props) {
               <Row warp="wrap" className={"flex gap-2"} align="center">
                 <Dropdown aria-label="Select an operator">
                   <Dropdown.Trigger>
-                    <Input
-                      value={
-                        (
-                          find(operators, { value: condition.operator })
-                          && find(operators, { value: condition.operator }).key
-                        )
-                        || "="
-                      }
-                      labelPlacement="outside"
-                      className="max-w-[100px]"
-                      size="sm"
-                    />
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        value={
+                          (
+                            find(operators, { value: condition.operator })
+                            && find(operators, { value: condition.operator }).key
+                          )
+                          || "="
+                        }
+                        labelPlacement="outside"
+                        className="max-w-[100px]"
+                        size="sm"
+                        variant="secondary"
+                      />
+                      <InputGroup.Suffix className="border-none">
+                        <LuChevronDown size={16} />
+                      </InputGroup.Suffix>
+                    </InputGroup>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
                     <Dropdown.Menu
@@ -337,6 +344,7 @@ function DatasetFilters(props) {
                         labelPlacement="outside"
                         size="sm"
                         fullWidth
+                        variant="secondary"
                       />
                     )}
 
@@ -427,44 +435,40 @@ function DatasetFilters(props) {
             )}
             <Separator />
             <Card.Footer className="justify-between gap-2">
-              {!condition.saved && condition.field && (
-                <Tooltip>
-                  <Tooltip.Trigger>
+              <ButtonGroup variant="secondary" size="sm" className="w-full">
+                {!condition.saved && condition.field && (
+                  <Tooltip>
                     <Button
-                      variant="ghost"
                       size="sm"
+                      variant="tertiary"
                       onPress={() => _onApplyCondition(condition.id, condition.exposed)}
                       fullWidth
                     >
                       Apply
                       <LuCircleCheck size={18} />
                     </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Apply this condition</Tooltip.Content>
-                </Tooltip>
-              )}
+                    <Tooltip.Content>Apply this condition</Tooltip.Content>
+                  </Tooltip>
+                )}
 
-              <Tooltip>
-                <Tooltip.Trigger>
+                <Tooltip>
                   <Button
-                    variant="ghost"
                     size="sm"
+                    variant="tertiary"
                     onPress={() => _onRemoveCondition(condition.id)}
                     fullWidth
                   >
                     Remove
                     <LuCircleX size={18} />
                   </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content>Remove filter</Tooltip.Content>
-              </Tooltip>
+                  <Tooltip.Content>Remove filter</Tooltip.Content>
+                </Tooltip>
 
-              {condition.field && condition.operator && !condition.exposed && (
-                <Tooltip>
-                  <Tooltip.Trigger>
+                {condition.field && condition.operator && !condition.exposed && (
+                  <Tooltip>
                     <Button
-                      variant="ghost"
                       size="sm"
+                      variant="tertiary"
                       onPress={() => _onApplyCondition(
                         condition.id,
                         true,
@@ -476,16 +480,15 @@ function DatasetFilters(props) {
                       Expose
                       <LuEye size={18} />
                     </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Expose filter to viewers</Tooltip.Content>
-                </Tooltip>
-              )}
+                    <Tooltip.Content>Expose filter to viewers</Tooltip.Content>
+                  </Tooltip>
+                )}
 
-              {condition.field && condition.operator && condition.exposed && (
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button variant="ghost"
+                {condition.field && condition.operator && condition.exposed && (
+                  <Tooltip>
+                    <Button
                       size="sm"
+                      variant="tertiary"
                       onPress={() => _onApplyCondition(
                         condition.id,
                         false,
@@ -497,43 +500,39 @@ function DatasetFilters(props) {
                       Hide
                       <LuEyeOff size={18} />
                     </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Hide this filter from viewers</Tooltip.Content>
-                </Tooltip>
-              )}
+                    <Tooltip.Content>Hide this filter from viewers</Tooltip.Content>
+                  </Tooltip>
+                )}
 
-              {!condition.saved && condition.value && (
-                <Tooltip>
-                  <Tooltip.Trigger>
+                {!condition.saved && condition.value && (
+                  <Tooltip>
                     <Button
-                      variant="ghost"
                       size="sm"
+                      variant="tertiary"
                       onPress={() => _onRevertCondition(condition.id)}
                       fullWidth
                     >
                       Undo
                       <LuRedo size={18} />
                     </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Undo changes</Tooltip.Content>
-                </Tooltip>
-              )}
-              {condition.saved && (
-                <Tooltip>
-                  <Tooltip.Trigger>
+                    <Tooltip.Content>Undo changes</Tooltip.Content>
+                  </Tooltip>
+                )}
+                {condition.saved && (
+                  <Tooltip>
                     <Button
-                      variant="ghost"
                       size="sm"
+                      variant="tertiary"
                       onPress={() => _onEditConditionSettings(condition)}
                       fullWidth
                     >
                       Config
                       <LuSettings size={18} />
                     </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Filter settings</Tooltip.Content>
-                </Tooltip>
-              )}
+                    <Tooltip.Content>Filter settings</Tooltip.Content>
+                  </Tooltip>
+                )}
+              </ButtonGroup>
             </Card.Footer>
           </Card>
         );
@@ -587,56 +586,45 @@ function DatasetFilters(props) {
           <Modal.Header>
             <Modal.Heading>Filter settings</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
-            <Row>
-              <Input
-                label="The name of the filter as it appears to viewers"
-                placeholder="Enter a name"
-                onChange={(e) => {
-                  setSelectedCondition({ ...selectedCondition, displayName: e.target.value });
-                }}
-                value={
-                  selectedCondition.displayName
-                  || (selectedCondition.field && selectedCondition.field.substring(selectedCondition.field.lastIndexOf(".") + 1))
-                  || ""
-                }
-                fullWidth
-                variant="secondary"
-              />
-            </Row>
-            <Row>
-              <Input
-                label="Assign a variable name to filter"
-                placeholder="Enter a variable name"
-                onChange={(e) => {
-                  setSelectedCondition({ ...selectedCondition, variable: e.target.value });
-                }}
-                value={selectedCondition.variable}
-                fullWidth
-                variant="secondary"
-                errorMessage={selectedCondition.variable && !_isVariableValid(selectedCondition.variable) && "Variables must start with a letter and contain only letters, numbers, and underscores"}
-                description="Variables are used to reference the filter value in when embedding the chart or filtering on the dashboard"
-              />
-            </Row>
-            <Row>
-              <Checkbox
-                id="dataset-filter-hide-values"
-                isSelected={selectedCondition.hideValues}
-                onChange={(selected) => {
-                  setSelectedCondition({
-                    ...selectedCondition,
-                    hideValues: selected
-                  });
-                }}
-              >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Checkbox.Content>
-                  <Label htmlFor="dataset-filter-hide-values" className="text-sm">Hide existing values from the filter dropdown</Label>
-                </Checkbox.Content>
-              </Checkbox>
-            </Row>
+          <Modal.Body className="flex flex-col gap-2 p-1">
+            <TextField className="w-full" name="modal-dataset-name">
+              <Label>The name of the filter as it appears to viewers</Label>
+              <InputGroup variant="secondary" fullWidth>
+                <InputGroup.Input
+                  value={selectedCondition.displayName}
+                  onChange={(e) => {
+                    setSelectedCondition({ ...selectedCondition, displayName: e.target.value });
+                  }}
+                  placeholder="Enter a name"
+                />
+              </InputGroup>
+            </TextField>
+            <TextField className="w-full" name="modal-dataset-name">
+              <Label>Assign a variable name to filter</Label>
+              <InputGroup variant="secondary" fullWidth>
+                <InputGroup.Input
+                  value={selectedCondition.variable}
+                  onChange={(e) => {
+                    setSelectedCondition({ ...selectedCondition, variable: e.target.value });
+                  }}
+                  placeholder="Enter a variable name"
+                />
+              </InputGroup>
+            </TextField>
+            <Checkbox
+              isSelected={selectedCondition.hideValues}
+              onChange={(selected) => {
+                setSelectedCondition({ ...selectedCondition, hideValues: selected });
+              }}
+              variant="secondary"
+            >
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="dataset-filter-hide-values" className="text-sm">Hide existing values from the filter dropdown</Label>
+              </Checkbox.Content>
+            </Checkbox>
           </Modal.Body>
           <Modal.Footer>
             <Button
@@ -675,7 +663,7 @@ function DatasetFilters(props) {
         >
           <Drawer.Dialog>
           <Drawer.Header
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
+            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
           >
             <Tooltip>
               <Tooltip.Trigger>
@@ -692,7 +680,7 @@ function DatasetFilters(props) {
             </Tooltip>
             <div className="text-sm font-bold">Variable settings</div>
             <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
+              <code className="rounded-sm bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
                 {variableSettings?.name}
               </code>
             </div>

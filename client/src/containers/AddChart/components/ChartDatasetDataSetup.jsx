@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import {
   Autocomplete, Button, Chip, EmptyState, InputGroup, Label, ListBox, SearchField, Select, Separator, TextField, Tooltip, useFilter,
 } from "@heroui/react";
-import { LuCheck, LuInfo, LuSettings } from "react-icons/lu";
+import { LuLayers, LuSettings } from "react-icons/lu";
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -181,24 +181,23 @@ function ChartDatasetDataSetup({
     <div>
       <TextField className="w-full max-w-xl" name="series-name">
         <Label>Series name</Label>
-        <InputGroup fullWidth>
+        <InputGroup fullWidth variant="secondary">
           <InputGroup.Input
             placeholder="Enter a name for your series"
             value={legend}
             onChange={onSaveLegend.onChange}
           />
-          <InputGroup.Suffix className="pr-1">
+          <InputGroup.Suffix className="pr-2 border-none">
             <Row align="center" className="gap-2">
               {legend && legend !== cdc.legend && (
-                <Tooltip>
+                <Tooltip delay={0}>
                   <Tooltip.Trigger>
                     <Button
-                      isIconOnly
-                      color="primary"
+                      variant="secondary"
                       size="sm"
                       onPress={onSaveLegend.onSave}
                     >
-                      <LuCheck />
+                      Save
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Save series name</Tooltip.Content>
@@ -206,7 +205,7 @@ function ChartDatasetDataSetup({
               )}
               <Tooltip>
                 <Tooltip.Trigger>
-                  <div><LuInfo size={18} className="text-default-400" /></div>
+                  <div><LuLayers size={18} className="text-default-400" /></div>
                 </Tooltip.Trigger>
                 <Tooltip.Content>{`Dataset: ${getDatasetDisplayName(dataset)}`}</Tooltip.Content>
               </Tooltip>
@@ -214,25 +213,26 @@ function ChartDatasetDataSetup({
           </InputGroup.Suffix>
         </InputGroup>
       </TextField>
-      <div className="h-4" />
+      <div className="h-2" />
 
       {_canAccess("projectAdmin") && (
         <Button
-          variant="ghost"
+          variant="outline"
           fullWidth
           onPress={onEditDataset}
+          size="sm"
         >
-          <LuSettings size={18} />
+          <LuSettings size={16} />
           Edit dataset
         </Button>
       )}
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <Text b>Data setup</Text>
-      <div className="h-4" />
+      <div className="h-2" />
 
       <Autocomplete
         placeholder="Select dimension"
@@ -261,7 +261,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {filterOptions("x").map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" className="mr-2 min-w-[70px] justify-center" variant="soft" color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -271,7 +271,7 @@ function ChartDatasetDataSetup({
         </Autocomplete.Popover>
       </Autocomplete>
 
-      <div className="h-8" />
+      <div className="h-4" />
 
       <Autocomplete
         placeholder="Select metric"
@@ -300,7 +300,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {fieldOptions.map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" variant="soft" className={"mr-2 min-w-[70px] justify-center"} color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -337,7 +337,7 @@ function ChartDatasetDataSetup({
         </Select.Popover>
       </Select>
 
-      <div className="h-8" />
+      <div className="h-4" />
 
       <Autocomplete
         placeholder="Select a field"
@@ -366,7 +366,7 @@ function ChartDatasetDataSetup({
             <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
               {getDateFieldOptions().map((option) => (
                 <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                  <Chip size="sm" variant="soft" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                  <Chip size="sm" variant="soft" className={"mr-2 min-w-[70px] justify-center"} color={option.label.color}>{option.label.content}</Chip>
                   {option.text}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -376,9 +376,9 @@ function ChartDatasetDataSetup({
         </Autocomplete.Popover>
       </Autocomplete>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="font-bold">Filters</div>
       <div className="h-4" />

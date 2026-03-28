@@ -5,7 +5,6 @@ import {
   Avatar,
   Button,
   Checkbox,
-  Chip,
   Separator,
   Input,
   InputGroup,
@@ -398,7 +397,7 @@ function ChartDatasetConfig(props) {
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel id="data-setup">
-          <div className="h-8" />
+          <div className="h-2" />
           <ChartDatasetDataSetup
             cdc={cdc}
             dataset={dataset}
@@ -415,23 +414,22 @@ function ChartDatasetConfig(props) {
         </Tabs.Panel>
 
         <Tabs.Panel id="display">
-          <div className="h-8" />
+          <div className="h-2" />
 
           {chart.type !== "table" && (
             <>
               <div className="chart-cdc-colors">
                 <div className="font-bold">{"Series colors"}</div>
-                <div className="h-4" />
+                <div className="h-2" />
 
                 <div className="flex flex-row justify-between items-center">
                   <div className="text-sm">Primary color</div>
                   <div>
                     <Popover>
                       <Popover.Trigger>
-                        <Chip
+                        <div
                           style={_getDatasetColor(cdc.datasetColor)}
-                          size="lg"
-                          className="rounded-sm pl-[100px]"
+                          className="w-full h-8 rounded-3xl pl-[100px]"
                         />
                       </Popover.Trigger>
                       <Popover.Content className="border-none bg-transparent shadow-none">
@@ -447,7 +445,7 @@ function ChartDatasetConfig(props) {
                     </Popover>
                   </div>
                 </div>
-                <div className="h-4" />
+                <div className="h-2" />
 
                 {chart.type !== "matrix" && (
                   <Row align={"center"} justify={"space-between"}>
@@ -457,6 +455,7 @@ function ChartDatasetConfig(props) {
                         isSelected={cdc.fill}
                         onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
                         isDisabled={cdc.multiFill}
+                        variant="secondary"
                       >
                         <Checkbox.Control className="size-4 shrink-0">
                           <Checkbox.Indicator />
@@ -470,10 +469,9 @@ function ChartDatasetConfig(props) {
                       <div>
                         <Popover>
                           <Popover.Trigger>
-                            <Chip
+                            <div
                               style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
-                              size="lg"
-                              className="rounded-sm pl-[100px]"
+                              className="w-full h-8 rounded-3xl pl-[100px]"
                             />
                           </Popover.Trigger>
                           <Popover.Content className="border-none bg-transparent shadow-none">
@@ -490,7 +488,7 @@ function ChartDatasetConfig(props) {
                     )}
                   </Row>
                 )}
-                <div className="h-4" />
+                <div className="h-2" />
 
                 {chart.type !== "line" && chart.type !== "matrix" && (
                   <Row>
@@ -500,6 +498,7 @@ function ChartDatasetConfig(props) {
                       onChange={(selected) => {
                         if (selected !== cdc.multiFill) _onChangeMultiFill();
                       }}
+                      variant="secondary"
                     >
                       <Checkbox.Control className="size-4 shrink-0">
                         <Checkbox.Indicator />
@@ -521,9 +520,9 @@ function ChartDatasetConfig(props) {
                           <div>
                             <Popover>
                               <Popover.Trigger>
-                                <Chip
+                                <div
                                   style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                                  className="rounded-sm"
+                                  className="w-full h-8 rounded-3xl"
                                 />
                               </Popover.Trigger>
                               <Popover.Content className="border-none bg-transparent shadow-none">
@@ -546,9 +545,9 @@ function ChartDatasetConfig(props) {
                 )}
               </div>
 
-              <div className="h-8" />
+              <div className="h-4" />
               <Separator />
-              <div className="h-8" />
+              <div className="h-4" />
             </>
           )}
 
@@ -560,7 +559,7 @@ function ChartDatasetConfig(props) {
               <div className="h-2" />
               <div className="flex flex-col gap-2">
                 <div className="text-sm">Sort records</div>
-                <div className="flex flex-row gap-2">
+                <div className="flex flex-row items-center gap-2">
                   <Tooltip>
                     <Tooltip.Trigger>
                       <Button
@@ -590,70 +589,74 @@ function ChartDatasetConfig(props) {
                     <Tooltip.Content>Sort the dataset in descending order</Tooltip.Content>
                   </Tooltip>
                   {cdc.sort && (
-                    <>
-                      <Tooltip>
-                        <Tooltip.Trigger>
+                    <div>
+                      <Tooltip delay={0}>
+                        <Tooltip.Trigger className="flex justify-center">
                           <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
                             <LuCircleX className="text-danger" />
                           </Link>
                         </Tooltip.Trigger>
                         <Tooltip.Content>Clear sorting</Tooltip.Content>
                       </Tooltip>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
-              <div className="h-8" />
+              <div className="h-4" />
 
               <div className="flex flex-col gap-2">
-                <div className="text-sm">Max records</div>
-                <div className="flex flex-row gap-2">
-                  <Input
-                    labelPlacement="outside"
-                    placeholder="Max records"
-                    value={maxRecords}
-                    onChange={(event) => setMaxRecords(event.target.value)}
-                    type="number"
-                    min={1}
-                    fullWidth
-                    description="Limit the number of records shown"
-                  />
-                  {maxRecords && (
-                    <>
-                      {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
-                        <>
-                          <Tooltip>
-                            <Tooltip.Trigger>
-                              <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
-                                <LuCircleCheck className="text-success" />
-                              </Link>
-                            </Tooltip.Trigger>
-                            <Tooltip.Content>Save</Tooltip.Content>
-                          </Tooltip>
-                        </>
-                      )}
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <Link
-                            className="text-danger"
-                            onPress={() => {
-                              _onUpdateCdc({ maxRecords: null });
-                              setMaxRecords("");
-                            }}
-                          >
-                            <LuCircleX className="text-danger" />
-                          </Link>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Clear limit</Tooltip.Content>
-                      </Tooltip>
-                    </>
-                  )}
+                <div className="flex flex-row items-center gap-2">
+                  <TextField className="w-full" name="max-records">
+                    <Label>Max records</Label>
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        placeholder="Max records"
+                        value={maxRecords}
+                        onChange={(event) => setMaxRecords(event.target.value)}
+                        variant="secondary"
+                        labelPlacement="outside"
+                        description="Limit the number of records shown"
+                      />
+                      <InputGroup.Suffix className="pr-2 border-none">
+                        {maxRecords && (
+                          <div className="flex flex-row gap-1">
+                            {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
+                              <>
+                                <Tooltip>
+                                  <Tooltip.Trigger className="flex justify-center">
+                                    <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
+                                      <LuCircleCheck className="text-success" />
+                                    </Link>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content>Save</Tooltip.Content>
+                                </Tooltip>
+                              </>
+                            )}
+                            <Tooltip>
+                              <Tooltip.Trigger className="flex justify-center">
+                                <Link
+                                  className="text-danger"
+                                  onPress={() => {
+                                    _onUpdateCdc({ maxRecords: null });
+                                    setMaxRecords("");
+                                  }}
+                                >
+                                  <LuCircleX className="text-danger" />
+                                </Link>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Clear limit</Tooltip.Content>
+                            </Tooltip>
+                          </div>
+                        )}
+                      </InputGroup.Suffix>
+                    </InputGroup>
+                  </TextField>
                 </div>
               </div>
 
-              <div className="h-8" />
+              <div className="h-4" />
               <Separator />
-              <div className="h-8" />
+              <div className="h-4" />
             </>
           )}
 
@@ -706,7 +709,7 @@ function ChartDatasetConfig(props) {
                         />
                         {formula !== cdc.formula && (
                           <Tooltip>
-                            <Tooltip.Trigger>
+                            <Tooltip.Trigger className="flex justify-center">
                               <Link onPress={_onApplyFormula}>
                                 <LuCircleCheck className={"text-success"} />
                               </Link>
@@ -715,7 +718,7 @@ function ChartDatasetConfig(props) {
                           </Tooltip>
                         )}
                         <Tooltip>
-                          <Tooltip.Trigger>
+                          <Tooltip.Trigger className="flex justify-center">
                             <Link onPress={_onRemoveFormula}>
                               <LuCircleX className="text-danger" />
                             </Link>
@@ -723,7 +726,7 @@ function ChartDatasetConfig(props) {
                           <Tooltip.Content>Remove formula</Tooltip.Content>
                         </Tooltip>
                         <Tooltip>
-                          <Tooltip.Trigger>
+                          <Tooltip.Trigger className="flex justify-center">
                             <Link onPress={_onExampleFormula}>
                               <LuWandSparkles className="text-accent" />
                             </Link>
@@ -736,9 +739,9 @@ function ChartDatasetConfig(props) {
                 )}
               </div>
 
-              <div className="h-8" />
+              <div className="h-4" />
               <Separator />
-              <div className="h-8" />
+              <div className="h-4" />
 
               <div>
                 {!goal && (
@@ -773,7 +776,7 @@ function ChartDatasetConfig(props) {
                       />
                       {`${goal}` !== `${cdc.goal || ""}` && (
                         <Tooltip>
-                          <Tooltip.Trigger>
+                          <Tooltip.Trigger className="flex justify-center">
                             <Link onPress={() => _onUpdateCdc({ goal })}>
                               <LuCircleCheck className={"text-success"} />
                             </Link>
@@ -782,7 +785,7 @@ function ChartDatasetConfig(props) {
                         </Tooltip>
                       )}
                       <Tooltip>
-                        <Tooltip.Trigger>
+                        <Tooltip.Trigger className="flex justify-center">
                           <Link onPress={() => {
                             _onUpdateCdc({ goal: null });
                             setGoal("");
@@ -801,7 +804,7 @@ function ChartDatasetConfig(props) {
         </Tabs.Panel>
 
         <Tabs.Panel id="automation">
-          <div className="h-8" />
+          <div className="h-2" />
 
           <Row>
             <DatasetAlerts
@@ -817,9 +820,9 @@ function ChartDatasetConfig(props) {
             />
           </Row>
 
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
 
           <div className="flex flex-col gap-2">
             <div className="font-bold">{"Variables"}</div>
@@ -901,9 +904,9 @@ function ChartDatasetConfig(props) {
         </Tabs.Panel>
       </Tabs>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="flex flex-row justify-between">
         {canAccess("teamAdmin", user.id, team?.TeamRoles) && (

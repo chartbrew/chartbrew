@@ -221,7 +221,7 @@ function ChartPreview(props) {
   };
 
   return (
-    <div className={"bg-surface rounded-lg mx-auto p-4 w-full"}>
+    <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
           <div className={"w-full"}>
@@ -241,6 +241,7 @@ function ChartPreview(props) {
                   id="chart-preview-use-cache"
                   isSelected={useCache}
                   onChange={changeCache}
+                  variant="secondary"
                 >
                   <Checkbox.Control className="size-4 shrink-0">
                     <Checkbox.Indicator />
@@ -392,7 +393,7 @@ function ChartPreview(props) {
             </div>
           </div>
           <div className="h-4" />
-          <div className="border-solid border border-content3 px-3 py-2 rounded-2xl chart-preview-types">
+          <div className="border-solid border border-divider px-3 py-2 rounded-3xl chart-preview-types">
             <div className="flex flex-row gap-4 justify-around flex-wrap">
               <div className="flex flex-row gap-1">
                 <Tooltip>
@@ -561,8 +562,8 @@ function ChartPreview(props) {
                 <div className={"container mx-auto"}>
                   <Text className={"text-foreground-500 text-[20px]"}>{"Configure the dataset to get started"}</Text>
                   <div className="h-2" />
-                  <Skeleton className="rounded-lg">
-                    <div className="h-5 rounded-lg bg-default-300"></div>
+                  <Skeleton className="rounded-3xl">
+                    <div className="h-5 rounded-3xl bg-default-300"></div>
                   </Skeleton>
                 </div>
                 <div className="h-1" />
@@ -581,6 +582,7 @@ function ChartPreview(props) {
               isSelected={chart.mode === "kpichart"}
               onChange={_onChangeMode}
               isDisabled={chart.type === "kpi" || chart.type === "avg"}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -594,6 +596,7 @@ function ChartPreview(props) {
               isSelected={chart.showGrowth}
               onChange={_onChangeGrowth}
               isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -606,6 +609,7 @@ function ChartPreview(props) {
               id="chart-preview-invert-growth"
               isSelected={chart.invertGrowth}
               onChange={_onChangeInvertGrowth}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />

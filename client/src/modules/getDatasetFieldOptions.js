@@ -14,10 +14,10 @@ function createFieldOption(field, type, isObject = false) {
       style: { width: 55, textAlign: "center" },
       content: type || "unknown",
       size: "mini",
-      color: type === "date" ? "secondary"
-        : type === "number" ? "primary"
+      color: type === "date" ? "warning"
+        : type === "number" ? "accent"
           : type === "string" ? "success"
-            : type === "boolean" ? "warning"
+            : type === "boolean" ? "danger-soft"
               : "default",
     },
   };

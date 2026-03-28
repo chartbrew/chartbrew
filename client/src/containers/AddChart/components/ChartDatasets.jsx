@@ -187,12 +187,12 @@ function ChartDatasets(props) {
           )}
         </div>
       </div>
-      <div className="h-8" />
+      <div className="h-4" />
 
       {(chart?.ChartDatasetConfigs?.length === 0 || addMode) && (
         <>
           <TextField aria-label="Search datasets" className="w-full max-w-md" name="dataset-search">
-            <InputGroup fullWidth>
+            <InputGroup fullWidth variant="secondary">
               <InputGroup.Prefix>
                 <LuSearch className="size-4 text-muted" aria-hidden />
               </InputGroup.Prefix>
@@ -207,22 +207,24 @@ function ChartDatasets(props) {
           <div className="flex flex-row gap-1 items-center">
             <Chip
               variant={tag === "project" ? "primary" : "soft"}
+              color={tag === "project" ? "accent" : "default"}
               onClick={() => setTag("project")}
-              className="rounded-sm cursor-pointer"
+              className="cursor-pointer"
             >
               This project
             </Chip>
             <Chip
               variant={tag === "team" ? "primary" : "soft"}
+              color={tag === "team" ? "accent" : "default"}
               onClick={() => setTag("team")}
-              className="rounded-sm cursor-pointer chart-empty-filter-tutorial"
+              className="cursor-pointer chart-empty-filter-tutorial"
             >
               All
             </Chip>
             <div className="w-2" />
             <div className="text-sm text-foreground-500">{`${_filteredDatasets().length} datasets found`}</div>
           </div>
-          <div className="h-8" />
+          <div className="h-4" />
 
           {datasets.length === 0 && (
             <div>No datasets available.</div>
@@ -234,7 +236,7 @@ function ChartDatasets(props) {
                 <Card
                   role="button"
                   tabIndex={0}
-                  className={`w-full cursor-pointer border-2 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
+                  className={`w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-content2/40 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
                   onClick={() => _onCreateCdc(dataset.id)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -304,17 +306,17 @@ function ChartDatasets(props) {
               </Fragment>
             ))}
           </ScrollShadow>
-          <div className="h-16" />
+          <div className="h-8" />
         </>
       )}
 
       {datasets.length === 0 && canAccess("teamAdmin", user.id, team?.TeamRoles) && (
         <div>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div className="text-sm text-foreground-500">No datasets found. Create a dataset to get started.</div>
-          <div className="h-8" />
+          <div className="h-4" />
           <Button
             variant="primary"
             onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
@@ -334,26 +336,28 @@ function ChartDatasets(props) {
             _onReorderCdc({ dragId, newOrder });
           }}
           orientation="horizontal"
+          className="gap-2"
           renderItem={(cdc, { isDragging }) => (
             <Chip
               key={cdc.id}
               title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
-              variant={activeCdc?.id === cdc.id ? "primary" : "soft"}
+              variant={activeCdc?.id === cdc.id ? "soft" : "secondary"}
+              color={activeCdc?.id === cdc.id ? "accent" : "default"}
               onClick={() => setActiveCdc(cdc)}
-              className={`rounded-sm cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
+              className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
               size="lg"
             >
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cdc.datasetColor }} />
-              {cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}
+              <Chip.Label>{cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}</Chip.Label>
               <LuGripVertical size={16} className="cursor-grab" />
             </Chip>
           )}
         />
       )}
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       {activeCdc?.id && (
         <ChartDatasetConfig

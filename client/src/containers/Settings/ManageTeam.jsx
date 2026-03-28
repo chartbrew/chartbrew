@@ -61,11 +61,15 @@ function ManageTeam() {
       </div>
       <div className="h-8" />
       <Tabs
+        className="w-fit self-start"
         onSelectionChange={_onMenuChange}
         selectedKey={activeMenu}
       >
-        <Tabs.ListContainer>
-          <Tabs.List className="border border-divider">
+        <Tabs.ListContainer className="w-fit">
+          <Tabs.List
+            aria-label="Settings sections"
+            className="w-fit flex-nowrap border border-divider *:w-fit *:shrink-0 *:whitespace-nowrap"
+          >
             <Tabs.Tab id="profile">
               <Tabs.Indicator />
               <div className="flex flex-row items-center gap-2">

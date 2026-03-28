@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal,
   Switch, Select, Label, ListBox,
+  TextField,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -349,39 +350,38 @@ function DatasetAlerts(props) {
         )}
       </Container>
       <Modal.Backdrop isOpen={open} onOpenChange={setOpen}>
-        <Modal.Container size="2xl">
+        <Modal.Container size="lg">
           <Modal.Dialog>
           <Modal.Header>
             <Modal.Heading>{newAlert.id ? "Edit alert" : "Set up a new alert"}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="flex flex-col gap-2 p-1">
             <div>
-              <Row align="center">
-                <Select
-                  variant="secondary"
-                  placeholder="Select an alert type"
-                  value={newAlert.type || null}
-                  onChange={(value) => setNewAlert({ ...newAlert, type: value })}
-                  selectionMode="single"
-                  aria-label="Select an alert type"
-                >
-                  <Label>Alert type</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {ruleTypes.map((rule) => (
-                        <ListBox.Item key={rule.value} id={rule.value} textValue={rule.label}>
-                          {rule.label}
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </Row>
+              <Select
+                variant="secondary"
+                placeholder="Select an alert type"
+                value={newAlert.type || null}
+                onChange={(value) => setNewAlert({ ...newAlert, type: value })}
+                selectionMode="single"
+                aria-label="Select an alert type"
+                fullWidth
+              >
+                <Label>Alert type</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {ruleTypes.map((rule) => (
+                      <ListBox.Item key={rule.value} id={rule.value} textValue={rule.label}>
+                        {rule.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
               <div className="h-2" />
 
               {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
@@ -447,14 +447,12 @@ function DatasetAlerts(props) {
               <div className="h-8" />
               {newAlert.type && (
                 <>
-                  <Row>
-                    <Text b>Where should we send the alerts?</Text>
-                  </Row>
+                  <div className="font-bold">Where should we send the alerts?</div>
                   <div className="h-2" />
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
-                      variant={!newAlert.mediums.email?.enabled ? "outline" : "secondary"}
+                      variant={!newAlert.mediums.email?.enabled ? "outline" : "primary"}
                       onPress={() => _onChangeMediums("email")}
                     >
                       <LuMail />
@@ -468,7 +466,7 @@ function DatasetAlerts(props) {
                             selectedIntegrations.length === 0
                             || !selectedIntegrations.find(
                               (i) => i.integration_id === integration.id && i.enabled
-                            ) ? "outline" : "secondary"
+                            ) ? "outline" : "primary"
                           }
                           onPress={() => _onSelectIntegration(integration)}
                         >
@@ -498,25 +496,23 @@ function DatasetAlerts(props) {
                   </div>
                   {newAlert.mediums.email?.enabled && (
                   <>
-                    <div className="h-8" />
-                    <Row>
-                      <Text b>Email alerts - Who should receive them?</Text>
-                    </Row>
+                    <div className="h-4" />
+                    <div className="font-bold">Email alerts - Who should receive them?</div>
                     <div className="h-2" />
-                    <Row wrap="wrap" className={"gap-2"}>
+                    <div className="flex flex-wrap items-center gap-2">
                       {_filterTeamMembers().map((member) => (
                         <Link key={member.email} onPress={() => _onChangeRecipient(member.email)}>
                           <Chip
-                            color="secondary"
+                            color="accent"
                             size="sm"
                             variant={newAlert.recipients.includes(member.email) ? "primary" : "soft"}
-                            className="rounded-sm cursor-pointer"
+                            className="cursor-pointer"
                           >
                             {member.email}
                           </Chip>
                         </Link>
                       ))}
-                    </Row>
+                    </div>
                   </>
                   )}
                 </>
@@ -524,23 +520,19 @@ function DatasetAlerts(props) {
 
               {newAlert.type && (
                 <>
-                  <div className="h-16" />
-                  <Row>
-                    <Text b>Add a timeout between alerts of the same type</Text>
-                  </Row>
-                  <Row>
-                    <Text size="sm">By default, data is checked after each automatic chart update</Text>
-                  </Row>
+                  <div className="h-8" />
+                  <div className="font-bold">Add a timeout between alerts of the same type</div>
+                  <div className="text-sm text-gray-500">By default, data is checked after each automatic chart update</div>
                   <div className="h-2" />
                   <Row>
-                    <Input
-                      label="Enter a timeout"
-                      type="number"
-                      fullWidth
-                      variant="secondary"
-                      value={displayTimeout}
-                      onChange={(e) => setDisplayTimeout(e.target.value)}
-                    />
+                    <TextField name="dataset-alert-timeout" fullWidth variant="secondary">
+                      <Label>Enter a timeout</Label>
+                      <Input
+                        type="number"
+                        value={displayTimeout}
+                        onChange={(e) => setDisplayTimeout(e.target.value)}
+                      />
+                    </TextField>
                     <div className="w-2" />
                     <Select
                       variant="secondary"
@@ -548,6 +540,7 @@ function DatasetAlerts(props) {
                       onChange={(value) => setTimeoutUnit(value)}
                       selectionMode="single"
                       aria-label="Select a time unit"
+                      fullWidth
                     >
                       <Label>Time unit</Label>
                       <Select.Trigger>
@@ -623,7 +616,6 @@ function DatasetAlerts(props) {
               id="dataset-alert-active"
               isSelected={newAlert.active}
               onChange={(selected) => setNewAlert({ ...newAlert, active: selected })}
-              size="sm"
             >
               <Switch.Control>
                 <Switch.Thumb />

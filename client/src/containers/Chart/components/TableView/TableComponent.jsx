@@ -25,16 +25,38 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   text: `Show ${pageSize}`,
 }));
 
-/** Maps legacy table column button settings (v2) to HeroUI v3 Button variant. */
+const TABLE_COLUMN_BUTTON_STYLE_IDS = new Set(["accent", "success", "warning", "danger", "danger-soft"]);
+
+/** Maps persisted table column button settings to HeroUI v3 Button variant. */
 const tableDisplayButtonVariant = (buttonSettings) => {
-  const color = buttonSettings.color || "primary";
-  const legacy = buttonSettings.variant || "solid";
+  const color = buttonSettings.color || "accent";
+  const legacyVariant = buttonSettings.variant || "primary";
+
+  if (TABLE_COLUMN_BUTTON_STYLE_IDS.has(color)) {
+    if (color === "danger-soft") return "danger-soft";
+    if (color === "danger") return "danger";
+    return "primary";
+  }
+
+  const legacy = legacyVariant || "solid";
   if (legacy === "flat") return "tertiary";
   if (legacy === "bordered") return "outline";
   if (legacy === "light") return "tertiary";
   if (color === "danger") return "danger";
   if (color === "secondary") return "secondary";
   return "primary";
+};
+
+/** Semantic fills when using Button variant primary (accent / success / warning). */
+const tableDisplayButtonClassName = (buttonSettings) => {
+  const color = buttonSettings.color || "accent";
+  if (color === "success") {
+    return "bg-success text-success-foreground hover:opacity-90";
+  }
+  if (color === "warning") {
+    return "bg-warning text-warning-foreground hover:opacity-90";
+  }
+  return undefined;
 };
 
 /** Convert react-table v7-style column defs from the server to TanStack Table v8 defs. */
@@ -98,12 +120,13 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
       // Check if column format is button - if so, render as button instead of link
       const columnConfig = columnsFormatting?.[columnKey];
       if (columnConfig?.display?.format === "button") {
-        const buttonSettings = columnConfig.display.button || { color: "primary", variant: "solid" };
+        const buttonSettings = columnConfig.display.button || { color: "accent", variant: "primary" };
         baseContent = (
           <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline">
             <Button
               size="sm"
               variant={tableDisplayButtonVariant(buttonSettings)}
+              className={tableDisplayButtonClassName(buttonSettings)}
             >
               {buttonSettings.text || "View"}
             </Button>
@@ -412,7 +435,7 @@ function TableComponent({
                   <div className="w-1" />
                   <Dropdown aria-label="Select a page size">
                     <Dropdown.Trigger>
-                      <Button variant="secondary" size="sm">
+                      <Button variant="tertiary" size="sm">
                         {(paginationOptions.find((option) => option.value === pageSize) || { text: `Show ${pageSize}` }).text}
                         <LuChevronDown size={16} />
                       </Button>

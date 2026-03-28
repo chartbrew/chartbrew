@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Separator, Input, Tooltip, Modal, Select,
   Label, ListBox,
+  TextField,
 } from "@heroui/react";
 import moment from "moment";
 import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
@@ -182,14 +183,14 @@ function ChartSettings({ chart, onChange }) {
   };
 
   return (
-    <div className={"bg-surface rounded-lg mx-auto p-4 w-full"}>
+    <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
       <Row>
         <Text b>Chart Settings</Text>
       </Row>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="text-sm text-gray-500">Date settings</div>
       <div className="h-2" />
@@ -240,6 +241,7 @@ function ChartSettings({ chart, onChange }) {
               isDisabled={!dateRange.endDate}
               onChange={(selected) => onChange({ currentEndDate: selected })}
               className="chart-settings-relative"
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -248,37 +250,37 @@ function ChartSettings({ chart, onChange }) {
                 <Label htmlFor="chart-settings-current-end" className="text-sm">Auto-update the date range</Label>
               </Checkbox.Content>
             </Checkbox>
-            <Tooltip>
+            <Tooltip delay={0}>
               <Tooltip.Trigger>
                 <div>
-                  <LuInfo />
+                  <LuInfo size={16} />
                 </div>
               </Tooltip.Trigger>
               <Tooltip.Content>
                 <div style={{ padding: 5 }}>
-                  <Text>
+                  <div className="text-sm">
                     {"When this is enabled, the date range will be preserved but shifted to the present date."}
-                  </Text>
+                  </div>
                   <div className="h-2" />
-                  <Text>
+                  <div className="text-sm">
                     {"This option takes into account the date interval as well."}
-                  </Text>
+                  </div>
                   <div className="h-4" />
                   <ul>
                     <li>
-                      <Text b>
+                      <div className="text-sm font-bold">
                         {"Daily interval: the end date will be the end of the present day"}
-                      </Text>
+                      </div>
                     </li>
                     <li>
-                      <Text b>
+                      <div className="text-sm font-bold">
                         {"Weekly interval: the end date will be the end of the present week"}
-                      </Text>
+                      </div>
                     </li>
                     <li>
-                      <Text b>
+                      <div className="text-sm font-bold">
                         {"Monthly interval: the end date will be the end of the present month"}
-                      </Text>
+                      </div>
                     </li>
                   </ul>
                 </div>
@@ -291,6 +293,7 @@ function ChartSettings({ chart, onChange }) {
             isSelected={chart.fixedStartDate}
             isDisabled={!chart.currentEndDate}
             onChange={(selected) => onChange({ fixedStartDate: selected })}
+            variant="secondary"
           >
             <Checkbox.Control className="size-4 shrink-0">
               <Checkbox.Indicator />
@@ -301,7 +304,7 @@ function ChartSettings({ chart, onChange }) {
           </Checkbox>
         </div>
       </div>
-      <div className="h-8" />
+      <div className="h-4" />
       <div className="grid grid-cols-12 gap-2">
         <div className="col-span-12 md:col-span-6 lg:col-span-6">
           <Select
@@ -335,6 +338,7 @@ function ChartSettings({ chart, onChange }) {
             id="chart-settings-include-zeros"
             isSelected={chart.includeZeros}
             onChange={(selected) => onChange({ includeZeros: selected })}
+            variant="secondary"
           >
             <Checkbox.Control className="size-4 shrink-0">
               <Checkbox.Indicator />
@@ -346,9 +350,9 @@ function ChartSettings({ chart, onChange }) {
         </div>
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {chart.type === "line" && (
@@ -357,6 +361,7 @@ function ChartSettings({ chart, onChange }) {
               id="chart-settings-data-points"
               isSelected={chart.pointRadius > 0}
               onChange={(selected) => _onAddPoints(selected ? 3 : 0)}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -373,6 +378,7 @@ function ChartSettings({ chart, onChange }) {
               id="chart-settings-stacked"
               isSelected={chart.stacked}
               onChange={(selected) => onChange({ stacked: selected })}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -389,6 +395,7 @@ function ChartSettings({ chart, onChange }) {
               id="chart-settings-horizontal"
               isSelected={chart.horizontal}
               onChange={(selected) => onChange({ horizontal: selected })}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -405,6 +412,7 @@ function ChartSettings({ chart, onChange }) {
             isSelected={chart.displayLegend}
             onChange={(selected) => onChange({ displayLegend: selected })}
             isDisabled={chart.type === "matrix"}
+            variant="secondary"
           >
             <Checkbox.Control className="size-4 shrink-0">
               <Checkbox.Indicator />
@@ -420,6 +428,7 @@ function ChartSettings({ chart, onChange }) {
             isSelected={chart.dataLabels}
             onChange={(selected) => onChange({ dataLabels: selected })}
             isDisabled={chart.type === "matrix"}
+            variant="secondary"
           >
             <Checkbox.Control className="size-4 shrink-0">
               <Checkbox.Indicator />
@@ -435,6 +444,7 @@ function ChartSettings({ chart, onChange }) {
               id="chart-settings-log-scale"
               isSelected={chart.isLogarithmic}
               onChange={(selected) => onChange({ isLogarithmic: selected })}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -451,6 +461,7 @@ function ChartSettings({ chart, onChange }) {
               id="chart-settings-dashed-last"
               isSelected={chart.dashedLastPoint}
               onChange={(selected) => onChange({ dashedLastPoint: selected })}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -463,35 +474,38 @@ function ChartSettings({ chart, onChange }) {
         )}
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="flex flex-col gap-2">
         {chart.type !== "table" && (
           <>
-            <div className="flex flex-row items-center gap-2">
-              <Input
-                label="Max Y Axis value"
-                placeholder="Enter a number"
-                type="number"
-                value={max}
-                onChange={(e) => setMax(e.target.value)}
-                fullWidth
-              />
+            <div className="flex flex-row items-end gap-2">
+              <TextField name="max-y-axis-value" className="w-full">
+                <Label>Max Y Axis value</Label>
+                <Input
+                  placeholder="Enter a number"
+                  type="number"
+                  value={max}
+                  onChange={(e) => setMax(e.target.value)}
+                  fullWidth
+                  variant="secondary"
+                />
+              </TextField>
               <div className="flex flex-row gap-1">
                 {max && (
                   <>
                     <Button
                       isDisabled={!max || (max === chart.maxValue)}
-                      onPress={() => onChange({ maxValue: max })} variant="secondary"
+                      onPress={() => onChange({ maxValue: max })}
+                      variant="secondary"
                       size="sm"
                     >
                       Save
                     </Button>
                     <Button
                       variant="tertiary"
-                      color="danger"
                       onPress={() => {
                         onChange({ maxValue: null });
                         setMax("");
@@ -504,16 +518,19 @@ function ChartSettings({ chart, onChange }) {
                 )}
               </div>
             </div>
-            <div className="flex flex-row items-center gap-2">
-              <Input
-                label="Min Y Axis value"
-                placeholder="Enter a number"
-                type="number"
-                value={min}
-                onChange={(e) => setMin(e.target.value)}
-                fullWidth
-              />
-              <div className="flex flex-row gap-1">
+            <div className="flex flex-row items-end gap-2">
+              <TextField name="min-y-axis-value" className="w-full">
+                <Label>Min Y Axis value</Label>
+                <Input
+                  placeholder="Enter a number"
+                  type="number"
+                  value={min}
+                  onChange={(e) => setMin(e.target.value)}
+                  fullWidth
+                  variant="secondary"
+                />
+              </TextField>
+              <div className="flex flex-row items-center gap-1">
                 {min && (
                   <>
                     <Button
@@ -525,7 +542,6 @@ function ChartSettings({ chart, onChange }) {
                     </Button>
                     <Button
                       variant="tertiary"
-                      color="danger"
                       onPress={() => {
                         onChange({ minValue: null });
                         setMin("");
@@ -570,9 +586,9 @@ function ChartSettings({ chart, onChange }) {
         )}
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="grid grid-cols-12 gap-1">
         <div className="col-span-12">

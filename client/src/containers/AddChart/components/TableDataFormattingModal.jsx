@@ -4,10 +4,12 @@ import {
   Button, Checkbox, Chip, Description, Separator, Input, Label, ListBox, Modal,
   Popover,
   Select,
+  TextField,
 } from "@heroui/react";
-import { LuPlus, LuX } from "react-icons/lu";
+import { LuCheck, LuPlus, LuX } from "react-icons/lu";
 import { Block } from "@uiw/react-color";
 import { chartColors } from "../../../config/colors";
+import { cn } from "../../../modules/utils";
 
 const dataTypes = [{
   value: "none",
@@ -81,6 +83,54 @@ const displayFormats = [{
   text: "Image",
 }];
 
+/** HeroUI v3 table URL button presets (aligns with Button variants). */
+const TABLE_COLUMN_BUTTON_STYLES = [
+  { id: "accent", label: "Accent", chipColor: "accent", chipVariant: "primary" },
+  { id: "success", label: "Success", chipColor: "success", chipVariant: "primary" },
+  { id: "warning", label: "Warning", chipColor: "warning", chipVariant: "primary" },
+  { id: "danger", label: "Danger", chipColor: "danger", chipVariant: "primary" },
+  { id: "danger-soft", label: "Danger soft", chipColor: "danger", chipVariant: "soft" },
+];
+
+const TABLE_COLUMN_BUTTON_STYLE_IDS = new Set(TABLE_COLUMN_BUTTON_STYLES.map((s) => s.id));
+
+function persistedVariantForTableColumnButtonStyle(styleId) {
+  if (styleId === "danger") return "danger";
+  if (styleId === "danger-soft") return "danger-soft";
+  return "primary";
+}
+
+function normalizeTableColumnButtonSettingsFromConfig(button) {
+  if (!button) {
+    return { color: "accent", variant: "primary", text: "View" };
+  }
+  const { color, variant, text } = button;
+  if (TABLE_COLUMN_BUTTON_STYLE_IDS.has(color)) {
+    return {
+      color,
+      variant: persistedVariantForTableColumnButtonStyle(color),
+      text: text || "View",
+    };
+  }
+  if (color === "danger" && (variant === "flat" || variant === "tertiary" || variant === "light")) {
+    return { color: "danger-soft", variant: "danger-soft", text: text || "View" };
+  }
+  if (color === "danger") {
+    return { color: "danger", variant: "danger", text: text || "View" };
+  }
+  if (color === "success") {
+    return { color: "success", variant: "primary", text: text || "View" };
+  }
+  if (color === "warning") {
+    return { color: "warning", variant: "primary", text: text || "View" };
+  }
+  return {
+    color: "accent",
+    variant: "primary",
+    text: text || "View",
+  };
+}
+
 function TableDataFormattingModal(props) {
   const {
     open, onUpdate, onClose, config, loading,
@@ -97,8 +147,8 @@ function TableDataFormattingModal(props) {
   const [rules, setRules] = useState([]);
   const [progress, setProgress] = useState(null);
   const [buttonSettings, setButtonSettings] = useState({
-    color: "primary",
-    variant: "flat",
+    color: "accent",
+    variant: "primary",
     text: "View",
   });
   const [imageSettings, setImageSettings] = useState({
@@ -146,11 +196,7 @@ function TableDataFormattingModal(props) {
       }
 
       if (config.display?.button) {
-        setButtonSettings({
-          color: config.display.button.color,
-          variant: config.display.button.variant,
-          text: config.display.button.text,
-        });
+        setButtonSettings(normalizeTableColumnButtonSettingsFromConfig(config.display.button));
       }
 
       if (config.display?.image) {
@@ -170,8 +216,8 @@ function TableDataFormattingModal(props) {
       setDisplayFormat("default");
       setRules([]);
       setButtonSettings({
-        color: "primary",
-        variant: "flat",
+        color: "accent",
+        variant: "primary",
         text: "View",
       });
       setImageSettings({
@@ -204,7 +250,16 @@ function TableDataFormattingModal(props) {
     if (displayFormat) newConfig.display = { ...(newConfig.display || {}), format: displayFormat };
     if (rules) newConfig.display = { ...(newConfig.display || {}), rules };
     if (progress) newConfig.display = { ...(newConfig.display || {}), progress };
-    if (buttonSettings.color && buttonSettings.variant && buttonSettings.text) newConfig.display = { ...(newConfig.display || {}), button: { color: buttonSettings.color, variant: buttonSettings.variant, text: buttonSettings.text } };
+    if (buttonSettings.color && buttonSettings.text) {
+      newConfig.display = {
+        ...(newConfig.display || {}),
+        button: {
+          color: buttonSettings.color,
+          variant: persistedVariantForTableColumnButtonStyle(buttonSettings.color),
+          text: buttonSettings.text,
+        },
+      };
+    }
     if (imageSettings.size) newConfig.display = { ...(newConfig.display || {}), image: { size: imageSettings.size, variant: imageSettings.variant } };
 
     onUpdate(newConfig);
@@ -221,13 +276,13 @@ function TableDataFormattingModal(props) {
         if (!nextOpen) onClose();
       }}
     >
-      <Modal.Container size="xl">
+      <Modal.Container size="lg">
         <Modal.Dialog>
         <Modal.Header className="flex flex-col">
           <Modal.Heading>Column formatting</Modal.Heading>
           <div className="text-sm text-gray-500 font-normal">Change the data format for this column</div>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="flex flex-col gap-2 p-1">
           <div className="flex flex-row">
             <Select
               variant="secondary"
@@ -235,6 +290,7 @@ function TableDataFormattingModal(props) {
               value={dataType}
               onChange={(value) => setDataType(value)}
               aria-label="Select a data type"
+              className="w-full"
             >
               <Label>Data type</Label>
               <Select.Trigger>
@@ -262,6 +318,7 @@ function TableDataFormattingModal(props) {
                 value={formatValue || null}
                 onChange={(value) => setFormatValue(value)}
                 aria-label="Select a date format"
+                fullWidth
               >
                 <Label>Date format</Label>
                 <Select.Trigger>
@@ -288,6 +345,7 @@ function TableDataFormattingModal(props) {
                     value={customDateFormat}
                     placeholder="Enter the format here"
                     onChange={(e) => setCustomDateFormat(e.target.value)}
+                    fullWidth
                   />
                 </>
               )}
@@ -319,6 +377,7 @@ function TableDataFormattingModal(props) {
                       placeholder="Enter symbol here $, £, €, etc."
                       onChange={(e) => setSymbol(e.target.value)}
                       size="sm"
+                      fullWidth
                     />
                   </div>
                 </>
@@ -328,6 +387,8 @@ function TableDataFormattingModal(props) {
                   id="table-format-thousands"
                   isSelected={thousandsSeparator}
                   onChange={(checked) => setThousandsSeparator(checked)}
+                  className="w-full"
+                  variant="secondary"
                 >
                   <Checkbox.Control className="size-4 shrink-0">
                     <Checkbox.Indicator />
@@ -342,6 +403,8 @@ function TableDataFormattingModal(props) {
                   id="table-format-decimals"
                   isSelected={allowDecimals}
                   onChange={(checked) => setAllowDecimals(checked)}
+                  className="w-full"
+                  variant="secondary"
                 >
                   <Checkbox.Control className="size-4 shrink-0">
                     <Checkbox.Indicator />
@@ -352,21 +415,27 @@ function TableDataFormattingModal(props) {
                 </Checkbox>
               </div>
               <div>
-                <Input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={decimals}
-                  onChange={(e) => setDecimals(e.target.value)}
-                  variant="secondary"
-                  isDisabled={!allowDecimals}
-                  size="sm"
-                />
+                <TextField name="decimals" className="w-full">
+                  <Label>Decimals</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={decimals}
+                    onChange={(e) => setDecimals(e.target.value)}
+                    variant="secondary"
+                    isDisabled={!allowDecimals}
+                    size="sm"
+                  />
+                </TextField>
               </div>
             </>
           )}
 
+          <div className="h-1" />
           <Separator />
+          <div className="h-1" />
+
           <Select 
             variant="secondary"
             selectionMode="single"
@@ -489,113 +558,51 @@ function TableDataFormattingModal(props) {
           {displayFormat === "button" && (
             <div className="flex flex-col items-start gap-1">
               <div className="text-sm text-gray-500">
-                Button color:
+                Button style:
               </div>
-              <div className="flex flex-row items-center gap-1">
-                <Chip
-                  size="sm"
-                  variant="primary"
-                  onClick={() => _onChangeButtonSettings({ color: "primary", variant: "solid" })}
-                  className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="accent"
-                  onClick={() => _onChangeButtonSettings({ color: "primary", variant: "flat" })}
-                  className={`px-4 ${buttonSettings.color === "primary" && buttonSettings.variant === "flat" ? " outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "solid" })}
-                  className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="tertiary"
-                  onClick={() => _onChangeButtonSettings({ color: "secondary", variant: "bordered" })}
-                  className={`px-4 ${buttonSettings.color === "secondary" && buttonSettings.variant === "bordered" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="success"
-                  onClick={() => _onChangeButtonSettings({ color: "success", variant: "light" })}
-                  className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "light" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="success"
-                  onClick={() => _onChangeButtonSettings({ color: "success", variant: "flat" })}
-                  className={`px-4 ${buttonSettings.color === "success" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => _onChangeButtonSettings({ color: "default", variant: "solid" })}
-                  className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="default"
-                  onClick={() => _onChangeButtonSettings({ color: "default", variant: "flat" })}
-                  className={`px-4 ${buttonSettings.color === "default" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="warning"
-                  onClick={() => _onChangeButtonSettings({ color: "warning", variant: "solid" })}
-                  className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="warning"
-                  onClick={() => _onChangeButtonSettings({ color: "warning", variant: "flat" })}
-                  className={`px-4 ${buttonSettings.color === "warning" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="danger"
-                  onClick={() => _onChangeButtonSettings({ color: "danger", variant: "solid" })}
-                  className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "solid" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  color="danger"
-                  onClick={() => _onChangeButtonSettings({ color: "danger", variant: "flat" })}
-                  className={`px-4 ${buttonSettings.color === "danger" && buttonSettings.variant === "flat" ? "outline-black outline-2" : ""}`}
-                  content=" "
-                />
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                {TABLE_COLUMN_BUTTON_STYLES.map((style) => {
+                  const selected = buttonSettings.color === style.id;
+                  return (
+                    <Chip
+                      key={style.id}
+                      size="sm"
+                      color={style.chipColor}
+                      variant={style.chipVariant}
+                      aria-pressed={selected}
+                      aria-label={`${style.label}${selected ? ", selected" : ""}`}
+                      onClick={() => _onChangeButtonSettings({
+                        color: style.id,
+                        variant: persistedVariantForTableColumnButtonStyle(style.id),
+                      })}
+                      className={cn(
+                        selected
+                          ? "cursor-pointer px-3 border-2 border-divider"
+                          : "cursor-pointer px-3"
+                      )}
+                    >
+                      {selected ? (
+                        <LuCheck size={14} strokeWidth={2.5} className="shrink-0" aria-hidden />
+                      ) : null}
+                      <Chip.Label className={selected ? "font-semibold" : undefined}>
+                        {style.label}
+                      </Chip.Label>
+                    </Chip>
+                  );
+                })}
               </div>
               <div className="h-2" />
               <div className="text-sm text-gray-500">
                 Button text:
               </div>
-              <div className="flex flex-row items-center gap-1">
+              <div className="flex flex-row items-center gap-1 w-full">
                 <Input
                   placeholder="Enter the button text here"
                   value={buttonSettings.text}
                   onChange={(e) => _onChangeButtonSettings({ text: e.target.value })}
                   variant="secondary"
                   size="sm"
+                  fullWidth
                 />
               </div>
             </div>
@@ -606,7 +613,7 @@ function TableDataFormattingModal(props) {
               <div className="text-sm text-gray-500">
                 Image size (width in pixels)
               </div>
-              <div className="flex flex-row items-center gap-1">
+              <div className="flex flex-row items-center gap-1 w-full">
                 <Input
                   type="number"
                   placeholder="Enter the image size here"
@@ -614,6 +621,7 @@ function TableDataFormattingModal(props) {
                   onChange={(e) => setImageSettings({ ...imageSettings, size: e.target.value })}
                   variant="secondary"
                   size="sm"
+                  fullWidth
                 />
                 <div className="text-sm text-gray-500">px</div>
               </div>
@@ -628,7 +636,7 @@ function TableDataFormattingModal(props) {
                 value={imageSettings.variant}
                 onChange={(value) => setImageSettings({ ...imageSettings, variant: value })}
                 aria-label="Select a image variant"
-                className="max-w-sm"
+                className="w-full"
               >
                 <Select.Trigger>
                   <Select.Value />
