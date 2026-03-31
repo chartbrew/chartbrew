@@ -29,6 +29,7 @@ import {
   LuArrowDownRight,
   LuPlug,
   LuTvMinimal,
+  LuChevronDown,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -1092,7 +1093,6 @@ function ProjectDashboard() {
                       <Dropdown aria-label="Add widget">
                         <Button
                           variant="outline"
-                          size="sm"
                           onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
                         >
                           <LuGrid2X2Plus size={18} />
@@ -1122,7 +1122,6 @@ function ProjectDashboard() {
                         </Dropdown.Popover>
                       </Dropdown>
                       <Button
-                        size="sm"
                         onPress={() => setShowShare(true)}
                       >
                         <ButtonGroup.Separator />
@@ -1132,7 +1131,6 @@ function ProjectDashboard() {
                       <Button
                         onPress={() => _onRefreshData()}
                         isPending={refreshLoading}
-                        size="sm"
                       >
                         <ButtonGroup.Separator />
                         {refreshLoading ? <ButtonSpinner /> : <LuRefreshCw />}
@@ -1144,7 +1142,6 @@ function ProjectDashboard() {
                             variant="outline"
                             isIconOnly
                             onPress={() => setScheduleVisible(true)}
-                            size="sm"
                           >
                             <ButtonGroup.Separator />
                             <LuCalendarClock
@@ -1162,7 +1159,6 @@ function ProjectDashboard() {
                             isIconOnly
                             onPress={() => _onRefreshData()}
                             isPending={refreshLoading}
-                            size="sm"
                             className="flex sm:hidden bg-background"
                           >
                             <ButtonGroup.Separator />
@@ -1176,7 +1172,6 @@ function ProjectDashboard() {
                           <Badge.Anchor className="relative inline-flex">
                             <Button
                               isIconOnly
-                              size="sm"
                               onPress={() => dispatch(completeTutorial({
                                 user_id: user.id,
                                 tutorial: { projectSettings: true },
@@ -1196,7 +1191,6 @@ function ProjectDashboard() {
                           <Button
                             variant="outline"
                             isIconOnly
-                            size="sm"
                           >
                             <ButtonGroup.Separator />
                             <LuEllipsisVertical size={20} />
@@ -1478,7 +1472,7 @@ function ProjectDashboard() {
                 </Tooltip>
                 <Tabs
                   size="sm"
-                  variant="secondary"
+                  variant="primary"
                   selectedKey={previewSize?.breakpoint}
                   onSelectionChange={(key) => _onChangePreviewSize(key)}
                 >
@@ -1494,7 +1488,7 @@ function ProjectDashboard() {
                       </Tabs.Tab>
                       <Tabs.Tab id="xl">
                         <Tabs.Indicator />
-                        Large screen
+                        XL
                       </Tabs.Tab>
                       <Tabs.Tab id="lg">
                         <Tabs.Indicator />
@@ -1525,6 +1519,7 @@ function ProjectDashboard() {
                     <Button size="sm" variant="tertiary">
                       <LuLayoutDashboard />
                       Auto-layout
+                      <LuChevronDown />
                     </Button>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>

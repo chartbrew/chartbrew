@@ -348,7 +348,7 @@ function WebhookIntegrations({ teamId }) {
       <Modal>
         <Modal.Backdrop isOpen={!!integrationToDelete} onOpenChange={(nextOpen) => { if (!nextOpen) setIntegrationToDelete(false); }}>
           <Modal.Container>
-            <Modal.Dialog className="sm:max-w-3xl">
+            <Modal.Dialog>
               <Modal.Header>
             <div className="font-bold">Are you sure you want to delete this integration?</div>
               </Modal.Header>

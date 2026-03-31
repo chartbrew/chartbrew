@@ -38,6 +38,7 @@ function DateRangeFilter({
   onChange,
   className = "",
   size = "sm",
+  variant = "primary",
   isEdit = false,
 }) {
   // This is the actual value that is displayed to the user
@@ -158,7 +159,7 @@ function DateRangeFilter({
       value={currentValue}
       onChange={_handleDateRangeChange}
     >
-      <DateField.Group fullWidth variant="secondary" size={size}>
+      <DateField.Group fullWidth variant={variant} size={size}>
         <DateField.Input slot="start">
           {(segment) => <DateField.Segment segment={segment} />}
         </DateField.Input>
@@ -221,7 +222,7 @@ function DateRangeFilter({
             </div>
           </div>
         </RangeCalendar>
-        <div className="flex flex-col gap-1 border-t-1 border-divider pb-4 pt-2">
+        <div className="flex flex-col gap-1 border-t border-divider pb-4 pt-2">
           <div className="flex flex-row flex-wrap gap-1 px-2 py-1 max-w-lg">
             <Link onPress={() => _onSelectRange("this_month")} className="whitespace-nowrap">
               <Chip size="sm" variant="soft" className="cursor-pointer">

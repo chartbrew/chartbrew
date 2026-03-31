@@ -41,7 +41,7 @@ function VariableFilter({
               </Chip>
             )}
             className={["pl-1", className].filter(Boolean).join(" ")}
-            variant="secondary"
+            variant="primary"
             value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             size="sm"
@@ -64,7 +64,7 @@ function VariableFilter({
               </Chip>
             )}
             className={["pl-1", className].filter(Boolean).join(" ")}
-            variant="secondary"
+            variant="primary"
             value={textValue || ""}
             onChange={(e) => setTextValue(e.target.value)}
             type="number"
@@ -96,7 +96,7 @@ function VariableFilter({
               }}
               isDisabled={!allowValueChange}
             >
-              <DateField.Group fullWidth variant="secondary" size="sm">
+              <DateField.Group fullWidth variant="primary" size="sm">
                 <DateField.Input>
                   {(segment) => <DateField.Segment segment={segment} />}
                 </DateField.Input>
@@ -145,7 +145,7 @@ function VariableFilter({
       case "binary":
         return (
           <Select
-            variant="secondary"
+            variant="primary"
             className={className}
             value={value || null}
             onChange={(selectedValue) => onApply?.(selectedValue)}

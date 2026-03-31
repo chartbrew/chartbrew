@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Separator, Input, Switch, TextArea, Tooltip, RadioGroup, Radio,
+  Button, Separator, Input, InputGroup, Switch, Tooltip, RadioGroup, Radio,
   Drawer, Checkbox, Spinner, Label,
   Alert,
 } from "@heroui/react";
@@ -358,38 +358,56 @@ function SharingSettings(props) {
             <div className="space-y-2">
               <div className="text-sm font-medium">Direct Link</div>
               <div>
-                <Input
-                  labelPlacement="outside"
-                  value={_getEmbedUrl()}
-                  fullWidth
-                  readOnly
-                  size="sm"
-                  endContent={
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input
+                    value={_getEmbedUrl()}
+                    readOnly
+                    size="sm"
+                    variant="secondary"
+                    className="min-w-0"
+                  />
+                  <InputGroup.Suffix className="border-none pr-1">
                     <div className="flex flex-row items-center gap-1">
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <Button
+                        isIconOnly
+                        aria-label="Open direct link in new tab"
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => window.open(_getEmbedUrl(), "_blank")}
+                      >
                         <LuExternalLink />
                       </Button>
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
+                      <Button isIconOnly aria-label="Copy direct link" size="sm" variant="tertiary" onPress={_onCopyUrl}>
                         {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                       </Button>
                     </div>
-                  }
-                />
+                  </InputGroup.Suffix>
+                </InputGroup>
               </div>
               <div className="h-2" />
               <div className="text-sm font-medium">Embedding Code</div>
               <div>
-                <TextArea
-                  value={_getSignedEmbedString()}
-                  fullWidth
-                  readOnly
-                  size="sm"
-                  endContent={
-                    <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyEmbed}>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.TextArea
+                    value={_getSignedEmbedString()}
+                    readOnly
+                    rows={4}
+                    size="sm"
+                    variant="secondary"
+                    className="min-w-0 resize-none"
+                  />
+                  <InputGroup.Suffix className="border-none self-start pr-1 pt-1">
+                    <Button
+                      isIconOnly
+                      aria-label="Copy embed code"
+                      size="sm"
+                      variant="tertiary"
+                      onPress={_onCopyEmbed}
+                    >
                       {embedCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
                     </Button>
-                  }
-                />
+                  </InputGroup.Suffix>
+                </InputGroup>
               </div>
             </div>
           </>
@@ -398,14 +416,36 @@ function SharingSettings(props) {
         <div>
           <div className="text-sm font-medium mb-1">Theme</div>
           <RadioGroup
+            name="sharing-embed-theme"
             orientation="horizontal"
-            size="sm"
             value={embedTheme}
-            onValueChange={setEmbedTheme}
+            variant="secondary"
+            onChange={setEmbedTheme}
           >
-            <Radio value="os">System default</Radio>
-            <Radio value="dark">Dark</Radio>
-            <Radio value="light">Light</Radio>
+            <Radio value="os">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">System default</Label>
+              </Radio.Content>
+            </Radio>
+            <Radio value="dark">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">Dark</Label>
+              </Radio.Content>
+            </Radio>
+            <Radio value="light">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">Light</Label>
+              </Radio.Content>
+            </Radio>
           </RadioGroup>
         </div>
 
@@ -481,6 +521,7 @@ function SharingSettings(props) {
               id="sharing-settings-allow-params"
               isSelected={allowParams}
               onChange={(selected) => setAllowParams(selected)}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -489,7 +530,7 @@ function SharingSettings(props) {
                 <Label htmlFor="sharing-settings-allow-params" className="text-sm">Allow parameters in the URL</Label>
               </Checkbox.Content>
             </Checkbox>
-            <Tooltip>
+            <Tooltip delay={0}>
               <Tooltip.Trigger>
                 <div className="text-gray-500"><LuInfo size={16} /></div>
               </Tooltip.Trigger>
@@ -510,6 +551,7 @@ function SharingSettings(props) {
             value={expirationDate}
             onChange={(e) => setExpirationDate(e.target.value)}
             size="sm"
+            variant="secondary"
           />
           {expirationDate && (
             <Button
@@ -536,308 +578,313 @@ function SharingSettings(props) {
         if (!isOpen) onClose();
       }}
     >
-      <Drawer.Backdrop variant="blur" />
-      <Drawer.Content
-        placement="right"
-        className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium max-w-3xl"
-      >
-        <Drawer.Dialog>
-        {onReport && (
-          <Drawer.Header className="flex flex-row items-center justify-between gap-2">
-            <Text size="h3">Sharing settings</Text>
-            <Drawer.CloseTrigger aria-label="Close" />
-          </Drawer.Header>
-        )}
-        {!onReport && (
-          <Drawer.Header
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
-          >
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Button
-                  isIconOnly
-                  onPress={onClose}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <LuChevronsRight />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content>Close</Tooltip.Content>
-            </Tooltip>
-            <div className="flex flex-row items-center gap-2">
-              <Button
-                size="sm"
-                variant="primary"
-                onPress={() => navigate(`/report/${newBrewName}/edit`)}
-              >
-                Edit report visuals
-                <LuPalette size={18} />
-              </Button>
-            </div>
-          </Drawer.Header>
-        )}
-        <Drawer.Body>
-          <div className="font-medium text-gray-500">Dashboard visibility</div>
-          <div className="flex flex-row items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center">
-              <Switch
-                id="sharing-settings-allow-public"
-                isSelected={project.public}
-                onChange={_onTogglePublic}
-                size="sm"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-                <Switch.Content>
-                  <Label htmlFor="sharing-settings-allow-public">Allow sharing</Label>
-                </Switch.Content>
-              </Switch>
-              <div className="w-1" />
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <div><LuInfo size={16} /></div>
-                </Tooltip.Trigger>
-                <Tooltip.Content className="max-w-xs">
-                  <>
-                    <p>{"Allow sharing the report with anyone with or without a Chartbrew account."}</p>
-                    <div className="h-2" />
-                    <p>{"When disabled, the report can only be seen by members of your team if logged in."}</p>
-                  </>
-                </Tooltip.Content>
-              </Tooltip>
-            </div>
-            <div className="flex items-center">
-              <Switch
-                id="sharing-settings-require-password"
-                isSelected={project.passwordProtected}
-                onChange={_onTogglePassword}
-                isReadOnly={passwordLoading}
-                aria-busy={passwordLoading}
-                size="sm"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-                <Switch.Content>
-                  <Label htmlFor="sharing-settings-require-password">Require password to view</Label>
-                </Switch.Content>
-              </Switch>
-              <div className="w-1" />
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <div><LuInfo size={16} /></div>
-                </Tooltip.Trigger>
-                <Tooltip.Content className="max-w-xs">
-                  When enabled, the report will require the viewers outside of your team to enter a password before viewing
-                </Tooltip.Content>
-              </Tooltip>
-            </div>
-          </div>
-          {project.passwordProtected && (
-            <>
-              <Row>
-                <Input
-                  label="Report password"
-                  placeholder="Enter a password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  isDisabled={!project.passwordProtected}
-                  variant="secondary"
-                  fullWidth
-                />
-              </Row>
-              <Row>
-                <Button
-                  variant="primary"
-                  onPress={() => _onSavePassword(newPassword)}
-                  isDisabled={
-                    !project.passwordProtected
-                    || !newPassword
-                    || project.password === newPassword
-                  }
-                  size="sm"
-                >
-                  Save password
-                </Button>
-              </Row>
-            </>
+      <Drawer.Backdrop>
+        <Drawer.Content
+          placement="right"
+          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium max-w-3xl"
+        >
+          <Drawer.Dialog className="min-w-lg">
+          {onReport && (
+            <Drawer.Header className="flex flex-row items-center justify-between gap-2">
+              <Text size="h3">Sharing settings</Text>
+              <Drawer.CloseTrigger aria-label="Close" />
+            </Drawer.Header>
           )}
-
-          <Separator />
-
-          <div className="font-medium text-gray-500">Customize your Report URL</div>
-          <Input
-            id="share-url-text"
-            placeholder="Enter your custom dashboard URL"
-            labelPlacement="outside"
-            startContent={(
-              <div className="text-sm text-gray-500">
-                {`${SITE_HOST}/report/`}
-              </div>
-            )}
-            value={newBrewName}
-            onChange={(e) => _onChangeBrewName(e.target.value)}
-            color={urlError ? "error" : "default"}
-            description={urlError}
-            variant="secondary"
-            fullWidth
-          />
-          <Row>
-            <Button
-              variant="primary"
-              onPress={() => _onSaveBrewName(newBrewName)}
-              isDisabled={!newBrewName}
-              isPending={urlLoading}
-              size="sm"
+          {!onReport && (
+            <Drawer.Header
+              className="flex flex-row items-center border-b border-divider gap-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg pb-4"
             >
-              {urlLoading ? <ButtonSpinner /> : null}
-              {onReport ? "Save URL and reload" : "Save URL"}
-            </Button>
-          </Row>
-
-          <Separator />
-
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-gray-500">Share Links</div>
-
-            <div className="flex items-center">
-              <Button
-                size="sm"
-                variant="tertiary"
-                onPress={_onCreateNewPolicy}
-                isPending={shareLoading}
-              >
-                {shareLoading ? <ButtonSpinner /> : <LuPlus />}
-                New Link
-              </Button>
-            </div>
-
-            {sharePolicies.length === 0 && (
-              <div className="text-center py-4 text-gray-500">
-                <LuShare className="mx-auto mb-2" size={24} />
-                <div className="text-sm">No share links created yet</div>
-                <div className="text-xs">Create your first share link to get started</div>
+              <Tooltip delay={0}>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    onPress={onClose}
+                    size="sm"
+                    variant="tertiary"
+                  >
+                    <LuChevronsRight />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Close</Tooltip.Content>
+              </Tooltip>
+              <div className="flex flex-row items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={() => navigate(`/report/${newBrewName}/edit`)}
+                >
+                  Edit report visuals
+                  <LuPalette size={18} />
+                </Button>
               </div>
+            </Drawer.Header>
+          )}
+          <Drawer.Body className="flex flex-col gap-2 p-1 pb-10">
+            <div className="font-medium text-gray-500">Dashboard visibility</div>
+            <div className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center">
+                <Switch
+                  id="sharing-settings-allow-public"
+                  isSelected={project.public}
+                  onChange={_onTogglePublic}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Content>
+                    <Label htmlFor="sharing-settings-allow-public">Allow sharing</Label>
+                  </Switch.Content>
+                </Switch>
+                <div className="w-1" />
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuInfo size={16} /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content className="max-w-xs">
+                    <>
+                      <p>{"Allow sharing the report with anyone with or without a Chartbrew account."}</p>
+                      <div className="h-2" />
+                      <p>{"When disabled, the report can only be seen by members of your team if logged in."}</p>
+                    </>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+              <div className="flex items-center">
+                <Switch
+                  id="sharing-settings-require-password"
+                  isSelected={project.passwordProtected}
+                  onChange={_onTogglePassword}
+                  isReadOnly={passwordLoading}
+                  aria-busy={passwordLoading}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Content>
+                    <Label htmlFor="sharing-settings-require-password">Require password to view</Label>
+                  </Switch.Content>
+                </Switch>
+                <div className="w-1" />
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <div><LuInfo size={16} /></div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content className="max-w-xs">
+                    When enabled, the report will require the viewers outside of your team to enter a password before viewing
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </div>
+            {project.passwordProtected && (
+              <>
+                <Row>
+                  <Input
+                    label="Report password"
+                    placeholder="Enter a password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    isDisabled={!project.passwordProtected}
+                    variant="secondary"
+                    fullWidth
+                  />
+                </Row>
+                <Row>
+                  <Button
+                    variant="primary"
+                    onPress={() => _onSavePassword(newPassword)}
+                    isDisabled={
+                      !project.passwordProtected
+                      || !newPassword
+                      || project.password === newPassword
+                    }
+                    size="sm"
+                  >
+                    Save password
+                  </Button>
+                </Row>
+              </>
             )}
 
-            {sharePolicies.length > 0 && (
-              <div className="border-1 border-divider rounded-medium p-2">
-                {!selectedPolicy && sharePolicies.map((policy, index) => (
-                  <div
-                    key={policy.id}
-                    className="flex flex-row items-center justify-between cursor-pointer hover:bg-content2 rounded-medium p-2"
-                    onClick={() => setSelectedPolicy(policy)}
-                  >
-                    <div className="flex flex-col">
-                      <div className="font-medium text-sm">Link {index + 1}</div>
-                      <div className="text-xs text-gray-500">
-                        {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
-                      </div>
-                    </div>
-                    <div className="flex flex-row items-center gap-2">
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
-                        <LuExternalLink size={16} />
-                      </Button>
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
-                        {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy size={16} />}
-                      </Button>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="danger-soft"
-                        onPress={() => _onDeletePolicy(policy.id)}
-                      >
-                        <LuTrash2 size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            <div className="h-1" />
+            <Separator />
+            <div className="h-1" />
 
+            <div className="font-medium text-gray-500">Customize your Report URL</div>
+            <Input
+              id="share-url-text"
+              placeholder="Enter your custom dashboard URL"
+              labelPlacement="outside"
+              startContent={(
+                <div className="text-sm text-gray-500">
+                  {`${SITE_HOST}/report/`}
+                </div>
+              )}
+              value={newBrewName}
+              onChange={(e) => _onChangeBrewName(e.target.value)}
+              color={urlError ? "error" : "default"}
+              description={urlError}
+              variant="secondary"
+              fullWidth
+            />
+            <Row>
+              <Button
+                variant="primary"
+                onPress={() => _onSaveBrewName(newBrewName)}
+                isDisabled={!newBrewName}
+                isPending={urlLoading}
+                size="sm"
+              >
+                {urlLoading ? <ButtonSpinner /> : null}
+                {onReport ? "Save URL and reload" : "Save URL"}
+              </Button>
+            </Row>
 
-                {selectedPolicy && (
-                  <div>
+            <div className="h-1" />
+            <Separator />
+            <div className="h-1" />
+
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-gray-500">Share Links</div>
+
+              <div className="flex items-center">
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  onPress={_onCreateNewPolicy}
+                  isPending={shareLoading}
+                >
+                  {shareLoading ? <ButtonSpinner /> : <LuPlus />}
+                  New Link
+                </Button>
+              </div>
+              <div className="h-1" />
+
+              {sharePolicies.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  <LuShare className="mx-auto mb-2" size={24} />
+                  <div className="text-sm">No share links created yet</div>
+                  <div className="text-xs">Create your first share link to get started</div>
+                </div>
+              )}
+
+              {sharePolicies.length > 0 && (
+                <div className="border border-divider rounded-3xl p-2">
+                  {!selectedPolicy && sharePolicies.map((policy, index) => (
                     <div
-                      key={selectedPolicy.id}
-                      className="flex flex-row items-center gap-1 hover:cursor-pointer text-accent mt-2"
-                      onClick={() => setSelectedPolicy(null)}
+                      key={policy.id}
+                      className="flex flex-row items-center justify-between cursor-pointer hover:bg-content2 rounded-medium p-2"
+                      onClick={() => setSelectedPolicy(policy)}
                     >
-                      <div><LuArrowLeft size={16} /></div>
-                      <div className="text-sm">Back to all links</div>
-                    </div>
-
-                    <div className="h-4" />
-                    <Separator />
-                    <div className="h-4" />
-
-                    {_renderPolicyDetails()}
-
-                    {_hasUnsavedChanges() && (
-                      <div className="mt-4 mb-2">
+                      <div className="flex flex-col">
+                        <div className="font-medium text-sm">Link {index + 1}</div>
+                        <div className="text-xs text-gray-500">
+                          {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-center gap-2">
+                        <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                          <LuExternalLink size={16} />
+                        </Button>
+                        <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
+                          {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy size={16} />}
+                        </Button>
                         <Button
+                          isIconOnly
                           size="sm"
-                          variant="primary"
-                          onPress={_onUpdatePolicy}
-                          isPending={isUpdating}
+                          variant="danger-soft"
+                          onPress={() => _onDeletePolicy(policy.id)}
                         >
-                          {isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
-                          Save & Regenerate links
+                          <LuTrash2 size={16} />
                         </Button>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  ))}
+
+
+                  {selectedPolicy && (
+                    <div>
+                      <div
+                        key={selectedPolicy.id}
+                        className="flex flex-row items-center gap-1 hover:cursor-pointer text-accent mt-2"
+                        onClick={() => setSelectedPolicy(null)}
+                      >
+                        <div><LuArrowLeft size={16} /></div>
+                        <div className="text-sm">Back to all links</div>
+                      </div>
+
+                      <div className="h-4" />
+                      <Separator />
+                      <div className="h-4" />
+
+                      {_renderPolicyDetails()}
+
+                      {_hasUnsavedChanges() && (
+                        <div className="mt-4 mb-2">
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onPress={_onUpdatePolicy}
+                            isPending={isUpdating}
+                          >
+                            {isUpdating ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
+                            Save & Regenerate links
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {shareLoading && (
+              <div className="flex items-center justify-center py-4">
+                <Spinner size="sm" aria-label="Loading" />
               </div>
             )}
-          </div>
-          
-          {shareLoading && (
-            <div className="flex items-center justify-center py-4">
-              <Spinner size="sm" aria-label="Loading" />
-            </div>
-          )}
 
-          {!project?.public && sharePolicies?.length > 0 && (
-            <div className="mt-2">
-              <Alert status="accent">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>Report not shareable</Alert.Title>
-                  <Alert.Description>Toggle &apos;Allow sharing&apos; to make it shareable. Right now, only team members can view it.</Alert.Description>
-                </Alert.Content>
-              </Alert>
-            </div>
-          )}
+            {!project?.public && sharePolicies?.length > 0 && (
+              <div className="mt-2">
+                <Alert status="accent">
+                  <Alert.Indicator />
+                  <Alert.Content>
+                    <Alert.Title>Report not shareable</Alert.Title>
+                    <Alert.Description>Toggle &apos;Allow sharing&apos; to make it shareable. Right now, only team members can view it.</Alert.Description>
+                  </Alert.Content>
+                </Alert>
+              </div>
+            )}
 
-          <Separator />
-          
-          <Row align="center">
-            <Switch
-              id="sharing-settings-branding"
-              isSelected={project.Team && project.Team.showBranding}
-              onChange={_onToggleBranding}
-              size="sm"
+            <div className="h-1" />
+            <Separator />
+            <div className="h-1" />
+
+            <Row align="center">
+              <Switch
+                id="sharing-settings-branding"
+                isSelected={project.Team && project.Team.showBranding}
+                onChange={_onToggleBranding}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Content>
+                  <Label htmlFor="sharing-settings-branding">Show Chartbrew branding</Label>
+                </Switch.Content>
+              </Switch>
+            </Row>
+          </Drawer.Body>
+          <Drawer.Footer>
+            <Button
+              onPress={onClose}
+              variant="tertiary"
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
-              <Switch.Content>
-                <Label htmlFor="sharing-settings-branding">Show Chartbrew branding</Label>
-              </Switch.Content>
-            </Switch>
-          </Row>
-        </Drawer.Body>
-        <Drawer.Footer>
-          <Button
-            onPress={onClose}
-            variant="tertiary"
-          >
-            Close
-          </Button>
-        </Drawer.Footer>
-        </Drawer.Dialog>
-      </Drawer.Content>
+              Close
+            </Button>
+          </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
     </Drawer>
   );
 }

@@ -293,377 +293,382 @@ function SnapshotSchedule({ isOpen, onClose }) {
         <Modal.Dialog className="sm:max-w-3xl">
           <Modal.Header className="flex flex-col">
             <Modal.Heading>Schedule snapshot deliveries</Modal.Heading>
-            <div className="text-lg font-bold">Schedule snapshot deliveries</div>
             <div className="text-sm text-gray-500">
               {"Snapshots of your dashboards sent over multiple channels"}
             </div>
           </Modal.Header>
-          <Modal.Body>
-            <div className="flex flex-col gap-2 w-full pb-6">
-              <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
-                <Select
-                  placeholder="Select snapshot frequency"
-                  aria-label="Update frequency"
-                  variant="secondary"
-                  selectionMode="single"
-                  value={schedule.frequency || null}
-                  onChange={(value) => setSchedule({ ...schedule, frequency: value })}
-                >
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {frequencies.map((frequency) => (
-                        <ListBox.Item key={frequency.value} id={frequency.value} textValue={frequency.label}>
-                          {frequency.label}
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+          <Modal.Body className="flex flex-col gap-2 pb-6 px-4">
+            <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
+              <Select
+                placeholder="Select snapshot frequency"
+                aria-label="Update frequency"
+                variant="secondary"
+                selectionMode="single"
+                value={schedule.frequency || null}
+                onChange={(value) => setSchedule({ ...schedule, frequency: value })}
+                fullWidth
+              >
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {frequencies.map((frequency) => (
+                      <ListBox.Item key={frequency.value} id={frequency.value} textValue={frequency.label}>
+                        {frequency.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-                {schedule.frequency === "weekly" && (
-                  <>
-                    <div>{"on"}</div>
-                    <Select
-                      placeholder="Select day"
-                      aria-label="Update day of week"
-                      variant="secondary"
-                      selectionMode="single"
-                      value={schedule.dayOfWeek || null}
-                      onChange={(value) => setSchedule({ ...schedule, dayOfWeek: value })}
-                    >
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {daysOfWeek.map((day) => (
-                            <ListBox.Item key={day.value} id={day.value} textValue={day.label}>
-                              {day.label}
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                  </>
-                )}
-
-                {(schedule.frequency === "every_x_days" || schedule.frequency === "every_x_hours" || schedule.frequency === "every_x_minutes") && (
-                  <Input
-                    placeholder="X"
-                    type="number"
-                    aria-label="Update frequency"
-                    variant="secondary"
-                    value={schedule.frequencyNumber}
-                    onChange={(e) => setSchedule({ ...schedule, frequencyNumber: e.target.value })}
-                  />
-                )}
-
-                {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
-                  <>
-                    <div>{"at"}</div>
-                    <TimeField
-                      aria-label="Update time"
-                      value={schedule.time}
-                      hourCycle={12}
-                      onChange={(time) => {
-                        setSchedule({ ...schedule, time });
-                      }}
-                      className="min-w-[9rem]"
-                    >
-                      <TimeField.Group variant="secondary">
-                        <TimeField.Input>
-                          {(segment) => <TimeField.Segment segment={segment} />}
-                        </TimeField.Input>
-                      </TimeField.Group>
-                    </TimeField>
-                  </>
-                )}
-              </div>
-              {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
-                <div className="flex flex-row items-center gap-2">
-                  <Autocomplete
-                    placeholder="Select a timezone"
+              {schedule.frequency === "weekly" && (
+                <>
+                  <div>{"on"}</div>
+                  <Select
+                    placeholder="Select day"
+                    aria-label="Update day of week"
                     variant="secondary"
                     selectionMode="single"
-                    value={schedule.timezone || null}
-                    onChange={(value) => {
-                      setSchedule({ ...schedule, timezone: value || "" });
-                    }}
+                    value={schedule.dayOfWeek || null}
+                    onChange={(value) => setSchedule({ ...schedule, dayOfWeek: value })}
                     fullWidth
-                    aria-label="Timezone"
                   >
-                    <Label>Timezone</Label>
-                    <Autocomplete.Trigger>
-                      <Autocomplete.Value />
-                      <Autocomplete.ClearButton />
-                      <Autocomplete.Indicator />
-                    </Autocomplete.Trigger>
-                    <Autocomplete.Popover>
-                      <Autocomplete.Filter filter={contains}>
-                        <SearchField autoFocus name="timezone-search" variant="secondary">
-                          <SearchField.Group>
-                            <SearchField.SearchIcon />
-                            <SearchField.Input placeholder="Search timezones..." />
-                            <SearchField.ClearButton />
-                          </SearchField.Group>
-                        </SearchField>
-                        <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
-                          {timezones.map((timezone) => (
-                            <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
-                              {timezone}
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Autocomplete.Filter>
-                    </Autocomplete.Popover>
-                  </Autocomplete>
-
-                  <Button variant="ghost"
-                    size="sm"
-                    onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
-                  >
-                    <LuMapPin />
-                  </Button>
-                </div>
-              )}
-
-              <div className="h-4" />
-
-              <div className="font-medium">
-                {"Where should we send the snapshots?"}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  variant={!schedule.mediums.email?.enabled ? "tertiary" : "primary"}
-                  onPress={() => _onChangeMediums("email")}
-                >
-                  <LuMail />
-                  Email
-                </Button>
-                {integrations && integrations.map((integration) => (
-                  <Button
-                    key={integration.id}
-                    size="sm"
-                    variant={
-                      selectedIntegrations.length === 0
-                      || !selectedIntegrations.find(
-                        (i) => i.integration_id === integration.id && i.enabled
-                      ) ? "tertiary" : "primary"
-                    }
-                    onPress={() => _onSelectIntegration(integration)}
-                  >
-                    {integration.config?.slackMode ? <LuSlack />
-                      : integration.type === "webhook" ? <LuWebhook />
-                        : null}
-                    {integration.name}
-                  </Button>
-                ))}
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      isIconOnly
-                      variant="ghost"
-                      size="sm"
-                      onPress={_onCreateNewIntegration}
-                    >
-                      <LuPlus size={18} />
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Create a new integration</Tooltip.Content>
-                </Tooltip>
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      isIconOnly
-                      variant="ghost"
-                      size="sm"
-                      onPress={_onRefreshIntegrationList}
-                    >
-                      <LuRefreshCw size={18} />
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Refresh list</Tooltip.Content>
-                </Tooltip>
-              </div>
-
-              {schedule.mediums.email?.enabled && (
-                <>
-                  <div className="mt-2">
-                    <TextArea
-                      placeholder="Enter email address (one per line)"
-                      variant="secondary"
-                      value={customEmails.join("\n")}
-                      onChange={(e) => setCustomEmails(e.target.value.split("\n"))}
-                      rows={10}
-                    />
-                    <div className="flex flex-row items-center gap-2">
-                      <Button
-                        size="sm"
-                        onPress={_onAddProjectMembers}
-                        variant="ghost"
-                      >
-                        <LuMailPlus size={18} />
-                        Add dashboard members
-                      </Button>
-                    </div>
-                  </div>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {daysOfWeek.map((day) => (
+                          <ListBox.Item key={day.value} id={day.value} textValue={day.label}>
+                            {day.label}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
                 </>
               )}
 
-              <div className="h-4" />
-
-              <div className="flex flex-row items-center justify-between">
-                <div className="font-medium">
-                  {"Preview"}
-                </div>
-                <div className="flex flex-row items-center gap-2">
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={_onCopyToClipboard}
-                  >
-                    <LuCopy size={18} />
-                    Copy image
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate(`/report/${project.brewName}/edit`)}
-                  >
-                    <LuSettings size={18} />
-                    Edit visuals
-                  </Button>
-                </div>
-              </div>
-
-              {snapshotPath && (
-                <div className="w-full bg-content3 rounded-lg p-2">
-                  <div
-                    className="flex flex-col items-center cursor-pointer"
-                    onClick={() => {
-                      window.open(snapshotPath, "_blank");
-                    }}
-                  >
-                    <img src={snapshotPath} alt="Snapshot" className="max-h-96 max-w-full" />
-                  </div>
-                </div>
+              {(schedule.frequency === "every_x_days" || schedule.frequency === "every_x_hours" || schedule.frequency === "every_x_minutes") && (
+                <Input
+                  placeholder="X"
+                  type="number"
+                  aria-label="Update frequency"
+                  variant="secondary"
+                  value={schedule.frequencyNumber}
+                  onChange={(e) => setSchedule({ ...schedule, frequencyNumber: e.target.value })}
+                  fullWidth
+                />
               )}
 
-              <div className="flex flex-row items-center justify-between flex-wrap">
-                <div className="flex flex-row items-center">
-                  <Button
-                    size="sm"
-                    onPress={_onTakeSnapshot}
-                    isPending={isLoading}
-                    variant="tertiary"
+              {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
+                <>
+                  <div>{"at"}</div>
+                  <TimeField
+                    aria-label="Update time"
+                    value={schedule.time}
+                    hourCycle={12}
+                    onChange={(time) => {
+                      setSchedule({ ...schedule, time });
+                    }}
+                    className="min-w-36"
+                    fullWidth
                   >
-                    {isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
-                    Take snapshot
-                  </Button>
-                  <div className="w-4" />
-                  <Tabs
-                    selectedKey={schedule.theme}
-                    onSelectionChange={(key) => setSchedule({ ...schedule, theme: key })}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    <Tabs.ListContainer>
-                      <Tabs.List>
-                        <Tabs.Tab id="light">
-                          <LuSun size={18} />
-                        </Tabs.Tab>
-                        <Tabs.Tab id="dark">
-                          <LuMoon size={18} />
-                        </Tabs.Tab>
-                      </Tabs.List>
-                    </Tabs.ListContainer>
-                  </Tabs>
-                </div>
+                    <TimeField.Group variant="secondary">
+                      <TimeField.Input>
+                        {(segment) => <TimeField.Segment segment={segment} />}
+                      </TimeField.Input>
+                    </TimeField.Group>
+                  </TimeField>
+                </>
+              )}
+            </div>
+            {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
+              <div className="flex flex-row items-end gap-2">
+                <Autocomplete
+                  placeholder="Select a timezone"
+                  variant="secondary"
+                  selectionMode="single"
+                  value={schedule.timezone || null}
+                  onChange={(value) => {
+                    setSchedule({ ...schedule, timezone: value || "" });
+                  }}
+                  fullWidth
+                  aria-label="Timezone"
+                >
+                  <Label>Timezone</Label>
+                  <Autocomplete.Trigger>
+                    <Autocomplete.Value />
+                    <Autocomplete.ClearButton />
+                    <Autocomplete.Indicator />
+                  </Autocomplete.Trigger>
+                  <Autocomplete.Popover>
+                    <Autocomplete.Filter filter={contains}>
+                      <SearchField autoFocus name="timezone-search" variant="secondary">
+                        <SearchField.Group>
+                          <SearchField.SearchIcon />
+                          <SearchField.Input placeholder="Search timezones..." />
+                          <SearchField.ClearButton />
+                        </SearchField.Group>
+                      </SearchField>
+                      <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                        {timezones.map((timezone) => (
+                          <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
+                            {timezone}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Autocomplete.Filter>
+                  </Autocomplete.Popover>
+                </Autocomplete>
 
-                <div className="flex flex-row items-center gap-2">
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <ButtonGroup variant="ghost" size="sm">
-                        <Button
-                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
-                          isIconOnly
-                          className={schedule?.viewport?.width === 375 ? "bg-primary/15" : undefined}
-                        >
-                          <LuSmartphone />
-                        </Button>
-                        <Button
-                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
-                          isIconOnly
-                          className={schedule?.viewport?.width === 768 ? "bg-primary/15" : undefined}
-                        >
-                          <LuTablet />
-                        </Button>
-                        <Button
-                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
-                          isIconOnly
-                          className={schedule?.viewport?.width === 1440 ? "bg-primary/15" : undefined}
-                        >
-                          <LuLaptop />
-                        </Button>
-                        <Button
-                          onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
-                          isIconOnly
-                          className={schedule?.viewport?.width === 1920 ? "bg-primary/15" : undefined}
-                        >
-                          <LuMonitor />
-                        </Button>
-                      </ButtonGroup>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>Viewport width</Tooltip.Content>
-                  </Tooltip>
-                  <Input
-                    placeholder="Viewport width"
-                    type="number"
-                    variant="secondary"
-                    value={schedule?.viewport?.width}
-                    onChange={(e) => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: parseInt(e.target.value, 10) } })}
-                    className="max-w-24"
+                <Button variant="secondary"
+                  onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
+                >
+                  <LuMapPin />
+                </Button>
+              </div>
+            )}
+
+            <div className="h-4" />
+
+            <div className="font-medium">
+              {"Where should we send the snapshots?"}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant={!schedule.mediums.email?.enabled ? "tertiary" : "primary"}
+                onPress={() => _onChangeMediums("email")}
+              >
+                <LuMail />
+                Email
+              </Button>
+              {integrations && integrations.map((integration) => (
+                <Button
+                  key={integration.id}
+                  size="sm"
+                  variant={
+                    selectedIntegrations.length === 0
+                    || !selectedIntegrations.find(
+                      (i) => i.integration_id === integration.id && i.enabled
+                    ) ? "tertiary" : "primary"
+                  }
+                  onPress={() => _onSelectIntegration(integration)}
+                >
+                  {integration.config?.slackMode ? <LuSlack />
+                    : integration.type === "webhook" ? <LuWebhook />
+                      : null}
+                  {integration.name}
+                </Button>
+              ))}
+              <Tooltip delay={0}>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    variant="ghost"
                     size="sm"
-                    max={7680}
+                    onPress={_onCreateNewIntegration}
+                  >
+                    <LuPlus size={18} />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Create a new integration</Tooltip.Content>
+              </Tooltip>
+              <Tooltip delay={0}>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    variant="ghost"
+                    size="sm"
+                    onPress={_onRefreshIntegrationList}
+                  >
+                    <LuRefreshCw size={18} />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Refresh list</Tooltip.Content>
+              </Tooltip>
+            </div>
+
+            {schedule.mediums.email?.enabled && (
+              <>
+                <div className="mt-2">
+                  <TextArea
+                    placeholder="Enter email address (one per line)"
+                    variant="secondary"
+                    value={customEmails.join("\n")}
+                    onChange={(e) => setCustomEmails(e.target.value.split("\n"))}
+                    rows={10}
+                    fullWidth
                   />
+                  <div className="flex flex-row items-center gap-2">
+                    <Button
+                      size="sm"
+                      onPress={_onAddProjectMembers}
+                      variant="ghost"
+                    >
+                      <LuMailPlus size={18} />
+                      Add dashboard members
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="h-4" />
+
+            <div className="flex flex-row items-center justify-between">
+              <div className="font-medium">
+                {"Preview"}
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  onPress={_onCopyToClipboard}
+                >
+                  <LuCopy size={18} />
+                  Copy image
+                </Button>
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  onPress={() => navigate(`/report/${project.brewName}/edit`)}
+                >
+                  <LuSettings size={18} />
+                  Edit visuals
+                </Button>
+              </div>
+            </div>
+
+            {snapshotPath && (
+              <div className="w-full bg-content3 rounded-lg p-2">
+                <div
+                  className="flex flex-col items-center cursor-pointer"
+                  onClick={() => {
+                    window.open(snapshotPath, "_blank");
+                  }}
+                >
+                  <img src={snapshotPath} alt="Snapshot" className="max-h-96 max-w-full" />
                 </div>
               </div>
-              <div className="flex flex-row items-center gap-4">
-                <Checkbox
-                  id="snapshot-remove-styling"
-                  isSelected={schedule.removeStyling}
-                  onChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
+            )}
+
+            <div className="flex flex-row items-center justify-between flex-wrap">
+              <div className="flex flex-row items-center">
+                <Button
+                  size="sm"
+                  onPress={_onTakeSnapshot}
+                  isPending={isLoading}
+                  variant="tertiary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Content>
-                    <Label htmlFor="snapshot-remove-styling" className="text-sm">Remove styling</Label>
-                  </Checkbox.Content>
-                </Checkbox>
-                <Checkbox
-                  id="snapshot-remove-header"
-                  isSelected={schedule.removeHeader}
-                  onChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
+                  {isLoading ? <ButtonSpinner /> : <LuCamera size={18} />}
+                  Take snapshot
+                </Button>
+                <div className="w-4" />
+                <Tabs
+                  selectedKey={schedule.theme}
+                  onSelectionChange={(key) => setSchedule({ ...schedule, theme: key })}
+                  size="sm"
+                  variant="ghost"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Content>
-                    <Label htmlFor="snapshot-remove-header" className="text-sm">Remove header</Label>
-                  </Checkbox.Content>
-                </Checkbox>
+                  <Tabs.ListContainer>
+                    <Tabs.List>
+                      <Tabs.Tab id="light">
+                        <LuSun size={18} />
+                        <Tabs.Indicator />
+                      </Tabs.Tab>
+                      <Tabs.Tab id="dark">
+                        <LuMoon size={18} />
+                        <Tabs.Indicator />
+                      </Tabs.Tab>
+                    </Tabs.List>
+                  </Tabs.ListContainer>
+                </Tabs>
               </div>
+
+              <div className="flex flex-row items-center gap-2">
+                <Tooltip delay={0}>
+                  <Tooltip.Trigger>
+                    <ButtonGroup variant="outline" size="sm">
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 375, height: 667 } })}
+                        isIconOnly
+                        className={schedule?.viewport?.width === 375 ? "bg-primary/15" : undefined}
+                      >
+                        <LuSmartphone />
+                      </Button>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 768, height: 1024 } })}
+                        isIconOnly
+                        className={schedule?.viewport?.width === 768 ? "bg-primary/15" : undefined}
+                      >
+                        <LuTablet />
+                      </Button>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1440, height: 900 } })}
+                        isIconOnly
+                        className={schedule?.viewport?.width === 1440 ? "bg-primary/15" : undefined}
+                      >
+                        <LuLaptop />
+                      </Button>
+                      <Button
+                        onPress={() => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: 1920, height: 1080 } })}
+                        isIconOnly
+                        className={schedule?.viewport?.width === 1920 ? "bg-primary/15" : undefined}
+                      >
+                        <LuMonitor />
+                      </Button>
+                    </ButtonGroup>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Viewport width</Tooltip.Content>
+                </Tooltip>
+                <Input
+                  placeholder="Viewport width"
+                  type="number"
+                  variant="secondary"
+                  value={schedule?.viewport?.width}
+                  onChange={(e) => setSchedule({ ...schedule, viewport: { ...schedule.viewport, width: parseInt(e.target.value, 10) } })}
+                  className="min-w-20"
+                  size="sm"
+                  max={7680}
+                />
+              </div>
+            </div>
+            <div className="flex flex-row items-center gap-4">
+              <Checkbox
+                variant="secondary"
+                id="snapshot-remove-styling"
+                isSelected={schedule.removeStyling}
+                onChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
+              >
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="snapshot-remove-styling" className="text-sm">Remove styling</Label>
+                </Checkbox.Content>
+              </Checkbox>
+              <Checkbox
+                variant="secondary"
+                id="snapshot-remove-header"
+                isSelected={schedule.removeHeader}
+                onChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
+              >
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label htmlFor="snapshot-remove-header" className="text-sm">Remove header</Label>
+                </Checkbox.Content>
+              </Checkbox>
             </div>
           </Modal.Body>
           <Modal.Footer className="items-center">

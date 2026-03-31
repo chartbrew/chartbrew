@@ -4,6 +4,7 @@ import {
   Chip, Button, Checkbox, Input, Link, Modal,
   Switch, Select, Label, ListBox,
   TextField,
+  Tooltip,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -20,7 +21,6 @@ import {
 } from "../../../slices/integration";
 import autoUpdatePicture from "../../../assets/chartbrew-auto-update.webp";
 import Container from "../../../components/Container";
-import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { selectCharts } from "../../../slices/chart";
 import { selectUser } from "../../../slices/user";
@@ -628,15 +628,17 @@ function DatasetAlerts(props) {
             </Switch>
             <div className="w-2" />
             {newAlert.id && (
-              <Button
-                color="danger"
-                variant="tertiary"
-                onPress={() => _onDelete()}
-                isPending={deleteLoading}
-              >
-                Delete alert
-                <LuTrash />
-              </Button>
+              <Tooltip delay={0}>
+                <Button
+                  isIconOnly
+                  variant="danger-soft"
+                  onPress={() => _onDelete()}
+                  isPending={deleteLoading}
+                >
+                  <LuTrash />
+                </Button>
+                <Tooltip.Content>Delete alert</Tooltip.Content>
+              </Tooltip>
             )}
             <Button onPress={() => setOpen(false)} variant="secondary">
               Close

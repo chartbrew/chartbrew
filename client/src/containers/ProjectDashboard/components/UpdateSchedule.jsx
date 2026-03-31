@@ -152,12 +152,11 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
         <Modal.Dialog className="sm:max-w-2xl">
         <Modal.Header className="flex flex-col">
           <Modal.Heading>Schedule dashboard updates</Modal.Heading>
-          <div className="text-lg font-bold">Schedule dashboard updates</div>
           <div className="text-sm text-gray-500">
             {"All the charts in this dashboard will be updated at the appointed time"}
           </div>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="flex flex-col gap-2 p-1">
           <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2">
             <Select
               placeholder="Select update frequency"
@@ -166,6 +165,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
               selectionMode="single"
               value={schedule.frequency || null}
               onChange={(value) => setSchedule({ ...schedule, frequency: value })}
+              fullWidth
             >
               <Select.Trigger>
                 <Select.Value />
@@ -193,6 +193,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                   selectionMode="single"
                   value={schedule.dayOfWeek || null}
                   onChange={(value) => setSchedule({ ...schedule, dayOfWeek: value })}
+                  fullWidth
                 >
                   <Select.Trigger>
                     <Select.Value />
@@ -220,6 +221,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                 variant="secondary"
                 value={schedule.frequencyNumber}
                 onChange={(e) => setSchedule({ ...schedule, frequencyNumber: e.target.value })}
+                fullWidth
               />
             )}
 
@@ -233,7 +235,8 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                   onChange={(time) => {
                     setSchedule({ ...schedule, time });
                   }}
-                  className="min-w-[9rem]"
+                  className="min-w-36"
+                  fullWidth
                 >
                   <TimeField.Group variant="secondary">
                     <TimeField.Input>
@@ -245,7 +248,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
             )}
           </div>
           {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-end gap-2">
               <Autocomplete
                 placeholder="Select a timezone"
                 variant="secondary"
@@ -284,16 +287,18 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
                 </Autocomplete.Popover>
               </Autocomplete>
 
-              <Button variant="ghost"
-                size="sm"
+              <Button variant="secondary"
                 onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
               >
                 <LuMapPin />
               </Button>
             </div>
           )}
-
+          
+          <div className="h-1" />
           <Separator />
+          <div className="h-1" />
+
           <Link onPress={openSnapshotSchedule} className="flex flex-row items-center gap-2 cursor-pointer text-sm">
             <LuMonitorUp />
             <span>Get your reports delivered to your inbox, slack, and more.</span>

@@ -198,6 +198,7 @@ function ChartSettings({ chart, onChange }) {
         <div className="flex flex-row items-center gap-2 flex-wrap">
           <div>
             <DateRangeFilter
+              variant="secondary"
               startDate={chart.startDate}
               endDate={chart.endDate}
               onChange={_onChangeDateRangeNew}

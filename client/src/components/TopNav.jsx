@@ -138,6 +138,8 @@ function TopNav() {
     );
   };
 
+  const askDataButtonClassName = "relative overflow-hidden border border-white/55 bg-linear-to-br from-primary-200/80 via-white/72 to-secondary-200/72 text-foreground shadow-[0_10px_22px_-18px_rgba(4,139,222,0.28)] backdrop-blur-md backdrop-saturate-150 transition-[border-color,box-shadow,transform,background] duration-200 hover:border-white/70 hover:shadow-[0_12px_24px_-18px_rgba(4,139,222,0.3)] active:scale-[0.99] dark:border-white/10 dark:bg-linear-to-br dark:from-primary-500/28 dark:via-content1/82 dark:to-secondary-500/22";
+
   return (
     <div className="sticky top-0 z-50 w-full border-b border-divider bg-surface p-2">
       <div className="flex flex-row items-center justify-between">
@@ -151,7 +153,7 @@ function TopNav() {
         <div className="flex flex-row items-center gap-4">
           {canUserAccess("teamAdmin", team) ? (
             <Button
-              className="text-foreground bg-linear-to-tr from-primary-300 via-violet-200 to-secondary-300 shadow-md transition-all duration-300 hover:bg-linear-to-br dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500"
+              className={askDataButtonClassName}
               onPress={() => dispatch(toggleAiModal())}
               size="sm"
               variant="primary"

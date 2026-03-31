@@ -6,10 +6,12 @@ import {
   Dropdown,
   Input,
   InputGroup,
+  Label,
   Modal,
   Separator,
   Table,
   Tabs,
+  TextField,
   Tooltip
 } from "@heroui/react";
 import moment from "moment";
@@ -758,15 +760,17 @@ function DashboardList() {
                   Rename your dashboard
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
-                <Input
-                  label="Dashboard name"
-                  placeholder="Enter the dashboard name"
-                  value={projectToEdit?.name || ""}
-                  onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
-                  variant="secondary"
-                  fullWidth
-                />
+              <Modal.Body className="p-1">
+                <TextField name="dashboard-name">
+                  <Label>Dashboard name</Label>
+                  <Input
+                    placeholder="Enter the dashboard name"
+                    value={projectToEdit?.name || ""}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                    variant="secondary"
+                    fullWidth
+                  />
+                </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button

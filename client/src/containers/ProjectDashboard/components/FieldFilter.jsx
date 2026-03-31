@@ -98,7 +98,7 @@ function FieldFilter({
               }
             }}
           >
-            <DateField.Group fullWidth variant="secondary" size="sm">
+            <DateField.Group fullWidth variant="primary" size="sm">
               <DateField.Prefix>
                 {renderLabel()}
               </DateField.Prefix>

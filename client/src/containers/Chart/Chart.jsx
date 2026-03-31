@@ -1055,7 +1055,7 @@ function Chart(props) {
           <Modal.Header>
             <Modal.Heading>Set up auto-update for your chart</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="p-1">
             <div>
               <Row align="center">
                 <Select
@@ -1066,6 +1066,7 @@ function Chart(props) {
                   }}
                   variant="secondary"
                   aria-label="Select a preset"
+                  fullWidth
                 >
                   <Label>Select a preset</Label>
                   <Select.Trigger>
@@ -1140,6 +1141,7 @@ function Chart(props) {
                   variant="secondary"
                   disableAnimation
                   min={updateFreqType === "seconds" ? 10 : 1}
+                  fullWidth
                 />
                 <Dropdown aria-label="Select a time unit">
                   <Dropdown.Trigger>
@@ -1234,7 +1236,7 @@ function Chart(props) {
           <Modal.Header>
             <Modal.Heading>Alerts</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="flex flex-col gap-2 p-1">
             <div className="text-sm">{"Select a dataset to set up alerts for"}</div>
             <Select
               selectionMode="single"

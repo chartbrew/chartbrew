@@ -88,11 +88,10 @@ function KpiMode(props) {
               <Chip
                 size="sm"
                 variant="soft"
-                className="rounded-sm"
                 color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
               >
                 {status === "positive" ? <LuArrowUpRight size={14} /> : status === "negative" ? <LuArrowDownRight size={14} /> : null}
-                {`${formattedComparison}%`}
+                <Chip.Label>{`${formattedComparison}%`}</Chip.Label>
               </Chip>
             </div>
           </Tooltip.Trigger>

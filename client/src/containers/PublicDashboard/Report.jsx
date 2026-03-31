@@ -6,6 +6,8 @@ import {
   Link, ProgressCircle, Chip,
   Spinner,
   Form,
+  Label,
+  TextField,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { Block } from "@uiw/react-color";
@@ -815,7 +817,7 @@ function Report({ editMode = false }) {
       <div className={editMode && editorVisible && !preview ? "ml-16" : ""}>
         {!removeHeader && (
           <header
-            className="header grow-0 flex w-full max-w-full flex-row items-center justify-between border-b border-divider"
+            className="header grow-0 flex w-full max-w-full flex-row items-center justify-between border-b border-divider py-4"
             style={{ backgroundColor: removeStyling ? (isDark ? "#000000" : "#FFFFFF") : (newChanges.backgroundColor || project.backgroundColor || "#FFFFFF") }}
           >
             <div className="flex min-w-0 flex-1 flex-row items-center gap-4">
@@ -933,7 +935,7 @@ function Report({ editMode = false }) {
             )}
 
             {dashboardFilters?.[project.id]?.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-background p-2 mx-2 rounded-lg border-1 border-divider">
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-background p-2 mx-2 rounded-lg border border-divider">
                 {!filterLoading && (
                   <div className="flex flex-row items-center gap-2">
                     <LuListFilter size={22} />
@@ -1024,89 +1026,85 @@ function Report({ editMode = false }) {
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-2xl">
               <Modal.Header>
-            <Text size="h4">Edit the title and description</Text>
+                <Text size="h4">Customize your report</Text>
               </Modal.Header>
-              <Modal.Body>
-            <Row>
-              <Input
-                label="Dashboard title"
-                placeholder="Enter your dashboard title"
-                value={newChanges.dashboardTitle}
-                onChange={(e) => {
-                  setNewChanges({ ...newChanges, dashboardTitle: e.target.value });
-                }}
-                variant="secondary"
-                fullWidth
-              />
-            </Row>
-            <Row>
-              <Input
-                label="Dashboard description"
-                placeholder="Enter a short description"
-                value={newChanges.description}
-                onChange={(e) => {
-                  setNewChanges({ ...newChanges, description: e.target.value });
-                }}
-                variant="secondary"
-                fullWidth
-              />
-            </Row>
-            <Row>
-              <Input
-                label="Company website URL"
-                placeholder="https://example.com"
-                value={newChanges.logoLink}
-                onChange={(e) => {
-                  setNewChanges({ ...newChanges, logoLink: e.target.value });
-                }}
-                variant="secondary"
-                fullWidth
-              />
-            </Row>
-            <div className="h-1" />
-            <Separator />
-            <div className="h-1" />
-            <Row>
-              <Text b>Custom CSS</Text>
-            </Row>
-            <Row>
-              <Text size={"sm"}>Some of the main classes on the page:</Text>
-            </Row>
-            <Row wrap="wrap" className={"gap-1"}>
-              <Chip>.main-container</Chip>
-              <Chip>.title-container</Chip>
-              <Chip>.dashboard-title</Chip>
-              <Chip>.dashboard-sub-title</Chip>
-              <Chip>.chart-grid</Chip>
-              <Chip>.chart-container</Chip>
-              <Chip>.chart-card</Chip>
-            </Row>
-            <Row>
-              <div style={{ width: "100%" }}>
-                <AceEditor
-                  mode="css"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  height="200px"
-                  width="none"
-                  value={newChanges.headerCode}
-                  style={{ borderRadius: 10 }}
-                  onChange={(value) => {
-                    setNewChanges({ ...newChanges, headerCode: value });
-                  }}
-                  name="queryEditor"
-                  editorProps={{ $blockScrolling: true }}
-                  className="rounded-md border-1 border-solid border-content3"
-                />
-              </div>
-            </Row>
+              <Modal.Body className="flex flex-col gap-2 p-1">
+                <TextField name="dashboard-title">
+                  <Label>Dashboard title</Label>
+                  <Input
+                    placeholder="Enter your dashboard title"
+                    value={newChanges.dashboardTitle}
+                    onChange={(e) => {
+                      setNewChanges({ ...newChanges, dashboardTitle: e.target.value });
+                    }}
+                    variant="secondary"
+                    fullWidth
+                  />
+                </TextField>
+                <TextField name="dashboard-description">
+                  <Label>Dashboard description</Label>
+                  <Input
+                    placeholder="Enter a short description"
+                    value={newChanges.description}
+                    onChange={(e) => { setNewChanges({ ...newChanges, description: e.target.value }); }}
+                    variant="secondary"
+                    fullWidth
+                  />
+                </TextField>
+                <TextField name="company-website-url">
+                  <Label>Company website URL</Label>
+                  <Input
+                    placeholder="https://example.com"
+                    value={newChanges.logoLink}
+                    onChange={(e) => {
+                      setNewChanges({ ...newChanges, logoLink: e.target.value });
+                    }}
+                    variant="secondary"
+                    fullWidth
+                  />
+                </TextField>
+
+                <div className="h-1" />
+                <Separator />
+                <div className="h-1" />
+
+                <Label>Custom CSS</Label>
+                <div className="text-sm text-muted">Some of the main classes on the page:</div>
+                <Row wrap="wrap" className={"gap-1"}>
+                  <Chip>.main-container</Chip>
+                  <Chip>.title-container</Chip>
+                  <Chip>.dashboard-title</Chip>
+                  <Chip>.dashboard-sub-title</Chip>
+                  <Chip>.chart-grid</Chip>
+                  <Chip>.chart-container</Chip>
+                  <Chip>.chart-card</Chip>
+                </Row>
+                <Row>
+                  <div style={{ width: "100%" }}>
+                    <AceEditor
+                      mode="css"
+                      theme={isDark ? "one_dark" : "tomorrow"}
+                      height="200px"
+                      width="none"
+                      value={newChanges.headerCode}
+                      style={{ borderRadius: 10 }}
+                      onChange={(value) => {
+                        setNewChanges({ ...newChanges, headerCode: value });
+                      }}
+                      name="queryEditor"
+                      editorProps={{ $blockScrolling: true }}
+                      className="rounded-md border border-divider"
+                    />
+                  </div>
+                </Row>
               </Modal.Body>
               <Modal.Footer>
-            <Button
-              variant="primary"
-              onPress={() => setEditingTitle(false)}
-            >
-              Preview changes
-            </Button>
+                <Button
+                  variant="primary"
+                  onPress={() => setEditingTitle(false)}
+                >
+                  Preview changes
+                </Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

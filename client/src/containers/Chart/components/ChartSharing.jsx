@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react"
 import PropTypes from "prop-types"
 import {
-  Button, Checkbox, Input, Modal, Label,
-  Radio, RadioGroup, Spinner, Switch, Tooltip, ListBox,
+  Button, Checkbox, Input, InputGroup, Modal, Label,
+  Radio, RadioGroup, Spinner, Switch, TextField, Tooltip, ListBox,
   Chip,
 } from "@heroui/react"
 import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
@@ -442,47 +442,67 @@ function ChartSharing({ chart, isOpen, onClose }) {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-4">
         {shareToken && (
           <>
             <div className="space-y-4">
               <div>
-                <Input
-                  label="Embed Code"
-                  labelPlacement="outside"
-                  id="iframe-text"
-                  value={_getEmbedString()}
-                  fullWidth
-                  readOnly
-                  size="sm"
-                  endContent={
-                    <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyIframe}>
-                      {iframeCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
-                    </Button>
-                  }
-                />
+                <TextField name="chart-sharing-embed-code" className="w-full">
+                  <Label className="text-sm font-medium">Embed Code</Label>
+                  <InputGroup fullWidth variant="secondary">
+                    <InputGroup.TextArea
+                      id="iframe-text"
+                      value={_getEmbedString()}
+                      readOnly
+                      rows={4}
+                      size="sm"
+                      variant="secondary"
+                      className="min-w-0 resize-none"
+                    />
+                    <InputGroup.Suffix className="border-none self-start pr-1 pt-1">
+                      <Button
+                        isIconOnly
+                        aria-label="Copy embed code"
+                        size="sm"
+                        variant="tertiary"
+                        onPress={_onCopyIframe}
+                      >
+                        {iframeCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
+                      </Button>
+                    </InputGroup.Suffix>
+                  </InputGroup>
+                </TextField>
               </div>
-              <div className="h-4" />
               <div>
-                <Input
-                  label="Direct Link"
-                  labelPlacement="outside"
-                  value={_getEmbedUrl()}
-                  id="url-text"
-                  fullWidth
-                  readOnly
-                  size="sm"
-                  endContent={
-                    <div className="flex flex-row items-center gap-1">
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
-                        <LuExternalLink />
-                      </Button>
-                      <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
-                        {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
-                      </Button>
-                    </div>
-                  }
-                />
+                <TextField name="chart-sharing-direct-link" className="w-full">
+                  <Label className="text-sm font-medium">Direct Link</Label>
+                  <InputGroup fullWidth variant="secondary">
+                    <InputGroup.Input
+                      id="url-text"
+                      value={_getEmbedUrl()}
+                      readOnly
+                      size="sm"
+                      variant="secondary"
+                      className="min-w-0"
+                    />
+                    <InputGroup.Suffix className="border-none pr-1">
+                      <div className="flex flex-row items-center gap-1">
+                        <Button
+                          isIconOnly
+                          aria-label="Open direct link in new tab"
+                          size="sm"
+                          variant="tertiary"
+                          onPress={() => window.open(_getEmbedUrl(), "_blank")}
+                        >
+                          <LuExternalLink />
+                        </Button>
+                        <Button isIconOnly aria-label="Copy direct link" size="sm" variant="tertiary" onPress={_onCopyUrl}>
+                          {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy />}
+                        </Button>
+                      </div>
+                    </InputGroup.Suffix>
+                  </InputGroup>
+                </TextField>
               </div>
             </div>
           </>
@@ -490,19 +510,41 @@ function ChartSharing({ chart, isOpen, onClose }) {
 
         <div>
           <RadioGroup
+            name="chart-sharing-embed-theme"
             orientation="horizontal"
-            size="sm"
             value={embedTheme}
-            onValueChange={(value) => setEmbedTheme(value)}
+            variant="secondary"
+            onChange={setEmbedTheme}
           >
-            <Radio value="os">System default</Radio>
-            <Radio value="dark">Dark</Radio>
-            <Radio value="light">Light</Radio>
+            <Radio value="os">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">System default</Label>
+              </Radio.Content>
+            </Radio>
+            <Radio value="dark">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">Dark</Label>
+              </Radio.Content>
+            </Radio>
+            <Radio value="light">
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <Radio.Content>
+                <Label className="text-sm">Light</Label>
+              </Radio.Content>
+            </Radio>
           </RadioGroup>
         </div>
 
         <div>
-          <div className="flex flex-row justify-between items-center mb-2">
+          <div className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-center gap-2">
               <div className="text-sm font-medium">Parameters</div>
               <Tooltip>
@@ -575,6 +617,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
               id="chart-sharing-allow-params"
               isSelected={allowParams}
               onChange={(selected) => setAllowParams(selected)}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -583,7 +626,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 <Label htmlFor="chart-sharing-allow-params" className="text-sm">Allow parameters in the URL</Label>
               </Checkbox.Content>
             </Checkbox>
-            <Tooltip>
+            <Tooltip delay={0}>
               <Tooltip.Trigger>
                 <div className="text-gray-500"><LuInfo size={16} /></div>
               </Tooltip.Trigger>
@@ -604,6 +647,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
             value={expirationDate}
             onChange={(e) => setExpirationDate(e.target.value)}
             size="sm"
+            variant="secondary"
           />
           {expirationDate && (
             <Button
@@ -636,7 +680,6 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 id="chart-sharing-enable"
                 isSelected={chart.shareable}
                 onChange={_onToggleShareable}
-                size="sm"
                 className="mr-4"
               >
                 <Switch.Control>
@@ -647,7 +690,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 </Switch.Content>
               </Switch>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body className="pt-4">
               {shareLoading && (
                 <div className="flex items-center justify-center py-4">
                   <Spinner size="sm" aria-label="Loading" />
@@ -706,7 +749,7 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   isPending={isUpdating}
                 >
                   <LuRefreshCcw size={16} />
-                  Regenerate link
+                  Save & regenerate link
                 </Button>
               )}
               <Button
