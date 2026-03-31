@@ -6,7 +6,9 @@ import {
   Button,
   Modal,
   Tabs,
-  Card
+  Card,
+  TextField,
+  Label
 } from "@heroui/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -84,7 +86,7 @@ function ProjectForm(props) {
                 Create a new dashboard
               </Modal.Heading>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body className="flex flex-col gap-2 p-1">
               <form onSubmit={(e) => {
                 e.preventDefault();
                 _onCreateProject();
@@ -92,7 +94,7 @@ function ProjectForm(props) {
                 <div>
                   <div className="h-2" />
                   {!hideType && (
-                    <Row align="center" justify="center">
+                    <div className="w-full">
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
                         <Tabs.ListContainer>
                           <Tabs.List className="w-full">
@@ -100,28 +102,24 @@ function ProjectForm(props) {
                               <Tabs.Indicator />
                               Empty dashboard
                             </Tabs.Tab>
-                            <Tabs.Tab id="communityTemplates">
-                              <Tabs.Indicator />
-                              Community templates
-                            </Tabs.Tab>
                             <Tabs.Tab id="template">
                               <Tabs.Indicator />
-                              Custom templates
+                              Create from template
                             </Tabs.Tab>
                           </Tabs.List>
                         </Tabs.ListContainer>
                       </Tabs>
-                    </Row>
+                    </div>
                   )}
                   <div className="h-4" />
-                  <Row align="center">
+                  <TextField name="dashboard-name">
+                    <Label>Dashboard name</Label>
                     <Input
                       onChange={(e) => setNewProject({
                         ...newProject,
                         name: e.target.value,
                         team_id: team.id,
                       })}
-                      label="Dashboard name"
                       placeholder="Enter a name for your dashboard"
                       fullWidth
                       size="lg"
@@ -129,7 +127,7 @@ function ProjectForm(props) {
                       autoFocus
                       value={newProject.name}
                     />
-                  </Row>
+                  </TextField>
                   {error && (
                     <Row>
                       <p className="text-sm text-red-500">
@@ -150,8 +148,8 @@ function ProjectForm(props) {
                           fullWidth
                           variant="primary"
                         >
+                          Create dashboard
                           <LuArrowRight />
-                          Create
                         </Button>
                       </Row>
                     </>

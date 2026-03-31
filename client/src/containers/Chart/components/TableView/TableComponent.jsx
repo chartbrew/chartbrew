@@ -233,14 +233,13 @@ const renderCellContent = (value, columnKey, columnsFormatting) => {
     const progressValue = Number(value);
     const safeProgressValue = Number.isFinite(progressValue) ? progressValue : 0;
     return (
-      <Tooltip>
+      <Tooltip delay={0}>
         <Tooltip.Trigger>
           <ProgressBar
             aria-label="Progress"
             value={safeProgressValue}
             maxValue={columnConfig.display.progress.max}
             minValue={0}
-            size="sm"
             className="min-w-[80px]"
           >
             <ProgressBar.Track>

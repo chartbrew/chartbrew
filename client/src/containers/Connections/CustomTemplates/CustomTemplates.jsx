@@ -109,18 +109,17 @@ function CustomTemplates(props) {
                 setSelectedTemplate(template);
               }
             }}
-            className="h-full w-[230px] cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
+            className="h-full w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-content2/40"
           >
             <Card.Header>
-              <Text b>{template.name}</Text>
+              <Card.Title>{template.name}</Card.Title>
             </Card.Header>
             <Separator />
             <Card.Content className="flex flex-col align-middle justify-center">
-              <Row>
-                <LuChartColumn />
-                <div className="w-1" />
-                <Text>{`${template.model.Charts.length} charts`}</Text>
-              </Row>
+              <div className="flex flex-row items-center gap-2">
+                <LuChartColumn size={16} />
+                <span className="text-sm">{`${template.model.Charts.length} charts`}</span>
+              </div>
             </Card.Content>
             <Separator />
             <Card.Footer>

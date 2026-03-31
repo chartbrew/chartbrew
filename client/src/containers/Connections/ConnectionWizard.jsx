@@ -213,13 +213,13 @@ function ConnectionWizard() {
                 <span className="text-xl text-secondary font-semibold">Step 1:</span>
                 <span className="text-xl font-semibold">Select your datasource type</span>
               </div>
-              <div className="h-8" />
+              <div className="h-4" />
               <Surface className="rounded-3xl bg-surface border border-divider p-4">
                 <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-                  <TextField aria-label="Search connections" className="max-w-lg" name="connection-search">
-                    <InputGroup fullWidth>
+                  <TextField aria-label="Search connections" className="sm:min-w-md" name="connection-search">
+                    <InputGroup fullWidth variant="secondary">
                       <InputGroup.Input
-                        placeholder="Search..."
+                        placeholder="Search connections..."
                         onChange={(e) => setConnectionSearch(e.target.value)}
                       />
                       <InputGroup.Suffix className="pr-2">
@@ -255,7 +255,7 @@ function ConnectionWizard() {
                           {conn.ai && (
                             <Tooltip>
                               <Tooltip.Trigger>
-                                <Chip variant="secondary" size="sm" className="rounded-sm">
+                                <Chip variant="secondary">
                                   <LuBrainCircuit size={14} />
                                   {"AI-powered"}
                                 </Chip>
@@ -278,7 +278,7 @@ function ConnectionWizard() {
                 </div>
               </Surface>
 
-              <div className="h-8" />
+              <div className="h-4" />
               {selectedType && (
                 <div className="flex flex-row items-center gap-2">
                   <span className="text-xl text-secondary font-semibold">Step 2:</span>
@@ -296,7 +296,7 @@ function ConnectionWizard() {
               <span className="text-xl font-semibold">Edit your connection</span>
             </div>
           )}
-          <div className="h-8" />
+          <div className="h-4" />
 
           {selectedType === "api" && (
             <ApiConnectionForm

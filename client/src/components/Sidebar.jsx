@@ -53,7 +53,38 @@ function Sidebar() {
 
   const _getTeamRole = (teamRoles) => {
     if (!teamRoles) return "";
-    return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
+    let role = teamRoles.filter((o) => o.user_id === user.data.id)[0];
+    if (role.role === "teamOwner") {
+      return {
+        role: "Team Owner",
+        color: "accent",
+      };
+    } else if (role.role === "teamAdmin") {
+      return {
+        role: "Team Admin",
+        color: "success",
+      };
+    } else if (role.role === "projectAdmin") {
+      return {
+        role: "Project Admin",
+        color: "warning",
+      };
+    } else if (role.role === "projectEditor") {
+      return {
+        role: "Project Editor",
+        color: "default",
+      };
+    } else if (role.role === "projectViewer") {
+      return {
+        role: "Project Viewer",
+        color: "default",
+      };
+    }
+
+    return {
+      role: "Guest",
+      color: "default",
+    };
   };
 
   const _onChangeTeam = (teamId) => {
@@ -168,8 +199,8 @@ function Sidebar() {
                     >
                       <div className="flex w-full flex-row items-center justify-between gap-2">
                         <span>{t.name}</span>
-                        <Chip size="sm" variant="secondary">
-                          {_getTeamRole(t.TeamRoles)}
+                        <Chip size="sm" variant="secondary" color={_getTeamRole(t.TeamRoles).color}>
+                          {_getTeamRole(t.TeamRoles).role}
                         </Chip>
                       </div>
                     </Dropdown.Item>

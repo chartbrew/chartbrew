@@ -1205,7 +1205,10 @@ function ProjectDashboard() {
                             >
                               <LuLayoutDashboard />
                               {"Edit layout"}
-                              <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
+                              <Kbd className="ms-auto">
+                                <Kbd.Abbr keyValue={isMac() ? "command" : "ctrl"} />
+                                <Kbd.Content>E</Kbd.Content>
+                              </Kbd>
                             </Dropdown.Item>
                             <Dropdown.Item
                               id="open-report"

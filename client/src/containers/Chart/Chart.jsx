@@ -729,7 +729,10 @@ function Chart(props) {
                             <span className={editingLayout ? "text-accent" : ""}>
                               {editingLayout ? "Complete layout" : "Edit layout"}
                             </span>
-                            <Kbd keys={[isMac ? "command" : "ctrl", "e"]}>E</Kbd>
+                            <Kbd className="ms-auto">
+                              <Kbd.Abbr keyValue={isMac ? "command" : "ctrl"} />
+                              <Kbd.Content>E</Kbd.Content>
+                            </Kbd>
                           </Dropdown.Item>
                         )}
                         {_canAccess("projectEditor") && (

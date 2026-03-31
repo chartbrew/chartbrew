@@ -7,7 +7,7 @@ import {
   Button, Checkbox, Chip, Separator, EmptyState, Label, ListBox, Modal, SearchField, Switch, useFilter,
 } from "@heroui/react";
 import {
-  LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
+  LuArrowLeft, LuArrowRight, LuCheckCheck, LuDatabase, LuTrash, LuX,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -227,9 +227,10 @@ function CustomTemplateForm(props) {
                 ))}
               </div>
               <div className="h-6" />
-              <Row>
-                <Text b>{"Datasets"}</Text>
-              </Row>
+              <div className="flex flex-row items-center gap-2">
+                <LuDatabase size={16} />
+                <span className="text-sm">{"Datasets"}</span>
+              </div>
               <div className="h-2" />
               <Row>
                 <Switch
@@ -237,7 +238,6 @@ function CustomTemplateForm(props) {
                   isSelected={newDatasets}
                   onChange={(selected) => setNewDatasets(selected)}
                   isDisabled={!canChangeNewDatasets}
-                  size="sm"
                 >
                   <Switch.Control>
                     <Switch.Thumb />
@@ -283,6 +283,7 @@ function CustomTemplateForm(props) {
                       const wasSelected = _.indexOf(selectedCharts, chart.tid) > -1;
                       if (selected !== wasSelected) _onChangeSelectedCharts(chart.tid);
                     }}
+                    variant="secondary"
                   >
                     <Checkbox.Control className="size-4 shrink-0">
                       <Checkbox.Indicator />
@@ -299,7 +300,7 @@ function CustomTemplateForm(props) {
           <div className="h-8" />
           <Row>
             <Button
-              variant="ghost"
+              variant="outline"
               onPress={_onSelectAll}
               size="sm"
             >
@@ -308,7 +309,7 @@ function CustomTemplateForm(props) {
             </Button>
             <div className="w-1" />
             <Button
-              variant="ghost"
+              variant="outline"
               onPress={_onDeselectAll}
               size="sm"
             >
