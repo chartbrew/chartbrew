@@ -140,8 +140,8 @@ function ChartFilters(props) {
                         {`${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
                       </Label>
                     )}
-                    <Autocomplete.Trigger>
-                      <Autocomplete.Value />
+                    <Autocomplete.Trigger className="min-h-8 py-0.5">
+                      <Autocomplete.Value className="text-[12px] text-center flex items-center justify-center" />
                       <Autocomplete.ClearButton />
                       <Autocomplete.Indicator />
                     </Autocomplete.Trigger>
@@ -186,7 +186,7 @@ function ChartFilters(props) {
                     variant="secondary"
                     onKeyDown={(e) => _onKeyDown(e, condition)}
                     size={size}
-                    className="placeholder:text-xs"
+                    className="placeholder:text-xs py-1"
                   />
                   <div className="h-2" />
                 </>
@@ -198,7 +198,7 @@ function ChartFilters(props) {
                       <DatePicker
                         aria-label="Date filter"
                         name={`chart-filter-date-${condition.id}`}
-                        className="min-w-0 flex-1"
+                        className="min-w-0 flex-1 py-0.5 text-xs"
                         value={(
                           _getConditionValue(condition.id)
                           && parseDate(_getConditionValue(condition.id))
@@ -271,7 +271,7 @@ function ChartFilters(props) {
                       <DatePicker
                         aria-label={`${condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.key}`}
                         name={`chart-filter-date-inline-${condition.id}`}
-                        className="min-w-0 flex-1"
+                        className="min-w-0 flex-1 py-0.5 text-xs"
                         value={(
                           _getConditionValue(condition.id)
                           && parseDate(_getConditionValue(condition.id))
