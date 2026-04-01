@@ -1,10 +1,17 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, ProgressCircle,
-  Separator, Switch, Tooltip,
-  Modal,
+  Button,
+  Description,
+  Input,
+  InputGroup,
   Label,
+  Modal,
+  ProgressCircle,
+  Separator,
+  Switch,
+  TextField,
+  Tooltip,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
@@ -102,31 +109,31 @@ function TeamSettings() {
   }
 
   return (
-    <div className="flex flex-col bg-surface p-4 rounded-lg border border-divider">
+    <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
       <div className="text-lg font-semibold font-tw">Team settings</div>
       <div className="text-sm text-gray-500">Manage your team settings and controls</div>
-      <div className="h-8" />
+      <div className="h-4" />
       <div className="flex flex-col gap-2">
-        <Input
-          label="Team name"
-          placeholder={team.name}
-          name="name"
-          value={teamState.name}
-          onChange={(e) => {
-            setTeamState({ ...teamState, name: e.target.value });
-          }}
-          variant="secondary"
-          isInvalid={!!submitError}
-          errorMessage={submitError ? "Error updating team" : undefined}
-          className="max-w-md"
-        />
+        <TextField name="team-name" className="w-full gap-2">
+          <Label>Team name</Label>
+          <Input
+            placeholder={team.name}
+            value={teamState.name}
+            onChange={(e) => {
+              setTeamState({ ...teamState, name: e.target.value });
+            }}
+            variant="secondary"
+            isInvalid={!!submitError}
+            errorMessage={submitError ? "Error updating team" : undefined}
+            className="max-w-md"
+          />
+        </TextField>
 
         <div>
           <Button
             isPending={loading}
             onPress={_onTeamUpdate}
             variant={success ? "secondary" : "primary"}
-            size="sm"
           >
             {loading ? <ButtonSpinner /> : null}
             {success ? "Saved" : "Save"}
@@ -134,9 +141,9 @@ function TeamSettings() {
         </div>
       </div>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-row items-center gap-2">
@@ -144,7 +151,6 @@ function TeamSettings() {
             id="team-settings-allow-report-export"
             isSelected={team.allowReportExport}
             onChange={(selected) => _onToggleReportExport(selected)}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -166,7 +172,6 @@ function TeamSettings() {
             id="team-settings-allow-report-refresh"
             isSelected={team.allowReportRefresh}
             onChange={(selected) => _onToggleReportRefresh(selected)}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -190,7 +195,6 @@ function TeamSettings() {
             id="team-settings-show-branding"
             isSelected={team.showBranding}
             onChange={(selected) => _onToggleBranding(selected)}
-            size="sm"
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -210,12 +214,12 @@ function TeamSettings() {
 
       {canAccess("teamOwner", user.id, team.TeamRoles) && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
           <div className="flex flex-row items-center gap-2">
             <Button
-              color="danger"
+              variant="danger"
               onPress={() => setDeleteConfirm(true)}
               size="sm"
               isDisabled={_teamsOwned()?.length < 2}
@@ -236,7 +240,7 @@ function TeamSettings() {
       )}
 
       <Modal>
-        <Modal.Backdrop isOpen={deleteConfirm} onOpenChange={setDeleteConfirm}>
+        <Modal.Backdrop isOpen={deleteConfirm} onOpenChange={setDeleteConfirm} variant="blur">
           <Modal.Container size="lg">
             <Modal.Dialog>
               <Modal.Header>
@@ -244,21 +248,27 @@ function TeamSettings() {
                   Are you sure you want to delete this team?
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="flex flex-col gap-2 p-1">
                 <div>
                   This action is irreversible. All data associated with this team will be deleted and we will not be able to restore it.
                 </div>
                 <div>
-                  <Input
-                    label="Type the team name to confirm"
-                    placeholder={team.name}
-                    name="deleteConfirmChecked"
-                    value={deleteConfirmChecked}
-                    onChange={(e) => setDeleteConfirmChecked(e.target.value)}
-                    variant="secondary"
-                    description={`Type "${team.name}" to confirm`}
-                    endContent={deleteConfirmChecked === team.name && <LuCircleCheck size={18} className="text-success" />}
-                  />
+                  <TextField name="deleteConfirmChecked" className="w-full gap-2">
+                    <Label>Type the team name to confirm</Label>
+                    <InputGroup variant="secondary" fullWidth>
+                      <InputGroup.Input
+                        placeholder={team.name}
+                        value={deleteConfirmChecked}
+                        onChange={(e) => setDeleteConfirmChecked(e.target.value)}
+                      />
+                      {deleteConfirmChecked === team.name && (
+                        <InputGroup.Suffix className="pr-2">
+                          <LuCircleCheck size={18} className="text-success" aria-hidden />
+                        </InputGroup.Suffix>
+                      )}
+                    </InputGroup>
+                    <Description>{`Type "${team.name}" to confirm`}</Description>
+                  </TextField>
                 </div>
               </Modal.Body>
               <Modal.Footer>

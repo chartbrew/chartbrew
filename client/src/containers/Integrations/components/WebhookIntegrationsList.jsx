@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Input, Link, Label, Modal, Table,
   TextField,
+  EmptyState,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 
@@ -215,7 +216,12 @@ function WebhookIntegrations({ teamId }) {
               <Table.Column id="actions" className="w-12 text-end" textValue="Actions" />
             </Table.Header>
 
-            <Table.Body renderEmptyState={() => "No webhook integrations"}>
+            <Table.Body renderEmptyState={() => (
+              <EmptyState className="flex min-h-[160px] w-full flex-col items-center justify-center gap-4 text-center">
+                <LuWebhook size={24} />
+                <span className="text-sm text-muted">No results found</span>
+              </EmptyState>
+            )}>
               {webhookIntegrations.map((i) => (
                 <Table.Row key={i.id} id={String(i.id)}>
                   <Table.Cell>

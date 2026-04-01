@@ -571,7 +571,7 @@ function DatasetList() {
             <Table.Body
               renderEmptyState={() => (
                 connections.length === 0 && _canAccess("teamAdmin", team.TeamRoles) ? (
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1 py-4">
                     <LuLayers size={24} />
                     <span>You need to create a connection to get started</span>
                     <div className="h-1" />

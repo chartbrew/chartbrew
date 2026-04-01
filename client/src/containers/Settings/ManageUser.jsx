@@ -215,15 +215,9 @@ function ManageUser() {
 
   return (
     <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      <div className="flex flex-col gap-1">
-        <div className="text-lg font-semibold font-tw">
-          Profile settings
-        </div>
-        <div className="text-sm text-gray-500">
-          Manage your profile settings
-        </div>
-      </div>
-      <div className="h-8" />
+      <div className="text-lg font-semibold font-tw">Profile settings</div>
+      <div className="text-sm text-gray-500">Manage your profile settings</div>
+      <div className="h-4" />
       <TextField name="name" isInvalid={Boolean(submitError)} className="max-w-md">
         <Label>Name</Label>
         <Input

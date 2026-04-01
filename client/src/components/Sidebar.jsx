@@ -155,7 +155,7 @@ function Sidebar() {
             {collapsed ? (
               <img src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={40} />
             ) : (
-              <img src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={120} />
+              <img src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={150} />
             )}
           </Link>
 
