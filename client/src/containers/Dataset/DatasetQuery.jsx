@@ -289,20 +289,20 @@ function DatasetQuery(props) {
   const _renderDataRequestTabChip = (dr) => {
     if (_isMainDataRequest(dr)) {
       return (
-        <Chip size="sm" variant="primary" className="rounded-sm">
+        <Chip size="sm" variant="primary">
           main
         </Chip>
       );
     }
     if (_isDataRequestInJoin(dr)) {
       return (
-        <Chip size="sm" variant="soft" color="success" className="rounded-sm">
+        <Chip size="sm" variant="primary" color="success">
           joined
         </Chip>
       );
     }
     return (
-      <Chip size="sm" variant="soft" color="warning" className="rounded-sm">
+      <Chip size="sm" variant="primary" color="warning">
         needs config
       </Chip>
     );
@@ -323,7 +323,7 @@ function DatasetQuery(props) {
               setSelectedTab(key);
               setCreateMode(false);
             }}
-            className="w-full max-w-md"
+            className="w-full max-w-md border border-divider rounded-3xl"
           >
             <Tabs.ListContainer>
               <Tabs.List>

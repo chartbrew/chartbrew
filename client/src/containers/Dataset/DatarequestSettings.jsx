@@ -137,26 +137,6 @@ function DatarequestSettings(props) {
     }
   };
 
-  const _renderIcon = (drId, size = "md") => {
-    const dr = dataRequests.find((o) => o.id === drId);
-    if (dr?.Connection?.type) {
-      const src = connectionImages(isDark)[
-        dr.Connection.subType || dr.Connection.type
-      ];
-      return (
-        <>
-          <Avatar size={size} className="rounded-sm shrink-0">
-            <Avatar.Image src={src} alt="" />
-            <Avatar.Fallback />
-          </Avatar>
-          <div className="w-1" />
-        </>
-      );
-    }
-
-    return null;
-  };
-
   const _onAddJoin = () => {
     const newJoinSettings = {
       key: nanoid(6),
@@ -281,7 +261,7 @@ function DatarequestSettings(props) {
   };
 
   return (
-    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4 py-4 bg-background rounded-lg border-1 border-divider">
+    <div className="drsettings-page-tut max-w-(--breakpoint-2xl) mx-auto px-4 py-4 bg-surface rounded-3xl border border-divider">
       <div className="grid grid-cols-12">
         <div className="col-span-12 md:col-span-7 pr-4 pb-20">
           <Row>
@@ -292,11 +272,11 @@ function DatarequestSettings(props) {
               value={dataset?.main_dr_id ? `${dataset.main_dr_id}` : null}
               onChange={(value) => _onChangeMainSource(value)}
               aria-label="Select a main source"
+              fullWidth
             >
               <Label>Main source</Label>
               <Select.Trigger>
-                {dataset?.main_dr_id ? _renderIcon(dataset.main_dr_id, "sm") : null}
-                <Select.Value />
+                <Select.Value className="flex flex-row items-center gap-2" />
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
@@ -347,7 +327,6 @@ function DatarequestSettings(props) {
                     isDisabled={index === 0}
                   >
                     <Select.Trigger>
-                      {_renderIcon(join.dr_id, "sm")}
                       <Select.Value />
                       <Chip variant="primary" size="sm">
                         {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
@@ -393,8 +372,7 @@ function DatarequestSettings(props) {
                     aria-label="Select a source"
                   >
                     <Select.Trigger>
-                      {_renderIcon(join.join_id, "sm")}
-                      <Select.Value />
+                      <Select.Value className="flex flex-row items-center gap-2" />
                       <Chip variant="secondary" size="sm">
                         {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
                       </Chip>
