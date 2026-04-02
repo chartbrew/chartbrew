@@ -8,6 +8,14 @@ import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
 
+const TAB_LABEL_MAX_CHARS = 24;
+
+function formatTabLabel(legend) {
+  const s = legend == null ? "" : String(legend);
+  if (s.length <= TAB_LABEL_MAX_CHARS) return s;
+  return `${s.slice(0, TAB_LABEL_MAX_CHARS)}…`;
+}
+
 function TableContainer(props) {
   const {
     tabularData, embedded = false, datasets,
@@ -55,14 +63,24 @@ function TableContainer(props) {
             selectedKey={`${activeDatasetIndex}`}
             onSelectionChange={(key) => setActiveDatasetIndex(parseInt(key, 10))}
             size="sm"
+            className="w-fit max-w-full shrink-0"
           >
             <Tabs.ListContainer>
-              <Tabs.List>
-                {datasets.map((dataset, index) => (
-                  <Tabs.Tab key={dataset.legend} id={`${index}`}>
-                    {dataset.legend}
-                  </Tabs.Tab>
-                ))}
+              <Tabs.List
+                aria-label="Table datasets"
+                className="w-fit *:w-fit *:max-w-full *:shrink-0"
+              >
+                {datasets.map((dataset, index) => {
+                  const fullLegend = dataset.legend != null ? String(dataset.legend) : "";
+                  return (
+                    <Tabs.Tab key={`${index}-${fullLegend}`} id={`${index}`}>
+                      <span className="block whitespace-nowrap" title={fullLegend}>
+                        {formatTabLabel(dataset.legend)}
+                      </span>
+                      <Tabs.Indicator />
+                    </Tabs.Tab>
+                  );
+                })}
               </Tabs.List>
             </Tabs.ListContainer>
           </Tabs>
@@ -76,6 +94,9 @@ function TableContainer(props) {
           </div>
         )}
       </Row>
+      {datasets.length > 1 && (
+        <div className="h-2" />
+      )}
       {dataKey && tabularData[dataKey] && tabularData[dataKey].columns && (
         <TableComponent
           columns={tabularData[dataKey].columns}
