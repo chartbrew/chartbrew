@@ -30,6 +30,7 @@ import {
   LuPlug,
   LuTvMinimal,
   LuChevronDown,
+  LuSettings,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -1251,6 +1252,16 @@ function ProjectDashboard() {
                               >
                                 <LuFileDown />
                                 {"Export to Excel"}
+                              </Dropdown.Item>
+                            )}
+                            {_canAccess("teamAdmin") && (
+                              <Dropdown.Item
+                                id="settings"
+                                onPress={() => navigate("settings")}
+                                textValue="Dashboard settings"
+                              >
+                                <LuSettings />
+                                {"Dashboard settings"}
                               </Dropdown.Item>
                             )}
                           </Dropdown.Menu>

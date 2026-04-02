@@ -180,7 +180,7 @@
     --border: #e4e4e7;
     --separator: #e4e4e7;
     --focus: var(--cb-primary-500);
-    --link: var(--cb-secondary-500);
+    /* --link: var(--cb-secondary-500); */
 
     --radius: 0.5rem;
     --field-radius: 0.75rem;

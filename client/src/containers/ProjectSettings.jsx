@@ -4,6 +4,8 @@ import { PropTypes } from "prop-types";
 import {
   Autocomplete,
   Button, ProgressCircle, Separator, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
+  TextField,
+  Surface,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
@@ -16,8 +18,6 @@ import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
 import Row from "../components/Row";
 import { ButtonSpinner } from "../components/ButtonSpinner";
-import Text from "../components/Text";
-import Segment from "../components/Segment";
 import { selectTeam } from "../slices/team";
 
 /*
@@ -37,6 +37,8 @@ function ProjectSettings(props) {
   const [projectTimezone, setProjectTimezone] = useState("");
   const [loadingTimezone, setLoadingTimezone] = useState(false);
   const { contains } = useFilter({ sensitivity: "base" });
+  const [projectDescription, setProjectDescription] = useState("");
+  const [loadingDescription, setLoadingDescription] = useState(false);
 
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
@@ -102,6 +104,24 @@ function ProjectSettings(props) {
       });
   };
 
+  const _onSaveDescription = () => {
+    setLoadingDescription(true);
+    dispatch(updateProject({ project_id: project.id, data: { description: projectDescription } }))
+    .then((resp) => {
+        setLoadingDescription(false);
+        if (resp.error) {
+          toast.error("There was a problem updating the dashboard description. Please try again.");
+          return;
+        }
+        dispatch(changeActiveProject(project.id));
+        toast.success("The description was updated successfully!");
+      })
+      .catch(() => {
+        setLoadingDescription(false);
+        toast.error("There was a problem updating the dashboard description. Please try again.");
+      });
+  };
+
   const _onGetMachineTimezone = () => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setProjectTimezone(tz);
@@ -112,11 +132,11 @@ function ProjectSettings(props) {
   };
 
   return (
-    <Segment style={style} className="container mx-auto mt-4 bg-surface">
+    <Surface style={style} className="p-4 rounded-3xl border border-divider bg-surface">
       <Row>
         <span className="text-lg font-bold">Dashboard settings</span>
       </Row>
-      <div className="h-8" />
+      <div className="h-4" />
       {!project.id && (
         <>
           <Row>
@@ -130,18 +150,20 @@ function ProjectSettings(props) {
           e.preventDefault();
           _onSaveName();
         }} className="w-full">
-          <Input
-            label="Dashboard name"
-            placeholder="Type a name for your dashboard"
-            value={projectName ? projectName
-              : project.name ? project.name : ""}
-            onChange={(e) => setProjectName(e.target.value)}
-            variant="secondary"
-            isInvalid={nameError}
-            description={nameError ? "Dashboard name is required" : ""}
-            className="max-w-md"
-          />
-          <div className="h-4" />
+          <TextField name="project-name" className="w-full gap-2">
+            <Label>Dashboard name</Label>
+            <Input
+              placeholder="Type a name for your dashboard"
+              value={projectName ? projectName
+                : project.name ? project.name : ""}
+              onChange={(e) => setProjectName(e.target.value)}
+              variant="secondary"
+              isInvalid={nameError}
+              description={nameError ? "Dashboard name is required" : ""}
+              className="max-w-md"
+            />
+          </TextField>
+          <div className="h-2" />
           <Button
             type="submit" isDisabled={!_canAccess("projectEditor")}
             isPending={loading}
@@ -153,11 +175,37 @@ function ProjectSettings(props) {
         </form>
       </Row>
 
-      <div className="h-8" />
+      <div className="h-4" />
       <Separator />
-      <div className="h-8" />
+      <div className="h-4" />
 
-      <Row align="center" wrap={"wrap"}>
+      <div>
+        <TextField name="project-description" className="w-full gap-2">
+          <Label>Dashboard description</Label>
+          <Input
+            placeholder="Type a description for your dashboard"
+            value={projectDescription ? projectDescription : project.description || ""}
+            onChange={(e) => setProjectDescription(e.target.value)}
+            variant="secondary"
+            className="max-w-md"
+          />
+        </TextField>
+        <div className="h-2" />
+        <Button
+          isDisabled={!_canAccess("projectEditor")}
+          isPending={loadingDescription}
+          onPress={_onSaveDescription}
+        >
+          {loadingDescription ? <ButtonSpinner /> : null}
+          {"Save description"}
+        </Button>
+      </div>
+
+      <div className="h-4" />
+      <Separator />
+      <div className="h-4" />
+
+      <div className="flex flex-row items-end flex-wrap gap-2">
         <Autocomplete
           placeholder="Select a timezone"
           selectionMode="single"
@@ -196,17 +244,14 @@ function ProjectSettings(props) {
             </Autocomplete.Filter>
           </Autocomplete.Popover>
         </Autocomplete>
-        <div className="w-2" />
-        <Button variant="ghost"
+        <Button variant="secondary"
           isDisabled={!_canAccess("projectEditor")}
           onPress={() => _onGetMachineTimezone()}
         >
           <LuClock4 />
-          <Text hideIn={"xs"}>
-            Get current timezone
-          </Text>
+          Get current timezone
         </Button>
-      </Row>
+      </div>
       <div className="h-4" />
       <Row>
         <Button
@@ -234,16 +279,15 @@ function ProjectSettings(props) {
 
       {_canAccess("teamAdmin") && (
         <>
-          <div className="h-8" />
+          <div className="h-4" />
           <Separator />
-          <div className="h-8" />
+          <div className="h-4" />
 
           <Row>
             <Button
-              color="danger"
               isDisabled={!_canAccess("teamAdmin")}
               onPress={_onRemoveConfirmation}
-              variant="secondary"
+              variant="danger"
             >
               Remove project
               <LuTrash />
@@ -298,7 +342,7 @@ function ProjectSettings(props) {
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </Segment>
+    </Surface>
   );
 }
 

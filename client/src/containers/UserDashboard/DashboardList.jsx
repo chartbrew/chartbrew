@@ -35,6 +35,7 @@ import {
   LuTrash,
   LuUsers,
   LuCoffee,
+  LuSettings,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router";
@@ -440,13 +441,13 @@ function DashboardList() {
                           <Dropdown.Popover>
                             <Dropdown.Menu>
                               <Dropdown.Item
-                                id="rename"
-                                onPress={() => _onEditProject(project)}
-                                textValue="Rename"
+                                id="settings"
+                                onPress={() => navigate(`/dashboard/${project.id}/settings`)}
+                                textValue="Dashboard settings"
                               >
                                 <div className="flex flex-row items-center gap-2">
-                                  <LuPencilLine />
-                                  <span>Rename</span>
+                                  <LuSettings />
+                                  <span>Dashboard settings</span>
                                 </div>
                               </Dropdown.Item>
                               <Dropdown.Item

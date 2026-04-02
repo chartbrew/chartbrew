@@ -15,7 +15,7 @@ import {
   LuSmile,
   LuSquareKanban,
 } from "react-icons/lu";
-import { Button, Dropdown } from "@heroui/react";
+import { Breadcrumbs, Button, Dropdown } from "@heroui/react";
 
 import { selectSidebarCollapsed, showFeedbackModal, toggleAiModal, toggleSidebar } from "../slices/ui";
 import canAccess from "../config/canAccess";
@@ -98,18 +98,20 @@ function TopNav() {
 
   const renderBreadcrumbs = () => {
     const items = [];
+    const datasetName = getDatasetDisplayName(dataset);
 
     if (isOnDashboard() && project?.name) {
       items.push({ label: "Dashboards", onPress: () => navigate("/") });
-      items.push({ label: project.name, onPress: params.chartId ? () => navigate(`/dashboard/${params.projectId}`) : null });
+      items.push({ label: project.name, onPress: () => navigate(`/dashboard/${params.projectId}`) });
       if (params.chartId) items.push({ label: chart?.name || "Chart", onPress: null });
+      if (location.pathname.includes("settings")) items.push({ label: "Settings", onPress: null });
     } else if (isOnConnections()) {
       items.push({ label: "Connections", onPress: () => navigate("/connections") });
       if (connection?.name) items.push({ label: connection.name, onPress: null });
       if (params.connectionId === "new") items.push({ label: "New connection", onPress: null });
     } else if (isOnDatasets()) {
       items.push({ label: "Datasets", onPress: () => navigate("/datasets") });
-      if (getDatasetDisplayName(dataset)) items.push({ label: getDatasetDisplayName(dataset), onPress: null });
+      if (datasetName) items.push({ label: datasetName, onPress: null });
       if (params.datasetId === "new") items.push({ label: "New dataset", onPress: null });
     } else if (isOnIntegrations()) {
       items.push({ label: "Integrations", onPress: () => navigate("/integrations") });
@@ -121,20 +123,19 @@ function TopNav() {
     if (!items.length) return null;
 
     return (
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+      <Breadcrumbs
+        aria-label="Breadcrumb"
+        className="text-sm"
+      >
         {items.map((item, index) => (
-          <React.Fragment key={`${item.label}-${index}`}>
-            {index > 0 ? <span className="text-default-400">/</span> : null}
-            {item.onPress ? (
-              <button className="hover:text-accent" onClick={item.onPress} type="button">
-                {item.label}
-              </button>
-            ) : (
-              <span className="text-foreground">{item.label}</span>
-            )}
-          </React.Fragment>
+          <Breadcrumbs.Item
+            key={`${item.label}-${index}`}
+            onPress={item.onPress || undefined}
+          >
+            {item.label}
+          </Breadcrumbs.Item>
         ))}
-      </nav>
+      </Breadcrumbs>
     );
   };
 

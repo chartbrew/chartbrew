@@ -83,6 +83,9 @@ const router = createBrowserRouter([
           {
             path: "chart/:chartId/edit",
           },
+          {
+            path: "settings",
+          },
         ]
       },
       {
