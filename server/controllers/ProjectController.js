@@ -6,6 +6,7 @@ const db = require("../models/models");
 const TeamController = require("./TeamController");
 const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
+const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -84,7 +85,7 @@ class ProjectController {
   }
 
   update(id, data) {
-    const newFields = data;
+    const newFields = normalizeProjectScheduleTimezones(data);
     return this.findById(id)
       .then((project) => {
         if (data.passwordProtected && !project.password) {

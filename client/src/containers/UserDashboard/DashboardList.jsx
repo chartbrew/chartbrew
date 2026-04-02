@@ -129,10 +129,10 @@ const formatScheduleFrequency = (schedule) => {
 };
 
 const getProjectTimezoneLabel = (project) => {
-  const timezone = project.timezone || project?.updateSchedule?.timezone || project?.snapshotSchedule?.timezone;
+  const timezone = project.timezone;
 
   if (!timezone) {
-    return "Default timezone";
+    return "No timezone set";
   }
 
   try {

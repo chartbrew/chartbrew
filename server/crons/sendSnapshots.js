@@ -3,6 +3,7 @@ const { DateTime } = require("luxon");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const { getProjectSnapshotTimezone } = require("../modules/projectSnapshotTimezone");
 
 function buildJobId(entity, id) {
   return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
@@ -23,7 +24,7 @@ async function checkSnapshots(queue) {
     where: {
       snapshotSchedule: { [Op.ne]: "" }
     },
-    attributes: ["id", "lastSnapshotSentAt", "snapshotSchedule"],
+    attributes: ["id", "lastSnapshotSentAt", "snapshotSchedule", "timezone"],
   };
 
   try {
@@ -34,12 +35,12 @@ async function checkSnapshots(queue) {
 
     const snapshotChecks = projects.map(async (project) => {
       const {
-        timezone,
         frequency,
         dayOfWeek,
         time,
         frequencyNumber,
       } = project.snapshotSchedule || {};
+      const timezone = getProjectSnapshotTimezone(project);
 
       const now = DateTime.now().setZone(timezone);
       const lastSnapshot = project.lastSnapshotSentAt

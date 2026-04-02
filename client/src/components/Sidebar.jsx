@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Avatar, Button, Chip, Dropdown, Input, Modal, Separator, Tooltip } from "@heroui/react"
+import { Avatar, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
 import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
@@ -591,13 +591,18 @@ function Sidebar() {
               <Modal.Heading>Create a new team</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
-            <Input
-              label="Team name"
-              placeholder="Enter your new team name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              variant="secondary"
-            />
+              <div className="flex flex-col gap-2 p-1 pt-4">
+                <TextField name="team-name">
+                  <Label>Team name</Label>
+                  <Input
+                    id="team-name"
+                    placeholder="Enter your new team name"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    variant="secondary"
+                  />
+                </TextField>
+            </div>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="outline" onPress={() => setCreateTeamModal(false)}>

@@ -1,3 +1,5 @@
+const { normalizeProjectScheduleTimezones } = require("../../modules/projectSnapshotTimezone");
+
 module.exports = (sequelize, DataTypes) => {
   const Project = sequelize.define("Project", {
     id: {
@@ -69,7 +71,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       set(value) {
         try {
-          this.setDataValue("updateSchedule", JSON.stringify(value));
+          const normalizedProject = normalizeProjectScheduleTimezones({
+            timezone: this.getDataValue("timezone"),
+            updateSchedule: value,
+          });
+
+          if (normalizedProject.timezone) {
+            this.setDataValue("timezone", normalizedProject.timezone);
+          }
+
+          this.setDataValue("updateSchedule", JSON.stringify(normalizedProject.updateSchedule));
         } catch (error) {
           this.setDataValue("updateSchedule", "{}");
         }
@@ -85,7 +96,16 @@ module.exports = (sequelize, DataTypes) => {
     snapshotSchedule: {
       type: DataTypes.TEXT,
       set(value) {
-        this.setDataValue("snapshotSchedule", JSON.stringify(value));
+        const normalizedProject = normalizeProjectScheduleTimezones({
+          timezone: this.getDataValue("timezone"),
+          snapshotSchedule: value,
+        });
+
+        if (normalizedProject.timezone) {
+          this.setDataValue("timezone", normalizedProject.timezone);
+        }
+
+        this.setDataValue("snapshotSchedule", JSON.stringify(normalizedProject.snapshotSchedule));
       },
       get() {
         try {

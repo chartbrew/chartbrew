@@ -13,6 +13,7 @@ const {
   startRun,
   updateRunContext,
 } = require("../modules/updateAudit");
+const { getProjectUpdateTimezone } = require("../modules/projectSnapshotTimezone");
 
 function parsePositiveInt(value, fallback) {
   const parsedValue = parseInt(value, 10);
@@ -61,7 +62,7 @@ async function addDashboardToQueue(queue, dashboard) {
     summary: {
       frequency: dashboard.updateSchedule?.frequency || null,
       frequencyNumber: dashboard.updateSchedule?.frequencyNumber || null,
-      timezone: dashboard.updateSchedule?.timezone || null,
+      timezone: dashboard.timezone || dashboard.updateSchedule?.timezone || null,
     },
   });
   const queueEvent = await startEvent(traceContext, "queue_enqueued", {
@@ -137,7 +138,7 @@ async function updateDashboards(queue) {
     where: {
       updateSchedule: { [Op.ne]: "" }
     },
-    attributes: ["id", "team_id", "lastUpdatedAt", "updateSchedule"],
+    attributes: ["id", "team_id", "lastUpdatedAt", "updateSchedule", "timezone"],
   };
 
   try {
@@ -150,12 +151,12 @@ async function updateDashboards(queue) {
 
     const jobs = dashboards.map(async (dashboard) => {
       const {
-        timezone,
         frequency,
         dayOfWeek,
         time,
         frequencyNumber,
       } = dashboard.updateSchedule || {};
+      const timezone = getProjectUpdateTimezone(dashboard);
 
       const now = DateTime.now().setZone(timezone);
       const lastUpdated = dashboard.lastUpdatedAt

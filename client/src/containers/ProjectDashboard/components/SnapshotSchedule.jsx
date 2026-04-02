@@ -62,7 +62,6 @@ function SnapshotSchedule({ isOpen, onClose }) {
   const { contains } = useFilter({ sensitivity: "base" });
 
   const dispatch = useDispatch();
-  const initRef = useRef(null);
   const snapshotRef = useRef(null);
   const navigate = useNavigate();
 
@@ -74,17 +73,20 @@ function SnapshotSchedule({ isOpen, onClose }) {
   }, [project, isOpen]);
 
   useEffect(() => {
-    if (project?.snapshotSchedule && !initRef.current) {
-      initRef.current = true;
-      _resetSchedule();
-      if (project.snapshotSchedule?.integrations) {
-        setSelectedIntegrations(project.snapshotSchedule.integrations);
-      }
-      if (project.snapshotSchedule?.customEmails) {
-        setCustomEmails(project.snapshotSchedule.customEmails);
-      }
+    if (!isOpen) {
+      snapshotRef.current = null;
+      setSnapshotPath("");
+      return;
     }
-  }, [project]);
+
+    if (!project?.id) {
+      return;
+    }
+
+    _resetSchedule();
+    setSelectedIntegrations(project.snapshotSchedule?.integrations || []);
+    setCustomEmails(project.snapshotSchedule?.customEmails || []);
+  }, [isOpen, project?.id, project?.timezone, project?.snapshotSchedule]);
 
   useEffect(() => {
     if (team?.id) {
@@ -170,11 +172,13 @@ function SnapshotSchedule({ isOpen, onClose }) {
 
   const _onSave = async () => {
     setIsLoading(true);
+    const { timezone, ...snapshotSchedule } = schedule;
     const response = await dispatch(updateProject({
       project_id: project.id,
       data: { 
+        timezone,
         snapshotSchedule: {
-          ...schedule,
+          ...snapshotSchedule,
           integrations: selectedIntegrations,
           customEmails: customEmails,
         }
@@ -388,45 +392,51 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </>
               )}
             </div>
-            {(schedule.frequency === "every_x_days" || schedule.frequency === "daily" || schedule.frequency === "weekly") && (
-              <div className="flex flex-row items-end gap-2">
-                <Autocomplete
-                  placeholder="Select a timezone"
-                  variant="secondary"
-                  selectionMode="single"
-                  value={schedule.timezone || null}
-                  onChange={(value) => {
-                    setSchedule({ ...schedule, timezone: value || "" });
-                  }}
-                  fullWidth
-                  aria-label="Timezone"
-                >
-                  <Label>Timezone</Label>
-                  <Autocomplete.Trigger>
-                    <Autocomplete.Value />
-                    <Autocomplete.ClearButton />
-                    <Autocomplete.Indicator />
-                  </Autocomplete.Trigger>
-                  <Autocomplete.Popover>
-                    <Autocomplete.Filter filter={contains}>
-                      <SearchField autoFocus name="timezone-search" variant="secondary">
-                        <SearchField.Group>
-                          <SearchField.SearchIcon />
-                          <SearchField.Input placeholder="Search timezones..." />
-                          <SearchField.ClearButton />
-                        </SearchField.Group>
-                      </SearchField>
-                      <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
-                        {timezones.map((timezone) => (
-                          <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
-                            {timezone}
-                            <ListBox.ItemIndicator />
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Autocomplete.Filter>
-                  </Autocomplete.Popover>
-                </Autocomplete>
+            <div className="h-2" />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row items-center gap-2">
+                <div className="flex flex-col gap-1 w-full">
+                  <Autocomplete
+                    placeholder="Select a timezone"
+                    variant="secondary"
+                    selectionMode="single"
+                    value={schedule.timezone || null}
+                    onChange={(value) => {
+                      setSchedule({ ...schedule, timezone: value || "" });
+                    }}
+                    fullWidth
+                    aria-label="Timezone"
+                  >
+                    <Label>Dashboard timezone</Label>
+                    <Autocomplete.Trigger>
+                      <Autocomplete.Value />
+                      <Autocomplete.ClearButton />
+                      <Autocomplete.Indicator />
+                    </Autocomplete.Trigger>
+                    <Autocomplete.Popover>
+                      <Autocomplete.Filter filter={contains}>
+                        <SearchField autoFocus name="timezone-search" variant="secondary">
+                          <SearchField.Group>
+                            <SearchField.SearchIcon />
+                            <SearchField.Input placeholder="Search timezones..." />
+                            <SearchField.ClearButton />
+                          </SearchField.Group>
+                        </SearchField>
+                        <ListBox renderEmptyState={() => <EmptyState>No results found</EmptyState>}>
+                          {timezones.map((timezone) => (
+                            <ListBox.Item key={timezone} id={timezone} textValue={timezone}>
+                              {timezone}
+                              <ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Autocomplete.Filter>
+                    </Autocomplete.Popover>
+                  </Autocomplete>
+                  <div className="text-xs text-gray-500">
+                    Changing this will also update the dashboard timezone.
+                  </div>
+                </div>
 
                 <Button variant="secondary"
                   onPress={() => setSchedule({ ...schedule, timezone: getMachineTimezone() })}
@@ -434,13 +444,13 @@ function SnapshotSchedule({ isOpen, onClose }) {
                   <LuMapPin />
                 </Button>
               </div>
-            )}
+            </div>
 
             <div className="h-4" />
 
-            <div className="font-medium">
+            <Label>
               {"Where should we send the snapshots?"}
-            </div>
+            </Label>
 
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -525,9 +535,9 @@ function SnapshotSchedule({ isOpen, onClose }) {
             <div className="h-4" />
 
             <div className="flex flex-row items-center justify-between">
-              <div className="font-medium">
+              <Label>
                 {"Preview"}
-              </div>
+              </Label>
               <div className="flex flex-row items-center gap-2">
                 <Button
                   variant="tertiary"
@@ -704,7 +714,6 @@ function SnapshotSchedule({ isOpen, onClose }) {
 SnapshotSchedule.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  timezone: PropTypes.string.isRequired,
 };
 
 export default SnapshotSchedule;
