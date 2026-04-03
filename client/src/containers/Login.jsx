@@ -221,7 +221,7 @@ function Login() {
             {!view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground font-tw">
+                  <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground font-tw">
                     Welcome back
                   </h1>
                   <p className="text-sm text-muted">
