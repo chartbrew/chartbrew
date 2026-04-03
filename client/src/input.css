@@ -313,3 +313,11 @@
     border-color: var(--separator, currentcolor);
   }
 }
+
+.input-group__prefix {
+  border-right: none;
+}
+
+.input-group__suffix {
+  border-left: none;
+}
