@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Separator, Input, Switch, Tooltip, Chip, Select, Label, ListBox,
+  Separator, Input, Switch, Tooltip, Chip, Select, Label, ListBox, TextField,
 } from "@heroui/react";
 import { LuInfo } from "react-icons/lu";
 
 import fieldFinder from "../../../modules/fieldFinder";
-import Text from "../../../components/Text";
 
 const templates = [{
   key: "custom",
@@ -124,7 +123,7 @@ function ApiPagination(props) {
       </div>
 
       <div className="col-span-12">
-        <div className="h-4" />
+        <div className="h-2" />
         <Separator />
         <div className="h-2" />
       </div>
@@ -132,67 +131,91 @@ function ApiPagination(props) {
       {/* CUSTOM */}
       {template === "custom" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip>
-            <Tooltip.Trigger>
-              <div style={styles.rowDisplay}>
-                <Text>
-                  {"Items per page"}
-                </Text>
-                <div className="w-1" />
-                <LuInfo />
-              </div>
-            </Tooltip.Trigger>
-            <Tooltip.Content placement="top start">
-              The query parameter name that limits the number of item per request.
-            </Tooltip.Content>
-          </Tooltip>
-          <Input
-            isDisabled={!pagination}
-            placeholder="Items per page"
-            labelPlacement="outside"
-            value={items}
-            onChange={(e) => onPaginationChanged("items", e.target.value)}
-            variant="secondary"
+          <TextField
             fullWidth
-          />
+            isDisabled={!pagination}
+            className="w-full gap-2"
+            name="api-pagination-items-param"
+          >
+            <Label className="inline-flex items-center gap-1">
+              Items per page
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <button
+                    type="button"
+                    className="inline-flex rounded-sm p-0.5 text-default-400 outline-none hover:text-default-600"
+                    aria-label="About items per page parameter"
+                  >
+                    <LuInfo className="size-4" aria-hidden />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="top start">
+                  The query parameter name that limits the number of item per request.
+                </Tooltip.Content>
+              </Tooltip>
+            </Label>
+            <Input
+              variant="secondary"
+              fullWidth
+              placeholder="Items per page"
+              value={items}
+              onChange={(e) => onPaginationChanged("items", e.target.value)}
+            />
+          </TextField>
         </div>
       )}
       {template === "custom" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip>
-            <Tooltip.Trigger>
-              <div style={styles.rowDisplay}>
-                <Text>{"Offset"}</Text>
-                <div className="w-1" />
-                <LuInfo />
-              </div>
-            </Tooltip.Trigger>
-            <Tooltip.Content placement="top start">
-              The query parameter name used for the starting point of the first request.
-            </Tooltip.Content>
-          </Tooltip>
-          <Input
-            isDisabled={!pagination}
-            placeholder="Offset"
-            labelPlacement="outside"
-            value={offset}
-            onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="secondary"
+          <TextField
             fullWidth
-          />
+            isDisabled={!pagination}
+            className="w-full gap-2"
+            name="api-pagination-offset-param"
+          >
+            <Label className="inline-flex items-center gap-1">
+              Offset
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <button
+                    type="button"
+                    className="inline-flex rounded-sm p-0.5 text-default-400 outline-none hover:text-default-600"
+                    aria-label="About offset parameter"
+                  >
+                    <LuInfo className="size-4" aria-hidden />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="top start">
+                  The query parameter name used for the starting point of the first request.
+                </Tooltip.Content>
+              </Tooltip>
+            </Label>
+            <Input
+              variant="secondary"
+              fullWidth
+              placeholder="Offset"
+              value={offset}
+              onChange={(e) => onPaginationChanged("offset", e.target.value)}
+            />
+          </TextField>
         </div>
       )}
       {template === "pages" && (
         <div className="col-span-12 md:col-span-6">
-          <Input
-            label={"Enter the query parameter name for the page"}
-            isDisabled={!pagination}
-            placeholder="page"
-            value={offset}
-            onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="secondary"
+          <TextField
             fullWidth
-          />
+            isDisabled={!pagination}
+            className="w-full gap-2"
+            name="api-pagination-page-param"
+          >
+            <Label>Enter the query parameter name for the page</Label>
+            <Input
+              variant="secondary"
+              fullWidth
+              placeholder="page"
+              value={offset}
+              onChange={(e) => onPaginationChanged("offset", e.target.value)}
+            />
+          </TextField>
         </div>
       )}
 
@@ -202,7 +225,7 @@ function ApiPagination(props) {
           <div className="col-span-12">
             <div className="text-sm">{"Click here to select a field that contains the pagination URL"}</div>
             <div className="h-2" />
-            <div style={styles.rowDisplay}>
+            <div className="flex flex-row items-center gap-2">
               <Select
                 variant="secondary"
                 onChange={(value) => _onChangePaginationField(value)}
@@ -211,6 +234,7 @@ function ApiPagination(props) {
                 placeholder="Select a field"
                 isDisabled={!result || !pagination}
                 aria-label="Select a field"
+                fullWidth
               >
                 <Label>Select a field</Label>
                 <Select.Trigger>
@@ -228,23 +252,27 @@ function ApiPagination(props) {
                   </ListBox>
                 </Select.Popover>
               </Select>
-              {!result && (
-                <div className="text-sm">{" You will have to run a request before you can use this feature"}</div>
-              )}
             </div>
+            {!result && (
+              <div className="text-sm text-danger">{" You will have to run a request before you can use this feature"}</div>
+            )}
           </div>
           <div className="col-span-12">
-            <div className="text-sm">Or enter the object path manually here</div>
-            <div className="h-2" />
-            <Input
-              placeholder="pagination.next"
-              labelPlacement="outside"
-              value={paginationField || ""}
-              onChange={(e) => _onChangePaginationField(e.target.value)}
-              variant="secondary"
+            <TextField
               fullWidth
               isDisabled={!pagination}
-            />
+              className="w-full gap-2"
+              name="api-pagination-field-path"
+            >
+              <Label>Or enter the object path manually here</Label>
+              <Input
+                variant="secondary"
+                fullWidth
+                placeholder="pagination.next"
+                value={paginationField || ""}
+                onChange={(e) => _onChangePaginationField(e.target.value)}
+              />
+            </TextField>
           </div>
         </>
       )}
@@ -259,77 +287,109 @@ function ApiPagination(props) {
       {/* CURSOR-BASED */}
       {template === "cursor" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip>
-            <Tooltip.Trigger>
-              <div style={styles.rowDisplay}>
-                <div className="text-sm">{"Cursor query parameter"}</div>
-                <div className="w-1" />
-                <LuInfo />
-              </div>
-            </Tooltip.Trigger>
-            <Tooltip.Content placement="top start">
-              {"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
-            </Tooltip.Content>
-          </Tooltip>
-          <Input
-            isDisabled={!pagination}
-            placeholder="Cursor query parameter name"
-            value={offset}
-            onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            variant="secondary"
+          <TextField
             fullWidth
-          />
+            isDisabled={!pagination}
+            className="w-full gap-2"
+            name="api-pagination-cursor-param"
+          >
+            <Label className="inline-flex items-center gap-1">
+              Cursor query parameter
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <button
+                    type="button"
+                    className="inline-flex rounded-sm p-0.5 text-default-400 outline-none hover:text-default-600"
+                    aria-label="About cursor query parameter"
+                  >
+                    <LuInfo className="size-4" aria-hidden />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Content placement="top start">
+                  {"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
+                </Tooltip.Content>
+              </Tooltip>
+            </Label>
+            <Input
+              variant="secondary"
+              fullWidth
+              placeholder="Cursor query parameter name"
+              value={offset}
+              onChange={(e) => onPaginationChanged("offset", e.target.value)}
+            />
+          </TextField>
         </div>
       )}
       {template === "cursor" && (
         <div className="col-span-12 md:col-span-6">
-          <Tooltip>
-            <Tooltip.Trigger>
-              <div style={styles.rowDisplay}>
-                <div className="text-sm">{"Next cursor field name"}</div>
-                <div className="w-1" />
-                <LuInfo />
-              </div>
-            </Tooltip.Trigger>
-            <Tooltip.Content className="max-w-[400px]" placement="top start">
-              This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position.
-            </Tooltip.Content>
-          </Tooltip>
-          <Input
-            isDisabled={!pagination}
-            placeholder="Next cursor field name"
-            labelPlacement="outside"
-            value={items}
-            onChange={(e) => onPaginationChanged("items", e.target.value)}
-            variant="secondary"
+          <TextField
             fullWidth
-          />
+            isDisabled={!pagination}
+            className="w-full gap-2"
+            name="api-pagination-next-cursor-field"
+          >
+            <Label className="inline-flex items-center gap-1">
+              Next cursor field name
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <button
+                    type="button"
+                    className="inline-flex rounded-sm p-0.5 text-default-400 outline-none hover:text-default-600"
+                    aria-label="About next cursor field name"
+                  >
+                    <LuInfo className="size-4" aria-hidden />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="max-w-[400px]" placement="top start">
+                  This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position.
+                </Tooltip.Content>
+              </Tooltip>
+            </Label>
+            <Input
+              variant="secondary"
+              fullWidth
+              placeholder="Next cursor field name"
+              value={items}
+              onChange={(e) => onPaginationChanged("items", e.target.value)}
+            />
+          </TextField>
         </div>
       )}
 
       <div className="col-span-12">
-        <Tooltip>
-          <Tooltip.Trigger>
-            <div style={styles.rowDisplay}>
-              <div className="text-sm">{"Maximum number of items (0 = unlimited)"}</div>
-              <div className="w-1" />
-              <LuInfo />
-            </div>
-          </Tooltip.Trigger>
-          <Tooltip.Content placement="top start">
-            The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited
-          </Tooltip.Content>
-        </Tooltip>
-        <Input
-          isDisabled={!pagination}
-          placeholder="Limit"
-          labelPlacement="outside"
-          type="number"
-          value={itemsLimit}
-          onChange={(e) => onPaginationChanged("itemsLimit", e.target.value)}
-          variant="secondary"
+        <TextField
           fullWidth
-        />
+          isDisabled={!pagination}
+          className="w-full gap-2"
+          name="api-pagination-items-limit"
+          type="number"
+        >
+          <Label className="inline-flex items-center gap-1">
+            Maximum number of items (0 = unlimited)
+            <Tooltip>
+              <Tooltip.Trigger>
+                <button
+                  type="button"
+                  className="inline-flex rounded-sm p-0.5 text-default-400 outline-none hover:text-default-600"
+                  aria-label="About maximum number of items"
+                >
+                  <LuInfo className="size-4" aria-hidden />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Content placement="top start">
+                The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited
+              </Tooltip.Content>
+            </Tooltip>
+          </Label>
+          <Input
+            variant="secondary"
+            fullWidth
+            placeholder="Limit"
+            type="number"
+            value={itemsLimit}
+            onChange={(e) => onPaginationChanged("itemsLimit", e.target.value)}
+          />
+        </TextField>
       </div>
 
       <div className="col-span-12">

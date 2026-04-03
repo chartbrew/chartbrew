@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, Separator, Chip, Checkbox, Tooltip,
-  Badge, Drawer,
-  Label, ListBox, Select, Switch,
+  Button, Input, InputGroup, Separator, Chip, Checkbox, Tooltip,
+  Badge,
+  Label,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuInfo, LuPlay, LuTrash, LuX, LuVariable, LuChevronsRight } from "react-icons/lu";
+import { LuInfo, LuPlay, LuTrash, LuX, LuVariable } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -18,6 +18,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
+import VariableSettingsDrawer from "../../../components/VariableSettingsDrawer";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import {
@@ -60,6 +61,11 @@ function RealtimeDbBuilder(props) {
   const {
     dataRequest = null, onChangeRequest, connection, onSave, onDelete,
   } = props;
+
+  const onChangeRequestRef = useRef(onChangeRequest);
+  useEffect(() => {
+    onChangeRequestRef.current = onChangeRequest;
+  }, [onChangeRequest]);
 
   // Helper function to detect if a string contains variables
   const _hasVariables = (value) => {
@@ -148,10 +154,8 @@ function RealtimeDbBuilder(props) {
   }, []);
 
   useEffect(() => {
-    const newRequest = firebaseRequest;
-
-    onChangeRequest(newRequest);
-  }, [firebaseRequest, connection, onChangeRequest]);
+    onChangeRequestRef.current(firebaseRequest);
+  }, [firebaseRequest, connection?.id]);
 
   useEffect(() => {
     if (!connection?.id || !team?.id) return;
@@ -311,7 +315,7 @@ function RealtimeDbBuilder(props) {
                     )}
                   </Badge.Anchor>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Apply transformations to the data
                 </Tooltip.Content>
               </Tooltip>
@@ -319,13 +323,13 @@ function RealtimeDbBuilder(props) {
                 <Tooltip.Trigger>
                   <Button isIconOnly
                     size="sm"
-                    variant="secondary"
+                    variant="danger-soft"
                     onPress={() => onDelete()}
                   >
                     <LuTrash />
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Delete this data request
                 </Tooltip.Content>
               </Tooltip>
@@ -335,7 +339,7 @@ function RealtimeDbBuilder(props) {
           <Row>
             <Separator />
           </Row>
-          <div className="h-8" />
+          <div className="h-4" />
           <Row>
             <Text>
               {"Enter the data path"}
@@ -347,38 +351,42 @@ function RealtimeDbBuilder(props) {
             {"You can add {{variable_name}} in the data path. Click on the variable icon to configure them."}
           </div>
           <div className="h-2" />
-          <Row className="RealtimeDb-route-tut">
+          <Row className="RealtimeDb-route-tut w-full min-w-0 items-stretch gap-2">
             <Input
+              readOnly
+              aria-label="Firebase Realtime Database base URL"
               value={connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
-              fullWidth
-              className={"pointer-events-none"}
-              labelPlacement="outside"
-            />
-            <div className="w-2" />
-            <Input
-              placeholder={"Enter the data path"}
-              autoFocus
-              value={firebaseRequest.route || ""}
-              onChange={(e) => _onChangeRoute(e.target.value)}
               variant="secondary"
               fullWidth
-              disableAnimation
-              labelPlacement="outside"
-              endContent={_hasVariables(firebaseRequest.route) && (
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      isIconOnly
-                      onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))} variant="ghost"
-                      size="sm"
-                    >
-                      <LuVariable />
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Configure variable</Tooltip.Content>
-                </Tooltip>
-              )}
+              className="pointer-events-none min-w-0 max-w-sm shrink-0"
             />
+            <InputGroup fullWidth variant="secondary" className="w-full">
+              <InputGroup.Input
+                placeholder="Enter the data path"
+                autoFocus
+                aria-label="Firebase data path"
+                value={firebaseRequest.route || ""}
+                onChange={(e) => _onChangeRoute(e.target.value)}
+                className="w-full flex-1"
+              />
+              {_hasVariables(firebaseRequest.route) ? (
+                <InputGroup.Suffix className="flex items-center pr-1">
+                  <Tooltip>
+                    <Tooltip.Trigger>
+                      <Button
+                        isIconOnly
+                        onPress={() => _onVariableClick(_getFirstVariable(firebaseRequest.route))}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <LuVariable />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Configure variable</Tooltip.Content>
+                  </Tooltip>
+                </InputGroup.Suffix>
+              ) : null}
+            </InputGroup>
           </Row>
           {(requestSuccess || requestError) && (
             <>
@@ -481,6 +489,7 @@ function RealtimeDbBuilder(props) {
             <Row>
               <Input
                 placeholder="Enter a field to order by"
+                aria-label="Field to order by"
                 value={(firebaseRequest.configuration && firebaseRequest.configuration.key) || ""}
                 onChange={(e) => (
                   setFirebaseRequest({
@@ -493,7 +502,6 @@ function RealtimeDbBuilder(props) {
                 )}
                 variant="secondary"
                 fullWidth
-                labelPlacement="outside"
               />
             </Row>
           )}
@@ -555,7 +563,7 @@ function RealtimeDbBuilder(props) {
                       }
                     })
                   )}
-                  variant="danger-soft"
+                  variant="ghost"
                   size="sm"
                 >
                   <LuX />
@@ -567,8 +575,9 @@ function RealtimeDbBuilder(props) {
           <Row>
             <Input
               placeholder="How many records should return?"
+              aria-label="Limit result count"
               type="number"
-              value={limitValue}
+              value={String(limitValue)}
               onChange={(e) => e.target.value && _onChangeLimitValue(e.target.value)}
               isDisabled={
                 !firebaseRequest.configuration
@@ -579,7 +588,6 @@ function RealtimeDbBuilder(props) {
               }
               variant="secondary"
               fullWidth
-              labelPlacement="outside"
             />
           </Row>
         </div>
@@ -589,7 +597,7 @@ function RealtimeDbBuilder(props) {
               isPending={requestLoading}
               onPress={() => _onTest()}
               fullWidth
-              variant="ghost"
+              variant="primary"
             >
               {requestLoading ? <ButtonSpinner /> : null}
               Make the request
@@ -602,6 +610,7 @@ function RealtimeDbBuilder(props) {
               id="realtimedb-use-cache"
               isSelected={!invalidateCache}
               onChange={(selected) => setInvalidateCache(!selected)}
+              variant="secondary"
             >
               <Checkbox.Control className="size-4 shrink-0">
                 <Checkbox.Indicator />
@@ -632,7 +641,7 @@ function RealtimeDbBuilder(props) {
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="RealtimeDb-result-tut rounded-md border-1 border-solid border-content3"
+                className="RealtimeDb-result-tut rounded-md border border-divider"
               />
             </div>
           </Row>
@@ -654,135 +663,13 @@ function RealtimeDbBuilder(props) {
         initialTransform={firebaseRequest.transform}
       />
 
-      <Drawer
-        isOpen={!!variableSettings}
-        onOpenChange={(open) => {
-          if (!open) setVariableSettings(null);
-        }}
-      >
-        <Drawer.Backdrop variant="transparent" />
-        <Drawer.Content
-          placement="right"
-          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
-          style={{
-            marginTop: "54px",
-          }}
-        >
-          <Drawer.Dialog>
-          <Drawer.Header
-            className="flex flex-row items-center border-b-1 border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
-          >
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Button
-                  isIconOnly
-                  onPress={() => setVariableSettings(null)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <LuChevronsRight />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content>Close</Tooltip.Content>
-            </Tooltip>
-            <div className="text-sm font-bold">Variable settings</div>
-            <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
-                {variableSettings?.name}
-              </code>
-            </div>
-          </Drawer.Header>
-          <Drawer.Body>
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-accent">
-                {variableSettings?.name}
-              </pre>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable type</div>
-              <Select
-                placeholder="Select a variable type"
-                fullWidth
-                selectionMode="single"
-                value={variableSettings?.type || null}
-                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
-                variant="secondary"
-              >
-                <Label>Select a type</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="string" textValue="String">
-                      String
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="number" textValue="Number">
-                      Number
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="boolean" textValue="Boolean">
-                      Boolean
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="date" textValue="Date">
-                      Date
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Default value</div>
-              <Input
-                placeholder="Type a value here"
-                fullWidth
-                variant="secondary"
-                value={variableSettings?.default_value}
-                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
-                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
-              />
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Required</div>
-              <Switch
-                isSelected={variableSettings?.required}
-                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
-                size="sm"
-                aria-label="Required"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button
-              variant="tertiary"
-              onPress={() => setVariableSettings(null)}
-            >
-              Close
-            </Button>
-            <Button
-              variant="primary"
-              onPress={_onVariableSave}
-              isPending={variableLoading}
-            >
-              {variableLoading ? <ButtonSpinner /> : null}
-              Save
-            </Button>
-          </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer>
+      <VariableSettingsDrawer
+        variable={variableSettings}
+        onClose={() => setVariableSettings(null)}
+        onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
+        onSave={_onVariableSave}
+        savePending={variableLoading}
+      />
     </div>
   );
 }

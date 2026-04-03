@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Separator, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   Label, ListBox, Select,
-  Badge, Drawer, TextField, InputGroup, Description,
+  Badge, TextField, InputGroup,
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -15,7 +15,7 @@ import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import {
   LuTriangleAlert, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuCirclePlus,
-  LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX, LuVariable, LuChevronsRight,
+  LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX, LuVariable,
 } from "react-icons/lu";
 import { useParams } from "react-router";
 
@@ -32,6 +32,7 @@ import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Row from "../../../components/Row";
+import VariableSettingsDrawer from "../../../components/VariableSettingsDrawer";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
 import {
@@ -251,10 +252,10 @@ function FirestoreBuilder(props) {
             style: { width: 55, textAlign: "center" },
             content: o.type || "unknown",
             size: "mini",
-            color: o.type === "date" ? "secondary"
-              : o.type === "number" ? "primary"
+            color: o.type === "date" ? "warning"
+              : o.type === "number" ? "accent"
                 : o.type === "string" ? "success"
-                  : o.type === "boolean" ? "warning"
+                  : o.type === "boolean" ? "danger-soft"
                     : "default"
           },
         });
@@ -680,8 +681,9 @@ function FirestoreBuilder(props) {
               <Fragment key={collection._queryOptions.collectionId}>
                 <Chip
                   variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "soft" : "primary"}
+                  color={firestoreRequest.query !== collection._queryOptions.collectionId ? "default" : "accent"}
                   onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
-                  className="rounded-sm min-w-[50px] text-center cursor-pointer"
+                  className="min-w-[50px] text-center cursor-pointer"
                   size="lg"
                 >
                   {collection._queryOptions.collectionId}
@@ -698,7 +700,7 @@ function FirestoreBuilder(props) {
               size="sm"
               onPress={() => _onFetchCollections()}
               isPending={collectionsLoading}
-              variant="ghost"
+              variant="tertiary"
             >
               {collectionsLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} />}
               Refresh collections
@@ -710,11 +712,11 @@ function FirestoreBuilder(props) {
           <div className="h-4" />
 
           <Row align="center">
-            <Text>
+            <Label>
               {"Filter the collection "}
-            </Text>
+            </Label>
             <div className="w-2" />
-            <Tooltip>
+            <Tooltip delay={0}>
               <Tooltip.Trigger>
                 <div><LuInfo size={16} /></div>
               </Tooltip.Trigger>
@@ -752,13 +754,7 @@ function FirestoreBuilder(props) {
           <div className="h-4" />
           <Separator />
           <div className="h-4" />
-          <Row className="firestorebuilder-query-tut">
-            <Text>
-              {"Order and limit"}
-            </Text>
-          </Row>
-          <div className="h-2" />
-          <Row align="center">
+          <div className="flex flex-row items-end gap-2">
             <TextField fullWidth name="firestore-order-by">
               <Label>Order by</Label>
               <Input
@@ -768,7 +764,6 @@ function FirestoreBuilder(props) {
                 variant="secondary"
               />
             </TextField>
-            <div className="w-1" />
             <Select
               variant="secondary"
               onChange={(value) => setOrderByDirection(value)}
@@ -795,7 +790,7 @@ function FirestoreBuilder(props) {
                 </ListBox>
               </Select.Popover>
             </Select>
-          </Row>
+          </div>
           <div className="h-4" />
           <Row>
             <TextField className="max-w-[300px]" name="firestore-limit">
@@ -951,7 +946,7 @@ function FirestoreBuilder(props) {
               <Button
                 isPending={requestLoading}
                 onPress={() => _onTest()}
-                className={"w-full"} variant="ghost"
+                className={"w-full"} variant="primary"
               >
                 {requestLoading ? <ButtonSpinner /> : null}
                 Get Firestore data
@@ -1010,138 +1005,14 @@ function FirestoreBuilder(props) {
         initialTransform={firestoreRequest.transform}
       />
 
-      <Drawer
-        isOpen={!!variableSettings}
-        onOpenChange={(open) => {
-          if (!open) setVariableSettings(null);
-        }}
-      >
-        <Drawer.Backdrop variant="transparent" />
-        <Drawer.Content
-          placement="right"
-          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
-          style={{
-            marginTop: "54px",
-          }}
-        >
-          <Drawer.Dialog>
-          <Drawer.Header
-            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
-          >
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Button
-                  isIconOnly
-                  onPress={() => setVariableSettings(null)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <LuChevronsRight />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content>Close</Tooltip.Content>
-            </Tooltip>
-            <div className="text-sm font-bold">Variable settings</div>
-            <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
-                {variableSettings?.name}
-              </code>
-            </div>
-          </Drawer.Header>
-          <Drawer.Body>
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-accent">
-                {variableSettings?.name}
-              </pre>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable type</div>
-              <Select
-                placeholder="Select a variable type"
-                fullWidth
-                selectionMode="single"
-                value={variableSettings?.type || null}
-                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
-                variant="secondary"
-              >
-                <Label>Select a type</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="string" textValue="String">
-                      String
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="number" textValue="Number">
-                      Number
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="boolean" textValue="Boolean">
-                      Boolean
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="date" textValue="Date">
-                      Date
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Default value</div>
-              <TextField fullWidth name="firestore-variable-default" aria-label="Default value">
-                <Input
-                  placeholder="Enter a value"
-                  variant="secondary"
-                  value={variableSettings?.default_value ?? ""}
-                  onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
-                />
-                {variableSettings?.required && !variableSettings?.default_value ? (
-                  <Description>
-                    {"This variable is required. The request will fail if you don't provide a value."}
-                  </Description>
-                ) : null}
-              </TextField>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Required</div>
-              <Switch
-                isSelected={variableSettings?.required}
-                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
-                size="sm"
-                aria-label="Required"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button
-              variant="tertiary"
-              onPress={() => setVariableSettings(null)}
-            >
-              Close
-            </Button>
-            <Button onPress={_onVariableSave}
-              isPending={variableLoading}
-            >
-              {variableLoading ? <ButtonSpinner /> : null}
-              Save
-            </Button>
-          </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer>
+      <VariableSettingsDrawer
+        variable={variableSettings}
+        onClose={() => setVariableSettings(null)}
+        onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
+        onSave={_onVariableSave}
+        savePending={variableLoading}
+        defaultValueFieldName="firestore-variable-default"
+      />
     </div>
   );
 }
@@ -1214,10 +1085,10 @@ function Conditions(props) {
                         textValue={condition?.field?.substring(condition.field.lastIndexOf(".") + 1)}
                       >
                         <Row className={"gap-2"}>
-                          <Chip className="min-w-[70px] text-center" variant="soft" size="sm">
+                          <Chip className="min-w-[70px] justify-center" color={option.label.color} variant="soft" size="sm">
                             {option.label.content}
                           </Chip>
-                          <Text>{option.text}</Text>
+                          {option.text}
                         </Row>
                         <ListBox.ItemIndicator />
                       </ListBox.Item>

@@ -6,14 +6,13 @@ import {
   Checkbox,
   Separator,
   Input,
+  InputGroup,
   Tooltip,
   Chip,
   Tabs,
   Select,
   Popover,
   Badge,
-  Drawer,
-  Switch,
   Label,
   ListBox
 } from "@heroui/react";
@@ -21,7 +20,7 @@ import AceEditor from "react-ace";
 import { v4 as uuid } from "uuid";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuTrash, LuCircleX, LuChevronsRight, LuVariable } from "react-icons/lu";
+import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuTrash, LuCircleX, LuVariable } from "react-icons/lu";
 import { endOfDay, startOfDay, sub } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -46,6 +45,7 @@ import {
 } from "../../../slices/connection";
 import Container from "../../../components/Container";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
+import VariableSettingsDrawer from "../../../components/VariableSettingsDrawer";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -72,6 +72,10 @@ const methods = [{
   key: 5,
   text: "OPTIONS",
   value: "OPTIONS",
+}, {
+  key: 6,
+  text: "PATCH",
+  value: "PATCH",
 }];
 
 /*
@@ -511,7 +515,8 @@ function ApiBuilder(props) {
         return (
           <Chip
             key={index}
-            variant="primary"
+            variant="soft"
+            color="accent"
             size="sm"
             className={`cursor-pointer mx-1 ${size === "sm" ? "text-xs" : ""}`}
             onClick={() => onVariableClick(part)}
@@ -558,7 +563,7 @@ function ApiBuilder(props) {
                     )}
                   </Badge.Anchor>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Apply transformations to the data
                 </Tooltip.Content>
               </Tooltip>
@@ -573,7 +578,7 @@ function ApiBuilder(props) {
                     <LuTrash />
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
+                <Tooltip.Content placement="bottom" className="z-99999">
                   Delete this data request
                 </Tooltip.Content>
               </Tooltip>
@@ -583,24 +588,23 @@ function ApiBuilder(props) {
           <Row>
             <Separator />
           </Row>
-          <div className="h-8" />
-          <Row align="center" className="apibuilder-route-tut">
-            <Input
-              startContent={(
-                <div className="pointer-events-none flex items-center">
-                  <span className="text-default-400 text-small">
-                    {`${builderMetadata.host || connection?.host || ""}`}
-                  </span>
-                </div>
-              )}
-              placeholder="/route?key=value"
-              autoFocus
-              value={apiRequest.route || ""}
-              onChange={(e) => _onChangeRoute(e.target.value)}
-              fullWidth
-              variant="secondary"
-              disableAnimation
-            />
+          <div className="h-4" />
+          <Row align="center" className="apibuilder-route-tut w-full min-w-0">
+            <InputGroup fullWidth variant="secondary" className="w-full min-w-0">
+              <InputGroup.Prefix className="pointer-events-none flex shrink-0 items-center border-none">
+                <span className="text-sm text-default-400">
+                  {`${builderMetadata.host || connection?.host || ""}`}
+                </span>
+              </InputGroup.Prefix>
+              <InputGroup.Input
+                aria-label="API route path"
+                placeholder="/route?key=value"
+                autoFocus
+                value={apiRequest.route || ""}
+                onChange={(e) => _onChangeRoute(e.target.value)}
+                className="min-w-0 flex-1"
+              />
+            </InputGroup>
           </Row>
           {apiRequest.route && _hasVariables(apiRequest.route) && (
             <div className="mt-2 bg-content2 rounded-lg p-2">
@@ -618,7 +622,7 @@ function ApiBuilder(props) {
             <div><LuVariable /></div>
             {"You can add {{variable_name}} in URL, headers, or body. Click on variables to configure them."}
           </div>
-          <div className="h-8" />
+          <div className="h-4" />
           {apiRequest?.route && (apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
             <>
               <div className="border border-content3 rounded-lg px-4 py-2">
@@ -769,21 +773,20 @@ function ApiBuilder(props) {
                       <Container className={"pl-0 pr-0"}>
                         {builderMetadata.globalHeaders.map((header) => {
                           return (
-                            <Row key={header.key}>
+                            <div className="flex flex-row items-center gap-2" key={header.key}>
                               <Input
                                 value={header.key}
                                 variant="secondary"
                                 fullWidth
                                 disableAnimation
                               />
-                              <div className="w-2" />
                               <Input
                                 value={header.value}
                                 variant="secondary"
                                 fullWidth
                                 disableAnimation
                               />
-                            </Row>
+                            </div>
                           );
                         })}
                       </Container>
@@ -937,7 +940,9 @@ function ApiBuilder(props) {
               selectionMode="single"
               labelPlacement="ouside"
               aria-label="Select a method"
+              placeholder="Select method"
               size="sm"
+              fullWidth
             >
               <Select.Trigger>
                 <Select.Value />
@@ -957,8 +962,8 @@ function ApiBuilder(props) {
             <Button
               isPending={requestLoading}
               onPress={() => _onTest()}
-              fullWidth size="sm"
-              variant="ghost"
+              fullWidth
+              variant="primary"
             >
               {requestLoading ? <ButtonSpinner /> : null}
               {"Send the request"}
@@ -1044,135 +1049,13 @@ function ApiBuilder(props) {
         initialTransform={apiRequest.transform}
       />
 
-      <Drawer
-        isOpen={!!variableSettings}
-        onOpenChange={(open) => {
-          if (!open) setVariableSettings(null);
-        }}
-      >
-        <Drawer.Backdrop variant="transparent" />
-        <Drawer.Content
-          placement="right"
-          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
-          style={{
-            marginTop: "54px",
-          }}
-        >
-          <Drawer.Dialog>
-          <Drawer.Header
-            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
-          >
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Button
-                  isIconOnly
-                  onPress={() => setVariableSettings(null)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <LuChevronsRight />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content>Close</Tooltip.Content>
-            </Tooltip>
-            <div className="text-sm font-bold">Variable settings</div>
-            <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent/20 px-1.5 py-0.5 text-sm text-accent-600">
-                {variableSettings?.name}
-              </code>
-            </div>
-          </Drawer.Header>
-          <Drawer.Body>
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-accent">
-                {variableSettings?.name}
-              </pre>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable type</div>
-              <Select
-                placeholder="Select a variable type"
-                fullWidth
-                selectionMode="single"
-                value={variableSettings?.type || null}
-                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
-                variant="secondary"
-              >
-                <Label>Select a type</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="string" textValue="String">
-                      String
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="number" textValue="Number">
-                      Number
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="boolean" textValue="Boolean">
-                      Boolean
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="date" textValue="Date">
-                      Date
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Default value</div>
-              <Input
-                placeholder="Type a value here"
-                fullWidth
-                variant="secondary"
-                value={variableSettings?.default_value}
-                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
-                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The request will fail if you don't provide a value."}
-              />
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Required</div>
-              <Switch
-                isSelected={variableSettings?.required}
-                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
-                size="sm"
-                aria-label="Required"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button
-              variant="secondary"
-              onPress={() => setVariableSettings(null)}
-            >
-              Close
-            </Button>
-            <Button
-              variant="primary"
-              onPress={_onVariableSave}
-              isPending={variableLoading}
-            >
-              {variableLoading ? <ButtonSpinner /> : null}
-              Save
-            </Button>
-          </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer>
+      <VariableSettingsDrawer
+        variable={variableSettings}
+        onClose={() => setVariableSettings(null)}
+        onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
+        onSave={_onVariableSave}
+        savePending={variableLoading}
+      />
     </div>
   );
 }

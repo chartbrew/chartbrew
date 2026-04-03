@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Separator, Input, Tooltip, Chip, Checkbox,
-  Select, Autocomplete,
+  Select, Autocomplete, Spinner,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
 import AceEditor from "react-ace";
@@ -56,6 +56,7 @@ function GaBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [propertyMetadataLoading, setPropertyMetadataLoading] = useState(false);
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [formErrors, setFormErrors] = useState({});
@@ -68,6 +69,13 @@ function GaBuilder(props) {
   const [requestError, setRequestError] = useState("");
   const [showTransform, setShowTransform] = useState(false);
   const { contains } = useFilter({ sensitivity: "base" });
+  const filterAutocompleteItems = useCallback(
+    (textValue, inputValue) => contains(
+      String(textValue ?? ""),
+      String(inputValue ?? ""),
+    ),
+    [contains],
+  );
 
   const { isDark } = useTheme();
   const initRef = React.useRef(null);
@@ -235,16 +243,22 @@ function GaBuilder(props) {
     const dimensions = [];
     if (metadata?.metrics?.length > 0) {
       metadata.metrics.forEach((m) => {
+        const key = String(m.apiName ?? "");
         metrics.push({
-          ...m, text: m.uiName, key: m.apiName, value: m.apiName
+          text: String(m.uiName ?? m.apiName ?? ""),
+          key,
+          value: key,
         });
       });
     }
 
     if (metadata?.dimensions?.length > 0) {
       metadata.dimensions.forEach((d) => {
+        const key = String(d.apiName ?? "");
         dimensions.push({
-          ...d, text: d.uiName, key: d.apiName, value: d.apiName
+          text: String(d.uiName ?? d.apiName ?? ""),
+          key,
+          value: key,
         });
       });
     }
@@ -254,6 +268,13 @@ function GaBuilder(props) {
   };
 
   const _populateMetadata = (propertyId) => {
+    if (!propertyId) {
+      setPropertyMetadataLoading(false);
+      return;
+    }
+
+    setPropertyMetadataLoading(true);
+
     if (params.datasetId && dataRequest?.dataset_id && dataRequest?.id) {
       dispatch(getDataRequestBuilderMetadata({
         team_id: team?.id,
@@ -264,13 +285,20 @@ function GaBuilder(props) {
         .then((data) => {
           _applyPropertyMetadata(data.payload?.metadata);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          setPropertyMetadataLoading(false);
+        });
       return;
     }
 
     getMetadata(team?.id, connection.id, propertyId)
       .then((metadata) => {
         _applyPropertyMetadata(metadata);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setPropertyMetadataLoading(false);
       });
   };
 
@@ -439,6 +467,10 @@ function GaBuilder(props) {
     onSave(updatedRequest);
   };
 
+  const triggerSpinner = (show) => (show ? (
+    <Spinner size="sm" className="size-4 shrink-0" aria-label="Loading" />
+  ) : null);
+
   return (
     <div style={styles.container}>
       <div className="grid grid-cols-12 gap-4 pl-1 pr-1 md:pl-4 md:pr-4">
@@ -501,7 +533,6 @@ function GaBuilder(props) {
                 variant="secondary"
                 value={configuration.accountId || null}
                 placeholder="Select an account"
-                isPending={collectionsLoading}
                 onChange={(value) => _onAccountSelected(value)}
                 selectionMode="single"
                 aria-label="Select an account"
@@ -509,7 +540,7 @@ function GaBuilder(props) {
                 <Label>Account</Label>
                 <Select.Trigger>
                   <Select.Value />
-                  <Select.Indicator />
+                  <Select.Indicator>{triggerSpinner(collectionsLoading)}</Select.Indicator>
                 </Select.Trigger>
                 <Select.Popover>
                   <ListBox>
@@ -527,7 +558,6 @@ function GaBuilder(props) {
               <Select
                 isDisabled={!configuration.accountId}
                 variant="secondary"
-                isPending={collectionsLoading}
                 value={configuration.propertyId || null}
                 placeholder="Select a property"
                 onChange={(value) => _onPropertySelected(value)}
@@ -537,7 +567,7 @@ function GaBuilder(props) {
                 <Label>Property</Label>
                 <Select.Trigger>
                   <Select.Value />
-                  <Select.Indicator />
+                  <Select.Indicator>{triggerSpinner(collectionsLoading)}</Select.Indicator>
                 </Select.Trigger>
                 <Select.Popover>
                   <ListBox>
@@ -569,7 +599,6 @@ function GaBuilder(props) {
               <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="secondary"
-                isPending={collectionsLoading}
                 value={configuration.metrics || null}
                 placeholder="Select a metric"
                 errorMessage={formErrors.metrics} onChange={(value) => setConfiguration({ ...configuration, metrics: value })}
@@ -578,24 +607,30 @@ function GaBuilder(props) {
               >
                 <Autocomplete.Trigger>
                   <Autocomplete.Value />
-                  <Autocomplete.Indicator />
+                  <Autocomplete.Indicator>
+                    {triggerSpinner(propertyMetadataLoading && Boolean(configuration.propertyId))}
+                  </Autocomplete.Indicator>
                 </Autocomplete.Trigger>
                 <Autocomplete.Popover>
-                  <Autocomplete.Filter>
-                    <SearchField placeholder="Search metrics..." />
+                  <Autocomplete.Filter filter={filterAutocompleteItems}>
+                    <SearchField>
+                      <SearchField.Group>
+                        <SearchField.SearchIcon />
+                        <SearchField.Input />
+                      </SearchField.Group>
+                    </SearchField>
                     <ListBox
                       items={metricsOptions}
-                      filter={contains}
                       renderEmptyState={() => <EmptyState>No metrics found.</EmptyState>}
                     >
                       {(item) => (
-                        <ListBox.Item key={item.key} id={item.key} textValue={item.text}>
+                        <ListBox.Item key={item.key} id={item.key} textValue={String(item.text ?? item.key ?? "")}>
                           <div>
-                            <Text b>{item.text}</Text>
-                            <Text small className={"text-default-400"}>
+                            <span className="text-sm font-bold">{item.text}</span>
+                            <span className={"text-sm text-muted"}>
                               {" - "}
                               {item.key}
-                            </Text>
+                            </span>
                           </div>
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
@@ -610,7 +645,6 @@ function GaBuilder(props) {
               <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="secondary"
-                isPending={collectionsLoading}
                 value={configuration.dimensions || null}
                 onChange={(value) => setConfiguration({ ...configuration, dimensions: value })}
                 selectionMode="single"
@@ -619,19 +653,25 @@ function GaBuilder(props) {
               >
                 <Autocomplete.Trigger>
                   <Autocomplete.Value />
-                  <Autocomplete.Indicator />
+                  <Autocomplete.Indicator>
+                    {triggerSpinner(propertyMetadataLoading && Boolean(configuration.propertyId))}
+                  </Autocomplete.Indicator>
                 </Autocomplete.Trigger>
                 <Autocomplete.Popover>
-                  <Autocomplete.Filter>
-                    <SearchField placeholder="Search dimensions..." />
+                  <Autocomplete.Filter filter={filterAutocompleteItems}>
+                    <SearchField>
+                      <SearchField.Group>
+                        <SearchField.SearchIcon />
+                        <SearchField.Input />
+                      </SearchField.Group>
+                    </SearchField>
                     <ListBox
                       items={dimensionsOptions}
-                      filter={contains}
                       renderEmptyState={() => <EmptyState>No dimensions found.</EmptyState>}
                     >
                       {(item) => (
-                        <ListBox.Item key={item.key} id={item.key} textValue={item.text}>
-                          <Text>{item.text}</Text>
+                        <ListBox.Item key={item.key} id={item.key} textValue={String(item.text ?? item.key ?? "")}>
+                          {item.text}
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
                       )}
@@ -755,7 +795,7 @@ function GaBuilder(props) {
             <Button
               isPending={requestLoading}
               onPress={() => _onTest()}
-              className="w-full" variant="ghost"
+              className="w-full" variant="primary"
             >
               {requestLoading ? <ButtonSpinner /> : null}
               Get analytics data

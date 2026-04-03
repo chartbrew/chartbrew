@@ -11,15 +11,11 @@ import {
   Tabs,
   ProgressCircle,
   Badge,
-  Drawer,
-  Select,
-  Switch,
   Label,
-  ListBox
 } from "@heroui/react";
 import AceEditor from "react-ace";
 import toast from "react-hot-toast";
-import { LuCheck, LuChevronsRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -29,6 +25,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
+import VariableSettingsDrawer, { QUERY_REQUIRED_HINT } from "../../../components/VariableSettingsDrawer";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -598,135 +595,14 @@ function SqlBuilder(props) {
         initialTransform={sqlRequest.transform}
       />
 
-      <Drawer
-        isOpen={!!variableSettings}
-        onOpenChange={(open) => {
-          if (!open) setVariableSettings(null);
-        }}
-      >
-        <Drawer.Backdrop variant="transparent" />
-        <Drawer.Content
-          placement="right"
-          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
-          style={{
-            marginTop: "54px",
-          }}
-        >
-          <Drawer.Dialog>
-          <Drawer.Header
-            className="flex flex-row items-center border-b border-divider gap-2 px-2 py-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg"
-          >
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Button
-                  isIconOnly
-                  onPress={() => setVariableSettings(null)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <LuChevronsRight />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content>Close</Tooltip.Content>
-            </Tooltip>
-            <div className="text-sm font-bold">Variable settings</div>
-            <div className="flex flex-row items-center gap-2">
-              <code className="rounded-sm bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
-                {variableSettings?.name}
-              </code>
-            </div>
-          </Drawer.Header>
-          <Drawer.Body>
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable name</div>
-              <pre className="text-accent">
-                {variableSettings?.name}
-              </pre>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Variable type</div>
-              <Select
-                placeholder="Select a variable type"
-                fullWidth
-                selectionMode="single"
-                value={variableSettings?.type || null}
-                onChange={(value) => setVariableSettings({ ...variableSettings, type: value })}
-                variant="secondary"
-              >
-                <Label>Select a type</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="string" textValue="String">
-                      String
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="number" textValue="Number">
-                      Number
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="boolean" textValue="Boolean">
-                      Boolean
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="date" textValue="Date">
-                      Date
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Default value</div>
-              <Input
-                placeholder="Type a value here"
-                fullWidth
-                variant="secondary"
-                value={variableSettings?.default_value}
-                onChange={(e) => setVariableSettings({ ...variableSettings, default_value: e.target.value })}
-                description={variableSettings?.required && !variableSettings?.default_value && "This variable is required. The query will fail if you don't provide a value."}
-              />
-            </div>
-            <div className="h-2" />
-            <div className="flex flex-col gap-2">
-              <div className="text-sm font-bold text-gray-500">Required</div>
-              <Switch
-                isSelected={variableSettings?.required}
-                onChange={(selected) => setVariableSettings({ ...variableSettings, required: selected })}
-                size="sm"
-                aria-label="Required"
-              >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </div>
-          </Drawer.Body>
-          <Drawer.Footer>
-            <Button
-              variant="tertiary"
-              onPress={() => setVariableSettings(null)}
-            >
-              Close
-            </Button>
-            <Button
-              variant="primary"
-              onPress={_onVariableSave}
-              isPending={variableLoading}
-            >
-              {variableLoading ? <ButtonSpinner /> : null}
-              Save
-            </Button>
-          </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer>
+      <VariableSettingsDrawer
+        variable={variableSettings}
+        onClose={() => setVariableSettings(null)}
+        onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
+        onSave={_onVariableSave}
+        savePending={variableLoading}
+        requiredWithoutDefaultHint={QUERY_REQUIRED_HINT}
+      />
     </div>
   );
 }
