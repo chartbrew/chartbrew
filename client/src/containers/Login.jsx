@@ -9,6 +9,8 @@ import {
   Modal,
   Separator,
   TextField,
+  InputOTP,
+  REGEXP_ONLY_DIGITS,
 } from "@heroui/react";
 import { LuLock, LuMail } from "react-icons/lu";
 
@@ -337,7 +339,7 @@ function Login() {
             {view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground">
+                  <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
                     Two-factor authentication
                   </h1>
                   <p className="text-sm text-muted">
@@ -347,31 +349,35 @@ function Login() {
 
                 <div className="h-8" />
 
-                <form onSubmit={onValidateToken} className="space-y-3">
+                <form onSubmit={onValidateToken} className="space-y-3 flex flex-col items-center">
                   <TextField
                     fullWidth
                     variant="secondary"
                     name="otpToken"
                     aria-label="Authentication token"
                     isInvalid={Boolean(errors.otpToken)}
+                    autoFocus
                   >
-                    <InputGroup variant="secondary" fullWidth>
-                      <InputGroup.Prefix>
-                        <LuLock className="size-5 text-muted" aria-hidden />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input
-                        placeholder="Authentication token"
-                        value={otpToken}
-                        onChange={(e) => {
-                          setOtpToken(e.target.value);
-                          setErrors((currentErrors) => ({
-                            ...currentErrors,
-                            otpToken: "",
-                          }));
-                        }}
-                        className="text-base"
-                      />
-                    </InputGroup>
+                    <InputOTP
+                      maxLength={6}
+                      value={otpToken}
+                      onChange={(value) => setOtpToken(value)}
+                      className="justify-center"
+                      pattern={REGEXP_ONLY_DIGITS}
+                      autoFocus
+                    >
+                      <InputOTP.Group>
+                        <InputOTP.Slot index={0} />
+                        <InputOTP.Slot index={1} />
+                        <InputOTP.Slot index={2} />
+                      <InputOTP.Group />
+                      <InputOTP.Separator />
+                      <InputOTP.Group />
+                        <InputOTP.Slot index={3} />
+                        <InputOTP.Slot index={4} />
+                        <InputOTP.Slot index={5} />
+                      </InputOTP.Group>
+                    </InputOTP>
                     <FieldError>
                       {errors.otpToken || "Invalid token. Try a new one or use a backup code."}
                     </FieldError>
@@ -384,7 +390,7 @@ function Login() {
                     fullWidth
                     isDisabled={!otpToken}
                     variant="primary"
-                    className="mt-2"
+                    className="mt-2 max-w-sm"
                   >
                     Login
                   </Button>

@@ -61,7 +61,8 @@ function Signup() {
     setSignupError("");
 
     if (params.has("inviteToken")) {
-      const createResp = await dispatch(createInvitedUser({ name, email, password }));
+      const inviteToken = params.get("inviteToken");
+      const createResp = await dispatch(createInvitedUser({ name, email, password, inviteToken }));
 
       if (createResp.error) {
         setSignupError(getErrorMessage(createResp, "Error creating invited user"));
@@ -71,7 +72,7 @@ function Signup() {
 
       const userData = createResp.payload;
       const addMemberResp = await dispatch(
-        addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") })
+        addTeamMember({ userId: userData.id, inviteToken })
       );
 
       if (addMemberResp?.error || addMemberResp?.payload?.error) {

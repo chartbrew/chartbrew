@@ -120,8 +120,14 @@ module.exports = (app) => {
   /*
   ** Route to process invitations
   */
-  app.post("/user/invited", (req, res) => {
+  app.post("/user/invited", async (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
+    if (!req.body.inviteToken) return res.status(400).send("no invite token");
+
+    // check if the invite token is valid and has a team_id
+    const { inviteToken } = req.body;
+    const decodedToken = await jwt.verify(inviteToken, app.settings.encryptionKey);
+    if (!decodedToken?.team_id) return res.status(400).send("invalid invite token");
 
     const icon = req.body.name.substring(0, 2);
 

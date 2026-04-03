@@ -524,7 +524,7 @@ function ManageUser() {
                   Remove 2FA method
                 </Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="flex flex-col gap-2 p-1">
                 <div>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</div>
                 <div>To proceed with the deletion, please confirm your Chartbrew password.</div>
                 <Input

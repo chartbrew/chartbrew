@@ -1,25 +1,20 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { PropTypes } from "prop-types";
-import {
-  Button,
-} from "@heroui/react";
-import { useNavigate } from "react-router";
+import { Button } from "@heroui/react";
+import { Link, useNavigate } from "react-router";
 
-import Text from "../components/Text";
-import Row from "../components/Row";
+import cbLogoDark from "../assets/cb_logo_dark.svg";
+import cbLogoLight from "../assets/cb_logo_light.svg";
+import { useTheme } from "../modules/ThemeContext";
 import { clearUser, selectUser } from "../slices/user";
 import { removeAuthToken } from "../modules/auth";
 
-/*
-  Component for inviting user to the team
-*/
 function UserInvite() {
   const navigate = useNavigate();
   const fetchRef = useRef(null);
   const dispatch = useDispatch();
-
   const user = useSelector(selectUser);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (user.id && !fetchRef.current) {
@@ -29,7 +24,7 @@ function UserInvite() {
   }, [user]);
 
   const redirectUser = async (route) => {
-    const params = new URLSearchParams(document.location.search);
+    const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
     removeAuthToken();
@@ -45,46 +40,54 @@ function UserInvite() {
   };
 
   return (
-    <div style={styles.container}>
-      <div className="container mx-auto pt-20 justify-center items-center">
-        <Row justify="center" align="center" className={"text-center"}>
-          <Text size="h2">
-            {"You've been invited to join Chartbrew"}
-          </Text>
-        </Row>
-        <Row justify="center" align="center">
-          <Text className={"font-semibold text-default"}>Please select an option below</Text>
-        </Row>
-        <div className="h-4" />
-        <Row justify="center" align="center" wrap="wrap">
-          <Button
-            color="secondary"
-            onClick={() => redirectUser("login")}
-            auto
-          >
-            Login with an existing account
-          </Button>
-          <div className="w-2" />
-          <Button
-            onClick={() => redirectUser("signup")}
-            color="primary"
-          >
-            Create a new account
-          </Button>
-        </Row>
+    <div className="min-h-screen bg-surface-secondary px-6 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col justify-between gap-12">
+        <header className="flex flex-col items-center justify-center">
+          <Link to="/">
+            <img
+              src={isDark ? cbLogoDark : cbLogoLight}
+              className="w-[150px]"
+              alt="Chartbrew logo"
+            />
+          </Link>
+        </header>
+
+        <main className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-md">
+            <div className="space-y-2 text-center">
+              <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground font-tw">
+                You&apos;ve been invited to join Chartbrew
+              </h1>
+              <p className="text-sm text-muted">
+                Please select an option below
+              </p>
+            </div>
+
+            <div className="h-8" />
+
+            <div className="space-y-3">
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                onPress={() => redirectUser("signup")}
+              >
+                Create a new account
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                size="lg"
+                onPress={() => redirectUser("login")}
+              >
+                Login with an existing account
+              </Button>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
-
-UserInvite.propTypes = {
-  user: PropTypes.object.isRequired,
-};
 
 export default UserInvite;

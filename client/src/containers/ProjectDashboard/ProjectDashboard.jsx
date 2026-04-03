@@ -14,7 +14,6 @@ import {
   Kbd,
   ButtonGroup,
   Tabs,
-  Badge
 } from "@heroui/react";
 import { Link, useNavigate, useParams } from "react-router";
 import _, { isEqual } from "lodash";
@@ -55,7 +54,7 @@ import { ButtonSpinner } from "../../components/ButtonSpinner";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
-import { completeTutorial, selectUser } from "../../slices/user";
+import { selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { getChartIdentifiedConditions } from "../../modules/getChartDatasetConditions";
 import { exportMultipleChartsToExcel, canExportChart } from "../../modules/exportChart";
@@ -1169,34 +1168,13 @@ function ProjectDashboard() {
                         <Tooltip.Content placement="bottom end">Refresh all charts</Tooltip.Content>
                       </Tooltip>
                       <Dropdown aria-label="Dashboard actions">
-                        {!user?.tutorials?.projectSettings ? (
-                          <Badge.Anchor className="relative inline-flex">
-                            <Button
-                              isIconOnly
-                              onPress={() => dispatch(completeTutorial({
-                                user_id: user.id,
-                                tutorial: { projectSettings: true },
-                              }))}
-                            >
-                              <ButtonGroup.Separator />
-                              <LuEllipsisVertical size={20} />
-                            </Button>
-                            <Badge
-                              variant="secondary"
-                              size="sm"
-                              className="animate-pulse min-h-2 min-w-2 p-0"
-                              aria-label="New"
-                            />
-                          </Badge.Anchor>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            isIconOnly
-                          >
-                            <ButtonGroup.Separator />
-                            <LuEllipsisVertical size={20} />
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          isIconOnly
+                        >
+                          <ButtonGroup.Separator />
+                          <LuEllipsisVertical size={20} />
+                        </Button>
                         <Dropdown.Popover>
                           <Dropdown.Menu>
                             <Dropdown.Item
