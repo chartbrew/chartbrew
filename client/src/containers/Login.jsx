@@ -10,7 +10,7 @@ import {
   Separator,
   TextField,
 } from "@heroui/react";
-import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
+import { LuLock, LuMail } from "react-icons/lu";
 
 import cbLogoDark from "../assets/cb_logo_dark.svg";
 import cbLogoLight from "../assets/cb_logo_light.svg";
@@ -304,7 +304,6 @@ function Login() {
                     className="mt-2"
                   >
                     Login
-                    <LuChevronRight />
                   </Button>
                 </form>
 
@@ -388,7 +387,6 @@ function Login() {
                     className="mt-2"
                   >
                     Login
-                    <LuChevronRight />
                   </Button>
                 </form>
               </>

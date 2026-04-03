@@ -9,7 +9,7 @@ import {
   Separator,
   TextField,
 } from "@heroui/react";
-import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
+import { LuLock, LuMail, LuUser } from "react-icons/lu";
 
 import cbLogoDark from "../assets/cb_logo_dark.svg";
 import cbLogoLight from "../assets/cb_logo_light.svg";
@@ -232,7 +232,6 @@ function Signup() {
                 className="mt-2"
               >
                 Continue
-                {!loading ? <LuArrowRight /> : null}
               </Button>
 
               {addedToTeam && (
