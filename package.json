@@ -23,8 +23,5 @@
   "bugs": {
     "url": "https://github.com/charbrew/chartbrew/issues"
   },
-  "homepage": "https://github.com/chartbrew/chartbrew",
-  "devDependencies": {
-    "vuepress": "^1.9.7"
-  }
+  "homepage": "https://github.com/chartbrew/chartbrew"
 }
