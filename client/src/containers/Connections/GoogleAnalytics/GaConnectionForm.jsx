@@ -6,15 +6,11 @@ import {
   Button, Input, Chip, Separator,
   TextField, Label, FieldError,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import cookie from "react-cookies";
 import { FaGoogle } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { LuRefreshCw } from "react-icons/lu";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { API_HOST } from "../../../config/settings";
 import Container from "../../../components/Container";

@@ -17,13 +17,9 @@ import {
   Description,
   FieldError,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { LuChevronRight, LuCircleCheck, LuExternalLink, LuUpload } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Text from "../../../components/Text";
 import Container from "../../../components/Container";

@@ -26,13 +26,7 @@ import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-import ReactAceImport from "react-ace";
-
-// react-ace CJS interop: default import can be { default, split, diff } (object), not the component
-const AceEditor = ReactAceImport.default ?? ReactAceImport;
-import "ace-builds/src-min-noconflict/mode-css";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
+import AceEditor from "../../components/CodeEditor";
 
 import {
   getReport, getProject, updateProject, updateProjectLogo,

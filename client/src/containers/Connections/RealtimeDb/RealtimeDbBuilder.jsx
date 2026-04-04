@@ -6,14 +6,10 @@ import {
   Badge,
   Label,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import toast from "react-hot-toast";
 import { LuInfo, LuPlay, LuTrash, LuX, LuVariable } from "react-icons/lu";
 import { useParams } from "react-router";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";

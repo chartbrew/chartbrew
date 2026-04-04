@@ -17,13 +17,9 @@ import {
 } from "@heroui/react";
 
 import { v4 as uuid } from "uuid";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { LuChevronRight, LuInfo, LuPlus, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Container from "../../../components/Container";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";

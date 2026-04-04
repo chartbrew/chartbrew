@@ -16,13 +16,9 @@ import {
   Description,
   FieldError,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { useDispatch, useSelector } from "react-redux";
 import { LuCircleCheck, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Container from "../../../components/Container";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";

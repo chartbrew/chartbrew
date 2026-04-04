@@ -17,13 +17,9 @@ import {
   TextField,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { useDispatch, useSelector } from "react-redux";
 import { LuEye, LuEyeOff, LuPlus, LuX } from "react-icons/lu";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Row from "../../../components/Row";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";

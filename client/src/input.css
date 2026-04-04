@@ -314,6 +314,41 @@
   }
 }
 
+@layer components {
+  .cb-code-editor {
+    border: 1px solid var(--cb-content3);
+    background: var(--field-background);
+  }
+
+  .cb-code-editor .monaco-editor,
+  .cb-code-editor .monaco-editor-background,
+  .cb-code-editor .monaco-editor .margin {
+    background: transparent !important;
+  }
+
+  .cb-code-editor .monaco-editor .overflow-guard {
+    border-radius: 0.75rem;
+  }
+
+  .cb-code-editor .monaco-scrollable-element > .scrollbar > .slider {
+    background: color-mix(in srgb, var(--scrollbar) 70%, transparent);
+  }
+
+  .cb-code-editor .cb-monaco-variable {
+    background: rgba(4, 139, 222, 0.12);
+    border-bottom: 1px solid rgba(4, 139, 222, 0.65);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .cb-code-editor .cb-monaco-variable-hover {
+    background: rgba(4, 139, 222, 0.22);
+    border-bottom: 1px solid rgba(4, 139, 222, 0.85);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+}
+
 .input-group__prefix {
   border-right: none;
 }

@@ -22,10 +22,7 @@ import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-import AceEditor from "react-ace";
-import "ace-builds/src-min-noconflict/mode-css";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
+import AceEditor from "../../components/CodeEditor";
 
 import {
   getPublicDashboard, getProject, updateProject, updateProjectLogo,

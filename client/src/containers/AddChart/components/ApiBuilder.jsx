@@ -16,7 +16,7 @@ import {
   Label,
   ListBox
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { v4 as uuid } from "uuid";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
@@ -26,11 +26,6 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import moment from "moment";
 import { cloneDeep, isEqual } from "lodash";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/mode-javascript";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
 import {

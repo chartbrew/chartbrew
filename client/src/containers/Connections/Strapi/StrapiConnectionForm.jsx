@@ -8,10 +8,6 @@ import { v4 as uuid } from "uuid";
 import { LuCirclePlus, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
-
 import Row from "../../../components/Row";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";

@@ -6,14 +6,10 @@ import {
   Button, Input, Link, Chip, Accordion, Separator,
   TextField, Label, FieldError,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import { useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
 import { LuCode, LuExternalLink, LuFileCode2 } from "react-icons/lu";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { blue } from "../../../config/colors";
 import Container from "../../../components/Container";

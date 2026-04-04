@@ -5,15 +5,11 @@ import {
   Avatar, Chip, Button, Checkbox, Separator, Input, Tooltip,
   Label, ListBox, Select,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../components/CodeEditor";
 import { nanoid } from "nanoid";
 import _ from "lodash";
 import { LuInfo, LuPlay, LuPlus, LuX } from "react-icons/lu";
 import { useParams } from "react-router";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
   runRequest, runDataRequest, selectResponses, selectDataRequests,

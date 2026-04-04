@@ -6,7 +6,7 @@ import {
   Select, Autocomplete, Spinner,
   Badge, EmptyState, Label, ListBox, SearchField, useFilter,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import _ from "lodash";
 import toast from "react-hot-toast";
 import { Calendar } from "react-date-range";
@@ -14,10 +14,6 @@ import { format, sub } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { LuCalendarDays, LuInfo, LuPlay, LuTrash } from "react-icons/lu";
 import { useParams } from "react-router";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { getDataRequestBuilderMetadata, runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import {

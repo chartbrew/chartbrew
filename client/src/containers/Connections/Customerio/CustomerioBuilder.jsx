@@ -9,15 +9,11 @@ import {
   Tabs,
   Badge
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import toast from "react-hot-toast";
 import { LuActivity, LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";

@@ -6,7 +6,7 @@ import {
   Label, ListBox, Select,
   Badge, TextField, InputGroup,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../../components/CodeEditor";
 import _ from "lodash";
 import toast from "react-hot-toast";
 import { v4 as uuid } from "uuid";
@@ -18,10 +18,6 @@ import {
   LuRefreshCw, LuTrash, LuUndo, LuX, LuCircleX, LuVariable,
 } from "react-icons/lu";
 import { useParams } from "react-router";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
   getConnection, testRequest,

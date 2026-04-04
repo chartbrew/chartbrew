@@ -9,13 +9,9 @@ import {
   Switch,
   Accordion,
 } from "@heroui/react";
-import AceEditor from "react-ace";
+import AceEditor from "../../components/CodeEditor";
 import { useTheme } from "../../modules/ThemeContext";
 import { debounce } from "lodash";
-
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
 
 function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
   const { isDark } = useTheme();

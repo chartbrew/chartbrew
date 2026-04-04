@@ -4,10 +4,7 @@ import {
   Button, Input, Link, Chip, Accordion, ListBox, Select, Separator,
   TextField, Label, FieldError,
 } from "@heroui/react";
-import AceEditor from "react-ace";
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
-import "ace-builds/src-min-noconflict/theme-one_dark";
+import AceEditor from "../../../components/CodeEditor";
 import { LuExternalLink } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
