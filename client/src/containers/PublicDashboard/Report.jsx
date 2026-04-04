@@ -26,7 +26,10 @@ import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-import AceEditor from "react-ace";
+import ReactAceImport from "react-ace";
+
+// react-ace CJS interop: default import can be { default, split, diff } (object), not the component
+const AceEditor = ReactAceImport.default ?? ReactAceImport;
 import "ace-builds/src-min-noconflict/mode-css";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
@@ -54,6 +57,7 @@ import { selectUser } from "../../slices/user";
 import DashboardFilters from "../ProjectDashboard/components/DashboardFilters";
 import useInterval from "../../modules/useInterval";
 import { getChartIdentifiedConditions } from "../../modules/getChartDatasetConditions";
+import { normalizeColorForUiwPicker } from "../../modules/uiwColorPicker";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -740,46 +744,36 @@ function Report({ editMode = false }) {
                           <LuPalette size={26} className="text-foreground" />
                         </Link>
                       </Popover.Trigger>
-                      <Popover.Content placement="right-end">
+                      <Popover.Content>
                         <Popover.Dialog>
-                          <div className="p-4">
-                            <Row>
-                              <Text b>Change background</Text>
-                            </Row>
-                            <div className="h-1" />
-                            <Row>
-                              <div>
-                                <Block
-                                  color={newChanges.backgroundColor}
-                                  onChangeComplete={(color) => {
-                                    setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
-                                  }}
-                                  colors={defaultColors}
-                                  triangle="hide"
-                                  styles={{default: { card: { boxShadow: "none" } }}}
-                                />
-                              </div>
-                            </Row>
-
-                            <div className="h-2" />
-                            <Separator />
-                            <div className="h-2" />
-
-                            <Row>
-                              <Text b>Change text color</Text>
-                            </Row>
-                            <div className="h-1" />
-                            <Row>
+                          <div className="flex flex-row flex-wrap gap-2 p-4">
+                            <div>
+                              <div className="text-sm font-bold">Change background</div>
+                              <div className="h-1" />
                               <Block
-                                color={newChanges.titleColor}
-                                onChangeComplete={(color) => {
+                                color={normalizeColorForUiwPicker(newChanges.backgroundColor, "#FFFFFF")}
+                                onChange={(color) => {
+                                  setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
+                                }}
+                                colors={defaultColors}
+                                showTriangle={false}
+                                className="border border-divider"
+                              />
+                            </div>
+
+                            <div>
+                              <div className="text-sm font-bold">Change text color</div>
+                              <div className="h-1" />
+                              <Block
+                                color={normalizeColorForUiwPicker(newChanges.titleColor, "#000000")}
+                                onChange={(color) => {
                                   setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
                                 }}
                                 colors={defaultColors}
-                                triangle="hide"
-                                styles={{ default: { card: { boxShadow: "none" } } }}
+                                showTriangle={false}
+                                className="border border-divider"
                               />
-                            </Row>
+                            </div>
                           </div>
                         </Popover.Dialog>
                       </Popover.Content>
@@ -1023,8 +1017,8 @@ function Report({ editMode = false }) {
 
       <Modal>
         <Modal.Backdrop isOpen={editMode && editingTitle} onOpenChange={(nextOpen) => { if (!nextOpen) setEditingTitle(false); }}>
-          <Modal.Container>
-            <Modal.Dialog className="sm:max-w-2xl">
+          <Modal.Container size="lg">
+            <Modal.Dialog>
               <Modal.Header>
                 <Text size="h4">Customize your report</Text>
               </Modal.Header>

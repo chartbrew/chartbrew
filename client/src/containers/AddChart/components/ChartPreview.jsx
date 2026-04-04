@@ -32,6 +32,7 @@ import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import GaugeChart from "../../Chart/components/GaugeChart";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
+import { normalizeColorForUiwPicker } from "../../../modules/uiwColorPicker";
 
 function ChartPreview(props) {
   const {
@@ -672,7 +673,9 @@ function ChartPreview(props) {
                   <Popover.Content>
                     <Popover.Dialog>
                       <Block
-                        triangle={"hide"} onChange={(color) => _onChangeColor(color, index)}
+                        showTriangle={false}
+                        color={normalizeColorForUiwPicker(range.color, chartColors.blue.hex)}
+                        onChange={(color) => _onChangeColor(color, index)}
                         colors={Object.values(chartColors).map((c) => c.hex)}
                       />
                     </Popover.Dialog>

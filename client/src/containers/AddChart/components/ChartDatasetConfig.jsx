@@ -42,6 +42,7 @@ import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import connectionImages from "../../../config/connectionImages";
 import { useTheme } from "../../../modules/ThemeContext";
+import { normalizeColorForUiwPicker } from "../../../modules/uiwColorPicker";
 import ChartDatasetDataSetup from "./ChartDatasetDataSetup";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 
@@ -217,7 +218,7 @@ function ChartDatasetConfig(props) {
   };
 
   const _onChangeFillColor = (color, fillIndex) => {
-    const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+    const rgba = `rgba(${color.rgba.r}, ${color.rgba.g}, ${color.rgba.b}, ${color.rgba.a})`;
 
     if (!fillIndex && fillIndex !== 0) {
       _onUpdateCdc({ fillColor: [rgba] });
@@ -435,10 +436,10 @@ function ChartDatasetConfig(props) {
                       <Popover.Content className="border-none bg-transparent shadow-none">
                         <Popover.Dialog>
                           <Block
-                            triangle={"hide"}
-                            color={cdc.datasetColor}
+                            showTriangle={false}
+                            color={normalizeColorForUiwPicker(cdc.datasetColor, chartColors.blue.hex)}
                             colors={Object.values(chartColors).map((color) => color.hex)}
-                            onChangeComplete={_onChangeDatasetColor}
+                            onChange={_onChangeDatasetColor}
                           />
                         </Popover.Dialog>
                       </Popover.Content>
@@ -477,9 +478,12 @@ function ChartDatasetConfig(props) {
                           <Popover.Content className="border-none bg-transparent shadow-none">
                             <Popover.Dialog>
                               <Sketch
-                                color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
+                                color={normalizeColorForUiwPicker(
+                                  Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor,
+                                  chartColors.blue.hex,
+                                )}
                                 presetColors={Object.values(chartColors).map((color) => color.hex)}
-                                onChangeComplete={(color) => _onChangeFillColor(color)}
+                                onChange={(color) => _onChangeFillColor(color)}
                               />
                             </Popover.Dialog>
                           </Popover.Content>
@@ -528,10 +532,10 @@ function ChartDatasetConfig(props) {
                               <Popover.Content className="border-none bg-transparent shadow-none">
                                 <Popover.Dialog>
                                   <Block
-                                    triangle={"hide"}
-                                    color={cdc.fillColor[index] || "white"}
+                                    showTriangle={false}
+                                    color={normalizeColorForUiwPicker(cdc.fillColor[index], chartColors.blue.hex)}
                                     colors={Object.values(chartColors).map((color) => color.hex)}
-                                    onChangeComplete={(color) => _onChangeFillColor(color, index)}
+                                    onChange={(color) => _onChangeFillColor(color, index)}
                                   />
                                 </Popover.Dialog>
                               </Popover.Content>

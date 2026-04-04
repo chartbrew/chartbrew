@@ -50,6 +50,7 @@ import { selectUser } from "../../slices/user";
 import DashboardFilters from "../ProjectDashboard/components/DashboardFilters";
 import useInterval from "../../modules/useInterval";
 import { getChartIdentifiedConditions } from "../../modules/getChartDatasetConditions";
+import { normalizeColorForUiwPicker } from "../../modules/uiwColorPicker";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -739,13 +740,13 @@ function PublicDashboard() {
                             <Row>
                               <div>
                                 <Block
-                                  color={newChanges.backgroundColor}
-                                  onChangeComplete={(color) => {
+                                  color={normalizeColorForUiwPicker(newChanges.backgroundColor, "#FFFFFF")}
+                                  onChange={(color) => {
                                     setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
                                   }}
                                   colors={defaultColors}
-                                  triangle="hide"
-                                  styles={{default: { card: { boxShadow: "none" } }}}
+                                  showTriangle={false}
+                                  style={{ boxShadow: "none" }}
                                 />
                               </div>
                             </Row>
@@ -760,13 +761,13 @@ function PublicDashboard() {
                             <div className="h-2" />
                             <Row>
                               <Block
-                                color={newChanges.titleColor}
-                                onChangeComplete={(color) => {
+                                color={normalizeColorForUiwPicker(newChanges.titleColor, "#000000")}
+                                onChange={(color) => {
                                   setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
                                 }}
                                 colors={defaultColors}
-                                triangle="hide"
-                                styles={{ default: { card: { boxShadow: "none" } } }}
+                                showTriangle={false}
+                                style={{ boxShadow: "none" }}
                               />
                             </Row>
                           </div>

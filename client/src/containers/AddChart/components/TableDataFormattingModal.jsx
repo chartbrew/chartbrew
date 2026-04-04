@@ -9,6 +9,7 @@ import {
 import { LuCheck, LuPlus, LuX } from "react-icons/lu";
 import { Block } from "@uiw/react-color";
 import { chartColors } from "../../../config/colors";
+import { normalizeColorForUiwPicker } from "../../../modules/uiwColorPicker";
 import { cn } from "../../../modules/utils";
 
 const dataTypes = [{
@@ -479,11 +480,11 @@ function TableDataFormattingModal(props) {
                     size="sm"
                   />
                   <Popover aria-label="Color picker">
-                    <Popover.Trigger>
+                      <Popover.Trigger>
                       <Chip
                         size="sm"
                         variant="soft"
-                        onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : "rgba(0,0,0,0)" } : r)))}
+                        onPress={() => setRules(rules.map((r, i) => (i === index ? { ...r, color: r.color ? null : chartColors.blue.hex } : r)))}
                         className="rounded-sm pl-10 border border-solid border-content3"
                         style={{
                           backgroundColor: r.color || "transparent",
@@ -493,11 +494,11 @@ function TableDataFormattingModal(props) {
                     <Popover.Content className="flex flex-col items-start py-2">
                       <Popover.Dialog>
                         <Block
-                          triangle={"hide"}
-                          color={r.color || "rgba(0,0,0,0)"}
+                          showTriangle={false}
+                          color={normalizeColorForUiwPicker(r.color, chartColors.blue.hex)}
                           onChange={(color) => setRules(rules.map((r, i) => (i === index ? { ...r, color: color.hex } : r)))}
                           colors={Object.values(chartColors).map((c) => c.hex)}
-                          styles={{ default: { card: { boxShadow: "none" } } }}
+                          style={{ boxShadow: "none" }}
                         />
                         <Button
                           variant="ghost"
