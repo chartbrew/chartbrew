@@ -31,7 +31,7 @@ function extractCbActions(message) {
     const actions = JSON.parse(cbActionsMatch[1]);
     return actions;
   } catch (e) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.error("Failed to parse cb-actions:", e);
     return null;
   }
@@ -279,7 +279,7 @@ function formatResponse(message, snapshots = []) {
     snapshots.forEach((snapshot) => {
       if (snapshot.snapshot && typeof snapshot.snapshot === "string" && snapshot.snapshot.length > 0) {
         // Add image block
-        // eslint-disable-next-line prefer-template
+        // oxlint-disable-next-line prefer-template
         const altText = ("Chart: " + (snapshot.chart_name || "Generated Chart")).substring(0, 200);
         blocks.push({
           type: "image",

@@ -76,7 +76,7 @@ async function createChart(payload) {
       type: type || chartSpec.type,
       subType: subType || chartSpec.subType,
       draft: false,
-      // eslint-disable-next-line no-nested-ternary
+      // oxlint-disable-next-line no-nested-ternary
       displayLegend: displayLegend !== undefined
         ? displayLegend
         : chartSpec.displayLegend !== undefined
@@ -84,7 +84,7 @@ async function createChart(payload) {
           : true,
       pointRadius: pointRadius || chartSpec.pointRadius || 0,
       dataLabels: dataLabels || chartSpec.dataLabels || false,
-      // eslint-disable-next-line no-nested-ternary
+      // oxlint-disable-next-line no-nested-ternary
       includeZeros: includeZeros !== undefined
         ? includeZeros
         : chartSpec.includeZeros !== undefined

@@ -544,7 +544,7 @@ class ProjectController {
         return updatedProject;
       } catch (error) {
         // If variable application fails, return the project without variables
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to apply variables to dashboard:", error);
         return processedProject;
       }

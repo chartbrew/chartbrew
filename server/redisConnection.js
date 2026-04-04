@@ -1,7 +1,7 @@
 const getRedisOptions = () => {
   if (process.env.NODE_ENV === "production") {
     if (!process.env.CB_REDIS_HOST) {
-      console.error("CB_REDIS_HOST is not set. The charts are not going to update automatically."); // eslint-disable-line no-console
+      console.error("CB_REDIS_HOST is not set. The charts are not going to update automatically."); // oxlint-disable-line no-console
     }
     return {
       host: process.env.CB_REDIS_HOST,
@@ -12,7 +12,7 @@ const getRedisOptions = () => {
     };
   } else {
     if (!process.env.CB_REDIS_HOST_DEV) {
-      console.error("CB_REDIS_HOST_DEV is not set. The charts are not going to update automatically."); // eslint-disable-line no-console
+      console.error("CB_REDIS_HOST_DEV is not set. The charts are not going to update automatically."); // oxlint-disable-line no-console
     }
     return {
       host: process.env.CB_REDIS_HOST_DEV,

@@ -97,7 +97,7 @@ function getGlobalAllowPrivateNetworkCalls() {
     if (rawValue !== undefined && rawValue !== null && rawValue !== "" && !loggedInvalidAllowPrivateValue) {
       loggedInvalidAllowPrivateValue = true;
       // Invalid values are treated as deny-by-default.
-      console.warn("[outboundTargetPolicy] Invalid CB_ALLOW_PRIVATE_NETWORK_CALLS value. Expected true/1/false/0. Falling back to false."); // eslint-disable-line no-console
+      console.warn("[outboundTargetPolicy] Invalid CB_ALLOW_PRIVATE_NETWORK_CALLS value. Expected true/1/false/0. Falling back to false."); // oxlint-disable-line no-console
     }
     return false;
   }

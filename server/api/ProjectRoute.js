@@ -345,7 +345,7 @@ module.exports = (app) => {
                 return res.status(200).send(updatedProject);
               } catch (error) {
                 // If variable application fails, return the project without variables
-                // eslint-disable-next-line no-console
+                // oxlint-disable-next-line no-console
                 console.error("Failed to apply variables to dashboard:", error);
               }
             }
@@ -420,7 +420,7 @@ module.exports = (app) => {
                 return res.status(200).send(updatedProject);
               } catch (error) {
                 // If variable application fails, return the project without variables
-                // eslint-disable-next-line no-console
+                // oxlint-disable-next-line no-console
                 console.error("Failed to apply variables to dashboard:", error);
                 return res.status(200).send(processedProject);
               }
@@ -451,7 +451,7 @@ module.exports = (app) => {
             return res.status(200).send(updatedProject);
           } catch (error) {
             // If variable application fails, return the project without variables
-            // eslint-disable-next-line no-console
+            // oxlint-disable-next-line no-console
             console.error("Failed to apply variables to dashboard:", error);
           }
         }

@@ -24,7 +24,7 @@ function logOutboundSecurityEvent(payload) {
   };
 
   // Keep logs structured so they can be ingested in log pipelines.
-  console.warn(JSON.stringify(logPayload)); // eslint-disable-line no-console
+  console.warn(JSON.stringify(logPayload)); // oxlint-disable-line no-console
 }
 
 module.exports = {

@@ -27,7 +27,7 @@ module.exports.snapChart = async (shareString) => {
 
     return `uploads/snapshots/snap-${shareString}-${snapshotId}.png`;
   } catch (err) {
-    console.log("Could not take snapshot", err); // eslint-disable-line no-console
+    console.log("Could not take snapshot", err); // oxlint-disable-line no-console
     return null;
   } finally {
     if (browser) {
@@ -89,7 +89,7 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
 
     return `uploads/snapshots/snap-${snapshotId}.png`;
   } catch (err) {
-    console.log("Could not take dashboard snapshot", err); // eslint-disable-line no-console
+    console.log("Could not take dashboard snapshot", err); // oxlint-disable-line no-console
     return null;
   } finally {
     if (browser) {

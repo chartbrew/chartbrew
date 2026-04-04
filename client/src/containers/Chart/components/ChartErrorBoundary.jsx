@@ -15,7 +15,7 @@ export default class ChartErrorBoundary extends React.Component {
 
   render() {
     const { hasError } = this.state;
-    const { children } = this.props; // eslint-disable-line
+    const { children } = this.props;
     if (hasError) {
       // You can render any custom fallback UI
       return <Text>Something went wrong. Please refresh the data in the chart.</Text>;

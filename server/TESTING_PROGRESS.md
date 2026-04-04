@@ -37,7 +37,7 @@ server/
 │   │   └── index.js                # ✅ Factory exports
 │   └── fixtures/                   # Static test data
 ├── vitest.config.js                # ✅ Vitest configuration
-├── .eslintrc.json                  # ✅ Updated with test-specific rules
+├── .oxlintrc.json                  # ✅ Updated with test-specific rules
 └── package.json                    # ✅ Updated with test scripts
 ```
 
@@ -60,7 +60,7 @@ server/
 ## Completed ✅
 
 ### Infrastructure
-- [x] **Test Dependencies**: Installed vitest, supertest, testcontainers, faker, coverage, sqlite3, eslint-plugin-vitest-globals
+- [x] **Test Dependencies**: Installed vitest, supertest, testcontainers, faker, coverage, sqlite3
 - [x] **Test Configuration**: Created vitest.config.js with proper settings and coverage thresholds
 - [x] **Directory Structure**: Set up organized test folders (unit, integration, helpers, factories)
 - [x] **Global Setup**: Database container management with SQLite fallback in globalSetup.js

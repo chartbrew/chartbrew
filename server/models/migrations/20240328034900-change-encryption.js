@@ -50,7 +50,7 @@ async function migrateEncryptedFields(queryInterface, tableName, fields, noEncry
 
     // Update the record if any field values changed
     if (needsUpdate) {
-      // eslint-disable-next-line no-await-in-loop
+      // oxlint-disable-next-line no-await-in-loop
       await queryInterface.sequelize.query(
         `UPDATE ${quotedTableName} SET ${Object.keys(updates).map((key) => `${key} = :${key}`).join(", ")} WHERE id = :id`,
         {

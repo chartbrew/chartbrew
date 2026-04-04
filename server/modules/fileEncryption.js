@@ -21,7 +21,7 @@ async function encryptFile(filePath) {
 
     return filePath;
   } catch (error) {
-    console.error(`Error encrypting file ${filePath}:`, error); // eslint-disable-line no-console
+    console.error(`Error encrypting file ${filePath}:`, error); // oxlint-disable-line no-console
     throw error;
   }
 }
@@ -47,7 +47,7 @@ async function decryptFile(filePath) {
       return Buffer.from(fileContent);
     }
   } catch (error) {
-    console.error(`Error reading/decrypting file ${filePath}:`, error); // eslint-disable-line no-console
+    console.error(`Error reading/decrypting file ${filePath}:`, error); // oxlint-disable-line no-console
     throw error;
   }
 }
@@ -74,7 +74,7 @@ function decryptFileSync(filePath) {
       return Buffer.from(fileContent);
     }
   } catch (error) {
-    console.error(`Error reading/decrypting file ${filePath}:`, error); // eslint-disable-line no-console
+    console.error(`Error reading/decrypting file ${filePath}:`, error); // oxlint-disable-line no-console
     throw error;
   }
 }

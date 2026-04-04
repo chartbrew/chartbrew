@@ -101,7 +101,7 @@ module.exports.sendChartAlert = (data) => {
     snapshotUrl: data.snapshotUrl,
   }, (err, str) => {
     if (err) {
-      console.log(err); // eslint-disable-line no-console
+      console.log(err); // oxlint-disable-line no-console
     }
     message.html = str;
 

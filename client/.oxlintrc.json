@@ -1,0 +1,55 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react"
+  ],
+  "env": {
+    "browser": true,
+    "builtin": true,
+    "es2020": true
+  },
+  "globals": {
+    "HW_config": "writable",
+    "Headway": "writable",
+    "process": "writable"
+  },
+  "ignorePatterns": [
+    "dist"
+  ],
+  "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "rules": {
+    "arrow-body-style": "off",
+    "class-methods-use-this": "off",
+    "no-case-declarations": "off",
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "no-nested-ternary": "off",
+    "no-shadow": "off",
+    "no-unused-vars": [
+      "error",
+      {
+        "caughtErrors": "none",
+        "varsIgnorePattern": "React"
+      }
+    ],
+    "no-use-before-define": "off",
+    "react/exhaustive-deps": "off",
+    "react/jsx-curly-brace-presence": "off",
+    "react/jsx-filename-extension": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "19.2.4"
+    }
+  }
+}

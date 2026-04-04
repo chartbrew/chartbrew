@@ -314,7 +314,7 @@ function CustomerQuery(props) {
                         </span>
                       );
                     }
-                    return (<span />); // eslint-disable-line
+                    return <span key={`segment-or-${index}`} />;
                   })}
                   <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.or)} />
                 </Chip>
@@ -334,7 +334,7 @@ function CustomerQuery(props) {
                         </span>
                       );
                     }
-                    return (<span />); // eslint-disable-line
+                    return <span key={`segment-not-or-${index}`} />;
                   })}
                   <LuX size={16} className="text-danger cursor-pointer" onClick={() => _onRemoveCondition("segment", condition.not)} />
                 </Chip>

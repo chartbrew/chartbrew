@@ -811,7 +811,7 @@ function sanitizeConversationHistory(history) {
 
       if (orphanedResponses.length > 0) {
         const orphanedIds = orphanedResponses.map((tr) => tr.tool_call_id).join(", ");
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`Removing orphaned tool responses with tool_call_ids: ${orphanedIds}`);
       }
 
@@ -831,14 +831,14 @@ function sanitizeConversationHistory(history) {
         const missingIds = Array.from(toolCallIds)
           .filter((id) => !respondedIds.has(id))
           .join(", ");
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`Removing incomplete assistant message with tool_calls. Missing responses for tool_call_ids: ${missingIds}`);
         i = j; // Skip past the incomplete sequence
       }
     } else if (message.role === "tool") {
       // Orphaned tool response (no preceding assistant message with tool_calls)
       // Remove it to prevent OpenAI API errors
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.warn(`Removing orphaned tool response with tool_call_id: ${message.tool_call_id || "unknown"}`);
       i++;
     } else {
@@ -1085,7 +1085,7 @@ async function orchestrate(
       });
     }
 
-    // eslint-disable-next-line no-await-in-loop
+    // oxlint-disable-next-line no-await-in-loop
     const toolResults = await Promise.all(
       assistantMessage.tool_calls.map(async (toolCall) => {
         const toolName = toolCall.function.name;
@@ -1101,7 +1101,7 @@ async function orchestrate(
           try {
             await toolProgressCallback(toolName, "start", toolArgs);
           } catch (callbackError) {
-            // eslint-disable-next-line no-console
+            // oxlint-disable-next-line no-console
             console.error("Tool progress callback error:", callbackError);
           }
         }
@@ -1148,7 +1148,7 @@ async function orchestrate(
             try {
               await toolProgressCallback(toolName, "error", { error: error.message });
             } catch (callbackError) {
-              // eslint-disable-next-line no-console
+              // oxlint-disable-next-line no-console
               console.error("Tool progress callback error:", callbackError);
             }
           }
@@ -1202,7 +1202,7 @@ async function orchestrate(
 
     // Get next response from AI
     const startTime = Date.now();
-    // eslint-disable-next-line no-await-in-loop
+    // oxlint-disable-next-line no-await-in-loop
     response = await openaiClient.chat.completions.create({
       model: openAiModel || "gpt-5-nano",
       messages: updatedMessages,

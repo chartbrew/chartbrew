@@ -144,9 +144,9 @@ class SocketManager {
         }
 
         this.activeConnections.set(userId, socket);
-        // eslint-disable-next-line no-param-reassign
+        // oxlint-disable-next-line no-param-reassign
         socket.userId = userId;
-        // eslint-disable-next-line no-param-reassign
+        // oxlint-disable-next-line no-param-reassign
         socket.teamId = teamId;
 
         // Join team room for team-wide broadcasts

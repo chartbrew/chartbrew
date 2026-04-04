@@ -1024,7 +1024,7 @@ class ChartController {
         return embeddedChartData;
       } catch (error) {
         // If variable filtering fails, return the chart without filtering
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to apply variables to embedded chart:", error);
         const embeddedChartData = getEmbeddedChartData(chart, team);
         return embeddedChartData;
@@ -1087,7 +1087,7 @@ class ChartController {
         return embeddedChartData;
       } catch (error) {
         // If variable filtering fails, return the chart without filtering
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to apply variables to embedded chart:", error);
         const embeddedChartData = getEmbeddedChartData(chart, team);
         return embeddedChartData;
@@ -1373,11 +1373,10 @@ class ChartController {
 
       await Promise.all(
         chartDatasetConfigs.map((cdcData) => {
-          const { chart_id, ...cdcRest } = cdcData;
           const dataset = datasetMap[cdcData.dataset_id];
 
           const cdcToCreate = {
-            ...cdcRest,
+            ...cdcData,
             chart_id: chart.id,
             legend: cdcData.legend || getDatasetName(dataset) || null
           };

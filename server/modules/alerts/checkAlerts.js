@@ -63,7 +63,7 @@ async function processAlert(chart, alert, alerts) {
     snapshotUrl = await chartController.takeSnapshot(chart.id);
     snapshotUrl = `${fullApiUrl}/${snapshotUrl}`;
   } catch (err) {
-    console.log("Could not take snapshot", err); // eslint-disable-line no-console
+    console.log("Could not take snapshot", err); // oxlint-disable-line no-console
   }
 
   // first process the mediums
@@ -113,7 +113,7 @@ async function processAlert(chart, alert, alerts) {
       Promise.all(integrationAlerts);
     }
   } catch (err) {
-    console.log("Could not process integration alerts", err); // eslint-disable-line no-console
+    console.log("Could not process integration alerts", err); // oxlint-disable-line no-console
   }
 
   // deactivate alert if required

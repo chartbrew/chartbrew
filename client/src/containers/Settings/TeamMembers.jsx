@@ -97,7 +97,7 @@ function TeamMembers(props) {
   };
 
   const _onChangeProjectAccess = (projectId) => {
-    const newAccess = [...projectAccess[changedMember.id].projects] || [];
+    const newAccess = [...(projectAccess[changedMember.id]?.projects || [])];
     const isFound = _.indexOf(projectAccess[changedMember.id].projects, projectId);
 
     if (isFound === -1) {

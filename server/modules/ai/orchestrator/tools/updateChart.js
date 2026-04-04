@@ -334,7 +334,7 @@ async function updateChart(payload) {
       snapshot = await chartController.takeSnapshot(updatedChart.id);
     } catch (snapshotError) {
       // Ignore snapshot errors - chart update was successful
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.warn(`Failed to take snapshot for chart ${updatedChart.id}:`, snapshotError.message);
     }
 

@@ -34,7 +34,7 @@ class MatrixChart {
         }
       }
       if (!m || !m.isValid()) {
-        continue; // eslint-disable-line no-continue
+        continue; // oxlint-disable-line no-continue
       }
 
       const dateOnly = m.format("YYYY-MM-DD");
@@ -70,7 +70,7 @@ class MatrixChart {
           }
         }
         if (!m || !m.isValid()) {
-          continue; // eslint-disable-line no-continue
+          continue; // oxlint-disable-line no-continue
         }
         if (!minDate || m.isBefore(minDate)) minDate = m.clone();
         if (!maxDate || m.isAfter(maxDate)) maxDate = m.clone();

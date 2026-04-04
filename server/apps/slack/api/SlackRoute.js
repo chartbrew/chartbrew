@@ -57,9 +57,9 @@ module.exports = (app) => {
           }
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Slack command error:", error);
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error stack:", error.stack);
 
         // Only send error if it wasn't already sent by the handler
@@ -192,9 +192,9 @@ module.exports = (app) => {
       try {
         await slackController.handleMention(event);
       } catch (error) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Slack app_mention event error:", error);
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error stack:", error.stack);
         // Error handling is done in the controller
       }

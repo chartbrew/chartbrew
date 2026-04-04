@@ -1067,7 +1067,7 @@ class ConnectionController {
 
                   // Skip reserved date variables - they're handled separately below
                   if (variableName === "start_date" || variableName === "end_date") {
-                    // eslint-disable-next-line no-continue
+                    // oxlint-disable-next-line no-continue
                     continue;
                   }
 

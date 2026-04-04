@@ -777,9 +777,8 @@ class DatasetController {
         if (drVariableBindings && drVariableBindings.length > 0) {
           await Promise.all(
             drVariableBindings.map((vb) => {
-              const { entity_type, entity_id, ...vbRest } = vb;
               const vbData = {
-                ...vbRest,
+                ...vb,
                 entity_type: "DataRequest",
                 entity_id: createdDr.id.toString(),
                 name: extractVariableName(vb.name || vb.variableName || "")
@@ -797,9 +796,8 @@ class DatasetController {
     if (datasetVariableBindings && datasetVariableBindings.length > 0) {
       await Promise.all(
         datasetVariableBindings.map((vb) => {
-          const { entity_type, entity_id, ...vbRest } = vb;
           const vbData = {
-            ...vbRest,
+            ...vb,
             entity_type: "Dataset",
             entity_id: dataset.id.toString(),
             name: extractVariableName(vb.name || vb.variableName || "")

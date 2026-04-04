@@ -95,7 +95,7 @@ function parseProgressEvents(response) {
   // Extract events from response
   progressPatterns.forEach((pattern) => {
     let match;
-    while ((match = pattern.exec(response)) !== null) { // eslint-disable-line no-cond-assign
+    while ((match = pattern.exec(response)) !== null) { // oxlint-disable-line no-cond-assign
       const eventText = match[0].trim();
       const eventType = inferEventType(eventText);
 

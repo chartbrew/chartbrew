@@ -71,7 +71,7 @@ async function createTemporaryChart(payload) {
       type: type || spec.type || "line",
       subType: subType || spec.subType,
       draft: false,
-      // eslint-disable-next-line no-nested-ternary
+      // oxlint-disable-next-line no-nested-ternary
       displayLegend: displayLegend !== undefined
         ? displayLegend
         : spec.displayLegend !== undefined
@@ -79,7 +79,7 @@ async function createTemporaryChart(payload) {
           : true,
       pointRadius: pointRadius || spec.pointRadius || 0,
       dataLabels: dataLabels || spec.dataLabels || false,
-      // eslint-disable-next-line no-nested-ternary
+      // oxlint-disable-next-line no-nested-ternary
       includeZeros: includeZeros !== undefined
         ? includeZeros
         : spec.includeZeros !== undefined

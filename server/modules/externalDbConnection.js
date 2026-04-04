@@ -62,7 +62,7 @@ const createSshTunnel = async (sshConfig, dbConfig) => {
       port: assignedPort // The port we must use in Sequelize
     };
   } catch (error) {
-    console.error("SSH tunnel error:", error); // eslint-disable-line no-console
+    console.error("SSH tunnel error:", error); // oxlint-disable-line no-console
     throw error;
   }
 };
@@ -166,7 +166,7 @@ module.exports = async (connection) => {
       connectionConfig.host = "127.0.0.1";
       connectionConfig.port = sshTunnel.port;
     } catch (error) {
-      console.error("Failed to establish SSH tunnel:", error); // eslint-disable-line no-console
+      console.error("Failed to establish SSH tunnel:", error); // oxlint-disable-line no-console
       throw new Error(`SSH tunnel error: ${error.message}`);
     }
   }

@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
 
 /**
  * Validation script for entity creation rules

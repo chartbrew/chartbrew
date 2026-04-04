@@ -21,7 +21,7 @@ const applyMysqlOrPostgresVariables = (dataRequest, variables = {}) => {
   const foundVariables = [];
 
   // Extract all variables from the query
-  // eslint-disable-next-line no-cond-assign
+  // oxlint-disable-next-line no-cond-assign
   while ((match = variableRegex.exec(processedQuery)) !== null) {
     const variableName = match[1].trim();
     const startIndex = match.index;
@@ -159,7 +159,7 @@ const applyMongoVariables = (dataRequest, variables = {}) => {
   const foundVariables = [];
 
   // Extract all variables from the query
-  // eslint-disable-next-line no-cond-assign
+  // oxlint-disable-next-line no-cond-assign
   while ((match = variableRegex.exec(processedQuery)) !== null) {
     const variableName = match[1].trim();
     const startIndex = match.index;
@@ -301,7 +301,7 @@ const applyApiVariables = (dataRequest, variables = {}) => {
     const foundVariables = [];
 
     // Extract all variables from the string
-    // eslint-disable-next-line no-cond-assign
+    // oxlint-disable-next-line no-cond-assign
     while ((match = variableRegex.exec(str)) !== null) {
       const variableName = match[1].trim();
       foundVariables.push({
@@ -456,7 +456,7 @@ const applyFirestoreVariables = (dataRequest, variables = {}) => {
     let processedStr = str;
 
     // Extract all variables from the string
-    // eslint-disable-next-line no-cond-assign
+    // oxlint-disable-next-line no-cond-assign
     while ((match = variableRegex.exec(str)) !== null) {
       const variableName = match[1].trim();
       const binding = originalDataRequest.VariableBindings
@@ -615,7 +615,7 @@ const applyRealtimeDbVariables = (dataRequest, variables = {}) => {
     let processedStr = str;
 
     // Extract all variables from the string
-    // eslint-disable-next-line no-cond-assign
+    // oxlint-disable-next-line no-cond-assign
     while ((match = variableRegex.exec(str)) !== null) {
       const variableName = match[1].trim();
       const binding = originalDataRequest.VariableBindings

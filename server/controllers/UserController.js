@@ -165,7 +165,7 @@ class UserController {
       )];
 
       // Keep team cleanup sequential to preserve delete order per team.
-      /* eslint-disable no-await-in-loop */
+      /* oxlint-disable no-await-in-loop */
       for (const teamId of ownedTeamIds) {
         const projects = await db.Project.findAll({
           attributes: ["id"],
@@ -253,7 +253,7 @@ class UserController {
           transaction
         });
       }
-      /* eslint-enable no-await-in-loop */
+      /* oxlint-enable no-await-in-loop */
 
       await db.TeamRole.destroy({
         where: { "user_id": id },

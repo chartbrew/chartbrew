@@ -63,12 +63,12 @@ jobs:
         cd server
         npm ci
 
-    - name: Run ESLint
+    - name: Run backend lint
       run: |
         cd server
         npm run lint
 
-    - name: Check for ESLint warnings
+    - name: Check for backend lint warnings
       run: |
         cd server
         npm run lint -- --max-warnings 0

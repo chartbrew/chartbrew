@@ -1,0 +1,68 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "import",
+    "node",
+    "vitest"
+  ],
+  "env": {
+    "builtin": true,
+    "es2021": true,
+    "node": true
+  },
+  "globals": {
+    "Headers": "readonly"
+  },
+  "rules": {
+    "arrow-body-style": "off",
+    "class-methods-use-this": "off",
+    "default-param-last": "off",
+    "global-require": "error",
+    "import/no-dynamic-require": "error",
+    "no-await-in-loop": "error",
+    "no-console": "error",
+    "no-continue": "error",
+    "no-else-return": "off",
+    "no-nested-ternary": "error",
+    "no-param-reassign": "error",
+    "no-promise-executor-return": "off",
+    "no-shadow": "off",
+    "no-unused-vars": [
+      "warn",
+      {
+        "caughtErrors": "none"
+      }
+    ],
+    "no-template-curly-in-string": "off",
+    "prefer-promise-reject-errors": "off",
+    "prefer-template": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "tests/**/*.js",
+        "**/*.test.js",
+        "**/*.spec.js",
+        "vitest.config.js"
+      ],
+      "globals": {
+        "afterAll": "readonly",
+        "afterEach": "readonly",
+        "beforeAll": "readonly",
+        "beforeEach": "readonly",
+        "describe": "readonly",
+        "expect": "readonly",
+        "it": "readonly",
+        "test": "readonly",
+        "vi": "readonly"
+      },
+      "rules": {
+        "global-require": "off",
+        "import/no-dynamic-require": "off",
+        "no-await-in-loop": "off",
+        "no-console": "off",
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

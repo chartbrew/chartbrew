@@ -796,7 +796,7 @@ class AxisChart {
 
             configuration.growth.push({
               value: `${before}${currentValue.toLocaleString()}${after}`,
-              comparison: (result === 0 && 0) || +(result.toFixed(2)).toLocaleString(),
+              comparison: result === 0 ? 0 : +(result.toFixed(2)).toLocaleString(),
               status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
               label: d.label,
             });

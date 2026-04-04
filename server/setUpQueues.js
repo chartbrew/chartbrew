@@ -23,11 +23,11 @@ function debugQueueLog(queueName, eventName, payload = null) {
   }
 
   if (payload) {
-    console.log(`[queue:${queueName}] ${eventName}`, payload); // eslint-disable-line no-console
+    console.log(`[queue:${queueName}] ${eventName}`, payload); // oxlint-disable-line no-console
     return;
   }
 
-  console.log(`[queue:${queueName}] ${eventName}`); // eslint-disable-line no-console
+  console.log(`[queue:${queueName}] ${eventName}`); // oxlint-disable-line no-console
 }
 
 let updateChartsQueue;
@@ -40,7 +40,7 @@ const setUpQueues = (app) => {
   const queueEventsToClose = [];
 
   if (isQueueDebugEnabled) {
-    console.log("[setUpQueues] queue debug logging is ENABLED"); // eslint-disable-line no-console
+    console.log("[setUpQueues] queue debug logging is ENABLED"); // oxlint-disable-line no-console
   }
 
   // set up bullmq queues
@@ -52,7 +52,7 @@ const setUpQueues = (app) => {
   queuesToClose.push(updateChartsQueue);
   updateChartsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // oxlint-disable-line no-console
       process.exit(1);
     }
   });
@@ -64,7 +64,7 @@ const setUpQueues = (app) => {
   queuesToClose.push(updateDashboardsQueue);
   updateDashboardsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the updates queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // oxlint-disable-line no-console
       process.exit(1);
     }
   });
@@ -105,7 +105,7 @@ const setUpQueues = (app) => {
   queuesToClose.push(updateMongoDBSchemaQueue);
   updateMongoDBSchemaQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the MongoDB schema update queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the MongoDB schema update queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // oxlint-disable-line no-console
       process.exit(1);
     }
   });
@@ -128,7 +128,7 @@ const setUpQueues = (app) => {
   queuesToClose.push(dashboardSnapshotQueue);
   dashboardSnapshotQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the dashboard snapshot queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the dashboard snapshot queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // oxlint-disable-line no-console
       process.exit(1);
     }
   });
@@ -151,7 +151,7 @@ const setUpQueues = (app) => {
   queuesToClose.push(updateSnapshotsQueue);
   updateSnapshotsQueue.on("error", (error) => {
     if (error.code === "ECONNREFUSED") {
-      console.error("Failed to set up the update snapshots queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // eslint-disable-line no-console
+      console.error("Failed to set up the update snapshots queue. Please check if Redis is running: https://docs.chartbrew.com/quickstart#set-up-redis-for-automatic-dataset-updates"); // oxlint-disable-line no-console
       process.exit(1);
     }
   });

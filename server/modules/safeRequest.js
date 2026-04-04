@@ -51,7 +51,7 @@ async function safeRequest(requestOptions, policyContext = {}) {
   let currentForm = baseOptions.form;
   let currentFormData = baseOptions.formData;
 
-  while (true) { // eslint-disable-line no-constant-condition
+  while (true) { // oxlint-disable-line no-constant-condition
     const optionsForRequest = sanitizeOutboundRequestOptions(
       {
         ...baseOptions,
@@ -66,13 +66,13 @@ async function safeRequest(requestOptions, policyContext = {}) {
     );
 
     // Redirect validation must run sequentially to validate each hop in order.
-    // eslint-disable-next-line no-await-in-loop
+    // oxlint-disable-next-line no-await-in-loop
     await validateOutboundUrl(optionsForRequest.url, {
       ...policyContext,
       redirectCount,
     });
 
-    // eslint-disable-next-line no-await-in-loop
+    // oxlint-disable-next-line no-await-in-loop
     const response = await request(optionsForRequest);
     const statusCode = response && response.statusCode;
     const location = response && response.headers && response.headers.location;

@@ -66,7 +66,7 @@ class SlackController {
           errorSent = true;
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error posting via response_url:", e);
       }
     }
@@ -85,7 +85,7 @@ class SlackController {
           errorSent = true;
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error sending error message:", e);
       }
     }
@@ -184,14 +184,14 @@ class SlackController {
         }
       );
     } catch (error) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("handleConnect error:", error);
       const errorSent = await this.sendErrorMessage(
         error, slackTeamId, slackUserId, null, responseUrl
       );
       // Don't re-throw - error has been sent to user, just log it
       if (!errorSent) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to send error message to Slack");
       }
     }
@@ -454,7 +454,7 @@ class SlackController {
             ],
           });
         } catch (updateError) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Failed to update progress message:", updateError);
         }
       };
@@ -553,7 +553,7 @@ class SlackController {
             blocks: formattedResponse.blocks,
           });
         } catch (updateError) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Failed to update thinking message, posting new message:", updateError);
           // Fallback: post new message if update fails
           await client.chat.postMessage({
@@ -573,9 +573,9 @@ class SlackController {
         });
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("processQuestionInThread error:", error);
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("Error details:", {
         message: error.message,
         stack: error.stack,
@@ -603,7 +603,7 @@ class SlackController {
           });
           return; // Error displayed, don't send duplicate
         } catch (updateError) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Failed to update thinking message with error:", updateError);
           // Fall through to send error message normally
         }
@@ -621,11 +621,11 @@ class SlackController {
             blocks: errorMessage.blocks,
           });
         } catch (postError) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Failed to send error message to Slack:", postError);
         }
       } else {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Cannot send error message - missing required data:", {
           botToken: !!botToken,
           channelId,
@@ -717,7 +717,7 @@ class SlackController {
       // Process the question in the thread
       await this.processQuestionInThread(slackTeamId, slackUserId, channelId, question, threadTs);
     } catch (error) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("handleMention error:", error);
       // Error handling is done in processQuestionInThread
       throw error;
@@ -807,7 +807,7 @@ class SlackController {
         throw new Error("Failed to post status message");
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("handleStatus error:", error);
       const errorSent = await this.sendErrorMessage(
         error,
@@ -818,7 +818,7 @@ class SlackController {
       );
       // Don't re-throw - error has been sent to user, just log it
       if (!errorSent) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to send error message to Slack");
       }
     }
@@ -868,7 +868,7 @@ class SlackController {
         botToken = integration.config.bot_token;
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("Error finding integration:", e);
     }
 
@@ -880,7 +880,7 @@ class SlackController {
           return;
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error posting via response_url:", e);
       }
     }
@@ -890,11 +890,11 @@ class SlackController {
       try {
         await postMessage(botToken, channelId || slackUserId, helpMessage);
       } catch (e) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Error posting help message via bot token:", e);
       }
     } else {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("No bot token or response_url available, cannot send help message");
     }
   }
@@ -994,7 +994,7 @@ class SlackController {
         throw new Error("Failed to post disconnect message");
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error("handleDisconnect error:", error);
       const errorSent = await this.sendErrorMessage(
         error,
@@ -1005,7 +1005,7 @@ class SlackController {
       );
       // Don't re-throw - error has been sent to user, just log it
       if (!errorSent) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Failed to send error message to Slack");
       }
     }
@@ -1211,7 +1211,7 @@ class SlackController {
       const threadTs = message?.thread_ts || message?.ts;
 
       if (!threadTs) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error("Cannot determine thread_ts from interaction message");
         return;
       }
@@ -1226,7 +1226,7 @@ class SlackController {
         });
 
         if (!integration || !integration.config || !integration.config.bot_token) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Bot token not found for modal");
           return;
         }
@@ -1290,7 +1290,7 @@ class SlackController {
             },
           });
         } catch (error) {
-          // eslint-disable-next-line no-console
+          // oxlint-disable-next-line no-console
           console.error("Failed to open modal:", error);
         }
         return;

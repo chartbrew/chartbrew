@@ -7,7 +7,7 @@
     "start": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
     "dev": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
     "build": "npm run prepareSettings && vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "oxlint",
     "preview": "vite preview",
     "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"
@@ -73,10 +73,7 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react-swc": "^4.1.0",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
+    "oxlint": "^1.58.0",
     "postcss": "^8.4.28",
     "tailwindcss": "^4.1.11",
     "vite": "^8.0.3"

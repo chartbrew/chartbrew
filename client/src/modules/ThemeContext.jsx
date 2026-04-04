@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => { // eslint-disable-line
+export const ThemeProvider = ({ children }) => {
   const THEME_KEY = "cb_theme";
 
   const getInitialTheme = () => {
