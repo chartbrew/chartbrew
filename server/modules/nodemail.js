@@ -1,7 +1,17 @@
+const path = require("path");
+const React = require("react");
 const nodemailer = require("nodemailer");
-const ejs = require("ejs");
+const { render } = require("@react-email/render");
+const createJiti = require("jiti");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const jiti = createJiti(__filename, { jsx: true, interopDefault: true });
+const emailTemplatePaths = {
+  forgotPassword: path.join(__dirname, "../email-templates/emails/forgot-password.tsx"),
+  emailUpdate: path.join(__dirname, "../email-templates/emails/email-update.tsx"),
+  chartAlert: path.join(__dirname, "../email-templates/emails/chart-alert.tsx"),
+  dashboardSnapshot: path.join(__dirname, "../email-templates/emails/dashboard-snapshot.tsx"),
+};
 
 // setup nodemailer
 // In tests we don't want to connect to a real SMTP server.
@@ -11,6 +21,25 @@ const transportConfig = process.env.NODE_ENV === "test"
   : settings.mailSettings;
 
 const nodemail = nodemailer.createTransport(transportConfig);
+const emailComponentCache = {};
+
+function getEmailComponent(templateName) {
+  if (!emailComponentCache[templateName]) {
+    const templateModule = jiti(emailTemplatePaths[templateName]);
+    emailComponentCache[templateName] = templateModule.default || templateModule;
+  }
+
+  return emailComponentCache[templateName];
+}
+
+async function renderEmailTemplate(templateName, props) {
+  const EmailComponent = getEmailComponent(templateName);
+
+  return render(React.createElement(EmailComponent, {
+    ...props,
+    supportEmail: settings.adminMail,
+  }));
+}
 
 module.exports.sendInvite = (invite, admin, teamName) => {
   const inviteUrl = `${settings.client}/invite?team_id=${invite.team_id}&token=${invite.token}`;
@@ -42,7 +71,11 @@ module.exports.sendInvite = (invite, admin, teamName) => {
   return nodemail.sendMail(message);
 };
 
-module.exports.passwordReset = (data) => {
+module.exports.passwordReset = async (data) => {
+  const emailHtml = await renderEmailTemplate("forgotPassword", {
+    resetUrl: data.resetUrl,
+  });
+
   const message = {
     from: settings.adminMail,
     to: data.email,
@@ -57,22 +90,13 @@ module.exports.passwordReset = (data) => {
       Cheers,
       ChartBrew
     `,
-    html: `
-      <h3>Reset your Chartbrew password 🔑</h3>
-
-      <p>You can reset your password by clicking the link below:</p>
-
-      <p>${data.resetUrl}</p>
-
-      Cheers,
-      ChartBrew
-    `,
+    html: emailHtml,
   };
 
   return nodemail.sendMail(message);
 };
 
-module.exports.sendChartAlert = (data) => {
+module.exports.sendChartAlert = async (data) => {
   const message = {
     from: settings.adminMail,
     bcc: data.recipients,
@@ -91,38 +115,41 @@ module.exports.sendChartAlert = (data) => {
   message.text += `Check your dashboard here: ${data.dashboardUrl}`;
   message.text += "\n";
   message.text += "- Chartbrew";
-  // ------------------------------
-
-  ejs.renderFile(`${__dirname}/emailTemplates/alert.ejs`, {
+  const emailHtml = await renderEmailTemplate("chartAlert", {
     chartName: data.chartName,
     thresholdText: data.thresholdText,
     alerts: data.alerts,
     dashboardUrl: data.dashboardUrl,
     snapshotUrl: data.snapshotUrl,
-  }, (err, str) => {
-    if (err) {
-      console.log(err); // oxlint-disable-line no-console
-    }
-    message.html = str;
-
-    return nodemail.sendMail(message);
   });
+
+  message.html = emailHtml;
+
+  return nodemail.sendMail(message);
 };
 
-module.exports.emailUpdate = (data) => {
+module.exports.emailUpdate = async (data) => {
+  const emailHtml = await renderEmailTemplate("emailUpdate", {
+    updateUrl: data.updateUrl,
+  });
+
   const message = {
     from: settings.adminMail,
     to: data.email,
     subject: "Chartbrew - new email confirmation",
+    text: `
+      Confirm your new email address
+
+      Open the link below to confirm your new email address. This link expires in 3 hours.
+
+      ${data.updateUrl}
+
+      - Chartbrew
+    `,
+    html: emailHtml,
   };
 
-  ejs.renderFile(`${__dirname}/emailTemplates/emailUpdate.ejs`, {
-    updateUrl: data.updateUrl,
-  }, (err, str) => {
-    message.html = str;
-
-    return nodemail.sendMail(message);
-  });
+  return nodemail.sendMail(message);
 };
 
 module.exports.sendDashboardSnapshot = (data) => {
@@ -134,19 +161,26 @@ module.exports.sendDashboardSnapshot = (data) => {
   };
 
   return new Promise((resolve, reject) => {
-    ejs.renderFile(`${__dirname}/emailTemplates/snapshot.ejs`, {
+    renderEmailTemplate("dashboardSnapshot", {
       projectName: data.projectName,
       dashboardUrl: data.dashboardUrl,
       snapshotUrl: data.snapshotUrl,
-    }, (err, str) => {
-      if (err) {
-        return reject(err);
-      }
+    })
+      .then((emailHtml) => {
+        message.text = `
+          New snapshot of ${data.projectName}
 
-      message.html = str;
-      return nodemail.sendMail(message)
-        .then((result) => resolve(result))
-        .catch((sendErr) => reject(sendErr));
-    });
+          A new dashboard snapshot has been generated.
+
+          View live dashboard: ${data.dashboardUrl}
+          ${data.snapshotUrl ? `Snapshot preview: ${data.snapshotUrl}` : ""}
+
+          - Chartbrew
+        `;
+        message.html = emailHtml;
+        return nodemail.sendMail(message);
+      })
+      .then((result) => resolve(result))
+      .catch((error) => reject(error));
   });
 };

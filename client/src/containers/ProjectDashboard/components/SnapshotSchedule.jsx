@@ -691,7 +691,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
               Close
             </Button>
             {project?.snapshotSchedule?.frequency && (
-              <Button variant="danger" onPress={_onRemoveSchedule}>
+              <Button variant="danger-soft" onPress={_onRemoveSchedule}>
                 Remove schedule
               </Button>
             )}
