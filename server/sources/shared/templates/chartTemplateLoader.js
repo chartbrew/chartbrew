@@ -45,7 +45,12 @@ function validateTemplate(template) {
     if (!dataset.dataRequest || typeof dataset.dataRequest !== "object") {
       throw new Error(`Invalid chart template: dataset ${dataset.id} is missing dataRequest`);
     }
-    assertString(dataset.dataRequest.route, `dataset ${dataset.id} dataRequest.route`);
+    if (!dataset.dataRequest.route && !dataset.dataRequest.configuration) {
+      throw new Error(`Invalid chart template: dataset ${dataset.id} dataRequest.route or dataRequest.configuration is required`);
+    }
+    if (dataset.dataRequest.route) {
+      assertString(dataset.dataRequest.route, `dataset ${dataset.id} dataRequest.route`);
+    }
   });
 
   const chartIds = new Set();
@@ -66,12 +71,18 @@ function validateTemplate(template) {
         throw new Error(`Invalid chart template: chart ${chart.id} references unknown dataset ${datasetId}`);
       }
     });
-    if (!chart.cdc || typeof chart.cdc !== "object") {
+    const cdcs = chart.cdcs || (chart.cdc ? [chart.cdc] : []);
+    if (!Array.isArray(cdcs) || cdcs.length === 0) {
       throw new Error(`Invalid chart template: chart ${chart.id} is missing cdc`);
     }
-    if (!datasetIds.has(chart.cdc.datasetTemplateId)) {
-      throw new Error(`Invalid chart template: chart ${chart.id} references unknown cdc dataset`);
-    }
+    cdcs.forEach((cdc) => {
+      if (!cdc || typeof cdc !== "object") {
+        throw new Error(`Invalid chart template: chart ${chart.id} cdc must be an object`);
+      }
+      if (!datasetIds.has(cdc.datasetTemplateId)) {
+        throw new Error(`Invalid chart template: chart ${chart.id} references unknown cdc dataset`);
+      }
+    });
   });
 
   return template;

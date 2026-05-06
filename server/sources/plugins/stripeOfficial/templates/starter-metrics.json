@@ -1,0 +1,1049 @@
+{
+  "id": "stripe-official-starter-metrics",
+  "slug": "starter-metrics",
+  "version": 2,
+  "source": "stripeOfficial",
+  "name": "Stripe Official Starter Metrics",
+  "description": "KPI-first Stripe dashboard metrics with short default ranges, compact tables, and opinionated chart types.",
+  "requiredConnection": {
+    "type": "stripeOfficial",
+    "subType": "stripeOfficial"
+  },
+  "datasets": [
+    {
+      "id": "net_revenue_30d",
+      "name": "Stripe net revenue - last 30 days",
+      "description": "Net balance transaction charges grouped by day for KPI trend cards.",
+      "icon": "BadgeDollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "net",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "day",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "gross_revenue_30d",
+      "name": "Stripe gross revenue - last 30 days",
+      "description": "Gross balance transaction charges grouped by day for KPI trend cards.",
+      "icon": "DollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "amount",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "day",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "stripe_fees_30d",
+      "name": "Stripe fees - last 30 days",
+      "description": "Stripe fees from balance transaction charges grouped by day.",
+      "icon": "CircleDollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "fee",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "day",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "refunds_90d_weekly",
+      "name": "Stripe refunds - last 90 days",
+      "description": "Refund amounts grouped by week to avoid sparse daily charts.",
+      "icon": "Undo2",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "refunds",
+          "mode": "aggregate",
+          "metric": {
+            "field": "amount",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "week",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_90_days",
+            "end": "now"
+          },
+          "filters": [],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "successful_payments_30d",
+      "name": "Stripe successful payments - last 30 days",
+      "description": "Succeeded payment intents grouped by day.",
+      "icon": "CheckCircle",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "payment_intents",
+          "mode": "aggregate",
+          "metric": {
+            "operation": "count"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "day",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "status",
+              "operator": "is",
+              "value": "succeeded"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "failed_payments_30d",
+      "name": "Stripe failed payments - last 30 days",
+      "description": "Payment intents requiring a new payment method grouped by day.",
+      "icon": "XCircle",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "payment_intents",
+          "mode": "aggregate",
+          "metric": {
+            "operation": "count"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "day",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "status",
+              "operator": "is",
+              "value": "requires_payment_method"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "latest_payments_table",
+      "name": "Stripe latest payments",
+      "description": "Latest payment intents from the last 30 days.",
+      "icon": "Table",
+      "fieldsSchema": {
+        "root[].created": "date",
+        "root[].customer": "string",
+        "root[].amount": "number",
+        "root[].amount_received": "number",
+        "root[].status": "string",
+        "root[].payment_method": "string",
+        "root[].id": "string",
+        "root[].currency": "string"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "payment_intents",
+          "mode": "raw",
+          "dateRange": {
+            "field": "created",
+            "start": "last_30_days",
+            "end": "now"
+          },
+          "filters": [],
+          "rawColumns": [
+            "created",
+            "customer",
+            "amount",
+            "amount_received",
+            "status",
+            "payment_method",
+            "id",
+            "currency"
+          ],
+          "pagination": {
+            "limit": 10,
+            "maxRecords": 10
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "active_subscriptions_current",
+      "name": "Stripe active subscriptions",
+      "description": "Current active subscriptions.",
+      "icon": "RefreshCw",
+      "fieldsSchema": {
+        "root[].dimension": "string",
+        "root[].value": "number",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "subscriptions",
+          "mode": "aggregate",
+          "metric": {
+            "operation": "count"
+          },
+          "dimension": {
+            "field": "status",
+            "interval": "none"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": null,
+            "end": null
+          },
+          "filters": [
+            {
+              "field": "status",
+              "operator": "is",
+              "value": "active"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "new_subscriptions_90d_weekly",
+      "name": "Stripe new subscriptions - last 90 days",
+      "description": "New subscriptions grouped by week.",
+      "icon": "RefreshCw",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "subscriptions",
+          "mode": "aggregate",
+          "metric": {
+            "operation": "count"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "week",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_90_days",
+            "end": "now"
+          },
+          "filters": [],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "open_invoice_amount_current",
+      "name": "Stripe open invoice amount",
+      "description": "Current open invoice amount due.",
+      "icon": "FileText",
+      "fieldsSchema": {
+        "root[].dimension": "string",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "invoices",
+          "mode": "aggregate",
+          "metric": {
+            "field": "amount_due",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "status",
+            "interval": "none"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": null,
+            "end": null
+          },
+          "filters": [
+            {
+              "field": "status",
+              "operator": "is",
+              "value": "open"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "open_invoices_table",
+      "name": "Stripe open invoices",
+      "description": "Current open invoices for follow-up.",
+      "icon": "FileText",
+      "fieldsSchema": {
+        "root[].due_date": "date",
+        "root[].customer": "string",
+        "root[].number": "string",
+        "root[].amount_due": "number",
+        "root[].status": "string",
+        "root[].hosted_invoice_url": "string",
+        "root[].id": "string",
+        "root[].currency": "string"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "invoices",
+          "mode": "raw",
+          "dateRange": {
+            "field": "created",
+            "start": null,
+            "end": null
+          },
+          "filters": [
+            {
+              "field": "status",
+              "operator": "is",
+              "value": "open"
+            }
+          ],
+          "rawColumns": [
+            "due_date",
+            "customer",
+            "number",
+            "amount_due",
+            "status",
+            "hosted_invoice_url",
+            "id",
+            "currency"
+          ],
+          "pagination": {
+            "limit": 10,
+            "maxRecords": 10
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "net_revenue_90d_weekly",
+      "name": "Stripe net revenue - last 90 days",
+      "description": "Net balance transaction charges grouped by week.",
+      "icon": "BadgeDollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "net",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "week",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_90_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "gross_revenue_90d_weekly",
+      "name": "Stripe gross revenue - last 90 days",
+      "description": "Gross balance transaction charges grouped by week.",
+      "icon": "DollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "amount",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "week",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_90_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "stripe_fees_90d_weekly",
+      "name": "Stripe fees - last 90 days",
+      "description": "Stripe fees from balance transaction charges grouped by week.",
+      "icon": "CircleDollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "resource": "balance_transactions",
+          "mode": "aggregate",
+          "metric": {
+            "field": "fee",
+            "operation": "sum"
+          },
+          "dimension": {
+            "field": "created",
+            "interval": "week",
+            "type": "date"
+          },
+          "dateRange": {
+            "field": "created",
+            "start": "last_90_days",
+            "end": "now"
+          },
+          "filters": [
+            {
+              "field": "type",
+              "operator": "is",
+              "value": "charge"
+            }
+          ],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 5000
+          },
+          "queryMode": "list"
+        }
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "net-revenue-kpi",
+      "name": "Net revenue",
+      "description": "Net revenue from charges after Stripe fees for the last 30 days.",
+      "icon": "BadgeDollarSign",
+      "type": "line",
+      "requiredDatasetIds": [
+        "net_revenue_30d"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "day",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "pointRadius": 0,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "net_revenue_30d",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Net revenue",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 100
+      }
+    },
+    {
+      "id": "gross-revenue-kpi",
+      "name": "Gross revenue",
+      "description": "Gross Stripe charge amount for the last 30 days.",
+      "icon": "DollarSign",
+      "type": "line",
+      "requiredDatasetIds": [
+        "gross_revenue_30d"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "day",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "pointRadius": 0,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "gross_revenue_30d",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Gross revenue",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(255, 152, 0, 1)",
+        "fillColor": "rgba(255, 152, 0, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 145
+      }
+    },
+    {
+      "id": "stripe-fees-kpi",
+      "name": "Stripe fees",
+      "description": "Stripe fees from charges for the last 30 days.",
+      "icon": "CircleDollarSign",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "stripe_fees_30d"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "day",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "invertGrowth": true,
+        "pointRadius": 0,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "stripe_fees_30d",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Stripe fees",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 146
+      }
+    },
+    {
+      "id": "active-subscriptions",
+      "name": "Active subscriptions",
+      "description": "Current active subscription count.",
+      "icon": "RefreshCw",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "active_subscriptions_current"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month"
+      },
+      "cdc": {
+        "datasetTemplateId": "active_subscriptions_current",
+        "xAxis": "root[].dimension",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "legend": "Active subscriptions",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 130
+      }
+    },
+    {
+      "id": "net-revenue-over-time",
+      "name": "Net revenue over time",
+      "description": "Weekly net revenue trend for the last 90 days.",
+      "icon": "ChartLine",
+      "type": "line",
+      "requiredDatasetIds": [
+        "net_revenue_90d_weekly"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "week",
+        "pointRadius": 0,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "net_revenue_90d_weekly",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Net revenue",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 150
+      }
+    },
+    {
+      "id": "gross-revenue-vs-fees",
+      "name": "Gross revenue vs fees",
+      "description": "Weekly gross revenue and Stripe fees for the last 90 days.",
+      "icon": "ChartBar",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "gross_revenue_90d_weekly",
+        "stripe_fees_90d_weekly"
+      ],
+      "chart": {
+        "displayLegend": true,
+        "includeZeros": true,
+        "timeInterval": "week",
+        "stacked": false,
+        "xLabelTicks": "third"
+      },
+      "cdcs": [
+        {
+          "datasetTemplateId": "gross_revenue_90d_weekly",
+          "xAxis": "root[].period",
+          "yAxis": "root[].value",
+          "yAxisOperation": "none",
+          "dateField": "root[].period",
+          "legend": "Gross revenue",
+          "formula": "${val / 100}",
+          "datasetColor": "rgba(255, 152, 0, 1)",
+          "fillColor": "rgba(255, 152, 0, 0.14)"
+        },
+        {
+          "datasetTemplateId": "stripe_fees_90d_weekly",
+          "xAxis": "root[].period",
+          "yAxis": "root[].value",
+          "yAxisOperation": "none",
+          "dateField": "root[].period",
+          "legend": "Stripe fees",
+          "formula": "${val / 100}",
+          "datasetColor": "rgba(38, 166, 154, 1)"
+        }
+      ],
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 160
+      }
+    },
+    {
+      "id": "successful-vs-failed-payments",
+      "name": "Successful vs failed payments",
+      "description": "Daily successful and failed payment intent counts for the last 30 days.",
+      "icon": "CreditCard",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "successful_payments_30d",
+        "failed_payments_30d"
+      ],
+      "chart": {
+        "displayLegend": true,
+        "includeZeros": true,
+        "timeInterval": "day",
+        "stacked": false,
+        "xLabelTicks": "third"
+      },
+      "cdcs": [
+        {
+          "datasetTemplateId": "successful_payments_30d",
+          "xAxis": "root[].period",
+          "yAxis": "root[].value",
+          "yAxisOperation": "none",
+          "dateField": "root[].period",
+          "legend": "Successful payments",
+          "datasetColor": "#0FC457"
+        },
+        {
+          "datasetTemplateId": "failed_payments_30d",
+          "xAxis": "root[].period",
+          "yAxis": "root[].value",
+          "yAxisOperation": "none",
+          "dateField": "root[].period",
+          "legend": "Failed payments",
+          "datasetColor": "#EF4444"
+        }
+      ],
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 170
+      }
+    },
+    {
+      "id": "refunds-over-time",
+      "name": "Refunds",
+      "description": "Weekly refunded amount for the last 90 days.",
+      "icon": "Undo2",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "refunds_90d_weekly"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "week",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "invertGrowth": true,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "refunds_90d_weekly",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Refunds",
+        "formula": "${val / 100}",
+        "datasetColor": "#EF4444"
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 180
+      }
+    },
+    {
+      "id": "new-subscriptions-over-time",
+      "name": "New subscriptions",
+      "description": "Weekly new subscriptions for the last 90 days.",
+      "icon": "RefreshCw",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "new_subscriptions_90d_weekly"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "week",
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "new_subscriptions_90d_weekly",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "New subscriptions",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 190
+      }
+    },
+    {
+      "id": "open-invoice-amount",
+      "name": "Open invoice amount",
+      "description": "Current amount due on open invoices.",
+      "icon": "FileText",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "open_invoice_amount_current"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month"
+      },
+      "cdc": {
+        "datasetTemplateId": "open_invoice_amount_current",
+        "xAxis": "root[].dimension",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "legend": "Open invoice amount",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(255, 152, 0, 1)"
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 147
+      }
+    },
+    {
+      "id": "latest-payments-table",
+      "name": "Latest payments",
+      "description": "Latest payment intents from the last 30 days.",
+      "icon": "Table",
+      "type": "table",
+      "requiredDatasetIds": [
+        "latest_payments_table"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "defaultRowsPerPage": 10
+      },
+      "cdc": {
+        "datasetTemplateId": "latest_payments_table",
+        "xAxis": "root[].created",
+        "yAxis": "root[].amount_received",
+        "yAxisOperation": "none",
+        "dateField": "root[].created",
+        "legend": "Latest payments",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "columnsOrder": [
+          "root[].created",
+          "root[].customer",
+          "root[].amount",
+          "root[].amount_received",
+          "root[].status",
+          "root[].payment_method",
+          "root[].id",
+          "root[].currency"
+        ],
+        "maxRecords": 10
+      },
+      "layoutIntent": {
+        "kind": "table",
+        "priority": 250
+      }
+    },
+    {
+      "id": "open-invoices-table",
+      "name": "Open invoices",
+      "description": "Latest open invoices for follow-up.",
+      "icon": "FileText",
+      "type": "table",
+      "requiredDatasetIds": [
+        "open_invoices_table"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "defaultRowsPerPage": 10
+      },
+      "cdc": {
+        "datasetTemplateId": "open_invoices_table",
+        "xAxis": "root[].due_date",
+        "yAxis": "root[].amount_due",
+        "yAxisOperation": "none",
+        "dateField": "root[].due_date",
+        "legend": "Open invoices",
+        "formula": "${val / 100}",
+        "datasetColor": "rgba(255, 152, 0, 1)",
+        "columnsOrder": [
+          "root[].due_date",
+          "root[].customer",
+          "root[].number",
+          "root[].amount_due",
+          "root[].status",
+          "root[].hosted_invoice_url",
+          "root[].id",
+          "root[].currency"
+        ],
+        "maxRecords": 10
+      },
+      "layoutIntent": {
+        "kind": "table",
+        "priority": 260
+      }
+    }
+  ]
+}

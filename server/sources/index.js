@@ -12,6 +12,7 @@ const rdspostgres = require("./plugins/rdspostgres/rdspostgres.plugin");
 const rdsmysql = require("./plugins/rdsmysql/rdsmysql.plugin");
 const realtimedb = require("./plugins/realtimedb/realtimedb.plugin");
 const stripe = require("./plugins/stripe/stripe.plugin");
+const stripeOfficial = require("./plugins/stripeOfficial/stripeOfficial.plugin");
 const strapi = require("./plugins/strapi/strapi.plugin");
 const supabasedb = require("./plugins/supabasedb/supabasedb.plugin");
 const timescaledb = require("./plugins/timescaledb/timescaledb.plugin");
@@ -29,6 +30,7 @@ const sources = [
   rdsmysql,
   realtimedb,
   stripe,
+  stripeOfficial,
   strapi,
   supabasedb,
   timescaledb,

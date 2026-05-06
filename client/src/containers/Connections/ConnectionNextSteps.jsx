@@ -19,6 +19,7 @@ import {
   getChartTemplate,
   listChartTemplates,
   selectActiveChartTemplate,
+  selectChartTemplates,
   selectChartTemplateResult,
 } from "../../slices/chartTemplate";
 import { getConnection, selectConnections } from "../../slices/connection";
@@ -41,6 +42,7 @@ function ConnectionNextSteps() {
   const connections = useSelector(selectConnections);
   const projects = useSelector(selectProjects);
   const template = useSelector(selectActiveChartTemplate);
+  const templates = useSelector(selectChartTemplates);
   const result = useSelector(selectChartTemplateResult);
   const templateLoading = useSelector((state) => state.chartTemplate.loading);
   const templateError = useSelector((state) => state.chartTemplate.error);
@@ -48,6 +50,8 @@ function ConnectionNextSteps() {
   const connection = connections.find((item) => `${item.id}` === `${params.connectionId}`);
   const source = findSourceForConnection(connection);
   const hasChartTemplates = Boolean(source?.capabilities?.nextSteps?.chartTemplates);
+  const SourceChartTemplateSetup = source?.frontend?.ChartTemplateSetup;
+  const usesCustomChartTemplateSetup = Boolean(SourceChartTemplateSetup);
   const canUseAi = user?.id && team?.TeamRoles && canAccess("teamAdmin", user.id, team.TeamRoles);
 
   useEffect(() => {
@@ -61,6 +65,8 @@ function ConnectionNextSteps() {
     if (team?.id && hasChartTemplates && source?.id) {
       dispatch(listChartTemplates({ team_id: team.id, source: source.id }))
         .then((response) => {
+          if (usesCustomChartTemplateSetup) return;
+
           const firstTemplate = response.payload?.[0];
           if (firstTemplate) {
             dispatch(getChartTemplate({
@@ -71,7 +77,7 @@ function ConnectionNextSteps() {
           }
         });
     }
-  }, [dispatch, hasChartTemplates, source?.id, team?.id]);
+  }, [dispatch, hasChartTemplates, source?.id, team?.id, usesCustomChartTemplateSetup]);
 
   const _onAskAi = () => {
     dispatch(showAiModal());
@@ -79,6 +85,15 @@ function ConnectionNextSteps() {
 
   const _onBuildFromScratch = () => {
     navigate(`/datasets/new?connection_id=${params.connectionId}`);
+  };
+
+  const _loadTemplate = (templateSummary) => {
+    if (!team?.id || !templateSummary?.source || !templateSummary?.slug) return;
+    dispatch(getChartTemplate({
+      team_id: team.id,
+      source: templateSummary.source,
+      slug: templateSummary.slug,
+    }));
   };
 
   const _onNavigateHome = () => {
@@ -218,7 +233,9 @@ function ConnectionNextSteps() {
             />
             <div>
               <p className="text-xl font-semibold">{connection.name}</p>
-              <p className="text-sm text-foreground-500">Choose how you want to start building.</p>
+              <p className="text-sm text-foreground-500">
+                {usesCustomChartTemplateSetup ? "What do you want to track?" : "Choose how you want to start building."}
+              </p>
             </div>
           </div>
           <Button variant="tertiary" onPress={_onBuildFromScratch}>
@@ -232,15 +249,47 @@ function ConnectionNextSteps() {
       {!hasChartTemplates && _renderGenericNextSteps()}
 
       {hasChartTemplates && (
-        <ChartTemplateSetup
-          connection={connection}
-          error={templateError || null}
-          loading={templateLoading}
-          projects={projects}
-          result={result}
-          teamId={team.id}
-          template={template}
-        />
+        <>
+          {!usesCustomChartTemplateSetup && templates.length > 1 && (
+            <Surface className="mb-4 rounded-3xl border border-divider p-4" variant="default">
+              <div className="flex flex-row flex-wrap gap-2">
+                {templates.map((templateSummary) => (
+                  <Button
+                    key={templateSummary.id}
+                    variant={template?.slug === templateSummary.slug ? "secondary" : "tertiary"}
+                    onPress={() => _loadTemplate(templateSummary)}
+                  >
+                    {templateSummary.name}
+                    <span className="text-xs text-muted">
+                      {templateSummary.datasets.length} datasets
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </Surface>
+          )}
+
+          {SourceChartTemplateSetup ? (
+            <SourceChartTemplateSetup
+              connection={connection}
+              error={templateError || null}
+              loading={templateLoading}
+              projects={projects}
+              teamId={team.id}
+              templates={templates}
+            />
+          ) : (
+            <ChartTemplateSetup
+              connection={connection}
+              error={templateError || null}
+              loading={templateLoading}
+              projects={projects}
+              result={result}
+              teamId={team.id}
+              template={template}
+            />
+          )}
+        </>
       )}
     </div>
   );

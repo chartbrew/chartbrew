@@ -2,6 +2,7 @@ const db = require("../models/models");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
 const { listTemplates, loadTemplate } = require("../sources/shared/templates/chartTemplateLoader");
+const { buildTemplateLayouts } = require("../sources/shared/templates/chartTemplateLayout");
 const { getSourceById } = require("../sources");
 
 function toInt(value) {
@@ -32,6 +33,25 @@ function addProjectToList(projectIds, projectId) {
   }
 
   return [...currentIds, normalizedProjectId];
+}
+
+function getChartTemplateOptions(chartTemplate) {
+  const chartOptions = chartTemplate.chart || {};
+  const allowedFields = [
+    "displayLegend", "pointRadius", "dataLabels", "startDate", "endDate",
+    "dateVarsFormat", "includeZeros", "currentEndDate", "fixedStartDate",
+    "timeInterval", "autoUpdate", "mode", "maxValue", "minValue",
+    "disabledExport", "onReport", "xLabelTicks", "stacked", "horizontal",
+    "showGrowth", "invertGrowth", "layout", "snapshotToken", "isLogarithmic",
+    "content", "ranges", "dashedLastPoint", "defaultRowsPerPage",
+  ];
+
+  return allowedFields.reduce((options, field) => {
+    if (chartOptions[field] !== undefined) {
+      options[field] = chartOptions[field];
+    }
+    return options;
+  }, {});
 }
 
 class ChartTemplateController {
@@ -165,16 +185,32 @@ class ChartTemplateController {
       }));
 
       const selectedCharts = template.charts.filter((chart) => chartTemplateIds.includes(chart.id));
+      const existingCharts = await db.Chart.findAll({
+        where: { project_id: project.id },
+        attributes: ["id", "layout"],
+        transaction,
+      });
+      const generatedLayouts = selectedCharts.some((chart) => chart.layoutIntent)
+        ? buildTemplateLayouts(selectedCharts, { existingCharts })
+        : {};
       const createdCharts = [];
       await selectedCharts.reduce((promise, chartTemplate) => {
         return promise.then(async () => {
-          const datasetId = datasetMapping[chartTemplate.cdc.datasetTemplateId];
-          if (!datasetId) {
-            throw new Error(`Chart ${chartTemplate.id} requires dataset ${chartTemplate.cdc.datasetTemplateId}`);
-          }
+          const chartDatasetConfigs = (chartTemplate.cdcs || [chartTemplate.cdc]).map((cdcTemplate, index) => {
+            const datasetId = datasetMapping[cdcTemplate.datasetTemplateId];
+            if (!datasetId) {
+              throw new Error(`Chart ${chartTemplate.id} requires dataset ${cdcTemplate.datasetTemplateId}`);
+            }
 
-          const cdc = { ...chartTemplate.cdc };
-          delete cdc.datasetTemplateId;
+            const cdc = { ...cdcTemplate };
+            delete cdc.datasetTemplateId;
+            return {
+              ...cdc,
+              dataset_id: datasetId,
+              order: cdc.order || index + 1,
+            };
+          });
+
           const chart = await this.chartController.createWithChartDatasetConfigs({
             project_id: project.id,
             name: chartTemplate.name,
@@ -187,12 +223,9 @@ class ChartTemplateController {
             includeZeros: chartTemplate.chart?.includeZeros ?? true,
             timeInterval: chartTemplate.chart?.timeInterval || "month",
             horizontal: chartTemplate.chart?.horizontal || false,
-            defaultRowsPerPage: chartTemplate.chart?.defaultRowsPerPage,
-            chartDatasetConfigs: [{
-              ...cdc,
-              dataset_id: datasetId,
-              order: 1,
-            }],
+            ...getChartTemplateOptions(chartTemplate),
+            layout: generatedLayouts[chartTemplate.id] || chartTemplate.chart?.layout,
+            chartDatasetConfigs,
           }, user, { transaction, skipBackgroundUpdate: true });
 
           createdCharts.push({

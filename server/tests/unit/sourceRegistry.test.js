@@ -59,6 +59,26 @@ describe("source registry", () => {
     });
   });
 
+  it("resolves Stripe Official by id", () => {
+    const source = getSourceById("stripeOfficial");
+
+    expect(source).toMatchObject({
+      id: "stripeOfficial",
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+      name: "Stripe",
+      availability: {
+        server: {
+          enabled: true,
+        },
+      },
+    });
+    expect(source.backend.runDataRequest).toEqual(expect.any(Function));
+    expect(source.backend.getBuilderMetadata).toEqual(expect.any(Function));
+    expect(source.backend.testConnection).toEqual(expect.any(Function));
+    expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
+  });
+
   it("includes source availability in source summaries", () => {
     const stripeSummary = getSourceSummaries().find((source) => source.id === "stripe");
 
@@ -455,6 +475,15 @@ describe("source registry", () => {
     expect(source.id).toBe("stripe");
   });
 
+  it("resolves Stripe Official from its persisted source identity", () => {
+    const source = getSourceForConnection({
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+    });
+
+    expect(source.id).toBe("stripeOfficial");
+  });
+
   it("resolves generic API connections through the API protocol fallback", () => {
     expect(getSourceForConnection({
       type: "api",
@@ -529,6 +558,12 @@ describe("source registry", () => {
       subType: "stripe",
       capabilities: expect.any(Object),
     }));
+    expect(summaries).toContainEqual(expect.objectContaining({
+      id: "stripeOfficial",
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+      capabilities: expect.any(Object),
+    }));
     expect(summaries[0].backend).toBeUndefined();
   });
 
@@ -551,6 +586,28 @@ describe("source registry", () => {
     expect(source.backend.testConnection).toEqual(expect.any(Function));
     expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
     expect(source.backend.getBuilderMetadata).toEqual(expect.any(Function));
+  });
+
+  it("keeps Stripe Official config defaults in the source plugin", async () => {
+    const source = getSourceById("stripeOfficial");
+    const defaultRequest = source.backend.getDefaultDataRequest();
+    const metadata = await source.backend.getBuilderMetadata({});
+
+    expect(defaultRequest).toMatchObject({
+      method: "GET",
+      pagination: true,
+      items: "data",
+      offset: "starting_after",
+      template: "stripeOfficial",
+      configuration: {
+        source: "stripeOfficial",
+        resource: "balance_transactions",
+        mode: "aggregate",
+      },
+    });
+    expect(metadata.resources.balance_transactions.metrics).toEqual(expect.any(Array));
+    expect(metadata.compiledMetrics.mrr.status).toBe("available");
+    expect(metadata.compiledMetrics.customer_lifetime_value.calculationVersion).toBe(1);
   });
 
   it("wires Customer.io to source actions and runtime methods", async () => {
@@ -837,6 +894,10 @@ describe("source registry", () => {
       subType: "stripe",
     })?.source.id).toBe("stripe");
     expect(getSourceDataRequestRunner({
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+    })?.source.id).toBe("stripeOfficial");
+    expect(getSourceDataRequestRunner({
       type: "customerio",
       subType: "customerio",
     })?.source.id).toBe("customerio");
@@ -967,5 +1028,31 @@ describe("source registry", () => {
     }, { customer_id: "abc123" });
 
     expect(customerioResult.processedDataRequest.route).toBe("activities?customer_id=abc123");
+
+    const stripeOfficialResult = applySourceVariables({
+      configuration: {
+        source: "stripeOfficial",
+        resource: "balance_transactions",
+        dateRange: {
+          start: "{{startDate}}",
+          end: "{{endDate}}",
+        },
+      },
+      Connection: { type: "stripeOfficial", subType: "stripeOfficial" },
+      VariableBindings: [{
+        name: "startDate",
+        type: "date",
+        required: true,
+      }, {
+        name: "endDate",
+        type: "date",
+        required: true,
+      }],
+    }, { startDate: "2026-05-01", endDate: "2026-05-06" });
+
+    expect(stripeOfficialResult.processedDataRequest.configuration.dateRange).toEqual({
+      start: "2026-05-01",
+      end: "2026-05-06",
+    });
   });
 });
