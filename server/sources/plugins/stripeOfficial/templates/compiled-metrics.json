@@ -3,7 +3,7 @@
   "slug": "compiled-metrics",
   "version": 2,
   "source": "stripeOfficial",
-  "name": "Stripe Official Compiled Metrics",
+  "name": "Stripe Compiled Metrics",
   "description": "Subscription and cash-flow metrics computed from Stripe resources with monthly default ranges.",
   "requiredConnection": {
     "type": "stripeOfficial",

@@ -364,14 +364,8 @@ function MetricCard(props) {
       <div className="mt-3 flex flex-col gap-2">
         <div className="flex flex-row flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-foreground">{card.chart.name}</span>
-          {card.recommended && (
-            <Chip color="accent" size="sm" variant="soft">Recommended</Chip>
-          )}
-          {card.isComputed && (
-            <Chip color="warning" size="sm" variant="soft">Computed metric</Chip>
-          )}
         </div>
-        <p className="text-sm text-muted">{card.chart.description}</p>
+        <p className="text-xs text-muted">{card.chart.description}</p>
       </div>
 
       <div className="mt-4 flex flex-col gap-2 text-xs">
@@ -392,16 +386,19 @@ function MetricCard(props) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
+        {card.isComputed && (
+          <Chip color="warning" size="sm" variant="soft">Computed metric</Chip>
+        )}
         {card.filters.length > 0 ? card.filters.map((filter) => (
           <Chip key={filter} size="sm" variant="secondary">{filter}</Chip>
         )) : (
-          <Chip size="sm" variant="secondary">No default filters</Chip>
+          <Chip size="sm" variant="secondary">No filters</Chip>
         )}
       </div>
 
-      {card.caveat && (
+      {/* {card.caveat && (
         <p className="mt-3 text-xs leading-5 text-muted">{card.caveat}</p>
-      )}
+      )} */}
     </div>
   );
 }
@@ -630,7 +627,7 @@ function StripeOfficialTemplateSetup(props) {
       </div>
 
       <aside>
-        <div className="sticky top-4 flex flex-col gap-4">
+        <div className="sticky top-16 flex flex-col gap-4">
           <Surface className="rounded-3xl border border-divider p-5" variant="default">
             <div className="flex flex-col gap-4">
               <p className="text-lg font-semibold">Summary</p>

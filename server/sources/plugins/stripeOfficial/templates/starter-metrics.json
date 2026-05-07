@@ -3,7 +3,7 @@
   "slug": "starter-metrics",
   "version": 2,
   "source": "stripeOfficial",
-  "name": "Stripe Official Starter Metrics",
+  "name": "Stripe Starter Metrics",
   "description": "KPI-first Stripe dashboard metrics with short default ranges, compact tables, and opinionated chart types.",
   "requiredConnection": {
     "type": "stripeOfficial",

@@ -27,7 +27,7 @@ function StripeOfficialConnectionForm(props) {
     type: "stripeOfficial",
     subType: "stripeOfficial",
     host: STRIPE_API_HOST,
-    name: "Stripe Official",
+    name: "Stripe",
     authentication: { type: "api_key", token: "" },
     optionsArray: [],
   });
@@ -130,7 +130,7 @@ function StripeOfficialConnectionForm(props) {
   return (
     <div className="p-6 bg-surface border border-divider rounded-3xl">
       <p className="text-lg font-semibold">
-        {!editConnection && "Connect to Stripe Official"}
+        {!editConnection && "Connect to Stripe"}
         {editConnection && `Edit ${editConnection.name}`}
       </p>
       <div className="mt-5 mb-5">
