@@ -429,7 +429,7 @@ const FRONTEND_BY_SOURCE_ID = {
 Current registry-driven screens:
 
 - `client/src/containers/Connections/ConnectionWizard.jsx`
-- `client/src/containers/Connections/ConnectionNextSteps.jsx`
+- `client/src/containers/Connections/ConnectionTemplates.jsx`
 - `client/src/containers/Dataset/DatasetQuery.jsx`
 - `client/src/containers/AddChart/components/DatarequestModal.jsx`
 

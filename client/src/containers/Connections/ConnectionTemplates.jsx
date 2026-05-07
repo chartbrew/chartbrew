@@ -27,7 +27,7 @@ import { showAiModal } from "../../slices/ui";
 import { useTheme } from "../../modules/ThemeContext";
 import { findSourceForConnection } from "../../sources";
 
-function ConnectionNextSteps() {
+function ConnectionTemplates() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const params = useParams();
@@ -240,4 +240,4 @@ function ConnectionNextSteps() {
   );
 }
 
-export default ConnectionNextSteps;
+export default ConnectionTemplates;

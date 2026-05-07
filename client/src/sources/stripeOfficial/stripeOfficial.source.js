@@ -33,10 +33,11 @@ const stripeOfficialSource = {
   subType: "stripeOfficial",
   name: "Stripe",
   category: "payments",
+  showNewBadge: true,
   capabilities: {
-    ai: { canGenerateQueries: false },
-    templates: { charts: true },
-    nextSteps: { chartTemplates: true },
+    ai: { canGenerateQueries: false, hasSourceInstructions: true, hasTools: true, canGenerateDatasets: true },
+    templates: { charts: true, datasets: true },
+    nextSteps: { chartTemplates: true, datasetTemplates: true },
   },
   assets: {
     lightLogo: stripeLogo,

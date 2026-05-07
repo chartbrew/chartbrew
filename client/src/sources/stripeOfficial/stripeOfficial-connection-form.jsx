@@ -15,6 +15,7 @@ import Row from "../../components/Row";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { testRequest } from "../../slices/connection";
 import { selectTeam } from "../../slices/team";
+import { useNavigate } from "react-router";
 
 const STRIPE_API_HOST = "https://api.stripe.com/v1";
 
@@ -37,6 +38,7 @@ function StripeOfficialConnectionForm(props) {
 
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (editConnection) {
@@ -129,10 +131,20 @@ function StripeOfficialConnectionForm(props) {
 
   return (
     <div className="p-6 bg-surface border border-divider rounded-3xl">
-      <p className="text-lg font-semibold">
-        {!editConnection && "Connect to Stripe"}
-        {editConnection && `Edit ${editConnection.name}`}
-      </p>
+      <div className="flex flex-row items-center justify-between">
+        <p className="text-lg font-semibold">
+          {!editConnection && "Connect to Stripe"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
+        {editConnection && (
+          <Button
+            variant="secondary"
+            onPress={() => navigate("templates")}
+          >
+            Browse templates
+          </Button>
+        )}
+      </div>
       <div className="mt-5 mb-5">
         <Row>
           <TextField fullWidth className="max-w-[500px]" name="stripe-official-name" isInvalid={Boolean(errors.name)}>

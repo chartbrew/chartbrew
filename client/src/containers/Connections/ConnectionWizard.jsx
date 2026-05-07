@@ -150,7 +150,7 @@ function ConnectionWizard() {
 
         setSelectedType("");
 
-        navigate(`/connections/${createdConnection.payload.id}/next-steps`);
+        navigate(`/connections/${createdConnection.payload.id}/templates`);
         const resp = await dispatch(getConnection({ team_id: team.id, connection_id: createdConnection.payload.id }));
         setConnectionToEdit(resp.payload);
 
@@ -194,7 +194,7 @@ function ConnectionWizard() {
     <div>
       <div className="flex flex-col">
         <div className="sm:mr-96">          
-          <div className="h-4" />
+          <div className="h-2" />
 
           {!newConnection && (
             <>
@@ -240,8 +240,8 @@ function ConnectionWizard() {
                             src={getSourceLogo(conn, isDark)}
                           />
                         </Card.Content>
-                        <Card.Footer className="justify-center flex flex-col gap-1">
-                          {conn.capabilities?.ai?.canGenerateQueries && (
+                        <Card.Content className="flex flex-row items-center justify-center gap-1">
+                          {(conn.capabilities?.ai?.canGenerateQueries || conn.capabilities?.ai?.canGenerateDatasets) && (
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Chip variant="secondary">
@@ -254,6 +254,13 @@ function ConnectionWizard() {
                               </Tooltip.Content>
                             </Tooltip>
                           )}
+                          {conn.showNewBadge && (
+                            <Chip variant="soft" color="accent">
+                              <Chip.Label>{"New!"}</Chip.Label>
+                            </Chip>
+                          )}
+                        </Card.Content>
+                        <Card.Footer className="justify-center flex flex-col gap-1">
                           <span className="text-sm font-semibold">{conn.name}</span>
                         </Card.Footer>
                       </Card>
@@ -278,12 +285,12 @@ function ConnectionWizard() {
           )}
 
           {newConnection && (
-            <div className="flex flex-row items-center gap-2">
-              <Link to="/connections" className="text-xl font-semibold">
-                <LuArrowLeft size={24} className="text-foreground" />
-              </Link>
-              <span className="text-xl font-semibold">Edit your connection</span>
-            </div>
+            <Link to="/connections" className="text-foreground flex flex-row items-center gap-2">
+              <div className="p-1 rounded-lg bg-surface-tertiary">
+                <LuArrowLeft size={18} className="text-foreground" />
+              </div>
+              <span className="text-foreground font-semibold">Back to connections</span>
+            </Link>
           )}
           <div className="h-4" />
 
