@@ -3,13 +3,17 @@ const DatasetController = require("../../../../controllers/DatasetController");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
+const {
+  removeCompiledMetricAccumulation,
+  repairSourceDatasetIntent,
+} = require("./sourceIntentRepair");
 const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
 
 async function createTemporaryChart(payload) {
-  const {
+  let {
     connection_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
@@ -33,7 +37,24 @@ async function createTemporaryChart(payload) {
   try {
     const normalizedTeamId = normalizeTeamId(team_id);
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
-    requireSupportedSourceForConnection(connection);
+    const source = requireSupportedSourceForConnection(connection);
+
+    const repairedPayload = repairSourceDatasetIntent(source, {
+      name,
+      question: payload.question,
+      configuration,
+      spec,
+    });
+    configuration = repairedPayload.configuration;
+    spec = repairedPayload.spec || spec;
+    const chartSanitization = removeCompiledMetricAccumulation({
+      configuration,
+      type,
+      subType,
+      spec,
+    });
+    subType = chartSanitization.subType;
+    spec = chartSanitization.spec;
 
     // Find the temporary preview project for this team
     const ghostProject = await db.Project.findOne({
@@ -144,6 +165,10 @@ async function createTemporaryChart(payload) {
       project_id: ghostProject.id,
       is_temporary: true,
       snapshot,
+      intent_repair: repairedPayload.intentRepair,
+      chart_sanitization: chartSanitization.accumulationRemoved
+        ? { removedAccumulation: true }
+        : null,
     };
   } catch (error) {
     throw new Error(`Temporary chart creation failed: ${error.message}`);

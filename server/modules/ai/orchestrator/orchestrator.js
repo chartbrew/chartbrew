@@ -54,6 +54,14 @@ const {
   createTemporaryChart,
   moveChartToDashboard,
   disambiguate,
+  sourceGetCapabilities,
+  sourceGetSampleData,
+  sourceListResources,
+  sourceListTemplates,
+  sourceRecommendTemplates,
+  stripeOfficialPlanDataset,
+  stripeOfficialPreviewConfiguration,
+  stripeOfficialValidateConfiguration,
 } = require("./tools");
 const { chartColors } = require("../../../charts/colors");
 
@@ -73,6 +81,14 @@ const TEAM_SCOPED_TOOLS = new Set([
   "update_chart",
   "create_temporary_chart",
   "move_chart_to_dashboard",
+  "source_get_capabilities",
+  "source_list_resources",
+  "source_get_sample_data",
+  "source_list_templates",
+  "source_recommend_templates",
+  "stripe_official_plan_dataset",
+  "stripe_official_validate_configuration",
+  "stripe_official_preview_configuration",
 ]);
 
 async function availableTools() {
@@ -111,6 +127,102 @@ async function availableTools() {
       //   entities:[{ name, kind, columns:[{name,type}], stats?:{rowCount?} }],
       //   samples?:{ [entity]: [{}...] }
       // }
+    },
+    {
+      name: "source_get_capabilities",
+      description: "Get source-owned AI capabilities, source instructions, caveats, and supported workflow modes for a connection.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" }
+        },
+        required: ["connection_id"]
+      }
+    },
+    {
+      name: "source_list_resources",
+      description: "List source-owned resources, metrics, dimensions, filters, and compiled metrics for a connection.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" }
+        },
+        required: ["connection_id"]
+      }
+    },
+    {
+      name: "source_get_sample_data",
+      description: "Fetch a small capped source-owned sample for resource exploration. Use only for read-only previews.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          resource: { type: "string" },
+          row_limit: { type: "integer", default: 5 }
+        },
+        required: ["connection_id", "resource"]
+      }
+    },
+    {
+      name: "source_list_templates",
+      description: "List source-owned chart template packs and template summaries for a connection.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" }
+        },
+        required: ["connection_id"]
+      }
+    },
+    {
+      name: "source_recommend_templates",
+      description: "Recommend source-owned templates that match the user's business goal.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          question: { type: "string" }
+        },
+        required: ["connection_id", "question"]
+      }
+    },
+    {
+      name: "stripe_official_plan_dataset",
+      description: "Plan a Stripe Official DataRequest.configuration and chart bindings from a natural-language Stripe metric request. Returns configuration, output fields, warnings, and a chartSpec. Use this for Stripe Official instead of generate_query. REQUIRED for MRR, ARR, ARPA, churn, net cash flow, and LTV because those must use compiled_metric configurations.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          question: { type: "string" },
+          overrides: { type: "object", description: "Optional explicit Stripe configuration overrides such as dateRange, currency, filters, pagination, mode, metric, dimension, or compiledMetric." }
+        },
+        required: ["connection_id", "question"]
+      }
+    },
+    {
+      name: "stripe_official_validate_configuration",
+      description: "Validate a Stripe Official DataRequest.configuration before previewing or creating a dataset.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          configuration: { type: "object" }
+        },
+        required: ["connection_id", "configuration"]
+      }
+    },
+    {
+      name: "stripe_official_preview_configuration",
+      description: "Run a capped preview for a Stripe Official DataRequest.configuration and return compact rows, columns, warnings, and recommended chart bindings.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          configuration: { type: "object" },
+          row_limit: { type: "integer", default: 25 }
+        },
+        required: ["connection_id", "configuration"]
+      }
     },
     {
       name: "generate_query",
@@ -155,13 +267,14 @@ async function availableTools() {
         properties: {
           connection_id: { type: "string" },
           dialect: { type: "string", enum: supportedDialectIds },
-          query: { type: "string" },
+          query: { type: "string", description: "Read-only query for query-based sources" },
+          configuration: { type: "object", description: "Configuration for source-owned non-query execution such as Stripe Official" },
           params: { type: "object" },
           row_limit: { type: "integer", default: 1000 },
           timeout_ms: { type: "integer", default: 8000 },
           allow_ddl_dml: { type: "boolean", default: false } // must be false; server enforces
         },
-        required: ["connection_id", "dialect", "query"]
+        required: ["connection_id", "dialect"]
       }
       // returns: { rows:[{}], columns:[{name,type}], rowCount, elapsedMs }
     },
@@ -202,7 +315,7 @@ async function availableTools() {
           project_id: { type: "string", description: "Project ID where the dataset will be created" },
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           name: { type: "string", description: "Canonical dataset name stored on Dataset.name" },
-          query: { type: "string", description: "Source query for the dataset" },
+          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources such as Stripe Official." },
           configuration: { type: "object", description: "DataRequest dialect-specific settings" },
           variables: {
             type: "array",
@@ -212,7 +325,7 @@ async function availableTools() {
           },
           transform: { type: "object", description: "Data transformation rules" }
         },
-        required: ["connection_id", "name", "query"]
+        required: ["connection_id", "name"]
       }
       // returns: { dataset_id, data_request_id, name, dataset_url }
     },
@@ -405,7 +518,7 @@ async function availableTools() {
           },
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
           dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
-          query: { type: "string", description: "Source query for the dataset" },
+          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources such as Stripe Official." },
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
           configuration: { type: "object", description: "DataRequest dialect-specific settings for the reusable dataset" },
           variables: {
@@ -419,7 +532,7 @@ async function availableTools() {
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
-        required: ["connection_id", "name", "xAxis", "yAxis", "query"]
+        required: ["connection_id", "name"]
       }
       // returns: {
       //   chart_id, dataset_id, data_request_id, name, type,
@@ -489,6 +602,22 @@ async function callTool(name, payload) {
         return moveChartToDashboard(payload);
       case "disambiguate":
         return disambiguate(payload);
+      case "source_get_capabilities":
+        return sourceGetCapabilities(payload);
+      case "source_list_resources":
+        return sourceListResources(payload);
+      case "source_get_sample_data":
+        return sourceGetSampleData(payload);
+      case "source_list_templates":
+        return sourceListTemplates(payload);
+      case "source_recommend_templates":
+        return sourceRecommendTemplates(payload);
+      case "stripe_official_plan_dataset":
+        return stripeOfficialPlanDataset(payload);
+      case "stripe_official_validate_configuration":
+        return stripeOfficialValidateConfiguration(payload);
+      case "stripe_official_preview_configuration":
+        return stripeOfficialPreviewConfiguration(payload);
       default:
         throw new Error(`Tool ${name} not found`);
     }
@@ -524,10 +653,10 @@ This is a continuing conversation. Be aware of previous interactions and maintai
 ## Available Connections
 ${supportedConnections.map(({ connection, source }) => `- ${connection.name} (${source.name}; ${connection.type}${connection.subType ? `/${connection.subType}` : ""}) [ID: ${connection.id}]`).join("\n")}
 
-Note: Currently only source plugins that declare AI query generation support are available to the orchestrator:
+Note: Source plugins that declare AI query generation or source-owned AI tools are available to the orchestrator:
 ${formatSupportedSourceBullets()}
 
-API connections and other sources will be available when their source plugins declare AI query generation support.
+API connections and other sources will be available when their source plugins declare AI support.
 
 ## Available Projects
 ${projects.map((p) => `- ${p.name} [ID: ${p.id}] - ${p.Charts?.length || 0} charts`).join("\n")}
@@ -548,6 +677,7 @@ ${ENTITY_CREATION_RULES}
 - List and identify appropriate supported source connections
 - Retrieve database schemas with tables, columns, and sample data
 - Generate source queries from natural language for supported sources
+- Use source-owned AI tools for configuration-based sources such as Stripe Official
 - Execute source queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
@@ -578,6 +708,14 @@ ${ENTITY_CREATION_RULES}
      * Call run_query to execute the SQL and get results
      * Summarize the results
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
+   - For Stripe Official connections:
+     * Call source_get_capabilities or source_list_resources when you need Stripe context
+     * Call stripe_official_plan_dataset with the user's business question
+     * MRR, ARR, ARPA, churn rates, net cash flow, and customer lifetime value MUST use the compiled_metric configuration returned by stripe_official_plan_dataset. Never substitute net revenue, gross revenue, payment counts, invoices, refunds, or balance transactions for these business metrics.
+     * Call stripe_official_preview_configuration when you need rows before answering
+     * For charts, pass the planned configuration to create_temporary_chart by default
+     * If the user explicitly names a dashboard/project, create the dataset with create_dataset and then place the chart with create_chart using the planned chartSpec bindings
+     * Never use generate_query or fake API routes for Stripe Official
 
 2. When creating charts - CRITICAL CHART PLACEMENT RULES:
    

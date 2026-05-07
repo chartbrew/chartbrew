@@ -1,5 +1,6 @@
 const path = require("path");
 
+const stripeOfficialAi = require("./ai/stripeOfficial.ai");
 const stripeOfficialProtocol = require("./stripeOfficial.protocol");
 
 module.exports = {
@@ -31,15 +32,16 @@ module.exports = {
       dashboards: false,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
       hasSourceInstructions: true,
-      hasTools: false,
+      hasTools: true,
     },
   },
 
   backend: {
     ...stripeOfficialProtocol,
+    ai: stripeOfficialAi,
   },
 
   templates: {

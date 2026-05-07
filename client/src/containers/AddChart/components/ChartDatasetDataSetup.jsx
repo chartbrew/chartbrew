@@ -40,6 +40,21 @@ function ChartDatasetDataSetup({
 
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
+  const sourceDataRequest = dataset?.DataRequests?.find((dr) => (
+    dr?.configuration?.source
+    || dr?.Connection?.subType === "stripeOfficial"
+    || dr?.Connection?.type === "stripeOfficial"
+  ));
+  const sourceConfiguration = sourceDataRequest?.configuration || {};
+  const sourceType = sourceConfiguration.source
+    || sourceDataRequest?.Connection?.subType
+    || sourceDataRequest?.Connection?.type;
+  const isStripeOfficialDataset = sourceType === "stripeOfficial";
+  const isStripeCompiledMetric = isStripeOfficialDataset
+    && sourceConfiguration.mode === "compiled_metric";
+  const compiledMetricLabel = sourceConfiguration.compiledMetric
+    ? sourceConfiguration.compiledMetric.replace(/_/g, " ").toUpperCase()
+    : "Compiled metric";
 
   useEffect(() => {
     if (!dataset?.id || !teamId || datasetResponse || loadingFields) return;
@@ -234,6 +249,21 @@ function ChartDatasetDataSetup({
       <Text b>Data setup</Text>
       <div className="h-2" />
 
+      {isStripeOfficialDataset ? (
+        <div className="rounded-lg border border-divider bg-content2/40 p-3">
+          <div className="text-sm font-medium">
+            {isStripeCompiledMetric ? "Stripe Official compiled metric" : "Stripe Official dataset"}
+          </div>
+          <div className="text-sm text-foreground-500">
+            {isStripeCompiledMetric ? compiledMetricLabel : "Configure source fields from the dataset editor."}
+          </div>
+        </div>
+      ) : fieldOptions.length === 0 ? (
+        <div className="rounded-lg border border-divider bg-content2/40 p-3 text-sm text-foreground-500">
+          {loadingFields ? "Loading dataset fields..." : "No dataset fields available."}
+        </div>
+      ) : (
+        <>
       <Autocomplete
         placeholder="Select dimension"
         value={cdc.xAxis || null}
@@ -388,6 +418,8 @@ function ChartDatasetDataSetup({
         fieldOptions={fieldOptions}
         dataset={filterDataset}
       />
+        </>
+      )}
     </div>
   );
 }

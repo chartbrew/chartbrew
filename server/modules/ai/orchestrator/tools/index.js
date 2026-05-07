@@ -12,6 +12,18 @@ const updateChart = require("./updateChart");
 const createTemporaryChart = require("./createTemporaryChart");
 const moveChartToDashboard = require("./moveChartToDashboard");
 const disambiguate = require("./disambiguate");
+const {
+  sourceGetCapabilities,
+  sourceGetSampleData,
+  sourceListResources,
+  sourceListTemplates,
+  sourceRecommendTemplates,
+} = require("./sourceTools");
+const {
+  stripeOfficialPlanDataset,
+  stripeOfficialPreviewConfiguration,
+  stripeOfficialValidateConfiguration,
+} = require("./stripeOfficialTools");
 
 // Export all tool functions
 module.exports = {
@@ -29,4 +41,12 @@ module.exports = {
   createTemporaryChart,
   moveChartToDashboard,
   disambiguate,
+  sourceGetCapabilities,
+  sourceGetSampleData,
+  sourceListResources,
+  sourceListTemplates,
+  sourceRecommendTemplates,
+  stripeOfficialPlanDataset,
+  stripeOfficialPreviewConfiguration,
+  stripeOfficialValidateConfiguration,
 };

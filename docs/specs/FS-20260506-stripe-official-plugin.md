@@ -184,10 +184,54 @@ Resource metadata should drive the builder:
 
 Each resource schema declares date fields, metrics, dimensions, filters, supported query modes, expandable fields, and default raw-table columns.
 
+## AI Layer Checklist
+- [x] Declare Stripe Official AI capabilities in `server/sources/plugins/stripeOfficial/stripeOfficial.plugin.js`, including source instructions, available tools, and whether the source can generate Stripe dataset configurations.
+- [x] Add source-owned AI helper modules under `server/sources/plugins/stripeOfficial/ai/` instead of embedding Stripe-specific behavior directly in `server/modules/ai/orchestrator/orchestrator.js`.
+- [x] Define compact Stripe AI instructions that teach the orchestrator the Stripe-specific concepts: resources, compiled metrics, cents/currency handling, live/test mode, date fields, pagination caps, template caveats, and Search API limits.
+- [x] Expose read-only Stripe tools through a controlled orchestrator adapter:
+  - [x] `source.getCapabilities` for supported Stripe modes, resources, metrics, dimensions, filters, compiled metrics, and caveats.
+  - [x] `source.listResources` for payment intents, charges, balance transactions, customers, subscriptions, invoices, refunds, payouts, prices, and subscription items.
+  - [x] `source.getSchema` for builder/resource metadata without dumping raw Stripe objects.
+  - [x] `source.getSampleData` for small, capped previews using the existing Stripe protocol execution path.
+  - [x] `source.listTemplates` for registered `starter-metrics` and `compiled-metrics` template packs.
+  - [x] `source.recommendTemplates` to map user goals such as revenue, churn, payments, subscriptions, invoices, refunds, and cash flow to template ids.
+- [x] Expose Stripe query-planning tools that return `DataRequest.configuration` objects, not API routes:
+  - [x] `stripeOfficial.planDataset` to translate a natural-language metric request into a validated aggregate, raw table, or compiled metric configuration.
+  - [x] `stripeOfficial.validateConfiguration` to reuse the Stripe protocol validator and return actionable errors/warnings.
+  - [x] `stripeOfficial.previewConfiguration` to execute a capped preview and return rows, columns, warnings, and recommended chart bindings.
+- [x] Add create helpers only behind explicit user intent:
+  - [x] Create a reusable Stripe dataset from a planned configuration.
+  - [x] Create a temporary chart from a planned or previewed Stripe dataset.
+  - [x] Create or add selected Stripe template charts to a dashboard when the user explicitly requests dashboard placement.
+- [x] Support orchestrator chart placement for Stripe Official datasets:
+  - [x] Resolve the target dashboard/project from the user's explicit id or name and refuse ambiguous matches instead of guessing.
+  - [x] Create the Stripe dataset/data request first, then create the chart with the correct ChartDatasetConfig bindings for the planned Stripe output fields.
+  - [x] Place charts directly in the requested dashboard through `create_chart` when the user asks for placement.
+  - [x] Use `create_temporary_chart` by default when the user asks to visualize data but does not name a target dashboard.
+  - [x] Allow moving a temporary Stripe chart to a dashboard through the existing `move_chart_to_dashboard` flow when the user confirms placement later.
+  - [x] Return the created chart id, dataset id, dashboard/project id, and dashboard URL so the user can open the result.
+- [x] Update generic orchestrator tool schemas where needed so `create_dataset`, `suggest_chart`, `create_temporary_chart`, and `create_chart` can work with non-SQL Stripe Official configurations without requiring a fake query string.
+- [x] Ensure `list_connections`, source support checks, capability responses, and entity-creation rules include `stripeOfficial` only when its AI capabilities are enabled.
+- [x] Keep all Stripe AI execution team-scoped and connection-scoped; every tool must validate `team_id`, `connection_id`, plugin id/type/subType, source enablement, and user access before calling Stripe protocol code.
+- [x] Keep Stripe tool outputs small and structured: no secret keys, no full raw objects by default, no unbounded lists, and warnings when previews hit `maxRecords`.
+- [x] Add tests for Stripe AI capabilities, tool registration, team scoping, configuration planning, validation errors, template recommendation, preview caps, and non-SQL dataset/chart creation paths.
+- [x] Add an anti-hallucination harness and repair path for compiled business metrics so MRR, ARR, churn, net cash flow, and LTV requests cannot be planned or persisted as generic revenue aggregates.
+- [x] Add a KPI accumulation guard so compiled Stripe business metrics such as current MRR do not use `AddTimeseries`; KPI charts should display the latest computed value.
+- [ ] Add orchestrator prompt/response tests for representative user requests:
+  - [ ] Answer "What was net revenue last month?" from balance transactions.
+  - [ ] Create a revenue-over-time temporary chart.
+  - [ ] Create a revenue-over-time chart and place it in a named dashboard.
+  - [ ] Move a temporary Stripe chart into a dashboard after user confirmation.
+  - [ ] Recommend subscription/churn templates.
+  - [ ] Create a compiled MRR chart with caveats.
+  - [ ] Refuse unsupported/accounting-grade claims and explain limitations.
+- [ ] Add documentation or inline examples showing the expected Stripe AI tool call flow from question -> connection/resource discovery -> configuration plan -> preview -> dataset/chart creation.
+
 ## Acceptance Criteria
 - A user can connect Stripe with a restricted key, test it, and see a Stripe-specific next-step screen.
 - Selecting v1 templates creates reusable datasets and charts without exposing API request details.
 - A user can manually create an aggregated Stripe dataset and a raw Stripe table dataset.
+- The orchestrator can create Stripe Official datasets/charts and place charts in a requested dashboard when the target dashboard is explicit.
 - Runtime refresh uses the `stripeOfficial` protocol and respects variables, filters, pagination caps, and warnings.
 - Existing `stripe` API-backed connections and templates keep working unchanged.
 
@@ -211,6 +255,9 @@ Each resource schema declares date fields, metrics, dimensions, filters, support
 - [x] Builder test preview: run the saved Stripe request, keep runtime metadata/warnings, and render returned rows in a dynamic HeroUI table instead of a hard-coded preview.
 - [x] Next Steps pack selector: post-connect UI can switch between the registered `starter-metrics` and `compiled-metrics` packs.
 - [x] Dedicated post-connect Next Steps UI that consumes the registered Stripe template packs.
+- [x] AI layer first pass: source-owned Stripe instructions/tools, dataset planning, configuration validation/preview, config-backed dataset creation, temporary chart flow, and explicit dashboard placement support.
+- [x] AI anti-hallucination harness, runtime guardrails, and auto-repair path for Stripe compiled business metrics.
+- [x] AI KPI accumulation guard for Stripe compiled business metrics.
 - [ ] Browser flow verification.
 
 ## References

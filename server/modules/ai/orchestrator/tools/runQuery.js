@@ -5,7 +5,7 @@ const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
 async function runQuery(payload) {
   const {
-    connection_id, query, row_limit = 1000, timeout_ms = 8000, team_id
+    connection_id, query, configuration = null, row_limit = 1000, timeout_ms = 8000, team_id
   } = payload;
 
   if (!team_id) {
@@ -15,27 +15,34 @@ async function runQuery(payload) {
   const normalizedTeamId = normalizeTeamId(team_id);
   const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
 
-  // Validate that the query is read-only (whole words only)
-  const forbiddenKeywords = ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE"];
-  const upperQuery = query.toUpperCase();
-  const hasForbiddenKeyword = forbiddenKeywords.some((keyword) => {
-    // Use word boundaries to avoid false positives
-    const regex = new RegExp(`\\b${keyword}\\b`, "i");
-    return regex.test(upperQuery);
-  });
-
-  if (hasForbiddenKeyword) {
-    throw new Error("Only read-only queries (SELECT) are allowed");
-  }
-
   try {
     const startTime = Date.now();
     const source = requireSupportedSourceForConnection(connection);
+    const isConfigurationRequest = !query && configuration && typeof configuration === "object";
+
+    if (!query && !isConfigurationRequest) {
+      throw new Error("query or configuration is required");
+    }
 
     // Add LIMIT clause if not present to respect row_limit
-    let limitedQuery = query.trim();
-    if (!upperQuery.includes("LIMIT") && ["postgres", "mysql", "clickhouse"].includes(source.type)) {
-      limitedQuery = `${limitedQuery.replace(/;$/, "")} LIMIT ${row_limit}`;
+    let limitedQuery = query ? query.trim() : null;
+    if (limitedQuery) {
+      // Validate that the query is read-only (whole words only)
+      const forbiddenKeywords = ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE"];
+      const upperQuery = limitedQuery.toUpperCase();
+      const hasForbiddenKeyword = forbiddenKeywords.some((keyword) => {
+        // Use word boundaries to avoid false positives
+        const regex = new RegExp(`\\b${keyword}\\b`, "i");
+        return regex.test(upperQuery);
+      });
+
+      if (hasForbiddenKeyword) {
+        throw new Error("Only read-only queries (SELECT) are allowed");
+      }
+
+      if (!upperQuery.includes("LIMIT") && ["postgres", "mysql", "clickhouse"].includes(source.type)) {
+        limitedQuery = `${limitedQuery.replace(/;$/, "")} LIMIT ${row_limit}`;
+      }
     }
 
     // Create a temporary Dataset and DataRequest for proper database relationships
@@ -51,6 +58,7 @@ async function runQuery(payload) {
       dataset_id: tempDataset.id,
       connection_id,
       query: limitedQuery,
+      configuration,
       method: "GET",
       useGlobalHeaders: true,
     });
