@@ -50,7 +50,7 @@ describe("source registry", () => {
       id: "stripe",
       type: "api",
       subType: "stripe",
-      name: "Stripe",
+      name: "Stripe Legacy",
       availability: {
         server: {
           enabled: true,
@@ -112,7 +112,7 @@ describe("source registry", () => {
     })).toBe(false);
     expect(() => assertSourceServerEnabled(source, {
       CB_DISABLED_SERVER_SOURCES: "stripe",
-    })).toThrow("Stripe is disabled on this server.");
+    })).toThrow("Stripe Legacy is disabled on this server.");
   });
 
   it("resolves the generic API source by id", () => {
@@ -972,7 +972,7 @@ describe("source registry", () => {
       expect(() => runSourceDataRequest({
         connection: { type: "api", subType: "stripe" },
         dataRequest: { id: 1 },
-      })).toThrow("Stripe is disabled on this server.");
+      })).toThrow("Stripe Legacy is disabled on this server.");
       expect(runSpy).not.toHaveBeenCalled();
     } finally {
       stripeSource.availability = originalAvailability;
@@ -988,7 +988,7 @@ describe("source registry", () => {
     expect(() => runSourceDataRequest({
       connection: { type: "api", subType: "stripe" },
       dataRequest: { id: 1 },
-    })).toThrow("Stripe is disabled on this server.");
+    })).toThrow("Stripe Legacy is disabled on this server.");
     expect(runSpy).not.toHaveBeenCalled();
   });
 

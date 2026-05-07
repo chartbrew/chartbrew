@@ -4,11 +4,11 @@ import moment from "moment";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import {
-  Button, Chip, ProgressCircle, EmptyState, InputGroup, Table, TextField, cn,
+  Accordion, Button, Chip, ProgressCircle, EmptyState, InputGroup, Table, TextField, cn,
   Tabs,
 } from "@heroui/react";
 import {
-  LuChartArea, LuChevronDown, LuLayers, LuLayoutTemplate, LuPlugZap, LuPlus, LuSearch,
+  LuChartArea, LuChevronDown, LuLayers, LuLayoutTemplate, LuPlug, LuPlugZap, LuPlus, LuSearch,
 } from "react-icons/lu";
 
 import canAccess from "../../../config/canAccess";
@@ -26,7 +26,7 @@ import {
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import HeroPaginationNav from "../../../components/HeroPaginationNav";
-import ChartTemplateSetup from "../../Connections/components/ChartTemplateSetup";
+import { findSourceForConnection } from "../../../sources";
 
 const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
   ...acc,
@@ -38,9 +38,10 @@ const connectionTypeLabels = availableConnections.reduce((acc, connection) => ({
   plausible: "Plausible",
   simpleanalytics: "Simple Analytics",
   strapi: "Strapi",
-  stripe: "Stripe",
+  stripe: "Stripe Legacy",
   supabase: "Supabase",
   supabaseapi: "Supabase API",
+  stripeOfficial: "Stripe",
 });
 
 const _formatConnectionType = (type) => {
@@ -72,7 +73,7 @@ function ChartDescription(props) {
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("datasets");
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [expandedTemplateKeys, setExpandedTemplateKeys] = useState(new Set());
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -211,28 +212,18 @@ function ChartDescription(props) {
     onCreateFromDataset(dataset);
   };
 
-  const _onSelectTemplate = async (template) => {
+  const _onCreateTemplateConnection = (template) => {
     if (!template?.isAvailable) {
       navigate(`/connections/new?type=${template.requiredConnection?.subType || template.source}`);
-      return;
     }
-    if (!template.connection || !projectId || isBusy || !canCreateDataset) return;
+  };
 
-    if (selectedTemplate?.id === template.id) {
-      dispatch(clearChartTemplateResult());
-      setSelectedTemplate(null);
-      return;
-    }
-
+  const _onExpandedTemplatesChange = (keys) => {
     dispatch(clearChartTemplateResult());
-    setSelectedTemplate(template);
+    setExpandedTemplateKeys(keys);
   };
 
-  const _getTemplateCta = (template) => {
-    if (!template.isAvailable) return "Create connection";
-    if (!canCreateDataset) return "Admin access required";
-    return "Use template";
-  };
+  const _getTemplateKey = (template) => template.id || `${template.source}-${template.slug}`;
 
   const _renderTemplateList = () => (
     <div className="rounded-3xl border border-divider">
@@ -249,58 +240,125 @@ function ChartDescription(props) {
         </EmptyState>
       )}
 
-      {filteredTemplates.map((template) => {
-        const isUnavailable = !template.isAvailable;
-        const connectionLabel = _formatConnectionType(template.requiredConnection?.subType || template.source);
-        const isSelectedTemplate = selectedTemplate?.id === template.id;
+      {filteredTemplates.length > 0 && (
+        <Accordion
+          className="w-full"
+          expandedKeys={expandedTemplateKeys}
+          variant="surface"
+          onExpandedChange={_onExpandedTemplatesChange}
+        >
+          {filteredTemplates.map((template) => {
+            const templateKey = _getTemplateKey(template);
+            const isUnavailable = !template.isAvailable;
+            const connectionLabel = _formatConnectionType(template.requiredConnection?.subType || template.source);
+            const isExpanded = expandedTemplateKeys.has(templateKey);
+            const templateSource = template.connection ? findSourceForConnection(template.connection) : null;
+            const TemplateChartSetup = templateSource?.frontend?.ChartTemplateSetup;
+            const canRenderTemplateSetup = isExpanded
+              && template.connection
+              && projectId
+              && canCreateDataset
+              && TemplateChartSetup;
 
-        return (
-          <div
-            key={`${template.source}-${template.slug}`}
-            className={cn(
-              "flex flex-col gap-4 border-b border-divider p-4 rounded-3xl last:border-b-0 md:flex-row md:items-center md:justify-between",
-              isUnavailable ? "bg-content2/20" : "bg-surface"
-            )}
-          >
-            <div className={cn("flex min-w-0 flex-1 flex-row gap-3", isUnavailable ? "opacity-60" : "")}>
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40 text-foreground-500">
-                {isUnavailable ? <LuPlugZap size={18} /> : <LuChartArea size={18} />}
-              </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground">{template.name}</span>
-                  <Chip size="sm" variant={template.isAvailable ? "soft" : "secondary"}>
-                    {connectionLabel}
-                  </Chip>
-                  {template.connection && (
-                    <Chip size="sm" variant="secondary">
-                      {template.connection.name}
-                    </Chip>
-                  )}
-                </div>
-                <div className="mt-1 text-sm text-foreground-500">
-                  {template.description}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs text-foreground-500">
-                  <span>{`${template.datasets?.length || 0} datasets`}</span>
-                  <span>{`${template.charts?.length || 0} charts`}</span>
-                </div>
-              </div>
-            </div>
+            return (
+              <Accordion.Item
+                key={templateKey}
+                id={templateKey}
+                className={cn(
+                  "rounded-3xl",
+                  isUnavailable ? "bg-content2/20" : "bg-surface"
+                )}
+              >
+                <Accordion.Heading>
+                  <Accordion.Trigger className="flex w-full items-start gap-3 p-4 text-left">
+                    <span
+                      className={cn(
+                        "flex size-10 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40 text-foreground-500",
+                        isUnavailable ? "opacity-60" : ""
+                      )}
+                    >
+                      {isUnavailable ? <LuPlugZap size={18} /> : <LuChartArea size={18} />}
+                    </span>
+                    <span className={cn("flex min-w-0 flex-1 flex-col gap-2", isUnavailable ? "opacity-60" : "")}>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">{template.name}</span>
+                        <Chip size="sm" variant={template.isAvailable ? "soft" : "secondary"}>
+                          {connectionLabel}
+                        </Chip>
+                        {template.connection && (
+                          <Chip size="sm" variant="soft" color="accent">
+                            <LuPlug size={14} />
+                            <Chip.Label>{template.connection.name}</Chip.Label>
+                          </Chip>
+                        )}
+                      </span>
+                      <span className="flex flex-wrap gap-2 text-xs text-foreground-500">
+                        <span>{`${template.datasets?.length || 0} datasets`}</span>
+                        <span>{`${template.charts?.length || 0} charts`}</span>
+                      </span>
+                    </span>
+                    <Accordion.Indicator className="mt-1 text-muted">
+                      <LuChevronDown size={16} />
+                    </Accordion.Indicator>
+                  </Accordion.Trigger>
+                </Accordion.Heading>
+                <Accordion.Panel>
+                  <Accordion.Body className="px-4 pb-4 pt-0">
+                    <div className="flex flex-col gap-4">
+                      <div className="text-sm text-foreground-500">
+                        {template.description}
+                      </div>
+                      <div className="flex flex-row flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap gap-2 text-xs text-foreground-500">
+                          <Chip size="sm" variant="secondary">
+                            <Chip.Label>{`${template.datasets?.length || 0} datasets`}</Chip.Label>
+                          </Chip>
+                          <Chip size="sm" variant="secondary">
+                            <Chip.Label>{`${template.charts?.length || 0} charts`}</Chip.Label>
+                          </Chip>
+                        </div>
+                        {isUnavailable && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onPress={() => _onCreateTemplateConnection(template)}
+                            isDisabled={isBusy}
+                          >
+                            <LuPlugZap size={16} />
+                            Create connection
+                          </Button>
+                        )}
+                        {!isUnavailable && !canCreateDataset && (
+                          <Chip size="sm" variant="secondary">
+                            <Chip.Label>Admin access required</Chip.Label>
+                          </Chip>
+                        )}
+                      </div>
 
-            <Button
-              size="sm"
-              variant={template.isAvailable ? "primary" : "secondary"}
-              onPress={() => _onSelectTemplate(template)}
-              isDisabled={isBusy || (template.isAvailable && !canCreateDataset)}
-              className="md:w-auto"
-            >
-              {isUnavailable ? <LuPlugZap size={16} /> : <LuChevronDown size={16} />}
-              {isSelectedTemplate ? "Selected" : _getTemplateCta(template)}
-            </Button>
-          </div>
-        );
-      })}
+                      {canRenderTemplateSetup && (
+                        <div className="border-t border-divider pt-4">
+                          <TemplateChartSetup
+                            connection={template.connection}
+                            error={templateError || null}
+                            fixedProjectId={projectId}
+                            loading={templateLoading}
+                            projects={projects}
+                            result={templateResult}
+                            teamId={team.id}
+                            template={template}
+                            templates={[template]}
+                            title={`Create from ${template.name}`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </Accordion.Body>
+                </Accordion.Panel>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion>
+      )}
     </div>
   );
 
@@ -338,6 +396,9 @@ function ChartDescription(props) {
             <Tabs.Tab id="templates">
               <Tabs.Indicator />
               Templates
+              <Chip size="sm" variant="soft" color="accent" className="ml-2">
+                <Chip.Label>New!</Chip.Label>
+              </Chip>
             </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
@@ -369,23 +430,6 @@ function ChartDescription(props) {
       <div className="h-4" />
 
       {activeTab === "templates" && _renderTemplateList()}
-
-      {activeTab === "templates" && selectedTemplate && (
-        <>
-          <div className="h-4" />
-          <ChartTemplateSetup
-            connection={selectedTemplate.connection}
-            error={templateError || null}
-            fixedProjectId={projectId}
-            loading={templateLoading}
-            projects={projects}
-            result={templateResult}
-            teamId={team.id}
-            template={selectedTemplate}
-            title={`Create from ${selectedTemplate.name}`}
-          />
-        </>
-      )}
 
       {activeTab === "datasets" && (
         <div className="rounded-3xl">

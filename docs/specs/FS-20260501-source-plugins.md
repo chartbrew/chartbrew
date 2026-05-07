@@ -239,10 +239,10 @@ Primary files:
     - `client/src/sources/stripe/stripe-connection-form.jsx`
     - `client/src/sources/customerio/customerio-connection-form.jsx`
 - `client/src/containers/Connections/ConnectionNextSteps.jsx`
-  - Hardcodes Stripe template setup when `connection.subType === "stripe"`.
+  - Resolves chart-template setup from `source.frontend.ChartTemplateSetup`.
   - Otherwise renders generic next steps.
-- `client/src/containers/Connections/components/ChartTemplateSetup.jsx`
-  - UI for chart-template selection and creation.
+- `client/src/sources/stripe/stripe-template-setup.jsx`
+  - Stripe Legacy UI for chart-template selection and creation.
 
 ### Frontend dataset/data request builder
 

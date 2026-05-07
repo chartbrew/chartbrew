@@ -5,7 +5,7 @@ const stripeSource = {
   id: "stripe",
   type: "api",
   subType: "stripe",
-  name: "Stripe",
+  name: "Stripe Legacy",
   category: "payments",
   capabilities: {
     ai: { canGenerateQueries: false },

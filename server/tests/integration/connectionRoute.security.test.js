@@ -285,7 +285,7 @@ describe("ConnectionRoute project scoping", () => {
     expect(response.body).toEqual({
       code: "SOURCE_DISABLED",
       sourceId: "stripe",
-      message: "Stripe is disabled on this server.",
+      message: "Stripe Legacy is disabled on this server.",
     });
     expect(previewSpy).not.toHaveBeenCalled();
     expect(apiTestSpy).not.toHaveBeenCalled();

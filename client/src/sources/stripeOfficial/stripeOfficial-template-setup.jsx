@@ -407,17 +407,20 @@ function StripeOfficialTemplateSetup(props) {
   const {
     connection,
     error,
+    fixedProjectId,
     loading,
     projects,
     teamId,
     templates,
+    title,
   } = props;
 
   const [dashboardMode, setDashboardMode] = useState("existing");
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(fixedProjectId ? `${fixedProjectId}` : null);
   const [newDashboardName, setNewDashboardName] = useState("Stripe Revenue");
   const [fullTemplates, setFullTemplates] = useState([]);
   const [selectedCardKeys, setSelectedCardKeys] = useState([]);
+  const [initializedCardsSignature, setInitializedCardsSignature] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [createResult, setCreateResult] = useState(null);
@@ -427,7 +430,12 @@ function StripeOfficialTemplateSetup(props) {
   const navigate = useNavigate();
 
   const visibleProjects = useMemo(() => (projects || []).filter((project) => !project.ghost), [projects]);
+  const fixedProject = visibleProjects.find((project) => `${project.id}` === `${fixedProjectId}`);
+  const templatesSignature = useMemo(() => (
+    templates.map((template) => `${template.source}:${template.slug}`).join("|")
+  ), [templates]);
   const cards = useMemo(() => buildCards(fullTemplates), [fullTemplates]);
+  const cardsSignature = useMemo(() => cards.map((card) => card.key).join("|"), [cards]);
   const selectedCards = useMemo(() => {
     return cards.filter((card) => selectedCardKeys.includes(card.key));
   }, [cards, selectedCardKeys]);
@@ -437,15 +445,22 @@ function StripeOfficialTemplateSetup(props) {
   const selectedChartCount = selectedCards.length;
 
   useEffect(() => {
-    if (!selectedProjectId && visibleProjects.length > 0) {
+    if (fixedProjectId) {
+      setDashboardMode("existing");
+      setSelectedProjectId(`${fixedProjectId}`);
+    }
+  }, [fixedProjectId]);
+
+  useEffect(() => {
+    if (!fixedProjectId && !selectedProjectId && visibleProjects.length > 0) {
       setSelectedProjectId(`${visibleProjects[0].id}`);
     }
-  }, [selectedProjectId, visibleProjects]);
+  }, [fixedProjectId, selectedProjectId, visibleProjects]);
 
   useEffect(() => {
     let isMounted = true;
 
-    if (!teamId || templates.length === 0) {
+    if (!teamId || !templatesSignature) {
       setFullTemplates([]);
       return () => {
         isMounted = false;
@@ -469,14 +484,15 @@ function StripeOfficialTemplateSetup(props) {
     return () => {
       isMounted = false;
     };
-  }, [dispatch, teamId, templates]);
+  }, [dispatch, teamId, templatesSignature]);
 
   useEffect(() => {
-    if (cards.length === 0 || selectedCardKeys.length > 0) return;
+    if (cards.length === 0 || initializedCardsSignature === cardsSignature) return;
 
     const recommendedCards = cards.filter((card) => card.recommended);
     setSelectedCardKeys((recommendedCards.length > 0 ? recommendedCards : cards).map((card) => card.key));
-  }, [cards, selectedCardKeys.length]);
+    setInitializedCardsSignature(cardsSignature);
+  }, [cards, cardsSignature, initializedCardsSignature]);
 
   const _toggleCard = (cardKey) => {
     setSelectedCardKeys((currentKeys) => (
@@ -494,6 +510,16 @@ function StripeOfficialTemplateSetup(props) {
     }
 
     setSelectedCardKeys(uniq([...selectedCardKeys, ...groupCards.map((card) => card.key)]));
+  };
+
+  const _selectAllCards = () => {
+    setSelectedCardKeys(cards.map((card) => card.key));
+    setInitializedCardsSignature(cardsSignature);
+  };
+
+  const _deselectAllCards = () => {
+    setSelectedCardKeys([]);
+    setInitializedCardsSignature(cardsSignature);
   };
 
   const _createSelected = async (mode) => {
@@ -567,10 +593,20 @@ function StripeOfficialTemplateSetup(props) {
         <Surface className="rounded-3xl border border-divider p-5" variant="default">
           <div className="flex flex-col gap-5">
             <div>
-              <p className="text-xl font-semibold">What do you want to track?</p>
-              <p className="text-sm text-foreground-500">
+              <p className="font-semibold">{title || "What do you want to track?"}</p>
+              <p className="text-sm text-muted">
                 Choose Stripe metrics and Chartbrew will create the matching datasets and charts.
               </p>
+              {!isLoadPending && cards.length > 0 && (
+                <div className="mt-3 flex flex-row flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" onPress={_selectAllCards}>
+                    Select all
+                  </Button>
+                  <Button size="sm" variant="tertiary" onPress={_deselectAllCards}>
+                    Deselect all
+                  </Button>
+                </div>
+              )}
             </div>
 
             {(error || createError) && (
@@ -650,62 +686,70 @@ function StripeOfficialTemplateSetup(props) {
 
               <div className="flex flex-col gap-3">
                 <p className="text-sm font-semibold">Add selected to</p>
-                <Tabs
-                  selectedKey={dashboardMode}
-                  onSelectionChange={(key) => setDashboardMode(key)}
-                  className="w-full"
-                >
-                  <Tabs.ListContainer>
-                    <Tabs.List>
-                      <Tabs.Tab id="existing">
-                        Existing
-                        <Tabs.Indicator />
-                      </Tabs.Tab>
-                      <Tabs.Tab id="new">
-                        New
-                        <LuPlus size={16} className="ml-2" />
-                        <Tabs.Indicator />
-                      </Tabs.Tab>
-                    </Tabs.List>
-                  </Tabs.ListContainer>
-                </Tabs>
+                {fixedProjectId ? (
+                  <Chip variant="secondary" className="max-w-fit">
+                    {fixedProject?.name || "Current dashboard"}
+                  </Chip>
+                ) : (
+                  <>
+                    <Tabs
+                      selectedKey={dashboardMode}
+                      onSelectionChange={(key) => setDashboardMode(key)}
+                      className="w-full"
+                    >
+                      <Tabs.ListContainer>
+                        <Tabs.List>
+                          <Tabs.Tab id="existing">
+                            Existing
+                            <Tabs.Indicator />
+                          </Tabs.Tab>
+                          <Tabs.Tab id="new">
+                            New
+                            <LuPlus size={16} className="ml-2" />
+                            <Tabs.Indicator />
+                          </Tabs.Tab>
+                        </Tabs.List>
+                      </Tabs.ListContainer>
+                    </Tabs>
 
-                {dashboardMode === "existing" && (
-                  <Select
-                    placeholder="Select dashboard"
-                    fullWidth
-                    selectionMode="single"
-                    value={selectedProjectId}
-                    onChange={(value) => setSelectedProjectId(value)}
-                    variant="secondary"
-                  >
-                    <Label>Select a dashboard</Label>
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        {visibleProjects.map((project) => (
-                          <ListBox.Item key={project.id} id={`${project.id}`} textValue={project.name}>
-                            {project.name}
-                            <ListBox.ItemIndicator />
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                )}
+                    {dashboardMode === "existing" && (
+                      <Select
+                        placeholder="Select dashboard"
+                        fullWidth
+                        selectionMode="single"
+                        value={selectedProjectId}
+                        onChange={(value) => setSelectedProjectId(value)}
+                        variant="secondary"
+                      >
+                        <Label>Select a dashboard</Label>
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {visibleProjects.map((project) => (
+                              <ListBox.Item key={project.id} id={`${project.id}`} textValue={project.name}>
+                                {project.name}
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    )}
 
-                {dashboardMode === "new" && (
-                  <TextField fullWidth name="stripe-official-template-dashboard-name">
-                    <Label>Dashboard name</Label>
-                    <Input
-                      value={newDashboardName}
-                      onChange={(event) => setNewDashboardName(event.target.value)}
-                      variant="secondary"
-                    />
-                  </TextField>
+                    {dashboardMode === "new" && (
+                      <TextField fullWidth name="stripe-official-template-dashboard-name">
+                        <Label>Dashboard name</Label>
+                        <Input
+                          value={newDashboardName}
+                          onChange={(event) => setNewDashboardName(event.target.value)}
+                          variant="secondary"
+                        />
+                      </TextField>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -765,17 +809,21 @@ MetricCard.propTypes = {
 StripeOfficialTemplateSetup.propTypes = {
   connection: PropTypes.object.isRequired,
   error: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  fixedProjectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   loading: PropTypes.bool,
   projects: PropTypes.array,
   teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   templates: PropTypes.array,
+  title: PropTypes.string,
 };
 
 StripeOfficialTemplateSetup.defaultProps = {
   error: null,
+  fixedProjectId: null,
   loading: false,
   projects: [],
   templates: [],
+  title: null,
 };
 
 export default StripeOfficialTemplateSetup;

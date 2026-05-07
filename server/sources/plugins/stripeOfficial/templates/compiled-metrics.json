@@ -596,7 +596,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "Estimated customer lifetime value",
-        "formula": "${val / 100}",
+        "formula": "${ROUND(val / 100, 2)}",
         "datasetColor": "rgba(38, 166, 154, 1)"
       },
       "layoutIntent": {

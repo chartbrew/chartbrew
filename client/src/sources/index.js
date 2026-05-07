@@ -11,6 +11,7 @@ import RealtimeDbConnectionForm from "./realtimedb/realtimedb-connection-form";
 import GaConnectionForm from "./googleAnalytics/googleAnalytics-connection-form";
 import StrapiConnectionForm from "./strapi/strapi-connection-form";
 import StripeConnectionForm from "./stripe/stripe-connection-form";
+import StripeTemplateSetup from "./stripe/stripe-template-setup";
 import StripeOfficialConnectionForm from "./stripeOfficial/stripeOfficial-connection-form";
 import CustomerioConnectionForm from "./customerio/customerio-connection-form";
 import ClickHouseConnectionForm from "./clickhouse/clickhouse-connection-form";
@@ -73,6 +74,7 @@ const FRONTEND_BY_SOURCE_ID = {
   stripe: {
     ConnectionForm: StripeConnectionForm,
     DataRequestBuilder: ApiBuilder,
+    ChartTemplateSetup: StripeTemplateSetup,
   },
   stripeOfficial: {
     ConnectionForm: StripeOfficialConnectionForm,

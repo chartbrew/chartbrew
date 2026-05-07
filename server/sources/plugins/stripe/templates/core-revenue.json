@@ -3,7 +3,7 @@
   "slug": "core-revenue",
   "version": 1,
   "source": "stripe",
-  "name": "Stripe Core Revenue",
+  "name": "Stripe Core Revenue - API",
   "description": "Starter charts for Stripe revenue, payments, billing, customers, and balance transactions.",
   "requiredConnection": {
     "type": "api",
