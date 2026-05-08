@@ -3,16 +3,14 @@ import PropTypes from "prop-types";
 import {
   Button,
   Description,
-  Drawer,
   Input,
   Label,
   ListBox,
+  Modal,
   Select,
   Switch,
   TextField,
-  Tooltip,
 } from "@heroui/react";
-import { LuChevronsRight } from "react-icons/lu";
 
 import { ButtonSpinner } from "./ButtonSpinner";
 
@@ -28,64 +26,63 @@ function VariableSettingsDrawer(props) {
     onClose,
     onPatch,
     onSave,
+    onDelete,
     savePending,
+    deletePending,
     requiredWithoutDefaultHint = DEFAULT_REQUIRED_HINT,
     defaultValueFieldName,
   } = props;
 
   const isOpen = !!variable;
+  const variableName = variable?.name || "";
+  const variableType = variable?.type || null;
+  const canSave = Boolean(variableName.trim() && variableType);
 
   return (
-    <Drawer
+    <Modal.Backdrop
       isOpen={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <Drawer.Backdrop variant="transparent">
-        <Drawer.Content
-          placement="right"
-          className="sm:data-[placement=right]:m-2 sm:data-[placement=left]:m-2 rounded-medium"
-          style={{
-            paddingTop: "54px",
-          }}
-        >
-          <Drawer.Dialog>
-            <Drawer.Header className="flex flex-row items-center border-b border-divider gap-2 pb-2 justify-between bg-surface/50 backdrop-saturate-150 backdrop-blur-lg">
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Button
-                    isIconOnly
-                    onPress={onClose}
-                    size="sm"
-                    variant="tertiary"
-                  >
-                    <LuChevronsRight />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content>Close</Tooltip.Content>
-              </Tooltip>
-              <div className="text-sm font-bold">Variable settings</div>
-              <div className="flex flex-row items-center gap-2">
-                <code className="rounded-md bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
-                  {variable?.name}
-                </code>
-              </div>
-            </Drawer.Header>
-            <Drawer.Body>
-              <div className="flex flex-col gap-2">
+      <Modal.Container>
+        <Modal.Dialog className="sm:max-w-lg">
+          <Modal.CloseTrigger />
+          <Modal.Header>
+            <Modal.Heading>Variable settings</Modal.Heading>
+            {variableName ? (
+              <code className="w-fit rounded-md bg-accent-soft-hover px-1.5 py-0.5 text-sm text-accent-600">
+                {`{{${variableName}}}`}
+              </code>
+            ) : null}
+          </Modal.Header>
+          <Modal.Body className="p-1">
+            <div className="flex flex-col gap-4">
+              <TextField
+                variant="secondary"
+                className="w-full"
+                name="variable-name"
+                isRequired
+              >
                 <Label>Variable name</Label>
-                <pre className="text-accent">
-                  {variable?.name}
-                </pre>
-              </div>
-              <div className="h-4" />
+                <Input
+                  placeholder="startDate"
+                  aria-label="Variable name"
+                  fullWidth
+                  value={variableName}
+                  onChange={(e) => onPatch({ name: e.target.value.trim() })}
+                />
+                <Description>
+                  Use this name in placeholders like {variableName ? `{{${variableName}}}` : "{{variableName}}"}.
+                </Description>
+              </TextField>
+
               <div className="flex flex-col gap-2">
                 <Select
                   placeholder="Select a variable type"
                   fullWidth
                   selectionMode="single"
-                  value={variable?.type || null}
+                  value={variableType}
                   onChange={(value) => onPatch({ type: value })}
                   variant="secondary"
                 >
@@ -116,7 +113,7 @@ function VariableSettingsDrawer(props) {
                   </Select.Popover>
                 </Select>
               </div>
-              <div className="h-2" />
+
               <div className="flex flex-col gap-2">
                 <TextField
                   variant="secondary"
@@ -138,7 +135,7 @@ function VariableSettingsDrawer(props) {
                   ) : null}
                 </TextField>
               </div>
-              <div className="h-2" />
+
               <div className="flex flex-col gap-2">
                 <Label>Required</Label>
                 <Switch
@@ -151,20 +148,39 @@ function VariableSettingsDrawer(props) {
                   </Switch.Control>
                 </Switch>
               </div>
-            </Drawer.Body>
-            <Drawer.Footer>
+            </div>
+          </Modal.Body>
+          <Modal.Footer className="justify-between">
+            <div>
+              {variable?.id && onDelete ? (
+                <Button
+                  variant="danger-soft"
+                  onPress={onDelete}
+                  isPending={deletePending}
+                >
+                  {deletePending ? <ButtonSpinner /> : null}
+                  Remove
+                </Button>
+              ) : null}
+            </div>
+            <div className="flex flex-row gap-2">
               <Button variant="tertiary" onPress={onClose}>
                 Close
               </Button>
-              <Button variant="primary" onPress={onSave} isPending={savePending}>
+              <Button
+                variant="primary"
+                onPress={onSave}
+                isPending={savePending}
+                isDisabled={!canSave}
+              >
                 {savePending ? <ButtonSpinner /> : null}
                 Save
               </Button>
-            </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
-    </Drawer>
+            </div>
+          </Modal.Footer>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }
 
@@ -173,7 +189,9 @@ VariableSettingsDrawer.propTypes = {
   onClose: PropTypes.func.isRequired,
   onPatch: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
   savePending: PropTypes.bool,
+  deletePending: PropTypes.bool,
   requiredWithoutDefaultHint: PropTypes.string,
   defaultValueFieldName: PropTypes.string,
 };
@@ -181,6 +199,8 @@ VariableSettingsDrawer.propTypes = {
 VariableSettingsDrawer.defaultProps = {
   variable: null,
   savePending: false,
+  deletePending: false,
+  onDelete: null,
   requiredWithoutDefaultHint: DEFAULT_REQUIRED_HINT,
   defaultValueFieldName: undefined,
 };

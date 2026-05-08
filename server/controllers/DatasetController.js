@@ -879,6 +879,11 @@ class DatasetController {
     return this.findById(id);
   }
 
+  async deleteVariableBinding(id, variable_id) {
+    await db.VariableBinding.destroy({ where: { id: variable_id, entity_id: id, entity_type: "Dataset" } });
+    return this.findById(id);
+  }
+
   /**
    * Create a dataset with all its data requests in one go
    * @param {Object} data - Dataset data with dataRequests array

@@ -20,7 +20,13 @@ import { LuCheck, LuChevronRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-
 import { useParams } from "react-router";
 
 import { createSavedQuery, updateSavedQuery } from "../../slices/savedQuery";
-import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../slices/dataset";
+import {
+  createVariableBinding,
+  deleteVariableBinding,
+  runDataRequest,
+  selectDataRequests,
+  updateVariableBinding,
+} from "../../slices/dataset";
 import SavedQueries from "../../components/SavedQueries";
 import Container from "../../components/Container";
 import VariableSettingsDrawer, { QUERY_REQUIRED_HINT } from "../../components/VariableSettingsDrawer";
@@ -246,6 +252,35 @@ function MongoQueryBuilder(props) {
     } catch (error) {
       setVariableLoading(false);
       toast.error("Failed to save variable");
+    }
+  };
+
+  const _onVariableDelete = async () => {
+    if (!variableSettings?.id) return;
+
+    setVariableLoading(true);
+    try {
+      const response = await dispatch(deleteVariableBinding({
+        team_id: team.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+        variable_id: variableSettings.id,
+      }));
+
+      if (response.payload) {
+        setMongoRequest({
+          ...mongoRequest,
+          ...response.payload,
+          query: mongoRequest.query,
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable deleted successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to delete variable");
     }
   };
 
@@ -620,7 +655,9 @@ function MongoQueryBuilder(props) {
         onClose={() => setVariableSettings(null)}
         onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
         onSave={_onVariableSave}
+        onDelete={_onVariableDelete}
         savePending={variableLoading}
+        deletePending={variableLoading}
         requiredWithoutDefaultHint={QUERY_REQUIRED_HINT}
       />
     </div>

@@ -4,9 +4,12 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Button,
+  Calendar,
   Card,
   Checkbox,
   Chip,
+  DateField,
+  DatePicker,
   Disclosure,
   Input,
   Label,
@@ -16,7 +19,9 @@ import {
   Switch,
   Table,
   TextField,
+  Tooltip,
 } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 import {
   LuArrowRight,
   LuBraces,
@@ -30,11 +35,11 @@ import {
   LuPlus,
   LuRefreshCw,
   LuSave,
-  LuSparkles,
   LuTable2,
   LuTrash,
   LuUndo2,
   LuUsers,
+  LuVariable,
   LuX,
 } from "react-icons/lu";
 import toast from "react-hot-toast";
@@ -44,9 +49,65 @@ import { useParams } from "react-router";
 import AceEditor from "../../components/CodeEditor";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import DataTransform from "../../containers/Dataset/DataTransform";
-import { runDataRequest, selectDataRequests } from "../../slices/dataset";
+import VariableSettingsDrawer from "../../components/VariableSettingsDrawer";
+import {
+  createVariableBinding,
+  deleteVariableBinding,
+  runDataRequest,
+  selectDataRequests,
+  updateVariableBinding,
+} from "../../slices/dataset";
 import { selectTeam } from "../../slices/team";
 import { DEFAULT_CONFIGURATION } from "./stripeOfficial.source";
+
+const DATE_VARIABLES = {
+  start: "startDate",
+  end: "endDate",
+};
+
+function formatDateValue(date) {
+  if (!date) return "";
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function getDefaultDateRange() {
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - 30);
+
+  return {
+    start: formatDateValue(start),
+    end: formatDateValue(end),
+  };
+}
+
+function normalizeDateRangeValue(value, fallback) {
+  if (!value) return fallback;
+  if (/^\{\{[^}]+\}\}$/.test(String(value || "").trim())) return value;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value;
+  const parsedDate = new Date(value);
+  if (!Number.isNaN(parsedDate.getTime())) return formatDateValue(parsedDate);
+  return fallback;
+}
+
+function normalizeDateRange(dateRange = {}) {
+  const defaultRange = getDefaultDateRange();
+
+  return {
+    ...dateRange,
+    start: normalizeDateRangeValue(dateRange.start, defaultRange.start),
+    end: normalizeDateRangeValue(dateRange.end, defaultRange.end),
+  };
+}
+
+function getPlaceholderVariableName(value) {
+  const match = String(value || "").trim().match(/^\{\{([^}]+)\}\}$/);
+  return match?.[1]?.trim() || null;
+}
 
 const CATEGORY_OPTIONS = [{
   id: "payments",
@@ -580,6 +641,11 @@ function parseMetric(value) {
 }
 
 function mergeConfiguration(dataRequest) {
+  const dateRange = {
+    ...DEFAULT_CONFIGURATION.dateRange,
+    ...(dataRequest?.configuration?.dateRange || {}),
+  };
+
   return {
     ...DEFAULT_CONFIGURATION,
     ...(dataRequest?.configuration || {}),
@@ -591,10 +657,7 @@ function mergeConfiguration(dataRequest) {
       ...DEFAULT_CONFIGURATION.dimension,
       ...(dataRequest?.configuration?.dimension || {}),
     },
-    dateRange: {
-      ...DEFAULT_CONFIGURATION.dateRange,
-      ...(dataRequest?.configuration?.dateRange || {}),
-    },
+    dateRange: normalizeDateRange(dateRange),
     pagination: {
       ...DEFAULT_CONFIGURATION.pagination,
       ...(dataRequest?.configuration?.pagination || {}),
@@ -799,6 +862,10 @@ function StripeOfficialBuilder(props) {
   const [showTransform, setShowTransform] = useState(false);
   const [showConfigPreview, setShowConfigPreview] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [variableSettings, setVariableSettings] = useState(null);
+  const [variableDatePart, setVariableDatePart] = useState(null);
+  const [variableLoading, setVariableLoading] = useState(false);
+  const [variableDeleteLoading, setVariableDeleteLoading] = useState(false);
   const hydratedRequestRef = useRef({ id: null, signature: null });
 
   const params = useParams();
@@ -887,6 +954,131 @@ function StripeOfficialBuilder(props) {
         ...updates,
       },
     });
+  };
+
+  const _getVariableBinding = (name) => {
+    return [
+      ...(stripeRequest.VariableBindings || []),
+      ...(dataRequest.VariableBindings || []),
+    ]
+      .find((variableBinding) => variableBinding.name === name);
+  };
+
+  const _getDatePickerValue = (datePart) => {
+    const value = configuration.dateRange?.[datePart];
+    const variableName = getPlaceholderVariableName(value);
+    const defaultRange = getDefaultDateRange();
+    const fallback = defaultRange[datePart];
+
+    if (variableName) {
+      return normalizeDateRangeValue(_getVariableBinding(variableName)?.default_value, fallback);
+    }
+
+    return normalizeDateRangeValue(value, fallback);
+  };
+
+  const _openDateVariableSettings = (datePart) => {
+    const variableName = getPlaceholderVariableName(configuration.dateRange?.[datePart])
+      || DATE_VARIABLES[datePart];
+    const selectedVariable = _getVariableBinding(variableName);
+
+    setVariableDatePart(datePart);
+    setVariableSettings(selectedVariable || {
+      name: variableName,
+      type: "date",
+      default_value: _getDatePickerValue(datePart),
+      required: false,
+    });
+  };
+
+  const _onVariableSave = async () => {
+    setVariableLoading(true);
+
+    try {
+      let currentRequest = stripeRequest;
+
+      if (!currentRequest.id) {
+        const savedRequest = await onSave(currentRequest);
+        currentRequest = {
+          ...currentRequest,
+          ...(savedRequest?.payload || {}),
+        };
+        setStripeRequest(currentRequest);
+      }
+
+      let response;
+      if (variableSettings.id) {
+        response = await dispatch(updateVariableBinding({
+          team_id: team.id,
+          dataset_id: currentRequest.dataset_id,
+          dataRequest_id: currentRequest.id,
+          variable_id: variableSettings.id,
+          data: variableSettings,
+        }));
+      } else {
+        response = await dispatch(createVariableBinding({
+          team_id: team.id,
+          dataset_id: currentRequest.dataset_id,
+          dataRequest_id: currentRequest.id,
+          data: variableSettings,
+        }));
+      }
+
+      if (response.payload) {
+        setStripeRequest({
+          ...currentRequest,
+          ...response.payload,
+          configuration,
+        });
+      }
+
+      if (variableDatePart && variableSettings?.name) {
+        _updateDateRange({ [variableDatePart]: `{{${variableSettings.name}}}` });
+      }
+
+      setVariableLoading(false);
+      setVariableDatePart(null);
+      setVariableSettings(null);
+      toast.success("Variable saved successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to save variable");
+    }
+  };
+
+  const _onVariableDelete = async () => {
+    if (!variableSettings?.id) return;
+
+    setVariableDeleteLoading(true);
+
+    try {
+      const response = await dispatch(deleteVariableBinding({
+        team_id: team.id,
+        dataset_id: stripeRequest.dataset_id,
+        dataRequest_id: stripeRequest.id,
+        variable_id: variableSettings.id,
+      }));
+
+      if (response.payload) {
+        setStripeRequest({
+          ...stripeRequest,
+          ...response.payload,
+          configuration,
+        });
+      }
+
+      if (variableDatePart) {
+        _updateDateRange({ [variableDatePart]: _getDatePickerValue(variableDatePart) });
+      }
+
+      setVariableDeleteLoading(false);
+      setVariableDatePart(null);
+      setVariableSettings(null);
+      toast.success("Variable deleted successfully");
+    } catch (error) {
+      setVariableDeleteLoading(false);
+      toast.error("Failed to delete variable");
+    }
   };
 
   const _updatePagination = (updates) => {
@@ -1095,6 +1287,79 @@ function StripeOfficialBuilder(props) {
           </ListBox>
         </Select.Popover>
       </Select>
+    );
+  };
+
+  const renderDatePicker = (datePart, label) => {
+    const variableName = getPlaceholderVariableName(configuration.dateRange?.[datePart])
+      || DATE_VARIABLES[datePart];
+    const isUsingVariable = Boolean(getPlaceholderVariableName(configuration.dateRange?.[datePart]));
+    const dateValue = _getDatePickerValue(datePart);
+
+    return (
+      <div className="flex items-end gap-2">
+        <DatePicker
+          name={`stripe-${datePart}-date`}
+          value={parseDate(dateValue)}
+          onChange={(date) => {
+            if (date) _updateDateRange({ [datePart]: date.toString() });
+          }}
+          className="min-w-0 flex-1"
+        >
+          <Label>{label}</Label>
+          <DateField.Group fullWidth variant="secondary">
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <Calendar aria-label={`${label} date`}>
+              <Calendar.Header>
+                <Calendar.YearPickerTrigger>
+                  <Calendar.YearPickerTriggerHeading />
+                  <Calendar.YearPickerTriggerIndicator />
+                </Calendar.YearPickerTrigger>
+                <Calendar.NavButton slot="previous" />
+                <Calendar.NavButton slot="next" />
+              </Calendar.Header>
+              <Calendar.Grid>
+                <Calendar.GridHeader>
+                  {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                </Calendar.GridHeader>
+                <Calendar.GridBody>
+                  {(date) => <Calendar.Cell date={date} />}
+                </Calendar.GridBody>
+              </Calendar.Grid>
+              <Calendar.YearPickerGrid>
+                <Calendar.YearPickerGridBody>
+                  {({ year }) => <Calendar.YearPickerCell year={year} />}
+                </Calendar.YearPickerGridBody>
+              </Calendar.YearPickerGrid>
+            </Calendar>
+          </DatePicker.Popover>
+        </DatePicker>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              aria-label={`Configure ${label.toLowerCase()} variable`}
+              size="sm"
+              variant={isUsingVariable ? "primary" : "secondary"}
+              onPress={() => _openDateVariableSettings(datePart)}
+            >
+              <LuVariable size={16} />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>
+            {isUsingVariable ? `Using {{${variableName}}}` : "Click to set a variable"}
+          </Tooltip.Content>
+        </Tooltip>
+      </div>
     );
   };
 
@@ -1456,22 +1721,8 @@ function StripeOfficialBuilder(props) {
               </div>
               <div className="col-span-12 md:col-span-6">
                 <div className="grid grid-cols-2 gap-3">
-                  <TextField fullWidth name="stripe-start-date">
-                    <Label>Start</Label>
-                    <Input
-                      value={configuration.dateRange?.start || ""}
-                      onChange={(event) => _updateDateRange({ start: event.target.value })}
-                      variant="secondary"
-                    />
-                  </TextField>
-                  <TextField fullWidth name="stripe-end-date">
-                    <Label>End</Label>
-                    <Input
-                      value={configuration.dateRange?.end || ""}
-                      onChange={(event) => _updateDateRange({ end: event.target.value })}
-                      variant="secondary"
-                    />
-                  </TextField>
+                  {renderDatePicker("start", "Start")}
+                  {renderDatePicker("end", "End")}
                 </div>
               </div>
             </div>
@@ -1846,6 +2097,19 @@ function StripeOfficialBuilder(props) {
           }}
         />
       )}
+
+      <VariableSettingsDrawer
+        variable={variableSettings}
+        onClose={() => {
+          setVariableDatePart(null);
+          setVariableSettings(null);
+        }}
+        onPatch={(patch) => setVariableSettings((variable) => (variable ? { ...variable, ...patch } : variable))}
+        onSave={_onVariableSave}
+        onDelete={_onVariableDelete}
+        savePending={variableLoading}
+        deletePending={variableDeleteLoading}
+      />
     </div>
   );
 }

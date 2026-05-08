@@ -33,8 +33,8 @@ const DEFAULT_CONFIGURATION = {
   },
   dateRange: {
     field: "created",
-    start: "{{startDate}}",
-    end: "{{endDate}}",
+    start: "last_30_days",
+    end: "now",
   },
   filters: [],
   expand: [],

@@ -33,6 +33,7 @@ import {
   runDataRequest,
   selectDataRequests,
   createVariableBinding,
+  deleteVariableBinding,
   updateVariableBinding,
 } from "../../slices/dataset";
 import {
@@ -470,6 +471,37 @@ function ApiBuilder(props) {
     } catch (error) {
       setVariableLoading(false);
       toast.error("Failed to save variable");
+    }
+  };
+
+  const _onVariableDelete = async () => {
+    if (!variableSettings?.id) return;
+
+    setVariableLoading(true);
+    try {
+      const response = await dispatch(deleteVariableBinding({
+        team_id: team.id,
+        dataset_id: dataRequest.dataset_id,
+        dataRequest_id: dataRequest.id,
+        variable_id: variableSettings.id,
+      }));
+
+      if (response.payload) {
+        setApiRequest({
+          ...apiRequest,
+          ...response.payload,
+          route: apiRequest.route,
+          headers: apiRequest.headers,
+          body: apiRequest.body,
+        });
+      }
+
+      setVariableLoading(false);
+      setVariableSettings(null);
+      toast.success("Variable deleted successfully");
+    } catch (error) {
+      setVariableLoading(false);
+      toast.error("Failed to delete variable");
     }
   };
 
@@ -1073,7 +1105,9 @@ function ApiBuilder(props) {
         onClose={() => setVariableSettings(null)}
         onPatch={(patch) => setVariableSettings((v) => (v ? { ...v, ...patch } : v))}
         onSave={_onVariableSave}
+        onDelete={_onVariableDelete}
         savePending={variableLoading}
+        deletePending={variableLoading}
       />
     </div>
   );

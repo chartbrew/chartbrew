@@ -306,6 +306,19 @@ class RequestController {
         return this.findById(id);
       });
   }
+
+  deleteVariableBinding(id, variable_id) {
+    return db.VariableBinding.destroy({
+      where: {
+        id: variable_id,
+        entity_id: `${id}`,
+        entity_type: "DataRequest",
+      },
+    })
+      .then(() => {
+        return this.findById(id);
+      });
+  }
 }
 
 module.exports = RequestController;

@@ -102,6 +102,12 @@ The manual builder starts from intent:
 
 The UI should never show `/v1/payment_intents`, headers, auth, query strings, or pagination cursors.
 
+Date range UX:
+- Step 2 uses HeroUI date pickers for start and end dates.
+- New manual datasets default to the last 30 days through concrete date picker values, not `{{startDate}}` / `{{endDate}}` placeholders.
+- Each date picker has a variable icon that opens the shared variable settings modal. The modal supports editing the variable name before save and deleting an existing binding. Saving from that modal creates or updates a `VariableBinding` record and then stores the corresponding `{{variableName}}` placeholder in `DataRequest.configuration.dateRange`; deleting restores the date picker to a concrete date value.
+- ChartDatasetConfigs created from Stripe Official datasets must set `dateField` to the returned date field so dashboard date filters work: `root[].period` for aggregate and compiled metric outputs, and `root[].<dateRange.field>` for raw outputs.
+
 ## Compiled Business Metrics
 Some high-value Stripe metrics are not single Stripe fields. Treat these as compiled metrics: the Stripe protocol fetches the required Stripe objects, normalizes them into period snapshots or movements, and returns Chartbrew-ready rows. The dataset still owns the Stripe computation config; CDC only owns the chart binding to the computed output fields.
 
@@ -127,7 +133,7 @@ Compiled metric configs should declare their input resources, calculation versio
   "dimension": { "field": "period", "interval": "month" },
   "currency": "usd",
   "subscriptionStatus": ["active", "trialing"],
-  "dateRange": { "start": "{{startDate}}", "end": "{{endDate}}" },
+  "dateRange": { "start": "last_30_days", "end": "now" },
   "pagination": { "limit": 100, "maxRecords": 10000 }
 }
 ```
@@ -146,8 +152,8 @@ Because these metrics are opinionated, templates and previews must surface warni
   "dimension": { "field": "created", "interval": "day" },
   "dateRange": {
     "field": "created",
-    "start": "{{startDate}}",
-    "end": "{{endDate}}"
+    "start": "last_30_days",
+    "end": "now"
   },
   "filters": [
     { "field": "currency", "operator": "is", "value": "usd" },

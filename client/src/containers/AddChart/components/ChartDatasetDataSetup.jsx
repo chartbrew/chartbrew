@@ -19,6 +19,12 @@ import canAccess from "../../../config/canAccess";
 import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
 
+function getStripeOfficialDateField(configuration = {}) {
+  if (configuration.mode === "compiled_metric") return "root[].period";
+  if (configuration.mode === "aggregate") return "root[].period";
+  return `root[].${configuration.dateRange?.field || "created"}`;
+}
+
 function ChartDatasetDataSetup({
   cdc,
   dataset,
@@ -105,10 +111,15 @@ function ChartDatasetDataSetup({
 
     const autoFields = autoFieldSelector(nextFieldOptions);
     const autoUpdates = {};
+    const stripeDateField = isStripeOfficialDataset
+      ? getStripeOfficialDateField(sourceConfiguration)
+      : null;
 
     if (!cdc.xAxis && autoFields.xAxis) autoUpdates.xAxis = autoFields.xAxis;
     if (!cdc.yAxis && autoFields.yAxis) autoUpdates.yAxis = autoFields.yAxis;
-    if (!cdc.dateField && autoFields.dateField) autoUpdates.dateField = autoFields.dateField;
+    if (!cdc.dateField && (stripeDateField || autoFields.dateField)) {
+      autoUpdates.dateField = stripeDateField || autoFields.dateField;
+    }
     if (!cdc.yAxisOperation && autoFields.yAxisOperation) autoUpdates.yAxisOperation = autoFields.yAxisOperation;
 
     if (Object.keys(autoUpdates).length > 0) {
@@ -117,7 +128,20 @@ function ChartDatasetDataSetup({
     } else {
       autoSuggestedRef.current[cdc.id] = true;
     }
-  }, [cdc?.id, cdc?.xAxis, cdc?.yAxis, cdc?.dateField, cdc?.yAxisOperation, dataset?.id, dataset?.fieldsSchema, datasetResponse, teamId]);
+  }, [
+    cdc?.id,
+    cdc?.xAxis,
+    cdc?.yAxis,
+    cdc?.dateField,
+    cdc?.yAxisOperation,
+    dataset?.id,
+    dataset?.fieldsSchema,
+    datasetResponse,
+    teamId,
+    isStripeOfficialDataset,
+    sourceConfiguration.mode,
+    sourceConfiguration.dateRange?.field,
+  ]);
 
   useEffect(() => {
     if (cdc?.id && autoSuggestedRef.current[cdc.id] === undefined) {
