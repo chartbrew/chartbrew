@@ -6,6 +6,7 @@ import {
   FieldError,
   Input,
   Label,
+  Link,
   TextField,
 } from "@heroui/react";
 import { LuEye, LuEyeOff } from "react-icons/lu";
@@ -187,6 +188,9 @@ function StripeOfficialConnectionForm(props) {
         <div className="h-4" />
         <p className="max-w-[560px] text-sm text-foreground-500">
           Use a restricted key with read access to Balance, Balance Transactions, Payment Intents, Charges, Customers, Subscriptions, Invoices, Refunds, and Payouts.
+        </p>
+        <p className="max-w-[560px] text-sm text-foreground-500 mt-2">
+          <Link href="https://docs.stripe.com/keys/restricted-api-keys" target="_blank" rel="noopener noreferrer">Learn more about creating restricted keys</Link>
         </p>
 
         {testResult && (
