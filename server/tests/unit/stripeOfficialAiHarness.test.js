@@ -8,6 +8,7 @@ const DatasetController = require("../../controllers/DatasetController");
 const createChart = require("../../modules/ai/orchestrator/tools/createChart");
 const createDataset = require("../../modules/ai/orchestrator/tools/createDataset");
 const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
+const moveChartToDashboard = require("../../modules/ai/orchestrator/tools/moveChartToDashboard");
 const { getSourceById } = require("../../sources");
 
 describe("Stripe Official AI anti-hallucination harness", () => {
@@ -61,6 +62,93 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       },
     });
     expect(plan.chartSpec.subType).toBeUndefined();
+  });
+
+  it("refuses accounting-grade Stripe metric claims", () => {
+    const stripeOfficial = getSourceById("stripeOfficial");
+    const plan = stripeOfficial.backend.ai.planDataset({
+      question: "Create an accounting-grade GAAP MRR revenue recognition chart",
+    });
+    const validation = stripeOfficial.backend.ai.validateDatasetIntent({
+      question: "Create an audited Stripe revenue recognition report",
+      configuration: {
+        source: "stripeOfficial",
+        mode: "compiled_metric",
+        compiledMetric: "mrr",
+      },
+    });
+
+    expect(plan.status).toBe("invalid");
+    expect(plan.errors[0]).toContain("not accounting-grade");
+    expect(validation.valid).toBe(false);
+    expect(validation.errors[0]).toContain("Refuse GAAP/IFRS");
+  });
+
+  it("creates a revenue-over-time temporary chart from a Stripe plan", async () => {
+    const stripeOfficial = getSourceById("stripeOfficial");
+    const plan = stripeOfficial.backend.ai.planDataset({
+      question: "Create a revenue-over-time temporary chart",
+    });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
+      id: 42,
+      team_id: 7,
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+      name: "Stripe",
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      id: 77,
+      team_id: 7,
+      ghost: true,
+    });
+    const createSpy = vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
+      id: 99,
+      name: plan.datasetName,
+      DataRequests: [{ id: 1001 }],
+    });
+    vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+      id: 55,
+      name: plan.datasetName,
+      type: "line",
+      project_id: 77,
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      team_id: 7,
+      connection_id: 42,
+      name: plan.datasetName,
+      question: "Create a revenue-over-time temporary chart",
+      configuration: plan.configuration,
+      type: plan.chartSpec.type,
+      xAxis: plan.chartSpec.xAxis,
+      yAxis: plan.chartSpec.yAxis,
+      yAxisOperation: plan.chartSpec.yAxisOperation,
+      formula: plan.chartSpec.formula,
+      spec: plan.chartSpec,
+    });
+
+    expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({
+      project_ids: [],
+      dataRequests: [expect.objectContaining({
+        connection_id: 42,
+        configuration: expect.objectContaining({
+          source: "stripeOfficial",
+          resource: "balance_transactions",
+          metric: {
+            field: "net",
+            operation: "sum",
+          },
+        }),
+      })],
+    }));
+    expect(result).toMatchObject({
+      chart_id: 55,
+      dataset_id: 99,
+      data_request_id: 1001,
+      project_id: 77,
+      is_temporary: true,
+    });
   });
 
   it("repairs hallucinated MRR datasets that use generic revenue aggregates", async () => {
@@ -260,7 +348,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       xAxis: "root[].period",
       yAxis: "root[].value",
       yAxisOperation: "none",
-      formula: "${val / 100}",
+      formula: "{val / 100}",
     });
 
     expect(chartSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -268,6 +356,51 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       subType: undefined,
     }), null);
     expect(result.chart_sanitization).toEqual({ removedAccumulation: true });
+  });
+
+  it("moves a temporary Stripe chart to a dashboard after confirmation", async () => {
+    const datasetUpdate = vi.fn().mockResolvedValue({});
+    vi.spyOn(db.Chart, "findByPk").mockResolvedValue({
+      id: 55,
+      project_id: 77,
+    });
+    vi.spyOn(db.Project, "findByPk")
+      .mockResolvedValueOnce({
+        id: 77,
+        team_id: 7,
+        ghost: true,
+      })
+      .mockResolvedValueOnce({
+        id: 13,
+        team_id: 7,
+        ghost: false,
+      });
+    vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
+    vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([{
+      Dataset: {
+        project_ids: [],
+        update: datasetUpdate,
+      },
+    }]);
+    vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
+
+    const result = await moveChartToDashboard({
+      team_id: 7,
+      chart_id: 55,
+      target_project_id: 13,
+    });
+
+    expect(db.Chart.update).toHaveBeenCalledWith(expect.objectContaining({
+      project_id: 13,
+    }), { where: { id: 55 } });
+    expect(datasetUpdate).toHaveBeenCalledWith({ project_ids: [13] });
+    expect(result).toMatchObject({
+      chart_id: 55,
+      previous_project_id: 77,
+      new_project_id: 13,
+      dashboard_url: expect.stringContaining("/dashboard/13"),
+    });
   });
 
   it("allows MRR creation when the configuration uses the compiled metric", async () => {

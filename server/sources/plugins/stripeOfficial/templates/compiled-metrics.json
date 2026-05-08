@@ -360,7 +360,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "MRR",
-        "formula": "${val / 100}",
+        "formula": "{val / 100}",
         "datasetColor": "rgba(66, 133, 244, 1)",
         "fillColor": "rgba(66, 133, 244, 0.14)",
         "fill": true
@@ -392,7 +392,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "ARR",
-        "formula": "${val / 100}",
+        "formula": "{val / 100}",
         "datasetColor": "rgba(255, 152, 0, 1)"
       },
       "layoutIntent": {
@@ -425,7 +425,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "ARPA",
-        "formula": "${val / 100}",
+        "formula": "{val / 100}",
         "datasetColor": "rgba(38, 166, 154, 1)",
         "fillColor": "rgba(38, 166, 154, 0.14)",
         "fill": true
@@ -457,7 +457,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "Net cash flow",
-        "formula": "${val / 100}",
+        "formula": "{val / 100}",
         "datasetColor": "rgba(66, 133, 244, 1)"
       },
       "layoutIntent": {
@@ -596,7 +596,7 @@
         "yAxisOperation": "none",
         "dateField": "root[].period",
         "legend": "Estimated customer lifetime value",
-        "formula": "${ROUND(val / 100, 2)}",
+        "formula": "{ROUND(val / 100, 2)}",
         "datasetColor": "rgba(38, 166, 154, 1)"
       },
       "layoutIntent": {

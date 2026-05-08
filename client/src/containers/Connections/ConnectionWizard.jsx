@@ -240,7 +240,7 @@ function ConnectionWizard() {
                             src={getSourceLogo(conn, isDark)}
                           />
                         </Card.Content>
-                        <Card.Content className="flex flex-row items-center justify-center gap-1">
+                        <Card.Content className="flex flex-row items-center justify-center flex-wrap gap-1">
                           {(conn.capabilities?.ai?.canGenerateQueries || conn.capabilities?.ai?.canGenerateDatasets) && (
                             <Tooltip>
                               <Tooltip.Trigger>

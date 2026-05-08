@@ -40,6 +40,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 
 import { createFromChartTemplate, getChartTemplate } from "../../slices/chartTemplate";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 
 const GROUPS = [{
   id: "business",
@@ -774,6 +775,7 @@ function StripeOfficialTemplateSetup(props) {
                 variant="primary"
                 onPress={() => _createSelected("dashboard")}
               >
+                {isCreating && actionMode === "dashboard" ? <ButtonSpinner /> : null}
                 Create and add to dashboard
               </Button>
               <Button
@@ -783,6 +785,7 @@ function StripeOfficialTemplateSetup(props) {
                 variant="secondary"
                 onPress={() => _createSelected("datasets")}
               >
+                {isCreating && actionMode === "datasets" ? <ButtonSpinner /> : null}
                 Create datasets only
               </Button>
             </div>

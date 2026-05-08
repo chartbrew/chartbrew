@@ -217,15 +217,32 @@ Each resource schema declares date fields, metrics, dimensions, filters, support
 - [x] Add tests for Stripe AI capabilities, tool registration, team scoping, configuration planning, validation errors, template recommendation, preview caps, and non-SQL dataset/chart creation paths.
 - [x] Add an anti-hallucination harness and repair path for compiled business metrics so MRR, ARR, churn, net cash flow, and LTV requests cannot be planned or persisted as generic revenue aggregates.
 - [x] Add a KPI accumulation guard so compiled Stripe business metrics such as current MRR do not use `AddTimeseries`; KPI charts should display the latest computed value.
-- [ ] Add orchestrator prompt/response tests for representative user requests:
-  - [ ] Answer "What was net revenue last month?" from balance transactions.
-  - [ ] Create a revenue-over-time temporary chart.
-  - [ ] Create a revenue-over-time chart and place it in a named dashboard.
-  - [ ] Move a temporary Stripe chart into a dashboard after user confirmation.
-  - [ ] Recommend subscription/churn templates.
-  - [ ] Create a compiled MRR chart with caveats.
-  - [ ] Refuse unsupported/accounting-grade claims and explain limitations.
-- [ ] Add documentation or inline examples showing the expected Stripe AI tool call flow from question -> connection/resource discovery -> configuration plan -> preview -> dataset/chart creation.
+- [x] Add orchestrator prompt/response tests for representative user requests:
+  - [x] Answer "What was net revenue last month?" from balance transactions.
+  - [x] Create a revenue-over-time temporary chart.
+  - [x] Create a revenue-over-time chart and place it in a named dashboard.
+  - [x] Move a temporary Stripe chart into a dashboard after user confirmation.
+  - [x] Recommend subscription/churn templates.
+  - [x] Create a compiled MRR chart with caveats.
+  - [x] Refuse unsupported/accounting-grade claims and explain limitations.
+- [x] Add documentation or inline examples showing the expected Stripe AI tool call flow from question -> connection/resource discovery -> configuration plan -> preview -> dataset/chart creation.
+
+Expected Stripe AI flow:
+1. Discover context with `list_connections`, then `source.getCapabilities`/`source.listResources` for the selected `stripeOfficial` connection.
+2. Plan with `stripeOfficial.planDataset`, producing a `DataRequest.configuration` such as `resource: "balance_transactions"`, `metric: { field: "net", operation: "sum" }`, and no API route/query string.
+3. Optionally preview with `stripeOfficial.previewConfiguration`, capped to a small `pagination.maxRecords`, and surface returned warnings.
+4. Create a default visual preview with `create_temporary_chart` using the planned configuration and chart bindings.
+5. When the user explicitly names a dashboard, create the dataset first and call `create_chart` with the exact `project_id`; when they confirm later, call `move_chart_to_dashboard`.
+
+## Wrap-up Checklist
+- [x] Complete the manual Stripe builder filters. The current builder supports metadata filters, product/price subscription filters, expand fields, Search API controls, max records, and raw object mode. Livemode/test-mode filtering is intentionally excluded.
+- [x] Make the builder filters resource-aware and operator-aware using Stripe resource metadata instead of hard-coded generic fields.
+- [x] Make runtime dashboard/chart filters affect Stripe Official source refreshes. Runtime `filters` passed through Chartbrew refresh paths must be merged with `DataRequest.configuration.filters` before Stripe execution.
+- [x] Push supported filters into Stripe list parameters where the Stripe API supports them, and only fall back to local post-fetch filtering when pushdown is unavailable. Avoid incomplete filtered results when `maxRecords` is reached before matching rows are fetched.
+- [x] Add validation for Stripe filter fields/operators per resource, including AI validation paths and manual builder/server validation.
+- [x] Add focused protocol tests for configuration validation, saved filters, runtime filters, pagination caps, aggregate grouping, raw row shape, subscription status defaults, Search API restrictions, and compiled metric formulas.
+- [x] Document deferral for connection options. Mode, currency, and timezone selectors were removed until they are wired into runtime behavior; the connection still stores detected Stripe account metadata in `Connection.schema`/`Connection.options`.
+- [x] Revisit Stripe template currency formatting. Decision: template and AI-generated currency formulas convert minor units to major numeric units with `{val / 100}` and do not hard-code `$`; row/account currency metadata remains available for labels and future currency-aware formatting.
 
 ## Acceptance Criteria
 - A user can connect Stripe with a restricted key, test it, and see a Stripe-specific next-step screen.
@@ -258,6 +275,10 @@ Each resource schema declares date fields, metrics, dimensions, filters, support
 - [x] AI layer first pass: source-owned Stripe instructions/tools, dataset planning, configuration validation/preview, config-backed dataset creation, temporary chart flow, and explicit dashboard placement support.
 - [x] AI anti-hallucination harness, runtime guardrails, and auto-repair path for Stripe compiled business metrics.
 - [x] AI KPI accumulation guard for Stripe compiled business metrics.
+- [x] Manual builder resource-aware filter first pass.
+- [x] Runtime filter support for Stripe Official refreshes.
+- [x] Manual builder filter completion for metadata, product/price, expand fields, Search API controls, and raw object mode.
+- [x] Currency-aware template display formatting instead of hard-coded `$` formulas.
 - [ ] Browser flow verification.
 
 ## References

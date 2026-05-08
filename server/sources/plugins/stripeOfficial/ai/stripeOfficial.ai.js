@@ -47,7 +47,7 @@ const SOURCE_INSTRUCTIONS = [
   "MRR, ARR, ARPA, churn rates, net cash flow, and customer lifetime value must use compiled_metric mode with the matching compiledMetric key. Never answer those with generic revenue, balance transaction, payment, invoice, or refund aggregates.",
   "Use balance_transactions for net revenue, fees, payouts, and cash-flow style questions.",
   "Use payment_intents for modern payment counts and payment status questions unless the user explicitly asks for charges.",
-  "Stripe amounts are returned in minor currency units. Use chart formulas such as ${val / 100} for currency metrics.",
+  "Stripe amounts are returned in minor currency units. Use chart formulas such as {val / 100} for currency metrics; do not hard-code a currency symbol.",
   "Use compiled_metric mode for MRR, ARR, ARPA, churn rates, net cash flow, and estimated customer lifetime value.",
   "Keep previews capped. Mention warnings when maxRecords is reached or when compiled metrics are first-pass estimates.",
   "Use create_temporary_chart by default. Use create_chart only when the user explicitly names a target dashboard/project.",
@@ -95,6 +95,9 @@ const COMPILED_INTENT_RULES = [
     expected: { mode: "compiled_metric", compiledMetric: "customer_lifetime_value" },
   },
 ];
+
+const ACCOUNTING_GRADE_PATTERN = /accounting-grade|audited|audit-ready|\bgaap\b|\bifrs\b|revenue recognition|recognized revenue/i;
+const ACCOUNTING_GRADE_ERROR = "Stripe Official direct-API metrics are not accounting-grade. Refuse GAAP/IFRS, audited, or revenue-recognition claims and explain that Stripe Sigma, a warehouse, or accounting system reconciliation is required.";
 
 function getCapabilities() {
   return {
@@ -179,7 +182,7 @@ function getSchema() {
 function inferFieldType(field, resource) {
   if (resource.dateFields.includes(field)) return "date";
   if (["amount", "amount_received", "amount_paid", "amount_due", "fee", "net", "value"].includes(field)) return "number";
-  if (field === "livemode" || field === "cancel_at_period_end") return "boolean";
+  if (field === "cancel_at_period_end") return "boolean";
   return "string";
 }
 
@@ -352,7 +355,7 @@ function getDisplayFormula(config) {
   if (config.mode === "compiled_metric") {
     const metric = COMPILED_METRICS[config.compiledMetric];
     if (metric?.output === "ratio") return "{val * 100}%";
-    if (metric?.output === "currency") return "${val / 100}";
+    if (metric?.output === "currency") return "{val / 100}";
     return undefined;
   }
 
@@ -360,7 +363,7 @@ function getDisplayFormula(config) {
   const metric = resource?.metrics.find((candidate) => {
     return candidate.field === config.metric?.field && candidate.operation === config.metric?.operation;
   });
-  return metric?.type === "currency" ? "${val / 100}" : undefined;
+  return metric?.type === "currency" ? "{val / 100}" : undefined;
 }
 
 function getChartSpec(config, question) {
@@ -425,55 +428,36 @@ function makeLegend(config) {
 }
 
 function validateConfiguration(configuration) {
-  const errors = [];
-  const warnings = [];
-  const config = {
-    ...stripeOfficialProtocol.DEFAULT_CONFIGURATION,
+  const validation = stripeOfficialProtocol.validateConfiguration({
     ...(configuration || {}),
     pagination: {
       ...DEFAULT_PAGINATION,
       ...(configuration?.pagination || {}),
     },
-  };
-
-  if (config.source !== SOURCE_ID) {
-    errors.push("configuration.source must be stripeOfficial");
-  }
-
-  if (config.mode === "compiled_metric") {
-    if (!COMPILED_METRICS[config.compiledMetric]) {
-      errors.push(`Unsupported compiled Stripe metric: ${config.compiledMetric || "missing"}`);
-    }
-    warnings.push("Compiled Stripe metrics are direct-API estimates and may not be accounting-grade.");
-  } else if (!STRIPE_RESOURCES[config.resource]) {
-    errors.push(`Unsupported Stripe resource: ${config.resource || "missing"}`);
-  }
-
-  if (config.queryMode === "search") {
-    errors.push("Stripe Search API is not available to AI tools yet; use queryMode=list.");
-  }
-
-  if (!["aggregate", "raw", "compiled_metric"].includes(config.mode)) {
-    errors.push("mode must be aggregate, raw, or compiled_metric");
-  }
-
-  const maxRecords = Number(config.pagination?.maxRecords);
-  if (!Number.isFinite(maxRecords) || maxRecords <= 0) {
-    errors.push("pagination.maxRecords must be a positive number");
-  } else if (maxRecords > 5000) {
-    warnings.push("pagination.maxRecords will be capped by the Stripe protocol. Use smaller previews for AI tool calls.");
-  }
+  }, { allowSearch: false });
+  const maxRecords = Number(validation.configuration.pagination?.maxRecords);
 
   return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-    configuration: config,
+    ...validation,
+    warnings: [
+      ...validation.warnings,
+      ...(maxRecords > 5000
+        ? ["pagination.maxRecords will be capped by the Stripe protocol. Use smaller previews for AI tool calls."]
+        : []),
+    ],
   };
 }
 
 function validateDatasetIntent({ name = "", question = "", configuration = {} } = {}) {
   const intentText = [name, question].filter(Boolean).join(" ");
+  if (ACCOUNTING_GRADE_PATTERN.test(intentText)) {
+    return {
+      valid: false,
+      errors: [ACCOUNTING_GRADE_ERROR],
+      warnings: [],
+    };
+  }
+
   const matchedRule = COMPILED_INTENT_RULES.find((rule) => rule.pattern.test(intentText));
 
   if (!matchedRule) {
@@ -540,6 +524,25 @@ function repairDatasetIntent({ name = "", question = "", configuration = {} } = 
 }
 
 function planDataset({ question = "", overrides = {} } = {}) {
+  if (ACCOUNTING_GRADE_PATTERN.test(question)) {
+    return {
+      status: "invalid",
+      source: SOURCE_ID,
+      datasetName: makeTitle(question, { resource: "balance_transactions" }),
+      configuration: {
+        ...stripeOfficialProtocol.DEFAULT_CONFIGURATION,
+        source: SOURCE_ID,
+      },
+      chartSpec: {},
+      outputFields: [],
+      warnings: [],
+      errors: [ACCOUNTING_GRADE_ERROR],
+      rationale: {
+        intent: "unsupported_accounting_grade_claim",
+      },
+    };
+  }
+
   const intent = resolvePlanIntent(question, overrides);
   const interval = normalizeInterval(question, intent.mode);
   const dateRange = normalizeDateRange(question, overrides);

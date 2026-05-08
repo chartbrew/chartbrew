@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import {
   Button,
   Card,
+  Checkbox,
   Chip,
   Disclosure,
   Input,
@@ -18,6 +19,7 @@ import {
 } from "@heroui/react";
 import {
   LuArrowRight,
+  LuBraces,
   LuCalculator,
   LuChartLine,
   LuCreditCard,
@@ -181,6 +183,115 @@ const INTERVAL_OPTIONS = [
   { value: "month", label: "Month" },
   { value: "year", label: "Year" },
 ];
+
+const FILTER_OPERATOR_OPTIONS = {
+  is: { value: "is", label: "Is" },
+  isNot: { value: "isNot", label: "Is not" },
+  greaterThan: { value: "greaterThan", label: "Greater than" },
+  greaterOrEqual: { value: "greaterOrEqual", label: "Greater or equal" },
+  lessThan: { value: "lessThan", label: "Less than" },
+  lessOrEqual: { value: "lessOrEqual", label: "Less or equal" },
+  contains: { value: "contains", label: "Contains" },
+  notContains: { value: "notContains", label: "Does not contain" },
+  isNull: { value: "isNull", label: "Is empty" },
+  isNotNull: { value: "isNotNull", label: "Is not empty" },
+};
+
+const RESOURCE_FILTERS = {
+  payment_intents: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "amount", label: "Amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "customer", label: "Customer", type: "text", operators: ["is"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  charges: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "amount", label: "Amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "customer", label: "Customer", type: "text", operators: ["is"] },
+    { field: "billing_details.address.country", label: "Country", type: "text", operators: ["is"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  balance_transactions: [
+    { field: "type", label: "Type", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "reporting_category", label: "Reporting category", type: "text", operators: ["is"] },
+    { field: "source", label: "Source", type: "text", operators: ["is"] },
+    { field: "amount", label: "Gross amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "net", label: "Net amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "fee", label: "Fee", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+  ],
+  customers: [
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "email", label: "Email", type: "text", operators: ["is", "contains"] },
+    { field: "name", label: "Name", type: "text", operators: ["is", "contains"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  subscriptions: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "customer", label: "Customer", type: "text", operators: ["is"] },
+    { field: "items.data.price.id", label: "Price", type: "text", operators: ["is", "isNot"] },
+    { field: "items.data.price.product", label: "Product", type: "text", operators: ["is", "isNot"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  invoices: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "customer", label: "Customer", type: "text", operators: ["is"] },
+    { field: "amount_paid", label: "Amount paid", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "amount_due", label: "Amount due", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "subscription", label: "Subscription", type: "text", operators: ["is"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  refunds: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "amount", label: "Amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "charge", label: "Charge", type: "text", operators: ["is"] },
+    { field: "payment_intent", label: "Payment Intent", type: "text", operators: ["is"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+  payouts: [
+    { field: "status", label: "Status", type: "text", operators: ["is", "isNot"] },
+    { field: "currency", label: "Currency", type: "text", operators: ["is"] },
+    { field: "amount", label: "Amount", type: "number", operators: ["greaterThan", "greaterOrEqual", "lessThan", "lessOrEqual"] },
+    { field: "metadata.*", label: "Metadata", type: "metadata", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"] },
+  ],
+};
+
+const RESOURCE_EXPAND_FIELDS = {
+  payment_intents: [
+    { value: "data.customer", label: "Customer" },
+    { value: "data.latest_charge", label: "Latest charge" },
+    { value: "data.payment_method", label: "Payment method" },
+  ],
+  charges: [
+    { value: "data.customer", label: "Customer" },
+    { value: "data.balance_transaction", label: "Balance transaction" },
+    { value: "data.payment_intent", label: "Payment Intent" },
+  ],
+  balance_transactions: [
+    { value: "data.source", label: "Source object" },
+  ],
+  subscriptions: [
+    { value: "data.customer", label: "Customer" },
+    { value: "data.items.data.price", label: "Subscription item prices" },
+    { value: "data.default_payment_method", label: "Default payment method" },
+  ],
+  invoices: [
+    { value: "data.customer", label: "Customer" },
+    { value: "data.subscription", label: "Subscription" },
+    { value: "data.payment_intent", label: "Payment Intent" },
+    { value: "data.charge", label: "Charge" },
+  ],
+  refunds: [
+    { value: "data.charge", label: "Charge" },
+    { value: "data.payment_intent", label: "Payment Intent" },
+  ],
+};
+
+const SEARCHABLE_RESOURCES = ["payment_intents", "charges", "customers", "subscriptions", "invoices"];
 
 const MAX_RECORD_OPTIONS = [
   { value: "1000", label: "1,000" },
@@ -504,6 +615,48 @@ function formatMaxRecords(value) {
   return Number(value).toLocaleString();
 }
 
+function getFilterDefinitions(resource) {
+  return RESOURCE_FILTERS[resource] || [];
+}
+
+function getFilterDefinition(resource, field) {
+  return getFilterDefinitions(resource).find((filter) => {
+    if (filter.field === "metadata.*") return /^metadata\.?[^.]*$/.test(field);
+    return filter.field === field;
+  });
+}
+
+function getDefaultFilter(resource) {
+  const filter = getFilterDefinitions(resource)[0];
+  if (!filter) return null;
+
+  return {
+    field: filter.field,
+    operator: filter.operators[0] || "is",
+    value: filter.type === "boolean" ? true : "",
+  };
+}
+
+function sanitizeFiltersForResource(filters = [], resource) {
+  return filters.filter((filter) => {
+    const definition = getFilterDefinition(resource, filter.field);
+    return definition && definition.operators.includes(filter.operator || "is");
+  });
+}
+
+function getExpandFields(resource) {
+  return RESOURCE_EXPAND_FIELDS[resource] || [];
+}
+
+function sanitizeExpandForResource(expand = [], resource) {
+  const supportedExpand = getExpandFields(resource).map((option) => option.value);
+  return (expand || []).filter((field) => supportedExpand.includes(field));
+}
+
+function isSearchSupported(resource) {
+  return SEARCHABLE_RESOURCES.includes(resource);
+}
+
 const PREVIEW_ROW_LIMIT = 7;
 const PREVIEW_COLUMN_LIMIT = 7;
 const PREVIEW_COLUMN_PRIORITY = [
@@ -746,21 +899,58 @@ function StripeOfficialBuilder(props) {
     });
   };
 
-  const _updateSimpleFilter = (field, value) => {
-    const filters = (configuration.filters || []).filter((filter) => filter.field !== field);
-    if (value || value === true) {
-      filters.push({ field, operator: "is", value });
+  const _updateFilterAt = (index, updates) => {
+    const filters = [...(configuration.filters || [])];
+    const currentFilter = filters[index] || getDefaultFilter(configuration.resource);
+    const updatedField = updates.field === "metadata.*" ? "metadata." : updates.field;
+    const nextFilter = {
+      ...currentFilter,
+      ...updates,
+      ...(updatedField ? { field: updatedField } : {}),
+    };
+    const definition = getFilterDefinition(configuration.resource, nextFilter.field);
+
+    if (definition && updates.field) {
+      nextFilter.operator = definition.operators.includes(nextFilter.operator)
+        ? nextFilter.operator
+        : definition.operators[0] || "is";
+      nextFilter.value = definition.type === "boolean" ? true : "";
     }
+
+    filters[index] = nextFilter;
     _updateConfiguration({ filters });
   };
 
-  const _getSimpleFilter = (field) => {
-    return (configuration.filters || []).find((filter) => filter.field === field)?.value || "";
+  const _updateMetadataFilterKey = (index, key) => {
+    _updateFilterAt(index, { field: key ? `metadata.${key}` : "metadata." });
   };
 
-  const _isLivemodeOnly = () => {
-    return (configuration.filters || []).some((filter) => {
-      return filter.field === "livemode" && filter.value === true;
+  const _toggleExpandField = (field, isSelected) => {
+    const nextExpand = new Set(configuration.expand || []);
+    if (isSelected) {
+      nextExpand.add(field);
+    } else {
+      nextExpand.delete(field);
+    }
+    _updateConfiguration({ expand: Array.from(nextExpand) });
+  };
+
+  const _toggleSearchMode = (isSelected) => {
+    _updateConfiguration({
+      queryMode: isSelected ? "search" : "list",
+      searchQuery: isSelected ? configuration.searchQuery || "" : "",
+    });
+  };
+
+  const _addFilter = () => {
+    const filter = getDefaultFilter(configuration.resource);
+    if (!filter) return;
+    _updateConfiguration({ filters: [...(configuration.filters || []), filter] });
+  };
+
+  const _removeFilterAt = (index) => {
+    _updateConfiguration({
+      filters: (configuration.filters || []).filter((_, filterIndex) => filterIndex !== index),
     });
   };
 
@@ -770,6 +960,10 @@ function StripeOfficialBuilder(props) {
       _updateConfiguration({
         mode: "compiled_metric",
         compiledMetric,
+        queryMode: "list",
+        searchQuery: "",
+        expand: [],
+        filters: [],
         dimension: {
           field: "period",
           type: "date",
@@ -787,6 +981,10 @@ function StripeOfficialBuilder(props) {
       resource: category.defaultResource,
       compiledMetric: null,
       metric: nextMetric,
+      filters: sanitizeFiltersForResource(configuration.filters || [], category.defaultResource),
+      expand: sanitizeExpandForResource(configuration.expand || [], category.defaultResource),
+      queryMode: isSearchSupported(category.defaultResource) ? configuration.queryMode : "list",
+      searchQuery: isSearchSupported(category.defaultResource) ? configuration.searchQuery : "",
       dimension: {
         ...configuration.dimension,
         field: "created",
@@ -796,12 +994,18 @@ function StripeOfficialBuilder(props) {
   };
 
   const _selectQuickStart = (quickStart) => {
+    const isCompiledQuickStart = quickStart.configuration.mode === "compiled_metric";
     setConfiguration({
       ...configuration,
       ...quickStart.configuration,
       metric: quickStart.configuration.metric || configuration.metric,
       dimension: quickStart.configuration.dimension || configuration.dimension,
-      filters: quickStart.configuration.filters || configuration.filters || [],
+      filters: isCompiledQuickStart ? [] : quickStart.configuration.filters || configuration.filters || [],
+      expand: isCompiledQuickStart
+        ? []
+        : sanitizeExpandForResource(quickStart.configuration.expand || configuration.expand || [], quickStart.configuration.resource || configuration.resource),
+      queryMode: quickStart.configuration.queryMode || "list",
+      searchQuery: quickStart.configuration.searchQuery || "",
     });
   };
 
@@ -809,6 +1013,10 @@ function StripeOfficialBuilder(props) {
     _updateConfiguration({
       mode: "compiled_metric",
       compiledMetric,
+      queryMode: "list",
+      searchQuery: "",
+      expand: [],
+      filters: [],
       dimension: {
         field: compiledMetric === "net_cash_flow" ? "created" : "period",
         type: "date",
@@ -890,9 +1098,87 @@ function StripeOfficialBuilder(props) {
     );
   };
 
+  const renderFilterValueField = (filter, index, definition) => {
+    const operatorNeedsValue = !["isNull", "isNotNull"].includes(filter.operator);
+    const metadataKey = definition?.type === "metadata"
+      ? String(filter.field || "").replace(/^metadata\./, "")
+      : "";
+    if (!operatorNeedsValue) {
+      return (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {definition?.type === "metadata" && (
+            <TextField fullWidth name={`stripe-filter-metadata-key-${index}`}>
+              <Label>Metadata key</Label>
+              <Input
+                placeholder="plan"
+                value={metadataKey}
+                onChange={(event) => _updateMetadataFilterKey(index, event.target.value)}
+                variant="secondary"
+              />
+            </TextField>
+          )}
+          <TextField fullWidth name={`stripe-filter-value-${index}`}>
+            <Label>Value</Label>
+            <Input value="" placeholder="No value needed" disabled variant="secondary" />
+          </TextField>
+        </div>
+      );
+    }
+
+    if (definition?.type === "boolean") {
+      return renderSelectField({
+        name: `stripe-filter-value-${index}`,
+        label: "Value",
+        value: String(filter.value === true || filter.value === "true"),
+        onChange: (value) => _updateFilterAt(index, { value: value === "true" }),
+        options: [
+          { value: "true", label: "True" },
+          { value: "false", label: "False" },
+        ],
+      });
+    }
+
+    const valueField = (
+      <TextField fullWidth name={`stripe-filter-value-${index}`}>
+        <Label>Value</Label>
+        <Input
+          type={definition?.type === "number" ? "number" : "text"}
+          placeholder={definition?.type === "number" ? "0" : "Enter value"}
+          value={filter.value ?? ""}
+          onChange={(event) => _updateFilterAt(index, { value: event.target.value })}
+          variant="secondary"
+        />
+      </TextField>
+    );
+
+    if (definition?.type !== "metadata") return valueField;
+
+    return (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <TextField fullWidth name={`stripe-filter-metadata-key-${index}`}>
+          <Label>Metadata key</Label>
+          <Input
+            placeholder="plan"
+            value={metadataKey}
+            onChange={(event) => _updateMetadataFilterKey(index, event.target.value)}
+            variant="secondary"
+          />
+        </TextField>
+        {valueField}
+      </div>
+    );
+  };
+
   const selectedMetric = serializeMetric(configuration.metric || {});
   const selectedDimension = configuration.dimension?.field || "created";
   const selectedInterval = configuration.dimension?.interval || "day";
+  const filterDefinitions = configuration.mode === "compiled_metric"
+    ? []
+    : getFilterDefinitions(configuration.resource);
+  const expandFields = configuration.mode === "compiled_metric"
+    ? []
+    : getExpandFields(configuration.resource);
+  const searchSupported = configuration.mode !== "compiled_metric" && isSearchSupported(configuration.resource);
   const compiledMetricOption = COMPILED_METRIC_OPTIONS.find((option) => option.value === configuration.compiledMetric);
   const outputLabel = configuration.mode === "raw"
     ? "Raw table rows"
@@ -1044,6 +1330,10 @@ function StripeOfficialBuilder(props) {
                           resource,
                           compiledMetric: null,
                           metric: nextMetric,
+                          filters: sanitizeFiltersForResource(configuration.filters || [], resource),
+                          expand: sanitizeExpandForResource(configuration.expand || [], resource),
+                          queryMode: configuration.queryMode,
+                          searchQuery: configuration.searchQuery,
                         });
                       }}
                     >
@@ -1194,52 +1484,92 @@ function StripeOfficialBuilder(props) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-12 gap-3">
-                <TextField className="col-span-12 md:col-span-5" fullWidth name="stripe-status">
-                  <Label>Status</Label>
-                  <Input
-                    placeholder="Any"
-                    value={_getSimpleFilter("status")}
-                    onChange={(event) => _updateSimpleFilter("status", event.target.value)}
-                    variant="secondary"
-                  />
-                </TextField>
-                <TextField className="col-span-12 md:col-span-5" fullWidth name="stripe-currency">
-                  <Label>Currency</Label>
-                  <Input
-                    placeholder="Any"
-                    value={_getSimpleFilter("currency")}
-                    onChange={(event) => _updateSimpleFilter("currency", event.target.value.toLowerCase())}
-                    variant="secondary"
-                  />
-                </TextField>
-                <div className="col-span-12 flex items-end md:col-span-2">
-                  <Button
-                    fullWidth
-                    variant="tertiary"
-                    onPress={() => _updateConfiguration({ filters: [] })}
-                  >
-                    <LuX size={16} />
-                    Clear
-                  </Button>
-                </div>
-              </div>
+              {configuration.mode === "compiled_metric" && (
+                <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning-700 dark:text-warning-300">
+                  Compiled metric filters need metric-specific rules. Use currency above for this first pass.
+                </p>
+              )}
 
-              <Button
-                className="w-fit px-0 text-accent"
-                variant="ghost"
-                onPress={() => toast("Additional Stripe filters are part of the next builder pass.")}
-              >
-                <LuPlus size={16} />
-                Add filter
-              </Button>
+              {configuration.mode !== "compiled_metric" && (configuration.filters || []).length === 0 && (
+                <div className="rounded-lg border border-dashed border-divider bg-surface-secondary/40 p-4 text-sm text-muted">
+                  No filters yet. Add a filter to narrow the Stripe rows before Chartbrew aggregates or renders them.
+                </div>
+              )}
+
+              {configuration.mode !== "compiled_metric" && (configuration.filters || []).map((filter, index) => {
+                const definition = getFilterDefinition(configuration.resource, filter.field) || filterDefinitions[0];
+                const operatorOptions = (definition?.operators || ["is"]).map((operator) => FILTER_OPERATOR_OPTIONS[operator]);
+                const filterSelectValue = definition?.type === "metadata" ? "metadata.*" : filter.field;
+
+                return (
+                  <div key={`${filter.field}-${index}`} className="grid grid-cols-12 gap-3 rounded-lg border border-divider p-3">
+                    <div className="col-span-12 md:col-span-4">
+                      {renderSelectField({
+                        name: `stripe-filter-field-${index}`,
+                        label: "Field",
+                        value: filterSelectValue,
+                        onChange: (value) => _updateFilterAt(index, { field: value }),
+                        options: filterDefinitions.map((filterDefinition) => ({
+                          value: filterDefinition.field,
+                          label: filterDefinition.label,
+                        })),
+                      })}
+                    </div>
+                    <div className="col-span-12 md:col-span-3">
+                      {renderSelectField({
+                        name: `stripe-filter-operator-${index}`,
+                        label: "Operator",
+                        value: filter.operator || "is",
+                        onChange: (value) => _updateFilterAt(index, { operator: value }),
+                        options: operatorOptions.filter(Boolean),
+                      })}
+                    </div>
+                    <div className="col-span-12 md:col-span-4">
+                      {renderFilterValueField(filter, index, definition)}
+                    </div>
+                    <div className="col-span-12 flex items-end md:col-span-1">
+                      <Button
+                        isIconOnly
+                        aria-label="Remove filter"
+                        variant="tertiary"
+                        onPress={() => _removeFilterAt(index)}
+                      >
+                        <LuX size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {configuration.mode !== "compiled_metric" && (
+                <div className="flex flex-row flex-wrap gap-2">
+                  <Button
+                    className="w-fit"
+                    variant="tertiary"
+                    onPress={_addFilter}
+                    isDisabled={filterDefinitions.length === 0}
+                  >
+                    <LuPlus size={16} />
+                    Add filter
+                  </Button>
+                  {(configuration.filters || []).length > 0 && (
+                    <Button
+                      className="w-fit"
+                      variant="tertiary"
+                      onPress={() => _updateConfiguration({ filters: [] })}
+                    >
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator variant="tertiary" />
 
             <Disclosure isExpanded={showAdvanced} onExpandedChange={setShowAdvanced}>
               <Disclosure.Heading>
-                <Button slot="trigger" variant="ghost" className="px-0">
+                <Button slot="trigger" variant="ghost">
                   Advanced options
                   <Disclosure.Indicator />
                 </Button>
@@ -1258,29 +1588,71 @@ function StripeOfficialBuilder(props) {
                   </p>
 
                   <div className="flex flex-col gap-3">
-                    <Switch
-                      isSelected={_isLivemodeOnly()}
-                      onChange={(isSelected) => _updateSimpleFilter("livemode", isSelected ? true : "")}
-                    >
-                      <Switch.Control>
-                        <Switch.Thumb />
-                      </Switch.Control>
-                      <Switch.Content>
-                        <Label className="text-sm">Exclude test mode data</Label>
-                      </Switch.Content>
-                    </Switch>
+                    {configuration.mode === "raw" && (
+                      <Switch
+                        isSelected={Boolean(configuration.rawObjectMode)}
+                        onChange={(isSelected) => _updateConfiguration({ rawObjectMode: isSelected })}
+                      >
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
+                        <Switch.Content>
+                          <Label className="text-sm">Return full Stripe objects</Label>
+                        </Switch.Content>
+                      </Switch>
+                    )}
 
-                    <Switch isDisabled isSelected={configuration.queryMode === "search"}>
+                    <Switch
+                      isDisabled={!searchSupported}
+                      isSelected={configuration.queryMode === "search"}
+                      onChange={_toggleSearchMode}
+                    >
                       <Switch.Control>
                         <Switch.Thumb />
                       </Switch.Control>
                       <Switch.Content>
                         <div className="flex flex-row flex-wrap items-center gap-2">
                           <Label className="text-sm">Use Stripe Search API</Label>
-                          <Chip size="sm" variant="soft">planned</Chip>
+                          {!searchSupported && <Chip size="sm" variant="soft">not supported</Chip>}
                         </div>
                       </Switch.Content>
                     </Switch>
+
+                    {configuration.queryMode === "search" && (
+                      <TextField fullWidth name="stripe-search-query">
+                        <Label>Search query</Label>
+                        <Input
+                          placeholder={"metadata['plan']:'pro' OR email:'customer@example.com'"}
+                          value={configuration.searchQuery || ""}
+                          onChange={(event) => _updateConfiguration({ searchQuery: event.target.value })}
+                          variant="secondary"
+                        />
+                      </TextField>
+                    )}
+
+                    {expandFields.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium text-foreground">Expand fields</span>
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                          {expandFields.map((field) => (
+                            <Checkbox
+                              key={field.value}
+                              name={`stripe-expand-${field.value}`}
+                              isSelected={(configuration.expand || []).includes(field.value)}
+                              onChange={(isSelected) => _toggleExpandField(field.value, isSelected)}
+                              variant="secondary"
+                            >
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <Checkbox.Content>
+                                <Label>{field.label}</Label>
+                              </Checkbox.Content>
+                            </Checkbox>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Disclosure.Body>
               </Disclosure.Content>
@@ -1452,7 +1824,7 @@ function StripeOfficialBuilder(props) {
               Save configuration
             </Button>
             <Button fullWidth onPress={() => setShowTransform(!showTransform)} variant="secondary">
-              <LuSparkles size={16} />
+              <LuBraces size={16} />
               {showTransform ? "Hide transform" : "Transform data"}
             </Button>
             <Button fullWidth variant="danger-soft" onPress={onDelete}>

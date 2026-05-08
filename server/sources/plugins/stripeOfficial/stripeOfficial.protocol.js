@@ -18,6 +18,7 @@ const {
 const STRIPE_API_BASE_URL = "https://api.stripe.com/v1";
 const DEFAULT_MAX_RECORDS = 5000;
 const DEFAULT_PAGE_LIMIT = 100;
+const STRIPE_MRR_STATUSES = ["active", "past_due"];
 const DEFAULT_CONFIGURATION = {
   source: "stripeOfficial",
   resource: "balance_transactions",
@@ -259,6 +260,102 @@ function getResource(config) {
   return resource;
 }
 
+function normalizeMetadataField(field) {
+  if (!field) return field;
+  return String(field).replace(/^metadata\[/, "metadata.").replace(/\]$/, "");
+}
+
+function getFilterDefinition(resource, field) {
+  const normalizedField = normalizeMetadataField(normalizeFilterField(field));
+  return (resource.filters || []).find((candidate) => {
+    if (candidate.pattern && candidate.field === "metadata.*") {
+      return /^metadata\.[^.]+$/.test(normalizedField);
+    }
+    return candidate.field === normalizedField;
+  });
+}
+
+function validateConfiguration(configuration = {}, options = {}) {
+  const errors = [];
+  const warnings = [];
+  const config = getConfiguration({ configuration });
+  const allowSearch = options.allowSearch !== false;
+
+  if (config.source !== "stripeOfficial") {
+    errors.push("configuration.source must be stripeOfficial");
+  }
+
+  if (!["aggregate", "raw", "compiled_metric"].includes(config.mode)) {
+    errors.push("mode must be aggregate, raw, or compiled_metric");
+  }
+
+  if (config.mode === "compiled_metric") {
+    if (!COMPILED_METRICS[config.compiledMetric]) {
+      errors.push(`Unsupported compiled Stripe metric: ${config.compiledMetric || "missing"}`);
+    }
+    warnings.push("Compiled Stripe metrics are direct-API estimates and may not be accounting-grade.");
+  } else {
+    const resource = STRIPE_RESOURCES[config.resource];
+    if (!resource) {
+      errors.push(`Unsupported Stripe resource: ${config.resource || "missing"}`);
+    } else {
+      const queryMode = config.queryMode || "list";
+      if (!resource.supportedQueryModes.includes(queryMode)) {
+        errors.push(`Stripe ${resource.label} does not support queryMode=${queryMode}.`);
+      }
+      if (queryMode === "search") {
+        if (!allowSearch) {
+          errors.push("Stripe Search API is not available to AI tools yet; use queryMode=list.");
+        }
+        if (!config.searchQuery || !String(config.searchQuery).trim()) {
+          errors.push("searchQuery is required when queryMode=search.");
+        }
+      }
+
+      (config.filters || []).forEach((filter) => {
+        if (!filter?.field) return;
+        const normalizedField = normalizeMetadataField(normalizeFilterField(filter.field));
+        const filterDefinition = getFilterDefinition(resource, normalizedField);
+        if (!filterDefinition) {
+          errors.push(`Unsupported Stripe filter for ${config.resource}: ${normalizedField}`);
+          return;
+        }
+        if (!filterDefinition.operators.includes(filter.operator || "is")) {
+          errors.push(`Unsupported Stripe filter operator for ${config.resource}.${normalizedField}: ${filter.operator || "is"}`);
+        }
+      });
+
+      (config.expand || []).forEach((expandField) => {
+        if (!(resource.expandableFields || []).includes(expandField)) {
+          errors.push(`Unsupported Stripe expand field for ${config.resource}: ${expandField}`);
+        }
+      });
+    }
+  }
+
+  const maxRecords = Number(config.pagination?.maxRecords);
+  if (!Number.isFinite(maxRecords) || maxRecords <= 0) {
+    errors.push("pagination.maxRecords must be a positive number");
+  } else if (maxRecords > 10000) {
+    warnings.push("pagination.maxRecords is high. Large Stripe requests can be slow; narrow the date range when possible.");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    configuration: config,
+  };
+}
+
+function assertValidConfiguration(configuration) {
+  const validation = validateConfiguration(configuration);
+  if (!validation.valid) {
+    throw new Error(validation.errors.join(" "));
+  }
+  return validation.configuration;
+}
+
 function parseEpoch(value, fallback = null) {
   if (!value) return fallback;
   if (typeof value === "number") return value;
@@ -287,12 +384,111 @@ function parseEpoch(value, fallback = null) {
   return date.unix();
 }
 
+function readNestedValue(value, keys) {
+  if (value === null || value === undefined) return null;
+  if (!keys.length) return value;
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => {
+      const itemValue = readNestedValue(item, keys);
+      return Array.isArray(itemValue) ? itemValue : [itemValue];
+    }).filter((item) => item !== null && item !== undefined);
+  }
+
+  const [key, ...remainingKeys] = keys;
+  return readNestedValue(value[key], remainingKeys);
+}
+
 function getNestedValue(row, field) {
   if (!field) return null;
-  return String(field).split(".").reduce((value, key) => {
-    if (value === null || value === undefined) return null;
-    return value[key];
-  }, row);
+  const normalizedField = normalizeMetadataField(normalizeFilterField(field));
+  return readNestedValue(row, String(normalizedField).split("."));
+}
+
+function normalizeFilterField(field) {
+  if (!field) return field;
+
+  return String(field)
+    .replace(/^root\[\]\./, "")
+    .replace(/^root\./, "");
+}
+
+function hasFilterValue(filter = {}) {
+  if (["isNull", "isNotNull"].includes(filter.operator)) return true;
+  return filter.value !== undefined && filter.value !== null && filter.value !== "";
+}
+
+function normalizeRuntimeFilter(filter = {}) {
+  if (!filter || filter.clientOnly) return null;
+
+  if (filter.type === "date" && filter.startDate && filter.endDate) {
+    return {
+      field: null,
+      operator: "between",
+      start: filter.startDate,
+      end: filter.endDate,
+      runtimeDateRange: true,
+    };
+  }
+
+  if (!filter.field || !hasFilterValue(filter)) return null;
+
+  return {
+    field: normalizeFilterField(filter.field),
+    operator: filter.operator || "is",
+    value: filter.value,
+  };
+}
+
+function isSupportedFilter(config, filter) {
+  if (!filter || filter.runtimeDateRange) return false;
+
+  const resource = STRIPE_RESOURCES[config.resource];
+  if (!resource) return false;
+
+  const definition = getFilterDefinition(resource, filter.field);
+  return Boolean(definition && definition.operators.includes(filter.operator));
+}
+
+function mergeRuntimeFilters(config, runtimeFilters = []) {
+  const normalizedRuntimeFilters = (runtimeFilters || [])
+    .map(normalizeRuntimeFilter)
+    .filter(Boolean);
+  const dateRuntimeFilter = normalizedRuntimeFilters.find((filter) => filter.runtimeDateRange);
+  const fieldRuntimeFilters = normalizedRuntimeFilters.filter((filter) => {
+    return !filter.runtimeDateRange && isSupportedFilter(config, filter);
+  });
+
+  return {
+    ...config,
+    dateRange: dateRuntimeFilter
+      ? {
+        ...config.dateRange,
+        start: dateRuntimeFilter.start,
+        end: dateRuntimeFilter.end,
+      }
+      : config.dateRange,
+    filters: [
+      ...(config.filters || []),
+      ...fieldRuntimeFilters,
+    ],
+  };
+}
+
+function getListParamName(config, filter) {
+  if (!hasFilterValue(filter)) return null;
+  if (filter.operator !== "is") return null;
+  if (filter.field === "customer") return "customer";
+  if (filter.field === "type" && config.resource === "balance_transactions") return "type";
+  if (filter.field === "status" && ["subscriptions", "invoices", "payouts"].includes(config.resource)) return "status";
+  if (filter.field === "charge" && config.resource === "refunds") return "charge";
+  if (filter.field === "payment_intent" && config.resource === "refunds") return "payment_intent";
+  if (filter.field === "source" && config.resource === "balance_transactions") return "source";
+
+  return null;
+}
+
+function isPushdownFilter(config, filter) {
+  return Boolean(getListParamName(config, filter));
 }
 
 function buildListParams(config, resource) {
@@ -312,14 +508,23 @@ function buildListParams(config, resource) {
   }
 
   (config.filters || []).forEach((filter) => {
-    if (filter.operator !== "is") return;
-    if (filter.field === "customer") {
-      params.customer = filter.value;
-    }
-    if (filter.field === "status" && ["subscriptions", "invoices"].includes(config.resource)) {
-      params.status = filter.value;
-    }
+    const paramName = getListParamName(config, filter);
+    if (paramName) params[paramName] = filter.value;
   });
+
+  if (Array.isArray(config.expand) && config.expand.length > 0) {
+    params.expand = config.expand;
+  }
+
+  return params;
+}
+
+function buildSearchParams(config) {
+  const limit = Math.min(Number(config.pagination?.limit || DEFAULT_PAGE_LIMIT), DEFAULT_PAGE_LIMIT);
+  const params = {
+    limit,
+    query: String(config.searchQuery || "").trim(),
+  };
 
   if (Array.isArray(config.expand) && config.expand.length > 0) {
     params.expand = config.expand;
@@ -330,14 +535,42 @@ function buildListParams(config, resource) {
 
 async function fetchStripeRows(connection, config, resource) {
   if (config.queryMode === "search") {
-    throw new Error("Stripe Search API support is planned but not available in this first pass");
+    const maxRecords = Math.max(1, Number(config.pagination?.maxRecords || DEFAULT_MAX_RECORDS));
+    const rows = [];
+    const params = buildSearchParams(config);
+    let hasMore = true;
+    let page = null;
+
+    while (hasMore && rows.length < maxRecords) {
+      // oxlint-disable-next-line no-await-in-loop
+      const response = await stripeRequest(connection, resource.searchEndpoint || `${resource.endpoint}/search`, {
+        ...params,
+        ...(page ? { page } : {}),
+      });
+      const pageRows = Array.isArray(response?.data) ? response.data : [];
+      rows.push(...applyLocalFilters(pageRows, config.filters));
+
+      hasMore = response?.has_more === true && pageRows.length > 0;
+      page = response?.next_page || null;
+    }
+
+    const capped = rows.length > maxRecords || hasMore;
+    return {
+      rows: rows.slice(0, maxRecords),
+      recordsProcessed: Math.min(rows.length, maxRecords),
+      capped,
+      maxRecords,
+    };
   }
 
   const maxRecords = Math.max(1, Number(config.pagination?.maxRecords || DEFAULT_MAX_RECORDS));
   const rows = [];
   const params = buildListParams(config, resource);
+  const localFilters = (config.filters || []).filter((filter) => !isPushdownFilter(config, filter));
+  const hasLocalFilters = localFilters.length > 0;
   let hasMore = true;
   let startingAfter = null;
+  let scannedRows = 0;
 
   while (hasMore && rows.length < maxRecords) {
     // oxlint-disable-next-line no-await-in-loop
@@ -346,7 +579,8 @@ async function fetchStripeRows(connection, config, resource) {
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
     const pageRows = Array.isArray(response?.data) ? response.data : [];
-    rows.push(...pageRows);
+    scannedRows += pageRows.length;
+    rows.push(...(hasLocalFilters ? applyLocalFilters(pageRows, config.filters) : pageRows));
 
     hasMore = response?.has_more === true && pageRows.length > 0;
     startingAfter = pageRows[pageRows.length - 1]?.id || null;
@@ -355,7 +589,7 @@ async function fetchStripeRows(connection, config, resource) {
   const capped = rows.length > maxRecords || hasMore;
   return {
     rows: rows.slice(0, maxRecords),
-    recordsProcessed: Math.min(rows.length, maxRecords),
+    recordsProcessed: hasLocalFilters ? scannedRows : Math.min(rows.length, maxRecords),
     capped,
     maxRecords,
   };
@@ -364,18 +598,30 @@ async function fetchStripeRows(connection, config, resource) {
 function passesFilter(row, filter) {
   const value = getNestedValue(row, filter.field);
   const expected = filter.value;
+  const values = Array.isArray(value) ? value : [value];
+  const hasAnyValue = values.some((item) => item !== null && item !== undefined && item !== "");
 
   switch (filter.operator) {
     case "is":
-      return `${value}` === `${expected}`;
+      return values.some((item) => `${item}` === `${expected}`);
     case "isNot":
-      return `${value}` !== `${expected}`;
+      return values.every((item) => `${item}` !== `${expected}`);
     case "greaterThan":
-      return Number(value) > Number(expected);
+      return values.some((item) => Number(item) > Number(expected));
+    case "greaterOrEqual":
+      return values.some((item) => Number(item) >= Number(expected));
     case "lessThan":
-      return Number(value) < Number(expected);
+      return values.some((item) => Number(item) < Number(expected));
+    case "lessOrEqual":
+      return values.some((item) => Number(item) <= Number(expected));
     case "contains":
-      return String(value || "").includes(String(expected || ""));
+      return values.some((item) => String(item || "").includes(String(expected || "")));
+    case "notContains":
+      return values.every((item) => !String(item || "").includes(String(expected || "")));
+    case "isNull":
+      return !hasAnyValue;
+    case "isNotNull":
+      return hasAnyValue;
     default:
       return true;
   }
@@ -383,7 +629,14 @@ function passesFilter(row, filter) {
 
 function applyLocalFilters(rows, filters = []) {
   if (!Array.isArray(filters) || filters.length === 0) return rows;
-  return rows.filter((row) => filters.every((filter) => passesFilter(row, filter)));
+  return rows.filter((row) => filters.every((filter) => {
+    if (!hasFilterValue(filter)) return true;
+    return passesFilter(row, {
+      ...filter,
+      field: normalizeFilterField(filter.field),
+      operator: filter.operator || "is",
+    });
+  }));
 }
 
 function getPeriod(value, interval) {
@@ -517,6 +770,7 @@ function getPeriodRange(startEpoch, endEpoch, interval = "month") {
 
 function getPriceMonthlyAmount(price, quantity = 1) {
   if (!price?.recurring) return 0;
+  if (price.recurring.usage_type === "metered") return 0;
 
   const amount = Number(price.unit_amount_decimal || price.unit_amount || 0) * Number(quantity || 1);
   const intervalCount = Number(price.recurring.interval_count || 1);
@@ -532,10 +786,57 @@ function getSubscriptionItems(subscription) {
   return [];
 }
 
-function getSubscriptionMrr(subscription) {
-  return getSubscriptionItems(subscription).reduce((total, item) => {
+function getSubscriptionCurrency(subscription) {
+  return subscription.currency || getSubscriptionItems(subscription).find((item) => {
+    return item.price?.currency;
+  })?.price?.currency || null;
+}
+
+function getSubscriptionDiscounts(subscription) {
+  if (Array.isArray(subscription.discounts)) {
+    return subscription.discounts.filter((discount) => discount && typeof discount === "object");
+  }
+  return subscription.discount ? [subscription.discount] : [];
+}
+
+function isDiscountActiveAt(discount, snapshot) {
+  const timestamp = snapshot.unix();
+  if (discount.start && Number(discount.start) > timestamp) return false;
+  if (discount.end && Number(discount.end) <= timestamp) return false;
+  return true;
+}
+
+function applySubscriptionDiscounts(amount, subscription, snapshot) {
+  if (amount <= 0) return 0;
+
+  const subscriptionCurrency = getSubscriptionCurrency(subscription);
+  const discountedAmount = getSubscriptionDiscounts(subscription).reduce((currentAmount, discount) => {
+    if (!isDiscountActiveAt(discount, snapshot)) return currentAmount;
+
+    const coupon = discount.coupon || {};
+    if (coupon.percent_off) {
+      return currentAmount * (1 - (Number(coupon.percent_off) / 100));
+    }
+    if (
+      coupon.amount_off
+      && coupon.duration !== "once"
+      && (!coupon.currency || !subscriptionCurrency || coupon.currency === subscriptionCurrency)
+    ) {
+      return currentAmount - Number(coupon.amount_off || 0);
+    }
+
+    return currentAmount;
+  }, amount);
+
+  return Math.max(0, discountedAmount);
+}
+
+function getSubscriptionMrr(subscription, snapshot = moment()) {
+  const monthlyAmount = getSubscriptionItems(subscription).reduce((total, item) => {
     return total + getPriceMonthlyAmount(item.price, item.quantity || 1);
   }, 0);
+
+  return applySubscriptionDiscounts(monthlyAmount, subscription, snapshot);
 }
 
 function getSubscriptionStart(subscription) {
@@ -546,12 +847,19 @@ function getSubscriptionEnd(subscription) {
   return Number(subscription.ended_at || subscription.canceled_at || 0);
 }
 
-function wasSubscriptionActiveAt(subscription, periodStart) {
+function wasSubscriptionMrrActiveAt(subscription, snapshot) {
   const start = getSubscriptionStart(subscription);
   const end = getSubscriptionEnd(subscription);
-  const timestamp = periodStart.unix();
+  const timestamp = snapshot.unix();
 
-  return start <= timestamp && (!end || end >= timestamp);
+  if (start > timestamp) return false;
+  if (end && end <= timestamp) return false;
+  if (subscription.trial_end && Number(subscription.trial_end) > timestamp) return false;
+
+  if (STRIPE_MRR_STATUSES.includes(subscription.status)) return true;
+  if (["canceled", "unpaid"].includes(subscription.status) && end && end > timestamp) return true;
+
+  return false;
 }
 
 function wasSubscriptionCanceledDuring(subscription, period) {
@@ -561,13 +869,19 @@ function wasSubscriptionCanceledDuring(subscription, period) {
 
 function matchesCurrency(row, currency) {
   if (!currency) return true;
-  const rowCurrency = row.currency || getSubscriptionItems(row).find((item) => item.price?.currency)?.price?.currency;
+  const rowCurrency = getSubscriptionCurrency(row);
   return !rowCurrency || String(rowCurrency).toLowerCase() === String(currency).toLowerCase();
 }
 
 function getCompiledCurrency(config, rows = []) {
   if (config.currency && config.currency !== "auto") return String(config.currency).toLowerCase();
   return rows.find((row) => row.currency)?.currency || null;
+}
+
+function getSubscriptionSnapshot(period, endEpoch) {
+  const now = moment();
+  const configuredEnd = moment.unix(endEpoch);
+  return moment.min(period.end.clone(), configuredEnd, now);
 }
 
 async function fetchSubscriptionsForCompiledMetric(connection, config) {
@@ -598,11 +912,14 @@ function calculateRecurringMetricRows(subscriptions, config, metricKey) {
   const filteredSubscriptions = subscriptions.filter((subscription) => matchesCurrency(subscription, currency));
 
   return periods.map((period) => {
-    const activeSubscriptions = filteredSubscriptions.filter((subscription) => {
-      return wasSubscriptionActiveAt(subscription, period.start);
-    });
-    const mrr = activeSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription), 0);
-    const customers = new Set(activeSubscriptions.map((subscription) => subscription.customer).filter(Boolean));
+    const snapshot = getSubscriptionSnapshot(period, end);
+    const activeSubscriptions = filteredSubscriptions.map((subscription) => ({
+      subscription,
+      mrr: wasSubscriptionMrrActiveAt(subscription, snapshot) ? getSubscriptionMrr(subscription, snapshot) : 0,
+    })).filter((item) => item.mrr > 0);
+    const mrr = activeSubscriptions.reduce((total, item) => total + item.mrr, 0);
+    const activeSubscriptionRows = activeSubscriptions.map((item) => item.subscription);
+    const customers = new Set(activeSubscriptionRows.map((subscription) => subscription.customer).filter(Boolean));
     let value = mrr;
 
     if (metricKey === "arr") value = mrr * 12;
@@ -612,10 +929,11 @@ function calculateRecurringMetricRows(subscriptions, config, metricKey) {
       period: period.key,
       dimension: period.key,
       value,
-      currency: getCompiledCurrency(config, activeSubscriptions),
-      recordsProcessed: activeSubscriptions.length,
+      currency: getCompiledCurrency(config, activeSubscriptionRows),
+      recordsProcessed: activeSubscriptionRows.length,
       activeSubscriptions: activeSubscriptions.length,
       activeCustomers: customers.size,
+      snapshotAt: snapshot.unix(),
     };
   });
 }
@@ -628,14 +946,17 @@ function calculateChurnMetricRows(subscriptions, config, metricKey) {
   const filteredSubscriptions = subscriptions.filter((subscription) => matchesCurrency(subscription, currency));
 
   return periods.map((period) => {
+    const startingSnapshot = period.start.clone();
+    const endingSnapshot = getSubscriptionSnapshot(period, end);
     const startingSubscriptions = filteredSubscriptions.filter((subscription) => {
-      return wasSubscriptionActiveAt(subscription, period.start);
+      return wasSubscriptionMrrActiveAt(subscription, startingSnapshot)
+        && getSubscriptionMrr(subscription, startingSnapshot) > 0;
     });
     const canceledSubscriptions = filteredSubscriptions.filter((subscription) => {
       return wasSubscriptionCanceledDuring(subscription, period);
     });
-    const startingMrr = startingSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription), 0);
-    const canceledMrr = canceledSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription), 0);
+    const startingMrr = startingSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription, startingSnapshot), 0);
+    const canceledMrr = canceledSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription, endingSnapshot), 0);
     let value = 0;
 
     if (metricKey === "subscriber_churn_rate") {
@@ -743,7 +1064,7 @@ async function calculateRecurringCompiledMetric(connection, config, metricKey) {
     : calculateRecurringMetricRows(filteredRows, config, metricKey);
   const warnings = [
     ...buildWarnings(fetchResult, config),
-    "Recurring revenue metrics are calculated from subscription item prices available through the direct Stripe API. Taxes, discounts, metered usage, currency conversion, and historical price changes may need a later accounting-grade pass.",
+    "Recurring revenue metrics use Stripe-style MRR rules where possible: monthly-normalized licensed recurring prices for active and past_due subscriptions, excluding trialing, unpaid/canceled, free, metered, and tax amounts. Historical price changes and multi-currency conversion may still require a later accounting-grade pass.",
   ];
 
   if (metricKey === "net_mrr_churn_rate") {
@@ -780,6 +1101,7 @@ async function runDataRequest({
   connection,
   dataRequest,
   getCache,
+  filters = [],
   processedDataRequest = null,
   auditContext = null,
 }) {
@@ -796,7 +1118,7 @@ async function runDataRequest({
   }
 
   const dataRequestToRun = processedDataRequest || dataRequest;
-  const config = getConfiguration(dataRequestToRun);
+  const config = assertValidConfiguration(mergeRuntimeFilters(getConfiguration(dataRequestToRun), filters));
   const savedConnection = await getSavedConnection(connection);
 
   try {
@@ -867,6 +1189,19 @@ function previewDataRequest(options) {
 
 module.exports = {
   DEFAULT_CONFIGURATION,
+  _private: {
+    aggregateRows,
+    applyLocalFilters,
+    buildListParams,
+    buildSearchParams,
+    calculateRecurringMetricRows,
+    getPriceMonthlyAmount,
+    getSubscriptionMrr,
+    getFilterDefinition,
+    mergeRuntimeFilters,
+    normalizeFilterField,
+    normalizeRawRows,
+  },
   applyVariables,
   getBuilderMetadata,
   getDefaultDataRequest,
@@ -875,4 +1210,5 @@ module.exports = {
   runDataRequest,
   testConnection,
   testUnsavedConnection,
+  validateConfiguration,
 };

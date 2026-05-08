@@ -423,7 +423,7 @@ class DatasetController {
           sourceCacheParams = {
             datasetId: dataset.id,
             sourceVersion: runtimeCache.buildDatasetVersion(dataset, timezone),
-            variantHash: runtimeContext.sourceVariantHash,
+            variantHash: runtimeContext.chartVariantHash || runtimeContext.sourceVariantHash,
             viewerScope,
           };
 

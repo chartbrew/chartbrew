@@ -19,6 +19,10 @@ const {
 const { getSourceById } = require("../../sources");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 
+function epoch(date) {
+  return Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000);
+}
+
 describe("Stripe Official AI layer", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -68,7 +72,7 @@ describe("Stripe Official AI layer", () => {
       chartSpec: {
         yAxis: "root[].value",
         yAxisOperation: "none",
-        formula: "${val / 100}",
+        formula: "{val / 100}",
       },
     });
     expect(plan.configuration.dateRange.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -97,7 +101,7 @@ describe("Stripe Official AI layer", () => {
         type: "line",
         xAxis: "root[].period",
         yAxis: "root[].value",
-        formula: "${val / 100}",
+        formula: "{val / 100}",
       },
     });
     expect(plan.warnings[0]).toContain("direct-API estimates");
@@ -115,6 +119,367 @@ describe("Stripe Official AI layer", () => {
 
     expect(validation.valid).toBe(false);
     expect(validation.errors).toContain("Stripe Search API is not available to AI tools yet; use queryMode=list.");
+  });
+
+  it("validates Stripe AI filter fields and operators per resource", () => {
+    const source = getSourceById("stripeOfficial");
+    const validation = source.backend.ai.validateConfiguration({
+      source: "stripeOfficial",
+      mode: "aggregate",
+      resource: "balance_transactions",
+      queryMode: "list",
+      filters: [{
+        field: "status",
+        operator: "contains",
+        value: "paid",
+      }],
+      pagination: { maxRecords: 100 },
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Unsupported Stripe filter for balance_transactions: status");
+  });
+
+  it("validates manual Stripe configuration filters, expand fields, and Search controls", () => {
+    const valid = stripeOfficialProtocol.validateConfiguration({
+      source: "stripeOfficial",
+      mode: "raw",
+      resource: "subscriptions",
+      queryMode: "search",
+      searchQuery: "status:'active'",
+      filters: [{
+        field: "items.data.price.product",
+        operator: "is",
+        value: "prod_123",
+      }, {
+        field: "metadata.plan",
+        operator: "contains",
+        value: "pro",
+      }],
+      expand: ["data.items.data.price"],
+      rawObjectMode: true,
+      pagination: { maxRecords: 100 },
+    });
+    const invalid = stripeOfficialProtocol.validateConfiguration({
+      source: "stripeOfficial",
+      mode: "aggregate",
+      resource: "balance_transactions",
+      filters: [{
+        field: "metadata.plan",
+        operator: "contains",
+        value: "pro",
+      }],
+      expand: ["data.customer"],
+      pagination: { maxRecords: 100 },
+    });
+
+    expect(valid.valid).toBe(true);
+    expect(invalid.valid).toBe(false);
+    expect(invalid.errors).toEqual(expect.arrayContaining([
+      "Unsupported Stripe filter for balance_transactions: metadata.plan",
+      "Unsupported Stripe expand field for balance_transactions: data.customer",
+    ]));
+  });
+
+  it("merges runtime Stripe filters and date ranges into request configuration", () => {
+    const config = stripeOfficialProtocol._private.mergeRuntimeFilters({
+      source: "stripeOfficial",
+      mode: "aggregate",
+      resource: "balance_transactions",
+      dateRange: {
+        field: "created",
+        start: "last_90_days",
+        end: "now",
+      },
+      filters: [{
+        field: "type",
+        operator: "is",
+        value: "charge",
+      }],
+      pagination: { maxRecords: 100 },
+    }, [{
+      type: "date",
+      startDate: "2026-04-01",
+      endDate: "2026-04-30",
+    }, {
+      field: "root[].currency",
+      operator: "is",
+      value: "gbp",
+    }, {
+      field: "root[].status",
+      operator: "is",
+      value: "paid",
+    }]);
+
+    expect(config.dateRange).toMatchObject({
+      start: "2026-04-01",
+      end: "2026-04-30",
+    });
+    expect(config.filters).toEqual([
+      { field: "type", operator: "is", value: "charge" },
+      { field: "currency", operator: "is", value: "gbp" },
+    ]);
+  });
+
+  it("pushes supported Stripe list filters and applies local operators", () => {
+    const params = stripeOfficialProtocol._private.buildListParams({
+      resource: "balance_transactions",
+      dateRange: {
+        field: "created",
+        start: "2026-04-01",
+        end: "2026-04-30",
+      },
+      filters: [{
+        field: "type",
+        operator: "is",
+        value: "charge",
+      }, {
+        field: "currency",
+        operator: "is",
+        value: "gbp",
+      }],
+      pagination: { limit: 100 },
+    }, {
+      endpoint: "/balance_transactions",
+      defaultDateField: "created",
+    });
+    const rows = stripeOfficialProtocol._private.applyLocalFilters([
+      { id: "txn_1", amount: 2500, currency: "gbp" },
+      { id: "txn_2", amount: 500, currency: "gbp" },
+      { id: "txn_3", amount: 3000, currency: "usd" },
+    ], [{
+      field: "amount",
+      operator: "greaterOrEqual",
+      value: "1000",
+    }, {
+      field: "currency",
+      operator: "is",
+      value: "gbp",
+    }]);
+
+    expect(params).toMatchObject({
+      type: "charge",
+    });
+    expect(params.currency).toBeUndefined();
+    expect(rows).toEqual([{ id: "txn_1", amount: 2500, currency: "gbp" }]);
+  });
+
+  it("builds Stripe Search params and filters nested subscription price/product fields", () => {
+    const params = stripeOfficialProtocol._private.buildSearchParams({
+      searchQuery: "metadata['plan']:'pro'",
+      pagination: { limit: 25 },
+      expand: ["data.items.data.price"],
+    });
+    const rows = stripeOfficialProtocol._private.applyLocalFilters([
+      {
+        id: "sub_1",
+        metadata: { plan: "pro" },
+        items: {
+          data: [{
+            price: {
+              id: "price_1",
+              product: "prod_1",
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_2",
+        metadata: { plan: "starter" },
+        items: {
+          data: [{
+            price: {
+              id: "price_2",
+              product: "prod_2",
+            },
+          }],
+        },
+      },
+    ], [{
+      field: "items.data.price.product",
+      operator: "is",
+      value: "prod_1",
+    }, {
+      field: "metadata.plan",
+      operator: "contains",
+      value: "pro",
+    }]);
+
+    expect(params).toEqual({
+      query: "metadata['plan']:'pro'",
+      limit: 25,
+      expand: ["data.items.data.price"],
+    });
+    expect(rows).toEqual([expect.objectContaining({ id: "sub_1" })]);
+  });
+
+  it("covers Stripe protocol aggregation, raw row shape, and subscription defaults", () => {
+    const subscriptionParams = stripeOfficialProtocol._private.buildListParams({
+      resource: "subscriptions",
+      dateRange: {
+        field: "created",
+        start: "2026-01-01",
+        end: "2026-01-31",
+      },
+      filters: [{
+        field: "status",
+        operator: "is",
+        value: "",
+      }],
+      pagination: { limit: 100 },
+    }, {
+      endpoint: "/subscriptions",
+      defaultDateField: "created",
+      defaultParams: { status: "all" },
+    });
+    const aggregateRows = stripeOfficialProtocol._private.aggregateRows([
+      { id: "txn_1", created: 1770163200, net: 1200, currency: "usd" },
+      { id: "txn_2", created: 1770163300, net: 800, currency: "usd" },
+      { id: "txn_3", created: 1770249600, net: 500, currency: "usd" },
+    ], {
+      metric: { field: "net", operation: "sum" },
+      dimension: { field: "created", type: "date", interval: "day" },
+    });
+    const rawRows = stripeOfficialProtocol._private.normalizeRawRows([{
+      id: "ch_1",
+      amount: 2500,
+      billing_details: {
+        address: {
+          country: "GB",
+        },
+      },
+    }], {
+      rawColumns: ["id", "amount", "billing_details.address.country"],
+    }, {});
+
+    expect(subscriptionParams.status).toBe("all");
+    expect(aggregateRows).toEqual([
+      {
+        period: "2026-02-04",
+        dimension: "2026-02-04",
+        value: 2000,
+        currency: "usd",
+        recordsProcessed: 2,
+      },
+      {
+        period: "2026-02-05",
+        dimension: "2026-02-05",
+        value: 500,
+        currency: "usd",
+        recordsProcessed: 1,
+      },
+    ]);
+    expect(rawRows).toEqual([{
+      id: "ch_1",
+      amount: 2500,
+      billing_details_address_country: "GB",
+    }]);
+  });
+
+  it("calculates MRR with Stripe-style active/past_due monthly-normalized snapshots", () => {
+    const rows = stripeOfficialProtocol._private.calculateRecurringMetricRows([
+      {
+        id: "sub_monthly",
+        status: "active",
+        customer: "cus_1",
+        start_date: epoch("2020-01-15"),
+        currency: "usd",
+        items: {
+          data: [{
+            quantity: 2,
+            price: {
+              unit_amount: 10000,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_annual",
+        status: "past_due",
+        customer: "cus_2",
+        start_date: epoch("2020-03-10"),
+        currency: "usd",
+        items: {
+          data: [{
+            quantity: 1,
+            price: {
+              unit_amount: 120000,
+              currency: "usd",
+              recurring: { interval: "year", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_trialing",
+        status: "trialing",
+        customer: "cus_3",
+        start_date: epoch("2020-01-01"),
+        trial_end: epoch("2020-04-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 50000,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_metered",
+        status: "active",
+        customer: "cus_4",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 99900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "metered" },
+            },
+          }],
+        },
+      },
+    ], {
+      compiledMetric: "mrr",
+      dimension: { field: "period", interval: "month" },
+      dateRange: {
+        start: "2020-01-01",
+        end: "2020-03-15",
+      },
+      currency: "usd",
+    }, "mrr");
+
+    expect(rows.map((row) => ({
+      period: row.period,
+      value: row.value,
+      activeSubscriptions: row.activeSubscriptions,
+      activeCustomers: row.activeCustomers,
+    }))).toEqual([
+      {
+        period: "2020-01-01",
+        value: 20000,
+        activeSubscriptions: 1,
+        activeCustomers: 1,
+      },
+      {
+        period: "2020-02-01",
+        value: 20000,
+        activeSubscriptions: 1,
+        activeCustomers: 1,
+      },
+      {
+        period: "2020-03-01",
+        value: 30000,
+        activeSubscriptions: 2,
+        activeCustomers: 2,
+      },
+    ]);
   });
 
   it("recommends Stripe templates from business goals", () => {
@@ -302,7 +667,7 @@ describe("Stripe Official AI layer", () => {
       xAxis: "root[].period",
       yAxis: "root[].value",
       yAxisOperation: "none",
-      formula: "${val / 100}",
+      formula: "{val / 100}",
     });
 
     expect(ChartController.prototype.createWithChartDatasetConfigs).toHaveBeenCalledWith(expect.objectContaining({
@@ -311,7 +676,7 @@ describe("Stripe Official AI layer", () => {
         dataset_id: 99,
         xAxis: "root[].period",
         yAxis: "root[].value",
-        formula: "${val / 100}",
+        formula: "{val / 100}",
       })],
     }), null);
     expect(result).toMatchObject({
