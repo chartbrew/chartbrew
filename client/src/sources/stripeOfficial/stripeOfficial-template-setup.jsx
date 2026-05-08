@@ -40,6 +40,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 
 import { createFromChartTemplate, getChartTemplate } from "../../slices/chartTemplate";
+import { getProjectCharts } from "../../slices/chart";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 
 const GROUPS = [{
@@ -566,6 +567,7 @@ function StripeOfficialTemplateSetup(props) {
 
       if (mode === "dashboard") {
         await wait(DASHBOARD_CREATE_SETTLE_DELAY_MS);
+        await dispatch(getProjectCharts({ project_id: projectId })).unwrap().catch(() => null);
       }
 
       setCreateResult(aggregatedResult);

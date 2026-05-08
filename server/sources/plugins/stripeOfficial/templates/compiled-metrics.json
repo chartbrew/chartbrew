@@ -350,7 +350,6 @@
         "timeInterval": "month",
         "mode": "kpichart",
         "showGrowth": true,
-        "pointRadius": 3,
         "xLabelTicks": "third"
       },
       "cdc": {
@@ -415,7 +414,6 @@
         "timeInterval": "month",
         "mode": "kpichart",
         "showGrowth": true,
-        "pointRadius": 3,
         "xLabelTicks": "third"
       },
       "cdc": {
@@ -481,7 +479,6 @@
         "mode": "kpichart",
         "showGrowth": true,
         "invertGrowth": true,
-        "pointRadius": 3,
         "xLabelTicks": "third",
         "maxValue": 100,
         "minValue": 0
@@ -519,7 +516,6 @@
         "mode": "kpichart",
         "showGrowth": true,
         "invertGrowth": true,
-        "pointRadius": 3,
         "xLabelTicks": "third"
       },
       "cdc": {
@@ -555,7 +551,6 @@
         "mode": "kpichart",
         "showGrowth": true,
         "invertGrowth": true,
-        "pointRadius": 3,
         "xLabelTicks": "third"
       },
       "cdc": {
