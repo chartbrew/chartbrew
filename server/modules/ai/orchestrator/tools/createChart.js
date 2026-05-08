@@ -1,5 +1,7 @@
+const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
+const { removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
 
 const chartController = new ChartController();
@@ -7,7 +9,7 @@ const chartController = new ChartController();
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
 async function createChart(payload) {
-  const {
+  let {
     project_id, dataset_id, spec, team_id,
     name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
@@ -47,12 +49,28 @@ async function createChart(payload) {
     options: {}
   };
 
-  const chartSpec = spec || defaultSpec;
+  let chartSpec = spec || defaultSpec;
 
   try {
     // Get the dataset to get its legend for default values
     const normalizedTeamId = normalizeTeamId(team_id);
     const dataset = await requireDatasetForTeam(dataset_id, normalizedTeamId);
+    let dataRequest = null;
+    if (Array.isArray(dataset.DataRequests) && dataset.DataRequests.length > 0) {
+      dataRequest = dataset.DataRequests[0];
+    } else if (dataset.main_dr_id) {
+      dataRequest = await db.DataRequest.findByPk(dataset.main_dr_id);
+    } else {
+      dataRequest = await db.DataRequest.findOne({ where: { dataset_id } });
+    }
+    const chartSanitization = removeCompiledMetricAccumulation({
+      configuration: dataRequest?.configuration,
+      type,
+      subType,
+      spec: chartSpec,
+    });
+    subType = chartSanitization.subType;
+    chartSpec = chartSanitization.spec;
 
     // Check if project is a ghost project
     const project = await requireProjectForTeam(project_id, normalizedTeamId);
@@ -136,12 +154,16 @@ async function createChart(payload) {
 
     return {
       chart_id: chart.id,
+      dataset_id,
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
       snapshot,
+      chart_sanitization: chartSanitization.accumulationRemoved
+        ? { removedAccumulation: true }
+        : null,
     };
   } catch (error) {
     throw new Error(`Chart creation failed: ${error.message}`);

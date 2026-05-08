@@ -23,7 +23,7 @@ function buildSupportedConnectionText() {
 const ENTITY_CREATION_RULES = `## Entity Creation Rules
 
 **Dataset:**
-- Required: team_id, connection_id, name, query
+- Required: team_id, connection_id, name
 - Set draft=false (visible), project_ids=[] or [project_id]
 - After DataRequest created, update main_dr_id
 - name: string - canonical reusable dataset name
@@ -33,14 +33,14 @@ const ENTITY_CREATION_RULES = `## Entity Creation Rules
 ${buildSupportedConnectionText()}
 
 **DataRequest:**
-- Required: dataset_id, connection_id, query
-- query: string - source query for the selected supported source
+- Required: dataset_id, connection_id
+- query: string - source query for query-based sources
 - conditions: array - database filtering conditions (optional)
-- configuration: object - dialect-specific settings (optional)
+- configuration: object - dialect/source-specific settings. Required for configuration-based sources such as Stripe Official.
 - variables: array - parameterized query variables (default: [])
 - transform: object - data transformation rules (optional)
 
-Note: Only sources that declare AI query generation support in the source plugin registry are available to the orchestrator.
+Note: Sources that declare AI query generation or source-owned AI tools in the source plugin registry are available to the orchestrator.
 
 **Chart:**
 - Required: project_id, dataset_id
@@ -95,8 +95,20 @@ Note: Only sources that declare AI query generation support in the source plugin
 - configuration: object - dataset settings (default: {})
 
 **Sequence:**
-1. Create Dataset with DataRequest using quick-create (team_id, connection_id, name, query, draft=false, dataRequests array)
+1. Create Dataset with DataRequest using quick-create (team_id, connection_id, name, query or configuration, draft=false, dataRequests array)
 2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array including xAxis/yAxis/date bindings on the CDC)
+
+**Stripe Official sequence:**
+1. Use stripe_official_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query.
+2. Optionally use stripe_official_preview_configuration for compact rows/warnings.
+3. For default previews, use create_temporary_chart with connection_id, name, configuration, and chartSpec bindings.
+4. For explicit dashboard placement, use create_dataset first, then create_chart with the exact requested project_id and the chartSpec bindings.
+5. If the user later confirms placement for a temporary chart, use move_chart_to_dashboard.
+
+**Stripe Official anti-hallucination rule:**
+- MRR, ARR, ARPA, churn rates, net cash flow, and customer lifetime value are compiled business metrics.
+- These requests must use configuration.mode="compiled_metric" and the matching configuration.compiledMetric.
+- Do not replace these with balance_transactions, invoices, payment counts, refunds, or generic revenue aggregates.
 
 **CRITICAL RULES:**
 - Use the EXACT project specified by the user or context. Never create charts in different projects.
@@ -124,7 +136,7 @@ const SUPPORTED_CONNECTIONS = getOrchestratorSources().reduce((acc, source) => {
 // Field definitions for reference and validation
 const FIELD_SPECS = {
   Dataset: {
-    required: ["team_id", "connection_id", "name", "query"],
+    required: ["team_id", "connection_id", "name"],
     recommended: {
       draft: false,
       project_ids: [],
@@ -134,7 +146,7 @@ const FIELD_SPECS = {
   },
 
   DataRequest: {
-    required: ["dataset_id", "connection_id", "query"],
+    required: ["dataset_id", "connection_id"],
     recommended: {
       query: null,
       conditions: [],

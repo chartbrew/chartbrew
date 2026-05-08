@@ -22,7 +22,7 @@ module.exports = {
   id: "stripe",
   type: "api",
   subType: "stripe",
-  name: "Stripe",
+  name: "Stripe Legacy",
   category: "payments",
   description: "Connect to Stripe reporting data through the Stripe API.",
 

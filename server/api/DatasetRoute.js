@@ -390,6 +390,20 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to delete a variable binding
+  */
+  app.delete(`${root}/:id/variableBindings/:variable_id`, verifyToken, checkPermissions("deleteAny"), ensureDatasetBelongsToTeam, (req, res) => {
+    return datasetController.deleteVariableBinding(
+      req.params.id,
+      req.params.variable_id,
+    )
+      .then((dataset) => {
+        return res.status(200).send(dataset);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

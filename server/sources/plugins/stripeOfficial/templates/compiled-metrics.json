@@ -1,0 +1,603 @@
+{
+  "id": "stripe-official-compiled-metrics",
+  "slug": "compiled-metrics",
+  "version": 2,
+  "source": "stripeOfficial",
+  "name": "Stripe Compiled Metrics",
+  "description": "Subscription and cash-flow metrics computed from Stripe resources with monthly default ranges.",
+  "requiredConnection": {
+    "type": "stripeOfficial",
+    "subType": "stripeOfficial"
+  },
+  "datasets": [
+    {
+      "id": "mrr",
+      "name": "Stripe MRR - last 12 months",
+      "description": "Estimated monthly recurring revenue from subscription item prices.",
+      "icon": "TrendingUp",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].activeSubscriptions": "number",
+        "root[].activeCustomers": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "mrr",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "arr",
+      "name": "Stripe ARR - current estimate",
+      "description": "Estimated annual recurring revenue from MRR.",
+      "icon": "TrendingUp",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].activeSubscriptions": "number",
+        "root[].activeCustomers": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "arr",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "arpa",
+      "name": "Stripe ARPA - last 12 months",
+      "description": "Estimated average recurring revenue per active customer.",
+      "icon": "Users",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].activeSubscriptions": "number",
+        "root[].activeCustomers": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "arpa",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices",
+            "customers"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "net_cash_flow",
+      "name": "Stripe net cash flow - last 12 months",
+      "description": "Monthly net cash movement from balance transactions.",
+      "icon": "BadgeDollarSign",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].recordsProcessed": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "net_cash_flow",
+          "calculationVersion": 1,
+          "inputs": [
+            "balance_transactions"
+          ],
+          "dimension": {
+            "field": "created",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "field": "created",
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "filters": [],
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "gross_mrr_churn_rate",
+      "name": "Stripe gross MRR churn rate - last 12 months",
+      "description": "Canceled MRR divided by starting MRR for each month.",
+      "icon": "TrendingDown",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].startingMrr": "number",
+        "root[].canceledMrr": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "gross_mrr_churn_rate",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "net_mrr_churn_rate",
+      "name": "Stripe net MRR churn rate - last 12 months",
+      "description": "First-pass net MRR churn estimate from canceled MRR.",
+      "icon": "TrendingDown",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].startingMrr": "number",
+        "root[].canceledMrr": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "net_mrr_churn_rate",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "subscriber_churn_rate",
+      "name": "Stripe subscriber churn rate - last 12 months",
+      "description": "Canceled subscriptions divided by starting subscriptions.",
+      "icon": "UserMinus",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].startingSubscribers": "number",
+        "root[].canceledSubscribers": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "subscriber_churn_rate",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    },
+    {
+      "id": "customer_lifetime_value",
+      "name": "Estimated customer lifetime value",
+      "description": "Estimated CLV from paid invoices and subscriber churn.",
+      "icon": "HeartHandshake",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].value": "number",
+        "root[].currency": "string",
+        "root[].averageRevenuePerCustomer": "number",
+        "root[].averageChurnRate": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "stripeOfficial",
+          "mode": "compiled_metric",
+          "compiledMetric": "customer_lifetime_value",
+          "calculationVersion": 1,
+          "inputs": [
+            "customers",
+            "invoices",
+            "subscriptions"
+          ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "last_12_months",
+            "end": "now"
+          },
+          "pagination": {
+            "limit": 100,
+            "maxRecords": 10000
+          },
+          "queryMode": "list"
+        }
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "mrr",
+      "name": "MRR",
+      "description": "Estimated monthly recurring revenue with a 12-month trend.",
+      "icon": "TrendingUp",
+      "type": "line",
+      "requiredDatasetIds": [
+        "mrr"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "mrr",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "MRR",
+        "formula": "{val / 100}",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 10
+      }
+    },
+    {
+      "id": "arr",
+      "name": "ARR",
+      "description": "Estimated annual recurring revenue from current MRR.",
+      "icon": "TrendingUp",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "arr"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "showGrowth": true
+      },
+      "cdc": {
+        "datasetTemplateId": "arr",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "ARR",
+        "formula": "{val / 100}",
+        "datasetColor": "rgba(255, 152, 0, 1)"
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 20
+      }
+    },
+    {
+      "id": "arpa",
+      "name": "ARPA",
+      "description": "Average recurring revenue per active customer with a monthly trend.",
+      "icon": "Users",
+      "type": "line",
+      "requiredDatasetIds": [
+        "arpa"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "arpa",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "ARPA",
+        "formula": "{val / 100}",
+        "datasetColor": "rgba(38, 166, 154, 1)",
+        "fillColor": "rgba(38, 166, 154, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 30
+      }
+    },
+    {
+      "id": "net-cash-flow",
+      "name": "Net cash flow",
+      "description": "Monthly net cash movement from Stripe balance transactions.",
+      "icon": "BadgeDollarSign",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "net_cash_flow"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "net_cash_flow",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Net cash flow",
+        "formula": "{val / 100}",
+        "datasetColor": "rgba(66, 133, 244, 1)"
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 40
+      }
+    },
+    {
+      "id": "gross-mrr-churn-rate",
+      "name": "Gross MRR churn rate",
+      "description": "Monthly canceled MRR divided by starting MRR.",
+      "icon": "TrendingDown",
+      "type": "line",
+      "requiredDatasetIds": [
+        "gross_mrr_churn_rate"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "invertGrowth": true,
+        "xLabelTicks": "third",
+        "maxValue": 100,
+        "minValue": 0
+      },
+      "cdc": {
+        "datasetTemplateId": "gross_mrr_churn_rate",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Gross MRR churn rate",
+        "formula": "{val * 100}%",
+        "datasetColor": "rgba(238, 96, 2, 1)",
+        "fillColor": "rgba(238, 96, 2, 0.14)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 60
+      }
+    },
+    {
+      "id": "net-mrr-churn-rate",
+      "name": "Net MRR churn rate",
+      "description": "Monthly net MRR churn estimate.",
+      "icon": "TrendingDown",
+      "type": "line",
+      "requiredDatasetIds": [
+        "net_mrr_churn_rate"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "invertGrowth": true,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "net_mrr_churn_rate",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Net MRR churn rate",
+        "formula": "{val * 100}%",
+        "datasetColor": "#EF4444",
+        "fillColor": "rgba(239, 68, 68, 0.12)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 70
+      }
+    },
+    {
+      "id": "subscriber-churn-rate",
+      "name": "Subscriber churn rate",
+      "description": "Monthly canceled subscribers divided by starting subscribers.",
+      "icon": "UserMinus",
+      "type": "line",
+      "requiredDatasetIds": [
+        "subscriber_churn_rate"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month",
+        "mode": "kpichart",
+        "showGrowth": true,
+        "invertGrowth": true,
+        "xLabelTicks": "third"
+      },
+      "cdc": {
+        "datasetTemplateId": "subscriber_churn_rate",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Subscriber churn rate",
+        "formula": "{val * 100}%",
+        "datasetColor": "#EF4444",
+        "fillColor": "rgba(239, 68, 68, 0.12)",
+        "fill": true
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 80
+      }
+    },
+    {
+      "id": "customer-lifetime-value",
+      "name": "Estimated customer lifetime value",
+      "description": "Estimated CLV from paid invoices and subscriber churn.",
+      "icon": "HeartHandshake",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "customer_lifetime_value"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "timeInterval": "month"
+      },
+      "cdc": {
+        "datasetTemplateId": "customer_lifetime_value",
+        "xAxis": "root[].period",
+        "yAxis": "root[].value",
+        "yAxisOperation": "none",
+        "dateField": "root[].period",
+        "legend": "Estimated customer lifetime value",
+        "formula": "{ROUND(val / 100, 2)}",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 50
+      }
+    }
+  ]
+}

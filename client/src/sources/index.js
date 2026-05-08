@@ -11,6 +11,8 @@ import RealtimeDbConnectionForm from "./realtimedb/realtimedb-connection-form";
 import GaConnectionForm from "./googleAnalytics/googleAnalytics-connection-form";
 import StrapiConnectionForm from "./strapi/strapi-connection-form";
 import StripeConnectionForm from "./stripe/stripe-connection-form";
+import StripeTemplateSetup from "./stripe/stripe-template-setup";
+import StripeOfficialConnectionForm from "./stripeOfficial/stripeOfficial-connection-form";
 import CustomerioConnectionForm from "./customerio/customerio-connection-form";
 import ClickHouseConnectionForm from "./clickhouse/clickhouse-connection-form";
 import ApiBuilder from "./api/api-builder";
@@ -26,6 +28,8 @@ import FirestoreBuilder from "./firestore/firestore-builder";
 import GaBuilder from "./googleAnalytics/googleAnalytics-builder";
 import CustomerioBuilder from "./customerio/customerio-builder";
 import ClickHouseBuilder from "./clickhouse/clickhouse-builder";
+import StripeOfficialBuilder from "./stripeOfficial/stripeOfficial-builder";
+import StripeOfficialTemplateSetup from "./stripeOfficial/stripeOfficial-template-setup";
 import SOURCE_DEFINITIONS, {
   findSourceDefinitionForConnection,
   getSourceDefinition,
@@ -70,6 +74,12 @@ const FRONTEND_BY_SOURCE_ID = {
   stripe: {
     ConnectionForm: StripeConnectionForm,
     DataRequestBuilder: ApiBuilder,
+    ChartTemplateSetup: StripeTemplateSetup,
+  },
+  stripeOfficial: {
+    ConnectionForm: StripeOfficialConnectionForm,
+    DataRequestBuilder: StripeOfficialBuilder,
+    ChartTemplateSetup: StripeOfficialTemplateSetup,
   },
   customerio: {
     ConnectionForm: CustomerioConnectionForm,

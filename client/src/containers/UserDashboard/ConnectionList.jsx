@@ -14,6 +14,7 @@ import { useTheme } from "../../modules/ThemeContext"
 import { selectProjects } from "../../slices/project"
 import { selectDatasets } from "../../slices/dataset"
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName"
+import { findSourceForConnection } from "../../sources"
 
 function ConnectionList() {
   const [connectionSearch, setConnectionSearch] = useState("");
@@ -95,6 +96,15 @@ function ConnectionList() {
 
   const _getRelatedDatasets = (connectionId) => {
     return datasets.filter((d) => d.DataRequests?.find((dr) => dr.connection_id === connectionId));
+  };
+
+  const _hasConnectionTemplates = (connection) => {
+    const source = findSourceForConnection(connection);
+
+    return Boolean(
+      source?.capabilities?.nextSteps?.chartTemplates
+        || source?.capabilities?.nextSteps?.datasetTemplates
+    );
   };
 
   const _onDuplicateConnection = (connection) => {
@@ -226,16 +236,27 @@ function ConnectionList() {
                   <span className="text-xs text-foreground-500">Created on {new Date(connection.createdAt).toLocaleDateString()}</span>
                 </div>
               </Card.Content>
-              <Card.Footer>
+              <Card.Footer className="flex flex-row items-center gap-2">
                 <Button
                   variant="tertiary"
                   size="sm"
                   onPress={() => navigate(`/connections/${connection.id}`)}
                   fullWidth
                 >
-                  View connection
+                  Edit
                 </Button>
-                <div className="w-1" />
+                {_hasConnectionTemplates(connection) && (
+                  <>
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      onPress={() => navigate(`/connections/${connection.id}/templates`)}
+                      fullWidth
+                    >
+                      Browse templates
+                    </Button>
+                  </>
+                )}
                 <Dropdown>
                   <Dropdown.Trigger>
                     <Button

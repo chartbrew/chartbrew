@@ -738,7 +738,7 @@ function DashboardList() {
         </div>
 
         {canManageDashboards && (
-          <div className={cn("hidden xl:block xl:w-[360px] xl:shrink-0", whatsNewPanelCollapsed && "xl:hidden")}>
+          <div className={cn("hidden xl:block xl:w-[360px] xl:shrink-0 sticky top-18", whatsNewPanelCollapsed && "xl:hidden")}>
             <WhatsNewPanel onCollapse={_toggleWhatsNewPanel} />
           </div>
         )}

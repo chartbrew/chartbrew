@@ -11,6 +11,7 @@ import realtimeDbSource from "./realtimedb/realtimedb.source";
 import supabasedbSource from "./supabasedb/supabasedb.source";
 import timescaledbSource from "./timescaledb/timescaledb.source";
 import stripeSource from "./stripe/stripe.source";
+import stripeOfficialSource from "./stripeOfficial/stripeOfficial.source";
 import strapiSource from "./strapi/strapi.source";
 import customerioSource from "./customerio/customerio.source";
 import { applySourceAvailability } from "./sourceAvailability";
@@ -33,6 +34,8 @@ const SOURCE_DEFINITIONS = [{
   ...strapiSource,
 }, {
   ...stripeSource,
+}, {
+  ...stripeOfficialSource,
 }, {
   ...customerioSource,
 }, {

@@ -6,13 +6,22 @@ const {
 const { isSourceServerEnabled } = require("../../../sources/sourceAvailability");
 
 function sourceSupportsOrchestrator(source) {
+  const supportsQueryGeneration = Boolean(
+    source?.capabilities?.data?.supportsQuery
+    && source?.capabilities?.ai?.canGenerateQueries
+    && source?.backend?.runDataRequest
+    && source?.backend?.ai?.generateQuery
+  );
+  const supportsSourceTools = Boolean(
+    source?.capabilities?.ai?.hasTools
+    && source?.backend?.runDataRequest
+    && source?.backend?.ai
+  );
+
   return Boolean(
     source
     && isSourceServerEnabled(source)
-    && source.capabilities?.data?.supportsQuery
-    && source.capabilities?.ai?.canGenerateQueries
-    && source.backend?.runDataRequest
-    && source.backend?.ai?.generateQuery
+    && (supportsQueryGeneration || supportsSourceTools)
   );
 }
 

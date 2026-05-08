@@ -1,5 +1,6 @@
 const DatasetController = require("../../../../controllers/DatasetController");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
+const { repairSourceDatasetIntent } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireConnectionForTeam, requireProjectForTeam } = require("./teamScope");
 
 const datasetController = new DatasetController();
@@ -7,7 +8,7 @@ const datasetController = new DatasetController();
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
 async function createDataset(payload) {
-  const {
+  let {
     project_id, connection_id, name, team_id,
     query, configuration = {}, variables = [], transform = null,
     variableBindings = []
@@ -30,7 +31,15 @@ async function createDataset(payload) {
     }
 
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
-    requireSupportedSourceForConnection(connection);
+    const source = requireSupportedSourceForConnection(connection);
+
+    const repairedPayload = repairSourceDatasetIntent(source, {
+      name,
+      question: payload.question,
+      configuration,
+      spec: payload.spec,
+    });
+    configuration = repairedPayload.configuration;
 
     // Use the quick-create function to create dataset with data request in one go
     const dataset = await datasetController.createWithDataRequests({
@@ -59,6 +68,7 @@ async function createDataset(payload) {
       data_request_id: dataRequestId,
       name: dataset.name || dataset.legend,
       dataset_url: `${clientUrl}/datasets/${dataset.id}`,
+      intent_repair: repairedPayload.intentRepair,
     };
   } catch (error) {
     throw new Error(`Dataset creation failed: ${error.message}`);

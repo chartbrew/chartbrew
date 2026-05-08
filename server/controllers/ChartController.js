@@ -4,7 +4,10 @@ const { v4: uuid } = require("uuid");
 const jwt = require("jsonwebtoken");
 
 const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
-const { buildChartRuntimeContext } = require("../modules/chartRuntimeFilters");
+const {
+  buildChartRuntimeContext,
+  getDatasetRuntimeFilters,
+} = require("../modules/chartRuntimeFilters");
 const runtimeCache = require("../modules/runtimeCache");
 const { getDatasetName, resolveChartDatasetOptions } = require("../modules/resolveChartDatasetOptions");
 const { findSourceForConnection } = require("../sources");
@@ -58,6 +61,16 @@ function createRuntimeShortCircuit(chart) {
 
 function isRuntimeShortCircuit(value) {
   return Boolean(value && value.__runtimeCachedChart);
+}
+
+function getSourceRuntimeFiltersForDataset(runtimeContext, cdc, fallbackFilters = []) {
+  if (!runtimeContext) return fallbackFilters;
+
+  const dateFilters = runtimeContext.filters.filter((filter) => {
+    return filter.type === "date" && filter.startDate && filter.endDate;
+  });
+
+  return dateFilters.concat(getDatasetRuntimeFilters(runtimeContext, cdc));
 }
 
 function toPlainChart(chart) {
@@ -564,7 +577,7 @@ class ChartController {
                 chart_id: gChart.id,
                 noSource: false,
                 getCache: effectiveGetCache,
-                filters: effectiveFilters,
+                filters: getSourceRuntimeFiltersForDataset(runtimeContext, cdc, effectiveFilters),
                 timezone: project?.timezone,
                 variables: cdcVariables,
                 traceContext: chartTraceContext,

@@ -6,7 +6,6 @@ import {
 } from "@heroui/react";
 import {
   LuBrainCircuit,
-  LuChartArea,
   LuLayers,
   LuLayoutDashboard,
 } from "react-icons/lu";
@@ -16,9 +15,8 @@ import { useDispatch, useSelector } from "react-redux";
 import canAccess from "../../config/canAccess";
 import getConnectionLogo from "../../modules/getConnectionLogo";
 import {
-  getChartTemplate,
   listChartTemplates,
-  selectActiveChartTemplate,
+  selectChartTemplates,
   selectChartTemplateResult,
 } from "../../slices/chartTemplate";
 import { getConnection, selectConnections } from "../../slices/connection";
@@ -27,10 +25,9 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { showAiModal } from "../../slices/ui";
 import { useTheme } from "../../modules/ThemeContext";
-import ChartTemplateSetup from "./components/ChartTemplateSetup";
 import { findSourceForConnection } from "../../sources";
 
-function ConnectionNextSteps() {
+function ConnectionTemplates() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const params = useParams();
@@ -40,7 +37,7 @@ function ConnectionNextSteps() {
   const user = useSelector(selectUser);
   const connections = useSelector(selectConnections);
   const projects = useSelector(selectProjects);
-  const template = useSelector(selectActiveChartTemplate);
+  const templates = useSelector(selectChartTemplates);
   const result = useSelector(selectChartTemplateResult);
   const templateLoading = useSelector((state) => state.chartTemplate.loading);
   const templateError = useSelector((state) => state.chartTemplate.error);
@@ -48,6 +45,7 @@ function ConnectionNextSteps() {
   const connection = connections.find((item) => `${item.id}` === `${params.connectionId}`);
   const source = findSourceForConnection(connection);
   const hasChartTemplates = Boolean(source?.capabilities?.nextSteps?.chartTemplates);
+  const SourceChartTemplateSetup = source?.frontend?.ChartTemplateSetup;
   const canUseAi = user?.id && team?.TeamRoles && canAccess("teamAdmin", user.id, team.TeamRoles);
 
   useEffect(() => {
@@ -59,17 +57,7 @@ function ConnectionNextSteps() {
 
   useEffect(() => {
     if (team?.id && hasChartTemplates && source?.id) {
-      dispatch(listChartTemplates({ team_id: team.id, source: source.id }))
-        .then((response) => {
-          const firstTemplate = response.payload?.[0];
-          if (firstTemplate) {
-            dispatch(getChartTemplate({
-              team_id: team.id,
-              source: firstTemplate.source,
-              slug: firstTemplate.slug,
-            }));
-          }
-        });
+      dispatch(listChartTemplates({ team_id: team.id, source: source.id }));
     }
   }, [dispatch, hasChartTemplates, source?.id, team?.id]);
 
@@ -218,11 +206,13 @@ function ConnectionNextSteps() {
             />
             <div>
               <p className="text-xl font-semibold">{connection.name}</p>
-              <p className="text-sm text-foreground-500">Choose how you want to start building.</p>
+              <p className="text-sm text-foreground-500">
+                {SourceChartTemplateSetup ? "What do you want to track?" : "Choose how you want to start building."}
+              </p>
             </div>
           </div>
           <Button variant="tertiary" onPress={_onBuildFromScratch}>
-            <LuChartArea />
+            <LuLayers />
             Build from scratch
           </Button>
         </div>
@@ -232,18 +222,22 @@ function ConnectionNextSteps() {
       {!hasChartTemplates && _renderGenericNextSteps()}
 
       {hasChartTemplates && (
-        <ChartTemplateSetup
-          connection={connection}
-          error={templateError || null}
-          loading={templateLoading}
-          projects={projects}
-          result={result}
-          teamId={team.id}
-          template={template}
-        />
+        <>
+          {SourceChartTemplateSetup && (
+            <SourceChartTemplateSetup
+              connection={connection}
+              error={templateError || null}
+              loading={templateLoading}
+              projects={projects}
+              result={result}
+              teamId={team.id}
+              templates={templates}
+            />
+          )}
+        </>
       )}
     </div>
   );
 }
 
-export default ConnectionNextSteps;
+export default ConnectionTemplates;

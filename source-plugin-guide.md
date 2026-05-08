@@ -96,6 +96,7 @@ Frontend source UI files use lowercase kebab-case:
 client/src/sources/<source>/<source>-connection-form.jsx
 client/src/sources/<source>/<source>-builder.jsx
 client/src/sources/<source>/<source>-resource-query.jsx
+client/src/sources/<source>/<source>-template-setup.jsx
 client/src/sources/shared/<shared-ui>/
 ```
 
@@ -414,11 +415,13 @@ Add source-specific components:
 ```js
 import ConnectionForm from "./<source>/<source>-connection-form";
 import DataRequestBuilder from "./<source>/<source>-builder";
+import ChartTemplateSetup from "./<source>/<source>-template-setup";
 
 const FRONTEND_BY_SOURCE_ID = {
   <sourceId>: {
     ConnectionForm,
     DataRequestBuilder,
+    ChartTemplateSetup,
   },
 };
 ```
@@ -426,10 +429,13 @@ const FRONTEND_BY_SOURCE_ID = {
 Current registry-driven screens:
 
 - `client/src/containers/Connections/ConnectionWizard.jsx`
+- `client/src/containers/Connections/ConnectionTemplates.jsx`
 - `client/src/containers/Dataset/DatasetQuery.jsx`
 - `client/src/containers/AddChart/components/DatarequestModal.jsx`
 
 Do not add new explicit form or builder branches to those screens.
+Do not import source-specific template setup components into shared connection screens.
+When a source needs custom chart-template onboarding, keep that React component under `client/src/sources/<source>/` and expose it as `frontend.ChartTemplateSetup` from `client/src/sources/index.js`.
 
 For UI-disabled sources, filter only the new-connection picker. Existing connection edit and data-request builder flows should still resolve the source plugin by id or persisted connection shape.
 
@@ -522,7 +528,49 @@ If the source ships built-in chart templates:
    },
    ```
 
-4. Ensure `ChartTemplateController` and `server/sources/shared/templates/chartTemplateLoader.js` resolve built-in templates through registered source plugins, not through standalone source folders or controller-local constants.
+4. If the source needs a custom setup UI for choosing or grouping chart templates, add it under:
+
+   ```txt
+   client/src/sources/<sourceId>/<sourceId>-template-setup.jsx
+   ```
+
+   Then expose it through `frontend.ChartTemplateSetup` in `client/src/sources/index.js`. Shared screens should only ask the source registry for this component.
+
+5. Ensure `ChartTemplateController` and `server/sources/shared/templates/chartTemplateLoader.js` resolve built-in templates through registered source plugins, not through standalone source folders or controller-local constants.
+
+Template charts can bind one dataset with `cdc` or multiple datasets with `cdcs`:
+
+```js
+{
+  id: "revenue-vs-fees",
+  requiredDatasetIds: ["gross_revenue", "fees"],
+  cdcs: [{
+    datasetTemplateId: "gross_revenue",
+    xAxis: "root[].period",
+    yAxis: "root[].value",
+    legend: "Gross revenue",
+  }, {
+    datasetTemplateId: "fees",
+    xAxis: "root[].period",
+    yAxis: "root[].value",
+    legend: "Fees",
+  }],
+}
+```
+
+Use `layoutIntent` for template-owned dashboard placement. Do not hard-code React Grid Layout coordinates in template JSON unless there is a source-specific reason that cannot be expressed with an intent. `ChartTemplateController` calculates concrete breakpoint layouts from the selected chart set and the existing dashboard charts.
+
+```js
+{
+  id: "net-revenue-kpi",
+  layoutIntent: {
+    kind: "kpi",
+    priority: 10,
+  },
+}
+```
+
+Supported layout intent kinds are `kpi`, `trend`, `comparison`, and `table`. Lower `priority` values are placed first. Put Chartbrew-supported chart options under `chart`, such as `mode`, `showGrowth`, `invertGrowth`, `pointRadius`, `xLabelTicks`, `defaultRowsPerPage`, `timeInterval`, and `includeZeros`.
 
 ## AI/orchestrator checklist
 

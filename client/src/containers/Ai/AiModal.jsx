@@ -912,7 +912,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   )}
                   <div className="flex gap-2 mt-3">
-                    <a href={`/${team.id}/${parsed.projectId}/dashboard`} target="_blank" rel="noopener noreferrer">
+                    <a href={`/dashboard/${parsed.projectId}`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
                         variant="tertiary"
@@ -921,7 +921,7 @@ function AiModal({ isOpen, onClose }) {
                         View on Dashboard
                       </Button>
                     </a>
-                    <a href={`/${team.id}/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
+                    <a href={`/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="sm"
                         variant="tertiary"

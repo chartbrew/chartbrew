@@ -35,7 +35,7 @@ import {
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 
-import { createFromChartTemplate } from "../../../slices/chartTemplate";
+import { createFromChartTemplate } from "../../slices/chartTemplate";
 
 const TEMPLATE_ICONS = {
   BadgeDollarSign: LuBadgeDollarSign,
@@ -158,7 +158,7 @@ function TemplateSelectionTile(props) {
   );
 }
 
-function ChartTemplateSetup(props) {
+function StripeTemplateSetup(props) {
   const {
     connection,
     error,
@@ -167,7 +167,8 @@ function ChartTemplateSetup(props) {
     projects,
     result,
     teamId,
-    template,
+    template: selectedTemplate,
+    templates,
     title,
   } = props;
 
@@ -182,6 +183,7 @@ function ChartTemplateSetup(props) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const visibleProjects = useMemo(() => (projects || []).filter((project) => !project.ghost), [projects]);
+  const template = selectedTemplate || templates[0] || null;
   const totalSelectedItems = selectedDatasetIds.length + selectedChartIds.length;
   const fixedProject = visibleProjects.find((project) => `${project.id}` === `${fixedProjectId}`);
   const showCreateResult = result && !isSyntheticLoading;
@@ -228,6 +230,8 @@ function ChartTemplateSetup(props) {
   }, [result]);
 
   const _toggleDataset = (datasetId) => {
+    if (!template) return;
+
     const nextDatasetIds = selectedDatasetIds.includes(datasetId)
       ? selectedDatasetIds.filter((id) => id !== datasetId)
       : [...selectedDatasetIds, datasetId];
@@ -240,6 +244,8 @@ function ChartTemplateSetup(props) {
   };
 
   const _toggleChart = (chartId) => {
+    if (!template) return;
+
     if (selectedChartIds.includes(chartId)) {
       setSelectedChartIds(selectedChartIds.filter((id) => id !== chartId));
     } else {
@@ -252,6 +258,8 @@ function ChartTemplateSetup(props) {
   };
 
   const _selectAllDatasets = () => {
+    if (!template) return;
+
     const datasetIds = template.datasets.map((dataset) => dataset.id);
     setSelectedDatasetIds(datasetIds);
     setSelectedChartIds(template.charts
@@ -260,12 +268,16 @@ function ChartTemplateSetup(props) {
   };
 
   const _selectAllAvailableCharts = () => {
+    if (!template) return;
+
     setSelectedChartIds(template.charts
       .filter((chart) => _isChartAvailable(chart))
       .map((chart) => chart.id));
   };
 
   const _createTemplates = () => {
+    if (!template) return;
+
     const dashboard = dashboardMode === "new"
       ? { type: "new", name: newDashboardName || "Stripe Revenue" }
       : { type: "existing", project_id: selectedProjectId };
@@ -555,7 +567,7 @@ TemplateSelectionTile.defaultProps = {
   unavailableLabel: null,
 };
 
-ChartTemplateSetup.propTypes = {
+StripeTemplateSetup.propTypes = {
   connection: PropTypes.object.isRequired,
   error: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   fixedProjectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -564,17 +576,19 @@ ChartTemplateSetup.propTypes = {
   result: PropTypes.object,
   teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   template: PropTypes.object,
+  templates: PropTypes.array,
   title: PropTypes.string,
 };
 
-ChartTemplateSetup.defaultProps = {
+StripeTemplateSetup.defaultProps = {
   error: null,
   fixedProjectId: null,
   loading: false,
   projects: [],
   result: null,
   template: null,
+  templates: [],
   title: null,
 };
 
-export default ChartTemplateSetup;
+export default StripeTemplateSetup;
