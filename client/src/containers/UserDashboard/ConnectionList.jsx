@@ -1,6 +1,6 @@
 import { Avatar, Button, Card, Checkbox, Chip, Dropdown, InputGroup, Label, Modal, TextField, Tooltip } from "@heroui/react"
 import React, { useState } from "react"
-import { LuCopy, LuEllipsis, LuInfo, LuLayers, LuLayoutTemplate, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
+import { LuCopy, LuEllipsis, LuInfo, LuLayers, LuPencilLine, LuPlug, LuPlus, LuSearch, LuTags, LuTrash } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router"
 import { toast } from "react-hot-toast"
