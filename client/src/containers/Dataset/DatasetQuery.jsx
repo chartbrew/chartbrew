@@ -9,8 +9,10 @@ import {
   Chip,
   Tabs,
   TextField,
+  Popover,
+  Tooltip,
 } from "@heroui/react";
-import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -423,6 +425,23 @@ function DatasetQuery(props) {
                         <span>Add data request</span>
                       </div>
                     </Button>
+                  )}
+                  {_canAccess("teamAdmin") && (
+                    <Tooltip
+                      delay={0}
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        isIconOnly
+                        className="shrink-0"
+                      >
+                        <LuInfo size={16} />
+                      </Button>
+                      <Tooltip.Content placement="bottom">
+                        You can add additional data requests to any other source to join them together via the "Join settings" tab.
+                      </Tooltip.Content>
+                    </Tooltip>
                   )}
                 </div>
               </div>
