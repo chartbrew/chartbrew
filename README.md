@@ -44,7 +44,7 @@
 
 ## Prerequisites
 
-* NodeJS v20
+* NodeJS v22+
 * MySQL (5+) or PostgreSQL (12.5+)
 * Redis (v6+)
 
