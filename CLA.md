@@ -42,7 +42,7 @@ You reserve the right to revoke the patent license if We initiate a patent infri
 
 ## 5. License & Ownership
 ### 5.1 License Modification
-The Project is currently licensed under MIT License, but We reserve the right to **change the license at any time without further approval from contributors**.
+The Project is currently licensed under FSL-1.1-MIT License, but We reserve the right to **change the license at any time without further approval from contributors**.
 
 ### 5.2 Termination
 This Agreement remains effective for the term of the copyright and patents licensed here. However, You may terminate this Agreement if We fail to comply with our obligations under Section 5.1. Termination must be in writing.
