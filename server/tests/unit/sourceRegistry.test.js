@@ -9,18 +9,18 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const mongoose = require("mongoose");
-const apiProtocol = require("../../sources/shared/protocols/api.protocol.js");
-const ClickHouseConnection = require("../../sources/plugins/clickhouse/clickhouse.connection.js");
-const clickhouseProtocol = require("../../sources/plugins/clickhouse/clickhouse.protocol.js");
-const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection.js");
+const apiProtocol = require("../../sources/shared/protocols/api.protocol");
+const ClickHouseConnection = require("../../sources/plugins/clickhouse/clickhouse.connection");
+const clickhouseProtocol = require("../../sources/plugins/clickhouse/clickhouse.protocol");
+const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection");
 const db = require("../../models/models");
-const drCacheController = require("../../controllers/DataRequestCacheController.js");
-const firestoreProtocol = require("../../sources/plugins/firestore/firestore.protocol.js");
-const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection.js");
-const mongodbProtocol = require("../../sources/plugins/mongodb/mongodb.protocol.js");
-const oauthController = require("../../controllers/OAuthController.js");
-const realtimeDbProtocol = require("../../sources/plugins/realtimedb/realtimedb.protocol.js");
-const sqlProtocol = require("../../sources/shared/sql/sql.protocol.js");
+const drCacheController = require("../../controllers/DataRequestCacheController");
+const firestoreProtocol = require("../../sources/plugins/firestore/firestore.protocol");
+const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection");
+const mongodbProtocol = require("../../sources/plugins/mongodb/mongodb.protocol");
+const oauthController = require("../../controllers/OAuthController");
+const realtimeDbProtocol = require("../../sources/plugins/realtimedb/realtimedb.protocol");
+const sqlProtocol = require("../../sources/shared/sql/sql.protocol");
 const {
   getSourceById,
   getSourceForConnection,

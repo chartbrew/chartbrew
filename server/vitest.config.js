@@ -22,10 +22,10 @@ export default defineConfig({
         "index.js", // Main entry point
       ],
       include: [
-        "api/**",
-        "controllers/**",
-        "modules/**",
-        "middlewares/**",
+        "api/**/*.js",
+        "controllers/**/*.js",
+        "modules/**/*.js",
+        "middlewares/**/*.js",
       ],
       thresholds: {
         global: {
@@ -37,11 +37,7 @@ export default defineConfig({
       }
     },
     pool: "forks", // Use forks to avoid issues with database connections
-    poolOptions: {
-      forks: {
-        singleFork: true // Use single fork to avoid database connection conflicts
-      }
-    },
+    maxWorkers: 1, // Use one fork to avoid database connection conflicts
     globalSetup: "./tests/globalSetup.js",
   },
   resolve: {

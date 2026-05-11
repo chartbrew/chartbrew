@@ -117,7 +117,7 @@ describe("Auth Helpers", () => {
     it("should throw on invalid tokens", () => {
       expect(() => {
         verifyTestToken("invalid-token");
-      }).toThrow();
+      }).toThrow("jwt malformed");
     });
   });
 });

@@ -11,7 +11,7 @@ const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 const repoRoot = path.resolve(serverRoot, "..");
 
 function expectFile(relativePath) {
-  expect(fs.existsSync(path.join(repoRoot, relativePath)), relativePath).toBe(true);
+  expect(fs.existsSync(path.join(repoRoot, relativePath))).toBe(true);
 }
 
 function expectNoFiles(relativePath) {
@@ -20,7 +20,7 @@ function expectNoFiles(relativePath) {
     return;
   }
 
-  expect(fs.readdirSync(directory), relativePath).toHaveLength(0);
+  expect(fs.readdirSync(directory)).toHaveLength(0);
 }
 
 describe("source plugin structure", () => {
