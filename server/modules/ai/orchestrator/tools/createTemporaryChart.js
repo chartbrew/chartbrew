@@ -11,6 +11,7 @@ const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
+const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
 async function createTemporaryChart(payload) {
   let {
@@ -157,6 +158,8 @@ async function createTemporaryChart(payload) {
     }
 
     return {
+      status: "ok",
+      chart_created: true,
       chart_id: chart.id,
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
@@ -164,7 +167,12 @@ async function createTemporaryChart(payload) {
       type: chart.type,
       project_id: ghostProject.id,
       is_temporary: true,
+      chart_url: `${clientUrl}/dashboard/${ghostProject.id}/chart/${chart.id}/edit`,
       snapshot,
+      snapshot_status: snapshot ? "available" : "unavailable",
+      snapshot_note: snapshot
+        ? null
+        : "The chart was created, but a rendered snapshot is not available yet.",
       intent_repair: repairedPayload.intentRepair,
       chart_sanitization: chartSanitization.accumulationRemoved
         ? { removedAccumulation: true }

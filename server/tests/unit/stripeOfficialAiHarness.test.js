@@ -20,6 +20,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
     ["Create an MRR chart", "mrr"],
     ["Show ARR over time", "arr"],
     ["Create a gross MRR churn chart", "gross_mrr_churn_rate"],
+    ["Add a KPI with net MRR churn rate from Stripe", "net_mrr_churn_rate"],
     ["Show subscriber churn rate", "subscriber_churn_rate"],
     ["Show net cash flow", "net_cash_flow"],
     ["Show customer lifetime value", "customer_lifetime_value"],
@@ -143,11 +144,14 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       })],
     }));
     expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
       chart_id: 55,
       dataset_id: 99,
       data_request_id: 1001,
       project_id: 77,
       is_temporary: true,
+      snapshot_status: "unavailable",
     });
   });
 
@@ -304,7 +308,79 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       type: "kpi",
       subType: undefined,
     }), null);
-    expect(result.chart_sanitization).toEqual({ removedAccumulation: true });
+    expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
+      snapshot_status: "unavailable",
+      chart_sanitization: { removedAccumulation: true },
+    });
+  });
+
+  it("creates a net MRR churn KPI temporary chart from a simple Stripe request", async () => {
+    const stripeOfficial = getSourceById("stripeOfficial");
+    const plan = stripeOfficial.backend.ai.planDataset({
+      question: "Add a KPI with net MRR churn rate from Stripe",
+    });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
+      id: 42,
+      team_id: 7,
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+      name: "Stripe",
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      id: 77,
+      team_id: 7,
+      ghost: true,
+    });
+    vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
+      id: 99,
+      name: plan.datasetName,
+      DataRequests: [{ id: 1001 }],
+    });
+    vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+      id: 55,
+      name: plan.datasetName,
+      type: "kpi",
+      project_id: 77,
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      team_id: 7,
+      connection_id: 42,
+      name: plan.datasetName,
+      question: "Add a KPI with net MRR churn rate from Stripe",
+      configuration: plan.configuration,
+      type: "kpi",
+      xAxis: plan.chartSpec.xAxis,
+      yAxis: plan.chartSpec.yAxis,
+      yAxisOperation: plan.chartSpec.yAxisOperation,
+      formula: plan.chartSpec.formula,
+      spec: {
+        ...plan.chartSpec,
+        type: "kpi",
+      },
+    });
+
+    expect(plan).toMatchObject({
+      status: "ok",
+      configuration: {
+        source: "stripeOfficial",
+        mode: "compiled_metric",
+        compiledMetric: "net_mrr_churn_rate",
+      },
+    });
+    expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
+      chart_id: 55,
+      dataset_id: 99,
+      data_request_id: 1001,
+      type: "kpi",
+      snapshot_status: "unavailable",
+      snapshot_note: "The chart was created, but a rendered snapshot is not available yet.",
+    });
   });
 
   it("removes accumulation from dashboard-placed compiled metric KPI charts", async () => {
@@ -355,7 +431,12 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       type: "kpi",
       subType: undefined,
     }), null);
-    expect(result.chart_sanitization).toEqual({ removedAccumulation: true });
+    expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
+      snapshot_status: "unavailable",
+      chart_sanitization: { removedAccumulation: true },
+    });
   });
 
   it("moves a temporary Stripe chart to a dashboard after confirmation", async () => {

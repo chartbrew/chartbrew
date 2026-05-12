@@ -153,6 +153,8 @@ async function createChart(payload) {
     }
 
     return {
+      status: "ok",
+      chart_created: true,
       chart_id: chart.id,
       dataset_id,
       name: chart.name,
@@ -161,6 +163,10 @@ async function createChart(payload) {
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
       snapshot,
+      snapshot_status: snapshot ? "available" : "unavailable",
+      snapshot_note: snapshot
+        ? null
+        : "The chart was created, but a rendered snapshot is not available yet.",
       chart_sanitization: chartSanitization.accumulationRemoved
         ? { removedAccumulation: true }
         : null,

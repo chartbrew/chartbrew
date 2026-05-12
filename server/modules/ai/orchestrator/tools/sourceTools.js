@@ -6,7 +6,8 @@ const {
   requireConnectionForTeam,
 } = require("./teamScope");
 
-async function getScopedSource({ connection_id, team_id }) {
+async function getScopedSource(payload) {
+  const { connection_id, team_id } = payload;
   if (!team_id) {
     throw new Error("team_id is required");
   }
@@ -17,6 +18,10 @@ async function getScopedSource({ connection_id, team_id }) {
   const normalizedTeamId = normalizeTeamId(team_id);
   const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
   const source = requireSupportedSourceForConnection(connection);
+
+  if (payload.source_id && source.id !== payload.source_id) {
+    throw new Error(`This tool only supports ${payload.source_id} connections`);
+  }
 
   return { connection, source };
 }
@@ -71,10 +76,42 @@ async function sourceRecommendTemplates(payload) {
   });
 }
 
+async function sourcePlanDataset(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const tool = requireAiTool(source, "planDataset");
+
+  return tool({
+    connection,
+    question: payload.question,
+    overrides: payload.overrides || {},
+  });
+}
+
+async function sourceValidateConfiguration(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const tool = requireAiTool(source, "validateConfiguration");
+
+  return tool(payload.configuration, { connection });
+}
+
+async function sourcePreviewConfiguration(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const tool = requireAiTool(source, "previewConfiguration");
+
+  return tool({
+    connection,
+    configuration: payload.configuration,
+    rowLimit: payload.row_limit,
+  });
+}
+
 module.exports = {
   sourceGetCapabilities,
   sourceGetSampleData,
   sourceListResources,
   sourceListTemplates,
+  sourcePlanDataset,
+  sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceValidateConfiguration,
 };
