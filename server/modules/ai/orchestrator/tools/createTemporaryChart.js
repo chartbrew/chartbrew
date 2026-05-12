@@ -44,17 +44,21 @@ async function createTemporaryChart(payload) {
       name,
       question: payload.question,
       original_question: payload.original_question,
+      query,
       method,
       route,
       itemsLimit,
+      conditions,
       configuration,
       connection,
       spec,
     });
+    query = repairedPayload.query ?? query;
     configuration = repairedPayload.configuration;
     method = repairedPayload.method ?? method;
     route = repairedPayload.route ?? route;
     itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
+    conditions = repairedPayload.conditions ?? conditions;
     spec = repairedPayload.spec || spec;
     const chartSanitization = removeCompiledMetricAccumulation({
       configuration,

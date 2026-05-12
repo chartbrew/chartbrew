@@ -1,3 +1,4 @@
+const realtimeDbAi = require("./ai/realtimedb.ai");
 const realtimeDbProtocol = require("./realtimedb.protocol");
 
 module.exports = {
@@ -28,13 +29,14 @@ module.exports = {
       dashboards: false,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
-      hasSourceInstructions: false,
-      hasTools: false,
+      hasSourceInstructions: true,
+      hasTools: true,
     },
   },
   backend: {
     ...realtimeDbProtocol,
+    ai: realtimeDbAi,
   },
 };

@@ -10,7 +10,7 @@ const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_C
 async function createDataset(payload) {
   let {
     project_id, connection_id, name, team_id,
-    query, method, route, itemsLimit, configuration = {}, variables = [], transform = null,
+    query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = []
   } = payload;
 
@@ -37,17 +37,21 @@ async function createDataset(payload) {
       name,
       question: payload.question,
       original_question: payload.original_question,
+      query,
       method,
       route,
       itemsLimit,
+      conditions,
       configuration,
       connection,
       spec: payload.spec,
     });
+    query = repairedPayload.query ?? query;
     configuration = repairedPayload.configuration;
     method = repairedPayload.method ?? method;
     route = repairedPayload.route ?? route;
     itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
+    conditions = repairedPayload.conditions ?? conditions;
 
     // Use the quick-create function to create dataset with data request in one go
     const dataset = await datasetController.createWithDataRequests({
@@ -62,6 +66,7 @@ async function createDataset(payload) {
         route,
         itemsLimit,
         query,
+        conditions,
         configuration: configuration || {},
         variables: variables || [],
         transform: transform || null

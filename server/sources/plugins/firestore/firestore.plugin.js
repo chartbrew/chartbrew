@@ -1,3 +1,4 @@
+const firestoreAi = require("./ai/firestore.ai");
 const firestoreProtocol = require("./firestore.protocol");
 
 module.exports = {
@@ -29,14 +30,15 @@ module.exports = {
       dashboards: false,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
-      hasSourceInstructions: false,
-      hasTools: false,
+      hasSourceInstructions: true,
+      hasTools: true,
     },
   },
 
   backend: {
     ...firestoreProtocol,
+    ai: firestoreAi,
   },
 };

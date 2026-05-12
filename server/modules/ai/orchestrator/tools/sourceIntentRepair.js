@@ -48,6 +48,7 @@ async function repairSourceDatasetIntentAsync(source, payload) {
   const planDataset = source.backend?.ai?.planDataset;
   const canPlan = typeof planDataset === "function";
   const requiresDataRequestRoute = source.backend?.ai?.requiresDataRequestRoute === true;
+  const requiresDataRequestQuery = source.backend?.ai?.requiresDataRequestQuery === true;
   const question = mergeQuestionContext(payload.question, payload.original_question, payload.name);
 
   if (!canPlan || !question) {
@@ -55,7 +56,8 @@ async function repairSourceDatasetIntentAsync(source, payload) {
   }
 
   let shouldPlan = Object.keys(configuration).length === 0
-    || (requiresDataRequestRoute && !payload.route);
+    || (requiresDataRequestRoute && !payload.route)
+    || (requiresDataRequestQuery && !payload.query);
   if (!shouldPlan && typeof validateConfiguration === "function") {
     try {
       const validation = validateConfiguration(configuration, {
@@ -86,9 +88,11 @@ async function repairSourceDatasetIntentAsync(source, payload) {
 
   return {
     ...repairedPayload,
+    query: plan.query ?? plan.dataRequest?.query ?? repairedPayload.query ?? payload.query,
     method: plan.method ?? plan.dataRequest?.method ?? repairedPayload.method ?? payload.method,
     route: plan.route ?? plan.dataRequest?.route ?? repairedPayload.route ?? payload.route,
     itemsLimit: plan.itemsLimit ?? plan.dataRequest?.itemsLimit ?? repairedPayload.itemsLimit ?? payload.itemsLimit,
+    conditions: plan.conditions ?? plan.dataRequest?.conditions ?? repairedPayload.conditions ?? payload.conditions,
     configuration: plan.configuration || repairedPayload.configuration,
     spec: {
       ...(repairedPayload.spec || {}),
