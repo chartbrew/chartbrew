@@ -19,7 +19,7 @@ async function createTemporaryChart(payload) {
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     xAxis, xAxisOperation, yAxis, yAxisOperation = "none", dateField, dateFormat,
-    query, conditions = [], configuration = {}, variables = [], transform = null,
+    query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = [], spec = {}, team_id, formula, seriesConfiguration,
   } = payload;
 
@@ -44,11 +44,17 @@ async function createTemporaryChart(payload) {
       name,
       question: payload.question,
       original_question: payload.original_question,
+      method,
+      route,
+      itemsLimit,
       configuration,
       connection,
       spec,
     });
     configuration = repairedPayload.configuration;
+    method = repairedPayload.method ?? method;
+    route = repairedPayload.route ?? route;
+    itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
     spec = repairedPayload.spec || spec;
     const chartSanitization = removeCompiledMetricAccumulation({
       configuration,
@@ -81,6 +87,9 @@ async function createTemporaryChart(payload) {
       variableBindings,
       dataRequests: [{
         connection_id,
+        method,
+        route,
+        itemsLimit,
         query,
         configuration: configuration || {},
         variables: variables || [],

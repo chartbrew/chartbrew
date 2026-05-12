@@ -14,7 +14,7 @@ Status: draft
 - [x] Guarded GA4 runtime against missing `propertyId` before calling Google APIs and let creation tools auto-fill missing source-owned configuration through the planner.
 - [x] Fixed the orchestrator response contract so source disambiguation and tool-only completions always return a non-empty `message` instead of surfacing "Invalid response from AI".
 - [x] Passed original user request context into source planning and chart creation so GA4 can auto-select named properties even when the model shortens the tool-call question.
-- [ ] Add Customer.io source-owned AI planning and preview.
+- [x] Added Customer.io source-owned AI planning, validation, preview, route/method creation support, and harness coverage for customers, segments, activities, campaign metrics, and campaign disambiguation.
 - [ ] Add Firestore and RealtimeDB source-owned AI planning.
 - [ ] Add API connection AI context UI and generic API AI planning.
 

@@ -368,6 +368,9 @@ async function availableTools() {
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           name: { type: "string", description: "Canonical dataset name stored on Dataset.name" },
           query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources." },
+          method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"], description: "DataRequest HTTP method for route-based source-owned connectors" },
+          route: { type: "string", description: "DataRequest route/path for route-based source-owned connectors" },
+          itemsLimit: { type: "integer", description: "Maximum records to fetch for route-based source-owned connectors" },
           configuration: { type: "object", description: "DataRequest dialect-specific settings" },
           variables: {
             type: "array",
@@ -571,6 +574,9 @@ async function availableTools() {
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
           dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
           query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources." },
+          method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"], description: "DataRequest HTTP method for route-based source-owned connectors" },
+          route: { type: "string", description: "DataRequest route/path for route-based source-owned connectors" },
+          itemsLimit: { type: "integer", description: "Maximum records to fetch for route-based source-owned connectors" },
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
           configuration: { type: "object", description: "DataRequest dialect-specific settings for the reusable dataset" },
           variables: {

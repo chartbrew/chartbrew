@@ -47,13 +47,15 @@ async function repairSourceDatasetIntentAsync(source, payload) {
   const validateConfiguration = source.backend?.ai?.validateConfiguration;
   const planDataset = source.backend?.ai?.planDataset;
   const canPlan = typeof planDataset === "function";
+  const requiresDataRequestRoute = source.backend?.ai?.requiresDataRequestRoute === true;
   const question = mergeQuestionContext(payload.question, payload.original_question, payload.name);
 
   if (!canPlan || !question) {
     return repairedPayload;
   }
 
-  let shouldPlan = Object.keys(configuration).length === 0;
+  let shouldPlan = Object.keys(configuration).length === 0
+    || (requiresDataRequestRoute && !payload.route);
   if (!shouldPlan && typeof validateConfiguration === "function") {
     try {
       const validation = validateConfiguration(configuration, {
@@ -84,6 +86,9 @@ async function repairSourceDatasetIntentAsync(source, payload) {
 
   return {
     ...repairedPayload,
+    method: plan.method ?? plan.dataRequest?.method ?? repairedPayload.method ?? payload.method,
+    route: plan.route ?? plan.dataRequest?.route ?? repairedPayload.route ?? payload.route,
+    itemsLimit: plan.itemsLimit ?? plan.dataRequest?.itemsLimit ?? repairedPayload.itemsLimit ?? payload.itemsLimit,
     configuration: plan.configuration || repairedPayload.configuration,
     spec: {
       ...(repairedPayload.spec || {}),
