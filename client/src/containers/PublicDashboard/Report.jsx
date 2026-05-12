@@ -61,6 +61,8 @@ const defaultColors = [
   "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
 ];
 
+const PUBLIC_REPORT_CACHE_REFRESH_INTERVAL = 10 * 60 * 1000;
+
 function Report({ editMode = false }) {
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
@@ -97,6 +99,7 @@ function Report({ editMode = false }) {
   const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(false);
+  const cacheRefreshRef = useRef(false);
 
   const removeStyling = searchParams.get("removeStyling") === "true";
   const removeHeader = searchParams.get("removeHeader") === "true";
@@ -108,17 +111,6 @@ function Report({ editMode = false }) {
     });
 
     return allQueryParams;
-  };
-
-  // Get minimum auto-update frequency from all charts for dashboard-level refresh
-  const getMinAutoUpdateFreq = () => {
-    if (!charts || charts.length === 0) return 0;
-    const autoUpdateTimes = charts
-      .filter(chart => chart.autoUpdate > 0)
-      .map(chart => chart.autoUpdate);
-    
-    if (autoUpdateTimes.length === 0) return 0;
-    return Math.min(...autoUpdateTimes);
   };
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -140,31 +132,22 @@ function Report({ editMode = false }) {
     onDrop,
   });
 
-  // Dashboard-level auto-refresh for public dashboards
-  // This preserves URL variables and SharePolicy filtering
+  // Public report cache refresh. This intentionally avoids source refreshes.
   useInterval(async () => {
-    if (!refreshLoading && project?.id) {
-      setRefreshLoading(true);
-      
-      try {
-        const data = await dispatch(getReport({ 
-          brewName: params.brewName, 
-          password: window.localStorage.getItem("reportPassword"), 
-          token: searchParams.get("token"),
-          queryParams: _getReportQueryParams()
-        }));
-
-        // Update project data if successful (without changing editor visibility)
-        if (data && !data.error && data.payload) {
-          setProject(prevProject => ({ ...prevProject, ...data.payload }));
-        }
-      } catch (error) {
-        console.error("Dashboard auto-refresh failed:", error);
-      } finally {
-        setRefreshLoading(false);
-      }
+    if (!project?.id || cacheRefreshRef.current) {
+      return;
     }
-  }, getMinAutoUpdateFreq() > 0 ? getMinAutoUpdateFreq() * 1000 : 60000);
+
+    cacheRefreshRef.current = true;
+    _onRefreshCharts({
+      refresh: false,
+      getCache: true,
+      cacheOnly: true,
+      showLoading: false,
+    }).finally(() => {
+      cacheRefreshRef.current = false;
+    });
+  }, PUBLIC_REPORT_CACHE_REFRESH_INTERVAL);
 
   useEffect(() => {
     setLoading(true);
@@ -347,21 +330,26 @@ function Report({ editMode = false }) {
       });
   };
 
-  const _onRefreshCharts = () => {
+  const _onRefreshCharts = ({
+    refresh = true,
+    getCache = false,
+    cacheOnly = false,
+    showLoading = true,
+  } = {}) => {
     const runtimeCharts = charts.filter((chart) => chart.type !== "markdown");
 
     if (runtimeCharts.length === 0) {
-      setRefreshLoading(false);
+      if (showLoading) setRefreshLoading(false);
       return Promise.resolve("done");
     }
 
-    setRefreshLoading(true);
-    return _processChartBatches(runtimeCharts, dashboardFilters, chartFilters, { refresh: true })
+    if (showLoading) setRefreshLoading(true);
+    return _processChartBatches(runtimeCharts, dashboardFilters, chartFilters, { refresh, getCache, cacheOnly })
       .then(() => {
-        setRefreshLoading(false);
+        if (showLoading) setRefreshLoading(false);
       })
       .catch(() => {
-        setRefreshLoading(false);
+        if (showLoading) setRefreshLoading(false);
       });
   };
 
@@ -407,17 +395,22 @@ function Report({ editMode = false }) {
       });
   }, [project?.id, dashboardFilters, charts, chartFilters, filterLoading]);
 
-  const _runChartRequest = (chart, currentFilters = dashboardFilters, currentChartFilters = chartFilters, { refresh = false } = {}) => {
+  const _runChartRequest = (
+    chart,
+    currentFilters = dashboardFilters,
+    currentChartFilters = chartFilters,
+    { refresh = false, getCache = false, cacheOnly = false } = {}
+  ) => {
     if (!chart || chart.type === "markdown") return Promise.resolve(null);
 
     const runtimeRequest = _buildRuntimeRequest(chart, currentFilters, currentChartFilters);
     const shouldClearRuntimeState = !runtimeRequest.hasRuntimeFilters && Boolean(chart.filterMetadata);
 
-    if (!refresh && !shouldClearRuntimeState && !runtimeRequest.hasRuntimeFilters) {
+    if (!refresh && !getCache && !cacheOnly && !shouldClearRuntimeState && !runtimeRequest.hasRuntimeFilters) {
       return Promise.resolve(null);
     }
 
-    if (!refresh && shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables)) {
+    if (!refresh && !getCache && !cacheOnly && shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables)) {
       return Promise.resolve(null);
     }
 
@@ -441,6 +434,8 @@ function Report({ editMode = false }) {
       accessToken: searchParams.get("accessToken"),
       queryParams: _getReportQueryParams(),
       refresh,
+      getCache,
+      cacheOnly,
     })).catch(() => null);
   };
 
@@ -844,45 +839,46 @@ function Report({ editMode = false }) {
         )}
 
         <div className="absolute top-4 right-4 z-50">
-          {editMode && !isSaved && !preview && project?.id && _canAccess("projectEditor") && (
-            <div className="hidden sm:block">
-              <Button
-                variant="primary"
-                isPending={saveLoading}
-                onPress={_onSaveChanges}
-              >
-                {saveLoading ? <ButtonSpinner /> : null}
-                Save changes
-                {!saveLoading ? <LuCircleCheck /> : null}
-              </Button>
-            </div>
-          )}
-          {editMode && preview && (
-            <div>
-              <Button
-                onPress={() => editMode && setPreview(false)}
-                variant="tertiary"
-              >
-                Exit preview
-                <LuCircleX />
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-row gap-2">
+            {editMode && !isSaved && !preview && project?.id && _canAccess("projectEditor") && (
+              <div className="hidden sm:block">
+                <Button
+                  variant="primary"
+                  isPending={saveLoading}
+                  onPress={_onSaveChanges}
+                >
+                  {saveLoading ? <ButtonSpinner /> : null}
+                  Save changes
+                  {!saveLoading ? <LuCircleCheck /> : null}
+                </Button>
+              </div>
+            )}
+            {editMode && preview && (
+              <div>
+                <Button
+                  onPress={() => editMode && setPreview(false)}
+                  variant="tertiary"
+                >
+                  Exit preview
+                  <LuCircleX />
+                </Button>
+              </div>
+            )}
 
-          {project?.Team?.allowReportRefresh && (
-            <div className="hidden sm:block">
-              <Button
-                onPress={() => _onRefreshCharts()}
-                isPending={refreshLoading}
-                size="sm"
-                variant="primary"
-              >
-                {refreshLoading ? <ButtonSpinner /> : null}
-                Refresh charts
-                {!refreshLoading ? <LuRefreshCw /> : null}
-              </Button>
-            </div>
-          )}
+            {project?.Team?.allowReportRefresh && (
+              <div className="hidden sm:block">
+                <Button
+                  onPress={() => _onRefreshCharts()}
+                  isPending={refreshLoading}
+                  variant="primary"
+                >
+                  {refreshLoading ? <ButtonSpinner /> : null}
+                  Refresh charts
+                  {!refreshLoading ? <LuRefreshCw /> : null}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {charts && charts.length > 0 && _isOnReport() && (

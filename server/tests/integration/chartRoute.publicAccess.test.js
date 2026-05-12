@@ -519,4 +519,56 @@ describe("ChartRoute public access", () => {
       })
     );
   });
+
+  it("passes cache-only public filtered refreshes without requiring source refresh permission", async () => {
+    const seeded = await seedPublicChart(models, {
+      sharePolicy: {
+        visibility: "private",
+        allow_params: true,
+      },
+    });
+    const cachedChart = {
+      id: seeded.chart.id,
+      chartData: {
+        labels: ["Cached"],
+        datasets: [{ label: "Revenue", data: [42] }],
+      },
+      project_id: seeded.project.id,
+    };
+    const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
+      .mockResolvedValue(cachedChart);
+    const shareToken = generateProjectShareToken(seeded.project.id, seeded.sharePolicy.id);
+    const filters = [{ type: "field", field: "root[].status", operator: "eq", value: "active" }];
+
+    const response = await request(app)
+      .post(`/project/${seeded.project.id}/chart/${seeded.chart.id}/filter`)
+      .query({
+        token: shareToken,
+        getCache: "true",
+        cacheOnly: "true",
+      })
+      .send({
+        filters,
+        queryParams: {
+          token: shareToken,
+          accountId: "url-account",
+        },
+      })
+      .expect(200);
+
+    expect(response.body).toEqual(cachedChart);
+    expect(refreshSpy).toHaveBeenCalledWith(
+      `${seeded.chart.id}`,
+      undefined,
+      expect.objectContaining({
+        filters,
+        getCache: true,
+        cacheOnly: true,
+        variables: {
+          accountId: "url-account",
+        },
+        runtimeOnly: true,
+      })
+    );
+  });
 });

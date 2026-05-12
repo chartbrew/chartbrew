@@ -686,6 +686,7 @@ module.exports = (app) => {
           skipParsing,
           filters: req.body?.filters,
           getCache,
+          cacheOnly: req.query.cacheOnly === "true",
           variables,
           runtimeOnly: true,
         },
@@ -703,6 +704,12 @@ module.exports = (app) => {
       }
       if (error === "413" && error.message === "413") {
         return res.status(413).send(error);
+      }
+      if (error?.code === "RUNTIME_CHART_CACHE_MISS") {
+        return res.status(200).send({
+          id: Number(req.params.chart_id),
+          cacheMiss: true,
+        });
       }
       return res.status(400).send(error);
     }

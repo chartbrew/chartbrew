@@ -29,5 +29,3 @@ This is a monorepo containing two main applications:
 - Scaffold from spec, or directly implement if requested, run tests and linting to validate works, and fix any issues.
 - When working on sources, source plugins, source templates, source-specific frontend components, or source runtime behavior, follow [`source-plugin-guide.md`](source-plugin-guide.md) before making changes.
 
-### Docs
-- Specs ≤ 2 pages. ADRs short. Use Mermaid if needed.

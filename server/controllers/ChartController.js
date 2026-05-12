@@ -366,6 +366,7 @@ class ChartController {
     filters,
     isExport,
     getCache,
+    cacheOnly = false,
     variables,
     skipSave,
     runtimeOnly = false,
@@ -469,7 +470,7 @@ class ChartController {
               runtimePayload: runtimeContext.cacheableChartPayload,
             });
 
-            if (runtimeChartCacheEntry.stale) {
+            if (runtimeChartCacheEntry.stale && !cacheOnly) {
               runtimeCache.triggerBackgroundRefresh(
                 runtimeChartCacheParams.chartId
                   ? `chart-runtime-refresh:${runtimeChartCacheParams.chartId}:${runtimeContext.chartVariantHash}:${runtimeViewerScope}`
@@ -490,6 +491,27 @@ class ChartController {
 
             return createRuntimeShortCircuit(cachedChart);
           }
+        }
+
+        if (cacheOnly) {
+          runtimeCache.debugLog("chart_cache_only_miss", {
+            chartId: id,
+            viewerScope: runtimeViewerScope,
+            hasRuntimeFilters: Boolean(runtimeContext?.cacheableChartPayload?.hasRuntimeFilters),
+            chartVariantHash: runtimeContext?.chartVariantHash || null,
+          });
+
+          if (runtimeContext.cacheableChartPayload?.hasRuntimeFilters) {
+            const cacheMissError = new Error("Runtime chart cache miss");
+            cacheMissError.code = "RUNTIME_CHART_CACHE_MISS";
+            throw cacheMissError;
+          }
+
+          return createRuntimeShortCircuit(attachRuntimeCacheMetadata(gChart, {
+            cacheStatus: "stored",
+            variantHash: runtimeContext?.chartVariantHash || null,
+            stale: false,
+          }));
         }
 
         if (runtimeContext.needsSourceRefresh) {

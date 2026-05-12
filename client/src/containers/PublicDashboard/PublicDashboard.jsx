@@ -57,6 +57,8 @@ const defaultColors = [
   "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
 ];
 
+const PUBLIC_REPORT_CACHE_REFRESH_INTERVAL = 10 * 60 * 1000;
+
 function PublicDashboard() {
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
@@ -93,6 +95,7 @@ function PublicDashboard() {
   const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(false);
+  const cacheRefreshRef = useRef(false);
 
   const removeStyling = searchParams.get("removeStyling") === "true";
   const removeHeader = searchParams.get("removeHeader") === "true";
@@ -104,17 +107,6 @@ function PublicDashboard() {
     });
 
     return allQueryParams;
-  };
-
-  // Get minimum auto-update frequency from all charts for dashboard-level refresh
-  const getMinAutoUpdateFreq = () => {
-    if (!charts || charts.length === 0) return 0;
-    const autoUpdateTimes = charts
-      .filter(chart => chart.autoUpdate > 0)
-      .map(chart => chart.autoUpdate);
-    
-    if (autoUpdateTimes.length === 0) return 0;
-    return Math.min(...autoUpdateTimes);
   };
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -134,31 +126,22 @@ function PublicDashboard() {
     onDrop,
   });
 
-  // Dashboard-level auto-refresh for public dashboards
-  // This preserves URL variables and SharePolicy filtering
+  // Public dashboard cache refresh. This intentionally avoids source refreshes.
   useInterval(async () => {
-    if (!refreshLoading && project?.id) {
-      setRefreshLoading(true);
-      
-      try {
-        const data = await dispatch(getPublicDashboard({ 
-          brewName: params.brewName, 
-          password: window.localStorage.getItem("reportPassword"), 
-          token: searchParams.get("token"),
-          queryParams: _getReportQueryParams()
-        }));
-
-        // Update project data if successful (without changing editor visibility)
-        if (data && !data.error && data.payload) {
-          setProject(prevProject => ({ ...prevProject, ...data.payload }));
-        }
-      } catch (error) {
-        console.error("Dashboard auto-refresh failed:", error);
-      } finally {
-        setRefreshLoading(false);
-      }
+    if (!project?.id || cacheRefreshRef.current) {
+      return;
     }
-  }, getMinAutoUpdateFreq() > 0 ? getMinAutoUpdateFreq() * 1000 : 60000);
+
+    cacheRefreshRef.current = true;
+    _onRefreshCharts({
+      refresh: false,
+      getCache: true,
+      cacheOnly: true,
+      showLoading: false,
+    }).finally(() => {
+      cacheRefreshRef.current = false;
+    });
+  }, PUBLIC_REPORT_CACHE_REFRESH_INTERVAL);
 
   useEffect(() => {
     setLoading(true);
@@ -341,21 +324,26 @@ function PublicDashboard() {
       });
   };
 
-  const _onRefreshCharts = () => {
+  const _onRefreshCharts = ({
+    refresh = true,
+    getCache = false,
+    cacheOnly = false,
+    showLoading = true,
+  } = {}) => {
     const runtimeCharts = charts.filter((chart) => chart.type !== "markdown");
 
     if (runtimeCharts.length === 0) {
-      setRefreshLoading(false);
+      if (showLoading) setRefreshLoading(false);
       return Promise.resolve("done");
     }
 
-    setRefreshLoading(true);
-    return _processChartBatches(runtimeCharts, dashboardFilters, chartFilters, { refresh: true })
+    if (showLoading) setRefreshLoading(true);
+    return _processChartBatches(runtimeCharts, dashboardFilters, chartFilters, { refresh, getCache, cacheOnly })
       .then(() => {
-        setRefreshLoading(false);
+        if (showLoading) setRefreshLoading(false);
       })
       .catch(() => {
-        setRefreshLoading(false);
+        if (showLoading) setRefreshLoading(false);
       });
   };
 
@@ -401,17 +389,22 @@ function PublicDashboard() {
       });
   }, [project?.id, dashboardFilters, charts, chartFilters, filterLoading]);
 
-  const _runChartRequest = (chart, currentFilters = dashboardFilters, currentChartFilters = chartFilters, { refresh = false } = {}) => {
+  const _runChartRequest = (
+    chart,
+    currentFilters = dashboardFilters,
+    currentChartFilters = chartFilters,
+    { refresh = false, getCache = false, cacheOnly = false } = {}
+  ) => {
     if (!chart || chart.type === "markdown") return Promise.resolve(null);
 
     const runtimeRequest = _buildRuntimeRequest(chart, currentFilters, currentChartFilters);
     const shouldClearRuntimeState = !runtimeRequest.hasRuntimeFilters && Boolean(chart.filterMetadata);
 
-    if (!refresh && !shouldClearRuntimeState && !runtimeRequest.hasRuntimeFilters) {
+    if (!refresh && !getCache && !cacheOnly && !shouldClearRuntimeState && !runtimeRequest.hasRuntimeFilters) {
       return Promise.resolve(null);
     }
 
-    if (!refresh && shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables)) {
+    if (!refresh && !getCache && !cacheOnly && shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables)) {
       return Promise.resolve(null);
     }
 
@@ -435,6 +428,8 @@ function PublicDashboard() {
       accessToken: searchParams.get("accessToken"),
       queryParams: _getReportQueryParams(),
       refresh,
+      getCache,
+      cacheOnly,
     })).catch(() => null);
   };
 

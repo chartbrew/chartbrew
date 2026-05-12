@@ -9,7 +9,6 @@ import {
   Chip,
   Tabs,
   TextField,
-  Popover,
   Tooltip,
 } from "@heroui/react";
 import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";

@@ -188,7 +188,7 @@ export const runQuery = createAsyncThunk(
 export const runQueryWithFilters = createAsyncThunk(
   "chart/runQueryWithFilters",
   async ({
-    project_id, chart_id, filters, variables, shareToken, password, accessToken, refresh, getCache, queryParams
+    project_id, chart_id, filters, variables, shareToken, password, accessToken, refresh, getCache, cacheOnly, queryParams
   }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/filter?no_source=true`;
@@ -218,6 +218,10 @@ export const runQueryWithFilters = createAsyncThunk(
 
     if (getCache) {
       url += "&getCache=true";
+    }
+
+    if (cacheOnly) {
+      url += "&cacheOnly=true";
     }
 
     const response = await fetch(url, { method, headers, body });
@@ -890,6 +894,13 @@ export const chartSlice = createSlice({
         
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.cacheMiss) {
+              return {
+                ...chart,
+                loading: false,
+              };
+            }
+
             return {
               ...chart,
               ...action.payload,

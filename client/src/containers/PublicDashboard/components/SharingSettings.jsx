@@ -81,9 +81,44 @@ function SharingSettings(props) {
     setNewBrewName(value);
   };
 
-  const _onCopyUrl = () => {
+  const _getCompleteParams = (params) => {
+    if (!Array.isArray(params)) return [];
+
+    return params.filter((param) => param && param.key && param.value);
+  };
+
+  const _buildShareUrl = ({
+    token = "",
+    theme = embedTheme,
+    params = parameters,
+    paramsAllowed = allowParams,
+  } = {}) => {
+    if (!project?.brewName) return "";
+
+    const queryParams = [];
+    if (token) {
+      queryParams.push(`token=${encodeURIComponent(token)}`);
+    }
+
+    if (theme !== "os") {
+      queryParams.push(`theme=${encodeURIComponent(theme)}`);
+    }
+
+    if (paramsAllowed) {
+      _getCompleteParams(params).forEach((param) => {
+        queryParams.push(`${encodeURIComponent(param.key)}=${encodeURIComponent(param.value)}`);
+      });
+    }
+
+    const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+    return `${SITE_HOST}/report/${project.brewName}${queryString}`;
+  };
+
+  const _onCopyUrl = (urlToCopy) => {
     setUrlCopied(true);
-    const url = project.SharePolicies ? _getEmbedUrl() : `${SITE_HOST}/report/${newBrewName}`;
+    const url = typeof urlToCopy === "string"
+      ? urlToCopy
+      : shareToken ? _getEmbedUrl() : `${SITE_HOST}/report/${newBrewName}`;
     navigator.clipboard.writeText(url);
     toast.success("Copied to clipboard!");
     setTimeout(() => {
@@ -93,7 +128,7 @@ function SharingSettings(props) {
 
   const _onCopyEmbed = () => {
     setEmbedCopied(true);
-    const embedCode = project.SharePolicies ? _getSignedEmbedString() : _getEmbedString();
+    const embedCode = shareToken ? _getSignedEmbedString() : _getEmbedString();
     navigator.clipboard.writeText(embedCode);
     toast.success("Copied to clipboard!");
     setTimeout(() => {
@@ -184,10 +219,18 @@ function SharingSettings(props) {
       })
   };
 
-  const _generateTokenForPolicy = async (policy) => {
+  const _generateTokenForPolicy = async (policy, options = {}) => {
     if (!policy) return;
-    
-    setShareLoading(true);
+
+    const {
+      exp = policy.expires_at,
+      updateCurrentToken = true,
+    } = options;
+
+    if (updateCurrentToken) {
+      setShareLoading(true);
+    }
+
     try {
       const data = await dispatch(generateShareToken({
         project_id: project.id,
@@ -197,14 +240,67 @@ function SharingSettings(props) {
             params: policy.params,
             allow_params: policy.allow_params,
           },
-          exp: expirationDate,
+          exp,
         },
       }));
-      setShareToken(data?.payload?.token);
+      const token = data?.payload?.token || "";
+
+      if (updateCurrentToken) {
+        setShareToken(token);
+      }
+
+      return token;
     } catch (error) {
       toast.error("Failed to generate share token");
+      return "";
+    } finally {
+      if (updateCurrentToken) {
+        setShareLoading(false);
+      }
     }
+  };
+
+  const _getUrlForPolicy = async (policy) => {
+    const token = await _generateTokenForPolicy(policy, {
+      exp: policy.expires_at,
+      updateCurrentToken: false,
+    });
+
+    if (!token) return "";
+
+    return _buildShareUrl({
+      token,
+      params: policy.params,
+      paramsAllowed: policy.allow_params,
+    });
+  };
+
+  const _onOpenPolicyUrl = async (policy) => {
+    const newWindow = window.open("about:blank", "_blank");
+    setShareLoading(true);
+    const url = await _getUrlForPolicy(policy);
     setShareLoading(false);
+
+    if (!url) {
+      if (newWindow) newWindow.close();
+      return;
+    }
+
+    if (newWindow) {
+      newWindow.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
+  };
+
+  const _onCopyPolicyUrl = async (policy) => {
+    setShareLoading(true);
+    const url = await _getUrlForPolicy(policy);
+    setShareLoading(false);
+
+    if (url) {
+      _onCopyUrl(url);
+    }
   };
 
   const _onCreateNewPolicy = async () => {
@@ -292,16 +388,8 @@ function SharingSettings(props) {
   const _hasUnsavedChanges = () => {
     if (!selectedPolicy) return false;
     
-    // Filter out incomplete parameters (where key or value are empty)
-    const filterCompleteParams = (params) => {
-      if (!Array.isArray(params)) return [];
-      return params.filter(
-        (param) => param && param.key && param.value
-      );
-    };
-
-    const filteredParameters = filterCompleteParams(parameters);
-    const filteredPolicyParams = filterCompleteParams(selectedPolicy?.params);
+    const filteredParameters = _getCompleteParams(parameters);
+    const filteredPolicyParams = _getCompleteParams(selectedPolicy?.params);
     const changedParams = JSON.stringify(filteredParameters) !== JSON.stringify(filteredPolicyParams);
     const changedAllowParams = allowParams !== selectedPolicy?.allow_params;
     const changedExpirationDate = expirationDate !== selectedPolicy?.expires_at && (expirationDate !== "" || expirationDate !== null);
@@ -309,26 +397,7 @@ function SharingSettings(props) {
   };
 
   const _getEmbedUrl = () => {
-    if (!project.brewName) return "";
-    
-    // For SharePolicy system with token
-    if (shareToken) {
-      let url = `${SITE_HOST}/report/${project.brewName}?token=${shareToken}${embedTheme !== "os" ? `&theme=${embedTheme}` : ""}`;
-      
-      // If URL parameters are allowed and we have parameters, show example
-      if (allowParams && parameters && parameters.length > 0) {
-        const validParams = parameters.filter(p => p.key && p.value);
-        if (validParams.length > 0) {
-          const paramString = validParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join("&");
-          url += `&${paramString}`;
-        }
-      }
-      
-      return url;
-    }
-    
-    // Default URL without token
-    return `${SITE_HOST}/report/${project?.brewName}${embedTheme !== "os" ? `?theme=${embedTheme}` : ""}`;
+    return _buildShareUrl({ token: shareToken });
   };
 
   const _getSignedEmbedString = () => {
@@ -779,15 +848,33 @@ function SharingSettings(props) {
                           {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
                         </div>
                       </div>
-                      <div className="flex flex-row items-center gap-2">
-                        <Button isIconOnly size="sm" variant="tertiary" onPress={() => window.open(_getEmbedUrl(), "_blank")}>
+                      <div
+                        className="flex flex-row items-center gap-2"
+                        onClick={(event) => event.stopPropagation()}
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        <Button
+                          isIconOnly
+                          aria-label={`Open Link ${index + 1}`}
+                          size="sm"
+                          variant="tertiary"
+                          onPress={() => _onOpenPolicyUrl(policy)}
+                        >
                           <LuExternalLink size={16} />
                         </Button>
-                        <Button isIconOnly size="sm" variant="tertiary" onPress={_onCopyUrl}>
+                        <Button
+                          isIconOnly
+                          aria-label={`Copy Link ${index + 1}`}
+                          size="sm"
+                          variant="tertiary"
+                          onPress={() => _onCopyPolicyUrl(policy)}
+                        >
                           {urlCopied ? <LuCopyCheck className="text-success" /> : <LuCopy size={16} />}
                         </Button>
                         <Button
                           isIconOnly
+                          aria-label={`Delete Link ${index + 1}`}
                           size="sm"
                           variant="danger-soft"
                           onPress={() => _onDeletePolicy(policy.id)}
