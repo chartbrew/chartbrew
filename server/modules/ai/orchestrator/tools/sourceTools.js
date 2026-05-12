@@ -34,6 +34,18 @@ function requireAiTool(source, toolName) {
   return tool;
 }
 
+function mergeQuestionContext(question, originalQuestion) {
+  if (!originalQuestion || originalQuestion === question) {
+    return question;
+  }
+
+  if (!question) {
+    return originalQuestion;
+  }
+
+  return `${question}\nOriginal user request: ${originalQuestion}`;
+}
+
 async function sourceGetCapabilities(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "getCapabilities");
@@ -80,11 +92,22 @@ async function sourcePlanDataset(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "planDataset");
 
-  return tool({
+  const result = await tool({
     connection,
-    question: payload.question,
+    question: mergeQuestionContext(payload.question, payload.original_question),
     overrides: payload.overrides || {},
   });
+
+  if (result?.status === "needs_disambiguation") {
+    return {
+      ...result,
+      needs_user_input: true,
+      prompt: result.message || "Choose an option before I continue.",
+      options: Array.isArray(result.options) ? result.options : [],
+    };
+  }
+
+  return result;
 }
 
 async function sourceValidateConfiguration(payload) {

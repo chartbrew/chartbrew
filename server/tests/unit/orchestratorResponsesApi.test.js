@@ -5,6 +5,7 @@ import {
 const {
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  buildFallbackAssistantMessage,
   buildUsageRecordFromResponse,
 } = require("../../modules/ai/orchestrator/orchestrator");
 
@@ -93,5 +94,18 @@ describe("orchestrator Responses API adapters", () => {
       total_tokens: 165,
       elapsed_ms: 850,
     });
+  });
+
+  it("builds a non-empty fallback message after tool-only chart creation", () => {
+    const message = buildFallbackAssistantMessage({
+      toolResults: [{
+        content: JSON.stringify({
+          chart_created: true,
+          name: "Total sessions",
+        }),
+      }],
+    });
+
+    expect(message).toBe("I created Total sessions.");
   });
 });

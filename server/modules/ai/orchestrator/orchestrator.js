@@ -97,6 +97,14 @@ const TEAM_SCOPED_TOOLS = new Set([
   "stripe_official_preview_configuration",
 ]);
 
+const ORIGINAL_QUESTION_TOOLS = new Set([
+  "create_dataset",
+  "create_chart",
+  "create_temporary_chart",
+  "source_plan_dataset",
+  "stripe_official_plan_dataset",
+]);
+
 async function availableTools() {
   const supportedSourceList = formatSupportedSourceList();
   const supportedDialectIds = getSupportedDialectIds();
@@ -1154,6 +1162,38 @@ function buildAssistantMessageFromResponse(response) {
   };
 }
 
+function parseToolResultContent(content) {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    return null;
+  }
+}
+
+function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}) {
+  const createdCharts = toolResults
+    .map((result) => parseToolResultContent(result.content))
+    .filter((result) => result?.chart_created || result?.chart_id);
+
+  if (createdCharts.length > 0) {
+    const chartNames = createdCharts
+      .map((result) => result.name)
+      .filter(Boolean);
+
+    if (chartNames.length > 0) {
+      return `I created ${chartNames.join(", ")}.`;
+    }
+
+    return `I created ${createdCharts.length === 1 ? "the chart" : `${createdCharts.length} charts`}.`;
+  }
+
+  if (snapshots.length > 0) {
+    return `I created ${snapshots.length === 1 ? "the chart" : `${snapshots.length} charts`}.`;
+  }
+
+  return "I completed the requested action, but I could not generate a final text response. Please try again or rephrase the request.";
+}
+
 function buildUsageRecordFromResponse(response, elapsedMs, model) {
   if (!response?.usage) {
     return null;
@@ -1360,6 +1400,7 @@ async function orchestrate(
   const usageRecords = [];
   // Track snapshots from chart creation/update tools
   const snapshots = [];
+  let lastToolResults = [];
 
   const createModelResponse = async () => {
     const startTime = Date.now();
@@ -1422,6 +1463,9 @@ async function orchestrate(
         // Inject team_id into all team-scoped tools so they cannot access cross-team resources.
         if (TEAM_SCOPED_TOOLS.has(toolName)) {
           toolArgs.team_id = teamId;
+        }
+        if (ORIGINAL_QUESTION_TOOLS.has(toolName)) {
+          toolArgs.original_question = question;
         }
 
         // Call progress callback before tool execution
@@ -1496,6 +1540,7 @@ async function orchestrate(
 
     persistedMessages.push(...toolResults);
     modelMessages.push(...toolResults);
+    lastToolResults = toolResults;
 
     // Check if any tool requires user input
     const needsDisambiguation = toolResults.some(
@@ -1523,9 +1568,14 @@ async function orchestrate(
 
       return {
         needs_user_input: true,
+        message: disambiguationRequest.prompt || "I need one more choice before I can continue.",
         prompt: disambiguationRequest.prompt,
         options: disambiguationRequest.options,
         conversationHistory: persistedMessages,
+        usage: buildLegacyUsageFromResponse(response),
+        usageRecords,
+        iterations,
+        snapshots,
       };
     }
 
@@ -1533,6 +1583,13 @@ async function orchestrate(
     // oxlint-disable-next-line no-await-in-loop
     response = await createModelResponse();
     assistantMessage = buildAssistantMessageFromResponse(response);
+  }
+
+  if (!assistantMessage.content) {
+    assistantMessage.content = buildFallbackAssistantMessage({
+      toolResults: lastToolResults,
+      snapshots,
+    });
   }
 
   // Add final assistant message
@@ -1577,5 +1634,6 @@ module.exports = {
   buildSemanticLayer,
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  buildFallbackAssistantMessage,
   buildUsageRecordFromResponse,
 };

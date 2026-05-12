@@ -32,6 +32,71 @@ function repairSourceDatasetIntent(source, payload) {
   };
 }
 
+function mergeQuestionContext(...values) {
+  return values
+    .filter(Boolean)
+    .reduce((acc, value) => {
+      if (acc.includes(value)) return acc;
+      return acc ? `${acc}\n${value}` : value;
+    }, "");
+}
+
+async function repairSourceDatasetIntentAsync(source, payload) {
+  const repairedPayload = repairSourceDatasetIntent(source, payload);
+  const configuration = repairedPayload.configuration || {};
+  const validateConfiguration = source.backend?.ai?.validateConfiguration;
+  const planDataset = source.backend?.ai?.planDataset;
+  const canPlan = typeof planDataset === "function";
+  const question = mergeQuestionContext(payload.question, payload.original_question, payload.name);
+
+  if (!canPlan || !question) {
+    return repairedPayload;
+  }
+
+  let shouldPlan = Object.keys(configuration).length === 0;
+  if (!shouldPlan && typeof validateConfiguration === "function") {
+    try {
+      const validation = validateConfiguration(configuration, {
+        connection: payload.connection,
+      });
+      shouldPlan = validation && validation.valid === false;
+    } catch {
+      shouldPlan = false;
+    }
+  }
+
+  if (!shouldPlan) {
+    return repairedPayload;
+  }
+
+  const plan = await planDataset({
+    connection: payload.connection,
+    question,
+    overrides: payload.overrides || {},
+  });
+
+  if (plan?.status !== "ok") {
+    const options = Array.isArray(plan?.options) && plan.options.length > 0
+      ? ` Options: ${plan.options.map((option) => option.label || option.value).join(", ")}.`
+      : "";
+    throw new Error(`${plan?.message || "Source configuration is incomplete."}${options}`);
+  }
+
+  return {
+    ...repairedPayload,
+    configuration: plan.configuration || repairedPayload.configuration,
+    spec: {
+      ...(repairedPayload.spec || {}),
+      ...(plan.chartSpec || {}),
+    },
+    intentRepair: {
+      ...(repairedPayload.intentRepair || {}),
+      planned: true,
+      reason: "Filled missing or invalid source configuration with the source-owned planner.",
+    },
+  };
+}
+
 function isStripeCompiledMetricConfiguration(configuration) {
   return configuration?.source === "stripeOfficial"
     && configuration?.mode === "compiled_metric"
@@ -68,4 +133,5 @@ module.exports = {
   isStripeCompiledMetricConfiguration,
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntent,
+  repairSourceDatasetIntentAsync,
 };

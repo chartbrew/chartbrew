@@ -9,7 +9,11 @@ Status: draft
 - [x] Updated global orchestrator/entity instructions to describe source-owned configuration flows generically instead of hardcoding the Stripe workflow.
 - [x] Added a regression for simple Stripe net MRR churn KPI creation and clarified chart tool results so missing snapshots are not treated as failed chart creation.
 - [ ] Add compact AI instruction hooks and harness coverage for current query-generation sources.
-- [ ] Add GA4 source-owned AI planning and preview.
+- [x] Added GA4 source-owned AI planning, validation, metadata-aware preview, and harness coverage for users over time, sessions by channel, page views by page, ambiguous properties, and invalid metrics.
+- [x] Hardened GA4 property selection so the planner can resolve property IDs, quick-reply labels, and natural property names such as "Razvan Ilin website" without requiring `overrides.propertyId`.
+- [x] Guarded GA4 runtime against missing `propertyId` before calling Google APIs and let creation tools auto-fill missing source-owned configuration through the planner.
+- [x] Fixed the orchestrator response contract so source disambiguation and tool-only completions always return a non-empty `message` instead of surfacing "Invalid response from AI".
+- [x] Passed original user request context into source planning and chart creation so GA4 can auto-select named properties even when the model shortens the tool-call question.
 - [ ] Add Customer.io source-owned AI planning and preview.
 - [ ] Add Firestore and RealtimeDB source-owned AI planning.
 - [ ] Add API connection AI context UI and generic API AI planning.

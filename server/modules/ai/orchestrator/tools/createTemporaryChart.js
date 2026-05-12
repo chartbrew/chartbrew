@@ -5,7 +5,7 @@ const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const {
   removeCompiledMetricAccumulation,
-  repairSourceDatasetIntent,
+  repairSourceDatasetIntentAsync,
 } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
@@ -40,10 +40,12 @@ async function createTemporaryChart(payload) {
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
     const source = requireSupportedSourceForConnection(connection);
 
-    const repairedPayload = repairSourceDatasetIntent(source, {
+    const repairedPayload = await repairSourceDatasetIntentAsync(source, {
       name,
       question: payload.question,
+      original_question: payload.original_question,
       configuration,
+      connection,
       spec,
     });
     configuration = repairedPayload.configuration;
