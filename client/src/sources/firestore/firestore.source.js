@@ -8,7 +8,12 @@ const firestoreSource = {
   name: "Firestore",
   category: "database",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
   },
   assets: {
     lightLogo: firestoreLogo,

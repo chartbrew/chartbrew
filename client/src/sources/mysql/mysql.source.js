@@ -8,7 +8,12 @@ export default {
   name: "MySQL",
   category: "database",
   capabilities: {
-    ai: { canGenerateQueries: true },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: true,
+      hasSourceInstructions: true,
+      hasTools: false,
+    },
   },
   assets: {
     lightLogo,

@@ -26,6 +26,7 @@ Status: draft
 - [x] Added shared harness assertions for source-owned planner contracts, source/query tool-policy separation, and runtime-safe CDC bindings from temporary and saved chart creation.
 - [x] Added generic `source_*` tool output caps and small no-LLM routing replay coverage for high-risk tool sequences.
 - [x] Added compact query-generation instructions for SQL, ClickHouse, and MongoDB sources and harness coverage that verifies `get_schema` and `generate_query` receive them.
+- [x] Updated frontend source metadata and shared UI checks so AI-capable sources show an `AI-powered` badge consistently in source pickers and dataset connection cards.
 
 ## Context
 Stripe Official now has a source-owned AI layer in `server/sources/plugins/stripeOfficial/ai/stripeOfficial.ai.js`. That layer gives the orchestrator compact source instructions, source discovery tools, dataset planning, configuration validation, capped preview execution, template recommendation, and anti-hallucination guards without exposing raw API routes or large object dumps.

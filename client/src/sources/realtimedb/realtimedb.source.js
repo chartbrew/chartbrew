@@ -8,7 +8,12 @@ const realtimeDbSource = {
   name: "Realtime DB",
   category: "database",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
   },
   assets: {
     lightLogo: realtimeDbLogo,

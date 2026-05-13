@@ -8,7 +8,12 @@ const googleAnalyticsSource = {
   name: "Google Analytics",
   category: "analytics",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
   },
   assets: {
     lightLogo: gAnalyticsLogo,

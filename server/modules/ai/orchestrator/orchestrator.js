@@ -113,6 +113,7 @@ async function availableTools() {
   return [
     {
       name: "list_connections",
+      displayName: "Find data sources",
       description: `List AI-orchestrator-supported source connections (${supportedSourceList}) available to the project/user context.`,
       parameters: {
         type: "object",
@@ -126,6 +127,7 @@ async function availableTools() {
     },
     {
       name: "get_schema",
+      displayName: "Read data structure",
       description: `Get schema information for supported source connections (${supportedSourceList}).`,
       parameters: {
         type: "object",
@@ -144,6 +146,7 @@ async function availableTools() {
     },
     {
       name: "source_get_capabilities",
+      displayName: "Check source capabilities",
       description: "Get source-owned AI capabilities, source instructions, caveats, and supported workflow modes for a connection.",
       parameters: {
         type: "object",
@@ -155,6 +158,7 @@ async function availableTools() {
     },
     {
       name: "source_list_resources",
+      displayName: "List source resources",
       description: "List source-owned resources, metrics, dimensions, filters, and compiled metrics for a connection.",
       parameters: {
         type: "object",
@@ -166,6 +170,7 @@ async function availableTools() {
     },
     {
       name: "source_get_sample_data",
+      displayName: "Fetch sample data",
       description: "Fetch a small capped source-owned sample for resource exploration. Use only for read-only previews.",
       parameters: {
         type: "object",
@@ -179,6 +184,7 @@ async function availableTools() {
     },
     {
       name: "source_list_templates",
+      displayName: "List templates",
       description: "List source-owned chart template packs and template summaries for a connection.",
       parameters: {
         type: "object",
@@ -190,6 +196,7 @@ async function availableTools() {
     },
     {
       name: "source_recommend_templates",
+      displayName: "Recommend templates",
       description: "Recommend source-owned templates that match the user's business goal.",
       parameters: {
         type: "object",
@@ -202,6 +209,7 @@ async function availableTools() {
     },
     {
       name: "source_plan_dataset",
+      displayName: "Plan dataset",
       description: "Plan a source-owned DataRequest configuration and chart bindings from a natural-language request. Use this for configuration-based sources instead of generate_query.",
       parameters: {
         type: "object",
@@ -215,6 +223,7 @@ async function availableTools() {
     },
     {
       name: "source_validate_configuration",
+      displayName: "Validate configuration",
       description: "Validate a source-owned DataRequest configuration before previewing or creating a dataset.",
       parameters: {
         type: "object",
@@ -227,6 +236,7 @@ async function availableTools() {
     },
     {
       name: "source_preview_configuration",
+      displayName: "Preview data",
       description: "Run a capped preview for a source-owned DataRequest configuration and return compact rows, columns, warnings, and recommended chart bindings.",
       parameters: {
         type: "object",
@@ -240,6 +250,7 @@ async function availableTools() {
     },
     {
       name: "stripe_official_plan_dataset",
+      displayName: "Plan Stripe dataset",
       description: "Compatibility alias for source_plan_dataset on Stripe Official connections. Prefer source_plan_dataset for new source-owned workflows.",
       parameters: {
         type: "object",
@@ -253,6 +264,7 @@ async function availableTools() {
     },
     {
       name: "stripe_official_validate_configuration",
+      displayName: "Validate Stripe configuration",
       description: "Compatibility alias for source_validate_configuration on Stripe Official connections.",
       parameters: {
         type: "object",
@@ -265,6 +277,7 @@ async function availableTools() {
     },
     {
       name: "stripe_official_preview_configuration",
+      displayName: "Preview Stripe data",
       description: "Compatibility alias for source_preview_configuration on Stripe Official connections.",
       parameters: {
         type: "object",
@@ -278,6 +291,7 @@ async function availableTools() {
     },
     {
       name: "generate_query",
+      displayName: "Write query",
       description: `Generate source queries from natural language for supported source connections (${supportedSourceList}).`,
       parameters: {
         type: "object",
@@ -298,6 +312,7 @@ async function availableTools() {
     },
     {
       name: "validate_query",
+      displayName: "Check query",
       description: "Dry-run validation: syntax check or limit-1 execution.",
       parameters: {
         type: "object",
@@ -313,6 +328,7 @@ async function availableTools() {
     },
     {
       name: "run_query",
+      displayName: "Run query",
       description: `Execute read-only source queries on supported connections (${supportedSourceList}) with guardrails.`,
       parameters: {
         type: "object",
@@ -332,6 +348,7 @@ async function availableTools() {
     },
     {
       name: "summarize",
+      displayName: "Summarize results",
       description: "Summarize a result for a direct answer.",
       parameters: {
         type: "object",
@@ -345,6 +362,7 @@ async function availableTools() {
     },
     {
       name: "suggest_chart",
+      displayName: "Choose chart type",
       description: "Suggest a chart spec from the query/result.",
       parameters: {
         type: "object",
@@ -360,6 +378,7 @@ async function availableTools() {
     },
     {
       name: "create_dataset",
+      displayName: "Create dataset",
       description: "Persist a reusable Chartbrew dataset for query/data retrieval. Dataset names are canonical in Dataset.name; chart bindings belong on ChartDatasetConfig.",
       parameters: {
         type: "object",
@@ -387,6 +406,7 @@ async function availableTools() {
     },
     {
       name: "create_chart",
+      displayName: "Create chart",
       description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard (e.g., 'add to Sales Dashboard', 'place in Marketing dashboard'). DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user.",
       parameters: {
         type: "object",
@@ -445,6 +465,7 @@ async function availableTools() {
     },
     {
       name: "update_dataset",
+      displayName: "Update dataset",
       description: "Update an existing dataset and its associated data request with new reusable dataset metadata, source query, or data-request configuration. Do not use this tool for chart binding fields.",
       parameters: {
         type: "object",
@@ -462,6 +483,7 @@ async function availableTools() {
     },
     {
       name: "update_chart",
+      displayName: "Update chart",
       description: "Update an existing chart with new chart properties or ChartDatasetConfig series settings, including CDC-owned bindings like xAxis, yAxis, dateField, and conditions.",
       parameters: {
         type: "object",
@@ -528,6 +550,7 @@ async function availableTools() {
     },
     {
       name: "create_temporary_chart",
+      displayName: "Create chart preview",
       description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. This creates a reusable dataset plus a ChartDatasetConfig that owns the series bindings. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'.",
       parameters: {
         type: "object",
@@ -600,6 +623,7 @@ async function availableTools() {
     },
     {
       name: "move_chart_to_dashboard",
+      displayName: "Add chart to dashboard",
       description: "Move a temporary chart from the ghost project to a real dashboard/project. Use this after creating a temporary chart when the user confirms they want to add it to a specific dashboard. The chart's layout will be automatically recalculated for the new dashboard.",
       parameters: {
         type: "object",
@@ -613,6 +637,7 @@ async function availableTools() {
     },
     {
       name: "disambiguate",
+      displayName: "Ask for clarification",
       description: "Ask the user to choose among options when planning couldn’t decide.",
       parameters: {
         type: "object",
@@ -1404,6 +1429,9 @@ async function orchestrate(
   // Get available tools in Responses API format
   const toolDefinitions = await availableTools();
   const tools = buildResponseTools(toolDefinitions);
+  const toolDisplayNameByName = new Map(
+    toolDefinitions.map((tool) => [tool.name, tool.displayName || tool.name])
+  );
 
   // Track all usage records (one per API call)
   const usageRecords = [];
@@ -1457,9 +1485,18 @@ async function orchestrate(
     // Emit progress for tool execution
     if (conversation?.id && assistantMessage.tool_calls.length > 0) {
       const toolNames = assistantMessage.tool_calls.map((tc) => tc.function.name);
-      emitProgressEvent(socketManager, conversation.id, "EXECUTION_START", {
+      const toolDisplayNames = toolNames.map((toolName) => toolDisplayNameByName.get(toolName) || toolName);
+      emitProgressEvent(socketManager, conversation.id, "TOOL_STARTED", {
         tools: toolNames,
-        message: `Executing ${toolNames.length} tool${toolNames.length > 1 ? "s" : ""}: ${toolNames.join(", ")}`
+        toolDisplayNames,
+        toolEvents: toolNames.map((toolName, index) => ({
+          type: "tool_started",
+          toolName,
+          displayName: toolDisplayNames[index],
+          status: "running",
+        })),
+        status: "running",
+        message: toolDisplayNames.join(", ")
       });
     }
 

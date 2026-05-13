@@ -178,6 +178,7 @@ async function createChart(payload) {
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
+      visibility: "dashboard",
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
       snapshot,

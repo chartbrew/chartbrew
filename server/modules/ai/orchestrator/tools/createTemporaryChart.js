@@ -210,6 +210,7 @@ async function createTemporaryChart(payload) {
       type: chart.type,
       project_id: ghostProject.id,
       is_temporary: true,
+      visibility: "temporary",
       chart_url: `${clientUrl}/dashboard/${ghostProject.id}/chart/${chart.id}/edit`,
       snapshot,
       snapshot_status: snapshot ? "available" : "unavailable",

@@ -8,7 +8,12 @@ const stripeSource = {
   name: "Stripe Legacy",
   category: "payments",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: false,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: false,
+    },
     templates: { charts: true },
     nextSteps: { chartTemplates: true },
   },

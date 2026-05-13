@@ -58,6 +58,7 @@ const ProgressEvents = {
   EXECUTION_START: { type: "execution", message: "Executing database query..." },
   EXECUTION_SUCCESS: { type: "execution", message: "Query executed successfully" },
   EXECUTION_ERROR: { type: "execution", message: "Query execution failed" },
+  TOOL_STARTED: { type: "tool_started", message: "Running tools..." },
 
   // Visualization phase
   CHART_START: { type: "visualization", message: "Creating chart..." },
