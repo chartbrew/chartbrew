@@ -5,6 +5,37 @@ const require = createRequire(import.meta.url);
 const AxisChart = require("../../charts/AxisChart.js");
 
 describe("AxisChart runtime date handling", () => {
+  it("uses yAxis as the xAxis fallback for KPI-style count charts", async () => {
+    const chart = {
+      id: 1491,
+      type: "kpi",
+      timeInterval: "day",
+      includeZeros: true,
+      ChartDatasetConfigs: [{
+        id: "cdc-1",
+        legend: "Users",
+      }],
+    };
+
+    const datasets = [{
+      options: {
+        id: "cdc-1",
+        yAxis: "root[]._id",
+        yAxisOperation: "count",
+        legend: "Users",
+      },
+      data: [
+        { _id: "user-1" },
+        { _id: "user-2" },
+      ],
+    }];
+
+    const axisChart = new AxisChart({ chart, datasets }, "UTC");
+    const result = await axisChart.plot(false, [], {});
+
+    expect(result.configuration.data.datasets[0].data.length).toBeGreaterThan(0);
+  });
+
   it("supports normal chart refreshes with chart date windows and multiple datasets", async () => {
     const chart = {
       id: 1490,

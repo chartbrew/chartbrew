@@ -177,7 +177,7 @@ describe("Firebase source AI layers", () => {
       name: "Users count",
       DataRequests: [{ id: 1001 }],
     });
-    vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+    const createChartSpy = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
       id: 55,
       name: "Users count",
       type: "kpi",
@@ -202,6 +202,13 @@ describe("Firebase source AI layers", () => {
         }),
       })],
     }));
+    expect(createChartSpy).toHaveBeenCalledWith(expect.objectContaining({
+      chartDatasetConfigs: [expect.objectContaining({
+        xAxis: "root[]._id",
+        yAxis: "root[]._id",
+        yAxisOperation: "count",
+      })],
+    }), null);
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

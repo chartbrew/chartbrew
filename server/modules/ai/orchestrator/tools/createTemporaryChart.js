@@ -13,6 +13,20 @@ const datasetController = new DatasetController();
 const chartController = new ChartController();
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
+function resolveXAxis({
+  chartType, xAxis, yAxis, spec = {}
+}) {
+  if (chartType === "table") {
+    return xAxis ?? spec.xAxis ?? "root[]";
+  }
+
+  if (["kpi", "avg", "gauge"].includes(chartType)) {
+    return xAxis ?? spec.xAxis ?? yAxis ?? spec.yAxis;
+  }
+
+  return xAxis ?? spec.xAxis;
+}
+
 async function createTemporaryChart(payload) {
   let {
     connection_id, name, legend, type, subType, displayLegend, pointRadius,
@@ -59,6 +73,7 @@ async function createTemporaryChart(payload) {
     route = repairedPayload.route ?? route;
     itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
     conditions = repairedPayload.conditions ?? conditions;
+    variables = repairedPayload.variables ?? variables;
     spec = repairedPayload.spec || spec;
     const chartSanitization = removeCompiledMetricAccumulation({
       configuration,
@@ -68,6 +83,10 @@ async function createTemporaryChart(payload) {
     });
     subType = chartSanitization.subType;
     spec = chartSanitization.spec;
+    const chartType = type || spec.type || "line";
+    const resolvedXAxis = resolveXAxis({
+      chartType, xAxis, yAxis, spec
+    });
 
     // Find the temporary preview project for this team
     const ghostProject = await db.Project.findOne({
@@ -95,8 +114,17 @@ async function createTemporaryChart(payload) {
         route,
         itemsLimit,
         query,
+        conditions,
         configuration: configuration || {},
         variables: variables || [],
+        useGlobalHeaders: repairedPayload.useGlobalHeaders ?? payload.useGlobalHeaders,
+        headers: repairedPayload.headers ?? payload.headers,
+        body: repairedPayload.body ?? payload.body,
+        pagination: repairedPayload.pagination ?? payload.pagination,
+        items: repairedPayload.items ?? payload.items,
+        offset: repairedPayload.offset ?? payload.offset,
+        paginationField: repairedPayload.paginationField ?? payload.paginationField,
+        template: repairedPayload.template ?? payload.template,
         transform: transform || null
       }],
       main_dr_index: 0
@@ -111,7 +139,7 @@ async function createTemporaryChart(payload) {
     const chart = await chartController.createWithChartDatasetConfigs({
       project_id: ghostProject.id,
       name: name || "AI Generated Chart",
-      type: type || spec.type || "line",
+      type: chartType,
       subType: subType || spec.subType,
       draft: false,
       // oxlint-disable-next-line no-nested-ternary
@@ -140,7 +168,7 @@ async function createTemporaryChart(payload) {
       ranges: ranges || spec.ranges,
       chartDatasetConfigs: [{
         dataset_id: dataset.id,
-        xAxis: xAxis ?? spec.xAxis,
+        xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? spec.xAxisOperation,
         yAxis: yAxis ?? spec.yAxis,
         yAxisOperation: yAxisOperation ?? spec.yAxisOperation,

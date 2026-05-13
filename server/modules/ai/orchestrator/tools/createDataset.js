@@ -52,6 +52,7 @@ async function createDataset(payload) {
     route = repairedPayload.route ?? route;
     itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
     conditions = repairedPayload.conditions ?? conditions;
+    variables = repairedPayload.variables ?? variables;
 
     // Use the quick-create function to create dataset with data request in one go
     const dataset = await datasetController.createWithDataRequests({
@@ -69,6 +70,14 @@ async function createDataset(payload) {
         conditions,
         configuration: configuration || {},
         variables: variables || [],
+        useGlobalHeaders: repairedPayload.useGlobalHeaders ?? payload.useGlobalHeaders,
+        headers: repairedPayload.headers ?? payload.headers,
+        body: repairedPayload.body ?? payload.body,
+        pagination: repairedPayload.pagination ?? payload.pagination,
+        items: repairedPayload.items ?? payload.items,
+        offset: repairedPayload.offset ?? payload.offset,
+        paginationField: repairedPayload.paginationField ?? payload.paginationField,
+        template: repairedPayload.template ?? payload.template,
         transform: transform || null
       }],
       main_dr_index: 0

@@ -16,7 +16,11 @@ Status: draft
 - [x] Passed original user request context into source planning and chart creation so GA4 can auto-select named properties even when the model shortens the tool-call question.
 - [x] Added Customer.io source-owned AI planning, validation, preview, route/method creation support, and harness coverage for customers, segments, activities, campaign metrics, and campaign disambiguation.
 - [x] Added Firestore and RealtimeDB source-owned AI planning, validation, preview, DataRequest query/route repair, and harness coverage for collection/path counts, filters, ordering, previews, and missing path context.
-- [ ] Add API connection AI context UI and generic API AI planning.
+- [x] Added API connection free-form AI Context UI and generic API source-owned planning, validation, preview, and harness coverage for pasted endpoint/context notes.
+- [x] Added API host/provider hints as guidance-only metadata plus direct `/connections/:id?tab=aiContext` links when more API context is required.
+- [x] Relaxed generic API fallback behavior so recognizable provider hosts can use model/provider knowledge when AI Context is missing or incomplete, while unknown API hosts still require explicit context.
+- [x] Hardened AI-created table charts so missing CDC `xAxis` bindings default to `root[]` and cannot crash table extraction.
+- [x] Hardened AI-created KPI/avg/gauge charts so missing CDC `xAxis` bindings fall back to `yAxis` and cannot crash axis chart extraction.
 
 ## Context
 Stripe Official now has a source-owned AI layer in `server/sources/plugins/stripeOfficial/ai/stripeOfficial.ai.js`. That layer gives the orchestrator compact source instructions, source discovery tools, dataset planning, configuration validation, capped preview execution, template recommendation, and anti-hallucination guards without exposing raw API routes or large object dumps.
@@ -299,12 +303,19 @@ Implement `server/sources/plugins/api/ai/api.ai.js`:
 {
   "status": "needs_more_context",
   "message": "I need API endpoint details before I can safely build this request.",
-  "editConnectionUrl": "/connections/123",
-  "requiredContext": ["allowed endpoints", "response array path", "date filter params"]
+  "editConnectionUrl": "/connections/123?tab=aiContext",
+  "requiredContext": ["allowed endpoints", "response array path", "date filter params"],
+  "contextInstructions": [
+    "Open the API connection and go to the AI Context tab.",
+    "Paste endpoints Chartbrew AI should prefer.",
+    "Include request paths or curl examples, response samples, array path, date filters, pagination, and chartable fields."
+  ]
 }
 ```
 
-The assistant should surface that message and link the user to edit the connection in Chartbrew. It should not invent endpoints or claim it can use external docs unless a future docs retrieval tool exists.
+The assistant should surface that message and link the user to edit the connection in Chartbrew when the host is unknown or the model/provider fallback is uncertain.
+
+Host/provider recognition, such as detecting PostHog from the connection host, can be used as fallback permission for model/provider knowledge when AI Context is missing or incomplete. AI Context remains the preferred source of truth. When model fallback is used, the orchestrator must pass an explicit method, route, pagination/body/header assumptions, and chart bindings into the create tool. For unknown API hosts, the orchestrator must still ask for AI Context instead of inventing routes.
 
 ## Orchestrator Flow
 

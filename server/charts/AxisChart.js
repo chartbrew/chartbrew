@@ -80,6 +80,15 @@ class AxisChart {
         const dataset = this.datasets[i];
         const { yAxisOperation, dateField } = dataset.options;
         let { xAxis, yAxis } = dataset.options;
+        if (!xAxis && ["kpi", "avg", "gauge"].includes(this.chart.type) && yAxis) {
+          xAxis = yAxis;
+        }
+        if (!xAxis) {
+          throw new Error("Chart xAxis binding is required");
+        }
+        if (!yAxis) {
+          throw new Error("Chart yAxis binding is required");
+        }
         let xData;
         let yData;
         let yType;

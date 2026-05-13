@@ -55,12 +55,18 @@ async function repairSourceDatasetIntentAsync(source, payload) {
     return repairedPayload;
   }
 
-  let shouldPlan = Object.keys(configuration).length === 0
-    || (requiresDataRequestRoute && !payload.route)
-    || (requiresDataRequestQuery && !payload.query);
+  const hasRequiredRoute = !requiresDataRequestRoute || Boolean(payload.route || configuration.route);
+  const hasRequiredQuery = !requiresDataRequestQuery || Boolean(payload.query || configuration.query);
+  let shouldPlan = (!hasRequiredRoute || !hasRequiredQuery)
+    || (Object.keys(configuration).length === 0 && !payload.route && !payload.query);
   if (!shouldPlan && typeof validateConfiguration === "function") {
     try {
-      const validation = validateConfiguration(configuration, {
+      const validation = validateConfiguration({
+        ...configuration,
+        query: payload.query ?? configuration.query,
+        method: payload.method ?? configuration.method,
+        route: payload.route ?? configuration.route,
+      }, {
         connection: payload.connection,
       });
       shouldPlan = validation && validation.valid === false;
@@ -93,6 +99,15 @@ async function repairSourceDatasetIntentAsync(source, payload) {
     route: plan.route ?? plan.dataRequest?.route ?? repairedPayload.route ?? payload.route,
     itemsLimit: plan.itemsLimit ?? plan.dataRequest?.itemsLimit ?? repairedPayload.itemsLimit ?? payload.itemsLimit,
     conditions: plan.conditions ?? plan.dataRequest?.conditions ?? repairedPayload.conditions ?? payload.conditions,
+    variables: plan.variables ?? plan.dataRequest?.variables ?? repairedPayload.variables ?? payload.variables,
+    useGlobalHeaders: plan.useGlobalHeaders ?? plan.dataRequest?.useGlobalHeaders ?? repairedPayload.useGlobalHeaders ?? payload.useGlobalHeaders,
+    headers: plan.headers ?? plan.dataRequest?.headers ?? repairedPayload.headers ?? payload.headers,
+    body: plan.body ?? plan.dataRequest?.body ?? repairedPayload.body ?? payload.body,
+    pagination: plan.pagination ?? plan.dataRequest?.pagination ?? repairedPayload.pagination ?? payload.pagination,
+    items: plan.items ?? plan.dataRequest?.items ?? repairedPayload.items ?? payload.items,
+    offset: plan.offset ?? plan.dataRequest?.offset ?? repairedPayload.offset ?? payload.offset,
+    paginationField: plan.paginationField ?? plan.dataRequest?.paginationField ?? repairedPayload.paginationField ?? payload.paginationField,
+    template: plan.template ?? plan.dataRequest?.template ?? repairedPayload.template ?? payload.template,
     configuration: plan.configuration || repairedPayload.configuration,
     spec: {
       ...(repairedPayload.spec || {}),

@@ -776,9 +776,11 @@ ${ENTITY_CREATION_RULES}
    - For source-owned configuration connections:
      * Call source_get_capabilities or source_list_resources when you need source context
      * Call source_plan_dataset with the user's business question. Do not invent API routes or configuration fields.
+     * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
      * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
      * For charts, pass the planned configuration to create_temporary_chart by default
      * If the user explicitly names a dashboard/project, create the dataset with create_dataset and then place the chart with create_chart using the planned chartSpec bindings
+     * If a source tool returns status="needs_more_context" without modelFallbackAllowed, stop the creation flow and guide the user with the tool message. If editConnectionUrl is present, include it as a markdown link. If contextInstructions or exampleAiContext are present, summarize exactly what to paste.
      * If a chart creation tool returns chart_created=true and snapshot_status="unavailable", say the chart was created and mention only that the rendered preview is not available yet. Do not describe that as a failed or blocked chart.
      * Never use generate_query for configuration-based sources
 

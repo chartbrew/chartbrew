@@ -100,11 +100,12 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 
 **Source-owned configuration sequence:**
 1. Use source_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query for configuration-based sources.
-2. Optionally use source_validate_configuration and source_preview_configuration for compact rows/warnings.
-3. For default previews, use create_temporary_chart with connection_id, name, configuration, and chartSpec bindings.
-4. For explicit dashboard placement, use create_dataset first, then create_chart with the exact requested project_id and the chartSpec bindings.
-5. If the user later confirms placement for a temporary chart, use move_chart_to_dashboard.
-6. If chart_created=true and snapshot_status="unavailable", the chart still exists. Report it as created; only mention that the rendered preview is unavailable.
+2. For generic API connections, use connection AI Context first. If a recognizable provider host returns modelFallbackAllowed=true or needs_model_planning, you may use provider/API knowledge as a fallback by passing explicit method, route, pagination/body/header assumptions, and chart bindings to the create tool.
+3. Optionally use source_validate_configuration and source_preview_configuration for compact rows/warnings.
+4. For default previews, use create_temporary_chart with connection_id, name, configuration or explicit route/method, and chartSpec bindings.
+5. For explicit dashboard placement, use create_dataset first, then create_chart with the exact requested project_id and the chartSpec bindings.
+6. If the user later confirms placement for a temporary chart, use move_chart_to_dashboard.
+7. If chart_created=true and snapshot_status="unavailable", the chart still exists. Report it as created; only mention that the rendered preview is unavailable.
 
 **CRITICAL RULES:**
 - Use the EXACT project specified by the user or context. Never create charts in different projects.
