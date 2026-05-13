@@ -1,4 +1,8 @@
 const clickhouseProtocol = require("./clickhouse.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "clickhouse",
@@ -31,7 +35,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -39,8 +43,10 @@ module.exports = {
   backend: {
     ...clickhouseProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("clickhouse"),
       getSchema: clickhouseProtocol.getSchema,
       generateQuery: clickhouseProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("clickhouse"),
     },
   },
 };

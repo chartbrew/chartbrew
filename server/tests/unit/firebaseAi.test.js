@@ -110,6 +110,36 @@ describe("Firebase source AI layers", () => {
     });
   });
 
+  it("plans a Firestore doughnut breakdown from an explicit type field", async () => {
+    vi.spyOn(firestoreProtocol, "getBuilderMetadata").mockResolvedValue({
+      collections: [{
+        id: "connections",
+        path: "connections",
+        _queryOptions: { collectionId: "connections" },
+      }],
+    });
+    const source = getSourceById("firestore");
+
+    const plan = await source.backend.ai.planDataset({
+      connection: { id: 42, type: "firestore", subType: "firestore" },
+      question: "actually can you make a donut chart to show connection types?",
+    });
+
+    expect(plan).toMatchObject({
+      status: "ok",
+      query: "connections",
+      chartSpec: {
+        type: "doughnut",
+        xAxis: "root[].type",
+        yAxis: "root[]._id",
+        yAxisOperation: "count",
+      },
+      rationale: {
+        intent: "breakdown_documents",
+      },
+    });
+  });
+
   it("routes generic Firestore planning, validation, and preview", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
       id: 42,

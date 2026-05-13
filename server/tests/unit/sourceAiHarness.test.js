@@ -1,0 +1,854 @@
+import {
+  beforeEach, describe, expect, it, vi
+} from "vitest";
+
+const firestoreProtocol = require("../../sources/plugins/firestore/firestore.protocol");
+const realtimeDbProtocol = require("../../sources/plugins/realtimedb/realtimedb.protocol");
+const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection");
+const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection");
+const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
+const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
+const apiProtocol = require("../../sources/shared/protocols/api.protocol");
+const db = require("../../models/models");
+const ChartController = require("../../controllers/ChartController");
+const DatasetController = require("../../controllers/DatasetController");
+const createChart = require("../../modules/ai/orchestrator/tools/createChart");
+const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
+const generateQueryTool = require("../../modules/ai/orchestrator/tools/generateQuery");
+const getSchemaTool = require("../../modules/ai/orchestrator/tools/getSchema");
+const {
+  sourceGetCapabilities,
+  sourceGetSampleData,
+  sourceListResources,
+  sourcePlanDataset,
+  sourcePreviewConfiguration,
+  sourceValidateConfiguration,
+} = require("../../modules/ai/orchestrator/tools/sourceTools");
+const { getSourceById } = require("../../sources");
+
+const ALLOWED_STATUSES = new Set([
+  "ok",
+  "needs_disambiguation",
+  "needs_more_context",
+  "needs_model_planning",
+  "unsupported",
+  "error",
+]);
+
+const SOURCE_OWNED_IDS = [
+  "api",
+  "customerio",
+  "firestore",
+  "googleAnalytics",
+  "realtimedb",
+  "stripeOfficial",
+];
+
+const QUERY_GENERATION_IDS = [
+  "postgres",
+  "rdsPostgres",
+  "supabasedb",
+  "timescaledb",
+  "mysql",
+  "rdsMysql",
+  "clickhouse",
+  "mongodb",
+];
+
+const TOOL_TEAM_ID = 7;
+
+const apiContext = [
+  "GET /orders",
+  "Returns { \"data\": [{ \"id\": \"ord_1\", \"amount\": 25, \"status\": \"paid\", \"created_at\": \"2026-05-01\" }] }",
+  "Use data as the array path.",
+  "Filter dates with start_date and end_date. Date format YYYY-MM-DD.",
+].join("\n");
+
+function expectNoSensitiveOutput(value, { maxLength = 20000 } = {}) {
+  const serialized = JSON.stringify(value);
+  expect(serialized).not.toMatch(/bearer\s+[a-z0-9._-]+/i);
+  expect(serialized).not.toMatch(/api[_-]?key["']?\s*[:=]\s*["'][^"']+/i);
+  expect(serialized).not.toMatch(/authorization["']?\s*[:=]/i);
+  expect(serialized.length).toBeLessThan(maxLength);
+}
+
+function expectToolOutputContract(value, { maxLength = 20000, maxRows = 5 } = {}) {
+  expectNoSensitiveOutput(value, { maxLength });
+  expect(!Array.isArray(value?.rows) || value.rows.length <= maxRows).toBe(true);
+  expect(!Array.isArray(value?.resources) || value.resources.length <= 50).toBe(true);
+  expect(!Array.isArray(value?.collections) || value.collections.length <= 50).toBe(true);
+  expect(!Array.isArray(value?.campaigns) || value.campaigns.length <= 25).toBe(true);
+  expect(!Array.isArray(value?.segments) || value.segments.length <= 25).toBe(true);
+}
+
+function expectDataRequestContract(sourceId, plan) {
+  const dataRequest = plan.dataRequest || {};
+  const hasQuery = Boolean(dataRequest.query || plan.query);
+  const hasRoute = Boolean(dataRequest.route || plan.route);
+  const hasMethod = Boolean(dataRequest.method || plan.method);
+  const hasConfiguration = Boolean(plan.configuration || dataRequest.configuration);
+
+  expect(sourceId !== "firestore" || hasQuery).toBe(true);
+  expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
+  expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
+  expect(!["googleAnalytics", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+}
+
+function expectChartPlanContract(plan) {
+  const spec = plan.chartSpec || {};
+  expect(spec.type).toBeTruthy();
+  const isTable = spec.type === "table";
+  const isKpiStyle = ["kpi", "avg", "gauge"].includes(spec.type);
+  const requiresAxes = !isTable && !isKpiStyle;
+  const requiresDateField = spec.type === "line" && /date|time|period/i.test(spec.xAxis || "");
+
+  expect(!isKpiStyle || Boolean(spec.yAxis)).toBe(true);
+  expect(!isKpiStyle || Boolean(spec.yAxisOperation || "none")).toBe(true);
+  expect(!requiresAxes || Boolean(spec.xAxis)).toBe(true);
+  expect(!requiresAxes || Boolean(spec.yAxis)).toBe(true);
+  expect(!requiresDateField || Boolean(spec.dateField || spec.xAxis)).toBe(true);
+}
+
+function expectChartDatasetConfigContract({ chartType, chartDatasetConfig, expected = {} }) {
+  const isTable = chartType === "table";
+  const isKpiStyle = ["kpi", "avg", "gauge"].includes(chartType);
+  const needsXAxis = !isTable && !isKpiStyle;
+  const needsYAxis = !isTable;
+
+  expect(chartDatasetConfig.dataset_id).toBeTruthy();
+  expect(!isTable || chartDatasetConfig.xAxis === "root[]").toBe(true);
+  expect(!isKpiStyle || Boolean(chartDatasetConfig.yAxis)).toBe(true);
+  expect(!isKpiStyle || Boolean(chartDatasetConfig.xAxis || chartDatasetConfig.yAxis)).toBe(true);
+  expect(!needsXAxis || Boolean(chartDatasetConfig.xAxis)).toBe(true);
+  expect(!needsYAxis || Boolean(chartDatasetConfig.yAxis)).toBe(true);
+  expect(chartDatasetConfig).toMatchObject(expected);
+}
+
+async function planFixture(fixture) {
+  if (fixture.setup) await fixture.setup();
+  const source = getSourceById(fixture.sourceId);
+  const plan = await source.backend.ai.planDataset(fixture.payload);
+  return { source, plan };
+}
+
+async function validateFixturePlan({ source, sourceId, payload, plan }) {
+  if (["googleAnalytics", "stripeOfficial"].includes(sourceId)) {
+    return source.backend.ai.validateConfiguration(plan.configuration);
+  }
+
+  const dataRequest = {
+    query: plan.query || plan.dataRequest?.query,
+    method: plan.method || plan.dataRequest?.method,
+    route: plan.route || plan.dataRequest?.route,
+    itemsLimit: plan.itemsLimit || plan.dataRequest?.itemsLimit,
+    conditions: plan.conditions || plan.dataRequest?.conditions,
+    configuration: plan.configuration || plan.dataRequest?.configuration,
+    variables: plan.variables || plan.dataRequest?.variables,
+  };
+
+  if (sourceId === "api") {
+    return source.backend.ai.validateConfiguration(dataRequest, { connection: payload.connection });
+  }
+
+  return source.backend.ai.validateConfiguration(dataRequest);
+}
+
+const plannerContractFixtures = [{
+  name: "GA4 timeseries",
+  sourceId: "googleAnalytics",
+  payload: {
+    question: "Show users over time",
+    overrides: { propertyId: "properties/123" },
+  },
+}, {
+  name: "Customer.io table",
+  sourceId: "customerio",
+  payload: {
+    question: "Show recent purchase events",
+  },
+}, {
+  name: "Firestore count",
+  sourceId: "firestore",
+  setup: async () => {
+    vi.spyOn(firestoreProtocol, "getBuilderMetadata").mockResolvedValue({
+      collections: [{ id: "users", path: "users" }],
+    });
+  },
+  payload: {
+    connection: { id: 42, type: "firestore", subType: "firestore" },
+    question: "Count users",
+  },
+}, {
+  name: "Firestore follow-up doughnut breakdown",
+  sourceId: "firestore",
+  setup: async () => {
+    vi.spyOn(firestoreProtocol, "getBuilderMetadata").mockResolvedValue({
+      collections: [{ id: "connections", path: "connections" }],
+    });
+  },
+  payload: {
+    connection: { id: 42, type: "firestore", subType: "firestore" },
+    question: "actually can you make a donut chart to show connection types?",
+  },
+  expectedChartSpec: {
+    type: "doughnut",
+    xAxis: "root[].type",
+    yAxis: "root[]._id",
+    yAxisOperation: "count",
+  },
+}, {
+  name: "Realtime DB count",
+  sourceId: "realtimedb",
+  payload: {
+    question: "Count /orders",
+  },
+}, {
+  name: "Generic API timeseries from context",
+  sourceId: "api",
+  payload: {
+    connection: {
+      id: 42,
+      type: "api",
+      subType: "api",
+      host: "https://api.example.com",
+      schema: {
+        apiAiContext: {
+          raw: apiContext,
+        },
+      },
+    },
+    question: "Show orders over time for the last 30 days",
+  },
+}, {
+  name: "Stripe Official timeseries",
+  sourceId: "stripeOfficial",
+  payload: {
+    question: "Create an MRR chart over the last 6 months",
+  },
+}];
+
+const toolHarnessConnections = {
+  api: {
+    id: 101,
+    team_id: TOOL_TEAM_ID,
+    type: "api",
+    subType: "api",
+    host: "https://api.example.com",
+    schema: {
+      apiAiContext: {
+        raw: apiContext,
+      },
+    },
+  },
+  customerio: {
+    id: 102,
+    team_id: TOOL_TEAM_ID,
+    type: "customerio",
+    subType: "customerio",
+    host: "us",
+    password: "redacted-test-token",
+  },
+  firestore: {
+    id: 103,
+    team_id: TOOL_TEAM_ID,
+    type: "firestore",
+    subType: "firestore",
+    name: "Firestore",
+  },
+  googleAnalytics: {
+    id: 104,
+    team_id: TOOL_TEAM_ID,
+    type: "googleAnalytics",
+    subType: "googleAnalytics",
+    oauth_id: 1004,
+    schema: {
+      googleAnalytics: {
+        accountId: "accounts/1",
+        propertyId: "properties/123",
+        propertyName: "Example GA4",
+      },
+    },
+  },
+  realtimedb: {
+    id: 105,
+    team_id: TOOL_TEAM_ID,
+    type: "realtimedb",
+    subType: "realtimedb",
+    schema: {
+      aiContext: {
+        paths: [{ path: "orders", label: "Orders" }],
+      },
+    },
+  },
+  stripeOfficial: {
+    id: 106,
+    team_id: TOOL_TEAM_ID,
+    type: "stripeOfficial",
+    subType: "stripeOfficial",
+    name: "Stripe",
+  },
+};
+
+function getToolConnection(sourceId) {
+  return toolHarnessConnections[sourceId];
+}
+
+function mockToolConnections() {
+  vi.spyOn(db.Connection, "findByPk").mockImplementation(async (id) => {
+    return Object.values(toolHarnessConnections).find((connection) => connection.id === Number(id)) || null;
+  });
+}
+
+function setupApiToolRuntime() {
+  vi.spyOn(apiProtocol, "previewDataRequest").mockResolvedValue({
+    data: [{
+      id: "ord_1",
+      amount: 25,
+      status: "paid",
+      created_at: "2026-05-01",
+    }],
+  });
+}
+
+function setupCustomerioToolRuntime() {
+  vi.spyOn(CustomerioConnection, "getAllCampaigns").mockResolvedValue([{
+    id: 1,
+    name: "Welcome",
+    active: true,
+  }]);
+  vi.spyOn(CustomerioConnection, "getAllSegments").mockResolvedValue([{
+    id: 2,
+    name: "Customers",
+    type: "manual",
+  }]);
+  vi.spyOn(CustomerioConnection, "getAllObjectTypes").mockResolvedValue([{
+    id: "user",
+    name: "User",
+  }]);
+  vi.spyOn(CustomerioConnection, "getActivities").mockResolvedValue({
+    activities: [{
+      id: "act_1",
+      type: "event",
+      name: "purchase",
+      timestamp: 1770000000,
+    }],
+    activity_count: 1,
+  });
+}
+
+function setupFirestoreToolRuntime() {
+  vi.spyOn(firestoreProtocol, "getBuilderMetadata").mockResolvedValue({
+    collections: [{ id: "connections", path: "connections" }],
+  });
+  vi.spyOn(firestoreProtocol, "createFirestoreConnection").mockReturnValue({
+    get: vi.fn().mockResolvedValue({
+      data: [{ _id: "conn_1", type: "api" }],
+      configuration: {},
+    }),
+  });
+}
+
+function setupGoogleAnalyticsToolRuntime() {
+  vi.spyOn(googleAnalyticsProtocol, "getBuilderMetadata").mockResolvedValue({
+    accounts: [{
+      account: "accounts/1",
+      displayName: "Example Account",
+      propertySummaries: [{
+        property: "properties/123",
+        displayName: "Example GA4",
+      }],
+    }],
+    metadata: null,
+  });
+  vi.spyOn(googleAnalyticsProtocol, "getSavedConnection").mockResolvedValue(getToolConnection("googleAnalytics"));
+  vi.spyOn(googleAnalyticsProtocol, "getOAuth").mockResolvedValue({
+    refreshToken: "redacted-refresh-token",
+  });
+  vi.spyOn(googleAnalyticsConnection, "getAnalytics").mockResolvedValue([{
+    date: "20260501",
+    activeUsers: 12,
+  }]);
+}
+
+function setupRealtimeDbToolRuntime() {
+  vi.spyOn(realtimeDbProtocol, "createRealtimeDatabase").mockReturnValue({
+    getData: vi.fn().mockResolvedValue([{ _key: "order_1", total: 25 }]),
+  });
+}
+
+function setupStripeOfficialToolRuntime() {
+  vi.spyOn(stripeOfficialProtocol, "previewDataRequest").mockResolvedValue({
+    responseData: {
+      data: [{
+        id: "txn_1",
+        created: 1770000000,
+        net: 2500,
+      }],
+      configuration: {
+        warnings: [],
+      },
+    },
+  });
+}
+
+const compactToolFixtures = [{
+  sourceId: "api",
+  question: "Show orders over time",
+  resource: "/orders",
+  previewConfiguration: {
+    method: "GET",
+    route: "/orders",
+    itemsLimit: 5,
+    useGlobalHeaders: true,
+  },
+  setup: setupApiToolRuntime,
+}, {
+  sourceId: "customerio",
+  question: "Show recent purchase events",
+  resource: "activities",
+  previewConfiguration: {
+    method: "GET",
+    route: "activities",
+    itemsLimit: 5,
+    configuration: { limit: 5 },
+  },
+  setup: setupCustomerioToolRuntime,
+}, {
+  sourceId: "firestore",
+  question: "Show connection records",
+  resource: "connections",
+  previewConfiguration: {
+    query: "connections",
+    configuration: { limit: 5 },
+    conditions: [],
+  },
+  setup: setupFirestoreToolRuntime,
+}, {
+  sourceId: "googleAnalytics",
+  question: "Show users over time",
+  resource: "ga4_report",
+  previewConfiguration: {
+    accountId: "accounts/1",
+    propertyId: "properties/123",
+    startDate: "7daysAgo",
+    endDate: "yesterday",
+    metrics: "activeUsers",
+    dimensions: "date",
+  },
+  setup: setupGoogleAnalyticsToolRuntime,
+}, {
+  sourceId: "realtimedb",
+  question: "Show /orders",
+  resource: "orders",
+  previewConfiguration: {
+    route: "orders",
+    configuration: { limitToLast: 5, limitToFirst: 0 },
+  },
+  setup: setupRealtimeDbToolRuntime,
+}, {
+  sourceId: "stripeOfficial",
+  question: "Show latest balance transactions",
+  resource: "balance_transactions",
+  previewConfiguration: {
+    source: "stripeOfficial",
+    mode: "raw",
+    resource: "balance_transactions",
+    dateField: "created",
+    rawColumns: ["id", "created", "net"],
+    pagination: { maxRecords: 5 },
+  },
+  setup: setupStripeOfficialToolRuntime,
+}];
+
+const toolRoutingReplays = [{
+  name: "source-owned chart preview",
+  sourceId: "firestore",
+  steps: ["source_get_capabilities", "source_plan_dataset", "create_temporary_chart"],
+  finalStatus: "ok",
+}, {
+  name: "source-owned missing context",
+  sourceId: "realtimedb",
+  steps: ["source_get_capabilities", "source_plan_dataset"],
+  finalStatus: "needs_more_context",
+  forbidden: ["create_temporary_chart", "create_chart"],
+}, {
+  name: "query-generation database chart",
+  sourceId: "postgres",
+  steps: ["get_schema", "generate_query", "run_query", "suggest_chart"],
+  forbidden: ["source_plan_dataset", "source_validate_configuration", "source_preview_configuration"],
+}];
+
+const queryGenerationFixtures = [{
+  sourceId: "postgres",
+  type: "postgres",
+  subType: "postgres",
+  instructionPattern: /PostgreSQL|SELECT/i,
+}, {
+  sourceId: "rdsPostgres",
+  type: "postgres",
+  subType: "rdsPostgres",
+  instructionPattern: /PostgreSQL|SELECT/i,
+}, {
+  sourceId: "supabasedb",
+  type: "postgres",
+  subType: "supabasedb",
+  instructionPattern: /PostgreSQL|SELECT/i,
+}, {
+  sourceId: "timescaledb",
+  type: "postgres",
+  subType: "timescaledb",
+  instructionPattern: /time_bucket|date_trunc/i,
+}, {
+  sourceId: "mysql",
+  type: "mysql",
+  subType: "mysql",
+  instructionPattern: /MySQL|SELECT/i,
+}, {
+  sourceId: "rdsMysql",
+  type: "mysql",
+  subType: "rdsMysql",
+  instructionPattern: /MySQL|SELECT/i,
+}, {
+  sourceId: "clickhouse",
+  type: "clickhouse",
+  subType: "clickhouse",
+  instructionPattern: /ClickHouse|SELECT/i,
+}, {
+  sourceId: "mongodb",
+  type: "mongodb",
+  subType: "mongodb",
+  instructionPattern: /Mongo|read-only/i,
+}];
+
+function getQueryGenerationConnection(fixture) {
+  return {
+    id: 300 + queryGenerationFixtures.indexOf(fixture),
+    team_id: TOOL_TEAM_ID,
+    type: fixture.type,
+    subType: fixture.subType,
+    name: `${fixture.sourceId} connection`,
+    schema: {
+      entities: [{
+        name: "orders",
+        columns: [{
+          name: "id",
+          type: "string",
+        }, {
+          name: "created_at",
+          type: "date",
+        }, {
+          name: "amount",
+          type: "number",
+        }],
+      }],
+    },
+  };
+}
+
+describe("Source AI harness", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete global.openaiClient;
+  });
+
+  it.each(plannerContractFixtures)("$name satisfies the source-owned planner contract", async (fixture) => {
+    const { source, plan } = await planFixture(fixture);
+    const validation = await validateFixturePlan({
+      source,
+      sourceId: fixture.sourceId,
+      payload: fixture.payload,
+      plan,
+    });
+
+    expect(ALLOWED_STATUSES.has(plan.status)).toBe(true);
+    expect(plan.status).toBe("ok");
+    expectDataRequestContract(fixture.sourceId, plan);
+    expectChartPlanContract(plan);
+    expect(plan.chartSpec).toMatchObject(fixture.expectedChartSpec || {});
+    expectNoSensitiveOutput(plan);
+    expect(validation.valid).toBe(true);
+    expectNoSensitiveOutput(validation);
+  });
+
+  it("standardizes missing-context responses", async () => {
+    const { plan } = await planFixture({
+      sourceId: "realtimedb",
+      payload: { question: "Show recent records" },
+    });
+
+    expect(plan).toMatchObject({
+      status: "needs_more_context",
+      requiredContext: expect.any(Array),
+    });
+    expect(plan.message).toBeTruthy();
+    expectNoSensitiveOutput(plan);
+  });
+
+  it("keeps source-owned capability responses compact and token-safe", async () => {
+    for (const sourceId of SOURCE_OWNED_IDS) {
+      const source = getSourceById(sourceId);
+      expect(source.capabilities.ai).toMatchObject({
+        canGenerateDatasets: true,
+        canGenerateQueries: false,
+        hasSourceInstructions: true,
+        hasTools: true,
+      });
+
+      const capabilities = await source.backend.ai.getCapabilities({
+        connection: {
+          id: 42,
+          type: source.type,
+          subType: source.subType,
+          host: sourceId === "api" ? "https://api.example.com" : undefined,
+        },
+      });
+      expect(capabilities.instructions.length).toBeLessThan(2500);
+      expectNoSensitiveOutput(capabilities);
+    }
+  });
+
+  it("keeps source tool policy split between configuration planning and query generation", () => {
+    for (const sourceId of SOURCE_OWNED_IDS) {
+      const source = getSourceById(sourceId);
+      expect(source.capabilities.ai).toMatchObject({
+        canGenerateDatasets: true,
+        canGenerateQueries: false,
+        hasTools: true,
+      });
+      expect(source.backend.ai.planDataset).toEqual(expect.any(Function));
+      expect(source.backend.ai.generateQuery).toBeUndefined();
+    }
+
+    for (const sourceId of QUERY_GENERATION_IDS) {
+      const source = getSourceById(sourceId);
+      expect(source.capabilities.ai).toMatchObject({
+        canGenerateDatasets: true,
+        canGenerateQueries: true,
+        hasSourceInstructions: true,
+        hasTools: false,
+      });
+      expect(source.backend.ai.generateQuery).toEqual(expect.any(Function));
+      expect(source.backend.ai.getCapabilities).toEqual(expect.any(Function));
+      expect(source.backend.ai.planDataset).toBeUndefined();
+    }
+  });
+
+  it.each(queryGenerationFixtures)("$sourceId exposes compact query-generation instructions through get_schema", async (fixture) => {
+    const source = getSourceById(fixture.sourceId);
+    const connection = getQueryGenerationConnection(fixture);
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+
+    const capabilities = await source.backend.ai.getCapabilities({ connection });
+    const schema = await getSchemaTool({
+      team_id: TOOL_TEAM_ID,
+      connection_id: connection.id,
+    });
+
+    expect(source.capabilities.ai).toMatchObject({
+      canGenerateDatasets: true,
+      canGenerateQueries: true,
+      hasSourceInstructions: true,
+      hasTools: false,
+    });
+    expect(capabilities.instructions).toMatch(fixture.instructionPattern);
+    expect(capabilities.instructions.length).toBeLessThan(1200);
+    expect(schema.sourceInstructions).toMatch(fixture.instructionPattern);
+    expect(schema.sourceInstructions.length).toBeLessThan(1200);
+    expectToolOutputContract(capabilities);
+    expectToolOutputContract(schema);
+  });
+
+  it.each(queryGenerationFixtures)("$sourceId injects compact instructions into generate_query", async (fixture) => {
+    const source = getSourceById(fixture.sourceId);
+    const generateQuerySpy = vi.spyOn(source.backend.ai, "generateQuery").mockResolvedValue({
+      query: fixture.sourceId === "mongodb"
+        ? "collection('orders').find().limit(10)"
+        : "SELECT id, created_at, amount FROM orders LIMIT 10",
+    });
+    global.openaiClient = {};
+
+    const result = await generateQueryTool({
+      source_id: fixture.sourceId,
+      question: "Show recent orders",
+      schema: {
+        entities: [{
+          name: "orders",
+          columns: [{ name: "id", type: "string" }],
+        }],
+      },
+    });
+    const generationPayload = generateQuerySpy.mock.calls[0][0];
+
+    expect(result.status).toBe("ok");
+    expect(generationPayload.schema.sourceInstructions).toMatch(fixture.instructionPattern);
+    expect(generationPayload.schema.sourceInstructions.length).toBeLessThan(1200);
+    expect(result.query).toBeTruthy();
+  });
+
+  it.each(compactToolFixtures)("$sourceId source tools return compact bounded outputs", async (fixture) => {
+    mockToolConnections();
+    fixture.setup();
+    const connection = getToolConnection(fixture.sourceId);
+    const basePayload = {
+      team_id: TOOL_TEAM_ID,
+      connection_id: connection.id,
+      source_id: fixture.sourceId,
+    };
+
+    const capabilities = await sourceGetCapabilities(basePayload);
+    const resources = await sourceListResources(basePayload);
+    const plan = await sourcePlanDataset({
+      ...basePayload,
+      question: fixture.question,
+      overrides: fixture.sourceId === "googleAnalytics"
+        ? { propertyId: "properties/123" }
+        : {},
+    });
+    const validation = await sourceValidateConfiguration({
+      ...basePayload,
+      configuration: fixture.previewConfiguration,
+    });
+    const preview = await sourcePreviewConfiguration({
+      ...basePayload,
+      configuration: fixture.previewConfiguration,
+      row_limit: 5,
+    });
+    const sample = await sourceGetSampleData({
+      ...basePayload,
+      resource: fixture.resource,
+      row_limit: 5,
+    });
+
+    expect(plan.status).toBe("ok");
+    expect(validation.valid).toBe(true);
+    expect(preview.status).toBe("ok");
+    expect(["ok", "needs_more_context"].includes(sample.status)).toBe(true);
+    expectToolOutputContract(capabilities);
+    expectToolOutputContract(resources, { maxLength: 30000 });
+    expectToolOutputContract(plan);
+    expectToolOutputContract(validation);
+    expectToolOutputContract(preview);
+    expectToolOutputContract(sample);
+  });
+
+  it.each(toolRoutingReplays)("$name follows the allowed high-risk tool sequence", (replay) => {
+    const source = getSourceById(replay.sourceId);
+    const usedTools = new Set(replay.steps);
+    const forbiddenTools = replay.forbidden || [];
+
+    for (const toolName of forbiddenTools) {
+      expect(usedTools.has(toolName)).toBe(false);
+    }
+
+    expect(!source.capabilities.ai.hasTools || !usedTools.has("generate_query")).toBe(true);
+    expect(!source.capabilities.ai.canGenerateQueries || !usedTools.has("source_plan_dataset")).toBe(true);
+    expect(replay.finalStatus !== "needs_more_context" || !usedTools.has("create_temporary_chart")).toBe(true);
+    expect(replay.finalStatus !== "needs_more_context" || !usedTools.has("create_chart")).toBe(true);
+  });
+
+  it("persists safe CDC bindings for temporary chart table payloads", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
+      id: 42,
+      team_id: 7,
+      type: "api",
+      subType: "api",
+      host: "https://api.example.com",
+      schema: {
+        apiAiContext: {
+          raw: apiContext,
+        },
+      },
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      id: 77,
+      team_id: 7,
+      ghost: true,
+    });
+    vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
+      id: 99,
+      name: "Orders",
+      DataRequests: [{ id: 1001 }],
+    });
+    const createChartSpy = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+      id: 55,
+      name: "Orders",
+      type: "table",
+      project_id: 77,
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      team_id: 7,
+      connection_id: 42,
+      name: "Orders",
+      original_question: "Show orders from the API",
+      type: "table",
+      configuration: {},
+    });
+    const chartPayload = createChartSpy.mock.calls[0][0];
+
+    expectChartDatasetConfigContract({
+      chartType: chartPayload.type,
+      chartDatasetConfig: chartPayload.chartDatasetConfigs[0],
+      expected: {
+        dataset_id: 99,
+        xAxis: "root[]",
+      },
+    });
+    expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
+    });
+  });
+
+  it("persists safe CDC bindings for saved KPI payloads", async () => {
+    const datasetUpdate = vi.fn().mockResolvedValue(null);
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99,
+      team_id: 7,
+      name: "Users",
+      project_ids: [],
+      DataRequests: [{ id: 1001, configuration: {} }],
+      update: datasetUpdate,
+    });
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({
+      id: 77,
+      team_id: 7,
+      ghost: false,
+    });
+    const createChartSpy = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+      id: 55,
+      name: "Users count",
+      type: "kpi",
+      project_id: 77,
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createChart({
+      team_id: 7,
+      project_id: 77,
+      dataset_id: 99,
+      name: "Users count",
+      type: "kpi",
+      yAxis: "root[]._id",
+      yAxisOperation: "count",
+    });
+    const chartPayload = createChartSpy.mock.calls[0][0];
+
+    expect(datasetUpdate).toHaveBeenCalledWith({ project_ids: [77] });
+    expectChartDatasetConfigContract({
+      chartType: chartPayload.type,
+      chartDatasetConfig: chartPayload.chartDatasetConfigs[0],
+      expected: {
+        dataset_id: 99,
+        xAxis: "root[]._id",
+        yAxis: "root[]._id",
+        yAxisOperation: "count",
+      },
+    });
+    expect(result).toMatchObject({
+      status: "ok",
+      chart_created: true,
+    });
+  });
+});

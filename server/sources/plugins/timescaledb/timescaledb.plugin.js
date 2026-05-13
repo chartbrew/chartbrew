@@ -1,4 +1,8 @@
 const timescaledbProtocol = require("./timescaledb.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "timescaledb",
@@ -32,7 +36,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -40,8 +44,10 @@ module.exports = {
   backend: {
     ...timescaledbProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("timescaledb"),
       getSchema: timescaledbProtocol.getSchema,
       generateQuery: timescaledbProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("timescaledb"),
     },
   },
 };

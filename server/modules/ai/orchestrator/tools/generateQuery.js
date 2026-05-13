@@ -1,5 +1,14 @@
 const { getSourceByDialect, requireSourceById } = require("../sourceSupport");
 
+async function getSourceInstructions(source) {
+  if (source.backend?.ai?.getCapabilities) {
+    const capabilities = await source.backend.ai.getCapabilities({});
+    return capabilities?.instructions || source.backend?.ai?.instructions;
+  }
+
+  return source.backend?.ai?.instructions;
+}
+
 async function generateQuery(payload) {
   const {
     question, schema, preferred_dialect, source_id
@@ -40,9 +49,16 @@ async function generateQuery(payload) {
     if (!source?.backend?.ai?.generateQuery) {
       throw new Error(`No AI query generator is available for '${preferred_dialect || source_id || "unknown"}'`);
     }
+    const sourceInstructions = await getSourceInstructions(source);
+    const schemaForGeneration = Array.isArray(effectiveSchema)
+      ? { entities: effectiveSchema, sourceInstructions }
+      : {
+        ...effectiveSchema,
+        sourceInstructions: effectiveSchema.sourceInstructions || sourceInstructions,
+      };
 
     const result = await source.backend.ai.generateQuery({
-      schema: effectiveSchema,
+      schema: schemaForGeneration,
       question,
       conversationHistory: [],
     });

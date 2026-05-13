@@ -61,6 +61,7 @@ function getQuestionTokens(question = "") {
     "in",
     "latest",
     "list",
+    "make",
     "of",
     "recent",
     "records",
@@ -82,6 +83,30 @@ function isCountRequest(question = "") {
     || normalizedQuestion.includes("how many")
     || normalizedQuestion.includes("total")
     || normalizedQuestion.includes("kpi");
+}
+
+function getBreakdownField(question = "") {
+  const normalizedQuestion = normalizeText(question);
+  const byMatch = question.match(/\bby\s+([a-zA-Z0-9_.$-]+)/i);
+  if (byMatch) return singularize(byMatch[1]);
+
+  const typedResource = question.match(/\b[a-zA-Z0-9_-]+\s+(types?|statuses?|categories?)\b/i);
+  if (typedResource) {
+    const token = normalizeText(typedResource[1]);
+    if (token.startsWith("type")) return "type";
+    if (token.startsWith("status")) return "status";
+    if (token.startsWith("categor")) return "category";
+  }
+
+  if (normalizedQuestion.includes(" by type") || normalizedQuestion.includes(" types")) return "type";
+  if (normalizedQuestion.includes(" by status") || normalizedQuestion.includes(" statuses")) return "status";
+  if (normalizedQuestion.includes(" by category") || normalizedQuestion.includes(" categories")) return "category";
+
+  return "";
+}
+
+function isBreakdownRequest(question = "") {
+  return Boolean(getBreakdownField(question));
 }
 
 function parseLimit(question = "", fallback = 100) {
@@ -210,6 +235,18 @@ function resolveOrder(question = "") {
 }
 
 function buildChartSpec({ collectionId, question = "" }) {
+  const breakdownField = getBreakdownField(question);
+  if (breakdownField) {
+    return {
+      type: normalizeText(question).match(/donut|doughnut/) ? "doughnut" : "bar",
+      title: `${titleCase(collectionId)} by ${titleCase(breakdownField)}`,
+      xAxis: `root[].${breakdownField}`,
+      yAxis: "root[]._id",
+      yAxisOperation: "count",
+      legend: "Documents",
+    };
+  }
+
   if (isCountRequest(question)) {
     return {
       type: "kpi",
@@ -226,6 +263,12 @@ function buildChartSpec({ collectionId, question = "" }) {
     columnsOrder: ["_id"],
     maxRecords: 100,
   };
+}
+
+function getIntent(question = "") {
+  if (isBreakdownRequest(question)) return "breakdown_documents";
+  if (isCountRequest(question)) return "count_documents";
+  return "list_documents";
 }
 
 async function planDataset({ connection, question = "" } = {}) {
@@ -276,7 +319,7 @@ async function planDataset({ connection, question = "" } = {}) {
       : [],
     errors: [],
     rationale: {
-      intent: isCountRequest(question) ? "count_documents" : "list_documents",
+      intent: getIntent(question),
       collection: collectionId,
     },
   };

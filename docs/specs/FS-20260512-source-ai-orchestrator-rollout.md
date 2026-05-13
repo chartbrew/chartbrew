@@ -8,7 +8,7 @@ Status: draft
 - [x] Routed Stripe Official through the generic source-owned planning path while keeping existing `stripe_official_*` tool names as compatibility aliases.
 - [x] Updated global orchestrator/entity instructions to describe source-owned configuration flows generically instead of hardcoding the Stripe workflow.
 - [x] Added a regression for simple Stripe net MRR churn KPI creation and clarified chart tool results so missing snapshots are not treated as failed chart creation.
-- [ ] Add compact AI instruction hooks and harness coverage for current query-generation sources.
+- [x] Add compact AI instruction hooks and harness coverage for current query-generation sources.
 - [x] Added GA4 source-owned AI planning, validation, metadata-aware preview, and harness coverage for users over time, sessions by channel, page views by page, ambiguous properties, and invalid metrics.
 - [x] Hardened GA4 property selection so the planner can resolve property IDs, quick-reply labels, and natural property names such as "Razvan Ilin website" without requiring `overrides.propertyId`.
 - [x] Guarded GA4 runtime against missing `propertyId` before calling Google APIs and let creation tools auto-fill missing source-owned configuration through the planner.
@@ -21,6 +21,11 @@ Status: draft
 - [x] Relaxed generic API fallback behavior so recognizable provider hosts can use model/provider knowledge when AI Context is missing or incomplete, while unknown API hosts still require explicit context.
 - [x] Hardened AI-created table charts so missing CDC `xAxis` bindings default to `root[]` and cannot crash table extraction.
 - [x] Hardened AI-created KPI/avg/gauge charts so missing CDC `xAxis` bindings fall back to `yAxis` and cannot crash axis chart extraction.
+- [x] Add a cross-source AI harness that covers count, table, breakdown, timeseries, follow-up chart-type changes, missing context, invalid fields, chart binding contracts, and forbidden tool paths across all AI-enabled sources.
+- [x] Added the first token-free source-owned harness pass for GA4, Customer.io, Firestore, RealtimeDB, API, and Stripe Official, including the Firestore donut follow-up regression.
+- [x] Added shared harness assertions for source-owned planner contracts, source/query tool-policy separation, and runtime-safe CDC bindings from temporary and saved chart creation.
+- [x] Added generic `source_*` tool output caps and small no-LLM routing replay coverage for high-risk tool sequences.
+- [x] Added compact query-generation instructions for SQL, ClickHouse, and MongoDB sources and harness coverage that verifies `get_schema` and `generate_query` receive them.
 
 ## Context
 Stripe Official now has a source-owned AI layer in `server/sources/plugins/stripeOfficial/ai/stripeOfficial.ai.js`. That layer gives the orchestrator compact source instructions, source discovery tools, dataset planning, configuration validation, capped preview execution, template recommendation, and anti-hallucination guards without exposing raw API routes or large object dumps.
@@ -386,6 +391,48 @@ Add source harness tests:
 - RealtimeDB: known path table, ordered limited path, unknown path needs context.
 - API: missing AI context, valid endpoint plan, unsafe method rejection, preview cap.
 
+### Cross-Source AI Harness
+Add a deterministic, token-free harness for every AI-enabled source. This should exercise source-owned planners and chart creation contracts directly, without calling the LLM or replaying full model responses by default.
+
+Harness goals:
+- Prevent one-off debugging per source by asserting source, chart, tool, and token-efficiency invariants.
+- Avoid trying to enumerate every possible user request. There can be thousands of valid scenarios; the harness should test contracts and invariants, not become a scenario catalog.
+- Use only tiny representative fixtures when an invariant needs a concrete input. For example, a Firestore "donut by type" fixture is useful because it tests the invariant that breakdown intent produces categorical `xAxis` plus count `yAxis`, not because that exact phrase is special.
+- Keep requests token-efficient by testing source-owned `planDataset`, `validateConfiguration`, preview row shape, and chart contract helpers directly. LLM transcript replay should be a small optional smoke layer, not the core regression suite.
+
+Required invariant groups:
+- Source contract: every AI-enabled source returns one of the known statuses, a valid DataRequest plan for `ok`, or an actionable missing-context response.
+- Chart binding contract: chart specs and persisted CDCs are runtime-safe for their chart type.
+- Tool policy: configuration-based sources must not use `generate_query`; query-generation sources must not use source-owned configuration tools unless they explicitly declare them.
+- Token/size policy: capabilities, resources, samples, previews, and validation results remain bounded and free of secrets.
+- Follow-up contract: changing chart type or grouping can reuse source intent only when the new chart bindings are valid.
+
+Minimum shared assertions:
+- `status` is one of the documented source-owned statuses.
+- `dataRequest` has the required source fields: SQL/Mongo query, source-owned `configuration`, API/Customer.io route/method, Firestore query, RealtimeDB route.
+- `chartSpec` bindings match the chart type:
+  - table: `xAxis` may be omitted only if the creation tool defaults it to `root[]`.
+  - KPI/avg/gauge: `yAxis` is required; `xAxis` may be omitted only if the creation/runtime path falls back to `yAxis`.
+  - line/bar/pie/doughnut/radar/polar: `xAxis` and `yAxis` are required.
+  - timeseries: `dateField` is required when dashboard date filtering is expected.
+- Capability/tool outputs stay compact and never include secrets, auth headers, tokens, or large raw docs.
+- Resource listing/sample APIs return capped summaries and a bounded row count.
+
+Implementation shape:
+- Add `tests/unit/sourceAiHarness.test.js` for the common source-owned planner contract.
+- Keep per-source fixtures small: one or two collections/routes/properties/endpoints and a minimal sample response.
+- Add per-source examples only for unusual parsing or domain rules, such as Stripe churn metrics, GA4 property selection, Customer.io campaigns, API provider fallback, or Firestore breakdown fields.
+- Avoid real model calls. If transcript replay is added later, store tool-call expectations as JSON fixtures and assert only the allowed tool sequence and final creation payload.
+
+Harness implementation checklist:
+- [x] Add first source-owned planner harness for GA4, Customer.io, Firestore, RealtimeDB, API, and Stripe Official.
+- [x] Refactor harness labels and docs around invariants rather than scenario classes.
+- [x] Add shared chart-binding contract assertions for persisted CDC payloads from `create_temporary_chart` and `create_chart`.
+- [x] Add tool-policy assertions for configuration-based versus query-generation source flows.
+- [x] Add compact-output assertions for `source_get_capabilities`, `source_list_resources`, `source_get_sample_data`, preview, and validation.
+- [x] Add a small transcript/tool-sequence replay only for high-risk orchestrator routing, without real model calls.
+- [x] Keep per-source examples limited to custom domain rules that cannot be expressed as generic invariants.
+
 Run focused verification:
 
 ```sh
@@ -409,6 +456,7 @@ Use the exact test filenames created during implementation; `sourceAiTools.test.
 7. Add API connection AI context UI and generic API AI planning.
 8. Update global orchestrator prompt and entity creation rules to remove Stripe-only workflow text and keep source-specific detail lazy-loaded.
 9. Add regression tests for token-efficiency boundaries and no per-source top-level tool growth.
+10. Add the cross-source AI harness and use it as the first regression target when adding or changing any source AI layer.
 
 ## Acceptance Criteria
 - The orchestrator still supports all currently AI-enabled database sources.
@@ -420,3 +468,4 @@ Use the exact test filenames created during implementation; `sourceAiTools.test.
 - API planning refuses to proceed without sufficient user-provided AI context and returns an edit-connection link.
 - The global orchestrator prompt does not include large per-source docs or source-specific route catalogs.
 - Source AI previews are capped, scoped, read-only, and redact sensitive data.
+- The cross-source harness passes for all AI-enabled sources and catches invalid chart binding contracts before runtime extraction can crash.

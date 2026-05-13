@@ -1,4 +1,8 @@
 const postgresProtocol = require("./postgres.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "postgres",
@@ -31,7 +35,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -39,8 +43,10 @@ module.exports = {
   backend: {
     ...postgresProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("postgres"),
       getSchema: postgresProtocol.getSchema,
       generateQuery: postgresProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("postgres"),
     },
   },
 };
