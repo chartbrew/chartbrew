@@ -15,7 +15,6 @@ function AccountNav() {
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState(false);
-  const [changelogPadding, setChangelogPadding] = useState(true);
 
   const user = useSelector(selectUser);
   const dispatch = useDispatch();
@@ -24,17 +23,6 @@ function AccountNav() {
   const teams = useSelector(selectTeams);
   const { theme, setTheme, isDark } = useTheme();
   const userInitials = user?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
-
-  useEffect(() => {
-    setTimeout(() => {
-      try {
-        Headway.init(HW_config);
-        setChangelogPadding(false);
-      } catch (e) {
-        // ---
-      }
-    }, 1000);
-  }, []);
 
   useEffect(() => {
     if (teams.length > 0) {
@@ -168,14 +156,6 @@ function AccountNav() {
             </Dropdown.Menu>
           </Dropdown.Popover>
         </Dropdown>
-
-        <div className="changelog-trigger flex max-h-8 w-full flex-row items-center justify-between rounded-lg px-2 py-2 hover:bg-content2">
-          <div className="flex flex-row items-center gap-2">
-            <LuConstruction size={18} />
-            <div className="hidden sm:block text-sm">Updates</div>
-          </div>
-          <span className={`changelog-badge ${changelogPadding ? "p-4" : "p-0 w-6"}`} />
-        </div>
       </div>
 
       <Dropdown className="justify-start">

@@ -27,7 +27,6 @@ import AiModal from "../containers/Ai/AiModal";
   The navbar component used throughout the app
 */
 function NavbarContainer() {
-  const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
@@ -43,17 +42,6 @@ function NavbarContainer() {
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    setTimeout(() => {
-      try {
-        Headway.init(HW_config);
-        setChangelogPadding(false);
-      } catch (e) {
-        // ---
-      }
-    }, 1000);
-  }, []);
 
   useEffect(() => {
     if (teams.length > 0) {
@@ -204,15 +192,6 @@ function NavbarContainer() {
           )}
         </div>
         <div className="flex items-center gap-2">
-            <div
-              className="changelog-trigger flex flex-row items-center text-foreground cursor-pointer"
-              title="Changelog"
-            >
-              <span className="changelog-badge text-accent-500">
-                {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
-              </span>
-              <div className={"hidden sm:block text-sm"}>Updates</div>
-            </div>
           <Dropdown>
               <Dropdown.Trigger>
                 <Button

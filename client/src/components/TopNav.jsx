@@ -41,17 +41,6 @@ function TopNav() {
   const dataset = useSelector((state) => state.dataset.data.find((item) => `${item.id}` === `${params.datasetId}`));
   const integrations = useSelector(selectIntegrations);
 
-  useEffect(() => {
-    try {
-      Headway.init({
-        selector: ".changelog-trigger",
-        account: "JVODWy",
-      });
-    } catch (e) {
-      // ---
-    }
-  }, []);
-
   const canUserAccess = (role, teamData) => {
     if (teamData) {
       return canAccess(role, user.id, teamData.TeamRoles);
@@ -153,7 +142,7 @@ function TopNav() {
           {renderBreadcrumbs()}
         </div>
 
-        <div className="flex flex-row items-center gap-4">
+        <div className="flex flex-row items-center gap-2">
           {canUserAccess("teamAdmin", team) ? (
             <Button
               className={askDataButtonClassName}
@@ -168,7 +157,7 @@ function TopNav() {
 
           <Dropdown aria-label="Select a help option">
             <Dropdown.Trigger>
-              <Button className="bg-transparent p-0" variant="ghost">
+              <Button className="bg-transparent" variant="ghost">
                 <LuHeartHandshake size={18} />
                 Resources
               </Button>
@@ -220,10 +209,6 @@ function TopNav() {
               </Dropdown.Menu>
             </Dropdown.Popover>
           </Dropdown>
-
-          <Button className="changelog-trigger mr-2" isIconOnly size="sm" title="Changelog" variant="ghost">
-            <LuBell className="text-foreground" size={18} />
-          </Button>
         </div>
       </div>
     </div>

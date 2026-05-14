@@ -9,8 +9,6 @@
     "es2020": true
   },
   "globals": {
-    "HW_config": "writable",
-    "Headway": "writable",
     "process": "writable"
   },
   "ignorePatterns": [
