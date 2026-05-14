@@ -55,21 +55,6 @@ const SOURCE_INSTRUCTIONS = [
 
 const COMPILED_INTENT_RULES = [
   {
-    id: "mrr",
-    pattern: /\bmrr\b|monthly recurring revenue/i,
-    expected: { mode: "compiled_metric", compiledMetric: "mrr" },
-  },
-  {
-    id: "arr",
-    pattern: /\barr\b|annual recurring revenue/i,
-    expected: { mode: "compiled_metric", compiledMetric: "arr" },
-  },
-  {
-    id: "arpa",
-    pattern: /\barpa\b|average revenue per account|average revenue per customer/i,
-    expected: { mode: "compiled_metric", compiledMetric: "arpa" },
-  },
-  {
     id: "gross_mrr_churn_rate",
     pattern: /gross mrr churn/i,
     expected: { mode: "compiled_metric", compiledMetric: "gross_mrr_churn_rate" },
@@ -83,6 +68,21 @@ const COMPILED_INTENT_RULES = [
     id: "subscriber_churn_rate",
     pattern: /subscriber churn|customer churn|churn rate/i,
     expected: { mode: "compiled_metric", compiledMetric: "subscriber_churn_rate" },
+  },
+  {
+    id: "mrr",
+    pattern: /\bmrr\b|monthly recurring revenue/i,
+    expected: { mode: "compiled_metric", compiledMetric: "mrr" },
+  },
+  {
+    id: "arr",
+    pattern: /\barr\b|annual recurring revenue/i,
+    expected: { mode: "compiled_metric", compiledMetric: "arr" },
+  },
+  {
+    id: "arpa",
+    pattern: /\barpa\b|average revenue per account|average revenue per customer/i,
+    expected: { mode: "compiled_metric", compiledMetric: "arpa" },
   },
   {
     id: "net_cash_flow",

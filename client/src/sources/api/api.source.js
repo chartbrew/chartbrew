@@ -7,7 +7,12 @@ const apiSource = {
   name: "API",
   category: "api",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
   },
   assets: {
     lightLogo: apiLogo,

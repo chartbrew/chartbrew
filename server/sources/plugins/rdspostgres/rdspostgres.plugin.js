@@ -1,4 +1,8 @@
 const rdspostgresProtocol = require("./rdspostgres.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "rdsPostgres",
@@ -32,7 +36,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -40,8 +44,10 @@ module.exports = {
   backend: {
     ...rdspostgresProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("rdsPostgres"),
       getSchema: rdspostgresProtocol.getSchema,
       generateQuery: rdspostgresProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("rdsPostgres"),
     },
   },
 };

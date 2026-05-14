@@ -1,4 +1,5 @@
 const CustomerioConnection = require("./customerio.connection");
+const customerioAi = require("./ai/customerio.ai");
 const customerioProtocol = require("./customerio.protocol");
 
 const actions = {
@@ -52,16 +53,17 @@ module.exports = {
       dashboards: false,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
-      hasSourceInstructions: false,
-      hasTools: false,
+      hasSourceInstructions: true,
+      hasTools: true,
     },
     actions: Object.keys(actions),
   },
 
   backend: {
     ...customerioProtocol,
+    ai: customerioAi,
     actions,
   },
 };

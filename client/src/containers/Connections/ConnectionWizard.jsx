@@ -6,7 +6,12 @@ import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
 import { Link, useSearchParams } from "react-router";
 
-import { getSourceLogo, getSourcePickerItems, getSourcePlugin } from "../../sources";
+import {
+  getSourceLogo,
+  getSourcePickerItems,
+  getSourcePlugin,
+  isSourceAiPowered,
+} from "../../sources";
 import { canCreateSourceConnections } from "../../sources/sourceAvailability";
 import { useTheme } from "../../modules/ThemeContext";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection } from "../../slices/connection";
@@ -241,7 +246,7 @@ function ConnectionWizard() {
                           />
                         </Card.Content>
                         <Card.Content className="flex flex-row items-center justify-center flex-wrap gap-1">
-                          {(conn.capabilities?.ai?.canGenerateQueries || conn.capabilities?.ai?.canGenerateDatasets) && (
+                          {isSourceAiPowered(conn) && (
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Chip variant="secondary">

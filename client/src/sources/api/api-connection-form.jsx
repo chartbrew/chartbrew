@@ -14,6 +14,7 @@ import {
   Separator,
   Select,
   Tabs,
+  TextArea,
   TextField,
 } from "@heroui/react";
 import { v4 as uuid } from "uuid";
@@ -57,7 +58,11 @@ function ApiConnectionForm(props) {
     type: "api", subType: "api", optionsArray: []
   });
   const [errors, setErrors] = useState({});
-  const [menuType, setMenuType] = useState("authentication");
+  const [menuType, setMenuType] = useState(
+    new URLSearchParams(window.location.search).get("tab") === "aiContext"
+      ? "aiContext"
+      : "authentication"
+  );
   const [testResult, setTestResult] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -204,6 +209,19 @@ function ApiConnectionForm(props) {
     setConnection({ ...connection, authentication: auth });
   };
 
+  const _onChangeAiContext = (value) => {
+    setConnection({
+      ...connection,
+      schema: {
+        ...(connection.schema || {}),
+        apiAiContext: {
+          ...(connection.schema?.apiAiContext || {}),
+          raw: value.slice(0, 12000),
+        },
+      },
+    });
+  };
+
   return (
     <div className="p-4 bg-surface border border-divider rounded-3xl pb-10">
       <div>
@@ -269,6 +287,10 @@ function ApiConnectionForm(props) {
                 </Tabs.Tab>
                 <Tabs.Tab id="headers">
                   Headers
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab id="aiContext">
+                  AI Context
                   <Tabs.Indicator />
                 </Tabs.Tab>
               </Tabs.List>
@@ -433,6 +455,31 @@ function ApiConnectionForm(props) {
             </Button>
             <div className="h-8" />
           </>
+        )}
+
+        {menuType === "aiContext" && (
+          <div className="max-w-3xl">
+            <div className="font-bold">Give Chartbrew AI a bounded map of this API</div>
+            <div className="text-sm text-muted">
+              Paste endpoint URLs, docs snippets, curl examples, response samples, or plain notes. AI will only use endpoints it can find here or in your prompt.
+            </div>
+            <div className="h-4" />
+            <TextField fullWidth name="api-ai-context">
+              <Label>AI context</Label>
+              <TextArea
+                value={connection.schema?.apiAiContext?.raw || ""}
+                onChange={(e) => _onChangeAiContext(e.target.value)}
+                placeholder={"GET /orders\nReturns { data: [{ id, amount, status, created_at }] }\nUse data as the array path. Filter dates with start_date and end_date."}
+                rows={12}
+                fullWidth
+                variant="secondary"
+              />
+              <Description>
+                Keep this to the endpoints Chartbrew AI is allowed to use. Secrets do not belong here.
+              </Description>
+            </TextField>
+            <div className="h-4" />
+          </div>
         )}
 
         {addError && (

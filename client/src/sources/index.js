@@ -139,6 +139,12 @@ export function getSourceLogo(source, isDark) {
   return getSourceDefinitionLogo(source, isDark);
 }
 
+export function isSourceAiPowered(source) {
+  const ai = source?.capabilities?.ai;
+
+  return Boolean(ai?.canGenerateDatasets || ai?.canGenerateQueries || ai?.hasTools);
+}
+
 export function getSourcePickerItems() {
   return SOURCE_PLUGINS.filter(canCreateSourceConnections);
 }

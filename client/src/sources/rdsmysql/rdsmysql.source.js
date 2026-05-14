@@ -9,7 +9,12 @@ export default {
   name: "RDS MySQL",
   category: "database",
   capabilities: {
-    ai: { canGenerateQueries: true },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: true,
+      hasSourceInstructions: true,
+      hasTools: false,
+    },
   },
   assets: {
     lightLogo,

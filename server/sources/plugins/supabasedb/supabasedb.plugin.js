@@ -1,4 +1,8 @@
 const supabasedbProtocol = require("./supabasedb.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "supabasedb",
@@ -32,7 +36,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -40,8 +44,10 @@ module.exports = {
   backend: {
     ...supabasedbProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("supabasedb"),
       getSchema: supabasedbProtocol.getSchema,
       generateQuery: supabasedbProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("supabasedb"),
     },
   },
 };

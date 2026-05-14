@@ -33,6 +33,22 @@ export async function getAiConversation(conversationId, teamId) {
   return response.json();
 }
 
+export async function getAiTools(teamId) {
+  const token = getAuthToken();
+  const url = `${API_HOST}/ai/tools?teamId=${teamId}`;
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`,
+  });
+
+  const response = await fetch(url, { headers, method: "GET" });
+  if (!response.ok) {
+    throw new Error("Failed to fetch AI tools");
+  }
+
+  return response.json();
+}
+
 export async function orchestrateAi(teamId, question, conversationHistory = [], aiConversationId, context = null) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/orchestrate`;

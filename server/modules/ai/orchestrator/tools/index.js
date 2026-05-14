@@ -17,7 +17,10 @@ const {
   sourceGetSampleData,
   sourceListResources,
   sourceListTemplates,
+  sourcePlanDataset,
+  sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceValidateConfiguration,
 } = require("./sourceTools");
 const {
   stripeOfficialPlanDataset,
@@ -45,7 +48,10 @@ module.exports = {
   sourceGetSampleData,
   sourceListResources,
   sourceListTemplates,
+  sourcePlanDataset,
+  sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceValidateConfiguration,
   stripeOfficialPlanDataset,
   stripeOfficialPreviewConfiguration,
   stripeOfficialValidateConfiguration,

@@ -8,7 +8,12 @@ const customerioSource = {
   name: "Customer.io",
   category: "marketing",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
   },
   assets: {
     lightLogo: customerioLogo,

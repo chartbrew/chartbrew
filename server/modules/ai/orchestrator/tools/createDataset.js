@@ -1,6 +1,6 @@
 const DatasetController = require("../../../../controllers/DatasetController");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
-const { repairSourceDatasetIntent } = require("./sourceIntentRepair");
+const { repairSourceDatasetIntentAsync } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireConnectionForTeam, requireProjectForTeam } = require("./teamScope");
 
 const datasetController = new DatasetController();
@@ -10,7 +10,7 @@ const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_C
 async function createDataset(payload) {
   let {
     project_id, connection_id, name, team_id,
-    query, configuration = {}, variables = [], transform = null,
+    query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = []
   } = payload;
 
@@ -33,13 +33,26 @@ async function createDataset(payload) {
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
     const source = requireSupportedSourceForConnection(connection);
 
-    const repairedPayload = repairSourceDatasetIntent(source, {
+    const repairedPayload = await repairSourceDatasetIntentAsync(source, {
       name,
       question: payload.question,
+      original_question: payload.original_question,
+      query,
+      method,
+      route,
+      itemsLimit,
+      conditions,
       configuration,
+      connection,
       spec: payload.spec,
     });
+    query = repairedPayload.query ?? query;
     configuration = repairedPayload.configuration;
+    method = repairedPayload.method ?? method;
+    route = repairedPayload.route ?? route;
+    itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
+    conditions = repairedPayload.conditions ?? conditions;
+    variables = repairedPayload.variables ?? variables;
 
     // Use the quick-create function to create dataset with data request in one go
     const dataset = await datasetController.createWithDataRequests({
@@ -50,9 +63,21 @@ async function createDataset(payload) {
       variableBindings,
       dataRequests: [{
         connection_id,
+        method,
+        route,
+        itemsLimit,
         query,
+        conditions,
         configuration: configuration || {},
         variables: variables || [],
+        useGlobalHeaders: repairedPayload.useGlobalHeaders ?? payload.useGlobalHeaders,
+        headers: repairedPayload.headers ?? payload.headers,
+        body: repairedPayload.body ?? payload.body,
+        pagination: repairedPayload.pagination ?? payload.pagination,
+        items: repairedPayload.items ?? payload.items,
+        offset: repairedPayload.offset ?? payload.offset,
+        paginationField: repairedPayload.paginationField ?? payload.paginationField,
+        template: repairedPayload.template ?? payload.template,
         transform: transform || null
       }],
       main_dr_index: 0

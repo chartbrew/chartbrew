@@ -32,7 +32,7 @@ import { selectProjects } from "../../slices/project";
 import { selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
-import { findSourceForConnection } from "../../sources";
+import { findSourceForConnection, isSourceAiPowered } from "../../sources";
 
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
@@ -561,7 +561,7 @@ function DatasetQuery(props) {
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-col gap-1">
                             <div className="text-lg font-semibold">{c.name}</div>
-                            {findSourceForConnection(c)?.capabilities?.ai?.canGenerateQueries && (
+                            {isSourceAiPowered(findSourceForConnection(c)) && (
                               <Chip variant="soft" color="accent" size="sm" className="max-w-fit">
                                 <LuBrainCircuit size={14} />
                                 <Chip.Label>{"AI-powered"}</Chip.Label>

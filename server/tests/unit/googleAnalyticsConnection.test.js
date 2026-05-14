@@ -163,4 +163,13 @@ describe("googleAnalytics.connection", () => {
     await expect(googleAnalyticsConnection.getAccounts("revoked-refresh-token", "oauth-1"))
       .rejects.toThrow("refresh token is invalid or expired");
   });
+
+  it("rejects reports without a GA4 property before calling the API", async () => {
+    await expect(googleAnalyticsConnection.getAnalytics(
+      { id: "oauth-1", refreshToken: "refresh-token" },
+      { configuration: { metrics: "sessions" } }
+    )).rejects.toThrow("Google Analytics propertyId is required");
+
+    expect(dataMocks.runReport).not.toHaveBeenCalled();
+  });
 });

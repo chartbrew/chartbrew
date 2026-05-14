@@ -1,4 +1,8 @@
 const rdsmysqlProtocol = require("./rdsmysql.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "rdsMysql",
@@ -32,7 +36,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -40,8 +44,10 @@ module.exports = {
   backend: {
     ...rdsmysqlProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("rdsMysql"),
       getSchema: rdsmysqlProtocol.getSchema,
       generateQuery: rdsmysqlProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("rdsMysql"),
     },
   },
 };

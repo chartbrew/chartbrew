@@ -64,6 +64,13 @@ describe("AI orchestrator team scope", () => {
         source_id: "clickhouse",
         source_name: "ClickHouse",
         name: "Events Warehouse",
+      }, {
+        id: 14,
+        type: "api",
+        subType: null,
+        source_id: "api",
+        source_name: "API",
+        name: "Generic API",
       }],
     });
   });
@@ -126,7 +133,12 @@ describe("AI orchestrator team scope", () => {
 
     expect(querySpy).toHaveBeenCalledWith(expect.objectContaining({
       question: "How many users?",
-      schema: { tables: ["Users"], description: { Users: ["id"] } },
+      conversationHistory: [],
+      schema: expect.objectContaining({
+        tables: ["Users"],
+        description: { Users: ["id"] },
+        sourceInstructions: expect.any(String),
+      }),
     }));
     expect(result).toMatchObject({
       status: "ok",

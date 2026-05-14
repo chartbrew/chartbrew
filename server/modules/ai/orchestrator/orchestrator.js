@@ -58,7 +58,10 @@ const {
   sourceGetSampleData,
   sourceListResources,
   sourceListTemplates,
+  sourcePlanDataset,
+  sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceValidateConfiguration,
   stripeOfficialPlanDataset,
   stripeOfficialPreviewConfiguration,
   stripeOfficialValidateConfiguration,
@@ -86,9 +89,20 @@ const TEAM_SCOPED_TOOLS = new Set([
   "source_get_sample_data",
   "source_list_templates",
   "source_recommend_templates",
+  "source_plan_dataset",
+  "source_validate_configuration",
+  "source_preview_configuration",
   "stripe_official_plan_dataset",
   "stripe_official_validate_configuration",
   "stripe_official_preview_configuration",
+]);
+
+const ORIGINAL_QUESTION_TOOLS = new Set([
+  "create_dataset",
+  "create_chart",
+  "create_temporary_chart",
+  "source_plan_dataset",
+  "stripe_official_plan_dataset",
 ]);
 
 async function availableTools() {
@@ -99,6 +113,7 @@ async function availableTools() {
   return [
     {
       name: "list_connections",
+      displayName: "Find data sources",
       description: `List AI-orchestrator-supported source connections (${supportedSourceList}) available to the project/user context.`,
       parameters: {
         type: "object",
@@ -112,6 +127,7 @@ async function availableTools() {
     },
     {
       name: "get_schema",
+      displayName: "Read data structure",
       description: `Get schema information for supported source connections (${supportedSourceList}).`,
       parameters: {
         type: "object",
@@ -130,6 +146,7 @@ async function availableTools() {
     },
     {
       name: "source_get_capabilities",
+      displayName: "Check source capabilities",
       description: "Get source-owned AI capabilities, source instructions, caveats, and supported workflow modes for a connection.",
       parameters: {
         type: "object",
@@ -141,6 +158,7 @@ async function availableTools() {
     },
     {
       name: "source_list_resources",
+      displayName: "List source resources",
       description: "List source-owned resources, metrics, dimensions, filters, and compiled metrics for a connection.",
       parameters: {
         type: "object",
@@ -152,6 +170,7 @@ async function availableTools() {
     },
     {
       name: "source_get_sample_data",
+      displayName: "Fetch sample data",
       description: "Fetch a small capped source-owned sample for resource exploration. Use only for read-only previews.",
       parameters: {
         type: "object",
@@ -165,6 +184,7 @@ async function availableTools() {
     },
     {
       name: "source_list_templates",
+      displayName: "List templates",
       description: "List source-owned chart template packs and template summaries for a connection.",
       parameters: {
         type: "object",
@@ -176,6 +196,7 @@ async function availableTools() {
     },
     {
       name: "source_recommend_templates",
+      displayName: "Recommend templates",
       description: "Recommend source-owned templates that match the user's business goal.",
       parameters: {
         type: "object",
@@ -187,8 +208,50 @@ async function availableTools() {
       }
     },
     {
+      name: "source_plan_dataset",
+      displayName: "Plan dataset",
+      description: "Plan a source-owned DataRequest configuration and chart bindings from a natural-language request. Use this for configuration-based sources instead of generate_query.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          question: { type: "string" },
+          overrides: { type: "object", description: "Optional explicit source configuration overrides such as date range, filters, pagination, metric, dimension, mode, or resource." }
+        },
+        required: ["connection_id", "question"]
+      }
+    },
+    {
+      name: "source_validate_configuration",
+      displayName: "Validate configuration",
+      description: "Validate a source-owned DataRequest configuration before previewing or creating a dataset.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          configuration: { type: "object" }
+        },
+        required: ["connection_id", "configuration"]
+      }
+    },
+    {
+      name: "source_preview_configuration",
+      displayName: "Preview data",
+      description: "Run a capped preview for a source-owned DataRequest configuration and return compact rows, columns, warnings, and recommended chart bindings.",
+      parameters: {
+        type: "object",
+        properties: {
+          connection_id: { type: "string" },
+          configuration: { type: "object" },
+          row_limit: { type: "integer", default: 25 }
+        },
+        required: ["connection_id", "configuration"]
+      }
+    },
+    {
       name: "stripe_official_plan_dataset",
-      description: "Plan a Stripe Official DataRequest.configuration and chart bindings from a natural-language Stripe metric request. Returns configuration, output fields, warnings, and a chartSpec. Use this for Stripe Official instead of generate_query. REQUIRED for MRR, ARR, ARPA, churn, net cash flow, and LTV because those must use compiled_metric configurations.",
+      displayName: "Plan Stripe dataset",
+      description: "Compatibility alias for source_plan_dataset on Stripe Official connections. Prefer source_plan_dataset for new source-owned workflows.",
       parameters: {
         type: "object",
         properties: {
@@ -201,7 +264,8 @@ async function availableTools() {
     },
     {
       name: "stripe_official_validate_configuration",
-      description: "Validate a Stripe Official DataRequest.configuration before previewing or creating a dataset.",
+      displayName: "Validate Stripe configuration",
+      description: "Compatibility alias for source_validate_configuration on Stripe Official connections.",
       parameters: {
         type: "object",
         properties: {
@@ -213,7 +277,8 @@ async function availableTools() {
     },
     {
       name: "stripe_official_preview_configuration",
-      description: "Run a capped preview for a Stripe Official DataRequest.configuration and return compact rows, columns, warnings, and recommended chart bindings.",
+      displayName: "Preview Stripe data",
+      description: "Compatibility alias for source_preview_configuration on Stripe Official connections.",
       parameters: {
         type: "object",
         properties: {
@@ -226,6 +291,7 @@ async function availableTools() {
     },
     {
       name: "generate_query",
+      displayName: "Write query",
       description: `Generate source queries from natural language for supported source connections (${supportedSourceList}).`,
       parameters: {
         type: "object",
@@ -246,6 +312,7 @@ async function availableTools() {
     },
     {
       name: "validate_query",
+      displayName: "Check query",
       description: "Dry-run validation: syntax check or limit-1 execution.",
       parameters: {
         type: "object",
@@ -261,6 +328,7 @@ async function availableTools() {
     },
     {
       name: "run_query",
+      displayName: "Run query",
       description: `Execute read-only source queries on supported connections (${supportedSourceList}) with guardrails.`,
       parameters: {
         type: "object",
@@ -268,7 +336,7 @@ async function availableTools() {
           connection_id: { type: "string" },
           dialect: { type: "string", enum: supportedDialectIds },
           query: { type: "string", description: "Read-only query for query-based sources" },
-          configuration: { type: "object", description: "Configuration for source-owned non-query execution such as Stripe Official" },
+          configuration: { type: "object", description: "Configuration for source-owned non-query execution" },
           params: { type: "object" },
           row_limit: { type: "integer", default: 1000 },
           timeout_ms: { type: "integer", default: 8000 },
@@ -280,6 +348,7 @@ async function availableTools() {
     },
     {
       name: "summarize",
+      displayName: "Summarize results",
       description: "Summarize a result for a direct answer.",
       parameters: {
         type: "object",
@@ -293,6 +362,7 @@ async function availableTools() {
     },
     {
       name: "suggest_chart",
+      displayName: "Choose chart type",
       description: "Suggest a chart spec from the query/result.",
       parameters: {
         type: "object",
@@ -308,6 +378,7 @@ async function availableTools() {
     },
     {
       name: "create_dataset",
+      displayName: "Create dataset",
       description: "Persist a reusable Chartbrew dataset for query/data retrieval. Dataset names are canonical in Dataset.name; chart bindings belong on ChartDatasetConfig.",
       parameters: {
         type: "object",
@@ -315,7 +386,11 @@ async function availableTools() {
           project_id: { type: "string", description: "Project ID where the dataset will be created" },
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           name: { type: "string", description: "Canonical dataset name stored on Dataset.name" },
-          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources such as Stripe Official." },
+          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources." },
+          conditions: { type: "array", items: { type: "object" }, description: "DataRequest conditions for condition-based source-owned connectors" },
+          method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"], description: "DataRequest HTTP method for route-based source-owned connectors" },
+          route: { type: "string", description: "DataRequest route/path for route-based source-owned connectors" },
+          itemsLimit: { type: "integer", description: "Maximum records to fetch for route-based source-owned connectors" },
           configuration: { type: "object", description: "DataRequest dialect-specific settings" },
           variables: {
             type: "array",
@@ -331,6 +406,7 @@ async function availableTools() {
     },
     {
       name: "create_chart",
+      displayName: "Create chart",
       description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard (e.g., 'add to Sales Dashboard', 'place in Marketing dashboard'). DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user.",
       parameters: {
         type: "object",
@@ -389,6 +465,7 @@ async function availableTools() {
     },
     {
       name: "update_dataset",
+      displayName: "Update dataset",
       description: "Update an existing dataset and its associated data request with new reusable dataset metadata, source query, or data-request configuration. Do not use this tool for chart binding fields.",
       parameters: {
         type: "object",
@@ -406,6 +483,7 @@ async function availableTools() {
     },
     {
       name: "update_chart",
+      displayName: "Update chart",
       description: "Update an existing chart with new chart properties or ChartDatasetConfig series settings, including CDC-owned bindings like xAxis, yAxis, dateField, and conditions.",
       parameters: {
         type: "object",
@@ -472,6 +550,7 @@ async function availableTools() {
     },
     {
       name: "create_temporary_chart",
+      displayName: "Create chart preview",
       description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. This creates a reusable dataset plus a ChartDatasetConfig that owns the series bindings. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'.",
       parameters: {
         type: "object",
@@ -518,7 +597,10 @@ async function availableTools() {
           },
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
           dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
-          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources such as Stripe Official." },
+          query: { type: "string", description: "Source query for query-based sources. Leave null/omitted for configuration-based sources." },
+          method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"], description: "DataRequest HTTP method for route-based source-owned connectors" },
+          route: { type: "string", description: "DataRequest route/path for route-based source-owned connectors" },
+          itemsLimit: { type: "integer", description: "Maximum records to fetch for route-based source-owned connectors" },
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
           configuration: { type: "object", description: "DataRequest dialect-specific settings for the reusable dataset" },
           variables: {
@@ -541,6 +623,7 @@ async function availableTools() {
     },
     {
       name: "move_chart_to_dashboard",
+      displayName: "Add chart to dashboard",
       description: "Move a temporary chart from the ghost project to a real dashboard/project. Use this after creating a temporary chart when the user confirms they want to add it to a specific dashboard. The chart's layout will be automatically recalculated for the new dashboard.",
       parameters: {
         type: "object",
@@ -554,6 +637,7 @@ async function availableTools() {
     },
     {
       name: "disambiguate",
+      displayName: "Ask for clarification",
       description: "Ask the user to choose among options when planning couldn’t decide.",
       parameters: {
         type: "object",
@@ -612,6 +696,12 @@ async function callTool(name, payload) {
         return sourceListTemplates(payload);
       case "source_recommend_templates":
         return sourceRecommendTemplates(payload);
+      case "source_plan_dataset":
+        return sourcePlanDataset(payload);
+      case "source_validate_configuration":
+        return sourceValidateConfiguration(payload);
+      case "source_preview_configuration":
+        return sourcePreviewConfiguration(payload);
       case "stripe_official_plan_dataset":
         return stripeOfficialPlanDataset(payload);
       case "stripe_official_validate_configuration":
@@ -677,7 +767,7 @@ ${ENTITY_CREATION_RULES}
 - List and identify appropriate supported source connections
 - Retrieve database schemas with tables, columns, and sample data
 - Generate source queries from natural language for supported sources
-- Use source-owned AI tools for configuration-based sources such as Stripe Official
+- Use source-owned AI tools for configuration-based sources
 - Execute source queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
@@ -708,14 +798,16 @@ ${ENTITY_CREATION_RULES}
      * Call run_query to execute the SQL and get results
      * Summarize the results
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
-   - For Stripe Official connections:
-     * Call source_get_capabilities or source_list_resources when you need Stripe context
-     * Call stripe_official_plan_dataset with the user's business question
-     * MRR, ARR, ARPA, churn rates, net cash flow, and customer lifetime value MUST use the compiled_metric configuration returned by stripe_official_plan_dataset. Never substitute net revenue, gross revenue, payment counts, invoices, refunds, or balance transactions for these business metrics.
-     * Call stripe_official_preview_configuration when you need rows before answering
+   - For source-owned configuration connections:
+     * Call source_get_capabilities or source_list_resources when you need source context
+     * Call source_plan_dataset with the user's business question. Do not invent API routes or configuration fields.
+     * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
+     * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
      * For charts, pass the planned configuration to create_temporary_chart by default
      * If the user explicitly names a dashboard/project, create the dataset with create_dataset and then place the chart with create_chart using the planned chartSpec bindings
-     * Never use generate_query or fake API routes for Stripe Official
+     * If a source tool returns status="needs_more_context" without modelFallbackAllowed, stop the creation flow and guide the user with the tool message. If editConnectionUrl is present, include it as a markdown link. If contextInstructions or exampleAiContext are present, summarize exactly what to paste.
+     * If a chart creation tool returns chart_created=true and snapshot_status="unavailable", say the chart was created and mention only that the rendered preview is not available yet. Do not describe that as a failed or blocked chart.
+     * Never use generate_query for configuration-based sources
 
 2. When creating charts - CRITICAL CHART PLACEMENT RULES:
    
@@ -1104,6 +1196,38 @@ function buildAssistantMessageFromResponse(response) {
   };
 }
 
+function parseToolResultContent(content) {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    return null;
+  }
+}
+
+function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}) {
+  const createdCharts = toolResults
+    .map((result) => parseToolResultContent(result.content))
+    .filter((result) => result?.chart_created || result?.chart_id);
+
+  if (createdCharts.length > 0) {
+    const chartNames = createdCharts
+      .map((result) => result.name)
+      .filter(Boolean);
+
+    if (chartNames.length > 0) {
+      return `I created ${chartNames.join(", ")}.`;
+    }
+
+    return `I created ${createdCharts.length === 1 ? "the chart" : `${createdCharts.length} charts`}.`;
+  }
+
+  if (snapshots.length > 0) {
+    return `I created ${snapshots.length === 1 ? "the chart" : `${snapshots.length} charts`}.`;
+  }
+
+  return "I completed the requested action, but I could not generate a final text response. Please try again or rephrase the request.";
+}
+
 function buildUsageRecordFromResponse(response, elapsedMs, model) {
   if (!response?.usage) {
     return null;
@@ -1305,11 +1429,15 @@ async function orchestrate(
   // Get available tools in Responses API format
   const toolDefinitions = await availableTools();
   const tools = buildResponseTools(toolDefinitions);
+  const toolDisplayNameByName = new Map(
+    toolDefinitions.map((tool) => [tool.name, tool.displayName || tool.name])
+  );
 
   // Track all usage records (one per API call)
   const usageRecords = [];
   // Track snapshots from chart creation/update tools
   const snapshots = [];
+  let lastToolResults = [];
 
   const createModelResponse = async () => {
     const startTime = Date.now();
@@ -1319,7 +1447,7 @@ async function orchestrate(
       input: buildResponseInputFromMessages(modelMessages),
       tools,
       tool_choice: "auto",
-      parallel_tool_calls: true,
+      parallel_tool_calls: false,
       reasoning: {
         effort: "medium",
       },
@@ -1357,9 +1485,18 @@ async function orchestrate(
     // Emit progress for tool execution
     if (conversation?.id && assistantMessage.tool_calls.length > 0) {
       const toolNames = assistantMessage.tool_calls.map((tc) => tc.function.name);
-      emitProgressEvent(socketManager, conversation.id, "EXECUTION_START", {
+      const toolDisplayNames = toolNames.map((toolName) => toolDisplayNameByName.get(toolName) || toolName);
+      emitProgressEvent(socketManager, conversation.id, "TOOL_STARTED", {
         tools: toolNames,
-        message: `Executing ${toolNames.length} tool${toolNames.length > 1 ? "s" : ""}: ${toolNames.join(", ")}`
+        toolDisplayNames,
+        toolEvents: toolNames.map((toolName, index) => ({
+          type: "tool_started",
+          toolName,
+          displayName: toolDisplayNames[index],
+          status: "running",
+        })),
+        status: "running",
+        message: toolDisplayNames.join(", ")
       });
     }
 
@@ -1372,6 +1509,9 @@ async function orchestrate(
         // Inject team_id into all team-scoped tools so they cannot access cross-team resources.
         if (TEAM_SCOPED_TOOLS.has(toolName)) {
           toolArgs.team_id = teamId;
+        }
+        if (ORIGINAL_QUESTION_TOOLS.has(toolName)) {
+          toolArgs.original_question = question;
         }
 
         // Call progress callback before tool execution
@@ -1446,6 +1586,7 @@ async function orchestrate(
 
     persistedMessages.push(...toolResults);
     modelMessages.push(...toolResults);
+    lastToolResults = toolResults;
 
     // Check if any tool requires user input
     const needsDisambiguation = toolResults.some(
@@ -1473,9 +1614,14 @@ async function orchestrate(
 
       return {
         needs_user_input: true,
+        message: disambiguationRequest.prompt || "I need one more choice before I can continue.",
         prompt: disambiguationRequest.prompt,
         options: disambiguationRequest.options,
         conversationHistory: persistedMessages,
+        usage: buildLegacyUsageFromResponse(response),
+        usageRecords,
+        iterations,
+        snapshots,
       };
     }
 
@@ -1483,6 +1629,13 @@ async function orchestrate(
     // oxlint-disable-next-line no-await-in-loop
     response = await createModelResponse();
     assistantMessage = buildAssistantMessageFromResponse(response);
+  }
+
+  if (!assistantMessage.content) {
+    assistantMessage.content = buildFallbackAssistantMessage({
+      toolResults: lastToolResults,
+      snapshots,
+    });
   }
 
   // Add final assistant message
@@ -1527,5 +1680,6 @@ module.exports = {
   buildSemanticLayer,
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  buildFallbackAssistantMessage,
   buildUsageRecordFromResponse,
 };

@@ -1,4 +1,5 @@
 const protocol = require("./googleAnalytics.protocol");
+const googleAnalyticsAi = require("./ai/googleAnalytics.ai");
 
 module.exports = {
   id: "googleAnalytics",
@@ -29,14 +30,15 @@ module.exports = {
       dashboards: true,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
-      hasSourceInstructions: false,
-      hasTools: false,
+      hasSourceInstructions: true,
+      hasTools: true,
     },
   },
 
   backend: {
     ...protocol,
+    ai: googleAnalyticsAi,
   },
 };

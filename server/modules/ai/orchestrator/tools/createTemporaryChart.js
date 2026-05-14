@@ -5,20 +5,35 @@ const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const {
   removeCompiledMetricAccumulation,
-  repairSourceDatasetIntent,
+  repairSourceDatasetIntentAsync,
 } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
+const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+
+function resolveXAxis({
+  chartType, xAxis, yAxis, spec = {}
+}) {
+  if (chartType === "table") {
+    return xAxis ?? spec.xAxis ?? "root[]";
+  }
+
+  if (["kpi", "avg", "gauge"].includes(chartType)) {
+    return xAxis ?? spec.xAxis ?? yAxis ?? spec.yAxis;
+  }
+
+  return xAxis ?? spec.xAxis;
+}
 
 async function createTemporaryChart(payload) {
   let {
     connection_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
-    xAxis, xAxisOperation, yAxis, yAxisOperation = "none", dateField, dateFormat,
-    query, conditions = [], configuration = {}, variables = [], transform = null,
+    xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
+    query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = [], spec = {}, team_id, formula, seriesConfiguration,
   } = payload;
 
@@ -39,13 +54,26 @@ async function createTemporaryChart(payload) {
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
     const source = requireSupportedSourceForConnection(connection);
 
-    const repairedPayload = repairSourceDatasetIntent(source, {
+    const repairedPayload = await repairSourceDatasetIntentAsync(source, {
       name,
       question: payload.question,
+      original_question: payload.original_question,
+      query,
+      method,
+      route,
+      itemsLimit,
+      conditions,
       configuration,
+      connection,
       spec,
     });
+    query = repairedPayload.query ?? query;
     configuration = repairedPayload.configuration;
+    method = repairedPayload.method ?? method;
+    route = repairedPayload.route ?? route;
+    itemsLimit = repairedPayload.itemsLimit ?? itemsLimit;
+    conditions = repairedPayload.conditions ?? conditions;
+    variables = repairedPayload.variables ?? variables;
     spec = repairedPayload.spec || spec;
     const chartSanitization = removeCompiledMetricAccumulation({
       configuration,
@@ -55,6 +83,10 @@ async function createTemporaryChart(payload) {
     });
     subType = chartSanitization.subType;
     spec = chartSanitization.spec;
+    const chartType = type || spec.type || "line";
+    const resolvedXAxis = resolveXAxis({
+      chartType, xAxis, yAxis, spec
+    });
 
     // Find the temporary preview project for this team
     const ghostProject = await db.Project.findOne({
@@ -78,9 +110,21 @@ async function createTemporaryChart(payload) {
       variableBindings,
       dataRequests: [{
         connection_id,
+        method,
+        route,
+        itemsLimit,
         query,
+        conditions,
         configuration: configuration || {},
         variables: variables || [],
+        useGlobalHeaders: repairedPayload.useGlobalHeaders ?? payload.useGlobalHeaders,
+        headers: repairedPayload.headers ?? payload.headers,
+        body: repairedPayload.body ?? payload.body,
+        pagination: repairedPayload.pagination ?? payload.pagination,
+        items: repairedPayload.items ?? payload.items,
+        offset: repairedPayload.offset ?? payload.offset,
+        paginationField: repairedPayload.paginationField ?? payload.paginationField,
+        template: repairedPayload.template ?? payload.template,
         transform: transform || null
       }],
       main_dr_index: 0
@@ -95,7 +139,7 @@ async function createTemporaryChart(payload) {
     const chart = await chartController.createWithChartDatasetConfigs({
       project_id: ghostProject.id,
       name: name || "AI Generated Chart",
-      type: type || spec.type || "line",
+      type: chartType,
       subType: subType || spec.subType,
       draft: false,
       // oxlint-disable-next-line no-nested-ternary
@@ -124,10 +168,10 @@ async function createTemporaryChart(payload) {
       ranges: ranges || spec.ranges,
       chartDatasetConfigs: [{
         dataset_id: dataset.id,
-        xAxis: xAxis ?? spec.xAxis,
+        xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? spec.xAxisOperation,
         yAxis: yAxis ?? spec.yAxis,
-        yAxisOperation: yAxisOperation ?? spec.yAxisOperation,
+        yAxisOperation: yAxisOperation ?? spec.yAxisOperation ?? "none",
         dateField: dateField ?? spec.dateField,
         dateFormat: dateFormat ?? spec.dateFormat,
         conditions: conditions ?? spec.conditions,
@@ -157,6 +201,8 @@ async function createTemporaryChart(payload) {
     }
 
     return {
+      status: "ok",
+      chart_created: true,
       chart_id: chart.id,
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
@@ -164,7 +210,13 @@ async function createTemporaryChart(payload) {
       type: chart.type,
       project_id: ghostProject.id,
       is_temporary: true,
+      visibility: "temporary",
+      chart_url: `${clientUrl}/dashboard/${ghostProject.id}/chart/${chart.id}/edit`,
       snapshot,
+      snapshot_status: snapshot ? "available" : "unavailable",
+      snapshot_note: snapshot
+        ? null
+        : "The chart was created, but a rendered snapshot is not available yet.",
       intent_repair: repairedPayload.intentRepair,
       chart_sanitization: chartSanitization.accumulationRemoved
         ? { removedAccumulation: true }

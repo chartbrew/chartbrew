@@ -1,24 +1,24 @@
 # Source plugin guide
 
-This guide is the implementation checklist for adding or migrating a Chartbrew source in `chartbrew-os`.
+Use this checklist when adding, migrating, or changing a Chartbrew source.
 
-Use it together with:
+Related docs:
 
 - [`chartbrew-source-plugin-initial-spec.md`](./chartbrew-source-plugin-initial-spec.md)
 - [`chartbrew-source-plugin-progress.md`](./chartbrew-source-plugin-progress.md)
 
-## Principles
+## Core rules
 
-- Keep source-specific implementation with the source plugin.
-- Prefer registry and capability checks over `connection.type` or `connection.subType` branches.
-- Keep server runtime availability separate from frontend creation availability.
-- Migrate one source at a time, but remove old branches for that migrated source in the same change.
-- Do not keep legacy helper routes, compatibility thunks, or controller branches unless an active UI or API caller still needs them.
-- Branded API sources can use the shared API protocol when they do not need custom behavior. Do not create a native protocol just to wrap the API protocol.
+- Keep source-specific runtime, UI, templates, and AI behavior owned by the source plugin.
+- Prefer registry/capability checks over `connection.type` and `connection.subType` branches.
+- Migrate one source at a time and remove old branches for that source in the same change.
+- Keep backend availability separate from frontend creation availability.
+- Reuse shared protocols only when behavior is genuinely shared.
+- Do not add helper routes, compatibility thunks, or controller branches unless an active caller still needs them.
 
 ## Source identity
 
-Every source needs a stable plugin `id`, plus the persisted connection identity:
+Each source has a registry identity plus persisted connection identity:
 
 ```js
 {
@@ -28,91 +28,61 @@ Every source needs a stable plugin `id`, plus the persisted connection identity:
 }
 ```
 
-Rules:
+- `id`: registry key for UI, templates, source lookup, and tests.
+- `type`: persisted execution family, such as `api`, `postgres`, `mongodb`, or `customerio`.
+- `subType`: persisted brand/variant when needed.
+- Plain sources can use the same value for all three.
+- Branded API sources should use `type: "api"` and their brand as `subType`.
+- Variants should declare `dependsOn: ["<sourceId>"]`.
 
-- `id` is the source registry key used by UI, templates, and plugin lookup.
-- `type` is the persisted execution family, such as `api`, `postgres`, `mongodb`, or `customerio`.
-- `subType` is the persisted brand or variant when needed.
-- For plain protocol sources, `id`, `type`, and `subType` can all match.
-- For branded API sources, keep `type: "api"` and use `subType` for the brand.
-- For variants that depend on an existing source plugin, add `dependsOn: ["<sourceId>"]`.
+## Availability
 
-## Source availability
-
-Source disabling has two independent axes:
-
-- Backend/server disabling means Chartbrew must not make outbound requests to the source.
-- Frontend/UI disabling means users cannot create new connections for the source from the UI.
-
-Model this with an optional availability block:
+Use an optional `availability` block:
 
 ```js
 availability: {
-  server: {
-    enabled: true,
-  },
-  ui: {
-    canCreateConnections: true,
-  },
+  server: { enabled: true },
+  ui: { canCreateConnections: true },
 }
 ```
 
-Omitted values should default to enabled/creatable.
+- Server disabling uses `CB_DISABLED_SERVER_SOURCES`.
+- UI creation disabling uses `VITE_DISABLED_UI_SOURCES`.
+- Do not remove disabled sources from the registry; existing connections still need metadata, logos, builders, and clear errors.
+- Enforce server disabling before hooks that can call a source: connection tests, previews, `runDataRequest`, metadata/schema loading, actions, and AI tools.
+- UI disabling should only hide new-connection creation. Existing edit/build flows must still resolve the source.
 
-Server runtime overrides use `CB_DISABLED_SERVER_SOURCES`. Frontend creation overrides use `VITE_DISABLED_UI_SOURCES` because the client is built with Vite.
+## File layout
 
-Do not remove disabled sources from the registry. Existing connections still need to resolve to their source metadata so Chartbrew can render names, logos, edit screens, builders, and clear disabled-source errors.
-
-Server-side disabling must be enforced before every hook that can call the external source:
-
-- `prepareConnectionData`
-- `testConnection`
-- `testUnsavedConnection`
-- `previewDataRequest`
-- `runDataRequest`
-- `getBuilderMetadata` when it loads remote metadata
-- `getSchema`
-- `actions`
-- AI/orchestrator source tools
-
-UI-side disabling should only filter creation surfaces. Use a creatable-source list for the connection picker, but keep `getSourcePlugin(id)` and `getSourceForConnection(connection)` able to return UI-disabled sources for existing connections.
-
-## File naming
-
-Use source-prefixed filenames so source files are easy to find.
-
-Backend source files use dot-separated role names:
+Backend:
 
 ```txt
 server/sources/plugins/<source>/<source>.plugin.js
 server/sources/plugins/<source>/<source>.protocol.js
 server/sources/plugins/<source>/<source>.connection.js
+server/sources/plugins/<source>/ai/<source>.ai.js
+server/sources/plugins/<source>/templates/
 server/sources/shared/<shared-helper>.js
 ```
 
-Frontend source UI files use lowercase kebab-case:
+Frontend:
 
 ```txt
+client/src/sources/<source>/<source>.source.js
 client/src/sources/<source>/<source>-connection-form.jsx
 client/src/sources/<source>/<source>-builder.jsx
 client/src/sources/<source>/<source>-resource-query.jsx
 client/src/sources/<source>/<source>-template-setup.jsx
-client/src/sources/shared/<shared-ui>/
+client/src/sources/<source>/assets/
 ```
 
-Keep React component names PascalCase inside the files. The filename is for navigation; the exported component name should stay idiomatic React.
+Use source-prefixed filenames. Keep React component names PascalCase inside files.
 
 ## Backend checklist
 
-### 1. Create the source plugin
+### 1. Create the plugin
 
-Add a file:
-
-```txt
-server/sources/plugins/<sourceId>/<sourceId>.plugin.js
-```
-
-The plugin should export source metadata, capabilities, backend behavior, and optional template metadata:
+Add `server/sources/plugins/<sourceId>/<sourceId>.plugin.js`:
 
 ```js
 const protocol = require("./<sourceId>.protocol");
@@ -125,12 +95,6 @@ module.exports = {
   name: "<Display name>",
   category: "<category>",
   description: "<short description>",
-  availability: {
-    server: {
-      enabled: true,
-    },
-  },
-
   capabilities: {
     connection: {
       supportsTest: true,
@@ -158,50 +122,32 @@ module.exports = {
       hasTools: false,
     },
   },
-
   backend: {
     ...protocol,
   },
 };
 ```
 
-Use Stripe as the branded API example:
+Examples:
 
-- `server/sources/plugins/stripe/stripe.plugin.js`
-- `server/sources/shared/protocols/api.protocol.js`
+- Branded shared API: `server/sources/plugins/stripe/stripe.plugin.js`
+- Custom protocol: `server/sources/plugins/customerio/customerio.plugin.js`
+- Shared SQL wrapper: `server/sources/plugins/postgres/postgres.protocol.js`
 
-Use Customer.io as the custom protocol example:
+### 2. Register it
 
-- `server/sources/plugins/customerio/customerio.plugin.js`
-- `server/sources/plugins/customerio/customerio.protocol.js`
-- `server/sources/plugins/customerio/customerio.connection.js`
+Update `server/sources/index.js`.
 
-### 2. Register the plugin
-
-Update:
-
-```txt
-server/sources/index.js
-```
-
-Import the plugin and add it to the `sources` array. The registry validates required fields and exposes:
+The registry provides:
 
 - `getSourceById(id)`
 - `getSourceForConnection(connection)`
 - `findSourceForConnection(connection)`
 - `getSourceSummaries()`
 
-If a source can be disabled at runtime, add the availability override near the registry/config layer and enforce it from shared source execution wrappers. Do not make each controller remember the same disabled-source check.
+### 3. Add protocol behavior
 
-### 3. Add or reuse a protocol module
-
-Source-specific protocol modules live inside the source plugin folder:
-
-```txt
-server/sources/plugins/<sourceId>/
-```
-
-A backend protocol can implement:
+Implement only what the source needs:
 
 - `testConnection({ connection })`
 - `testUnsavedConnection({ connection, extras })`
@@ -211,38 +157,19 @@ A backend protocol can implement:
 - `getBuilderMetadata({ connection, dataRequest, options })`
 - `getSchema({ connection, dataRequest })`
 - `applyVariables({ dataRequest, variables })`
-- `ai.generateQuery({ schema, question, conversationHistory, currentQuery, connection, dataRequest })`
 - `actions`
 
-Only implement what the source needs.
+Rules:
 
-`prepareConnectionData(...)` runs before `ConnectionController.create(...)` in `server/api/ConnectionRoute.js`. Use it for source-owned create-time enrichment, such as loading a SQL schema before the connection is persisted. It should return the connection payload to persist. If enrichment is best-effort, catch source errors and return the original connection object so users can still save and test manually.
+- Keep custom runtime behavior in source-owned files, not controllers.
+- `prepareConnectionData(...)` may enrich connection payloads before save; catch best-effort failures and return the original connection.
+- Variable substitution is source-owned through `backend.applyVariables(...)`; the dispatcher is `server/sources/applySourceVariables.js`.
+- Branded API sources can reuse `server/sources/shared/protocols/api.protocol.js`.
+- SQL variants can reuse `server/sources/shared/sql/sql.protocol.js`, but still keep source-owned wrappers for source identity, defaults, AI, templates, and variants.
 
-If the source has custom runtime behavior, keep it in `server/sources/plugins/<source>/<source>.protocol.js` or a sibling source-owned implementation file. Do not add new custom source methods to `ConnectionController`.
+### 4. Add actions only when needed
 
-Variable substitution is source-owned. The public dispatcher is `server/sources/applySourceVariables.js`, which resolves `backend.applyVariables(...)` from the source registry. Keep concrete substitution logic beside the protocol, such as `server/sources/shared/sql/sql.variables.js`, `server/sources/shared/protocols/api.variables.js`, or `server/sources/plugins/<source>/<source>.variables.js`. `server/modules/applyVariables.js` is only a compatibility wrapper for older imports.
-
-If the source only brands the API connector, reuse `server/sources/shared/protocols/api.protocol.js`.
-
-SQL sources can reuse the shared SQL runtime without giving up source ownership:
-
-```txt
-server/sources/shared/sql/externalDbConnection.js
-server/sources/shared/sql/sql.protocol.js
-```
-
-The source plugin should still keep a source-owned protocol wrapper, for example:
-
-```txt
-server/sources/plugins/postgres/postgres.protocol.js
-server/sources/plugins/mysql/mysql.protocol.js
-```
-
-That wrapper should pass source-specific details such as `connectionType`, AI behavior, defaults, templates, and variant handling into the shared SQL helpers. Keep variants as separate plugins when they can have different templates, AI harnesses, setup defaults, or UI behavior. For example, a future TimescaleDB plugin should declare `dependsOn: ["postgres"]` and depend on the Postgres/shared SQL behavior from its own plugin wrapper instead of being folded into a generic shared branch.
-
-### 4. Move source-specific actions
-
-For source-specific UI helper calls, expose actions from the plugin:
+Expose source-specific helper calls as plugin actions:
 
 ```js
 const actions = {
@@ -252,9 +179,7 @@ const actions = {
 };
 
 module.exports = {
-  // ...
   capabilities: {
-    // ...
     actions: Object.keys(actions),
   },
   backend: {
@@ -270,39 +195,32 @@ Actions are called through:
 POST /team/:team_id/connections/:connection_id/source-action
 ```
 
-Do not add new routes like `/helper/:method`. The route already:
+Do not add new `/helper/:method` routes.
 
-- verifies token
-- checks connection permissions
-- resolves the source from the connection
-- rejects actions not exposed by the plugin
+### 5. Route runtime through the registry
 
-### 5. Route backend execution through the registry
-
-Migrate runtime dispatch by asking the registry first.
-
-Current runtime dispatcher:
+Runtime execution should resolve the source from:
 
 ```txt
 server/sources/runSourceDataRequest.js
 ```
 
-Current callers:
+Callers:
 
 - `server/controllers/DataRequestController.js`
 - `server/controllers/DatasetController.js`
 
-When migrating a source, make sure the source is handled by `source.backend.runDataRequest(...)` and remove any old fallback branch for that same source.
+When migrating a source, route it through `source.backend.runDataRequest(...)` and remove old fallback branches.
 
-### 6. Route connection tests and previews through the plugin
+### 6. Route tests/previews through the plugin
 
-Current route:
+Source-aware connection routes live in:
 
 ```txt
 server/api/ConnectionRoute.js
 ```
 
-The following paths should resolve migrated sources through plugin methods first:
+These paths should use plugin methods:
 
 - `GET /team/:team_id/connections/:connection_id/test`
 - `POST /team/:team_id/connections/:type/test`
@@ -310,71 +228,39 @@ The following paths should resolve migrated sources through plugin methods first
 - `POST /team/:team_id/connections/:connection_id/apiTest`
 - `POST /team/:team_id/connections/:connection_id/source-action`
 
-For branded API sources such as Stripe, `apiTest` should call `source.backend.previewDataRequest(...)` through the shared API protocol.
+### 7. Add backend tests
 
-### 7. Move implementation ownership
-
-When migrating a source, move source-specific runtime code out of shared controllers and into source-owned files.
-
-Good:
-
-```txt
-server/sources/plugins/customerio/customerio.protocol.js
-server/sources/plugins/customerio/customerio.connection.js
-```
-
-Avoid:
-
-```txt
-server/controllers/ConnectionController.js -> runCustomerio()
-server/controllers/ConnectionController.js -> testCustomerio()
-server/api/ConnectionRoute.js -> /helper/:method
-```
-
-Shared runtime utilities can live outside the source if they are genuinely reusable. Existing example:
-
-```txt
-server/sources/shared/connectorRuntime.js
-```
-
-### 8. Add backend tests
-
-Update or add tests in:
+Update or add:
 
 ```txt
 server/tests/unit/sourceRegistry.test.js
 server/tests/integration/connectionRoute.security.test.js
 ```
 
-Minimum coverage for a migrated source:
+Minimum checks:
 
-- registry resolves by `id`
-- registry resolves from persisted connection shape
-- source exposes expected backend methods
-- runtime dispatcher returns a runner for migrated sources
-- protected source actions reject unlisted actions
-- project-scoped users cannot call source actions on restricted connections
-- API preview/test routes use plugin hooks for migrated API sources
-
-Run focused verification:
-
-```sh
-cd server && npm run test:run -- tests/unit/sourceRegistry.test.js tests/integration/connectionRoute.security.test.js
-cd server && npm run lint
-```
+- resolves by `id`
+- resolves from persisted connection shape
+- exposes expected backend methods
+- runtime dispatcher finds the migrated source
+- unlisted actions are rejected
+- project-scoped users cannot access restricted source actions
+- preview/test routes call plugin hooks
 
 ## Frontend checklist
 
-### 1. Add source definition metadata
+### 1. Add source metadata
 
-Create source-local metadata:
+Create:
 
 ```txt
 client/src/sources/<source>/<source>.source.js
 client/src/sources/<source>/assets/
 ```
 
-Add the source metadata, capabilities, assets, defaults, and templates:
+Keep `*.source.js` free of React imports.
+
+Typical shape:
 
 ```js
 {
@@ -384,9 +270,7 @@ Add the source metadata, capabilities, assets, defaults, and templates:
   name: "<Display name>",
   category: "<category>",
   availability: {
-    ui: {
-      canCreateConnections: true,
-    },
+    ui: { canCreateConnections: true },
   },
   capabilities: {
     ai: { canGenerateQueries: false },
@@ -400,17 +284,9 @@ Add the source metadata, capabilities, assets, defaults, and templates:
 }
 ```
 
-Keep `*.source.js` free of React component imports. Builders can import metadata/defaults without pulling in UI components. `client/src/sources/definitions.js` is only the temporary legacy bridge for sources that have not been moved into source-local modules yet.
+### 2. Wire components
 
-### 2. Wire frontend components
-
-Update:
-
-```txt
-client/src/sources/index.js
-```
-
-Add source-specific components:
+Update `client/src/sources/index.js`:
 
 ```js
 import ConnectionForm from "./<source>/<source>-connection-form";
@@ -426,80 +302,29 @@ const FRONTEND_BY_SOURCE_ID = {
 };
 ```
 
-Current registry-driven screens:
+Rules:
 
-- `client/src/containers/Connections/ConnectionWizard.jsx`
-- `client/src/containers/Connections/ConnectionTemplates.jsx`
-- `client/src/containers/Dataset/DatasetQuery.jsx`
-- `client/src/containers/AddChart/components/DatarequestModal.jsx`
+- Do not add source-specific form/builder branches to shared screens.
+- Keep custom template setup UI under `client/src/sources/<source>/`.
+- UI-disabled sources should be hidden only from creation; existing edit/builder flows still resolve by registry.
 
-Do not add new explicit form or builder branches to those screens.
-Do not import source-specific template setup components into shared connection screens.
-When a source needs custom chart-template onboarding, keep that React component under `client/src/sources/<source>/` and expose it as `frontend.ChartTemplateSetup` from `client/src/sources/index.js`.
+### 3. Use source actions
 
-For UI-disabled sources, filter only the new-connection picker. Existing connection edit and data-request builder flows should still resolve the source plugin by id or persisted connection shape.
+Use `runSourceAction(...)` from `client/src/slices/connection.js`.
 
-### 3. Use source actions from UI
+Do not add `runHelperMethod` thunks or helper routes.
 
-Use:
+### 4. Use registry logos
 
-```js
-runSourceAction({
-  team_id,
-  connection_id,
-  action,
-  params,
-})
-```
-
-from:
-
-```txt
-client/src/slices/connection.js
-```
-
-Do not add new `runHelperMethod` thunks or route calls.
-
-### 4. Use registry-first logos
-
-For connection display logos, use:
-
-```txt
-client/src/modules/getConnectionLogo.js
-```
-
-This resolves logos from the source registry.
-
-For source picker cards where the source object is already available, `getSourceLogo(source, isDark)` is fine.
-
-### 5. Add or update frontend verification
-
-Run:
-
-```sh
-cd client && npm run lint
-cd client && npm run build
-```
-
-If you changed screens materially, test the relevant flow in the browser:
-
-- connection creation
-- connection edit
-- dataset request builder opening existing requests
-- data-request preview/run
-- any source action dropdowns or resource pickers
+- Connection display: `client/src/modules/getConnectionLogo.js`
+- Source picker cards: `getSourceLogo(source, isDark)`
 
 ## Template checklist
 
 If the source ships built-in chart templates:
 
-1. Add template files under:
-
-   ```txt
-   server/sources/plugins/<sourceId>/templates/
-   ```
-
-2. Add template metadata to the backend plugin:
+1. Put files under `server/sources/plugins/<sourceId>/templates/`.
+2. Add backend template metadata:
 
    ```js
    const path = require("path");
@@ -513,7 +338,7 @@ If the source ships built-in chart templates:
    }
    ```
 
-3. Add frontend source metadata:
+3. Add frontend template metadata:
 
    ```js
    capabilities: {
@@ -528,17 +353,10 @@ If the source ships built-in chart templates:
    },
    ```
 
-4. If the source needs a custom setup UI for choosing or grouping chart templates, add it under:
+4. Custom setup UI goes in `client/src/sources/<sourceId>/<sourceId>-template-setup.jsx`.
+5. Built-in templates must resolve through registered source plugins.
 
-   ```txt
-   client/src/sources/<sourceId>/<sourceId>-template-setup.jsx
-   ```
-
-   Then expose it through `frontend.ChartTemplateSetup` in `client/src/sources/index.js`. Shared screens should only ask the source registry for this component.
-
-5. Ensure `ChartTemplateController` and `server/sources/shared/templates/chartTemplateLoader.js` resolve built-in templates through registered source plugins, not through standalone source folders or controller-local constants.
-
-Template charts can bind one dataset with `cdc` or multiple datasets with `cdcs`:
+Template chart bindings:
 
 ```js
 {
@@ -549,16 +367,11 @@ Template charts can bind one dataset with `cdc` or multiple datasets with `cdcs`
     xAxis: "root[].period",
     yAxis: "root[].value",
     legend: "Gross revenue",
-  }, {
-    datasetTemplateId: "fees",
-    xAxis: "root[].period",
-    yAxis: "root[].value",
-    legend: "Fees",
   }],
 }
 ```
 
-Use `layoutIntent` for template-owned dashboard placement. Do not hard-code React Grid Layout coordinates in template JSON unless there is a source-specific reason that cannot be expressed with an intent. `ChartTemplateController` calculates concrete breakpoint layouts from the selected chart set and the existing dashboard charts.
+Use `layoutIntent` instead of hard-coded grid coordinates:
 
 ```js
 {
@@ -570,38 +383,144 @@ Use `layoutIntent` for template-owned dashboard placement. Do not hard-code Reac
 }
 ```
 
-Supported layout intent kinds are `kpi`, `trend`, `comparison`, and `table`. Lower `priority` values are placed first. Put Chartbrew-supported chart options under `chart`, such as `mode`, `showGrowth`, `invertGrowth`, `pointRadius`, `xLabelTicks`, `defaultRowsPerPage`, `timeInterval`, and `includeZeros`.
+Supported kinds: `kpi`, `trend`, `comparison`, `table`.
 
 ## AI/orchestrator checklist
 
-Do this after the source has backend runtime support.
+Pick exactly one runtime AI mode.
 
-For simple query generation, expose the source hook on the backend plugin:
+### Query-generation mode
+
+Use for SQL-like or Mongo-like sources where Chartbrew generates a read-only query over a schema.
+
+Capabilities:
+
+```js
+ai: {
+  canGenerateDatasets: true,
+  canGenerateQueries: true,
+  hasSourceInstructions: true,
+  hasTools: false,
+}
+```
+
+Backend wiring:
 
 ```js
 backend: {
   ...protocol,
   ai: {
+    getCapabilities: () => getQueryGenerationCapabilities("<sourceId>"),
     getSchema: protocol.getSchema,
     generateQuery: protocol.generateQuery,
+    instructions: getQueryGenerationInstructions("<sourceId>"),
   },
 }
 ```
 
-`DataRequestController.askAi(...)` resolves `backend.ai.generateQuery(...)` before falling back to the legacy SQL/MongoDB/ClickHouse switch. A source with `capabilities.ai.canGenerateQueries: true` must provide `backend.ai.generateQuery(...)`.
+Rules:
 
-Move hardcoded supported-source lists toward source capabilities in:
+- Put compact dialect hints in `server/sources/shared/ai/queryGenerationInstructions.js`.
+- Keep hints short: read-only, dialect syntax, date bucketing, limits, variables, caveats.
+- `get_schema` returns `sourceInstructions`.
+- `generate_query` injects `sourceInstructions` into the schema sent to `backend.ai.generateQuery(...)`.
+- Do not expose source-owned `planDataset`.
 
-- `server/modules/ai/orchestrator/entityCreationRules.js`
-- `server/modules/ai/orchestrator/tools/listConnections.js`
-- `server/modules/ai/orchestrator/tools/getSchema.js`
-- `server/modules/ai/orchestrator/orchestrator.js`
+### Source-owned configuration mode
 
-For query-generating sources, add source capabilities first, then route AI behavior from those capabilities.
+Use for sources where Chartbrew plans configuration, routes, paths, or API request options instead of free-form queries.
+
+Capabilities:
+
+```js
+ai: {
+  canGenerateDatasets: true,
+  canGenerateQueries: false,
+  hasSourceInstructions: true,
+  hasTools: true,
+}
+```
+
+Backend wiring:
+
+```js
+const sourceAi = require("./ai/<sourceId>.ai");
+
+backend: {
+  ...protocol,
+  ai: sourceAi,
+}
+```
+
+AI module path:
+
+```txt
+server/sources/plugins/<sourceId>/ai/<sourceId>.ai.js
+```
+
+Implement only needed methods:
+
+- `getCapabilities({ connection })`
+- `listResources({ connection })`
+- `getSchema({ connection })`
+- `getSampleData({ connection, resource, rowLimit })`
+- `planDataset({ connection, question, overrides })`
+- `validateConfiguration(configuration, { connection })`
+- `previewConfiguration({ connection, configuration, rowLimit })`
+- `listTemplates({ connection })`
+- `recommendTemplates({ connection, question })`
+
+Rules:
+
+- Use generic orchestrator tools from `server/modules/ai/orchestrator/tools/sourceTools.js`.
+- Do not add per-source top-level orchestrator tools.
+- Do not expose `generateQuery`.
+- Keep outputs compact, capped, and secret-free.
+- Do not return raw docs, auth headers, bearer tokens, OAuth tokens, or large schemas.
+- Generic API sources can use free-form AI Context; only recognizable provider hosts may allow model/provider fallback.
+
+Planner statuses:
+
+- `ok`: include source DataRequest fields and `chartSpec`
+- `needs_more_context`: include `message`, `requiredContext`, and optional edit/context guidance
+- `needs_disambiguation`: include compact `options`
+- `needs_model_planning`: only for generic API/provider fallback
+- `unsupported` or `error`: include actionable `message` or `errors`
+
+### Chart binding contract
+
+AI-created charts must persist safe ChartDatasetConfigs:
+
+- Table: planner may omit `xAxis` only if creation defaults it to `root[]`.
+- KPI/avg/gauge: require `yAxis`; missing `xAxis` must fall back to `yAxis`.
+- Line/bar/pie/doughnut/radar/polar: require both `xAxis` and `yAxis`.
+- Timeseries: provide date-compatible `xAxis` or `dateField` when date filtering is expected.
+
+Normalize or reject unsafe chart payloads before rendering.
+
+### Harness expectations
+
+When AI behavior changes, update:
+
+```txt
+server/tests/unit/sourceAiHarness.test.js
+```
+
+The harness is deterministic and must not call the LLM. It should check:
+
+- planner statuses, DataRequest shape, and chart specs
+- query-generation instructions through `get_schema` and `generate_query`
+- source-owned sources do not expose `generateQuery`
+- query-generation sources do not expose `planDataset`
+- generic `source_*` outputs are compact, capped, and secret-free
+- temporary and saved charts persist safe CDC bindings
+- high-risk tool sequences stay in the intended mode
+
+Keep fixtures small and invariant-focused. Add source-specific examples only for domain rules generic assertions cannot express.
 
 ## Cleanup checklist
 
-Before considering a source migrated, search for old source-specific branches:
+Search for old source branches:
 
 ```sh
 rg "<sourceId>|<Connection.type>|<Connection.subType>" server/controllers server/api client/src
@@ -614,19 +533,20 @@ Remove migrated-source branches from:
 - `DatasetController`
 - route-specific helper endpoints
 - frontend builder/form switch statements
-- one-off logo maps at display call sites
+- one-off logo maps
 
-It is acceptable for generic protocol code to mention protocol names. For example, the shared API protocol can remain API-specific, and `paginateRequests.js` can keep template-specific pagination behavior until that is deliberately migrated.
+Generic protocol files may still mention protocol names.
 
 ## Verification checklist
 
-Run at minimum:
+Run the relevant focused checks:
 
 ```sh
 cd server && npm run test:run -- tests/unit/sourceRegistry.test.js tests/integration/connectionRoute.security.test.js
+cd server && npm run test:run -- tests/unit/sourceAiHarness.test.js
 cd server && npm run lint
 cd client && npm run lint
 cd client && npm run build
 ```
 
-Add source-specific focused tests when templates, protocol behavior, schema loading, or AI behavior are touched.
+Add source-specific focused tests when templates, protocol behavior, schema loading, frontend flows, or AI behavior are touched.

@@ -13,6 +13,11 @@ const {
   getSupportedSourceIds,
 } = require("../../modules/ai/orchestrator/sourceSupport");
 const {
+  sourcePlanDataset,
+  sourceValidateConfiguration,
+  sourcePreviewConfiguration,
+} = require("../../modules/ai/orchestrator/tools/sourceTools");
+const {
   stripeOfficialPlanDataset,
   stripeOfficialValidateConfiguration,
 } = require("../../modules/ai/orchestrator/tools/stripeOfficialTools");
@@ -562,6 +567,9 @@ describe("Stripe Official AI layer", () => {
       "source_get_sample_data",
       "source_list_templates",
       "source_recommend_templates",
+      "source_plan_dataset",
+      "source_validate_configuration",
+      "source_preview_configuration",
       "stripe_official_plan_dataset",
       "stripe_official_validate_configuration",
       "stripe_official_preview_configuration",
@@ -593,6 +601,53 @@ describe("Stripe Official AI layer", () => {
     expect(db.Connection.findByPk).toHaveBeenCalledWith(42);
     expect(plan.status).toBe("ok");
     expect(validation.valid).toBe(true);
+  });
+
+  it("routes generic source planning tools through source-owned Stripe AI", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
+      id: 42,
+      team_id: 7,
+      type: "stripeOfficial",
+      subType: "stripeOfficial",
+      name: "Stripe",
+    });
+    const previewSpy = vi.spyOn(stripeOfficialProtocol, "previewDataRequest").mockResolvedValue({
+      responseData: {
+        data: [{ period: "2026-04-01", value: 1200 }],
+      },
+    });
+
+    const plan = await sourcePlanDataset({
+      connection_id: 42,
+      team_id: 7,
+      question: "Create an MRR chart",
+    });
+    const validation = await sourceValidateConfiguration({
+      connection_id: 42,
+      team_id: 7,
+      configuration: plan.configuration,
+    });
+    const preview = await sourcePreviewConfiguration({
+      connection_id: 42,
+      team_id: 7,
+      configuration: plan.configuration,
+      row_limit: 3,
+    });
+
+    expect(db.Connection.findByPk).toHaveBeenCalledWith(42);
+    expect(plan).toMatchObject({
+      status: "ok",
+      configuration: {
+        source: "stripeOfficial",
+        mode: "compiled_metric",
+        compiledMetric: "mrr",
+      },
+    });
+    expect(validation.valid).toBe(true);
+    expect(previewSpy).toHaveBeenCalledWith(expect.objectContaining({
+      connection: expect.objectContaining({ id: 42 }),
+    }));
+    expect(preview.rows).toEqual([{ period: "2026-04-01", value: 1200 }]);
   });
 
   it("creates configuration-backed Stripe datasets without requiring a query", async () => {

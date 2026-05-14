@@ -330,9 +330,10 @@ async function updateChart(payload) {
     const updatedChart = await db.Chart.findByPk(chart_id, {
       include: [{
         model: db.Project,
-        attributes: ["id", "name"]
+        attributes: ["id", "name", "ghost"]
       }]
     });
+    const isTemporary = !!updatedChart.Project?.ghost;
 
     // Take a snapshot of the updated chart for visualization
     let snapshot = null;
@@ -350,6 +351,9 @@ async function updateChart(payload) {
       name: updatedChart.name,
       type: updatedChart.type,
       project_id: updatedChart.project_id,
+      is_temporary: isTemporary,
+      visibility: isTemporary ? "temporary" : "dashboard",
+      ghost_project_id: isTemporary ? updatedChart.project_id : null,
       dashboard_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/dashboard`,
       chart_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
       snapshot,

@@ -98,6 +98,7 @@ async function moveChartToDashboard(payload) {
       chart_id,
       previous_project_id: chart.project_id,
       new_project_id: target_project_id,
+      visibility: "dashboard",
       dashboard_url: `${global.clientUrl}/dashboard/${target_project_id}`,
       chart_url: `${global.clientUrl}/dashboard/${target_project_id}/chart/${chart_id}/edit`,
     };

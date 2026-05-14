@@ -1,4 +1,8 @@
 const mongodbProtocol = require("./mongodb.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "mongodb",
@@ -31,7 +35,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -39,8 +43,10 @@ module.exports = {
   backend: {
     ...mongodbProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("mongodb"),
       getSchema: mongodbProtocol.getSchema,
       generateQuery: mongodbProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("mongodb"),
     },
   },
 };

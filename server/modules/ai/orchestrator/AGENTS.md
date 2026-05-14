@@ -22,7 +22,8 @@ When adding new AI capabilities:
 2. **Export the function** as the default export
 3. **Add the tool to `tools/index.js`** to make it available to the orchestrator
 4. **Update the `availableTools()` function** in `orchestrator.js` to define the tool schema for OpenAI
-5. **Add a case in `callTool()`** to route the tool call to your function
+5. **Add `displayName`** next to the technical `name`; the chat UI uses it for human-readable operation labels
+6. **Add a case in `callTool()`** to route the tool call to your function
 
 ### Tool Organization
 
@@ -142,4 +143,3 @@ The orchestrator uses OpenAI's function calling to:
 5. Return results to user
 
 Entity creation rules guide the AI in steps 4-5 to ensure proper database relationships and field values.
-

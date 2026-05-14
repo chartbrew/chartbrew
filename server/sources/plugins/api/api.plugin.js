@@ -1,3 +1,4 @@
+const apiAi = require("./ai/api.ai");
 const apiProtocol = require("../../shared/protocols/api.protocol");
 
 module.exports = {
@@ -28,14 +29,15 @@ module.exports = {
       dashboards: false,
     },
     ai: {
-      canGenerateDatasets: false,
+      canGenerateDatasets: true,
       canGenerateQueries: false,
-      hasSourceInstructions: false,
-      hasTools: false,
+      hasSourceInstructions: true,
+      hasTools: true,
     },
   },
 
   backend: {
     ...apiProtocol,
+    ai: apiAi,
   },
 };

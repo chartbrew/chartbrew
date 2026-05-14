@@ -25,7 +25,7 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { showAiModal } from "../../slices/ui";
 import { useTheme } from "../../modules/ThemeContext";
-import { findSourceForConnection } from "../../sources";
+import { findSourceForConnection, isSourceAiPowered } from "../../sources";
 
 function ConnectionTemplates() {
   const dispatch = useDispatch();
@@ -46,7 +46,8 @@ function ConnectionTemplates() {
   const source = findSourceForConnection(connection);
   const hasChartTemplates = Boolean(source?.capabilities?.nextSteps?.chartTemplates);
   const SourceChartTemplateSetup = source?.frontend?.ChartTemplateSetup;
-  const canUseAi = user?.id && team?.TeamRoles && canAccess("teamAdmin", user.id, team.TeamRoles);
+  const canUseAi = user?.id && team?.TeamRoles
+    && canAccess("teamAdmin", user.id, team.TeamRoles) && isSourceAiPowered(source);
 
   useEffect(() => {
     if (team?.id && params.connectionId) {

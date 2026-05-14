@@ -1,24 +1,26 @@
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
-import { Accordion, Avatar, Button, Chip, Dropdown, Input, InputGroup, Kbd, Label, ListBox, Modal, Popover, ProgressCircle, Separator, TextField, Tooltip } from "@heroui/react"
-import { LuArrowRight, LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuChevronDown, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuWrench, LuAtSign, LuLayoutGrid, LuPlug, LuLayers, LuSlack, LuX } from "react-icons/lu"
+import { Accordion, Avatar, Button, Chip, Dropdown, Kbd, Modal, Separator, Tooltip } from "@heroui/react"
+import { LuBrainCircuit, LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuCoins, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
+import { getAiConversation, getAiConversations, getAiTools, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { getChart } from "../../slices/chart";
-import Chart from "../Chart/Chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import isMac from "../../modules/isMac";
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
+import AiComposer from "./AiComposer";
+import AiContextPicker from "./AiContextPicker";
+import AiMessageGroup from "./AiMessageGroup";
+import AiProgress from "./AiProgress";
+import { getChartToolMessageInfo, groupAiMessages, humanizeToolName } from "./aiMessageUtils";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -35,22 +37,7 @@ function formatTokens(tokens) {
   return tokens.toString();
 }
 
-const components = {
-  code: ({ children }) => {
-    const formattedText = String(children).replace(/^`|`$/g, ""); // Strip backticks
-    return formattedText;
-  },
-  li: ({ children, className }) => {
-    // If this is a task list item, remove the bullet point and reduce padding
-    if (className?.includes("task-list-item")) {
-      return <li className={`${className} list-none -ml-6`}>{children}</li>;
-    }
-    return <li className={className}>{children}</li>;
-  }
-};
-
 function AiModal({ isOpen, onClose }) {
-  const [question, setQuestion] = useState("");
   const [conversations, setConversations] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +45,7 @@ function AiModal({ isOpen, onClose }) {
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
   const [teamUsage, setTeamUsage] = useState(null);
+  const [toolDisplayNames, setToolDisplayNames] = useState({});
   const [createdCharts, setCreatedCharts] = useState([]);
   const [selectedContext, setSelectedContext] = useState({
     multiSelect: [], // entities selected via "@" button (multiple allowed)
@@ -77,14 +65,14 @@ function AiModal({ isOpen, onClose }) {
   const projects = useSelector(selectProjects);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
-  const contextEntities = [
+  const contextEntities = useMemo(() => [
     ...projects.map((p) => ({ ...p, entity_type: "project" })),
     ...connections.map((c) => ({ ...c, entity_type: "connection" })),
     ...datasets.map((d) => ({ ...d, entity_type: "dataset" })),
-  ];
+  ], [projects, connections, datasets]);
 
   // Filter context entities based on search
-  const filteredContextEntities = contextEntities.filter((entity) => {
+  const filteredContextEntities = useMemo(() => contextEntities.filter((entity) => {
     if (!contextSearch.trim()) return true;
 
     const searchLower = contextSearch.toLowerCase();
@@ -95,7 +83,10 @@ function AiModal({ isOpen, onClose }) {
     return name.includes(searchLower) ||
            type.includes(searchLower) ||
            legend.includes(searchLower);
-  });
+  }), [contextEntities, contextSearch]);
+  const conversationGroups = useMemo(() => (
+    groupAiMessages(conversation?.full_history || [])
+  ), [conversation?.full_history]);
 
   // Helper to get display label for context entity
   const getContextLabel = (entity) => {
@@ -156,22 +147,16 @@ function AiModal({ isOpen, onClose }) {
       ];
 
       const chartMessages = allMessages
-        .filter(msg => msg.role === "tool")
-        .map(msg => {
-          try {
-            const content = JSON.parse(msg.content);
-            if ((msg.name === "create_chart" || msg.name === "update_chart" || msg.name === "create_temporary_chart") && content.chart_id) {
-              return {
-                chartId: content.chart_id,
-                projectId: content.project_id,
-                isUpdate: msg.name === "update_chart",
-                isTemporary: msg.name === "create_temporary_chart"
-              };
-            }
-          } catch (e) {
-            // Ignore parsing errors
-          }
-          return null;
+        .map((msg) => {
+          const chartInfo = getChartToolMessageInfo(msg);
+          if (!chartInfo) return null;
+
+          return {
+            chartId: chartInfo.chartId,
+            projectId: chartInfo.projectId,
+            isUpdate: chartInfo.type === "chart_updated" ||
+              ["update_chart", "update_dataset"].includes(chartInfo.toolName),
+          };
         })
         .filter(Boolean);
 
@@ -235,8 +220,9 @@ function AiModal({ isOpen, onClose }) {
 
   // Load conversations when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && team?.id) {
       loadConversations();
+      loadAiToolDisplayNames();
       // check the route params and add project and chart id to the context
       const projectId = parseInt(params?.projectId, 10);
       const chartId = parseInt(params?.chartId, 10);
@@ -263,7 +249,7 @@ function AiModal({ isOpen, onClose }) {
         setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
       }
     }
-  }, [isOpen]);
+  }, [isOpen, team?.id]);
 
   // Join conversation room when conversation changes
   useEffect(() => {
@@ -278,6 +264,10 @@ function AiModal({ isOpen, onClose }) {
         id: Date.now() + Math.random(),
         type: data.event,
         message: data.data?.message || "Processing...",
+        tools: data.data?.tools || [],
+        toolDisplayNames: data.data?.toolDisplayNames || data.data?.tool_display_names || [],
+        toolEvents: data.data?.toolEvents || data.data?.tool_events || [],
+        status: data.data?.status,
         timestamp: new Date(data.timestamp)
       }]);
     };
@@ -310,16 +300,28 @@ function AiModal({ isOpen, onClose }) {
     }
   };
 
-  const _onAskAi = async (e) => {
-    e.preventDefault();
-    // Allow submission if there's either a question or a selected context
-    const hasContent = question.trim() || selectedContext.multiSelect.length > 0 || selectedContext.singleSelect;
-    if (!hasContent || isLoading) return;
+  const loadAiToolDisplayNames = async () => {
+    try {
+      const data = await getAiTools(team.id);
+      const displayNames = {};
 
-    const userMessage = {
-      role: "user",
-      content: question.trim()
-    };
+      (data.tools || []).forEach((tool) => {
+        if (tool?.name) {
+          displayNames[tool.name] = tool.displayName || tool.display_name || humanizeToolName(tool.name);
+        }
+      });
+
+      setToolDisplayNames(displayNames);
+    } catch (error) {
+      console.error("Failed to load AI tool display names:", error);
+    }
+  };
+
+  const _onAskAi = async (questionText) => {
+    const submittedText = questionText || "";
+    // Allow submission if there's either a question or a selected context
+    const hasContent = submittedText.trim() || selectedContext.multiSelect.length > 0 || selectedContext.singleSelect;
+    if (!hasContent || isLoading) return;
 
     // Prepare context object (only multiSelect goes to context)
     let context = null;
@@ -329,13 +331,18 @@ function AiModal({ isOpen, onClose }) {
 
     setIsLoading(true);
     setProgressEvents([]);
-    let currentQuestion = question.trim();
+    let currentQuestion = submittedText.trim();
 
     // Append singleSelect to the question text
     if (selectedContext.singleSelect) {
       currentQuestion += (currentQuestion ? "\n\n" : "") + selectedContext.singleSelect.label;
     }
-    setQuestion("");
+
+    const userMessage = {
+      role: "user",
+      content: currentQuestion || selectedContext.multiSelect.map((entity) => entity.label).join("\n")
+    };
+
     setSelectedContext({
       multiSelect: [],
       singleSelect: null
@@ -625,649 +632,6 @@ function AiModal({ isOpen, onClose }) {
     setIsLoading(false);
   };
 
-  const _parseMessage = (message) => {
-    // Check if message is a tool call
-    if (message.tool_calls && message.tool_calls.length > 0) {
-      return {
-        type: "tool_call",
-        tools: message.tool_calls.map(tc => ({
-          name: tc.function.name,
-          args: JSON.parse(tc.function.arguments)
-        }))
-      };
-    }
-
-    // Check if message is a tool result
-    if (message.role === "tool") {
-      const content = JSON.parse(message.content);
-
-      // Check if this is a chart creation or update result
-      if ((message.name === "create_chart" || message.name === "update_chart" || message.name === "create_temporary_chart") && content.chart_id) {
-        const isTemporary = message.name === "create_temporary_chart";
-        return {
-          type: message.name === "create_chart" ? "chart_created" : message.name === "update_chart" ? "chart_updated" : "chart_temporary",
-          chartId: content.chart_id,
-          chartName: content.name,
-          chartType: content.type,
-          projectId: content.project_id || content.ghost_project_id,
-          dashboardUrl: content.dashboard_url,
-          chartUrl: content.chart_url,
-          isTemporary,
-          content: content
-        };
-      }
-
-      return {
-        type: "tool_result",
-        name: message.name,
-        content: content
-      };
-    }
-
-    // Check for cb-actions suggestions block
-    if (message.role === "assistant" && message.content) {
-      // Try multiple patterns to handle cases where AI forgets proper formatting
-      let cbActionsMatch = null;
-      let suggestionsData = null;
-
-      // First try the proper fenced code block format
-      cbActionsMatch = message.content.match(/```cb-actions\s*\n([\s\S]*?)\n```/);
-      if (cbActionsMatch) {
-        try {
-          suggestionsData = JSON.parse(cbActionsMatch[1]);
-        } catch (e) {
-          // Try parsing without the code block wrapper
-        }
-      }
-
-      // If that didn't work, try parsing cb-actions directly (fallback for when AI forgets backticks)
-      if (!suggestionsData) {
-        const directMatch = message.content.match(/cb-actions\s*(\{[\s\S]*?\})/);
-        if (directMatch) {
-          try {
-            suggestionsData = JSON.parse(directMatch[1]);
-          } catch (e) {
-            // Invalid JSON, continue to next fallback
-          }
-        }
-      }
-
-      // If we successfully parsed suggestions data, process it
-      if (suggestionsData && suggestionsData.version === 1 && Array.isArray(suggestionsData.suggestions)) {
-        // Remove the cb-actions block from content (try both formats)
-        let content = message.content
-          .replace(/```cb-actions\s*\n[\s\S]*?\n```/, "")
-          .replace(/cb-actions\s*\{[\s\S]*?\}/, "")
-          .trim();
-
-        // Remove title if it starts with "# "
-        if (content && content.startsWith("# ")) {
-          const lines = content.split("\n");
-          if (lines.length > 1) {
-            content = lines.slice(1).join("\n").trim();
-          } else {
-            content = "";
-          }
-        }
-
-        return {
-          type: "message_with_suggestions",
-          content: content,
-          suggestions: suggestionsData.suggestions
-        };
-      }
-    }
-
-    // Regular message
-    let content = message.content;
-    // Remove title if it starts with "# "
-    if (content && content.startsWith("# ")) {
-      const lines = content.split("\n");
-      if (lines.length > 1) {
-        content = lines.slice(1).join("\n").trim();
-      } else {
-        content = "";
-      }
-    }
-
-    return {
-      type: "message",
-      content: content
-    };
-  };
-
-  const _groupMessages = (messages) => {
-    const groups = [];
-    let currentGroup = null;
-
-    messages.forEach((message) => {
-      const parsed = _parseMessage(message);
-
-      if (message.role === "user" || parsed.type === "chart_created" || parsed.type === "chart_updated" || parsed.type === "chart_temporary") {
-        // User messages and chart creation/update messages are always separate
-        groups.push({
-          type: parsed.type === "chart_created" ? "chart_created" : parsed.type === "chart_updated" ? "chart_updated" : parsed.type === "chart_temporary" ? "chart_temporary" : "user",
-          messages: [message]
-        });
-        currentGroup = null;
-      } else if (message.role === "assistant" || message.role === "tool") {
-        // Group consecutive assistant and tool messages (except chart creation)
-        if (!currentGroup || currentGroup.type !== "assistant") {
-          currentGroup = {
-            type: "assistant",
-            messages: []
-          };
-          groups.push(currentGroup);
-        }
-        currentGroup.messages.push(message);
-      }
-    });
-
-    return groups;
-  };
-
-  const _renderMessage = (message, index) => {
-    const parsed = _parseMessage(message);
-
-    // User messages - right aligned
-    if (message.role === "user") {
-      return (
-        <div key={index} className="flex justify-end mb-4 px-4">
-          <div className="max-w-[70%] bg-primary text-accent-foreground px-4 py-3 rounded-lg">
-            <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-          </div>
-        </div>
-      );
-    }
-
-    // Tool calls - centered with compact display
-    if (parsed.type === "tool_call") {
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Avatar
-                  size="sm"
-                  color="accent"
-                >
-                  <Avatar.Fallback>
-                    <LuBrainCircuit size={16} className="text-background" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <span className="text-sm font-medium">AI is working...</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {parsed.tools.map((tool, idx) => (
-                  <Popover key={idx} aria-label="Tool call arguments">
-                    <Popover.Trigger>
-                      <Chip
-                        variant="primary"
-                        size="sm"
-                        className="cursor-pointer"
-                      >
-                        Tool: {tool.name}
-                        <LuChevronDown size={14} />
-                      </Chip>
-                    </Popover.Trigger>
-                    <Popover.Content placement="bottom" className="max-w-md">
-                      <Popover.Dialog>
-                        <div className="p-2">
-                          <div className="text-xs font-semibold mb-2">Arguments:</div>
-                          <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                            {JSON.stringify(tool.args, null, 2)}
-                          </code>
-                        </div>
-                      </Popover.Dialog>
-                    </Popover.Content>
-                  </Popover>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Tool results - centered with compact display
-    if (parsed.type === "tool_result") {
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className="bg-success-50 border border-success-200 px-4 py-3 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Chip variant="soft" color="success" size="sm">
-                  Result: {parsed.name}
-                </Chip>
-              </div>
-              <Popover aria-label="Tool result">
-                <Popover.Trigger>
-                  <Button size="sm" variant="tertiary">
-                    View result
-                    <LuChevronDown size={14} />
-                  </Button>
-                </Popover.Trigger>
-                <Popover.Content placement="bottom" className="max-w-2xl">
-                  <Popover.Dialog>
-                    <div className="p-2">
-                      <code className="block rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                        {JSON.stringify(parsed.content, null, 2)}
-                      </code>
-                    </div>
-                  </Popover.Dialog>
-                </Popover.Content>
-              </Popover>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Chart created/updated messages - render the actual chart
-    if ((parsed.type === "chart_created" || parsed.type === "chart_updated") && createdCharts?.length > 0) {
-      const chartData = createdCharts.find((c) => c.id === parsed.chartId);
-
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className={`px-6 py-4 rounded-lg border ${
-              parsed.type === "chart_created" ? "border-success-200" : "border-warning-200"
-            }`}>
-              <div className="flex items-start gap-3">
-                <Avatar
-                  size="sm"
-                  color={parsed.type === "chart_created" ? "success" : "warning"}
-                >
-                  <Avatar.Fallback>
-                    <LuBrainCircuit size={16} className="text-accent" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="w-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium">
-                      {parsed.type === "chart_created" ? "Chart Created" : "Chart Updated"}
-                    </span>
-                    <Chip
-                      size="sm"
-                      variant="soft"
-                      color={parsed.type === "chart_created" ? "success" : "warning"}
-                    >
-                      {parsed.chartName}
-                    </Chip>
-                  </div>
-                  {chartData ? (
-                    <div className="overflow-hidden h-[300px]">
-                      <Chart
-                        chart={chartData}
-                        isPublic={false}
-                        showExport={false}
-                      />
-                    </div>
-                  ) : (
-                    <div className={`border ${
-                      parsed.type === "chart_created" ? "border-success-200" : "border-warning-200"
-                    } rounded-lg p-8`}>
-                      <ProgressCircle aria-label="Loading chart" />
-                      <div className="text-sm mt-2">Loading chart...</div>
-                    </div>
-                  )}
-                  <div className="flex gap-2 mt-3">
-                    <a href={`/dashboard/${parsed.projectId}`} target="_blank" rel="noopener noreferrer">
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        className="pointer-events-none"
-                      >
-                        View on Dashboard
-                      </Button>
-                    </a>
-                    <a href={`/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        className="pointer-events-none"
-                      >
-                        Edit Chart
-                      </Button>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Temporary chart messages - render the chart with temporary styling
-    if (parsed.type === "chart_temporary" && createdCharts?.length > 0) {
-      const chartData = createdCharts.find((c) => c.id === parsed.chartId);
-
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className="px-6 py-4 rounded-lg border border-primary-200 bg-primary-50/50">
-              <div className="flex items-start gap-3">
-                <Avatar
-                  size="sm"
-                  variant="soft"
-                >
-                  <Avatar.Fallback>
-                    <LuBrainCircuit size={16} className="text-accent" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="w-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium">
-                      Temporary Chart Preview
-                    </span>
-                    <Chip
-                      size="sm"
-                      variant="primary"
-                    >
-                      {parsed.chartName}
-                    </Chip>
-                    <Chip
-                      size="sm"
-                      variant="soft"
-                      color="default"
-                      className="ml-auto"
-                    >
-                      Not saved to dashboard
-                    </Chip>
-                  </div>
-                  {chartData ? (
-                    <div className="overflow-hidden h-[300px]">
-                      <Chart
-                        chart={chartData}
-                        isPublic={false}
-                        showExport={false}
-                      />
-                    </div>
-                  ) : (
-                    <div className="border border-primary-200 rounded-lg p-8">
-                      <ProgressCircle aria-label="Loading chart" />
-                      <div className="text-sm mt-2">Loading chart...</div>
-                    </div>
-                  )}
-                  <div className="text-xs text-foreground-500 mt-3 mb-2">
-                    {"This chart is temporary. Tell me which dashboard you'd like to add it to."}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Assistant messages with suggestions - centered, taking most space
-    if (message.role === "assistant" && parsed.type === "message_with_suggestions") {
-      const isError = message.isError;
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className={`px-6 py-4 rounded-lg ${
-              isError
-                ? "bg-danger-50 border border-danger-200"
-                : ""
-            }`}>
-              <div className="flex items-start gap-3">
-                <Avatar
-                  size="sm"
-                  color={isError ? "danger" : "accent"}
-                  variant="soft"
-                >
-                  <Avatar.Fallback>
-                    <LuBrainCircuit size={16} className="text-foreground" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="flex-1">
-                  {parsed.content && (
-                    <div className={`text-sm prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
-                      isError ? "text-danger" : "text-foreground"
-                    }`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-                        {parsed.content}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-                  {parsed.suggestions && parsed.suggestions.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {parsed.suggestions.map((suggestion) => (
-                        <Button
-                          key={suggestion.id}
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
-                          onPress={() => _onSuggestionClick(suggestion)}
-                          isPending={isLoading}
-                        >
-                          {suggestion.label}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Assistant messages - centered, taking most space
-    if (message.role === "assistant" && parsed.type === "message") {
-      const isError = message.isError;
-      return (
-        <div key={index} className="flex justify-center mb-4 px-4">
-          <div className="w-full max-w-[90%]">
-            <div className={`px-6 py-4 rounded-lg ${
-              isError
-                ? "bg-danger-50 border border-danger-200"
-                : ""
-            }`}>
-              <div className="flex items-start gap-3">
-                <Avatar
-                  size="sm"
-                  color={isError ? "danger" : "accent"}
-                  variant="soft"
-                >
-                  <Avatar.Fallback>
-                    <LuBrainCircuit size={16} className="text-foreground" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className={`text-sm prose prose-xs md:prose-lg dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2 ${
-                    isError ? "text-danger" : "text-foreground"
-                  }`}>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={components}
-                    >
-                      {parsed.content}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const _renderGroupedMessages = (group, groupIndex) => {
-    if (group.type === "user") {
-      // Render user message
-      return _renderMessage(group.messages[0], `group-${groupIndex}-user`);
-    }
-
-    if (group.type === "chart_created" || group.type === "chart_updated" || group.type === "chart_temporary") {
-      // Render chart creation/update/temporary message
-      return _renderMessage(group.messages[0], `group-${groupIndex}-chart`);
-    }
-
-    // Group assistant messages - collect all operations and final message
-    const operations = [];
-    let finalMessage = null;
-    let suggestions = null;
-
-    group.messages.forEach((message) => {
-      const parsed = _parseMessage(message);
-
-      if (parsed.type === "tool_call") {
-        parsed.tools.forEach((tool) => {
-          operations.push({
-            type: "call",
-            name: tool.name,
-            data: tool.args
-          });
-        });
-      } else if (parsed.type === "tool_result") {
-        operations.push({
-          type: "result",
-          name: parsed.name,
-          data: parsed.content
-        });
-      } else if (parsed.type === "message_with_suggestions") {
-        finalMessage = {
-          ...message,
-          content: parsed.content // Use the parsed content with title removed
-        };
-        suggestions = parsed.suggestions;
-      } else if (parsed.type === "message") {
-        finalMessage = {
-          ...message,
-          content: parsed.content // Use the parsed content with title removed
-        };
-      }
-    });
-
-    // Render grouped assistant messages
-    return (
-      <div key={`group-${groupIndex}`} className="flex justify-center mb-4 px-4">
-        <div className="w-full max-w-[90%]">
-          <div className="px-6 py-4">
-            <div className="flex items-start gap-3">
-              <Avatar
-                size="sm"
-                color="accent"
-                variant="soft"
-              >
-                <Avatar.Fallback>
-                  <LuBrainCircuit size={16} className="text-foreground" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex-1">
-                {operations.length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-xs font-medium text-foreground-500 mb-2">Operations performed:</div>
-                    <div className="space-y-1">
-                      {operations.map((op, idx) => (
-                        <Popover key={idx} aria-label="Tool call arguments">
-                          <Popover.Trigger>
-                            <div className="text-xs text-gray-500 cursor-pointer hover:underline flex items-center gap-1">
-                              <span><LuWrench size={12} /></span>
-                              <span className="font-medium">
-                                {op.type === "call" ? "Called" : "Got result from"}: {op.name}
-                              </span>
-                              <LuChevronDown size={14} className="opacity-60" />
-                            </div>
-                          </Popover.Trigger>
-                          <Popover.Content placement="bottom" className="max-w-2xl">
-                            <Popover.Dialog>
-                              <div className="p-2">
-                                <div className="text-xs font-semibold mb-2">
-                                  {op.type === "call" ? "Arguments:" : "Result:"}
-                                </div>
-                                <code className="block max-h-96 overflow-auto rounded-md bg-default/40 p-2 text-xs text-default-700 whitespace-pre-wrap">
-                                  {JSON.stringify(op.data, null, 2)}
-                                </code>
-                              </div>
-                            </Popover.Dialog>
-                          </Popover.Content>
-                        </Popover>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {finalMessage && (
-                  <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-                      {finalMessage.content}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {suggestions && suggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {suggestions.map((suggestion) => (
-                      <Button
-                        key={suggestion.id}
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="h-auto min-h-7 rounded-full px-3 py-1 font-normal"
-                        onPress={() => _onSuggestionClick(suggestion)}
-                        isPending={isLoading}
-                      >
-                        {suggestion.label}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const _renderProgressEvents = () => {
-    if (progressEvents.length === 0) return null;
-
-    return (
-      <div className="flex justify-center mb-4 px-4">
-        <div className="w-full max-w-[90%]">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Avatar
-                size="sm"
-                color="accent"
-                variant="soft"
-              >
-                <Avatar.Fallback>
-                  <LuBrainCircuit size={16} className="text-foreground" />
-                </Avatar.Fallback>
-              </Avatar>
-              <LuLoader size={16} className="animate-spin" />
-              <span className="text-sm">Working...</span>
-            </div>
-            <div className="space-y-1">
-              {progressEvents.map((event) => (
-                <div key={event.id} className="text-xs text-accent-700 flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    event.type === "processing" ? "bg-blue-500" :
-                    event.type === "connection" ? "bg-green-500" :
-                    event.type === "analysis" ? "bg-yellow-500" :
-                    event.type === "query_generation" ? "bg-purple-500" :
-                    event.type === "execution" ? "bg-orange-500" :
-                    event.type === "visualization" ? "bg-pink-500" :
-                    "bg-gray-500"
-                  }`} />
-                  {event.message}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Modal>
@@ -1309,161 +673,39 @@ function AiModal({ isOpen, onClose }) {
                   </div>
                 </div>
                 <div className="h-8" />
-                <form onSubmit={_onAskAi} id="ai-form">
-                  <TextField fullWidth name="aiQuestion" aria-label="Ask me a question" className="w-full">
-                    <Label className="sr-only">Ask me a question</Label>
-                    <InputGroup fullWidth>
-                      <InputGroup.Input
-                        placeholder="Ask me a question"
-                        value={question}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setQuestion(value);
-                          // Open context popover when "@" is typed
-                          if (value.endsWith("@") && !isContextPopoverOpen) {
-                            setIsContextPopoverOpen(true);
-                          }
-                        }}
-                      />
-                      <InputGroup.Suffix className="pr-1 border-none">
-                        <Button
-                          type="submit"
-                          isIconOnly
-                          isDisabled={(!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect)}
-                          variant="primary"
-                          onPress={() => setQuestion(question + " ")}
-                          size="sm"
-                          aria-label="Submit question"
-                        >
-                          <LuArrowRight size={18} />
-                        </Button>
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                  </TextField>
-                  <div className="flex flex-row items-center gap-1 flex-wrap mt-2">
-                    <Chip
-                      variant="soft"
-                      size="sm"
-                      onClick={() => {
-                        setQuestion("What can you do?");
-                      }}
-                      className="cursor-pointer"
-                    >
-                      What can you do?
-                    </Chip>
-                    <Chip
-                      variant="soft"
-                      size="sm"
-                      onClick={() => {
-                        setQuestion("How many users I have in my database?");
-                      }}
-                      className="cursor-pointer"
-                    >
-                      How many users I have in my database?
-                    </Chip>
-                  </div>
-                </form>
+                <AiComposer
+                  id="ai-form"
+                  name="aiQuestion"
+                  placeholder="Ask me a question"
+                  isLoading={isLoading}
+                  selectedContext={selectedContext}
+                  onSubmitQuestion={_onAskAi}
+                  onAtTyped={() => {
+                    if (!isContextPopoverOpen) {
+                      setIsContextPopoverOpen(true);
+                    }
+                  }}
+                  suggestions={[
+                    "What can you do?",
+                    "How many users I have in my database?"
+                  ]}
+                />
 
                 <div className="h-2" />
 
                 <div className="flex flex-row items-center gap-1 flex-wrap">
-                  <Popover isOpen={isContextPopoverOpen} onOpenChange={setIsContextPopoverOpen}>
-                    <Popover.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        isPending={isLoading}
-                        isIconOnly={selectedContext.multiSelect.length > 0}
-                      >
-                        {selectedContext.multiSelect.length > 0 ? (
-                          <LuAtSign size={16} />
-                        ) : (
-                          <>
-                            <LuAtSign size={16} />
-                            Add extra context
-                          </>
-                        )}
-                      </Button>
-                    </Popover.Trigger>
-                    <Popover.Content placement="bottom" className="w-80">
-                      <Popover.Dialog>
-                      <div className="p-2 w-full">
-                        <div className="text-xs text-foreground-500 mb-2">
-                          Context helps our AI to understand your intentions better.
-                        </div>
-                        <Input
-                          placeholder="Search projects, connections, datasets..."
-                          value={contextSearch}
-                          onChange={(e) => setContextSearch(e.target.value)}
-                          size="sm"
-                          className="mb-2"
-                          autoFocus
-                          fullWidth
-                        />
-                        <div className="max-h-64 overflow-y-auto w-full">
-                          <ListBox
-                            aria-label="Context entities"
-                            selectionMode="none"
-                            className="w-full"
-                            renderEmptyState={() => (
-                              <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
-                            )}
-                          >
-                            {filteredContextEntities.map((entity) => {
-                              const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                              const rowId = `${entity.entity_type}-${entity.id}`;
-                              return (
-                                <ListBox.Item
-                                  key={rowId}
-                                  id={rowId}
-                                  textValue={getContextLabel(entity)}
-                                  className={isSelected ? "bg-primary-50" : ""}
-                                  onAction={() => {
-                                    setSelectedContext((prev) => {
-                                      const newEntity = {
-                                        ...entity,
-                                        label: getContextLabel(entity)
-                                      };
-                                      const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                      if (isAlreadySelected) {
-                                        return {
-                                          ...prev,
-                                          multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                                        };
-                                      }
-                                      return {
-                                        ...prev,
-                                        multiSelect: [...prev.multiSelect, newEntity]
-                                      };
-                                    });
-                                    setContextSearch("");
-                                  }}
-                                >
-                                  <div className="flex w-full items-center justify-between gap-2">
-                                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                                      {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
-                                        entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
-                                          entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
-                                      <div className="flex min-w-0 flex-col">
-                                        <span className="text-sm">{entity.name || entity.legend}</span>
-                                        <span className="text-xs text-foreground-500">
-                                          {entity.entity_type === "project" ? "Project" :
-                                            entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                              "Dataset"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
-                                  </div>
-                                </ListBox.Item>
-                              );
-                            })}
-                          </ListBox>
-                        </div>
-                      </div>
-                      </Popover.Dialog>
-                    </Popover.Content>
-                  </Popover>
+                  <AiContextPicker
+                    isOpen={isContextPopoverOpen}
+                    onOpenChange={setIsContextPopoverOpen}
+                    isLoading={isLoading}
+                    contextSearch={contextSearch}
+                    setContextSearch={setContextSearch}
+                    filteredContextEntities={filteredContextEntities}
+                    selectedContext={selectedContext}
+                    setSelectedContext={setSelectedContext}
+                    getContextLabel={getContextLabel}
+                    showTriggerLabel
+                  />
 
                   {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
                     <>
@@ -1745,12 +987,18 @@ function AiModal({ isOpen, onClose }) {
                     <div className="h-[calc(100vh-200px)] overflow-y-auto py-4 pb-24">
                       {conversation?.full_history?.length > 0 ? (
                         <>
-                          {(() => {
-                            // Show grouped view for all conversations
-                            const groups = _groupMessages(conversation.full_history);
-                            return groups.map((group, index) => _renderGroupedMessages(group, index));
-                          })()}
-                          {_renderProgressEvents()}
+                          {conversationGroups.map((group, index) => (
+                            <AiMessageGroup
+                              key={`group-${index}`}
+                              group={group}
+                              groupIndex={index}
+                              createdCharts={createdCharts}
+                              toolDisplayNames={toolDisplayNames}
+                              onSuggestionClick={_onSuggestionClick}
+                              isLoading={isLoading}
+                            />
+                          ))}
+                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
                           {isLoading && progressEvents.length === 0 && (
                             <div className="flex justify-center mb-4 px-4">
                               <div className="w-full max-w-[90%]">
@@ -1779,7 +1027,7 @@ function AiModal({ isOpen, onClose }) {
                               </div>
                             </div>
                           )}
-                          {_renderProgressEvents()}
+                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
                           <div ref={messagesEndRef} />
                         </>
                       ) : isLoading ? (
@@ -1796,8 +1044,21 @@ function AiModal({ isOpen, onClose }) {
                       )}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-divider bg-surface z-10">
-                      <form onSubmit={_onAskAi} id="ai-conversation-form">
-                        {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                      <AiComposer
+                        id="ai-conversation-form"
+                        name="aiConversationQuestion"
+                        inputRef={inputRef}
+                        placeholder="Ask me anything about your data..."
+                        isLoading={isLoading}
+                        selectedContext={selectedContext}
+                        onSubmitQuestion={_onAskAi}
+                        onAtTyped={() => {
+                          if (!isSecondContextPopoverOpen) {
+                            setIsSecondContextPopoverOpen(true);
+                          }
+                        }}
+                        showEnterHint
+                        leadingContent={(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
                           <div className="flex flex-wrap items-center gap-2 mb-2">
                             {selectedContext.multiSelect.map((entity) => (
                               <Chip
@@ -1843,136 +1104,25 @@ function AiModal({ isOpen, onClose }) {
                             <span className="text-xs text-foreground-500">+ add more details</span>
                           </div>
                         )}
-                        <div className="flex flex-row gap-2 items-center">
-                          <Popover isOpen={isSecondContextPopoverOpen} onOpenChange={setIsSecondContextPopoverOpen}>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              isPending={isLoading}
-                              isIconOnly
-                              aria-label="Add context"
-                            >
-                              <LuAtSign size={18} />
-                            </Button>
-                            <Popover.Content placement="top" className="z-[100] w-80">
-                              <Popover.Dialog>
-                              <div className="p-2 w-full">
-                                <div className="text-xs text-foreground-500 mb-2">
-                                  Context helps our AI to understand your intentions better.
-                                </div>
-                                <Input
-                                  placeholder="Search projects, connections, datasets..."
-                                  value={contextSearch}
-                                  onChange={(e) => setContextSearch(e.target.value)}
-                                  size="sm"
-                                  className="mb-2"
-                                  autoFocus
-                                  fullWidth
-                                />
-                                <div className="max-h-64 overflow-y-auto w-full">
-                                  <ListBox
-                                    aria-label="Context entities"
-                                    selectionMode="none"
-                                    className="w-full"
-                                    renderEmptyState={() => (
-                                      <div className="px-2 py-3 text-sm text-foreground-500">No entities found</div>
-                                    )}
-                                  >
-                                    {filteredContextEntities.map((entity) => {
-                                      const isSelected = selectedContext.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                      const rowId = `${entity.entity_type}-${entity.id}`;
-                                      return (
-                                        <ListBox.Item
-                                          key={rowId}
-                                          id={rowId}
-                                          textValue={getContextLabel(entity)}
-                                          className={isSelected ? "bg-primary-50" : ""}
-                                          onAction={() => {
-                                            setSelectedContext((prev) => {
-                                              const newEntity = {
-                                                ...entity,
-                                                label: getContextLabel(entity)
-                                              };
-                                              const isAlreadySelected = prev.multiSelect.some(e => e.id === entity.id && e.entity_type === entity.entity_type);
-                                              if (isAlreadySelected) {
-                                                return {
-                                                  ...prev,
-                                                  multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                                                };
-                                              }
-                                              return {
-                                                ...prev,
-                                                multiSelect: [...prev.multiSelect, newEntity]
-                                              };
-                                            });
-                                            setContextSearch("");
-                                          }}
-                                        >
-                                          <div className="flex w-full items-center justify-between gap-2">
-                                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                                              {entity.entity_type === "project" ? <LuLayoutGrid size={16} className="shrink-0" /> :
-                                                entity.entity_type === "connection" ? <LuPlug size={16} className="shrink-0" /> :
-                                                  entity.entity_type === "dataset" ? <LuLayers size={16} className="shrink-0" /> : null}
-                                              <div className="flex min-w-0 flex-col">
-                                                <span className="text-sm">{entity.name || entity.legend}</span>
-                                                <span className="text-xs text-foreground-500">
-                                                  {entity.entity_type === "project" ? "Project" :
-                                                    entity.entity_type === "connection" ? `Connection (${entity.type})` :
-                                                      "Dataset"}
-                                                </span>
-                                              </div>
-                                            </div>
-                                            {isSelected ? <div className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
-                                          </div>
-                                        </ListBox.Item>
-                                      );
-                                    })}
-                                  </ListBox>
-                                </div>
-                              </div>
-                              </Popover.Dialog>
-                            </Popover.Content>
-                          </Popover>
-                          <TextField
-                            fullWidth
-                            className="min-w-0 flex-1"
-                            name="aiConversationQuestion"
-                            aria-label="Ask me anything about your data"
-                            isDisabled={isLoading}
-                          >
-                            <Label className="sr-only">Ask me anything about your data</Label>
-                            <InputGroup fullWidth>
-                              <InputGroup.Input
-                                ref={inputRef}
-                                placeholder="Ask me anything about your data..."
-                                value={question}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setQuestion(value);
-                                  // Open context popover when "@" is typed
-                                  if (value.endsWith("@") && !isSecondContextPopoverOpen) {
-                                    setIsSecondContextPopoverOpen(true);
-                                  }
-                                }}
-                              />
-                              <InputGroup.Suffix className="pr-2">
-                                <Kbd>
-                                  <Kbd.Abbr keyValue="enter" />
-                                </Kbd>
-                              </InputGroup.Suffix>
-                            </InputGroup>
-                          </TextField>
-                          <Button
-                            type="submit"
-                            isIconOnly
-                            variant="primary"
-                            isDisabled={!question.trim() && selectedContext.multiSelect.length === 0 && !selectedContext.singleSelect}
-                            isPending={isLoading}
-                          >
-                            <LuArrowRight />
-                          </Button>
-                        </div>
-                      </form>
+                        leadingControl={(
+                          <AiContextPicker
+                            isOpen={isSecondContextPopoverOpen}
+                            onOpenChange={setIsSecondContextPopoverOpen}
+                            isLoading={isLoading}
+                            contextSearch={contextSearch}
+                            setContextSearch={setContextSearch}
+                            filteredContextEntities={filteredContextEntities}
+                            selectedContext={selectedContext}
+                            setSelectedContext={setSelectedContext}
+                            getContextLabel={getContextLabel}
+                            placement="top"
+                            contentClassName="z-[100] w-80"
+                            triggerVariant="outline"
+                            triggerSize="md"
+                            triggerIsIconOnly
+                          />
+                        )}
+                      />
                     </div>
                   </div>
                 </div>

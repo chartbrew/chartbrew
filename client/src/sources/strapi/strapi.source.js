@@ -8,7 +8,12 @@ const strapiSource = {
   name: "Strapi",
   category: "api",
   capabilities: {
-    ai: { canGenerateQueries: false },
+    ai: {
+      canGenerateDatasets: false,
+      canGenerateQueries: false,
+      hasSourceInstructions: false,
+      hasTools: false,
+    },
     templates: { dashboards: true },
   },
   assets: {

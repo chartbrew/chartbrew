@@ -8,6 +8,20 @@ const chartController = new ChartController();
 
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
+function resolveXAxis({
+  chartType, xAxis, yAxis, chartSpec = {}
+}) {
+  if (chartType === "table") {
+    return xAxis ?? chartSpec.xAxis ?? "root[]";
+  }
+
+  if (["kpi", "avg", "gauge"].includes(chartType)) {
+    return xAxis ?? chartSpec.xAxis ?? yAxis ?? chartSpec.yAxis;
+  }
+
+  return xAxis ?? chartSpec.xAxis;
+}
+
 async function createChart(payload) {
   let {
     project_id, dataset_id, spec, team_id,
@@ -71,6 +85,10 @@ async function createChart(payload) {
     });
     subType = chartSanitization.subType;
     chartSpec = chartSanitization.spec;
+    const chartType = type || chartSpec.type || "line";
+    const resolvedXAxis = resolveXAxis({
+      chartType, xAxis, yAxis, chartSpec
+    });
 
     // Check if project is a ghost project
     const project = await requireProjectForTeam(project_id, normalizedTeamId);
@@ -90,7 +108,7 @@ async function createChart(payload) {
     const chart = await chartController.createWithChartDatasetConfigs({
       project_id,
       name: name || chartSpec.title || "AI Generated Chart",
-      type: type || chartSpec.type,
+      type: chartType,
       subType: subType || chartSpec.subType,
       draft: false,
       // oxlint-disable-next-line no-nested-ternary
@@ -120,10 +138,10 @@ async function createChart(payload) {
       layout: chartSpec.layout, // Will be auto-calculated if not provided
       chartDatasetConfigs: [{
         dataset_id,
-        xAxis: xAxis ?? chartSpec.xAxis,
+        xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? chartSpec.xAxisOperation,
         yAxis: yAxis ?? chartSpec.yAxis,
-        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
+        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation ?? "none",
         dateField: dateField ?? chartSpec.dateField,
         dateFormat: dateFormat ?? chartSpec.dateFormat,
         conditions: conditions ?? chartSpec.conditions,
@@ -153,14 +171,21 @@ async function createChart(payload) {
     }
 
     return {
+      status: "ok",
+      chart_created: true,
       chart_id: chart.id,
       dataset_id,
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
+      visibility: "dashboard",
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
       snapshot,
+      snapshot_status: snapshot ? "available" : "unavailable",
+      snapshot_note: snapshot
+        ? null
+        : "The chart was created, but a rendered snapshot is not available yet.",
       chart_sanitization: chartSanitization.accumulationRemoved
         ? { removedAccumulation: true }
         : null,

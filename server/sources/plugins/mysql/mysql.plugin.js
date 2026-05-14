@@ -1,4 +1,8 @@
 const mysqlProtocol = require("./mysql.protocol");
+const {
+  getQueryGenerationCapabilities,
+  getQueryGenerationInstructions,
+} = require("../../shared/ai/queryGenerationInstructions");
 
 module.exports = {
   id: "mysql",
@@ -31,7 +35,7 @@ module.exports = {
     ai: {
       canGenerateDatasets: true,
       canGenerateQueries: true,
-      hasSourceInstructions: false,
+      hasSourceInstructions: true,
       hasTools: false,
     },
   },
@@ -39,8 +43,10 @@ module.exports = {
   backend: {
     ...mysqlProtocol,
     ai: {
+      getCapabilities: () => getQueryGenerationCapabilities("mysql"),
       getSchema: mysqlProtocol.getSchema,
       generateQuery: mysqlProtocol.generateQuery,
+      instructions: getQueryGenerationInstructions("mysql"),
     },
   },
 };

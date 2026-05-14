@@ -144,11 +144,17 @@ module.exports.getMetadata = async (refreshToken, propertyId) => {
 module.exports.getAnalytics = async (oauth, dataRequest) => {
   const oauth2Client = getOAuthClient();
 
-  const { configuration } = dataRequest;
+  const { configuration = {} } = dataRequest;
 
   try {
     if (!oauth.refreshToken) {
       throw new Error("Google Analytics OAuth refresh token is missing. Reconnect Google Analytics.");
+    }
+    if (!configuration.propertyId) {
+      throw new Error("Google Analytics propertyId is required. Choose a GA4 property before running this report.");
+    }
+    if (!configuration.metrics) {
+      throw new Error("Google Analytics metrics is required. Choose a GA4 metric before running this report.");
     }
 
     oauth2Client.setCredentials({ refresh_token: oauth.refreshToken });

@@ -24,7 +24,7 @@ module.exports = (data, filters, timezone) => {
   for (let i = 0; i < datasets.length; i++) {
     const dataset = datasets[i];
     const { dateField } = dataset.options;
-    let { xAxis } = dataset.options;
+    let xAxis = dataset.options.xAxis || "root[]";
     let xData;
 
     const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
@@ -64,6 +64,9 @@ module.exports = (data, filters, timezone) => {
 
       xData = _.get(filteredData, arrayFinder);
     }
+    if (!Array.isArray(xData)) {
+      xData = [];
+    }
 
     // transform the object in case there are any groupings
     // also exclude any fields that are marked to be excluded
@@ -92,16 +95,18 @@ module.exports = (data, filters, timezone) => {
     let { groupBy } = dataset.options;
     if (groupBy) {
       groupBy = groupBy.replace("root[].", "");
+      // Apply groupBy on the data
+      pairedXData.forEach((item) => {
+        const foundIndex = _.findIndex(groupedXData, { [groupBy]: item[groupBy] });
+        if (foundIndex > -1) {
+          groupedXData[foundIndex] = { ...groupedXData[foundIndex], ...item };
+        } else {
+          groupedXData.push(item);
+        }
+      });
+    } else {
+      groupedXData.push(...pairedXData);
     }
-    // Apply groupBy on the data
-    pairedXData.forEach((item) => {
-      const foundIndex = _.findIndex(groupedXData, { [groupBy]: item[groupBy] });
-      if (foundIndex > -1) {
-        groupedXData[foundIndex] = { ...groupedXData[foundIndex], ...item };
-      } else {
-        groupedXData.push(item);
-      }
-    });
 
     exportData[dataset.options.legend] = groupedXData;
   }
