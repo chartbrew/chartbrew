@@ -1447,7 +1447,7 @@ async function orchestrate(
       input: buildResponseInputFromMessages(modelMessages),
       tools,
       tool_choice: "auto",
-      parallel_tool_calls: true,
+      parallel_tool_calls: false,
       reasoning: {
         effort: "medium",
       },

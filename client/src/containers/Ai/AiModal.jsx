@@ -154,7 +154,8 @@ function AiModal({ isOpen, onClose }) {
           return {
             chartId: chartInfo.chartId,
             projectId: chartInfo.projectId,
-            isUpdate: chartInfo.type === "chart_updated",
+            isUpdate: chartInfo.type === "chart_updated" ||
+              ["update_chart", "update_dataset"].includes(chartInfo.toolName),
           };
         })
         .filter(Boolean);

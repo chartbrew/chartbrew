@@ -86,7 +86,7 @@ export function getChartToolMessageInfo(message) {
   }
 
   const content = parseJson(message.content);
-  if (!content?.chart_id || !["create_chart", "update_chart", "create_temporary_chart"].includes(message.name)) {
+  if (!content?.chart_id || !["create_chart", "update_chart", "create_temporary_chart", "update_dataset"].includes(message.name)) {
     return null;
   }
 
@@ -97,8 +97,9 @@ export function getChartToolMessageInfo(message) {
 
   return {
     type: isTemporary ? "chart_temporary" : message.name === "create_chart" ? "chart_created" : "chart_updated",
+    toolName: message.name,
     chartId: content.chart_id,
-    chartName: content.name,
+    chartName: content.chart_name || content.name,
     chartType: content.type,
     projectId: content.project_id || content.ghost_project_id,
     dashboardUrl: content.dashboard_url,
