@@ -32,7 +32,7 @@ async function createTemporaryChart(payload) {
     connection_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
-    xAxis, xAxisOperation, yAxis, yAxisOperation = "none", dateField, dateFormat,
+    xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
     query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = [], spec = {}, team_id, formula, seriesConfiguration,
   } = payload;
@@ -171,7 +171,7 @@ async function createTemporaryChart(payload) {
         xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? spec.xAxisOperation,
         yAxis: yAxis ?? spec.yAxis,
-        yAxisOperation: yAxisOperation ?? spec.yAxisOperation,
+        yAxisOperation: yAxisOperation ?? spec.yAxisOperation ?? "none",
         dateField: dateField ?? spec.dateField,
         dateFormat: dateFormat ?? spec.dateFormat,
         conditions: conditions ?? spec.conditions,

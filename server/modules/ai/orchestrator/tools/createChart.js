@@ -141,7 +141,7 @@ async function createChart(payload) {
         xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? chartSpec.xAxisOperation,
         yAxis: yAxis ?? chartSpec.yAxis,
-        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
+        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation ?? "none",
         dateField: dateField ?? chartSpec.dateField,
         dateFormat: dateFormat ?? chartSpec.dateFormat,
         conditions: conditions ?? chartSpec.conditions,
