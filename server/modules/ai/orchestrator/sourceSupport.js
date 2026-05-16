@@ -25,6 +25,14 @@ function sourceSupportsOrchestrator(source) {
   );
 }
 
+function sourceUsesSourceOwnedConfiguration(source) {
+  return Boolean(
+    source?.capabilities?.ai?.hasTools
+    && source?.backend?.ai
+    && !source?.capabilities?.ai?.canGenerateQueries
+  );
+}
+
 function getOrchestratorSources() {
   return getSources().filter(sourceSupportsOrchestrator);
 }
@@ -108,5 +116,6 @@ module.exports = {
   isConnectionSupported,
   requireSourceById,
   requireSupportedSourceForConnection,
+  sourceUsesSourceOwnedConfiguration,
   sourceSupportsOrchestrator,
 };

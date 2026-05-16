@@ -15,6 +15,7 @@
 const OpenAI = require("openai");
 const db = require("../../../models/models");
 const socketManager = require("../../socketManager");
+const { sanitizeSnippet } = require("../../updateAudit");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
@@ -52,6 +53,7 @@ const {
   updateDataset,
   updateChart,
   createTemporaryChart,
+  createDashboardFromTemplate,
   moveChartToDashboard,
   disambiguate,
   sourceGetCapabilities,
@@ -83,6 +85,7 @@ const TEAM_SCOPED_TOOLS = new Set([
   "update_dataset",
   "update_chart",
   "create_temporary_chart",
+  "create_dashboard_from_template",
   "move_chart_to_dashboard",
   "source_get_capabilities",
   "source_list_resources",
@@ -95,6 +98,10 @@ const TEAM_SCOPED_TOOLS = new Set([
   "stripe_official_plan_dataset",
   "stripe_official_validate_configuration",
   "stripe_official_preview_configuration",
+]);
+
+const USER_SCOPED_TOOLS = new Set([
+  "create_dashboard_from_template",
 ]);
 
 const ORIGINAL_QUESTION_TOOLS = new Set([
@@ -329,14 +336,14 @@ async function availableTools() {
     {
       name: "run_query",
       displayName: "Run query",
-      description: `Execute read-only source queries on supported connections (${supportedSourceList}) with guardrails.`,
+      description: `Execute read-only source queries on query-generation connections (${supportedSourceList}) with guardrails. Do not use this for source-owned configuration sources; use source_preview_configuration instead.`,
       parameters: {
         type: "object",
         properties: {
           connection_id: { type: "string" },
           dialect: { type: "string", enum: supportedDialectIds },
           query: { type: "string", description: "Read-only query for query-based sources" },
-          configuration: { type: "object", description: "Configuration for source-owned non-query execution" },
+          configuration: { type: "object", description: "Legacy only. Do not pass source-owned configurations; use source_preview_configuration instead." },
           params: { type: "object" },
           row_limit: { type: "integer", default: 1000 },
           timeout_ms: { type: "integer", default: 8000 },
@@ -622,6 +629,34 @@ async function availableTools() {
       // }
     },
     {
+      name: "create_dashboard_from_template",
+      displayName: "Create dashboard from template",
+      description: "Create a full dashboard/project from a source-owned template bundle. This is generic across template-backed sources. Use only when the user asks to create a full dashboard, dashboard bundle, or starter dashboard; use create_temporary_chart for one-off charts.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_id: { type: "string", enum: supportedSourceIds, description: "Source plugin id that owns the template, for example jira or stripeOfficial" },
+          template_slug: { type: "string", description: "Template slug from source_list_templates or source_recommend_templates" },
+          connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
+          dashboard: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["new", "existing"] },
+              name: { type: "string", description: "Name for a new dashboard" },
+              project_id: { type: "string", description: "Existing dashboard/project ID" }
+            },
+            required: ["type"],
+            description: "Destination dashboard. Use type=new with a name when creating a new dashboard, or type=existing with project_id when the user names an existing dashboard."
+          },
+          dataset_template_ids: { type: "array", items: { type: "string" }, description: "Optional selected dataset template ids. Omit to create all datasets in the template." },
+          chart_template_ids: { type: "array", items: { type: "string" }, description: "Optional selected chart template ids. Omit to create all charts in the template." },
+          variable_defaults: { type: "object", description: "Default values for template variable bindings, for example { projects: 'CHART', sprint_id: '123' } for Jira templates." }
+        },
+        required: ["source_id", "template_slug", "connection_id", "dashboard"]
+      }
+      // returns: { project_id, dashboard_url, datasets, charts }
+    },
+    {
       name: "move_chart_to_dashboard",
       displayName: "Add chart to dashboard",
       description: "Move a temporary chart from the ghost project to a real dashboard/project. Use this after creating a temporary chart when the user confirms they want to add it to a specific dashboard. The chart's layout will be automatically recalculated for the new dashboard.",
@@ -682,6 +717,8 @@ async function callTool(name, payload) {
         return updateChart(payload);
       case "create_temporary_chart":
         return createTemporaryChart(payload);
+      case "create_dashboard_from_template":
+        return createDashboardFromTemplate(payload);
       case "move_chart_to_dashboard":
         return moveChartToDashboard(payload);
       case "disambiguate":
@@ -712,8 +749,12 @@ async function callTool(name, payload) {
         throw new Error(`Tool ${name} not found`);
     }
   } catch (error) {
-    throw new Error(`Tool ${name} execution failed: ${error.message}`);
+    throw new Error(`Tool ${name} execution failed: ${sanitizeToolError(error)}`);
   }
+}
+
+function sanitizeToolError(error) {
+  return sanitizeSnippet(error?.message || error || "Tool execution failed", 1000) || "Tool execution failed";
 }
 
 function buildSystemPrompt(semanticLayer, conversation = null) {
@@ -771,6 +812,7 @@ ${ENTITY_CREATION_RULES}
 - Execute source queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
+- Create full dashboards from source-owned template bundles when the user asks for a starter dashboard or dashboard pack
 - Create temporary charts when no project is specified, then move them to dashboards upon user confirmation
 - Inform users when they request unsupported data sources that these will be available when the corresponding source plugin declares AI query support
 - Only suggest actions that correspond to these tools - no exports, sharing features, or other unimplemented functionality
@@ -804,10 +846,11 @@ ${ENTITY_CREATION_RULES}
      * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
      * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
      * For charts, pass the planned configuration to create_temporary_chart by default
+     * For full dashboard requests, call source_recommend_templates or source_list_templates, then create_dashboard_from_template with a source-owned template slug
      * If the user explicitly names a dashboard/project, create the dataset with create_dataset and then place the chart with create_chart using the planned chartSpec bindings
      * If a source tool returns status="needs_more_context" without modelFallbackAllowed, stop the creation flow and guide the user with the tool message. If editConnectionUrl is present, include it as a markdown link. If contextInstructions or exampleAiContext are present, summarize exactly what to paste.
      * If a chart creation tool returns chart_created=true and snapshot_status="unavailable", say the chart was created and mention only that the rendered preview is not available yet. Do not describe that as a failed or blocked chart.
-     * Never use generate_query for configuration-based sources
+     * Never use generate_query or run_query for configuration-based sources
 
 2. When creating charts - CRITICAL CHART PLACEMENT RULES:
    
@@ -1228,6 +1271,25 @@ function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}
   return "I completed the requested action, but I could not generate a final text response. Please try again or rephrase the request.";
 }
 
+function buildDisambiguationAssistantMessage({ prompt, options = [] } = {}) {
+  const suggestions = options.map((option, index) => ({
+    id: String(option.value || option.id || `option_${index + 1}`),
+    label: option.label || option.value || `Option ${index + 1}`,
+    action: "reply",
+  }));
+
+  return [
+    prompt || "I need one more choice before I can continue.",
+    "",
+    "```cb-actions",
+    JSON.stringify({
+      version: 1,
+      suggestions,
+    }, null, 2),
+    "```",
+  ].join("\n");
+}
+
 function buildUsageRecordFromResponse(response, elapsedMs, model) {
   if (!response?.usage) {
     return null;
@@ -1348,7 +1410,7 @@ async function orchestrate(
   teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
   // Extract optional tool progress callback
-  const { toolProgressCallback } = options;
+  const { toolProgressCallback, userId } = options;
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
@@ -1510,6 +1572,9 @@ async function orchestrate(
         if (TEAM_SCOPED_TOOLS.has(toolName)) {
           toolArgs.team_id = teamId;
         }
+        if (USER_SCOPED_TOOLS.has(toolName)) {
+          toolArgs.user_id = userId;
+        }
         if (ORIGINAL_QUESTION_TOOLS.has(toolName)) {
           toolArgs.original_question = question;
         }
@@ -1561,10 +1626,12 @@ async function orchestrate(
             content: JSON.stringify(result)
           };
         } catch (error) {
+          const safeError = sanitizeToolError(error);
+
           // Call progress callback on error
           if (toolProgressCallback) {
             try {
-              await toolProgressCallback(toolName, "error", { error: error.message });
+              await toolProgressCallback(toolName, "error", { error: safeError });
             } catch (callbackError) {
               // oxlint-disable-next-line no-console
               console.error("Tool progress callback error:", callbackError);
@@ -1576,8 +1643,7 @@ async function orchestrate(
             role: "tool",
             name: toolName,
             content: JSON.stringify({
-              error: error.message,
-              stack: error.stack
+              error: safeError
             })
           };
         }
@@ -1611,10 +1677,18 @@ async function orchestrate(
           }
         }).content
       );
+      const disambiguationMessage = buildDisambiguationAssistantMessage({
+        prompt: disambiguationRequest.prompt,
+        options: disambiguationRequest.options,
+      });
+      persistedMessages.push({
+        role: "assistant",
+        content: disambiguationMessage,
+      });
 
       return {
         needs_user_input: true,
-        message: disambiguationRequest.prompt || "I need one more choice before I can continue.",
+        message: disambiguationMessage,
         prompt: disambiguationRequest.prompt,
         options: disambiguationRequest.options,
         conversationHistory: persistedMessages,
@@ -1680,6 +1754,8 @@ module.exports = {
   buildSemanticLayer,
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
+  sanitizeToolError,
   buildUsageRecordFromResponse,
 };

@@ -5,7 +5,9 @@ import {
 const {
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
+  sanitizeToolError,
   buildUsageRecordFromResponse,
 } = require("../../modules/ai/orchestrator/orchestrator");
 
@@ -107,5 +109,31 @@ describe("orchestrator Responses API adapters", () => {
     });
 
     expect(message).toBe("I created Total sessions.");
+  });
+
+  it("builds a persisted assistant message with quick replies for disambiguation", () => {
+    const message = buildDisambiguationAssistantMessage({
+      prompt: "Which sprint should I use?",
+      options: [
+        { label: "Use the active sprint", value: "active_sprint" },
+        { label: "Pick a board", value: "pick_board" },
+      ],
+    });
+
+    expect(message).toContain("Which sprint should I use?");
+    expect(message).toContain("```cb-actions");
+    expect(message).toContain("\"version\": 1");
+    expect(message).toContain("\"id\": \"active_sprint\"");
+    expect(message).toContain("\"label\": \"Use the active sprint\"");
+    expect(message).toContain("\"action\": \"reply\"");
+  });
+
+  it("redacts sensitive request details from tool errors", () => {
+    const message = sanitizeToolError(new Error("401 - authorization: Basic abc123def456 token=secret"));
+
+    expect(message).toContain("Basic [REDACTED]");
+    expect(message).toContain("token=[REDACTED]");
+    expect(message).not.toContain("abc123def456");
+    expect(message).not.toContain("secret");
   });
 });

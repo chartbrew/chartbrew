@@ -1,0 +1,139 @@
+{
+  "id": "jira-bug-tracking",
+  "slug": "bug-tracking",
+  "version": 1,
+  "source": "jira",
+  "name": "Jira Bug Tracking",
+  "description": "Open bugs, priority breakdowns, oldest bugs, and bug trends.",
+  "requiredConnection": {
+    "type": "jira",
+    "subType": "jira"
+  },
+  "datasets": [
+    {
+      "id": "bugs_by_priority",
+      "name": "Jira open bugs by priority",
+      "description": "Open bug count grouped by priority.",
+      "icon": "Bug",
+      "fieldsSchema": {
+        "root[].priority": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND issuetype = Bug AND statusCategory != Done",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "priority"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "bug_trend",
+      "name": "Jira bug trend",
+      "description": "Bugs created and resolved by day.",
+      "icon": "LineChart",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].created": "number",
+        "root[].resolved": "number",
+        "root[].open": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "includeDoneAt": true,
+          "jql": "project IN ({{projects}}) AND issuetype = Bug AND ((created >= {{start_date}} AND created <= {{end_date}}) OR (statusCategory = Done AND statusCategoryChangedDate >= {{start_date}} AND statusCategoryChangedDate <= {{end_date}})) ORDER BY updated ASC",
+          "transform": {
+            "type": "created_resolved_trend",
+            "interval": "day"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true },
+          { "name": "start_date", "type": "date", "default_value": "-30d", "required": false },
+          { "name": "end_date", "type": "date", "default_value": "now()", "required": false }
+        ]
+      }
+    },
+    {
+      "id": "oldest_open_bugs",
+      "name": "Jira oldest open bugs",
+      "description": "Oldest unresolved bugs.",
+      "icon": "Table",
+      "fieldsSchema": {
+        "root[].key": "string",
+        "root[].summary": "string",
+        "root[].priority": "string",
+        "root[].assignee": "string",
+        "root[].createdAt": "date"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND issuetype = Bug AND statusCategory != Done ORDER BY created ASC",
+          "transform": { "type": "raw" },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 500 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "bugs-by-priority",
+      "name": "Bugs by priority",
+      "description": "Open bugs grouped by priority.",
+      "icon": "Bug",
+      "type": "bar",
+      "requiredDatasetIds": ["bugs_by_priority"],
+      "layoutIntent": { "kind": "comparison", "priority": 10 },
+      "cdc": { "datasetTemplateId": "bugs_by_priority", "xAxis": "root[].priority", "yAxis": "root[].issueCount", "legend": "Bugs", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true }
+    },
+    {
+      "id": "bug-trend",
+      "name": "Bug trend",
+      "description": "Bugs created and resolved over time.",
+      "icon": "LineChart",
+      "type": "line",
+      "requiredDatasetIds": ["bug_trend"],
+      "layoutIntent": { "kind": "trend", "priority": 20 },
+      "cdcs": [
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].created", "legend": "Created", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true },
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].resolved", "legend": "Resolved", "datasetColor": "#0FC457", "fillColor": "rgba(15, 196, 87, 0.12)", "fill": true }
+      ]
+    },
+    {
+      "id": "oldest-open-bugs",
+      "name": "Oldest open bugs",
+      "description": "Oldest unresolved bug issues.",
+      "icon": "Table",
+      "type": "table",
+      "requiredDatasetIds": ["oldest_open_bugs"],
+      "layoutIntent": { "kind": "table", "priority": 30 },
+      "cdc": {
+        "datasetTemplateId": "oldest_open_bugs",
+        "xAxis": "root[]",
+        "datasetColor": "#EF4444",
+        "columnsOrder": ["key", "summary", "priority", "assignee", "createdAt"]
+      }
+    }
+  ]
+}

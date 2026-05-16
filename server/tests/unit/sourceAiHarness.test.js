@@ -7,6 +7,8 @@ const realtimeDbProtocol = require("../../sources/plugins/realtimedb/realtimedb.
 const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection");
 const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection");
 const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
+const jiraConnection = require("../../sources/plugins/jira/jira.connection");
+const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 const apiProtocol = require("../../sources/shared/protocols/api.protocol");
 const db = require("../../models/models");
@@ -16,6 +18,7 @@ const createChart = require("../../modules/ai/orchestrator/tools/createChart");
 const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
 const generateQueryTool = require("../../modules/ai/orchestrator/tools/generateQuery");
 const getSchemaTool = require("../../modules/ai/orchestrator/tools/getSchema");
+const { sourceUsesSourceOwnedConfiguration } = require("../../modules/ai/orchestrator/sourceSupport");
 const {
   sourceGetCapabilities,
   sourceGetSampleData,
@@ -40,6 +43,7 @@ const SOURCE_OWNED_IDS = [
   "customerio",
   "firestore",
   "googleAnalytics",
+  "jira",
   "realtimedb",
   "stripeOfficial",
 ];
@@ -91,7 +95,7 @@ function expectDataRequestContract(sourceId, plan) {
   expect(sourceId !== "firestore" || hasQuery).toBe(true);
   expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
   expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
-  expect(!["googleAnalytics", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+  expect(!["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
 }
 
 function expectChartPlanContract(plan) {
@@ -132,7 +136,7 @@ async function planFixture(fixture) {
 }
 
 async function validateFixturePlan({ source, sourceId, payload, plan }) {
-  if (["googleAnalytics", "stripeOfficial"].includes(sourceId)) {
+  if (["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId)) {
     return source.backend.ai.validateConfiguration(plan.configuration);
   }
 
@@ -225,6 +229,12 @@ const plannerContractFixtures = [{
   payload: {
     question: "Create an MRR chart over the last 6 months",
   },
+}, {
+  name: "Jira issue breakdown",
+  sourceId: "jira",
+  payload: {
+    question: "Show open Jira issues by status",
+  },
 }];
 
 const toolHarnessConnections = {
@@ -266,6 +276,25 @@ const toolHarnessConnections = {
         accountId: "accounts/1",
         propertyId: "properties/123",
         propertyName: "Example GA4",
+      },
+    },
+  },
+  jira: {
+    id: 107,
+    team_id: TOOL_TEAM_ID,
+    type: "jira",
+    subType: "jira",
+    name: "Jira",
+    host: "https://chartbrew.atlassian.net",
+    authentication: {
+      email: "raz@example.com",
+      apiToken: "redacted-test-token",
+    },
+    options: {
+      jira: {
+        fieldMappings: {
+          storyPoints: "customfield_10016",
+        },
       },
     },
   },
@@ -370,6 +399,40 @@ function setupGoogleAnalyticsToolRuntime() {
   }]);
 }
 
+function setupJiraToolRuntime() {
+  vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
+    issues: [{
+      key: "CHART-1",
+      fields: {
+        summary: "Build Jira source",
+        project: { key: "CHART" },
+        issuetype: { name: "Story" },
+        status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+        assignee: { displayName: "Raz" },
+        priority: { name: "High" },
+        created: "2026-05-01T00:00:00.000Z",
+        updated: "2026-05-02T00:00:00.000Z",
+        customfield_10016: 5,
+      },
+    }],
+    total: 1,
+  });
+  vi.spyOn(jiraProtocol, "fetchJiraRows").mockResolvedValue([{
+    key: "CHART-1",
+    fields: {
+      summary: "Build Jira source",
+      project: { key: "CHART" },
+      issuetype: { name: "Story" },
+      status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+      assignee: { displayName: "Raz" },
+      priority: { name: "High" },
+      created: "2026-05-01T00:00:00.000Z",
+      updated: "2026-05-02T00:00:00.000Z",
+      customfield_10016: 5,
+    },
+  }]);
+}
+
 function setupRealtimeDbToolRuntime() {
   vi.spyOn(realtimeDbProtocol, "createRealtimeDatabase").mockReturnValue({
     getData: vi.fn().mockResolvedValue([{ _key: "order_1", total: 25 }]),
@@ -436,6 +499,20 @@ const compactToolFixtures = [{
     dimensions: "date",
   },
   setup: setupGoogleAnalyticsToolRuntime,
+}, {
+  sourceId: "jira",
+  question: "Show Jira issues by status",
+  resource: "issues",
+  previewConfiguration: {
+    source: "jira",
+    resource: "issues",
+    mode: "jql",
+    jql: "project = CHART",
+    fields: ["key", "summary", "status", "assignee", "created", "updated"],
+    transform: { type: "grouped", groupBy: "status", metric: "count" },
+    pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
+  },
+  setup: setupJiraToolRuntime,
 }, {
   sourceId: "realtimedb",
   question: "Show /orders",
@@ -850,5 +927,45 @@ describe("Source AI harness", () => {
       status: "ok",
       chart_created: true,
     });
+  });
+
+  it("formats Jira request errors without raw request headers", () => {
+    const message = jiraConnection.getSafeJiraErrorMessage({
+      statusCode: 400,
+      error: {
+        errorMessages: ["Invalid JQL"],
+        errors: {
+          jql: "The sprint field is invalid",
+        },
+      },
+      options: {
+        headers: {
+          authorization: "Basic abc123",
+        },
+      },
+    });
+
+    expect(message).toBe("400 - Invalid JQL The sprint field is invalid");
+    expectNoSensitiveOutput(message);
+  });
+
+  it("preserves plain Jira error bodies without request metadata", () => {
+    const message = jiraConnection.getSafeJiraErrorMessage({
+      statusCode: 401,
+      error: "Client must be authenticated to access this resource.",
+      request: {
+        headers: {
+          authorization: "Basic abc123",
+        },
+      },
+    });
+
+    expect(message).toBe("401 - Client must be authenticated to access this resource.");
+    expectNoSensitiveOutput(message);
+  });
+
+  it("marks Jira as source-owned configuration so generic run_query stays out of the flow", () => {
+    expect(sourceUsesSourceOwnedConfiguration(getSourceById("jira"))).toBe(true);
+    expect(sourceUsesSourceOwnedConfiguration(getSourceById("postgres"))).toBe(false);
   });
 });

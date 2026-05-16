@@ -1,0 +1,133 @@
+{
+  "id": "jira-team-workload",
+  "slug": "team-workload",
+  "version": 1,
+  "source": "jira",
+  "name": "Jira Team Workload",
+  "description": "Open work, work in progress, and stale issues by assignee.",
+  "requiredConnection": {
+    "type": "jira",
+    "subType": "jira"
+  },
+  "datasets": [
+    {
+      "id": "open_by_assignee",
+      "name": "Jira open issues by assignee",
+      "description": "Open issue count grouped by assignee.",
+      "icon": "Users",
+      "fieldsSchema": {
+        "root[].assignee": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND statusCategory != Done",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "assignee"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "wip_by_assignee",
+      "name": "Jira work in progress by assignee",
+      "description": "In-progress issue count grouped by assignee.",
+      "icon": "Activity",
+      "fieldsSchema": {
+        "root[].assignee": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND statusCategory = \"In Progress\"",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "assignee"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "stale_issues",
+      "name": "Jira stale issues",
+      "description": "Open issues not updated recently.",
+      "icon": "Clock",
+      "fieldsSchema": {
+        "root[].key": "string",
+        "root[].summary": "string",
+        "root[].assignee": "string",
+        "root[].status": "string",
+        "root[].updatedAt": "date"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND statusCategory != Done AND updated <= -14d ORDER BY updated ASC",
+          "transform": { "type": "stale_table" },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 500 }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "open-issues-by-assignee",
+      "name": "Open issues by assignee",
+      "description": "Open issues grouped by assignee.",
+      "icon": "Users",
+      "type": "bar",
+      "requiredDatasetIds": ["open_by_assignee"],
+      "layoutIntent": { "kind": "comparison", "priority": 10 },
+      "cdc": { "datasetTemplateId": "open_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "legend": "Open issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+    },
+    {
+      "id": "wip-by-assignee",
+      "name": "Work in progress by assignee",
+      "description": "In-progress issues grouped by assignee.",
+      "icon": "Activity",
+      "type": "bar",
+      "requiredDatasetIds": ["wip_by_assignee"],
+      "layoutIntent": { "kind": "comparison", "priority": 20 },
+      "cdc": { "datasetTemplateId": "wip_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "legend": "WIP issues", "datasetColor": "rgba(255, 152, 0, 1)", "fillColor": "rgba(255, 152, 0, 0.14)", "fill": true }
+    },
+    {
+      "id": "stale-issues",
+      "name": "Stale issues",
+      "description": "Open issues that have not been updated recently.",
+      "icon": "Table",
+      "type": "table",
+      "requiredDatasetIds": ["stale_issues"],
+      "layoutIntent": { "kind": "table", "priority": 30 },
+      "cdc": {
+        "datasetTemplateId": "stale_issues",
+        "xAxis": "root[]",
+        "datasetColor": "rgba(255, 152, 0, 1)",
+        "columnsOrder": ["key", "summary", "assignee", "status", "updatedAt"]
+      }
+    }
+  ]
+}

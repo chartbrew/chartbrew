@@ -54,6 +54,33 @@ function getChartTemplateOptions(chartTemplate) {
   }, {});
 }
 
+function normalizeVariableName(name) {
+  if (typeof name !== "string") return name;
+  const match = name.match(/^\{\{([^}]+)\}\}$/);
+  return match ? match[1].trim() : name.trim();
+}
+
+function applyVariableDefaultsToDataRequest(dataRequest, variableDefaults = {}) {
+  if (!dataRequest?.variableBindings || Object.keys(variableDefaults).length === 0) {
+    return dataRequest;
+  }
+
+  return {
+    ...dataRequest,
+    variableBindings: dataRequest.variableBindings.map((binding) => {
+      const name = normalizeVariableName(binding.name || binding.variableName || "");
+      if (variableDefaults[name] === undefined || variableDefaults[name] === null) {
+        return binding;
+      }
+
+      return {
+        ...binding,
+        default_value: variableDefaults[name],
+      };
+    }),
+  };
+}
+
 class ChartTemplateController {
   constructor() {
     this.chartController = new ChartController();
@@ -159,6 +186,7 @@ class ChartTemplateController {
 
       const datasetMapping = {};
       const selectedDatasets = template.datasets.filter((dataset) => datasetTemplateIds.includes(dataset.id));
+      const variableDefaults = data.variable_defaults || data.variableDefaults || {};
 
       const createdDatasets = await Promise.all(selectedDatasets.map(async (datasetTemplate) => {
         const dataset = await this.datasetController.createWithDataRequests({
@@ -170,7 +198,7 @@ class ChartTemplateController {
           fieldsSchema: datasetTemplate.fieldsSchema || {},
           dataRequests: [{
             ...sourcePlugin.backend.getDefaultDataRequest(),
-            ...datasetTemplate.dataRequest,
+            ...applyVariableDefaultsToDataRequest(datasetTemplate.dataRequest, variableDefaults),
             connection_id: connection.id,
           }],
           main_dr_index: 0,

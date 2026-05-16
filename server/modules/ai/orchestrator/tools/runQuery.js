@@ -1,6 +1,9 @@
 const db = require("../../../../models/models");
 const drCacheController = require("../../../../controllers/DataRequestCacheController");
-const { requireSupportedSourceForConnection } = require("../sourceSupport");
+const {
+  requireSupportedSourceForConnection,
+  sourceUsesSourceOwnedConfiguration,
+} = require("../sourceSupport");
 const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
 async function runQuery(payload) {
@@ -22,6 +25,10 @@ async function runQuery(payload) {
 
     if (!query && !isConfigurationRequest) {
       throw new Error("query or configuration is required");
+    }
+
+    if (sourceUsesSourceOwnedConfiguration(source)) {
+      throw new Error(`${source.name} uses source-owned configuration tools. Use source_preview_configuration for previews and create_temporary_chart for charts instead of run_query.`);
     }
 
     // Add LIMIT clause if not present to respect row_limit
