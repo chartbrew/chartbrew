@@ -79,6 +79,28 @@ describe("source registry", () => {
     expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
   });
 
+  it("resolves Jira by id", () => {
+    const source = getSourceById("jira");
+
+    expect(source).toMatchObject({
+      id: "jira",
+      type: "jira",
+      subType: "jira",
+      name: "Jira",
+      availability: {
+        server: {
+          enabled: true,
+        },
+      },
+    });
+    expect(source.backend.runDataRequest).toEqual(expect.any(Function));
+    expect(source.backend.getBuilderMetadata).toEqual(expect.any(Function));
+    expect(source.backend.getDefaultDataRequest).toEqual(expect.any(Function));
+    expect(source.backend.getSchema).toEqual(expect.any(Function));
+    expect(source.backend.testConnection).toEqual(expect.any(Function));
+    expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
+  });
+
   it("includes source availability in source summaries", () => {
     const stripeSummary = getSourceSummaries().find((source) => source.id === "stripe");
 
@@ -484,6 +506,15 @@ describe("source registry", () => {
     expect(source.id).toBe("stripeOfficial");
   });
 
+  it("resolves Jira from its persisted source identity", () => {
+    const source = getSourceForConnection({
+      type: "jira",
+      subType: "jira",
+    });
+
+    expect(source.id).toBe("jira");
+  });
+
   it("resolves generic API connections through the API protocol fallback", () => {
     expect(getSourceForConnection({
       type: "api",
@@ -562,6 +593,12 @@ describe("source registry", () => {
       id: "stripeOfficial",
       type: "stripeOfficial",
       subType: "stripeOfficial",
+      capabilities: expect.any(Object),
+    }));
+    expect(summaries).toContainEqual(expect.objectContaining({
+      id: "jira",
+      type: "jira",
+      subType: "jira",
       capabilities: expect.any(Object),
     }));
     expect(summaries[0].backend).toBeUndefined();

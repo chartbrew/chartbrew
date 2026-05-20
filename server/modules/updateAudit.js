@@ -70,6 +70,7 @@ function redactScalar(value) {
 
   return value
     .replace(/Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi, "Bearer [REDACTED]")
+    .replace(/Basic\s+[A-Za-z0-9\-._~+/]+=*/gi, "Basic [REDACTED]")
     .replace(/(token|password|secret|apikey|api_key)=([^&\s]+)/gi, "$1=[REDACTED]");
 }
 

@@ -1,0 +1,185 @@
+{
+  "id": "jira-sprint-health",
+  "slug": "sprint-health",
+  "version": 1,
+  "source": "jira",
+  "name": "Jira Sprint Health",
+  "description": "Sprint completion, story points, carryover, workload, and status breakdowns.",
+  "requiredConnection": {
+    "type": "jira",
+    "subType": "jira"
+  },
+  "datasets": [
+    {
+      "id": "sprint_summary",
+      "name": "Jira sprint summary",
+      "description": "Sprint completion and story point totals.",
+      "icon": "Gauge",
+      "fieldsSchema": {
+        "root[].committedIssues": "number",
+        "root[].completedIssues": "number",
+        "root[].completionRate": "number",
+        "root[].committedStoryPoints": "number",
+        "root[].completedStoryPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "sprint_issues",
+          "mode": "visual",
+          "sprintId": "{{sprint_id}}",
+          "jql": "",
+          "transform": { "type": "sprint_summary" },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "sprint_id", "type": "number", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "sprint_by_assignee",
+      "name": "Jira sprint work by assignee",
+      "description": "Sprint issue count and story points by assignee.",
+      "icon": "Users",
+      "fieldsSchema": {
+        "root[].assignee": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "sprint_issues",
+          "mode": "visual",
+          "sprintId": "{{sprint_id}}",
+          "jql": "",
+          "transform": {
+            "type": "grouped",
+            "metric": "storyPoints",
+            "groupBy": "assignee"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "sprint_id", "type": "number", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "sprint_by_status",
+      "name": "Jira sprint issue status",
+      "description": "Sprint issue count by status category.",
+      "icon": "PieChart",
+      "fieldsSchema": {
+        "root[].statusCategory": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "sprint_issues",
+          "mode": "visual",
+          "sprintId": "{{sprint_id}}",
+          "jql": "",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "statusCategory"
+          },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 5000 }
+        },
+        "variableBindings": [
+          { "name": "sprint_id", "type": "number", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "sprint_carryover",
+      "name": "Jira sprint carryover issues",
+      "description": "Sprint issues that are not done.",
+      "icon": "Table",
+      "fieldsSchema": {
+        "root[].key": "string",
+        "root[].summary": "string",
+        "root[].assignee": "string",
+        "root[].status": "string",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "sprint_issues",
+          "mode": "visual",
+          "sprintId": "{{sprint_id}}",
+          "jql": "statusCategory != Done",
+          "transform": { "type": "raw" },
+          "pagination": { "startAt": 0, "maxResults": 100, "maxRecords": 1000 }
+        },
+        "variableBindings": [
+          { "name": "sprint_id", "type": "number", "default_value": "", "required": true }
+        ]
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "sprint-completion",
+      "name": "Sprint completion",
+      "description": "Completed issues divided by committed issues.",
+      "icon": "Gauge",
+      "type": "gauge",
+      "requiredDatasetIds": ["sprint_summary"],
+      "layoutIntent": { "kind": "kpi", "priority": 10 },
+      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completionRate", "yAxis": "root[].completionRate", "yAxisOperation": "none", "legend": "Completion rate", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true, "formula": "{val * 100}%" }
+    },
+    {
+      "id": "story-points-completed",
+      "name": "Story points completed",
+      "description": "Completed story points for the selected sprint.",
+      "icon": "BadgeCheck",
+      "type": "kpi",
+      "requiredDatasetIds": ["sprint_summary"],
+      "layoutIntent": { "kind": "kpi", "priority": 20 },
+      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completedStoryPoints", "yAxis": "root[].completedStoryPoints", "yAxisOperation": "none", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+    },
+    {
+      "id": "sprint-work-by-assignee",
+      "name": "Sprint work by assignee",
+      "description": "Sprint story points grouped by assignee.",
+      "icon": "Users",
+      "type": "bar",
+      "requiredDatasetIds": ["sprint_by_assignee"],
+      "layoutIntent": { "kind": "comparison", "priority": 30 },
+      "cdc": { "datasetTemplateId": "sprint_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].storyPoints", "yAxisOperation": "none", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+    },
+    {
+      "id": "sprint-status-breakdown",
+      "name": "Sprint status breakdown",
+      "description": "Sprint issues grouped by status category.",
+      "icon": "PieChart",
+      "type": "doughnut",
+      "requiredDatasetIds": ["sprint_by_status"],
+      "layoutIntent": { "kind": "comparison", "priority": 40 },
+      "cdc": { "datasetTemplateId": "sprint_by_status", "xAxis": "root[].statusCategory", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(255, 255, 255, 1)", "fillColor": ["rgba(66, 133, 244, 1)", "rgba(255, 152, 0, 1)", "rgba(38, 166, 154, 1)"], "multiFill": true }
+    },
+    {
+      "id": "carryover-issues",
+      "name": "Carryover issues",
+      "description": "Sprint issues that are not done.",
+      "icon": "Table",
+      "type": "table",
+      "requiredDatasetIds": ["sprint_carryover"],
+      "layoutIntent": { "kind": "table", "priority": 50 },
+      "cdc": {
+        "datasetTemplateId": "sprint_carryover",
+        "xAxis": "root[]",
+        "yAxis": "root[].key",
+        "yAxisOperation": "none",
+        "datasetColor": "rgba(255, 152, 0, 1)",
+        "columnsOrder": ["key", "summary", "assignee", "status", "storyPoints"]
+      }
+    }
+  ]
+}

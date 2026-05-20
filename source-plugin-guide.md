@@ -355,6 +355,7 @@ If the source ships built-in chart templates:
 
 4. Custom setup UI goes in `client/src/sources/<sourceId>/<sourceId>-template-setup.jsx`.
 5. Built-in templates must resolve through registered source plugins.
+6. Template setup UIs should expose one selectable card per chart, grouped by domain when useful. Selecting one chart must create only that chart's required datasets, not the entire template bundle.
 
 Template chart bindings:
 

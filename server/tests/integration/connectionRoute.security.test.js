@@ -89,6 +89,19 @@ async function seedProjectScopedAccess(models) {
     connectionString: "mongodb://user:pass@mongo.example.com:27017/app",
   }));
 
+  const allowedJiraConnection = await models.Connection.create(connectionFactory.build({
+    team_id: team.id,
+    project_ids: [allowedProject.id],
+    type: "jira",
+    subType: "jira",
+    host: "https://chartbrew.atlassian.net",
+    authentication: JSON.stringify({
+      type: "api_token",
+      email: "raz@example.com",
+      apiToken: "jira-token",
+    }),
+  }));
+
   const restrictedApiConnection = await models.Connection.create(connectionFactory.build({
     team_id: team.id,
     project_ids: [restrictedProject.id],
@@ -113,6 +126,7 @@ async function seedProjectScopedAccess(models) {
       allowedStripeConnection,
       allowedStrapiConnection,
       allowedMongoConnection,
+      allowedJiraConnection,
       restrictedApiConnection,
     },
   };
@@ -170,6 +184,28 @@ describe("ConnectionRoute project scoping", () => {
 
     expect(response.body).toEqual({ error: "Unsupported source action" });
     expect(internalSpy).not.toHaveBeenCalled();
+  });
+
+  it("allows Jira source actions for connections assigned to the caller's project", async () => {
+    const seeded = await seedProjectScopedAccess(models);
+    const jiraSource = getSourceById("jira");
+    const actionSpy = vi.spyOn(jiraSource.backend.actions, "listProjects")
+      .mockResolvedValue([{ id: "10000", key: "CHART", name: "Chartbrew" }]);
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/connections/${seeded.connections.allowedJiraConnection.id}/source-action`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({ action: "listProjects" })
+      .expect(200);
+
+    expect(response.body).toEqual([{ id: "10000", key: "CHART", name: "Chartbrew" }]);
+    expect(actionSpy).toHaveBeenCalledWith(expect.objectContaining({
+      connection: expect.objectContaining({
+        id: seeded.connections.allowedJiraConnection.id,
+        type: "jira",
+      }),
+      params: {},
+    }));
   });
 
   it("rejects source actions for same-team connections outside the caller's projects", async () => {

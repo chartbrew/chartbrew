@@ -1,0 +1,199 @@
+{
+  "id": "jira-project-overview",
+  "slug": "project-overview",
+  "version": 1,
+  "source": "jira",
+  "name": "Jira Project Overview",
+  "description": "Project-level Jira KPIs, issue trends, status breakdowns, and recent completed work.",
+  "requiredConnection": {
+    "type": "jira",
+    "subType": "jira"
+  },
+  "datasets": [
+    {
+      "id": "issues_created_resolved",
+      "name": "Jira issues created vs resolved",
+      "description": "Created and resolved issue counts grouped by day.",
+      "icon": "LineChart",
+      "fieldsSchema": {
+        "root[].period": "date",
+        "root[].created": "number",
+        "root[].resolved": "number",
+        "root[].open": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "includeDoneAt": true,
+          "jql": "project IN ({{projects}}) AND ((created >= {{start_date}} AND created <= {{end_date}}) OR (statusCategory = Done AND statusCategoryChangedDate >= {{start_date}} AND statusCategoryChangedDate <= {{end_date}})) ORDER BY updated ASC",
+          "transform": {
+            "type": "created_resolved_trend",
+            "interval": "day"
+          },
+          "pagination": {
+            "startAt": 0,
+            "maxResults": 100,
+            "maxRecords": 5000
+          }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true },
+          { "name": "start_date", "type": "date", "default_value": "-365d", "required": false },
+          { "name": "end_date", "type": "date", "default_value": "now()", "required": false }
+        ]
+      }
+    },
+    {
+      "id": "issues_by_status",
+      "name": "Jira issues by status",
+      "description": "Issue count and story points grouped by status.",
+      "icon": "BarChart3",
+      "fieldsSchema": {
+        "root[].status": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND statusCategory != Done",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "status"
+          },
+          "pagination": {
+            "startAt": 0,
+            "maxResults": 100,
+            "maxRecords": 5000
+          }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "issues_by_assignee",
+      "name": "Jira open issues by assignee",
+      "description": "Open issue count and story points grouped by assignee.",
+      "icon": "Users",
+      "fieldsSchema": {
+        "root[].assignee": "string",
+        "root[].issueCount": "number",
+        "root[].storyPoints": "number"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "jql": "project IN ({{projects}}) AND statusCategory != Done",
+          "transform": {
+            "type": "grouped",
+            "metric": "count",
+            "groupBy": "assignee"
+          },
+          "pagination": {
+            "startAt": 0,
+            "maxResults": 100,
+            "maxRecords": 5000
+          }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true }
+        ]
+      }
+    },
+    {
+      "id": "recent_completed_work",
+      "name": "Jira recent completed work",
+      "description": "Recently completed issues for a project.",
+      "icon": "ListChecks",
+      "fieldsSchema": {
+        "root[].key": "string",
+        "root[].summary": "string",
+        "root[].assignee": "string",
+        "root[].doneAt": "date"
+      },
+      "dataRequest": {
+        "configuration": {
+          "source": "jira",
+          "resource": "issues",
+          "mode": "visual",
+          "includeDoneAt": true,
+          "jql": "project IN ({{projects}}) AND statusCategory = Done AND statusCategoryChangedDate >= {{start_date}} AND statusCategoryChangedDate <= {{end_date}} ORDER BY updated DESC",
+          "transform": {
+            "type": "raw"
+          },
+          "pagination": {
+            "startAt": 0,
+            "maxResults": 100,
+            "maxRecords": 500
+          }
+        },
+        "variableBindings": [
+          { "name": "projects", "type": "string", "default_value": "", "required": true },
+          { "name": "start_date", "type": "date", "default_value": "-30d", "required": false },
+          { "name": "end_date", "type": "date", "default_value": "now()", "required": false }
+        ]
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "created-vs-resolved",
+      "name": "Issues created vs resolved",
+      "description": "Created and resolved issues by day.",
+      "icon": "LineChart",
+      "type": "line",
+      "requiredDatasetIds": ["issues_created_resolved"],
+      "layoutIntent": { "kind": "trend", "priority": 10 },
+      "cdcs": [
+        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].created", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Created", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true },
+        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].resolved", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Resolved", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
+      ]
+    },
+    {
+      "id": "issues-by-status",
+      "name": "Issues by status",
+      "description": "Open issue count grouped by Jira status.",
+      "icon": "BarChart3",
+      "type": "bar",
+      "requiredDatasetIds": ["issues_by_status"],
+      "layoutIntent": { "kind": "comparison", "priority": 20 },
+      "cdc": { "datasetTemplateId": "issues_by_status", "xAxis": "root[].status", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+    },
+    {
+      "id": "issues-by-assignee",
+      "name": "Open issues by assignee",
+      "description": "Open issue count grouped by assignee.",
+      "icon": "Users",
+      "type": "bar",
+      "requiredDatasetIds": ["issues_by_assignee"],
+      "layoutIntent": { "kind": "comparison", "priority": 30 },
+      "cdc": { "datasetTemplateId": "issues_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(255, 152, 0, 1)", "fillColor": "rgba(255, 152, 0, 0.14)", "fill": true }
+    },
+    {
+      "id": "recent-completed-work",
+      "name": "Recent completed work",
+      "description": "Recently completed Jira issues.",
+      "icon": "Table",
+      "type": "table",
+      "requiredDatasetIds": ["recent_completed_work"],
+      "layoutIntent": { "kind": "table", "priority": 40 },
+      "cdc": {
+        "datasetTemplateId": "recent_completed_work",
+        "xAxis": "root[]",
+        "yAxis": "root[].key",
+        "yAxisOperation": "none",
+        "datasetColor": "rgba(38, 166, 154, 1)",
+        "columnsOrder": ["key", "summary", "assignee", "doneAt"]
+      }
+    }
+  ]
+}

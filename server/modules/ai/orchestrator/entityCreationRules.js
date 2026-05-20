@@ -99,7 +99,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array including xAxis/yAxis/date bindings on the CDC)
 
 **Source-owned configuration sequence:**
-1. Use source_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query for configuration-based sources.
+1. Use source_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query or run_query for configuration-based sources.
 2. For generic API connections, use connection AI Context first. If a recognizable provider host returns modelFallbackAllowed=true or needs_model_planning, you may use provider/API knowledge as a fallback by passing explicit method, route, pagination/body/header assumptions, and chart bindings to the create tool.
 3. Optionally use source_validate_configuration and source_preview_configuration for compact rows/warnings.
 4. For default previews, use create_temporary_chart with connection_id, name, configuration or explicit route/method, and chartSpec bindings.

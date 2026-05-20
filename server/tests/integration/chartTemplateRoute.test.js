@@ -59,6 +59,32 @@ async function seedStripeTemplateSetup(models) {
   };
 }
 
+async function seedJiraTemplateSetup(models) {
+  const seeded = await seedStripeTemplateSetup(models);
+  const connection = await models.Connection.create(connectionFactory.build({
+    team_id: seeded.team.id,
+    project_ids: [],
+    type: "jira",
+    subType: "jira",
+    host: "https://chartbrew.atlassian.net",
+    authentication: {
+      type: "api_token",
+      email: "raz@example.com",
+      apiToken: "token",
+    },
+    options: {
+      jira: {
+        siteUrl: "https://chartbrew.atlassian.net",
+      },
+    },
+  }));
+
+  return {
+    ...seeded,
+    connection,
+  };
+}
+
 describe("ChartTemplateRoute", () => {
   let app;
   let models;
@@ -192,6 +218,70 @@ describe("ChartTemplateRoute", () => {
     expect(datasets).toHaveLength(2);
     expect(datasets[0].DataRequests[0].template).toBe("stripe");
     expect(charts).toHaveLength(0);
+  });
+
+  it("applies template variable defaults when creating Jira datasets", async () => {
+    const seeded = await seedJiraTemplateSetup(models);
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/chart-templates/jira/project-overview/create`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        connection_id: seeded.connection.id,
+        dashboard: { type: "existing", project_id: seeded.project.id },
+        dataset_template_ids: ["issues_by_status"],
+        chart_template_ids: [],
+        variable_defaults: {
+          projects: "CHART",
+        },
+      })
+      .expect(200);
+
+    const dataRequest = await models.DataRequest.findOne({
+      where: { dataset_id: response.body.datasets[0].id },
+    });
+    const projectBinding = await models.VariableBinding.findOne({
+      where: {
+        entity_type: "DataRequest",
+        entity_id: `${dataRequest.id}`,
+        name: "projects",
+      },
+    });
+
+    expect(projectBinding.default_value).toBe("CHART");
+    expect(projectBinding.required).toBe(true);
+  });
+
+  it("creates Jira template charts with complete dataset config fields", async () => {
+    const seeded = await seedJiraTemplateSetup(models);
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/chart-templates/jira/project-overview/create`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        connection_id: seeded.connection.id,
+        dashboard: { type: "existing", project_id: seeded.project.id },
+        dataset_template_ids: ["issues_by_status"],
+        chart_template_ids: ["issues-by-status"],
+        variable_defaults: {
+          projects: "CHART",
+        },
+      })
+      .expect(200);
+
+    const chart = await models.Chart.findByPk(response.body.charts[0].id, {
+      include: [{ model: models.ChartDatasetConfig }],
+    });
+    const dataset = await models.Dataset.findByPk(response.body.datasets[0].id);
+    const [cdc] = chart.ChartDatasetConfigs;
+
+    expect(cdc.xAxis).toBe("root[].status");
+    expect(cdc.yAxis).toBe("root[].issueCount");
+    expect(cdc.yAxisOperation).toBe("none");
+    expect(dataset.fieldsSchema).toEqual(expect.objectContaining({
+      "root[].status": "string",
+      "root[].issueCount": "number",
+    }));
   });
 
   it("rejects cross-team connections", async () => {

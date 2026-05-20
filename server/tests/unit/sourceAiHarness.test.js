@@ -7,6 +7,8 @@ const realtimeDbProtocol = require("../../sources/plugins/realtimedb/realtimedb.
 const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection");
 const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection");
 const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
+const jiraConnection = require("../../sources/plugins/jira/jira.connection");
+const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 const apiProtocol = require("../../sources/shared/protocols/api.protocol");
 const db = require("../../models/models");
@@ -16,18 +18,23 @@ const createChart = require("../../modules/ai/orchestrator/tools/createChart");
 const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
 const generateQueryTool = require("../../modules/ai/orchestrator/tools/generateQuery");
 const getSchemaTool = require("../../modules/ai/orchestrator/tools/getSchema");
+const { sourceUsesSourceOwnedConfiguration } = require("../../modules/ai/orchestrator/sourceSupport");
 const {
   sourceGetCapabilities,
   sourceGetSampleData,
   sourceListResources,
   sourcePlanDataset,
   sourcePreviewConfiguration,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
 } = require("../../modules/ai/orchestrator/tools/sourceTools");
 const { getSourceById } = require("../../sources");
 
 const ALLOWED_STATUSES = new Set([
   "ok",
+  "fallback",
   "needs_disambiguation",
   "needs_more_context",
   "needs_model_planning",
@@ -40,6 +47,7 @@ const SOURCE_OWNED_IDS = [
   "customerio",
   "firestore",
   "googleAnalytics",
+  "jira",
   "realtimedb",
   "stripeOfficial",
 ];
@@ -91,7 +99,7 @@ function expectDataRequestContract(sourceId, plan) {
   expect(sourceId !== "firestore" || hasQuery).toBe(true);
   expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
   expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
-  expect(!["googleAnalytics", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+  expect(!["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
 }
 
 function expectChartPlanContract(plan) {
@@ -132,7 +140,7 @@ async function planFixture(fixture) {
 }
 
 async function validateFixturePlan({ source, sourceId, payload, plan }) {
-  if (["googleAnalytics", "stripeOfficial"].includes(sourceId)) {
+  if (["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId)) {
     return source.backend.ai.validateConfiguration(plan.configuration);
   }
 
@@ -225,6 +233,12 @@ const plannerContractFixtures = [{
   payload: {
     question: "Create an MRR chart over the last 6 months",
   },
+}, {
+  name: "Jira issue breakdown",
+  sourceId: "jira",
+  payload: {
+    question: "Show open Jira issues by status",
+  },
 }];
 
 const toolHarnessConnections = {
@@ -266,6 +280,25 @@ const toolHarnessConnections = {
         accountId: "accounts/1",
         propertyId: "properties/123",
         propertyName: "Example GA4",
+      },
+    },
+  },
+  jira: {
+    id: 107,
+    team_id: TOOL_TEAM_ID,
+    type: "jira",
+    subType: "jira",
+    name: "Jira",
+    host: "https://chartbrew.atlassian.net",
+    authentication: {
+      email: "raz@example.com",
+      apiToken: "redacted-test-token",
+    },
+    options: {
+      jira: {
+        fieldMappings: {
+          storyPoints: "customfield_10016",
+        },
       },
     },
   },
@@ -370,6 +403,40 @@ function setupGoogleAnalyticsToolRuntime() {
   }]);
 }
 
+function setupJiraToolRuntime() {
+  vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
+    issues: [{
+      key: "CHART-1",
+      fields: {
+        summary: "Build Jira source",
+        project: { key: "CHART" },
+        issuetype: { name: "Story" },
+        status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+        assignee: { displayName: "Raz" },
+        priority: { name: "High" },
+        created: "2026-05-01T00:00:00.000Z",
+        updated: "2026-05-02T00:00:00.000Z",
+        customfield_10016: 5,
+      },
+    }],
+    total: 1,
+  });
+  vi.spyOn(jiraProtocol, "fetchJiraRows").mockResolvedValue([{
+    key: "CHART-1",
+    fields: {
+      summary: "Build Jira source",
+      project: { key: "CHART" },
+      issuetype: { name: "Story" },
+      status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+      assignee: { displayName: "Raz" },
+      priority: { name: "High" },
+      created: "2026-05-01T00:00:00.000Z",
+      updated: "2026-05-02T00:00:00.000Z",
+      customfield_10016: 5,
+    },
+  }]);
+}
+
 function setupRealtimeDbToolRuntime() {
   vi.spyOn(realtimeDbProtocol, "createRealtimeDatabase").mockReturnValue({
     getData: vi.fn().mockResolvedValue([{ _key: "order_1", total: 25 }]),
@@ -436,6 +503,20 @@ const compactToolFixtures = [{
     dimensions: "date",
   },
   setup: setupGoogleAnalyticsToolRuntime,
+}, {
+  sourceId: "jira",
+  question: "Show Jira issues by status",
+  resource: "issues",
+  previewConfiguration: {
+    source: "jira",
+    resource: "issues",
+    mode: "jql",
+    jql: "project = CHART",
+    fields: ["key", "summary", "status", "assignee", "created", "updated"],
+    transform: { type: "grouped", groupBy: "status", metric: "count" },
+    pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
+  },
+  setup: setupJiraToolRuntime,
 }, {
   sourceId: "realtimedb",
   question: "Show /orders",
@@ -731,6 +812,226 @@ describe("Source AI harness", () => {
     expectToolOutputContract(sample);
   });
 
+  it("resolves Jira context through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }]);
+
+    const result = await sourceResolveContext({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for A4321",
+      intent: { id: "sprint_status", resource: "sprint_issues" },
+      mode: "preview",
+    });
+
+    expect(result.source).toBe("jira");
+    expect(result.resolution.entities.project).toMatchObject({
+      key: "A4321",
+    });
+    expect(result.resolution.entities.board).toMatchObject({
+      id: "77",
+    });
+    expect(result.resolution.entities.sprint).toMatchObject({
+      id: "123",
+    });
+    expectToolOutputContract(result);
+  });
+
+  it("runs safe Jira source actions through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+      active: true,
+    }]);
+
+    const result = await sourceRunAction({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      action: "listUsers",
+      params: { query: "Razvan", maxResults: 10 },
+    });
+
+    expect(result).toMatchObject({
+      source: "jira",
+      action: "listUsers",
+      rows: [expect.objectContaining({
+        accountId: "raz-account",
+        displayName: "Razvan Ilin",
+      })],
+      rowCount: 1,
+    });
+    expectToolOutputContract(result);
+  });
+
+  it("searches compact Jira issue records without creating a dataset", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([]);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+    }]);
+    vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
+      issues: [{
+        key: "A4321-1",
+        fields: {
+          summary: "Fix Jira AI search",
+          status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
+          assignee: { displayName: "Razvan Ilin" },
+          priority: { name: "High" },
+          issuetype: { name: "Task" },
+          created: "2026-05-15T00:00:00.000Z",
+          updated: "2026-05-18T00:00:00.000Z",
+        },
+      }],
+    });
+
+    const result = await sourceSearchRecords({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "Show all open issues assigned to Razvan",
+      row_limit: 10,
+    });
+
+    expect(result).toMatchObject({
+      source: "jira",
+      status: "ok",
+      rows: [expect.objectContaining({
+        key: "A4321-1",
+        summary: "Fix Jira AI search",
+        status: "In Progress",
+        assignee: "Razvan Ilin",
+      })],
+      rowCount: 1,
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: expect.stringContaining("assignee IN (\"raz-account\")"),
+        maxResults: 10,
+      }),
+    });
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].body.jql).toContain("statusCategory != Done");
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].body.jql).not.toContain("project IN ()");
+    expectToolOutputContract(result);
+  });
+
+  it("keeps Jira fallback plans usable for preview", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{ id: "10001", key: "A4321", name: "A4321 Project" }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{ id: 77, name: "A4321 Scrum Board", type: "scrum" }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
+
+    const plan = await sourcePlanDataset({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for A4321",
+      mode: "preview",
+    });
+
+    expect(plan.status).toBe("fallback");
+    expect(plan.configuration).toMatchObject({ source: "jira", resource: "issues" });
+    expect(plan.chartSpec).toMatchObject({ type: "bar", xAxis: "root[].status", yAxis: "root[].issueCount" });
+    expect(plan.needs_user_input).toBeUndefined();
+    expectToolOutputContract(plan);
+  });
+
+  it("passes persist mode through Jira source planning before saved creation", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }, {
+      id: 124,
+      name: "Sprint 15",
+      state: "active",
+    }]);
+
+    const plan = await sourcePlanDataset({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "save the active sprint status for A4321",
+      mode: "persist",
+    });
+
+    expect(plan.needs_user_input).toBe(true);
+    expect(plan.status).toBe("needs_disambiguation");
+    expect(plan.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: "sprint:123" }),
+      expect.objectContaining({ value: "sprint:124" }),
+    ]));
+  });
+
+  it("flattens Jira sprint disambiguation through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }, {
+      id: 124,
+      name: "Sprint 15",
+      state: "active",
+    }]);
+
+    const result = await sourceResolveContext({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for A4321",
+      intent: { id: "sprint_status", resource: "sprint_issues" },
+      mode: "persist",
+    });
+
+    expect(result.needs_user_input).toBe(true);
+    expect(result.prompt).toBeTruthy();
+    expect(result.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: "sprint:123" }),
+      expect.objectContaining({ value: "sprint:124" }),
+    ]));
+    expect(result.resolution.needsDisambiguation).toBe(true);
+  });
+
   it.each(toolRoutingReplays)("$name follows the allowed high-risk tool sequence", (replay) => {
     const source = getSourceById(replay.sourceId);
     const usedTools = new Set(replay.steps);
@@ -850,5 +1151,45 @@ describe("Source AI harness", () => {
       status: "ok",
       chart_created: true,
     });
+  });
+
+  it("formats Jira request errors without raw request headers", () => {
+    const message = jiraConnection.getSafeJiraErrorMessage({
+      statusCode: 400,
+      error: {
+        errorMessages: ["Invalid JQL"],
+        errors: {
+          jql: "The sprint field is invalid",
+        },
+      },
+      options: {
+        headers: {
+          authorization: "Basic abc123",
+        },
+      },
+    });
+
+    expect(message).toBe("400 - Invalid JQL The sprint field is invalid");
+    expectNoSensitiveOutput(message);
+  });
+
+  it("preserves plain Jira error bodies without request metadata", () => {
+    const message = jiraConnection.getSafeJiraErrorMessage({
+      statusCode: 401,
+      error: "Client must be authenticated to access this resource.",
+      request: {
+        headers: {
+          authorization: "Basic abc123",
+        },
+      },
+    });
+
+    expect(message).toBe("401 - Client must be authenticated to access this resource.");
+    expectNoSensitiveOutput(message);
+  });
+
+  it("marks Jira as source-owned configuration so generic run_query stays out of the flow", () => {
+    expect(sourceUsesSourceOwnedConfiguration(getSourceById("jira"))).toBe(true);
+    expect(sourceUsesSourceOwnedConfiguration(getSourceById("postgres"))).toBe(false);
   });
 });

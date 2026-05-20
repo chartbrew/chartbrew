@@ -59,6 +59,14 @@ describe("source plugin structure", () => {
     expectFile("server/sources/plugins/customerio/customerio.plugin.js");
     expectFile("server/sources/plugins/customerio/customerio.protocol.js");
     expectFile("server/sources/plugins/customerio/customerio.connection.js");
+    expectFile("server/sources/plugins/jira/jira.plugin.js");
+    expectFile("server/sources/plugins/jira/jira.protocol.js");
+    expectFile("server/sources/plugins/jira/jira.connection.js");
+    expectFile("server/sources/plugins/jira/jira.resources.js");
+    expectFile("server/sources/plugins/jira/templates/project-overview.json");
+    expectFile("server/sources/plugins/jira/templates/sprint-health.json");
+    expectFile("server/sources/plugins/jira/templates/bug-tracking.json");
+    expectFile("server/sources/plugins/jira/templates/team-workload.json");
   });
 
   it("keeps shared source backend code under server/sources/shared", () => {

@@ -1,4 +1,9 @@
-const { getSourceByDialect, requireSourceById } = require("../sourceSupport");
+const {
+  getSourceByDialect,
+  requireSourceById,
+  sourceSupportsQueryGeneration,
+  sourceUsesSourceOwnedConfiguration,
+} = require("../sourceSupport");
 
 async function getSourceInstructions(source) {
   if (source.backend?.ai?.getCapabilities) {
@@ -46,7 +51,7 @@ async function generateQuery(payload) {
       ? requireSourceById(source_id)
       : getSourceByDialect(preferred_dialect || schema?.source_id);
 
-    if (!source?.backend?.ai?.generateQuery) {
+    if (sourceUsesSourceOwnedConfiguration(source) || !sourceSupportsQueryGeneration(source)) {
       throw new Error(`No AI query generator is available for '${preferred_dialect || source_id || "unknown"}'`);
     }
     const sourceInstructions = await getSourceInstructions(source);

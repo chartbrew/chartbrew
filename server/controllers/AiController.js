@@ -69,7 +69,9 @@ async function getOrchestration(
   }
 
   try {
-    const orchestration = await orchestrate(teamId, question, fullHistory, conversation, context);
+    const orchestration = await orchestrate(teamId, question, fullHistory, conversation, context, {
+      userId,
+    });
 
     // Extract title from AI response for new conversations
     let finalMessage = orchestration.message;

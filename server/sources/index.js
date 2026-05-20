@@ -5,6 +5,7 @@ const clickhouse = require("./plugins/clickhouse/clickhouse.plugin");
 const customerio = require("./plugins/customerio/customerio.plugin");
 const firestore = require("./plugins/firestore/firestore.plugin");
 const googleAnalytics = require("./plugins/googleAnalytics/googleAnalytics.plugin");
+const jira = require("./plugins/jira/jira.plugin");
 const mongodb = require("./plugins/mongodb/mongodb.plugin");
 const mysql = require("./plugins/mysql/mysql.plugin");
 const postgres = require("./plugins/postgres/postgres.plugin");
@@ -23,6 +24,7 @@ const sources = [
   customerio,
   firestore,
   googleAnalytics,
+  jira,
   mongodb,
   mysql,
   postgres,

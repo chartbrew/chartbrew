@@ -10,6 +10,7 @@ const createChart = require("./createChart");
 const updateDataset = require("./updateDataset");
 const updateChart = require("./updateChart");
 const createTemporaryChart = require("./createTemporaryChart");
+const createDashboardFromTemplate = require("./createDashboardFromTemplate");
 const moveChartToDashboard = require("./moveChartToDashboard");
 const disambiguate = require("./disambiguate");
 const {
@@ -20,6 +21,9 @@ const {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
 } = require("./sourceTools");
 const {
@@ -42,6 +46,7 @@ module.exports = {
   updateDataset,
   updateChart,
   createTemporaryChart,
+  createDashboardFromTemplate,
   moveChartToDashboard,
   disambiguate,
   sourceGetCapabilities,
@@ -51,6 +56,9 @@ module.exports = {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
   stripeOfficialPlanDataset,
   stripeOfficialPreviewConfiguration,

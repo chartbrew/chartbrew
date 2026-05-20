@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -10,7 +10,6 @@ import { LuLayers, LuSettings } from "react-icons/lu";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import DatasetFilters from "../../../components/DatasetFilters";
-import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { getDatasetFieldOptionsFromResponse, getDatasetFieldOptionsFromSchema } from "../../../modules/getDatasetFieldOptions";
 import { operations } from "../../../modules/filterOperations";
 import { runRequest as runDatasetRequest, updateDataset } from "../../../slices/dataset";
@@ -18,12 +17,6 @@ import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import canAccess from "../../../config/canAccess";
 import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
-
-function getStripeOfficialDateField(configuration = {}) {
-  if (configuration.mode === "compiled_metric") return "root[].period";
-  if (configuration.mode === "aggregate") return "root[].period";
-  return `root[].${configuration.dateRange?.field || "created"}`;
-}
 
 function ChartDatasetDataSetup({
   cdc,
@@ -42,7 +35,6 @@ function ChartDatasetDataSetup({
 
   const [fieldOptions, setFieldOptions] = useState([]);
   const [loadingFields, setLoadingFields] = useState(false);
-  const autoSuggestedRef = useRef({});
 
   const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
@@ -82,7 +74,6 @@ function ChartDatasetDataSetup({
 
   useEffect(() => {
     if (!dataset?.id) return;
-    if (autoSuggestedRef.current[cdc?.id] && cdc?.id) return;
 
     let nextFieldOptions = [];
     let nextFieldsSchema = null;
@@ -106,48 +97,12 @@ function ChartDatasetDataSetup({
         data: { fieldsSchema: nextFieldsSchema },
       }));
     }
-
-    if (!cdc?.id) return;
-
-    const autoFields = autoFieldSelector(nextFieldOptions);
-    const autoUpdates = {};
-    const stripeDateField = isStripeOfficialDataset
-      ? getStripeOfficialDateField(sourceConfiguration)
-      : null;
-
-    if (!cdc.xAxis && autoFields.xAxis) autoUpdates.xAxis = autoFields.xAxis;
-    if (!cdc.yAxis && autoFields.yAxis) autoUpdates.yAxis = autoFields.yAxis;
-    if (!cdc.dateField && (stripeDateField || autoFields.dateField)) {
-      autoUpdates.dateField = stripeDateField || autoFields.dateField;
-    }
-    if (!cdc.yAxisOperation && autoFields.yAxisOperation) autoUpdates.yAxisOperation = autoFields.yAxisOperation;
-
-    if (Object.keys(autoUpdates).length > 0) {
-      autoSuggestedRef.current[cdc.id] = true;
-      onUpdateCdc(autoUpdates);
-    } else {
-      autoSuggestedRef.current[cdc.id] = true;
-    }
   }, [
-    cdc?.id,
-    cdc?.xAxis,
-    cdc?.yAxis,
-    cdc?.dateField,
-    cdc?.yAxisOperation,
     dataset?.id,
     dataset?.fieldsSchema,
     datasetResponse,
     teamId,
-    isStripeOfficialDataset,
-    sourceConfiguration.mode,
-    sourceConfiguration.dateRange?.field,
   ]);
-
-  useEffect(() => {
-    if (cdc?.id && autoSuggestedRef.current[cdc.id] === undefined) {
-      autoSuggestedRef.current[cdc.id] = false;
-    }
-  }, [cdc?.id]);
 
   const filterDataset = useMemo(() => {
     return {
