@@ -9,6 +9,7 @@ const {
   buildFallbackAssistantMessage,
   sanitizeToolError,
   buildUsageRecordFromResponse,
+  availableTools,
 } = require("../../modules/ai/orchestrator/orchestrator");
 
 describe("orchestrator Responses API adapters", () => {
@@ -135,5 +136,52 @@ describe("orchestrator Responses API adapters", () => {
     expect(message).toContain("token=[REDACTED]");
     expect(message).not.toContain("abc123def456");
     expect(message).not.toContain("secret");
+  });
+
+  it("exposes the generic source context resolution tool", async () => {
+    const tools = await availableTools();
+    const tool = tools.find((candidate) => candidate.name === "source_resolve_context");
+
+    expect(tool).toMatchObject({
+      name: "source_resolve_context",
+      displayName: "Resolve source context",
+    });
+    expect(tool.parameters.required).toEqual(expect.arrayContaining(["connection_id", "question"]));
+  });
+
+  it("exposes generic source action and record search tools", async () => {
+    const tools = await availableTools();
+    const actionTool = tools.find((candidate) => candidate.name === "source_run_action");
+    const searchTool = tools.find((candidate) => candidate.name === "source_search_records");
+
+    expect(actionTool).toMatchObject({
+      name: "source_run_action",
+      displayName: "Run source action",
+    });
+    expect(actionTool.parameters.required).toEqual(expect.arrayContaining(["connection_id", "action"]));
+    expect(searchTool).toMatchObject({
+      name: "source_search_records",
+      displayName: "Search source records",
+    });
+    expect(searchTool.parameters.required).toEqual(expect.arrayContaining(["connection_id", "question"]));
+  });
+
+  it("lets source-owned planning choose preview or persist mode", async () => {
+    const tools = await availableTools();
+    const tool = tools.find((candidate) => candidate.name === "source_plan_dataset");
+
+    expect(tool.parameters.properties.mode).toMatchObject({
+      type: "string",
+      enum: ["preview", "persist"],
+      default: "preview",
+    });
+  });
+
+  it("does not advertise source-owned Jira for generic query generation", async () => {
+    const tools = await availableTools();
+    const tool = tools.find((candidate) => candidate.name === "generate_query");
+
+    expect(tool.parameters.properties.source_id.enum).not.toContain("jira");
+    expect(tool.parameters.properties.preferred_dialect.enum).not.toContain("jira");
   });
 });

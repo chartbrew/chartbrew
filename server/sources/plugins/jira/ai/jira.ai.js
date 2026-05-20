@@ -1,7 +1,7 @@
 const moment = require("moment-timezone");
 
-const jiraConnection = require("../jira.connection");
 const jiraProtocol = require("../jira.protocol");
+const jiraResolver = require("./jira.resolver");
 const { DEFAULT_FIELDS, JIRA_RESOURCES } = require("../jira.resources");
 
 const SOURCE_ID = "jira";
@@ -34,6 +34,29 @@ const SOURCE_INSTRUCTIONS = [
   "For Jira follow-ups, reuse previously resolved sprintId, boardId, and project key as source_plan_dataset overrides when they are visible in prior tool results.",
 ].join("\n");
 
+const DISCOVERY_TARGETS = [
+  "projects",
+  "boards",
+  "sprints",
+  "versions",
+  "users",
+  "fields",
+];
+
+const SEMANTIC_INTENTS = [
+  "sprint_status",
+  "sprint_summary",
+  "bug_breakdown",
+  "release_progress",
+  "team_workload",
+  "created_resolved_trend",
+  "stale_issues",
+];
+
+function uniqueResourceValues(field) {
+  return Array.from(new Set(Object.values(JIRA_RESOURCES).flatMap((resource) => resource[field] || [])));
+}
+
 function getCapabilities() {
   return {
     source: SOURCE_ID,
@@ -46,6 +69,16 @@ function getCapabilities() {
       pagination: true,
       templates: ["project-overview", "sprint-health", "bug-tracking", "team-workload"],
       chartPlacement: true,
+      directRecordSearch: true,
+      discovery: DISCOVERY_TARGETS,
+      semanticIntents: SEMANTIC_INTENTS,
+      metrics: uniqueResourceValues("metrics"),
+      dimensions: uniqueResourceValues("dimensions"),
+      dateFields: uniqueResourceValues("dateFields"),
+      riskPolicy: {
+        preview: "best_match",
+        persist: "disambiguate_meaningful_uncertainty",
+      },
     },
     caveats: [
       "Jira Cloud API tokens are supported for v1; OAuth is intentionally excluded.",
@@ -66,7 +99,13 @@ function listResources() {
       supportedModes: id === "issues" || id === "sprint_issues"
         ? ["visual", "jql", "advanced"]
         : ["advanced"],
-      transforms: getTransformsForResource(id),
+      metrics: resource.metrics || [],
+      dimensions: resource.dimensions || [],
+      filters: resource.filters || [],
+      transforms: resource.transforms || getTransformsForResource(id),
+      dateFields: resource.dateFields || [],
+      requires: resource.requires || [],
+      canAutoResolve: resource.canAutoResolve || [],
     })),
   };
 }
@@ -154,6 +193,14 @@ function normalizeDateRange(question, overrides = {}) {
   };
 }
 
+function hasExplicitDateRange(question = "", overrides = {}) {
+  const normalizedQuestion = question.toLowerCase();
+  return Boolean(overrides.dateRange)
+    || normalizedQuestion.includes("last month")
+    || normalizedQuestion.includes("today")
+    || /last\s+\d+\s+days?/.test(normalizedQuestion);
+}
+
 function quoteList(values) {
   const list = Array.isArray(values) ? values : [values];
   return list
@@ -171,18 +218,21 @@ function buildJql({ question = "", overrides = {}, intent = {} } = {}) {
 
   const normalizedQuestion = question.toLowerCase();
   const dateRange = normalizeDateRange(question, overrides);
-  const projectValue = overrides.projects || overrides.project || extractProjectKey(question, overrides) || "{{projects}}";
+  const shouldSkipDefaultDateWindow = (intent.skipDefaultDateWindow || overrides.skipDefaultDateRange || overrides.skipDefaultDateWindow)
+    && !hasExplicitDateRange(question, overrides);
+  const projectValue = overrides.projects || overrides.project || extractProjectKey(question, overrides);
   const clauses = [];
 
   if (projectValue) clauses.push(`project IN (${quoteList(projectValue)})`);
   if (intent.issueType || overrides.issueType) clauses.push(`issuetype = ${quoteList(intent.issueType || overrides.issueType)}`);
   if (overrides.statusCategory) clauses.push(`statusCategory = ${quoteList(overrides.statusCategory)}`);
+  if (intent.statusCategoryNotDone || overrides.statusCategoryNotDone) clauses.push("statusCategory != Done");
   if (overrides.status) clauses.push(`status = ${quoteList(overrides.status)}`);
   if (overrides.assignee) clauses.push(`assignee IN (${quoteList(overrides.assignee)})`);
   if (overrides.priority || intent.priority) clauses.push(`priority IN (${quoteList(overrides.priority || intent.priority)})`);
   if (overrides.fixVersion) clauses.push(`fixVersion IN (${quoteList(overrides.fixVersion)})`);
-  if (intent.resource === "sprint_issues") {
-    // Sprint endpoint already scopes the issues. Avoid introducing date variables unless asked explicitly.
+  if (intent.resource === "sprint_issues" || shouldSkipDefaultDateWindow) {
+    // Some scoped Jira requests should not get default date variables unless asked explicitly.
   } else if (normalizedQuestion.includes("completed") || normalizedQuestion.includes("resolved")) {
     clauses.push(`resolutiondate >= ${dateRange.start}`);
     clauses.push(`resolutiondate <= ${dateRange.end}`);
@@ -201,31 +251,85 @@ function buildJql({ question = "", overrides = {}, intent = {} } = {}) {
   return `${clauses.join(" AND ")} ORDER BY updated DESC`;
 }
 
+function resolveOverrideIntent(question = "", overrides = {}) {
+  if (overrides.intent === "created_resolved_trend") {
+    return {
+      id: "created_resolved_trend",
+      resource: overrides.resource || "issues",
+      transform: overrides.transform || {
+        type: "created_resolved_trend",
+        interval: overrides.interval || inferInterval(question.toLowerCase()),
+      },
+      chartType: overrides.chartType || "line",
+    };
+  }
+
+  return {
+    id: overrides.intent,
+    resource: overrides.resource || "issues",
+    transform: overrides.transform || { type: "raw" },
+    chartType: overrides.chartType || "table",
+  };
+}
+
 function resolveIntent(question = "", overrides = {}) {
   const normalizedQuestion = question.toLowerCase();
   const groupBy = overrides.groupBy || inferGroupBy(normalizedQuestion);
 
+  if (overrides.intent) {
+    return resolveOverrideIntent(question, overrides);
+  }
+
   if (overrides.resource) {
     return {
+      id: "issue_table",
       resource: overrides.resource,
       transform: overrides.transform || { type: "raw" },
       chartType: overrides.chartType || "table",
     };
   }
 
-  if (normalizedQuestion.includes("sprint") || overrides.sprintId) {
-    const sprintMetric = ["status", "statusCategory"].includes(groupBy) ? "count" : "storyPoints";
+  if (normalizedQuestion.includes("release") || normalizedQuestion.includes("version") || normalizedQuestion.includes("fix version")) {
     return {
+      id: "release_progress",
+      resource: "issues",
+      needsVersion: true,
+      transform: { type: "grouped", groupBy: "statusCategory", metric: "count" },
+      chartType: "bar",
+    };
+  }
+
+  if (normalizedQuestion.includes("sprint") || overrides.sprintId) {
+    const isSummary = normalizedQuestion.includes("summary")
+      || normalizedQuestion.includes("completion")
+      || normalizedQuestion.includes("health");
+    const sprintGroupBy = groupBy || "status";
+    const sprintMetric = ["status", "statusCategory"].includes(sprintGroupBy) ? "count" : "storyPoints";
+
+    return {
+      id: isSummary ? "sprint_summary" : "sprint_status",
       resource: "sprint_issues",
-      transform: normalizedQuestion.includes("by ") || groupBy
-        ? { type: "grouped", groupBy: groupBy || "assignee", metric: overrides.metric || sprintMetric }
-        : { type: "sprint_summary" },
-      chartType: normalizedQuestion.includes("by ") || groupBy ? "bar" : "gauge",
+      needsSprint: true,
+      transform: isSummary
+        ? { type: "sprint_summary" }
+        : { type: "grouped", groupBy: sprintGroupBy, metric: overrides.metric || sprintMetric },
+      chartType: isSummary ? "gauge" : "bar",
+    };
+  }
+
+  if (normalizedQuestion.includes("bug") || normalizedQuestion.includes("defect")) {
+    return {
+      id: "bug_breakdown",
+      resource: "issues",
+      issueType: "Bug",
+      transform: { type: "grouped", groupBy: groupBy || "priority", metric: overrides.metric || "count" },
+      chartType: "bar",
     };
   }
 
   if (normalizedQuestion.includes("stale") || normalizedQuestion.includes("stuck") || normalizedQuestion.includes("oldest")) {
     return {
+      id: "stale_issues",
       resource: "issues",
       transform: { type: "stale_table" },
       chartType: "table",
@@ -234,6 +338,7 @@ function resolveIntent(question = "", overrides = {}) {
 
   if (normalizedQuestion.includes("created vs resolved") || normalizedQuestion.includes("created and resolved") || normalizedQuestion.includes("trend") || normalizedQuestion.includes("over time")) {
     return {
+      id: "created_resolved_trend",
       resource: "issues",
       transform: {
         type: "created_resolved_trend",
@@ -243,8 +348,39 @@ function resolveIntent(question = "", overrides = {}) {
     };
   }
 
+  if (normalizedQuestion.includes("working on") || normalizedQuestion.includes("currently") || normalizedQuestion.includes("current tasks")) {
+    return {
+      id: "current_work",
+      resource: "issues",
+      needsUser: true,
+      statusCategoryNotDone: true,
+      skipDefaultDateWindow: true,
+      transform: { type: "raw" },
+      chartType: "table",
+    };
+  }
+
+  if (normalizedQuestion.includes("completed") || normalizedQuestion.includes("done") || normalizedQuestion.includes("recent")) {
+    return {
+      id: "completed_work",
+      resource: "issues",
+      transform: { type: "raw" },
+      chartType: "table",
+    };
+  }
+
+  if (normalizedQuestion.includes("workload") || normalizedQuestion.includes("assignee") || normalizedQuestion.includes("team load")) {
+    return {
+      id: "team_workload",
+      resource: "issues",
+      transform: { type: "grouped", groupBy: "assignee", metric: overrides.metric || "count" },
+      chartType: "bar",
+    };
+  }
+
   if (groupBy) {
     return {
+      id: "issue_breakdown",
       resource: "issues",
       transform: { type: "grouped", groupBy, metric: overrides.metric || "count" },
       chartType: normalizedQuestion.includes("doughnut") || normalizedQuestion.includes("donut") ? "doughnut" : "bar",
@@ -253,6 +389,7 @@ function resolveIntent(question = "", overrides = {}) {
 
   if (normalizedQuestion.includes("table") || normalizedQuestion.includes("recent") || normalizedQuestion.includes("latest")) {
     return {
+      id: "issue_table",
       resource: "issues",
       transform: { type: "raw" },
       chartType: "table",
@@ -260,6 +397,7 @@ function resolveIntent(question = "", overrides = {}) {
   }
 
   return {
+    id: "project_overview",
     resource: "issues",
     transform: { type: "raw" },
     chartType: "kpi",
@@ -283,96 +421,21 @@ function inferInterval(normalizedQuestion) {
 }
 
 function extractProjectKey(question = "", overrides = {}) {
-  const explicitProject = overrides.project || overrides.projects || overrides.projectIdOrKey;
-  if (explicitProject) {
-    return Array.isArray(explicitProject) ? explicitProject[0] : String(explicitProject).split(",")[0].trim();
-  }
-
-  const ignored = new Set(["JIRA", "SCRUM", "SPRINT", "STATUS", "DONE", "OPEN"]);
-  const matches = String(question || "").match(/\b[A-Z][A-Z0-9_]{1,12}\b/g) || [];
-  return matches.find((match) => !ignored.has(match)) || null;
+  return jiraResolver.extractProjectKey(question, overrides);
 }
 
-async function resolveActiveSprint({ connection, question = "", overrides = {} } = {}) {
-  if (overrides.sprintId) {
-    return {
-      status: "resolved",
-      sprintId: String(overrides.sprintId),
-      boardId: overrides.boardId ? String(overrides.boardId) : "",
-    };
-  }
+function firstOverrideValue(value) {
+  if (!value) return null;
+  if (Array.isArray(value)) return value[0] ? String(value[0]).trim() : null;
+  return String(value).split(",")[0].trim();
+}
 
-  if (!connection) return { status: "unresolved" };
+function extractVersionName(question = "", overrides = {}) {
+  const explicitVersion = firstOverrideValue(overrides.fixVersion || overrides.version);
+  if (explicitVersion) return explicitVersion;
 
-  const projectKey = extractProjectKey(question, overrides);
-  let boards = [];
-
-  if (overrides.boardId) {
-    boards = [{
-      id: overrides.boardId,
-      name: `Board ${overrides.boardId}`,
-      type: "scrum",
-    }];
-  } else if (projectKey) {
-    boards = await jiraConnection.listBoards(connection, {
-      projectKeyOrId: projectKey,
-      maxResults: 50,
-    });
-  } else {
-    return { status: "unresolved" };
-  }
-
-  const activeSprints = [];
-  const sprintBoards = boards.filter((board) => !board.type || board.type === "scrum" || board.type === "kanban");
-
-  for (const board of sprintBoards.slice(0, 10)) {
-    try {
-      // oxlint-disable-next-line no-await-in-loop
-      const sprints = await jiraConnection.listSprints(connection, {
-        boardId: board.id,
-        maxResults: 50,
-        state: "active",
-      });
-      sprints.forEach((sprint) => {
-        if (sprint.state === "active") {
-          activeSprints.push({
-            ...sprint,
-            boardId: board.id,
-            boardName: board.name,
-          });
-        }
-      });
-    } catch (error) {
-      // Some boards may not expose sprints to the current token; continue checking the rest.
-    }
-  }
-
-  if (activeSprints.length === 1) {
-    return {
-      status: "resolved",
-      sprintId: String(activeSprints[0].id),
-      boardId: String(activeSprints[0].boardId),
-      sprint: activeSprints[0],
-      projectKey,
-    };
-  }
-
-  if (activeSprints.length > 1) {
-    return {
-      status: "ambiguous",
-      projectKey,
-      options: activeSprints.slice(0, 4).map((sprint) => ({
-        label: `Use ${sprint.name} on ${sprint.boardName}`,
-        value: `sprint:${sprint.id}`,
-      })),
-    };
-  }
-
-  return {
-    status: "unresolved",
-    projectKey,
-    boardCount: boards.length,
-  };
+  const match = String(question || "").match(/\bv?\d+(?:\.\d+){1,3}(?:[-_][A-Za-z0-9]+)?\b/i);
+  return match ? match[0] : null;
 }
 
 function getOutputFields(config) {
@@ -478,67 +541,216 @@ function validateConfiguration(configuration) {
   });
 }
 
-async function planDataset({ connection = null, question = "", overrides = {} } = {}) {
-  const intent = resolveIntent(question, overrides);
-  const normalizedQuestion = question.toLowerCase();
-  const issueType = overrides.issueType || (normalizedQuestion.includes("bug") || normalizedQuestion.includes("defect") ? "Bug" : undefined);
-  let sprintResolution = { status: "unresolved" };
+function buildActions(intent, resolution = {}) {
+  const actions = [];
 
   if (intent.resource === "sprint_issues") {
-    sprintResolution = await resolveActiveSprint({ connection, question, overrides });
-
-    if (sprintResolution.status === "ambiguous") {
-      return {
-        status: "needs_disambiguation",
-        source: SOURCE_ID,
-        message: `I found multiple active sprints${sprintResolution.projectKey ? ` for ${sprintResolution.projectKey}` : ""}. Which one should I use?`,
-        options: sprintResolution.options,
-      };
-    }
-
-    if (!overrides.sprintId && sprintResolution.status !== "resolved") {
-      const projectLabel = sprintResolution.projectKey ? ` for project ${sprintResolution.projectKey}` : "";
-      return {
-        status: "needs_disambiguation",
-        source: SOURCE_ID,
-        message: `I couldn't reliably resolve the active sprint${projectLabel} from the Jira connector. Do you want me to try one of these approaches?`,
-        options: [{
-          label: sprintResolution.projectKey
-            ? `Break down issues by status for ${sprintResolution.projectKey}`
-            : "Break down issues by status",
-          value: "status_breakdown",
-        }, {
-          label: "Help me pick the correct Jira board or sprint",
-          value: "pick_board",
-        }],
-      };
-    }
+    actions.push({
+      label: "Change sprint",
+      value: "change_sprint",
+    });
+    actions.push({
+      label: "Group by assignee",
+      value: "group_by_assignee",
+      overrides: {
+        groupBy: "assignee",
+      },
+    });
   }
 
-  const sprintId = sprintResolution.status === "resolved"
-    ? sprintResolution.sprintId
-    : overrides.sprintId || "{{sprint_id}}";
-  const boardId = sprintResolution.status === "resolved"
-    ? sprintResolution.boardId
-    : overrides.boardId || "{{board_id}}";
+  if (resolution.project?.key) {
+    actions.push({
+      label: `Show status breakdown for ${resolution.project.key}`,
+      value: "status_breakdown",
+      overrides: {
+        project: resolution.project.key,
+        groupBy: "status",
+      },
+    });
+  }
+
+  if (intent.id !== "issue_table") {
+    actions.push({
+      label: "Show issue table",
+      value: "show_table",
+      overrides: {
+        intent: "issue_table",
+        transform: { type: "raw" },
+        chartType: "table",
+      },
+    });
+  }
+
+  return actions;
+}
+
+function buildProjectStatusFallback({
+  question,
+  overrides = {},
+  resolution = {},
+  reason,
+  warnings = [],
+} = {}) {
+  const projectKey = resolution.project?.key || overrides.projects || overrides.project;
+  const clauses = ["statusCategory != Done"];
+  if (projectKey) clauses.unshift(`project IN (${quoteList(projectKey)})`);
+  const jql = `${clauses.join(" AND ")} ORDER BY updated DESC`;
+  const config = {
+    source: SOURCE_ID,
+    resource: "issues",
+    mode: overrides.mode || (overrides.jql ? "jql" : "visual"),
+    jql,
+    fields: overrides.fields || DEFAULT_FIELDS,
+    projectIdOrKey: projectKey,
+    transform: {
+      type: "grouped",
+      groupBy: "status",
+      metric: "count",
+    },
+    pagination: {
+      ...DEFAULT_PAGINATION,
+      ...(overrides.pagination || {}),
+    },
+  };
+  const validation = validateConfiguration(config);
+  const chartSpec = getChartSpec(validation.configuration, question, "bar");
+  const fallbackIntent = {
+    id: "status_breakdown_fallback",
+    resource: "issues",
+  };
+
+  return {
+    status: "fallback",
+    source: SOURCE_ID,
+    message: `I could not resolve the active sprint, so I planned a project status breakdown${reason ? `: ${reason}` : "."}`,
+    datasetName: chartSpec.title,
+    configuration: validation.configuration,
+    chartSpec,
+    outputFields: getOutputFields(validation.configuration),
+    resolution,
+    actions: buildActions(fallbackIntent, resolution),
+    warnings: [
+      ...validation.warnings,
+      ...warnings,
+    ],
+    errors: validation.errors,
+    rationale: {
+      intent: fallbackIntent.id,
+      resource: validation.configuration.resource,
+      mode: validation.configuration.mode,
+      transform: validation.configuration.transform,
+    },
+  };
+}
+
+function getProjectStatusFallbackConfiguration(configuration = {}) {
+  const projectKey = configuration.projectIdOrKey && !String(configuration.projectIdOrKey).includes("{{")
+    ? configuration.projectIdOrKey
+    : null;
+  const clauses = ["statusCategory != Done"];
+  if (projectKey) clauses.unshift(`project IN (${quoteList(projectKey)})`);
+
+  return {
+    ...configuration,
+    resource: "issues",
+    sprintId: undefined,
+    boardId: undefined,
+    projectIdOrKey: projectKey,
+    jql: `${clauses.join(" AND ")} ORDER BY updated DESC`,
+    transform: {
+      type: "grouped",
+      groupBy: "status",
+      metric: "count",
+    },
+    includeDoneAt: false,
+  };
+}
+
+function shouldFallbackSprintPreview(error) {
+  return /sprint|agile|board/i.test(error?.message || "");
+}
+
+async function planDataset({
+  connection = null,
+  question = "",
+  overrides = {},
+  mode = "preview",
+} = {}) {
+  const intent = resolveIntent(question, overrides);
+  const normalizedQuestion = question.toLowerCase();
+  const issueType = overrides.issueType || intent.issueType || (normalizedQuestion.includes("bug") || normalizedQuestion.includes("defect") ? "Bug" : undefined);
+  const resolvedContext = await jiraResolver.resolveContext({
+    connection,
+    question,
+    overrides,
+    intent,
+    mode: overrides.modeContext || mode,
+  });
+  const resolution = resolvedContext.entities || {};
+
+  if (resolvedContext.needsDisambiguation) {
+    return {
+      status: "needs_disambiguation",
+      source: SOURCE_ID,
+      message: "I found multiple Jira matches. Which one should I use?",
+      options: resolvedContext.options,
+      resolution,
+      actions: buildActions(intent, resolution),
+      warnings: resolvedContext.warnings || [],
+      errors: [],
+      rationale: {
+        intent: intent.id,
+        resource: intent.resource,
+        transform: intent.transform,
+      },
+    };
+  }
+
+  if (intent.resource === "sprint_issues" && !resolution.sprint?.id) {
+    return buildProjectStatusFallback({
+      question,
+      overrides,
+      resolution,
+      reason: "no active sprint was found",
+      warnings: resolvedContext.warnings || [],
+    });
+  }
+
+  const sprintId = resolution.sprint?.id || overrides.sprintId || "{{sprint_id}}";
+  const boardId = resolution.board?.id || overrides.boardId || "{{board_id}}";
+  const projectKey = resolution.project?.key || overrides.projects || overrides.project;
+  const fixVersion = resolution.version?.name
+    || overrides.fixVersion
+    || (intent.id === "release_progress" ? extractVersionName(question, overrides) : undefined);
+  const assignee = resolution.user?.accountId || resolution.user?.displayName || overrides.assignee;
+  const includeDoneAt = overrides.includeDoneAt
+    || ["completed_work", "created_resolved_trend", "sprint_summary"].includes(intent.id);
   const config = {
     source: SOURCE_ID,
     resource: intent.resource,
     mode: overrides.mode || (overrides.jql ? "jql" : "visual"),
     jql: buildJql({
       question,
-      overrides,
+      overrides: {
+        ...overrides,
+        projects: projectKey,
+        fixVersion,
+        assignee,
+      },
       intent: {
         resource: intent.resource,
         issueType,
         priority: normalizedQuestion.includes("blocker") ? "Blocker" : undefined,
+        skipDefaultDateWindow: intent.id === "release_progress" || intent.skipDefaultDateWindow,
+        statusCategoryNotDone: intent.statusCategoryNotDone,
       },
     }),
     fields: overrides.fields || DEFAULT_FIELDS,
     sprintId,
     boardId,
-    projectIdOrKey: overrides.projectIdOrKey || "{{projects}}",
+    projectIdOrKey: projectKey,
     transform: overrides.transform || intent.transform,
+    includeDoneAt,
     pagination: {
       ...DEFAULT_PAGINATION,
       ...(overrides.pagination || {}),
@@ -554,9 +766,15 @@ async function planDataset({ connection = null, question = "", overrides = {} } 
     configuration: validation.configuration,
     chartSpec,
     outputFields: getOutputFields(validation.configuration),
-    warnings: validation.warnings,
+    resolution,
+    actions: buildActions(intent, resolution),
+    warnings: [
+      ...validation.warnings,
+      ...(resolvedContext.warnings || []),
+    ],
     errors: validation.errors,
     rationale: {
+      intent: intent.id,
       resource: validation.configuration.resource,
       mode: validation.configuration.mode,
       transform: validation.configuration.transform,
@@ -576,6 +794,111 @@ function buildColumns(rows, config) {
   }));
 }
 
+function getSearchOverrides(question = "", overrides = {}, filters = {}) {
+  const normalizedQuestion = question.toLowerCase();
+  const wantsOpenWork = filters.open === true
+    || normalizedQuestion.includes("open")
+    || normalizedQuestion.includes("working on")
+    || normalizedQuestion.includes("currently")
+    || normalizedQuestion.includes("current tasks")
+    || normalizedQuestion.includes("active");
+
+  return {
+    ...overrides,
+    ...(wantsOpenWork ? { statusCategoryNotDone: true } : {}),
+    ...(!hasExplicitDateRange(question, overrides) ? { skipDefaultDateWindow: true } : {}),
+  };
+}
+
+function pickSearchRecordFields(row, fields) {
+  const defaultFields = ["key", "summary", "status", "assignee", "priority", "issueType", "updatedAt"];
+  const fieldsToUse = Array.isArray(fields) && fields.length > 0 ? fields : defaultFields;
+
+  return fieldsToUse.reduce((record, field) => ({
+    ...record,
+    [field]: row[field],
+  }), {});
+}
+
+async function searchRecords({
+  connection,
+  question = "",
+  resource = null,
+  filters = {},
+  jql = null,
+  fields = null,
+  rowLimit = 25,
+  overrides = {},
+} = {}) {
+  const maxRecords = Math.min(Number(rowLimit || 25), 50);
+  const searchOverrides = getSearchOverrides(question, {
+    ...overrides,
+    ...(resource ? { resource } : {}),
+  }, filters);
+  const plan = jql
+    ? {
+      status: "ok",
+      configuration: {
+        source: SOURCE_ID,
+        resource: resource || "issues",
+        mode: "jql",
+        jql,
+        fields: fields || DEFAULT_FIELDS,
+        transform: { type: "raw" },
+        pagination: {
+          ...DEFAULT_PAGINATION,
+          maxResults: maxRecords,
+          maxRecords,
+        },
+      },
+      resolution: {},
+      warnings: [],
+    }
+    : await planDataset({
+      connection,
+      question,
+      overrides: searchOverrides,
+      mode: "preview",
+    });
+
+  if (["needs_disambiguation", "needs_more_context", "invalid"].includes(plan.status)) {
+    return plan;
+  }
+
+  const configuration = {
+    ...plan.configuration,
+    fields: fields || plan.configuration.fields || DEFAULT_FIELDS,
+    transform: { type: "raw" },
+    pagination: {
+      ...(plan.configuration.pagination || DEFAULT_PAGINATION),
+      maxResults: maxRecords,
+      maxRecords,
+    },
+  };
+  const jiraRows = await jiraProtocol.fetchJiraRows(connection, configuration);
+  const fieldMappings = connection?.options?.jira?.fieldMappings || {};
+  const normalizedRows = ["issues", "sprint_issues"].includes(configuration.resource)
+    ? jiraRows.map((issue) => jiraProtocol.normalizeIssue(issue, fieldMappings, {
+      includeDoneAt: Boolean(configuration.includeDoneAt),
+    }))
+    : jiraRows;
+  const rows = normalizedRows
+    .slice(0, maxRecords)
+    .map((row) => pickSearchRecordFields(row, fields));
+
+  return {
+    source: SOURCE_ID,
+    status: "ok",
+    resource: configuration.resource,
+    rows,
+    rowCount: rows.length,
+    columns: buildColumns(rows, configuration),
+    configuration,
+    resolution: plan.resolution || {},
+    warnings: plan.warnings || [],
+  };
+}
+
 async function previewConfiguration({ connection, configuration, rowLimit = 25 } = {}) {
   const validation = validateConfiguration(configuration);
   if (!validation.valid) {
@@ -592,19 +915,39 @@ async function previewConfiguration({ connection, configuration, rowLimit = 25 }
       maxRecords: Math.min(Number(validation.configuration.pagination?.maxRecords || rowLimit), rowLimit),
     },
   };
-  const jiraRows = await jiraProtocol.fetchJiraRows(connection, previewConfig);
-  const normalizedRows = ["issues", "sprint_issues"].includes(previewConfig.resource)
-    ? jiraRows.map((issue) => jiraProtocol.normalizeIssue(issue, connection?.options?.jira?.fieldMappings || {}))
+  let previewConfigToUse = previewConfig;
+  let fallbackMessage = null;
+  let jiraRows;
+
+  try {
+    jiraRows = await jiraProtocol.fetchJiraRows(connection, previewConfigToUse);
+  } catch (error) {
+    if (previewConfig.resource !== "sprint_issues" || !shouldFallbackSprintPreview(error)) throw error;
+
+    previewConfigToUse = getProjectStatusFallbackConfiguration(previewConfig);
+    jiraRows = await jiraProtocol.fetchJiraRows(connection, previewConfigToUse);
+    fallbackMessage = `I could not preview sprint issues, so I used the project status breakdown instead: ${error.message}`;
+  }
+
+  const includeDoneAt = Boolean(previewConfigToUse.includeDoneAt)
+    || ["created_resolved_trend", "sprint_summary"].includes(previewConfigToUse.transform?.type);
+  const normalizedRows = ["issues", "sprint_issues"].includes(previewConfigToUse.resource)
+    ? jiraRows.map((issue) => jiraProtocol.normalizeIssue(issue, connection?.options?.jira?.fieldMappings || {}, {
+      includeDoneAt,
+    }))
     : jiraRows;
-  const rows = jiraProtocol.transformRows(normalizedRows, previewConfig);
+  const rows = jiraProtocol.transformRows(normalizedRows, previewConfigToUse);
 
   return {
-    status: "ok",
+    status: fallbackMessage ? "fallback" : "ok",
+    ...(fallbackMessage ? { message: fallbackMessage } : {}),
     rows: rows.slice(0, rowLimit),
-    columns: buildColumns(rows, previewConfig),
+    columns: buildColumns(rows, previewConfigToUse),
     rowCount: rows.length,
-    warnings: validation.warnings,
-    chartSpec: getChartSpec(previewConfig, ""),
+    warnings: fallbackMessage
+      ? [...validation.warnings, fallbackMessage]
+      : validation.warnings,
+    chartSpec: getChartSpec(previewConfigToUse, ""),
   };
 }
 
@@ -626,6 +969,27 @@ async function getSampleData({ connection, resource = "issues", rowLimit = 5 } =
   });
 }
 
+async function resolveContext({
+  connection,
+  question = "",
+  overrides = {},
+  intent = {},
+  mode = "preview",
+} = {}) {
+  const resolution = await jiraResolver.resolveContext({
+    connection,
+    question,
+    overrides,
+    intent,
+    mode,
+  });
+
+  return {
+    source: SOURCE_ID,
+    resolution,
+  };
+}
+
 module.exports = {
   getCapabilities,
   getSampleData,
@@ -636,5 +1000,7 @@ module.exports = {
   planDataset,
   previewConfiguration,
   recommendTemplates,
+  resolveContext,
+  searchRecords,
   validateConfiguration,
 };

@@ -310,8 +310,7 @@ function normalizeIssue(issue, fieldMappings = {}, options = {}) {
   const doneAtFromChangelog = options.includeDoneAt
     ? getDoneAtFromChangelog(issue, options.doneStatusLookup)
     : null;
-
-  return {
+  const normalizedIssue = {
     key: issue.key,
     summary: fields.summary || "",
     projectKey: fields.project?.key || null,
@@ -333,6 +332,12 @@ function normalizeIssue(issue, fieldMappings = {}, options = {}) {
     fixVersions: (fields.fixVersions || []).map((version) => version.name),
     epicKey: fields.parent?.key || readMappedField(fields, fieldMappings.epic) || null,
   };
+
+  if (issue._trendEvent) {
+    normalizedIssue._trendEvent = issue._trendEvent;
+  }
+
+  return normalizedIssue;
 }
 
 function getGroupValue(row, groupBy) {
@@ -374,14 +379,17 @@ function transformCreatedResolvedTrend(rows, transform = {}) {
   const interval = transform.interval || "day";
 
   rows.forEach((row) => {
-    const createdPeriod = getPeriod(row.createdAt, interval);
+    const shouldCountCreated = !row._trendEvent || row._trendEvent === "created";
+    const shouldCountResolved = !row._trendEvent || row._trendEvent === "resolved";
+
+    const createdPeriod = shouldCountCreated ? getPeriod(row.createdAt, interval) : null;
     if (createdPeriod) {
       const current = byPeriod.get(createdPeriod) || { period: createdPeriod, created: 0, resolved: 0, open: 0 };
       current.created += 1;
       byPeriod.set(createdPeriod, current);
     }
 
-    const resolvedPeriod = getPeriod(row.doneAt || row.resolvedAt, interval);
+    const resolvedPeriod = shouldCountResolved ? getPeriod(row.doneAt || row.resolvedAt, interval) : null;
     if (resolvedPeriod) {
       const current = byPeriod.get(resolvedPeriod) || { period: resolvedPeriod, created: 0, resolved: 0, open: 0 };
       current.resolved += 1;
@@ -490,15 +498,124 @@ function buildIssueSearchBody(config, nextPageToken = null) {
   return body;
 }
 
+function stripOrderBy(jql = "") {
+  return String(jql || "").replace(/\s+ORDER\s+BY[\s\S]*$/i, "").trim();
+}
+
+function extractTrendDateValue(jql = "", field, operator) {
+  const escapedField = String(field).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedOperator = String(operator).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = String(jql || "").match(new RegExp(`${escapedField}\\s*${escapedOperator}\\s*("(?:\\\\"|[^"])*"|now\\(\\)|[^\\s)]+)`, "i"));
+  return match?.[1]?.trim() || "";
+}
+
+function getTrendDateRange(config = {}) {
+  const jql = config.jql || "";
+  const visual = config.visual || {};
+  const startDate = extractTrendDateValue(jql, "created", ">=")
+    || extractTrendDateValue(jql, "statusCategoryChangedDate", ">=")
+    || (visual.startDate && !String(visual.startDate).includes("{{") ? visual.startDate : "");
+  const endDate = extractTrendDateValue(jql, "created", "<=")
+    || extractTrendDateValue(jql, "statusCategoryChangedDate", "<=")
+    || (visual.endDate && !String(visual.endDate).includes("{{") ? visual.endDate : "");
+
+  return { startDate, endDate };
+}
+
+function getTrendBaseJql(jql = "") {
+  const withoutOrder = stripOrderBy(jql);
+  const templateDateBlockIndex = withoutOrder.search(/\s+AND\s+\(\(\s*created\s*>=/i);
+  if (templateDateBlockIndex > -1) {
+    return withoutOrder.slice(0, templateDateBlockIndex).trim();
+  }
+
+  return withoutOrder
+    .replace(/\s+AND\s+created\s*>=\s*[^\s)]+/gi, "")
+    .replace(/\s+AND\s+created\s*<=\s*[^\s)]+/gi, "")
+    .replace(/\s+AND\s+statusCategoryChangedDate\s*>=\s*[^\s)]+/gi, "")
+    .replace(/\s+AND\s+statusCategoryChangedDate\s*<=\s*[^\s)]+/gi, "")
+    .trim();
+}
+
+function appendJqlClause(baseJql, clause) {
+  const base = String(baseJql || "").trim();
+  return base ? `${base} AND ${clause}` : clause;
+}
+
+function getCreatedResolvedTrendConfigs(config = {}) {
+  const { startDate, endDate } = getTrendDateRange(config);
+  if (!startDate || !endDate) return null;
+
+  const baseJql = getTrendBaseJql(config.jql);
+
+  return [{
+    event: "created",
+    config: {
+      ...config,
+      jql: `${appendJqlClause(baseJql, `created >= ${startDate} AND created <= ${endDate}`)} ORDER BY created ASC`,
+    },
+  }, {
+    event: "resolved",
+    config: {
+      ...config,
+      jql: `${appendJqlClause(baseJql, `statusCategory = Done AND statusCategoryChangedDate >= ${startDate} AND statusCategoryChangedDate <= ${endDate}`)} ORDER BY updated ASC`,
+    },
+  }];
+}
+
+async function fetchIssueRows(connection, config) {
+  const rows = [];
+  const maxRecords = Math.min(Number(config.pagination?.maxRecords || 5000), 10000);
+  let nextPageToken = null;
+  let hasMore = true;
+
+  while (hasMore && rows.length < maxRecords) {
+    // oxlint-disable-next-line no-await-in-loop
+    const response = await jiraConnection.jiraRequest(connection, getSearchRoute(config), {
+      method: "POST",
+      body: buildIssueSearchBody(config, nextPageToken),
+    });
+    const pageRows = Array.isArray(response?.issues) ? response.issues : [];
+    rows.push(...pageRows);
+    nextPageToken = response?.nextPageToken || null;
+    hasMore = pageRows.length > 0 && Boolean(nextPageToken) && rows.length < maxRecords;
+  }
+
+  return rows.slice(0, maxRecords);
+}
+
+async function fetchCreatedResolvedTrendIssueRows(connection, config) {
+  const trendConfigs = getCreatedResolvedTrendConfigs(config);
+  if (!trendConfigs) {
+    return fetchIssueRows(connection, config);
+  }
+
+  const rows = [];
+
+  await trendConfigs.reduce((promise, trendConfig) => promise.then(async () => {
+    const trendRows = await fetchIssueRows(connection, trendConfig.config);
+    rows.push(...trendRows.map((row) => ({
+      ...row,
+      _trendEvent: trendConfig.event,
+    })));
+  }), Promise.resolve());
+
+  return rows;
+}
+
 function buildSprintIssueSearchParams(config, startAt) {
   const maxResults = Math.min(Number(config.pagination?.maxResults || 100), 100);
   const expand = getExpandValues(config);
   const params = {
-    jql: config.jql,
     fields: Array.isArray(config.fields) ? config.fields.join(",") : config.fields,
     startAt,
     maxResults,
   };
+  const jql = String(config.jql || "").trim();
+
+  if (jql && !jql.includes("{{")) {
+    params.jql = jql;
+  }
 
   if (expand.length > 0) {
     params.expand = expand.join(",");
@@ -534,24 +651,11 @@ async function fetchJiraRows(connection, config) {
   }
 
   if (config.resource === "issues") {
-    const rows = [];
-    const maxRecords = Math.min(Number(config.pagination?.maxRecords || 5000), 10000);
-    let nextPageToken = null;
-    let hasMore = true;
-
-    while (hasMore && rows.length < maxRecords) {
-      // oxlint-disable-next-line no-await-in-loop
-      const response = await jiraConnection.jiraRequest(connection, getSearchRoute(config), {
-        method: "POST",
-        body: buildIssueSearchBody(config, nextPageToken),
-      });
-      const pageRows = Array.isArray(response?.issues) ? response.issues : [];
-      rows.push(...pageRows);
-      nextPageToken = response?.nextPageToken || null;
-      hasMore = pageRows.length > 0 && Boolean(nextPageToken) && rows.length < maxRecords;
+    if (config.transform?.type === "created_resolved_trend") {
+      return fetchCreatedResolvedTrendIssueRows(connection, config);
     }
 
-    return rows.slice(0, maxRecords);
+    return fetchIssueRows(connection, config);
   }
 
   const rows = [];

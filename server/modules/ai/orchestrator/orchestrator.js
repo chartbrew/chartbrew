@@ -22,6 +22,8 @@ const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabili
 const {
   formatSupportedSourceBullets,
   formatSupportedSourceList,
+  getQueryGenerationDialectIds,
+  getQueryGenerationSourceIds,
   getSupportedDialectIds,
   getSupportedSourceIds,
   getSupportedSourceForConnection,
@@ -63,6 +65,9 @@ const {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
   stripeOfficialPlanDataset,
   stripeOfficialPreviewConfiguration,
@@ -92,6 +97,9 @@ const TEAM_SCOPED_TOOLS = new Set([
   "source_get_sample_data",
   "source_list_templates",
   "source_recommend_templates",
+  "source_resolve_context",
+  "source_run_action",
+  "source_search_records",
   "source_plan_dataset",
   "source_validate_configuration",
   "source_preview_configuration",
@@ -108,6 +116,8 @@ const ORIGINAL_QUESTION_TOOLS = new Set([
   "create_dataset",
   "create_chart",
   "create_temporary_chart",
+  "source_resolve_context",
+  "source_search_records",
   "source_plan_dataset",
   "stripe_official_plan_dataset",
 ]);
@@ -116,6 +126,8 @@ async function availableTools() {
   const supportedSourceList = formatSupportedSourceList();
   const supportedDialectIds = getSupportedDialectIds();
   const supportedSourceIds = getSupportedSourceIds();
+  const queryGenerationDialectIds = getQueryGenerationDialectIds();
+  const queryGenerationSourceIds = getQueryGenerationSourceIds();
 
   return [
     {
@@ -215,6 +227,23 @@ async function availableTools() {
       }
     },
     {
+      name: "source_resolve_context",
+      displayName: "Resolve source context",
+      description: "Resolve source-owned business context such as Jira projects, boards, sprints, versions, and users without asking for raw IDs. Use this for corrections, follow-ups, or explicit context inspection.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_id: { type: "string", enum: supportedSourceIds },
+          connection_id: { type: "string" },
+          question: { type: "string" },
+          intent: { type: "object" },
+          overrides: { type: "object" },
+          mode: { type: "string", enum: ["preview", "persist"], default: "preview" }
+        },
+        required: ["connection_id", "question"]
+      }
+    },
+    {
       name: "source_plan_dataset",
       displayName: "Plan dataset",
       description: "Plan a source-owned DataRequest configuration and chart bindings from a natural-language request. Use this for configuration-based sources instead of generate_query.",
@@ -223,7 +252,44 @@ async function availableTools() {
         properties: {
           connection_id: { type: "string" },
           question: { type: "string" },
-          overrides: { type: "object", description: "Optional explicit source configuration overrides such as date range, filters, pagination, metric, dimension, mode, or resource." }
+          overrides: { type: "object", description: "Optional explicit source configuration overrides such as date range, filters, pagination, metric, dimension, or resource." },
+          mode: { type: "string", enum: ["preview", "persist"], default: "preview", description: "Use preview for temporary exploration. Use persist before creating saved datasets, charts, or dashboards so the source can request disambiguation instead of guessing IDs." }
+        },
+        required: ["connection_id", "question"]
+      }
+    },
+    {
+      name: "source_run_action",
+      displayName: "Run source action",
+      description: "Run a bounded source-owned metadata action such as Jira listUsers, listProjects, listBoards, listSprints, listVersions, validateJql, or previewJql. Use this to inspect source context without asking users for raw IDs.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_id: { type: "string", enum: supportedSourceIds },
+          connection_id: { type: "string" },
+          action: { type: "string" },
+          params: { type: "object" },
+          row_limit: { type: "integer", default: 25 }
+        },
+        required: ["connection_id", "action"]
+      }
+    },
+    {
+      name: "source_search_records",
+      displayName: "Search source records",
+      description: "Search compact source-owned records for answer-first questions without creating a dataset. For Jira, use this for issue tables such as open issues by assignee, blockers, active sprint issues, and similar small result sets.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_id: { type: "string", enum: supportedSourceIds },
+          connection_id: { type: "string" },
+          question: { type: "string" },
+          resource: { type: "string" },
+          filters: { type: "object" },
+          jql: { type: "string" },
+          fields: { type: "array", items: { type: "string" } },
+          overrides: { type: "object" },
+          row_limit: { type: "integer", default: 25 }
         },
         required: ["connection_id", "question"]
       }
@@ -305,9 +371,9 @@ async function availableTools() {
         properties: {
           question: { type: "string" },
           schema: { type: "object" }, // database schema from get_schema
-          source_id: { type: "string", enum: supportedSourceIds },
+          source_id: { type: "string", enum: queryGenerationSourceIds },
           hints: { type: "object" }, // optional project-level entity hints
-          preferred_dialect: { type: "string", enum: supportedDialectIds } // supported source ids/types/subtypes
+          preferred_dialect: { type: "string", enum: queryGenerationDialectIds } // supported source ids/types/subtypes
         },
         required: ["question"]
       }
@@ -733,8 +799,14 @@ async function callTool(name, payload) {
         return sourceListTemplates(payload);
       case "source_recommend_templates":
         return sourceRecommendTemplates(payload);
+      case "source_resolve_context":
+        return sourceResolveContext(payload);
       case "source_plan_dataset":
         return sourcePlanDataset(payload);
+      case "source_run_action":
+        return sourceRunAction(payload);
+      case "source_search_records":
+        return sourceSearchRecords(payload);
       case "source_validate_configuration":
         return sourceValidateConfiguration(payload);
       case "source_preview_configuration":
@@ -842,7 +914,10 @@ ${ENTITY_CREATION_RULES}
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
    - For source-owned configuration connections:
      * Call source_get_capabilities or source_list_resources when you need source context
-     * Call source_plan_dataset with the user's business question. Do not invent API routes or configuration fields.
+     * Use source_resolve_context when a Jira follow-up needs to inspect or correct project, board, sprint, version, or user context.
+     * Use source_run_action for bounded Jira metadata lookups such as users, projects, boards, sprints, versions, or JQL validation.
+     * Use source_search_records for answer-first Jira issue lists before creating datasets. This is preferred for prompts like "what is Raz working on", "show open issues assigned to X", "show blockers", or "what is in the active sprint".
+     * Call source_plan_dataset with the user's business question. Use mode="preview" for exploration or temporary charts, and mode="persist" before saved datasets, saved charts, or dashboards so ambiguous source context can be clarified. Do not invent API routes or configuration fields.
      * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
      * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
      * For charts, pass the planned configuration to create_temporary_chart by default

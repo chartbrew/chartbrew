@@ -21,6 +21,9 @@ const {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
 } = require("./sourceTools");
 const {
@@ -53,6 +56,9 @@ module.exports = {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
   stripeOfficialPlanDataset,
   stripeOfficialPreviewConfiguration,

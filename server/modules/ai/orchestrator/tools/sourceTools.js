@@ -34,6 +34,20 @@ function requireAiTool(source, toolName) {
   return tool;
 }
 
+function requireSourceAction(source, actionName) {
+  const allowedActions = source.capabilities?.actions || [];
+  if (!allowedActions.includes(actionName)) {
+    throw new Error(`${source.name} does not expose source action '${actionName}'`);
+  }
+
+  const action = source.backend?.actions?.[actionName];
+  if (typeof action !== "function") {
+    throw new Error(`${source.name} action '${actionName}' is not available`);
+  }
+
+  return action;
+}
+
 function mergeQuestionContext(question, originalQuestion) {
   if (!originalQuestion || originalQuestion === question) {
     return question;
@@ -96,6 +110,7 @@ async function sourcePlanDataset(payload) {
     connection,
     question: mergeQuestionContext(payload.question, payload.original_question),
     overrides: payload.overrides || {},
+    mode: payload.mode || "preview",
   });
 
   if (result?.status === "needs_disambiguation") {
@@ -108,6 +123,72 @@ async function sourcePlanDataset(payload) {
   }
 
   return result;
+}
+
+async function sourceResolveContext(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const tool = requireAiTool(source, "resolveContext");
+
+  const result = await tool({
+    connection,
+    question: mergeQuestionContext(payload.question, payload.original_question),
+    overrides: payload.overrides || {},
+    intent: payload.intent || {},
+    mode: payload.mode || "preview",
+  });
+
+  if (result?.resolution?.needsDisambiguation === true) {
+    return {
+      ...result,
+      needs_user_input: true,
+      prompt: result.resolution.message || "Choose an option before I continue.",
+      options: Array.isArray(result.resolution.options) ? result.resolution.options : [],
+    };
+  }
+
+  return result;
+}
+
+async function sourceRunAction(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const action = requireSourceAction(source, payload.action);
+  const result = await action({
+    connection,
+    params: payload.params || {},
+  });
+  const rows = Array.isArray(result) ? result : (result?.values || result?.rows || result?.issues || []);
+
+  if (Array.isArray(rows)) {
+    const rowLimit = Math.min(Number(payload.row_limit || payload.params?.maxResults || 25), 50);
+    return {
+      source: source.id,
+      action: payload.action,
+      rows: rows.slice(0, rowLimit),
+      rowCount: rows.length,
+    };
+  }
+
+  return {
+    source: source.id,
+    action: payload.action,
+    result,
+  };
+}
+
+async function sourceSearchRecords(payload) {
+  const { connection, source } = await getScopedSource(payload);
+  const tool = requireAiTool(source, "searchRecords");
+
+  return tool({
+    connection,
+    question: mergeQuestionContext(payload.question, payload.original_question),
+    resource: payload.resource,
+    filters: payload.filters || {},
+    jql: payload.jql,
+    fields: payload.fields,
+    rowLimit: payload.row_limit,
+    overrides: payload.overrides || {},
+  });
 }
 
 async function sourceValidateConfiguration(payload) {
@@ -136,5 +217,8 @@ module.exports = {
   sourcePlanDataset,
   sourcePreviewConfiguration,
   sourceRecommendTemplates,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
 };

@@ -35,7 +35,9 @@ import { useNavigate } from "react-router";
 
 import { createFromChartTemplate, getChartTemplate } from "../../slices/chartTemplate";
 import { getProjectCharts } from "../../slices/chart";
+import { runSourceAction } from "../../slices/connection";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
+import JiraBuilderAutocompleteField from "./components/jira-builder-autocomplete-field";
 
 const DASHBOARD_CREATE_SETTLE_DELAY_MS = 10000;
 
@@ -177,6 +179,43 @@ function wait(ms) {
 
 function uniq(values) {
   return [...new Set(values)];
+}
+
+function parseCsvValues(value = "") {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getProjectItems(jiraProjects) {
+  return jiraProjects.map((project) => ({
+    id: project.key,
+    label: `${project.key} - ${project.name}`,
+    shortLabel: project.key,
+    description: project.name,
+    searchText: `${project.key} ${project.name}`,
+  }));
+}
+
+function getBoardItems(jiraBoards) {
+  return jiraBoards.map((board) => ({
+    id: `${board.id}`,
+    label: board.name,
+    shortLabel: `${board.id}`,
+    description: `${board.type || "board"} #${board.id}`,
+    searchText: `${board.id} ${board.name} ${board.type || ""}`,
+  }));
+}
+
+function getSprintItems(jiraSprints) {
+  return jiraSprints.map((sprint) => ({
+    id: `${sprint.id}`,
+    label: sprint.name,
+    shortLabel: `${sprint.id}`,
+    description: `${sprint.state || "sprint"} #${sprint.id}`,
+    searchText: `${sprint.id} ${sprint.name} ${sprint.state || ""}`,
+  }));
 }
 
 function formatCreatedSummary(result) {
@@ -360,7 +399,12 @@ function JiraTemplateSetup(props) {
   const [createResult, setCreateResult] = useState(null);
   const [actionMode, setActionMode] = useState("dashboard");
   const [jiraProjectKeys, setJiraProjectKeys] = useState("");
+  const [jiraBoardId, setJiraBoardId] = useState("");
   const [jiraSprintId, setJiraSprintId] = useState("");
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [jiraProjects, setJiraProjects] = useState([]);
+  const [jiraBoards, setJiraBoards] = useState([]);
+  const [jiraSprints, setJiraSprints] = useState([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -382,6 +426,66 @@ function JiraTemplateSetup(props) {
   const needsSprintId = useMemo(() => {
     return selectedCards.some((card) => cardUsesVariable(card, "sprint_id"));
   }, [selectedCards]);
+  const selectedProjectKeys = useMemo(() => parseCsvValues(jiraProjectKeys), [jiraProjectKeys]);
+  const selectedProjectKeysSignature = selectedProjectKeys.join(",");
+  const projectItems = useMemo(() => getProjectItems(jiraProjects), [jiraProjects]);
+  const boardItems = useMemo(() => getBoardItems(jiraBoards), [jiraBoards]);
+  const sprintItems = useMemo(() => getSprintItems(jiraSprints), [jiraSprints]);
+
+  const runJiraAction = (action, actionParams = {}) => {
+    if (!teamId || !connection?.id) return Promise.resolve([]);
+
+    return dispatch(runSourceAction({
+      team_id: teamId,
+      connection_id: connection.id,
+      action,
+      params: actionParams,
+    })).unwrap().then((result) => {
+      if (Array.isArray(result)) return result;
+      if (result?.error) throw new Error(result.error);
+      return [];
+    });
+  };
+
+  const loadProjects = () => {
+    if (!teamId || !connection?.id) return;
+
+    setMetadataLoading(true);
+    runJiraAction("listProjects")
+      .then((loadedProjects) => setJiraProjects(loadedProjects))
+      .catch(() => setCreateError("Could not load Jira projects."))
+      .finally(() => setMetadataLoading(false));
+  };
+
+  const loadBoards = (projectKeyOrId = "") => {
+    if (!teamId || !connection?.id) return;
+
+    setMetadataLoading(true);
+    runJiraAction("listBoards", {
+      projectKeyOrId: projectKeyOrId || undefined,
+      maxResults: 50,
+    })
+      .then((loadedBoards) => setJiraBoards(loadedBoards))
+      .catch(() => setCreateError("Could not load Jira boards."))
+      .finally(() => setMetadataLoading(false));
+  };
+
+  const loadSprints = (boardId) => {
+    if (!teamId || !connection?.id || !boardId) {
+      setJiraSprints([]);
+      return;
+    }
+
+    setMetadataLoading(true);
+    runJiraAction("listSprints", {
+      boardId,
+      maxResults: 50,
+      state: "active",
+    })
+      .then((loadedSprints) => setJiraSprints(loadedSprints))
+      .catch(() => setCreateError("Could not load Jira sprints."))
+      .finally(() => setMetadataLoading(false));
+  };
 
   useEffect(() => {
     if (fixedProjectId) {
@@ -395,6 +499,25 @@ function JiraTemplateSetup(props) {
       setSelectedProjectId(`${visibleProjects[0].id}`);
     }
   }, [fixedProjectId, selectedProjectId, visibleProjects]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [teamId, connection?.id]);
+
+  useEffect(() => {
+    loadBoards(selectedProjectKeys[0] || "");
+  }, [selectedProjectKeysSignature, teamId, connection?.id]);
+
+  useEffect(() => {
+    if (!needsSprintId) {
+      setJiraBoardId("");
+      setJiraSprintId("");
+      setJiraSprints([]);
+      return;
+    }
+
+    loadSprints(jiraBoardId);
+  }, [needsSprintId, jiraBoardId, teamId, connection?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -629,34 +752,6 @@ function JiraTemplateSetup(props) {
               <Separator />
 
               <div className="flex flex-col gap-3">
-                {(needsProjectKeys || needsSprintId) && (
-                  <div className="flex flex-col gap-3 rounded-lg border border-divider bg-surface-secondary p-3">
-                    <p className="text-sm font-semibold">Jira filters</p>
-                    {needsProjectKeys && (
-                      <TextField fullWidth name="jira-template-project-keys">
-                        <Label>Project key(s)</Label>
-                        <Input
-                          placeholder="CHART or CHART, OPS"
-                          value={jiraProjectKeys}
-                          onChange={(event) => setJiraProjectKeys(event.target.value)}
-                          variant="secondary"
-                        />
-                      </TextField>
-                    )}
-                    {needsSprintId && (
-                      <TextField fullWidth name="jira-template-sprint-id">
-                        <Label>Sprint ID</Label>
-                        <Input
-                          placeholder="123"
-                          value={jiraSprintId}
-                          onChange={(event) => setJiraSprintId(event.target.value)}
-                          variant="secondary"
-                        />
-                      </TextField>
-                    )}
-                  </div>
-                )}
-
                 <p className="text-sm font-semibold">Add selected to</p>
                 {fixedProjectId ? (
                   <Chip variant="secondary" className="max-w-fit">
@@ -735,6 +830,60 @@ function JiraTemplateSetup(props) {
                 </Alert>
               )}
             </div>
+          </Surface>
+
+          <Surface className="rounded-3xl border border-divider p-5" variant="default">
+            {(needsProjectKeys || needsSprintId) && (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-semibold">Required Jira filters</p>
+                {needsProjectKeys && (
+                  <JiraBuilderAutocompleteField
+                    label="Project key(s)"
+                    name="jira-template-project-keys"
+                    placeholder={metadataLoading ? "Loading projects..." : "Select projects"}
+                    items={projectItems}
+                    value={selectedProjectKeys}
+                    selectionMode="multiple"
+                    onChange={(projectKeys) => {
+                      setJiraProjectKeys((projectKeys || []).join(", "));
+                      setJiraBoardId("");
+                      setJiraSprintId("");
+                    }}
+                    isDisabled={metadataLoading && projectItems.length === 0}
+                    emptyLabel="No Jira projects found"
+                  />
+                )}
+                {needsSprintId && (
+                  <>
+                    <JiraBuilderAutocompleteField
+                      label="Board"
+                      name="jira-template-board"
+                      placeholder={metadataLoading ? "Loading boards..." : "Select board"}
+                      items={boardItems}
+                      value={jiraBoardId}
+                      selectionMode="single"
+                      onChange={(boardId) => {
+                        setJiraBoardId(boardId ? `${boardId}` : "");
+                        setJiraSprintId("");
+                      }}
+                      isDisabled={metadataLoading && boardItems.length === 0}
+                      emptyLabel="No Jira boards found"
+                    />
+                    <JiraBuilderAutocompleteField
+                      label="Sprint"
+                      name="jira-template-sprint-id"
+                      placeholder={jiraBoardId ? "Select sprint" : "Select a board first"}
+                      items={sprintItems}
+                      value={jiraSprintId}
+                      selectionMode="single"
+                      onChange={(sprintId) => setJiraSprintId(sprintId ? `${sprintId}` : "")}
+                      isDisabled={!jiraBoardId || (metadataLoading && sprintItems.length === 0)}
+                      emptyLabel="No Jira sprints found"
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </Surface>
 
           {!createResult && (

@@ -63,6 +63,63 @@ describe("Jira chart templates", () => {
     });
   });
 
+  it("sets complete chart dataset config fields for the editor", () => {
+    TEMPLATE_SLUGS.forEach((slug) => {
+      const template = loadTemplate("jira", slug);
+      const datasetsById = new Map(template.datasets.map((dataset) => [dataset.id, dataset]));
+
+      template.charts.forEach((chart) => {
+        getChartDatasetConfigs(chart).forEach((cdc) => {
+          const dataset = datasetsById.get(cdc.datasetTemplateId);
+          const fields = dataset?.fieldsSchema || {};
+
+          expect(cdc.xAxis, `${slug}:${chart.id} is missing xAxis`).toEqual(expect.any(String));
+          expect(cdc.yAxis, `${slug}:${chart.id} is missing yAxis`).toEqual(expect.any(String));
+          expect(cdc.yAxisOperation, `${slug}:${chart.id} is missing yAxisOperation`).toEqual(expect.any(String));
+
+          if (cdc.xAxis !== "root[]") {
+            expect(fields[cdc.xAxis], `${slug}:${chart.id} xAxis is not in dataset fieldsSchema`).toBeTruthy();
+          }
+          expect(fields[cdc.yAxis], `${slug}:${chart.id} yAxis is not in dataset fieldsSchema`).toBeTruthy();
+        });
+      });
+    });
+  });
+
+  it("sets dateField for date-based chart dataset configs", () => {
+    TEMPLATE_SLUGS.forEach((slug) => {
+      const template = loadTemplate("jira", slug);
+      const datasetsById = new Map(template.datasets.map((dataset) => [dataset.id, dataset]));
+
+      template.charts.forEach((chart) => {
+        getChartDatasetConfigs(chart).forEach((cdc) => {
+          const dataset = datasetsById.get(cdc.datasetTemplateId);
+          const fields = dataset?.fieldsSchema || {};
+
+          if (fields[cdc.xAxis] !== "date") return;
+
+          expect(cdc.dateField, `${slug}:${chart.id} is missing dateField`).toBe(cdc.xAxis);
+          expect(cdc.yAxisOperation, `${slug}:${chart.id} should let AxisChart aggregate date buckets`).toBe("none");
+        });
+      });
+    });
+  });
+
+  it("uses a yearly default range for Jira trend datasets", () => {
+    TEMPLATE_SLUGS.forEach((slug) => {
+      const template = loadTemplate("jira", slug);
+
+      template.datasets
+        .filter((dataset) => dataset.dataRequest?.configuration?.transform?.type === "created_resolved_trend")
+        .forEach((dataset) => {
+          expect(dataset.dataRequest.variableBindings).toEqual(expect.arrayContaining([
+            expect.objectContaining({ name: "start_date", default_value: "-365d" }),
+            expect.objectContaining({ name: "end_date", default_value: "now()" }),
+          ]));
+        });
+    });
+  });
+
   it("includes variable bindings on Jira template data requests", () => {
     const template = loadTemplate("jira", "project-overview");
     const dataRequest = template.datasets[0].dataRequest;

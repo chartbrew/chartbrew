@@ -25,12 +25,16 @@ const {
   sourceListResources,
   sourcePlanDataset,
   sourcePreviewConfiguration,
+  sourceResolveContext,
+  sourceRunAction,
+  sourceSearchRecords,
   sourceValidateConfiguration,
 } = require("../../modules/ai/orchestrator/tools/sourceTools");
 const { getSourceById } = require("../../sources");
 
 const ALLOWED_STATUSES = new Set([
   "ok",
+  "fallback",
   "needs_disambiguation",
   "needs_more_context",
   "needs_model_planning",
@@ -806,6 +810,226 @@ describe("Source AI harness", () => {
     expectToolOutputContract(validation);
     expectToolOutputContract(preview);
     expectToolOutputContract(sample);
+  });
+
+  it("resolves Jira context through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "D2371",
+      name: "D2371 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "D2371 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }]);
+
+    const result = await sourceResolveContext({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for D2371",
+      intent: { id: "sprint_status", resource: "sprint_issues" },
+      mode: "preview",
+    });
+
+    expect(result.source).toBe("jira");
+    expect(result.resolution.entities.project).toMatchObject({
+      key: "D2371",
+    });
+    expect(result.resolution.entities.board).toMatchObject({
+      id: "77",
+    });
+    expect(result.resolution.entities.sprint).toMatchObject({
+      id: "123",
+    });
+    expectToolOutputContract(result);
+  });
+
+  it("runs safe Jira source actions through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+      active: true,
+    }]);
+
+    const result = await sourceRunAction({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      action: "listUsers",
+      params: { query: "Razvan", maxResults: 10 },
+    });
+
+    expect(result).toMatchObject({
+      source: "jira",
+      action: "listUsers",
+      rows: [expect.objectContaining({
+        accountId: "raz-account",
+        displayName: "Razvan Ilin",
+      })],
+      rowCount: 1,
+    });
+    expectToolOutputContract(result);
+  });
+
+  it("searches compact Jira issue records without creating a dataset", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([]);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+    }]);
+    vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
+      issues: [{
+        key: "D2371-1",
+        fields: {
+          summary: "Fix Jira AI search",
+          status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
+          assignee: { displayName: "Razvan Ilin" },
+          priority: { name: "High" },
+          issuetype: { name: "Task" },
+          created: "2026-05-15T00:00:00.000Z",
+          updated: "2026-05-18T00:00:00.000Z",
+        },
+      }],
+    });
+
+    const result = await sourceSearchRecords({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "Show all open issues assigned to Razvan",
+      row_limit: 10,
+    });
+
+    expect(result).toMatchObject({
+      source: "jira",
+      status: "ok",
+      rows: [expect.objectContaining({
+        key: "D2371-1",
+        summary: "Fix Jira AI search",
+        status: "In Progress",
+        assignee: "Razvan Ilin",
+      })],
+      rowCount: 1,
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: expect.stringContaining("assignee IN (\"raz-account\")"),
+        maxResults: 10,
+      }),
+    });
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].body.jql).toContain("statusCategory != Done");
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].body.jql).not.toContain("project IN ()");
+    expectToolOutputContract(result);
+  });
+
+  it("keeps Jira fallback plans usable for preview", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{ id: "10001", key: "D2371", name: "D2371 Project" }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{ id: 77, name: "D2371 Scrum Board", type: "scrum" }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
+
+    const plan = await sourcePlanDataset({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for D2371",
+      mode: "preview",
+    });
+
+    expect(plan.status).toBe("fallback");
+    expect(plan.configuration).toMatchObject({ source: "jira", resource: "issues" });
+    expect(plan.chartSpec).toMatchObject({ type: "bar", xAxis: "root[].status", yAxis: "root[].issueCount" });
+    expect(plan.needs_user_input).toBeUndefined();
+    expectToolOutputContract(plan);
+  });
+
+  it("passes persist mode through Jira source planning before saved creation", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "D2371",
+      name: "D2371 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "D2371 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }, {
+      id: 124,
+      name: "Sprint 15",
+      state: "active",
+    }]);
+
+    const plan = await sourcePlanDataset({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "save the active sprint status for D2371",
+      mode: "persist",
+    });
+
+    expect(plan.needs_user_input).toBe(true);
+    expect(plan.status).toBe("needs_disambiguation");
+    expect(plan.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: "sprint:123" }),
+      expect.objectContaining({ value: "sprint:124" }),
+    ]));
+  });
+
+  it("flattens Jira sprint disambiguation through the generic source tool", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "D2371",
+      name: "D2371 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "D2371 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "Sprint 14",
+      state: "active",
+    }, {
+      id: 124,
+      name: "Sprint 15",
+      state: "active",
+    }]);
+
+    const result = await sourceResolveContext({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "show active sprint status for D2371",
+      intent: { id: "sprint_status", resource: "sprint_issues" },
+      mode: "persist",
+    });
+
+    expect(result.needs_user_input).toBe(true);
+    expect(result.prompt).toBeTruthy();
+    expect(result.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: "sprint:123" }),
+      expect.objectContaining({ value: "sprint:124" }),
+    ]));
+    expect(result.resolution.needsDisambiguation).toBe(true);
   });
 
   it.each(toolRoutingReplays)("$name follows the allowed high-risk tool sequence", (replay) => {

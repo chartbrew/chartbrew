@@ -20,10 +20,37 @@ export function getDefaultDateRange() {
   };
 }
 
+function resolveRelativeDateValue(value) {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  const today = new Date();
+
+  if (["now", "now()", "today"].includes(normalizedValue)) {
+    return formatDateValue(today);
+  }
+
+  const lastDaysMatch = normalizedValue.match(/^last_(\d+)_days$/);
+  if (lastDaysMatch) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - Number(lastDaysMatch[1]));
+    return formatDateValue(date);
+  }
+
+  const relativeDaysMatch = normalizedValue.match(/^([+-]?\d+)d$/);
+  if (relativeDaysMatch) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + Number(relativeDaysMatch[1]));
+    return formatDateValue(date);
+  }
+
+  return null;
+}
+
 export function normalizeDateRangeValue(value, fallback) {
   if (!value) return fallback;
   if (/^\{\{[^}]+\}\}$/.test(String(value || "").trim())) return value;
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value;
+  const relativeDate = resolveRelativeDateValue(value);
+  if (relativeDate) return relativeDate;
   const parsedDate = new Date(value);
   if (!Number.isNaN(parsedDate.getTime())) return formatDateValue(parsedDate);
   return fallback;
@@ -32,6 +59,28 @@ export function normalizeDateRangeValue(value, fallback) {
 export function getPlaceholderVariableName(value) {
   const match = String(value || "").trim().match(/^\{\{([^}]+)\}\}$/);
   return match?.[1]?.trim() || null;
+}
+
+function inferVisualValueFromJql(jql = "", fieldNames = [], operator = "=") {
+  const fields = Array.isArray(fieldNames) ? fieldNames : [fieldNames];
+  const escapedFields = fields
+    .filter(Boolean)
+    .map((field) => String(field).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+
+  if (!escapedFields) return "";
+
+  const escapedOperator = String(operator).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = String(jql || "").match(new RegExp(`(?:${escapedFields})\\s*${escapedOperator}\\s*([^\\s)]+)`, "i"));
+  return match?.[1]?.trim() || "";
+}
+
+function inferProjectValueFromJql(jql = "") {
+  const inMatch = String(jql || "").match(/project\s+IN\s*\(([^)]+)\)/i);
+  if (inMatch) return inMatch[1].trim();
+
+  const equalsMatch = String(jql || "").match(/project\s*=\s*([^\s)]+)/i);
+  return equalsMatch?.[1]?.trim() || "";
 }
 
 export function normalizeVisualConfig(visual = {}) {
@@ -46,21 +95,39 @@ export function normalizeVisualConfig(visual = {}) {
 }
 
 export function mergeConfiguration(dataRequest) {
+  const requestConfiguration = dataRequest?.configuration || {};
+  const requestVisual = requestConfiguration.visual || {};
+  const inferredVisual = {
+    projects: requestVisual.projects || inferProjectValueFromJql(requestConfiguration.jql),
+    startDate: requestVisual.startDate || inferVisualValueFromJql(requestConfiguration.jql, [
+      "created",
+      "updated",
+      "resolutiondate",
+      "statusCategoryChangedDate",
+    ], ">="),
+    endDate: requestVisual.endDate || inferVisualValueFromJql(requestConfiguration.jql, [
+      "created",
+      "updated",
+      "resolutiondate",
+      "statusCategoryChangedDate",
+    ], "<="),
+  };
   const mergedConfiguration = {
     ...DEFAULT_CONFIGURATION,
-    ...(dataRequest?.configuration || {}),
-    fields: dataRequest?.configuration?.fields || DEFAULT_CONFIGURATION.fields,
+    ...requestConfiguration,
+    fields: requestConfiguration.fields || DEFAULT_CONFIGURATION.fields,
     transform: {
       ...DEFAULT_CONFIGURATION.transform,
-      ...(dataRequest?.configuration?.transform || {}),
+      ...(requestConfiguration.transform || {}),
     },
     pagination: {
       ...DEFAULT_CONFIGURATION.pagination,
-      ...(dataRequest?.configuration?.pagination || {}),
+      ...(requestConfiguration.pagination || {}),
     },
     visual: normalizeVisualConfig({
       ...(DEFAULT_CONFIGURATION.visual || {}),
-      ...(dataRequest?.configuration?.visual || {}),
+      ...inferredVisual,
+      ...requestVisual,
     }),
   };
 

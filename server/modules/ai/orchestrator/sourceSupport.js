@@ -5,23 +5,29 @@ const {
 } = require("../../../sources");
 const { isSourceServerEnabled } = require("../../../sources/sourceAvailability");
 
-function sourceSupportsOrchestrator(source) {
-  const supportsQueryGeneration = Boolean(
+function sourceSupportsQueryGeneration(source) {
+  return Boolean(
     source?.capabilities?.data?.supportsQuery
     && source?.capabilities?.ai?.canGenerateQueries
     && source?.backend?.runDataRequest
     && source?.backend?.ai?.generateQuery
   );
-  const supportsSourceTools = Boolean(
+}
+
+function sourceSupportsSourceTools(source) {
+  return Boolean(
     source?.capabilities?.ai?.hasTools
     && source?.backend?.runDataRequest
     && source?.backend?.ai
   );
 
+}
+
+function sourceSupportsOrchestrator(source) {
   return Boolean(
     source
     && isSourceServerEnabled(source)
-    && (supportsQueryGeneration || supportsSourceTools)
+    && (sourceSupportsQueryGeneration(source) || sourceSupportsSourceTools(source))
   );
 }
 
@@ -37,6 +43,12 @@ function getOrchestratorSources() {
   return getSources().filter(sourceSupportsOrchestrator);
 }
 
+function getQueryGenerationSources() {
+  return getSources().filter((source) => {
+    return source && isSourceServerEnabled(source) && sourceSupportsQueryGeneration(source);
+  });
+}
+
 function getSupportedConnectionTypes() {
   return [...new Set(getOrchestratorSources().map((source) => source.type))];
 }
@@ -45,8 +57,20 @@ function getSupportedSourceIds() {
   return getOrchestratorSources().map((source) => source.id);
 }
 
+function getQueryGenerationSourceIds() {
+  return getQueryGenerationSources().map((source) => source.id);
+}
+
 function getSupportedDialectIds() {
   return [...new Set(getOrchestratorSources().flatMap((source) => [
+    source.id,
+    source.type,
+    source.subType,
+  ].filter(Boolean)))];
+}
+
+function getQueryGenerationDialectIds() {
+  return [...new Set(getQueryGenerationSources().flatMap((source) => [
     source.id,
     source.type,
     source.subType,
@@ -108,6 +132,9 @@ module.exports = {
   formatSupportedSourceBullets,
   formatSupportedSourceList,
   getOrchestratorSources,
+  getQueryGenerationDialectIds,
+  getQueryGenerationSourceIds,
+  getQueryGenerationSources,
   getSourceByDialect,
   getSupportedConnectionTypes,
   getSupportedDialectIds,
@@ -116,6 +143,8 @@ module.exports = {
   isConnectionSupported,
   requireSourceById,
   requireSupportedSourceForConnection,
+  sourceSupportsQueryGeneration,
+  sourceSupportsSourceTools,
   sourceUsesSourceOwnedConfiguration,
   sourceSupportsOrchestrator,
 };

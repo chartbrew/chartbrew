@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import {
   Button,
   Card,
@@ -74,16 +74,22 @@ function JiraConfigStep() {
     loadSprints,
     metadataLoading,
     mode,
+    resolveVariableValue,
     setMode,
     updateConfiguration,
     updateTransform,
     updateVisual,
   } = useJiraBuilder();
   const visual = configuration.visual || {};
-  const projectItems = getProjectItems(jiraProjects || []);
-  const boardItems = getBoardItems(jiraBoards || []);
-  const sprintItems = getSprintItems(jiraSprints || []);
-  const selectedProjectKeys = parseCsvKeys(visual.projects);
+  const projectItems = useMemo(() => getProjectItems(jiraProjects || []), [jiraProjects]);
+  const boardItems = useMemo(() => getBoardItems(jiraBoards || []), [jiraBoards]);
+  const sprintItems = useMemo(() => getSprintItems(jiraSprints || []), [jiraSprints]);
+  const selectedProjectKeys = useMemo(() => parseCsvKeys(resolveVariableValue(visual.projects)), [
+    resolveVariableValue,
+    visual.projects,
+  ]);
+  const selectedBoardId = resolveVariableValue(configuration.boardId);
+  const selectedSprintId = resolveVariableValue(configuration.sprintId);
   const resource = configuration.resource || "issues";
   const supportsJql = ["issues", "sprint_issues"].includes(resource);
   const availableModeOptions = supportsJql
@@ -120,30 +126,30 @@ function JiraConfigStep() {
     }
   }, [configuration.transform?.type, selectedTransform]);
 
-  const updateIssueProjects = (keys) => {
+  const updateIssueProjects = useCallback((keys) => {
     const projectKeys = Array.isArray(keys) ? keys.map((key) => `${key}`) : [];
     updateVisual({ projects: projectKeys.join(", ") });
     loadBoards(projectKeys[0] || "");
-  };
+  }, [loadBoards, updateVisual]);
 
-  const updateProjectFilter = (projectKeyOrId) => {
+  const updateProjectFilter = useCallback((projectKeyOrId) => {
     const nextProject = projectKeyOrId ? `${projectKeyOrId}` : "";
     updateConfiguration({ projectIdOrKey: nextProject });
     loadBoards(nextProject);
-  };
+  }, [loadBoards, updateConfiguration]);
 
-  const updateBoard = (boardId) => {
+  const updateBoard = useCallback((boardId) => {
     const nextBoardId = boardId ? `${boardId}` : "";
     updateConfiguration({
       boardId: nextBoardId,
       sprintId: "",
     });
     loadSprints(nextBoardId);
-  };
+  }, [loadSprints, updateConfiguration]);
 
-  const updateSprint = (sprintId) => {
+  const updateSprint = useCallback((sprintId) => {
     updateConfiguration({ sprintId: sprintId ? `${sprintId}` : "" });
-  };
+  }, [updateConfiguration]);
 
   return (
     <Card className="border border-divider bg-surface p-0 shadow-none">
@@ -260,7 +266,7 @@ function JiraConfigStep() {
                   name="jira-sprint-issues-board"
                   placeholder={metadataLoading ? "Loading boards..." : "Select board"}
                   items={boardItems}
-                  value={configuration.boardId || ""}
+                  value={selectedBoardId}
                   selectionMode="single"
                   onChange={updateBoard}
                   isDisabled={metadataLoading && boardItems.length === 0}
@@ -269,12 +275,12 @@ function JiraConfigStep() {
                 <JiraBuilderAutocompleteField
                   label="Sprint"
                   name="jira-sprint-id"
-                  placeholder={configuration.boardId ? "Select sprint" : "Select a board first"}
+                  placeholder={selectedBoardId ? "Select sprint" : "Select a board first"}
                   items={sprintItems}
-                  value={configuration.sprintId || ""}
+                  value={selectedSprintId}
                   selectionMode="single"
                   onChange={updateSprint}
-                  isDisabled={!configuration.boardId || (metadataLoading && sprintItems.length === 0)}
+                  isDisabled={!selectedBoardId || (metadataLoading && sprintItems.length === 0)}
                   emptyLabel="No Jira sprints found"
                 />
               </div>
@@ -310,7 +316,7 @@ function JiraConfigStep() {
                   name="jira-board-id"
                   placeholder={metadataLoading ? "Loading boards..." : "Select board"}
                   items={boardItems}
-                  value={configuration.boardId || ""}
+                  value={selectedBoardId}
                   selectionMode="single"
                   onChange={updateBoard}
                   isDisabled={metadataLoading && boardItems.length === 0}

@@ -132,7 +132,7 @@
       "type": "gauge",
       "requiredDatasetIds": ["sprint_summary"],
       "layoutIntent": { "kind": "kpi", "priority": 10 },
-      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completionRate", "yAxis": "root[].completionRate", "legend": "Completion rate", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completionRate", "yAxis": "root[].completionRate", "yAxisOperation": "none", "legend": "Completion rate", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
     },
     {
       "id": "story-points-completed",
@@ -142,7 +142,7 @@
       "type": "kpi",
       "requiredDatasetIds": ["sprint_summary"],
       "layoutIntent": { "kind": "kpi", "priority": 20 },
-      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completedStoryPoints", "yAxis": "root[].completedStoryPoints", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completedStoryPoints", "yAxis": "root[].completedStoryPoints", "yAxisOperation": "none", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
     },
     {
       "id": "sprint-work-by-assignee",
@@ -152,7 +152,7 @@
       "type": "bar",
       "requiredDatasetIds": ["sprint_by_assignee"],
       "layoutIntent": { "kind": "comparison", "priority": 30 },
-      "cdc": { "datasetTemplateId": "sprint_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].storyPoints", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "sprint_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].storyPoints", "yAxisOperation": "none", "legend": "Story points", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
     },
     {
       "id": "sprint-status-breakdown",
@@ -162,7 +162,7 @@
       "type": "doughnut",
       "requiredDatasetIds": ["sprint_by_status"],
       "layoutIntent": { "kind": "comparison", "priority": 40 },
-      "cdc": { "datasetTemplateId": "sprint_by_status", "xAxis": "root[].statusCategory", "yAxis": "root[].issueCount", "legend": "Issues", "datasetColor": "rgba(255, 255, 255, 1)", "fillColor": ["rgba(66, 133, 244, 1)", "rgba(255, 152, 0, 1)", "rgba(38, 166, 154, 1)"], "multiFill": true }
+      "cdc": { "datasetTemplateId": "sprint_by_status", "xAxis": "root[].statusCategory", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(255, 255, 255, 1)", "fillColor": ["rgba(66, 133, 244, 1)", "rgba(255, 152, 0, 1)", "rgba(38, 166, 154, 1)"], "multiFill": true }
     },
     {
       "id": "carryover-issues",
@@ -175,6 +175,8 @@
       "cdc": {
         "datasetTemplateId": "sprint_carryover",
         "xAxis": "root[]",
+        "yAxis": "root[].key",
+        "yAxisOperation": "none",
         "datasetColor": "rgba(255, 152, 0, 1)",
         "columnsOrder": ["key", "summary", "assignee", "status", "storyPoints"]
       }

@@ -181,6 +181,89 @@ describe("Jira protocol", () => {
     ]);
   });
 
+  it("runs separate created and resolved searches for Jira trend templates", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "CHART-1",
+          fields: {
+            summary: "Created in range",
+            status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+            created: "2026-05-01T10:00:00.000Z",
+            updated: "2026-05-01T10:30:00.000Z",
+            resolutiondate: null,
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "CHART-2",
+          fields: {
+            summary: "Resolved in range",
+            status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+            created: "2025-07-10T10:00:00.000Z",
+            updated: "2026-05-03T12:00:00.000Z",
+            resolutiondate: null,
+          },
+          changelog: {
+            histories: [{
+              created: "2026-05-03T12:00:00.000Z",
+              items: [{ field: "status", toString: "Done" }],
+            }],
+          },
+        }],
+      });
+    vi.spyOn(jiraConnection, "listStatuses")
+      .mockResolvedValue([{ id: "10002", name: "Done", statusCategory: "Done", statusCategoryKey: "done" }]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    const response = await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+      },
+      dataRequest: {
+        id: 12,
+        configuration: {
+          source: "jira",
+          resource: "issues",
+          mode: "visual",
+          includeDoneAt: true,
+          jql: "project IN (CHART) AND ((created >= 2026-05-01 AND created <= 2026-05-31) OR (statusCategory = Done AND statusCategoryChangedDate >= 2026-05-01 AND statusCategoryChangedDate <= 2026-05-31)) ORDER BY updated ASC",
+          transform: { type: "created_resolved_trend", interval: "day" },
+          pagination: { maxResults: 100, maxRecords: 1000 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(response.responseData.data).toEqual([
+      { period: "2026-05-01", created: 1, resolved: 0, open: 1 },
+      { period: "2026-05-03", created: 0, resolved: 1, open: 0 },
+    ]);
+    expect(response.responseData.data.some((row) => row.period === "2025-07-10")).toBe(false);
+    expect(jiraConnection.jiraRequest).toHaveBeenNthCalledWith(1, expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: "project IN (CHART) AND created >= 2026-05-01 AND created <= 2026-05-31 ORDER BY created ASC",
+        expand: "changelog",
+      }),
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenNthCalledWith(2, expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: "project IN (CHART) AND statusCategory = Done AND statusCategoryChangedDate >= 2026-05-01 AND statusCategoryChangedDate <= 2026-05-31 ORDER BY updated ASC",
+        expand: "changelog",
+      }),
+    });
+  });
+
   it("runs issue searches and caches normalized response data", async () => {
     vi.spyOn(jiraConnection, "jiraRequest")
       .mockResolvedValueOnce({
@@ -305,6 +388,49 @@ describe("Jira protocol", () => {
         fields: expect.any(Array),
         maxResults: 100,
         nextPageToken: "next-page",
+      },
+    });
+  });
+
+  it("omits unresolved variable JQL from sprint issue requests", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "CHART-1",
+          fields: {
+            summary: "Sprint issue",
+            status: { name: "Done", statusCategory: { name: "Done" } },
+            issuetype: { name: "Story" },
+          },
+        }],
+        total: 1,
+      });
+
+    const rows = await jiraProtocol.fetchJiraRows({
+      id: 7,
+      type: "jira",
+      subType: "jira",
+      host: "https://chartbrew.atlassian.net",
+      authentication: {
+        email: "raz@example.com",
+        apiToken: "token",
+      },
+    }, {
+      source: "jira",
+      resource: "sprint_issues",
+      mode: "visual",
+      sprintId: "123",
+      jql: "project IN ({{projects}}) ORDER BY updated DESC",
+      fields: ["key", "summary", "status", "issuetype"],
+      pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+    });
+
+    expect(rows.map((row) => row.key)).toEqual(["CHART-1"]);
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: {
+        fields: "key,summary,status,issuetype",
+        startAt: 0,
+        maxResults: 100,
       },
     });
   });

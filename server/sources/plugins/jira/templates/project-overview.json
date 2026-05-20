@@ -40,7 +40,7 @@
         },
         "variableBindings": [
           { "name": "projects", "type": "string", "default_value": "", "required": true },
-          { "name": "start_date", "type": "date", "default_value": "-30d", "required": false },
+          { "name": "start_date", "type": "date", "default_value": "-365d", "required": false },
           { "name": "end_date", "type": "date", "default_value": "now()", "required": false }
         ]
       }
@@ -154,8 +154,8 @@
       "requiredDatasetIds": ["issues_created_resolved"],
       "layoutIntent": { "kind": "trend", "priority": 10 },
       "cdcs": [
-        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].created", "legend": "Created", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true },
-        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].resolved", "legend": "Resolved", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
+        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].created", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Created", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true },
+        { "datasetTemplateId": "issues_created_resolved", "xAxis": "root[].period", "yAxis": "root[].resolved", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Resolved", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
       ]
     },
     {
@@ -166,7 +166,7 @@
       "type": "bar",
       "requiredDatasetIds": ["issues_by_status"],
       "layoutIntent": { "kind": "comparison", "priority": 20 },
-      "cdc": { "datasetTemplateId": "issues_by_status", "xAxis": "root[].status", "yAxis": "root[].issueCount", "legend": "Issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "issues_by_status", "xAxis": "root[].status", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
     },
     {
       "id": "issues-by-assignee",
@@ -176,7 +176,7 @@
       "type": "bar",
       "requiredDatasetIds": ["issues_by_assignee"],
       "layoutIntent": { "kind": "comparison", "priority": 30 },
-      "cdc": { "datasetTemplateId": "issues_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "legend": "Issues", "datasetColor": "rgba(255, 152, 0, 1)", "fillColor": "rgba(255, 152, 0, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "issues_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Issues", "datasetColor": "rgba(255, 152, 0, 1)", "fillColor": "rgba(255, 152, 0, 0.14)", "fill": true }
     },
     {
       "id": "recent-completed-work",
@@ -189,6 +189,8 @@
       "cdc": {
         "datasetTemplateId": "recent_completed_work",
         "xAxis": "root[]",
+        "yAxis": "root[].key",
+        "yAxisOperation": "none",
         "datasetColor": "rgba(38, 166, 154, 1)",
         "columnsOrder": ["key", "summary", "assignee", "doneAt"]
       }

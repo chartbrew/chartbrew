@@ -1,6 +1,8 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import PropTypes from "prop-types";
@@ -69,6 +71,7 @@ function JiraBuilder(props) {
   const [variableDatePart, setVariableDatePart] = useState(null);
   const [variableLoading, setVariableLoading] = useState(false);
   const [variableDeleteLoading, setVariableDeleteLoading] = useState(false);
+  const hydratedRequestRef = useRef({ id: null, signature: null });
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -78,6 +81,18 @@ function JiraBuilder(props) {
     || dataRequest.connection_id
     || dataRequest.Connection?.id
     || dataRequest.connection?.id;
+  const dataRequestHydrationSignature = useMemo(() => {
+    return JSON.stringify({
+      configuration: dataRequest?.configuration || {},
+      variableBindings: (dataRequest?.VariableBindings || []).map((binding) => ({
+        id: binding.id,
+        name: binding.name,
+        default_value: binding.default_value,
+        required: binding.required,
+        type: binding.type,
+      })),
+    });
+  }, [dataRequest?.configuration, dataRequest?.VariableBindings]);
 
   useEffect(() => {
     const nextRequest = {
@@ -102,12 +117,29 @@ function JiraBuilder(props) {
 
   useEffect(() => {
     if (!dataRequest?.id) return;
+    const requestId = String(dataRequest.id);
 
+    if (
+      hydratedRequestRef.current.id === requestId
+      && hydratedRequestRef.current.signature === dataRequestHydrationSignature
+    ) {
+      return;
+    }
+
+    const previousRequestId = hydratedRequestRef.current.id;
     const nextConfiguration = mergeConfiguration(dataRequest);
+    hydratedRequestRef.current = {
+      id: requestId,
+      signature: dataRequestHydrationSignature,
+    };
     setJiraRequest(dataRequest);
     setConfiguration(nextConfiguration);
     setMode(nextConfiguration.mode || "visual");
-  }, [dataRequest?.id]);
+
+    if (previousRequestId && previousRequestId !== requestId) {
+      setPreviewPayload(null);
+    }
+  }, [dataRequest, dataRequestHydrationSignature]);
 
   useEffect(() => {
     if (stateDrs && stateDrs.length > 0) {
@@ -118,24 +150,34 @@ function JiraBuilder(props) {
     }
   }, [stateDrs, dataRequest.id]);
 
-  const updateConfiguration = (updates) => {
+  const updateConfiguration = useCallback((updates) => {
     setConfiguration((current) => ({
       ...current,
       ...updates,
     }));
-  };
+  }, []);
 
-  const updateVisual = (updates) => {
+  const updateVisual = useCallback((updates) => {
     setConfiguration((current) => withVisualJql(current, updates));
-  };
+  }, []);
 
-  const getVariableBinding = (name) => {
+  const getVariableBinding = useCallback((name) => {
     return [
       ...(jiraRequest.VariableBindings || []),
       ...(dataRequest.VariableBindings || []),
     ]
       .find((variableBinding) => variableBinding.name === name);
-  };
+  }, [dataRequest.VariableBindings, jiraRequest.VariableBindings]);
+
+  const resolveVariableValue = useCallback((value, fallback = "") => {
+    const variableName = getPlaceholderVariableName(value);
+    if (!variableName) return value || fallback;
+
+    const variableValue = getVariableBinding(variableName)?.default_value;
+    return variableValue === undefined || variableValue === null || variableValue === ""
+      ? fallback
+      : variableValue;
+  }, [getVariableBinding]);
 
   const getDatePickerValue = (datePart) => {
     const value = configuration.visual?.[datePart];
@@ -144,7 +186,7 @@ function JiraBuilder(props) {
     const fallback = defaultRange[datePart];
 
     if (variableName) {
-      return normalizeDateRangeValue(getVariableBinding(variableName)?.default_value, fallback);
+      return normalizeDateRangeValue(resolveVariableValue(value), fallback);
     }
 
     return normalizeDateRangeValue(value, fallback);
@@ -254,7 +296,7 @@ function JiraBuilder(props) {
     }
   };
 
-  const updateTransform = (updates) => {
+  const updateTransform = useCallback((updates) => {
     setConfiguration((current) => ({
       ...current,
       transform: {
@@ -262,7 +304,7 @@ function JiraBuilder(props) {
         ...updates,
       },
     }));
-  };
+  }, []);
 
   const runJiraAction = (action, actionParams = {}) => {
     if (!team?.id || !connectionId) return Promise.resolve([]);
@@ -289,7 +331,7 @@ function JiraBuilder(props) {
       .finally(() => setMetadataLoading(false));
   };
 
-  const loadBoards = (projectKeyOrId = "") => {
+  const loadBoards = useCallback((projectKeyOrId = "") => {
     if (!team?.id || !connectionId) return;
 
     setMetadataLoading(true);
@@ -300,9 +342,9 @@ function JiraBuilder(props) {
       .then((boards) => setJiraBoards(boards))
       .catch(() => toast.error("Could not load Jira boards."))
       .finally(() => setMetadataLoading(false));
-  };
+  }, [connectionId, team?.id]);
 
-  const loadSprints = (boardId) => {
+  const loadSprints = useCallback((boardId) => {
     if (!team?.id || !connectionId || !boardId) {
       setJiraSprints([]);
       return;
@@ -317,7 +359,7 @@ function JiraBuilder(props) {
       .then((sprints) => setJiraSprints(sprints))
       .catch(() => toast.error("Could not load Jira sprints."))
       .finally(() => setMetadataLoading(false));
-  };
+  }, [configuration.state, connectionId, team?.id]);
 
   const selectResource = (resource) => {
     setConfiguration((current) => {
@@ -409,6 +451,7 @@ function JiraBuilder(props) {
   const contextValue = {
     configuration,
     getDatePickerValue,
+    resolveVariableValue,
     groupByLabel,
     hasPreviewResult,
     metricLabel,

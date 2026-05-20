@@ -64,7 +64,7 @@
         },
         "variableBindings": [
           { "name": "projects", "type": "string", "default_value": "", "required": true },
-          { "name": "start_date", "type": "date", "default_value": "-30d", "required": false },
+          { "name": "start_date", "type": "date", "default_value": "-365d", "required": false },
           { "name": "end_date", "type": "date", "default_value": "now()", "required": false }
         ]
       }
@@ -105,7 +105,7 @@
       "type": "bar",
       "requiredDatasetIds": ["bugs_by_priority"],
       "layoutIntent": { "kind": "comparison", "priority": 10 },
-      "cdc": { "datasetTemplateId": "bugs_by_priority", "xAxis": "root[].priority", "yAxis": "root[].issueCount", "legend": "Bugs", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true }
+      "cdc": { "datasetTemplateId": "bugs_by_priority", "xAxis": "root[].priority", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Bugs", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true }
     },
     {
       "id": "bug-trend",
@@ -116,8 +116,8 @@
       "requiredDatasetIds": ["bug_trend"],
       "layoutIntent": { "kind": "trend", "priority": 20 },
       "cdcs": [
-        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].created", "legend": "Created", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true },
-        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].resolved", "legend": "Resolved", "datasetColor": "#0FC457", "fillColor": "rgba(15, 196, 87, 0.12)", "fill": true }
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].created", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Created", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true },
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].resolved", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Resolved", "datasetColor": "#0FC457", "fillColor": "rgba(15, 196, 87, 0.12)", "fill": true }
       ]
     },
     {
@@ -131,6 +131,8 @@
       "cdc": {
         "datasetTemplateId": "oldest_open_bugs",
         "xAxis": "root[]",
+        "yAxis": "root[].key",
+        "yAxisOperation": "none",
         "datasetColor": "#EF4444",
         "columnsOrder": ["key", "summary", "priority", "assignee", "createdAt"]
       }

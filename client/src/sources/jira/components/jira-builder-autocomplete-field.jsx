@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Autocomplete,
@@ -29,13 +29,19 @@ function JiraBuilderAutocompleteField(props) {
     emptyLabel,
   } = props;
   const { contains } = useFilter({ sensitivity: "base" });
-  const selectedValues = selectionMode === "multiple"
-    ? (Array.isArray(value) ? value.map((item) => `${item}`) : [])
-    : (value ? `${value}` : null);
-  const selectedKeys = selectionMode === "multiple"
-    ? selectedValues
-    : (selectedValues ? [selectedValues] : []);
-  const displayItems = [
+  const selectedValues = useMemo(() => {
+    if (selectionMode === "multiple") {
+      return Array.isArray(value) ? value.map((item) => `${item}`) : [];
+    }
+
+    return value ? `${value}` : null;
+  }, [selectionMode, value]);
+  const selectedKeys = useMemo(() => (
+    selectionMode === "multiple"
+      ? selectedValues
+      : (selectedValues ? [selectedValues] : [])
+  ), [selectedValues, selectionMode]);
+  const displayItems = useMemo(() => [
     ...items,
     ...selectedKeys
       .filter((key) => !findItem(items, key))
@@ -45,12 +51,15 @@ function JiraBuilderAutocompleteField(props) {
         shortLabel: key,
         searchText: key,
       })),
-  ];
+  ], [items, selectedKeys]);
 
-  const removeTags = (keys) => {
+  const removeTags = useCallback((keys) => {
     const nextKeys = (selectedValues || []).filter((key) => !keys.has(key));
     onChange(nextKeys);
-  };
+  }, [onChange, selectedValues]);
+  const handleChange = useCallback((keys) => {
+    onChange(selectionMode === "multiple" ? (keys || []) : keys);
+  }, [onChange, selectionMode]);
 
   return (
     <Autocomplete
@@ -62,7 +71,7 @@ function JiraBuilderAutocompleteField(props) {
       placeholder={placeholder}
       selectionMode={selectionMode}
       value={selectedValues}
-      onChange={(keys) => onChange(selectionMode === "multiple" ? (keys || []) : keys)}
+      onChange={handleChange}
       variant="secondary"
     >
       <Label>{label}</Label>

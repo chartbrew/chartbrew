@@ -103,4 +103,44 @@ describe("AxisChart runtime date handling", () => {
     expect(result.configuration.data.datasets[0].label).toBe("Dataset 1");
     expect(result.configuration.data.datasets[1].label).toBe("Dataset 2");
   });
+
+  it("sums numeric rows in the same date bucket when no y-axis operation is selected", async () => {
+    const chart = {
+      id: 1492,
+      type: "line",
+      timeInterval: "month",
+      includeZeros: false,
+      displayLegend: true,
+      ChartDatasetConfigs: [{
+        id: "cdc-1",
+        legend: "Created",
+      }],
+    };
+
+    const datasets = [{
+      options: {
+        id: "cdc-1",
+        dateField: "root[].period",
+        xAxis: "root[].period",
+        yAxis: "root[].created",
+        yAxisOperation: "none",
+        legend: "Created",
+        fieldsSchema: {
+          "root[].period": "date",
+          "root[].created": "number",
+        },
+      },
+      data: [
+        { period: "2026-04-02T00:00:00.000Z", created: 1 },
+        { period: "2026-04-14T00:00:00.000Z", created: 3 },
+        { period: "2026-05-01T00:00:00.000Z", created: 2 },
+      ],
+    }];
+
+    const axisChart = new AxisChart({ chart, datasets }, "UTC");
+    const result = await axisChart.plot(false, [], {});
+
+    expect(result.configuration.data.labels).toEqual(["Apr", "May"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([4, 2]);
+  });
 });
