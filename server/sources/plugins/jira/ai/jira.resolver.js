@@ -168,29 +168,28 @@ async function resolveBoardAndSprint({ connection, entities, overrides = {}, mod
     .slice(0, 10);
   if (candidateBoards.length === 0) return { needsDisambiguation: false, options: [] };
 
-  const activeSprints = [];
-  for (const board of candidateBoards) {
-    let sprints = [];
+  const sprintResults = await Promise.all(candidateBoards.map(async (board) => {
     try {
-      sprints = await jiraConnection.listSprints(connection, {
+      const sprints = await jiraConnection.listSprints(connection, {
         boardId: board.id,
         maxResults: 50,
         state: "active",
       });
+      return (Array.isArray(sprints) ? sprints : [])
+        .filter((sprint) => sprint.state === "active")
+        .map((sprint) => ({
+          ...sprint,
+          id: String(sprint.id),
+          boardId: String(board.id),
+          boardName: board.name,
+          boardType: board.type,
+        }));
     } catch (error) {
-      continue;
+      return [];
     }
+  }));
 
-    activeSprints.push(...(Array.isArray(sprints) ? sprints : [])
-      .filter((sprint) => sprint.state === "active")
-      .map((sprint) => ({
-        ...sprint,
-        id: String(sprint.id),
-        boardId: String(board.id),
-        boardName: board.name,
-        boardType: board.type,
-      })));
-  }
+  const activeSprints = sprintResults.flat();
 
   const options = activeSprints.slice(0, 4).map(buildSprintOption);
 

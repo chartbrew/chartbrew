@@ -132,7 +132,7 @@
       "type": "gauge",
       "requiredDatasetIds": ["sprint_summary"],
       "layoutIntent": { "kind": "kpi", "priority": 10 },
-      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completionRate", "yAxis": "root[].completionRate", "yAxisOperation": "none", "legend": "Completion rate", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "sprint_summary", "xAxis": "root[].completionRate", "yAxis": "root[].completionRate", "yAxisOperation": "none", "legend": "Completion rate", "datasetColor": "rgba(38, 166, 154, 1)", "fillColor": "rgba(38, 166, 154, 0.14)", "fill": true, "formula": "{val * 100}%" }
     },
     {
       "id": "story-points-completed",
