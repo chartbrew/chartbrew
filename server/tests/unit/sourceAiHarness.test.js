@@ -816,12 +816,12 @@ describe("Source AI harness", () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -834,14 +834,14 @@ describe("Source AI harness", () => {
       team_id: TOOL_TEAM_ID,
       connection_id: toolHarnessConnections.jira.id,
       source_id: "jira",
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       intent: { id: "sprint_status", resource: "sprint_issues" },
       mode: "preview",
     });
 
     expect(result.source).toBe("jira");
     expect(result.resolution.entities.project).toMatchObject({
-      key: "D2371",
+      key: "A4321",
     });
     expect(result.resolution.entities.board).toMatchObject({
       id: "77",
@@ -889,7 +889,7 @@ describe("Source AI harness", () => {
     }]);
     vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
       issues: [{
-        key: "D2371-1",
+        key: "A4321-1",
         fields: {
           summary: "Fix Jira AI search",
           status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
@@ -914,7 +914,7 @@ describe("Source AI harness", () => {
       source: "jira",
       status: "ok",
       rows: [expect.objectContaining({
-        key: "D2371-1",
+        key: "A4321-1",
         summary: "Fix Jira AI search",
         status: "In Progress",
         assignee: "Razvan Ilin",
@@ -935,15 +935,15 @@ describe("Source AI harness", () => {
 
   it("keeps Jira fallback plans usable for preview", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
-    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{ id: "10001", key: "D2371", name: "D2371 Project" }]);
-    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{ id: 77, name: "D2371 Scrum Board", type: "scrum" }]);
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{ id: "10001", key: "A4321", name: "A4321 Project" }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{ id: 77, name: "A4321 Scrum Board", type: "scrum" }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
 
     const plan = await sourcePlanDataset({
       team_id: TOOL_TEAM_ID,
       connection_id: toolHarnessConnections.jira.id,
       source_id: "jira",
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       mode: "preview",
     });
 
@@ -958,12 +958,12 @@ describe("Source AI harness", () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -980,7 +980,7 @@ describe("Source AI harness", () => {
       team_id: TOOL_TEAM_ID,
       connection_id: toolHarnessConnections.jira.id,
       source_id: "jira",
-      question: "save the active sprint status for D2371",
+      question: "save the active sprint status for A4321",
       mode: "persist",
     });
 
@@ -996,12 +996,12 @@ describe("Source AI harness", () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -1018,7 +1018,7 @@ describe("Source AI harness", () => {
       team_id: TOOL_TEAM_ID,
       connection_id: toolHarnessConnections.jira.id,
       source_id: "jira",
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       intent: { id: "sprint_status", resource: "sprint_issues" },
       mode: "persist",
     });

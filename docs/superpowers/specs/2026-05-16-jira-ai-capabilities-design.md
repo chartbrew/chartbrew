@@ -10,7 +10,7 @@ The Jira source should stay source-owned. The AI should plan Jira `DataRequest.c
 
 ## Current Gap
 
-Stripe Official exposes a semantic AI surface: source instructions, resources, metrics, dimensions, filters, compiled metrics, validation, repair, and compact preview behavior. Jira currently has a thinner planner with some hidden sprint resolution. That makes simple prompts like “show me the active sprint status for D2371” fragile because the orchestrator does not have enough structured capability information or reusable discovery behavior.
+Stripe Official exposes a semantic AI surface: source instructions, resources, metrics, dimensions, filters, compiled metrics, validation, repair, and compact preview behavior. Jira currently has a thinner planner with some hidden sprint resolution. That makes simple prompts like “show me the active sprint status for A4321” fragile because the orchestrator does not have enough structured capability information or reusable discovery behavior.
 
 ## Chosen Approach
 
@@ -101,7 +101,7 @@ Input:
 Resolution order:
 
 1. Parse hints from the question:
-   - project keys such as `D2371`
+   - project keys such as `A4321`
    - sprint state words such as active, current, latest, closed, future
    - Jira resource words such as sprint, bug, release, workload
    - assignee or reporter names
@@ -130,8 +130,8 @@ Resolver output:
 
 ```js
 {
-  project: { key: "D2371", name: "D2371", confidence: 0.98 },
-  board: { id: 77, name: "D2371 Scrum Board", confidence: 0.86, alternatives: [] },
+  project: { key: "A4321", name: "A4321", confidence: 0.98 },
+  board: { id: 77, name: "A4321 Scrum Board", confidence: 0.86, alternatives: [] },
   sprint: { id: 123, name: "Sprint 14", state: "active", confidence: 0.93 },
   warnings: [],
   needsDisambiguation: false
@@ -189,12 +189,12 @@ The `actions` array should power quick correction options:
 ]
 ```
 
-For “show me the active sprint status for D2371 in Jira”, the planner should resolve the project, board, and active sprint automatically and return:
+For “show me the active sprint status for A4321 in Jira”, the planner should resolve the project, board, and active sprint automatically and return:
 
 ```js
 {
   resource: "sprint_issues",
-  project: "D2371",
+  project: "A4321",
   boardId: "77",
   sprintId: "123",
   transform: { type: "grouped", groupBy: "status", metric: "count" },
@@ -234,7 +234,7 @@ Fallback response shape:
 ```js
 {
   status: "fallback",
-  message: "I could not resolve the active sprint, so I used the D2371 project status breakdown instead.",
+  message: "I could not resolve the active sprint, so I used the A4321 project status breakdown instead.",
   configuration,
   chartSpec,
   resolution,
@@ -253,7 +253,7 @@ Unit tests should cover:
 - No active sprint with project-level fallback.
 - User/version resolution only when requested.
 - No secret leakage in failed discovery.
-- Planning active sprint status from “active sprint status for D2371”.
+- Planning active sprint status from “active sprint status for A4321”.
 - Planning “simple sprint summary” using prior sprint/project overrides.
 - Planning bug breakdowns, workload, stale issues, recently completed work, and release progress.
 - Planner returns `resolution`, `actions`, `rationale`, and valid chart specs.
@@ -266,7 +266,7 @@ Unit tests should cover:
 
 ## Acceptance Criteria
 
-- A user can ask “show me the active sprint status for D2371 in Jira” and get a useful preview without knowing board or sprint IDs.
+- A user can ask “show me the active sprint status for A4321 in Jira” and get a useful preview without knowing board or sprint IDs.
 - A user can ask “show me a simple sprint summary” as a follow-up and Jira reuses prior resolved context.
 - A user can ask “show bugs by priority” and get a valid Jira configuration and chart with minimal extra input.
 - Release, workload, stale, and completed-work questions produce sensible default plans.

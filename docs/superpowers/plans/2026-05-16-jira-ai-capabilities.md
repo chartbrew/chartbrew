@@ -325,12 +325,12 @@ Add tests:
 it("resolves exact project, single scrum board, and active sprint", async () => {
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -341,14 +341,14 @@ it("resolves exact project, single scrum board, and active sprint", async () => 
 
   const resolution = await jiraResolver.resolveContext({
     connection: { id: 42 },
-    question: "show active sprint status for D2371",
+    question: "show active sprint status for A4321",
     intent: { id: "sprint_status", resource: "sprint_issues" },
     mode: "preview",
   });
 
   expect(resolution).toMatchObject({
     needsDisambiguation: false,
-    project: { key: "D2371", confidence: 0.98 },
+    project: { key: "A4321", confidence: 0.98 },
     board: { id: "77", confidence: 0.9 },
     sprint: { id: "123", state: "active", confidence: 0.95 },
   });
@@ -357,7 +357,7 @@ it("resolves exact project, single scrum board, and active sprint", async () => 
 it("returns sprint alternatives when multiple active sprints are plausible", async () => {
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([
@@ -367,7 +367,7 @@ it("returns sprint alternatives when multiple active sprints are plausible", asy
 
   const resolution = await jiraResolver.resolveContext({
     connection: { id: 42 },
-    question: "show active sprint status for D2371",
+    question: "show active sprint status for A4321",
     intent: { id: "sprint_status", resource: "sprint_issues" },
     mode: "persist",
   });
@@ -393,7 +393,7 @@ it("resolves versions and users only when requested", async () => {
 
   const resolution = await jiraResolver.resolveContext({
     connection: { id: 42 },
-    question: "show release readiness for D2371 v5.2.0 assigned to Jane",
+    question: "show release readiness for A4321 v5.2.0 assigned to Jane",
     intent: { id: "release_progress", resource: "issues", needsVersion: true, needsUser: true },
     mode: "preview",
   });
@@ -403,7 +403,7 @@ it("resolves versions and users only when requested", async () => {
     maxResults: 20,
   });
   expect(listVersionsSpy).toHaveBeenCalledWith(expect.any(Object), {
-    projectIdOrKey: "D2371",
+    projectIdOrKey: "A4321",
   });
   expect(resolution.user).toMatchObject({ accountId: "abc", confidence: 0.8 });
   expect(resolution.version).toMatchObject({ id: "20001", name: "v5.2.0", confidence: 0.9 });
@@ -710,12 +710,12 @@ Add tests to `server/tests/unit/jiraAi.test.js`:
 it("returns resolution and correction actions for active sprint status", async () => {
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -726,14 +726,14 @@ it("returns resolution and correction actions for active sprint status", async (
 
   const plan = await jiraAi.planDataset({
     connection: { id: 42 },
-    question: "show me the active sprint status for D2371",
+    question: "show me the active sprint status for A4321",
     mode: "preview",
   });
 
   expect(plan.status).toBe("ok");
   expect(plan.rationale.intent).toBe("sprint_status");
   expect(plan.resolution).toMatchObject({
-    project: { key: "D2371" },
+    project: { key: "A4321" },
     board: { id: "77" },
     sprint: { id: "123" },
   });
@@ -748,7 +748,7 @@ it("plans a sprint summary from follow-up overrides", async () => {
     connection: { id: 42 },
     question: "show me a simple sprint summary",
     overrides: {
-      project: "D2371",
+      project: "A4321",
       boardId: "77",
       sprintId: "123",
     },
@@ -769,19 +769,19 @@ it("plans a sprint summary from follow-up overrides", async () => {
 it("falls back to project status breakdown when active sprint cannot be resolved", async () => {
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
 
   const plan = await jiraAi.planDataset({
     connection: { id: 42 },
-    question: "show me the active sprint status for D2371",
+    question: "show me the active sprint status for A4321",
     mode: "preview",
   });
 
@@ -795,14 +795,14 @@ it("falls back to project status breakdown when active sprint cannot be resolved
       metric: "count",
     },
   });
-  expect(plan.configuration.jql).toContain("project IN (\"D2371\")");
+  expect(plan.configuration.jql).toContain("project IN (\"A4321\")");
 });
 
 it("plans Jira release progress from a version name", async () => {
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listVersions").mockResolvedValue([{
     id: "20001",
@@ -812,7 +812,7 @@ it("plans Jira release progress from a version name", async () => {
 
   const plan = await jiraAi.planDataset({
     connection: { id: 42 },
-    question: "show release readiness for D2371 v5.2.0",
+    question: "show release readiness for A4321 v5.2.0",
     mode: "preview",
   });
 
@@ -1163,12 +1163,12 @@ it("routes generic source context resolution to Jira AI", async () => {
   vi.spyOn(db.Connection, "findOne").mockResolvedValue(toolHarnessConnections.jira);
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -1181,7 +1181,7 @@ it("routes generic source context resolution to Jira AI", async () => {
     team_id: TOOL_TEAM_ID,
     connection_id: toolHarnessConnections.jira.id,
     source_id: "jira",
-    question: "show active sprint status for D2371",
+    question: "show active sprint status for A4321",
     intent: { id: "sprint_status", resource: "sprint_issues" },
     mode: "preview",
   });
@@ -1189,7 +1189,7 @@ it("routes generic source context resolution to Jira AI", async () => {
   expect(result).toMatchObject({
     source: "jira",
     resolution: {
-      project: { key: "D2371" },
+      project: { key: "A4321" },
       board: { id: "77" },
       sprint: { id: "123" },
     },
@@ -1373,12 +1373,12 @@ it("keeps Jira fallback plans usable for preview", async () => {
   vi.spyOn(db.Connection, "findOne").mockResolvedValue(toolHarnessConnections.jira);
   vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
     id: "10001",
-    key: "D2371",
-    name: "D2371 Project",
+    key: "A4321",
+    name: "A4321 Project",
   }]);
   vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
     id: 77,
-    name: "D2371 Scrum Board",
+    name: "A4321 Scrum Board",
     type: "scrum",
   }]);
   vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
@@ -1387,7 +1387,7 @@ it("keeps Jira fallback plans usable for preview", async () => {
     team_id: TOOL_TEAM_ID,
     connection_id: toolHarnessConnections.jira.id,
     source_id: "jira",
-    question: "show active sprint status for D2371",
+    question: "show active sprint status for A4321",
     mode: "preview",
   });
 
@@ -1495,10 +1495,10 @@ it("falls back to project status when sprint issue preview fails", async () => {
   fetchSpy
     .mockRejectedValueOnce(new Error("400 - The sprint field is invalid"))
     .mockResolvedValueOnce([{
-      key: "D2371-1",
+      key: "A4321-1",
       fields: {
         summary: "Fallback issue",
-        project: { key: "D2371" },
+        project: { key: "A4321" },
         issuetype: { name: "Story" },
         status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
         created: "2026-05-01T00:00:00.000Z",
@@ -1513,11 +1513,11 @@ it("falls back to project status when sprint issue preview fails", async () => {
       source: "jira",
       resource: "sprint_issues",
       mode: "visual",
-      jql: "project IN (\"D2371\") ORDER BY updated DESC",
+      jql: "project IN (\"A4321\") ORDER BY updated DESC",
       fields: ["key", "summary", "status", "project", "issuetype", "created", "updated"],
       sprintId: "123",
       boardId: "77",
-      projectIdOrKey: "D2371",
+      projectIdOrKey: "A4321",
       transform: { type: "grouped", groupBy: "status", metric: "count" },
       pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
     },
@@ -1681,7 +1681,7 @@ Expected:
 Run:
 
 ```bash
-node -e "const jiraAi=require('./sources/plugins/jira/ai/jira.ai'); jiraAi.planDataset({question:'show bugs by priority for D2371', overrides:{project:'D2371'}}).then((p)=>console.log(JSON.stringify({status:p.status,resource:p.configuration.resource,jql:p.configuration.jql,chart:p.chartSpec.type}, null, 2)))"
+node -e "const jiraAi=require('./sources/plugins/jira/ai/jira.ai'); jiraAi.planDataset({question:'show bugs by priority for A4321', overrides:{project:'A4321'}}).then((p)=>console.log(JSON.stringify({status:p.status,resource:p.configuration.resource,jql:p.configuration.jql,chart:p.chartSpec.type}, null, 2)))"
 ```
 
 Expected output contains:
@@ -1694,7 +1694,7 @@ Expected output contains:
 }
 ```
 
-The exact JQL should include `project IN ("D2371")` and `issuetype = "Bug"`.
+The exact JQL should include `project IN ("A4321")` and `issuetype = "Bug"`.
 
 - [ ] **Step 6: Git checkpoint**
 

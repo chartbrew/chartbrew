@@ -61,18 +61,18 @@ describe("Jira AI planner", () => {
   it("resolves an active sprint from a project key before planning sprint status", async () => {
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
       id: 123,
-      name: "D2371 Sprint 14",
+      name: "A4321 Sprint 14",
       state: "active",
     }]);
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42, type: "jira", subType: "jira" },
-      question: "can you show me the status of the active sprint I have for D2371 in Jira?",
+      question: "can you show me the status of the active sprint I have for A4321 in Jira?",
     });
 
     expect(plan.status).toBe("ok");
@@ -85,14 +85,14 @@ describe("Jira AI planner", () => {
         groupBy: "status",
       },
     });
-    expect(plan.configuration.jql).toBe("project IN (\"D2371\") ORDER BY updated DESC");
+    expect(plan.configuration.jql).toBe("project IN (\"A4321\") ORDER BY updated DESC");
     expect(plan.chartSpec).toMatchObject({
       type: "bar",
       xAxis: "root[].status",
       yAxis: "root[].issueCount",
     });
     expect(jiraConnection.listBoards).toHaveBeenCalledWith(expect.any(Object), {
-      projectKeyOrId: "D2371",
+      projectKeyOrId: "A4321",
       maxResults: 50,
     });
     expect(jiraConnection.listSprints).toHaveBeenCalledWith(expect.any(Object), {
@@ -105,29 +105,29 @@ describe("Jira AI planner", () => {
   it("returns resolution and correction actions for active sprint status", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
       id: 123,
-      name: "D2371 Sprint 14",
+      name: "A4321 Sprint 14",
       state: "active",
     }]);
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42 },
-      question: "show me the active sprint status for D2371",
+      question: "show me the active sprint status for A4321",
       mode: "preview",
     });
 
     expect(plan.status).toBe("ok");
     expect(plan.rationale.intent).toBe("sprint_status");
-    expect(plan.resolution.project).toMatchObject({ key: "D2371" });
+    expect(plan.resolution.project).toMatchObject({ key: "A4321" });
     expect(plan.resolution.board).toMatchObject({ id: "77" });
     expect(plan.resolution.sprint).toMatchObject({ id: "123" });
     expect(plan.actions).toEqual(expect.arrayContaining([
@@ -141,7 +141,7 @@ describe("Jira AI planner", () => {
       connection: { id: 42 },
       question: "show me a simple sprint summary",
       overrides: {
-        project: "D2371",
+        project: "A4321",
         boardId: "77",
         sprintId: "123",
       },
@@ -162,19 +162,19 @@ describe("Jira AI planner", () => {
   it("falls back to project status breakdown when active sprint cannot be resolved", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42 },
-      question: "show me the active sprint status for D2371",
+      question: "show me the active sprint status for A4321",
       mode: "preview",
     });
 
@@ -188,15 +188,15 @@ describe("Jira AI planner", () => {
         metric: "count",
       },
     });
-    expect(plan.configuration.jql).toContain("project IN (\"D2371\")");
+    expect(plan.configuration.jql).toContain("project IN (\"A4321\")");
     expect(plan.configuration.jql).not.toContain("created >=");
   });
 
   it("plans Jira release progress from a version name", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listVersions").mockResolvedValue([{
       id: "20001",
@@ -206,7 +206,7 @@ describe("Jira AI planner", () => {
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42 },
-      question: "show release readiness for D2371 v5.2.0",
+      question: "show release readiness for A4321 v5.2.0",
       mode: "preview",
     });
 
@@ -225,8 +225,8 @@ describe("Jira AI planner", () => {
   ])("keeps release version token when %s", async (name, versionsResult) => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     const versionsSpy = vi.spyOn(jiraConnection, "listVersions");
     if (versionsResult instanceof Error) {
@@ -237,7 +237,7 @@ describe("Jira AI planner", () => {
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42 },
-      question: "show release readiness for D2371 v5.2.0",
+      question: "show release readiness for A4321 v5.2.0",
       mode: "preview",
     });
 
@@ -250,8 +250,8 @@ describe("Jira AI planner", () => {
   it("applies resolved Jira users to planned workload JQL", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
       accountId: "abc",
@@ -260,7 +260,7 @@ describe("Jira AI planner", () => {
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42 },
-      question: "show workload for D2371 assigned to Jane",
+      question: "show workload for A4321 assigned to Jane",
       mode: "preview",
     });
 
@@ -301,7 +301,7 @@ describe("Jira AI planner", () => {
       question: "show project movement",
       overrides: {
         intent: "created_resolved_trend",
-        project: "D2371",
+        project: "A4321",
       },
       mode: "preview",
     });
@@ -320,10 +320,10 @@ describe("Jira AI planner", () => {
 
   it("normalizes preview issues with doneAt when requested", async () => {
     vi.spyOn(jiraProtocol, "fetchJiraRows").mockResolvedValue([{
-      key: "D2371-1",
+      key: "A4321-1",
       fields: {
         summary: "Ship release checklist",
-        project: { key: "D2371" },
+        project: { key: "A4321" },
         status: {
           name: "Done",
           statusCategory: {
@@ -352,7 +352,7 @@ describe("Jira AI planner", () => {
         source: "jira",
         resource: "issues",
         mode: "jql",
-        jql: "project IN (\"D2371\") ORDER BY updated DESC",
+        jql: "project IN (\"A4321\") ORDER BY updated DESC",
         includeDoneAt: true,
         transform: { type: "raw" },
       },
@@ -369,10 +369,10 @@ describe("Jira AI planner", () => {
     fetchSpy
       .mockRejectedValueOnce(new Error("400 - The sprint field is invalid"))
       .mockResolvedValueOnce([{
-        key: "D2371-1",
+        key: "A4321-1",
         fields: {
           summary: "Fallback issue",
-          project: { key: "D2371" },
+          project: { key: "A4321" },
           issuetype: { name: "Story" },
           status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
           created: "2026-05-01T00:00:00.000Z",
@@ -387,11 +387,11 @@ describe("Jira AI planner", () => {
         source: "jira",
         resource: "sprint_issues",
         mode: "visual",
-        jql: "project IN (\"D2371\") ORDER BY updated DESC",
+        jql: "project IN (\"A4321\") ORDER BY updated DESC",
         fields: ["key", "summary", "status", "project", "issuetype", "created", "updated"],
         sprintId: "123",
         boardId: "77",
-        projectIdOrKey: "D2371",
+        projectIdOrKey: "A4321",
         transform: { type: "grouped", groupBy: "status", metric: "count" },
         pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
       },
@@ -409,11 +409,11 @@ describe("Jira AI planner", () => {
       resource: "issues",
       sprintId: undefined,
       boardId: undefined,
-      projectIdOrKey: "D2371",
+      projectIdOrKey: "A4321",
       transform: { type: "grouped", groupBy: "status", metric: "count" },
       includeDoneAt: false,
     });
-    expect(fetchSpy.mock.calls[1][1].jql).toContain("project IN (\"D2371\")");
+    expect(fetchSpy.mock.calls[1][1].jql).toContain("project IN (\"A4321\")");
     expect(fetchSpy.mock.calls[1][1].jql).toContain("statusCategory != Done");
     expect(fetchSpy.mock.calls[1][1].jql).not.toContain("created >=");
   });
@@ -430,11 +430,11 @@ describe("Jira AI planner", () => {
         source: "jira",
         resource: "sprint_issues",
         mode: "visual",
-        jql: "project IN (\"D2371\") ORDER BY updated DESC",
+        jql: "project IN (\"A4321\") ORDER BY updated DESC",
         fields: ["key", "summary", "status", "project", "issuetype", "created", "updated"],
         sprintId: "123",
         boardId: "77",
-        projectIdOrKey: "D2371",
+        projectIdOrKey: "A4321",
         transform: { type: "grouped", groupBy: "status", metric: "count" },
         pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
       },
@@ -455,11 +455,11 @@ describe("Jira AI planner", () => {
         source: "jira",
         resource: "sprint_issues",
         mode: "visual",
-        jql: "project IN (\"D2371\") ORDER BY updated DESC",
+        jql: "project IN (\"A4321\") ORDER BY updated DESC",
         fields: ["key", "summary", "status", "project", "issuetype", "created", "updated"],
         sprintId: "123",
         boardId: "77",
-        projectIdOrKey: "D2371",
+        projectIdOrKey: "A4321",
         transform: { type: "grouped", groupBy: "status", metric: "count" },
         pagination: { startAt: 0, maxResults: 100, maxRecords: 5 },
       },
@@ -471,14 +471,14 @@ describe("Jira AI planner", () => {
   it("returns a useful fallback when no active sprint can be resolved", async () => {
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
 
     const plan = await jiraAi.planDataset({
       connection: { id: 42, type: "jira", subType: "jira" },
-      question: "show me the active sprint status for D2371",
+      question: "show me the active sprint status for A4321",
     });
 
     expect(plan.status).toBe("fallback");
@@ -492,12 +492,12 @@ describe("Jira AI planner", () => {
   it("resolves exact project, single scrum board, and active sprint context", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -508,7 +508,7 @@ describe("Jira AI planner", () => {
 
     const context = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       intent: { id: "sprint_status", resource: "sprint_issues" },
       mode: "preview",
     });
@@ -516,7 +516,7 @@ describe("Jira AI planner", () => {
     expect(context.needsDisambiguation).toBe(false);
     expect(context.entities.project).toMatchObject({
       id: "10001",
-      key: "D2371",
+      key: "A4321",
       confidence: 0.98,
     });
     expect(context.entities.board).toMatchObject({
@@ -533,16 +533,16 @@ describe("Jira AI planner", () => {
   it("resolves an active sprint from the second matching board", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }, {
       id: 88,
-      name: "D2371 Delivery Board",
+      name: "A4321 Delivery Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockImplementation((connection, params) => {
@@ -558,7 +558,7 @@ describe("Jira AI planner", () => {
 
     const context = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       intent: { id: "sprint_status", resource: "sprint_issues" },
       mode: "preview",
     });
@@ -566,7 +566,7 @@ describe("Jira AI planner", () => {
     expect(context.needsDisambiguation).toBe(false);
     expect(context.entities.board).toMatchObject({
       id: "88",
-      name: "D2371 Delivery Board",
+      name: "A4321 Delivery Board",
       confidence: 0.9,
     });
     expect(context.entities.sprint).toMatchObject({
@@ -590,12 +590,12 @@ describe("Jira AI planner", () => {
   it("asks for sprint disambiguation in persist mode when multiple active sprints exist", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
       id: 77,
-      name: "D2371 Scrum Board",
+      name: "A4321 Scrum Board",
       type: "scrum",
     }]);
     vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
@@ -610,7 +610,7 @@ describe("Jira AI planner", () => {
 
     const context = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show active sprint status for D2371",
+      question: "show active sprint status for A4321",
       intent: { id: "sprint_status", resource: "sprint_issues" },
       mode: "persist",
     });
@@ -626,8 +626,8 @@ describe("Jira AI planner", () => {
   it("resolves users and versions only when requested by intent", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
       accountId: "abc",
@@ -640,7 +640,7 @@ describe("Jira AI planner", () => {
 
     const context = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show release readiness for D2371 v5.2.0 assigned to Jane",
+      question: "show release readiness for A4321 v5.2.0 assigned to Jane",
       intent: {
         id: "release_progress",
         resource: "issues",
@@ -655,7 +655,7 @@ describe("Jira AI planner", () => {
       maxResults: 20,
     });
     expect(jiraConnection.listVersions).toHaveBeenCalledWith(expect.any(Object), {
-      projectIdOrKey: "D2371",
+      projectIdOrKey: "A4321",
     });
     expect(context.entities.user).toMatchObject({
       accountId: "abc",
@@ -671,15 +671,15 @@ describe("Jira AI planner", () => {
   it("adds warnings when user and version discovery fail", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     vi.spyOn(jiraConnection, "listUsers").mockRejectedValue(new Error("Jira users unavailable"));
     vi.spyOn(jiraConnection, "listVersions").mockRejectedValue(new Error("Jira versions unavailable"));
 
     const context = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show release readiness for D2371 v5.2.0 assigned to Jane",
+      question: "show release readiness for A4321 v5.2.0 assigned to Jane",
       intent: {
         id: "release_progress",
         resource: "issues",
@@ -700,15 +700,15 @@ describe("Jira AI planner", () => {
   it("skips user and version discovery when the intent does not need them", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
-      key: "D2371",
-      name: "D2371 Project",
+      key: "A4321",
+      name: "A4321 Project",
     }]);
     const listUsersSpy = vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([]);
     const listVersionsSpy = vi.spyOn(jiraConnection, "listVersions").mockResolvedValue([]);
 
     const resolution = await jiraResolver.resolveContext({
       connection: { id: 42 },
-      question: "show issue status for D2371",
+      question: "show issue status for A4321",
       intent: { id: "issue_breakdown", resource: "issues" },
       mode: "preview",
     });
