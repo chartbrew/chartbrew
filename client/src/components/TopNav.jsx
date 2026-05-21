@@ -1,13 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TbBrandDiscord } from "react-icons/tb";
 import { useLocation, useNavigate, useParams } from "react-router";
 import {
-  LuBell,
+  LuInbox,
   LuBook,
   LuBookOpenText,
   LuBrainCircuit,
   LuFileCode2,
+  LuExternalLink,
   LuGithub,
   LuHeartHandshake,
   LuPanelLeftClose,
@@ -15,7 +16,7 @@ import {
   LuSmile,
   LuSquareKanban,
 } from "react-icons/lu";
-import { Breadcrumbs, Button, Dropdown } from "@heroui/react";
+import { Badge, Breadcrumbs, Button, Chip, Dropdown, Popover, Separator } from "@heroui/react";
 
 import { selectSidebarCollapsed, showFeedbackModal, toggleAiModal, toggleSidebar } from "../slices/ui";
 import canAccess from "../config/canAccess";
@@ -25,6 +26,44 @@ import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
 import getDatasetDisplayName from "../modules/getDatasetDisplayName";
+import {
+  getNewsFeedUrl,
+  getSeenNewsIds,
+  getUnreadNewsItems,
+  normalizeNewsFeed,
+  saveSeenNewsIds,
+} from "../modules/newsFeed";
+
+const newsDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+
+function formatNewsDate(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return newsDateFormatter.format(date);
+}
+
+function formatContentType(value) {
+  const label = String(value || "blog").trim().replace(/[-_]+/g, " ");
+
+  return label.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getContentTypeChipColor(value) {
+  const type = String(value || "").toLowerCase();
+
+  if (type.includes("update")) return "accent";
+  if (type.includes("tutorial") || type.includes("guide")) return "success";
+  if (type.includes("release")) return "warning";
+
+  return "default";
+}
 
 function TopNav() {
   const dispatch = useDispatch();
@@ -40,6 +79,34 @@ function TopNav() {
   const connection = useSelector((state) => state.connection.data.find((item) => `${item.id}` === `${params.connectionId}`));
   const dataset = useSelector((state) => state.dataset.data.find((item) => `${item.id}` === `${params.datasetId}`));
   const integrations = useSelector(selectIntegrations);
+  const [newsItems, setNewsItems] = useState([]);
+  const [seenNewsIds, setSeenNewsIds] = useState(() => getSeenNewsIds());
+  const [newsOpen, setNewsOpen] = useState(false);
+
+  useEffect(() => {
+    const newsFeedUrl = getNewsFeedUrl();
+
+    if (!newsFeedUrl) return undefined;
+
+    const controller = new AbortController();
+
+    fetch(newsFeedUrl, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((feed) => {
+        const normalizedItems = normalizeNewsFeed(feed);
+        setNewsItems(normalizedItems);
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") {
+          setNewsItems([]);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
 
   const canUserAccess = (role, teamData) => {
     if (teamData) {
@@ -131,6 +198,17 @@ function TopNav() {
   };
 
   const askDataButtonClassName = "relative overflow-hidden border border-white/55 bg-linear-to-br from-primary-200/80 via-white/72 to-secondary-200/72 text-foreground shadow-[0_10px_22px_-18px_rgba(4,139,222,0.28)] backdrop-blur-md backdrop-saturate-150 transition-[border-color,box-shadow,transform,background] duration-200 hover:border-white/70 hover:shadow-[0_12px_24px_-18px_rgba(4,139,222,0.3)] active:scale-[0.99] dark:border-white/10 dark:bg-linear-to-br dark:from-primary-500/28 dark:via-content1/82 dark:to-secondary-500/22";
+  const unreadNewsItems = getUnreadNewsItems(newsItems, seenNewsIds);
+
+  const onNewsOpenChange = (open) => {
+    setNewsOpen(open);
+
+    if (!open || unreadNewsItems.length < 1) return;
+
+    const nextSeenIds = Array.from(new Set([...seenNewsIds, ...newsItems.map((item) => item.id)]));
+    saveSeenNewsIds(nextSeenIds);
+    setSeenNewsIds(nextSeenIds);
+  };
 
   return (
     <div className="sticky top-0 z-50 w-full border-b border-divider bg-surface p-2">
@@ -142,7 +220,7 @@ function TopNav() {
           {renderBreadcrumbs()}
         </div>
 
-        <div className="flex flex-row items-center gap-2">
+        <div className="flex flex-row items-center">
           {canUserAccess("teamAdmin", team) ? (
             <Button
               className={askDataButtonClassName}
@@ -209,6 +287,119 @@ function TopNav() {
               </Dropdown.Menu>
             </Dropdown.Popover>
           </Dropdown>
+
+          {newsItems.length > 0 ? (
+            <Popover isOpen={newsOpen} onOpenChange={onNewsOpenChange}>
+              <Badge.Anchor>
+                <Button
+                  aria-label={unreadNewsItems.length ? `${unreadNewsItems.length} unread Chartbrew update${unreadNewsItems.length === 1 ? "" : "s"}` : "Chartbrew updates"}
+                  className="p-0 mr-2"
+                  isIconOnly
+                  variant="ghost"
+                  size="sm"
+                >
+                  <LuInbox size={18} />
+                </Button>
+                <Badge
+                  color="danger"
+                  hidden={unreadNewsItems.length === 0}
+                  size="sm"
+                >
+                  <Badge.Label>{unreadNewsItems.length > 9 ? "9+" : unreadNewsItems.length}</Badge.Label>
+                </Badge>
+              </Badge.Anchor>
+              <Popover.Content
+                className="w-[calc(100vw-24px)] max-w-lg p-0"
+                offset={10}
+                placement="bottom end"
+                shouldFlip
+              >
+                <Popover.Dialog>
+                  <div className="flex max-h-[min(720px,calc(100vh-96px))] flex-col overflow-hidden">
+                    <div className="px-4 py-3">
+                      <p className="font-semibold text-foreground">Latest from Chartbrew</p>
+                      <p className="mt-1 text-xs text-muted">Recent posts, tutorials, and updates.</p>
+                    </div>
+                    <Separator />
+                    <div className="min-h-0 overflow-y-auto p-3">
+                      <div className="flex flex-col gap-3">
+                        {newsItems.map((item) => (
+                          <article
+                            key={item.id}
+                            className="overflow-hidden rounded-3xl border border-divider bg-content1"
+                          >
+                            {item.coverImage ? (
+                              <a
+                                href={item.url}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                <img
+                                  alt={item.coverImageAlt}
+                                  className="aspect-video w-full bg-content2 object-cover transition-opacity hover:opacity-90"
+                                  loading="lazy"
+                                  src={item.coverImage}
+                                />
+                              </a>
+                            ) : null}
+                            <div className="p-4">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Chip
+                                  color={getContentTypeChipColor(item.category)}
+                                  size="sm"
+                                  variant="soft"
+                                >
+                                  <Chip.Label>{formatContentType(item.category)}</Chip.Label>
+                                </Chip>
+                                {item.tags.map((tag) => (
+                                  <Chip
+                                    key={`${item.id}-${tag}`}
+                                    size="sm"
+                                    variant="soft"
+                                  >
+                                    <Chip.Label>{formatContentType(tag)}</Chip.Label>
+                                  </Chip>
+                                ))}
+                                {formatNewsDate(item.publishedAt) ? (
+                                  <span className="text-xs text-foreground-400">{formatNewsDate(item.publishedAt)}</span>
+                                ) : null}
+                              </div>
+
+                              <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
+                                <a
+                                  className="transition-colors hover:text-accent"
+                                  href={item.url}
+                                  rel="noreferrer"
+                                  target="_blank"
+                                >
+                                  {item.title}
+                                </a>
+                              </h3>
+                              <p className="mt-2 text-sm leading-6 text-foreground-600">
+                                {item.excerpt}
+                              </p>
+
+                              {item.url ? (
+                                <Button
+                                  className="mt-4"
+                                  size="sm"
+                                  variant="tertiary"
+                                  onPress={() => window.open(item.url, "_blank")}
+                                >
+                                  Read more
+                                  <LuExternalLink size={14} />
+                                </Button>
+                              ) : null}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Popover.Dialog>
+              </Popover.Content>
+            </Popover>
+          ) : null}
         </div>
       </div>
     </div>
