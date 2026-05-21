@@ -316,41 +316,41 @@
     },
     {
       "id": "active_subscriptions_current",
-      "name": "Stripe active subscriptions",
-      "description": "Current active subscriptions.",
+      "name": "Stripe active subscribers",
+      "description": "Current active subscribers with positive MRR.",
       "icon": "RefreshCw",
       "fieldsSchema": {
-        "root[].dimension": "string",
+        "root[].period": "date",
         "root[].value": "number",
-        "root[].recordsProcessed": "number"
+        "root[].recordsProcessed": "number",
+        "root[].activeSubscribers": "number",
+        "root[].activeSubscriptions": "number",
+        "root[].activeMrr": "number"
       },
       "dataRequest": {
         "configuration": {
           "source": "stripeOfficial",
-          "resource": "subscriptions",
-          "mode": "aggregate",
-          "metric": {
-            "operation": "count"
-          },
-          "dimension": {
-            "field": "status",
-            "interval": "none"
-          },
-          "dateRange": {
-            "field": "created",
-            "start": null,
-            "end": null
-          },
-          "filters": [
-            {
-              "field": "status",
-              "operator": "is",
-              "value": "active"
-            }
+          "mode": "compiled_metric",
+          "compiledMetric": "active_subscribers",
+          "calculationVersion": 1,
+          "inputs": [
+            "subscriptions",
+            "subscription_items",
+            "prices"
           ],
+          "dimension": {
+            "field": "period",
+            "interval": "month",
+            "type": "date"
+          },
+          "currency": "auto",
+          "dateRange": {
+            "start": "now",
+            "end": "now"
+          },
           "pagination": {
             "limit": 100,
-            "maxRecords": 5000
+            "maxRecords": 10000
           },
           "queryMode": "list"
         }
@@ -730,8 +730,8 @@
     },
     {
       "id": "active-subscriptions",
-      "name": "Active subscriptions",
-      "description": "Current active subscription count.",
+      "name": "Active subscribers",
+      "description": "Current active subscribers with positive MRR.",
       "icon": "RefreshCw",
       "type": "kpi",
       "requiredDatasetIds": [
@@ -744,10 +744,11 @@
       },
       "cdc": {
         "datasetTemplateId": "active_subscriptions_current",
-        "xAxis": "root[].dimension",
+        "xAxis": "root[].period",
         "yAxis": "root[].value",
         "yAxisOperation": "none",
-        "legend": "Active subscriptions",
+        "dateField": "root[].period",
+        "legend": "Active subscribers",
         "datasetColor": "rgba(38, 166, 154, 1)"
       },
       "layoutIntent": {

@@ -2,6 +2,7 @@ import {
   beforeEach, describe, expect, it, vi
 } from "vitest";
 
+const moment = require("moment-timezone");
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
 const DatasetController = require("../../controllers/DatasetController");
@@ -485,6 +486,273 @@ describe("Stripe Official AI layer", () => {
         activeCustomers: 2,
       },
     ]);
+  });
+
+  it("subtracts subscription item discounts from MRR", () => {
+    const mrr = stripeOfficialProtocol._private.getSubscriptionMrr({
+      id: "sub_discounted",
+      status: "active",
+      customer: "cus_discounted",
+      start_date: epoch("2020-01-01"),
+      currency: "usd",
+      items: {
+        data: [{
+          quantity: 1,
+          discounts: [{
+            start: epoch("2020-01-01"),
+            coupon: {
+              percent_off: 50,
+              duration: "forever",
+            },
+          }],
+          price: {
+            unit_amount: 2900,
+            currency: "usd",
+            recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+          },
+        }],
+      },
+    }, moment("2020-03-01"));
+
+    expect(mrr).toBe(1450);
+  });
+
+  it("subtracts customer-level discounts from MRR", () => {
+    const mrr = stripeOfficialProtocol._private.getSubscriptionMrr({
+      id: "sub_customer_discounted",
+      status: "active",
+      customer: {
+        id: "cus_discounted",
+        discount: {
+          start: epoch("2020-01-01"),
+          coupon: {
+            percent_off: 100,
+            duration: "forever",
+          },
+        },
+      },
+      start_date: epoch("2020-01-01"),
+      currency: "usd",
+      items: {
+        data: [{
+          quantity: 1,
+          price: {
+            unit_amount: 2900,
+            currency: "usd",
+            recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+          },
+        }],
+      },
+    }, moment("2020-03-01"));
+
+    expect(mrr).toBe(0);
+  });
+
+  it("calculates subscriber churn with customer-level positive-MRR subscribers", () => {
+    const rows = stripeOfficialProtocol._private.calculateChurnMetricRows([
+      {
+        id: "sub_customer_with_second_active_subscription",
+        status: "canceled",
+        customer: "cus_keep",
+        start_date: epoch("2020-01-01"),
+        canceled_at: epoch("2020-03-10"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_customer_still_active",
+        status: "active",
+        customer: "cus_keep",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_customer_churned",
+        status: "canceled",
+        customer: "cus_churned",
+        start_date: epoch("2020-01-01"),
+        canceled_at: epoch("2020-03-15"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_new_customer_churned",
+        status: "canceled",
+        customer: "cus_new_churned",
+        start_date: epoch("2020-03-05"),
+        canceled_at: epoch("2020-03-20"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+    ], {
+      compiledMetric: "subscriber_churn_rate",
+      dimension: { field: "period", interval: "month" },
+      dateRange: {
+        start: "2020-03-01",
+        end: "2020-03-31",
+      },
+      currency: "usd",
+    }, "subscriber_churn_rate");
+
+    expect(rows[0]).toMatchObject({
+      value: 2 / 3,
+      startingSubscribers: 2,
+      newSubscribers: 1,
+      churnedSubscribers: 2,
+    });
+  });
+
+  it("calculates customer lifetime value from ARPA divided by subscriber churn rate", () => {
+    const rows = stripeOfficialProtocol._private.calculateCustomerLifetimeValueRows([
+      {
+        id: "sub_active",
+        status: "active",
+        customer: "cus_active",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_churned",
+        status: "canceled",
+        customer: "cus_churned",
+        start_date: epoch("2020-01-01"),
+        canceled_at: epoch("2020-03-15"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+    ], {
+      compiledMetric: "customer_lifetime_value",
+      dimension: { field: "period", interval: "month" },
+      dateRange: {
+        start: "2020-03-01",
+        end: "2020-03-31",
+      },
+      currency: "usd",
+    });
+
+    expect(rows[0]).toMatchObject({
+      value: 5800,
+      averageRevenuePerUser: 2900,
+      subscriberChurnRate: 0.5,
+      activeSubscribers: 1,
+    });
+  });
+
+  it("calculates active subscribers as customers with positive MRR", () => {
+    const rows = stripeOfficialProtocol._private.calculateActiveSubscriberRows([
+      {
+        id: "sub_one",
+        status: "active",
+        customer: "cus_one",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_two_same_customer",
+        status: "active",
+        customer: "cus_one",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 2900,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+      {
+        id: "sub_free",
+        status: "active",
+        customer: "cus_free",
+        start_date: epoch("2020-01-01"),
+        currency: "usd",
+        items: {
+          data: [{
+            price: {
+              unit_amount: 0,
+              currency: "usd",
+              recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+            },
+          }],
+        },
+      },
+    ], {
+      compiledMetric: "active_subscribers",
+      dimension: { field: "period", interval: "month" },
+      dateRange: {
+        start: "2020-03-01",
+        end: "2020-03-31",
+      },
+      currency: "usd",
+    });
+
+    expect(rows[0]).toMatchObject({
+      value: 1,
+      activeSubscribers: 1,
+      activeSubscriptions: 2,
+    });
   });
 
   it("recommends Stripe templates from business goals", () => {

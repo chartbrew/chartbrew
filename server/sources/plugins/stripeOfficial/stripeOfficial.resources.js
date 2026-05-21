@@ -133,7 +133,7 @@ const STRIPE_RESOURCES = {
       { field: "items.data.price.product", operators: ["is", "isNot"] },
       { field: "metadata.*", operators: ["is", "isNot", "contains", "notContains", "isNull", "isNotNull"], pattern: true },
     ],
-    expandableFields: ["data.customer", "data.items.data.price", "data.default_payment_method"],
+    expandableFields: ["data.customer", "data.discounts", "data.items.data.discounts", "data.items.data.price", "data.default_payment_method"],
     rawColumns: ["id", "status", "customer", "created", "current_period_end", "cancel_at_period_end"],
     supportedQueryModes: ["list", "search"],
     defaultParams: { status: "all" },
@@ -277,6 +277,14 @@ const COMPILED_METRICS = {
     calculationVersion: 1,
     defaultInterval: "month",
     output: "ratio",
+  },
+  active_subscribers: {
+    label: "Active subscribers",
+    status: "available",
+    inputs: ["subscriptions", "customers"],
+    calculationVersion: 1,
+    defaultInterval: "month",
+    output: "number",
   },
   customer_lifetime_value: {
     label: "Customer lifetime value",

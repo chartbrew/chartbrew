@@ -799,6 +799,22 @@ function getSubscriptionDiscounts(subscription) {
   return subscription.discount ? [subscription.discount] : [];
 }
 
+function getSubscriptionItemDiscounts(item) {
+  if (Array.isArray(item?.discounts)) {
+    return item.discounts.filter((discount) => discount && typeof discount === "object");
+  }
+  return item?.discount ? [item.discount] : [];
+}
+
+function getCustomerDiscounts(subscription) {
+  const customer = subscription.customer;
+  if (!customer || typeof customer !== "object") return [];
+  if (Array.isArray(customer.discounts)) {
+    return customer.discounts.filter((discount) => discount && typeof discount === "object");
+  }
+  return customer.discount ? [customer.discount] : [];
+}
+
 function isDiscountActiveAt(discount, snapshot) {
   const timestamp = snapshot.unix();
   if (discount.start && Number(discount.start) > timestamp) return false;
@@ -806,11 +822,10 @@ function isDiscountActiveAt(discount, snapshot) {
   return true;
 }
 
-function applySubscriptionDiscounts(amount, subscription, snapshot) {
+function applyDiscounts(amount, discounts, currency, snapshot) {
   if (amount <= 0) return 0;
 
-  const subscriptionCurrency = getSubscriptionCurrency(subscription);
-  const discountedAmount = getSubscriptionDiscounts(subscription).reduce((currentAmount, discount) => {
+  const discountedAmount = discounts.reduce((currentAmount, discount) => {
     if (!isDiscountActiveAt(discount, snapshot)) return currentAmount;
 
     const coupon = discount.coupon || {};
@@ -820,7 +835,7 @@ function applySubscriptionDiscounts(amount, subscription, snapshot) {
     if (
       coupon.amount_off
       && coupon.duration !== "once"
-      && (!coupon.currency || !subscriptionCurrency || coupon.currency === subscriptionCurrency)
+      && (!coupon.currency || !currency || coupon.currency === currency)
     ) {
       return currentAmount - Number(coupon.amount_off || 0);
     }
@@ -831,12 +846,40 @@ function applySubscriptionDiscounts(amount, subscription, snapshot) {
   return Math.max(0, discountedAmount);
 }
 
+function applySubscriptionDiscounts(amount, subscription, snapshot) {
+  const subscriptionDiscountedAmount = applyDiscounts(
+    amount,
+    getSubscriptionDiscounts(subscription),
+    getSubscriptionCurrency(subscription),
+    snapshot,
+  );
+  return applyDiscounts(
+    subscriptionDiscountedAmount,
+    getCustomerDiscounts(subscription),
+    getSubscriptionCurrency(subscription),
+    snapshot,
+  );
+}
+
 function getSubscriptionMrr(subscription, snapshot = moment()) {
   const monthlyAmount = getSubscriptionItems(subscription).reduce((total, item) => {
-    return total + getPriceMonthlyAmount(item.price, item.quantity || 1);
+    const itemAmount = getPriceMonthlyAmount(item.price, item.quantity || 1);
+    return total + applyDiscounts(
+      itemAmount,
+      getSubscriptionItemDiscounts(item),
+      item.price?.currency || getSubscriptionCurrency(subscription),
+      snapshot,
+    );
   }, 0);
 
   return applySubscriptionDiscounts(monthlyAmount, subscription, snapshot);
+}
+
+function getCustomerId(subscription) {
+  if (subscription.customer && typeof subscription.customer === "object") {
+    return subscription.customer.id || subscription.customer.customer || subscription.id;
+  }
+  return subscription.customer || subscription.customer_id || subscription.id;
 }
 
 function getSubscriptionStart(subscription) {
@@ -865,6 +908,47 @@ function wasSubscriptionMrrActiveAt(subscription, snapshot) {
 function wasSubscriptionCanceledDuring(subscription, period) {
   const canceledAt = Number(subscription.canceled_at || subscription.ended_at || 0);
   return canceledAt >= period.start.unix() && canceledAt <= period.end.unix();
+}
+
+function getSubscriptionPositiveMrrStart(subscription) {
+  const start = getSubscriptionStart(subscription);
+  const trialEnd = Number(subscription.trial_end || 0);
+  return trialEnd > start ? trialEnd : start;
+}
+
+function getActiveCustomerMrrAt(subscriptions, snapshot) {
+  return subscriptions.reduce((customers, subscription) => {
+    const customerId = getCustomerId(subscription);
+    const mrr = wasSubscriptionMrrActiveAt(subscription, snapshot)
+      ? getSubscriptionMrr(subscription, snapshot)
+      : 0;
+
+    if (!customerId || mrr <= 0) return customers;
+    customers.set(customerId, (customers.get(customerId) || 0) + mrr);
+    return customers;
+  }, new Map());
+}
+
+function getNewActiveCustomerMrrDuring(subscriptions, period, startingCustomerMrr) {
+  return subscriptions.reduce((customers, subscription) => {
+    const customerId = getCustomerId(subscription);
+    const positiveMrrStart = getSubscriptionPositiveMrrStart(subscription);
+    if (!customerId || startingCustomerMrr.has(customerId)) return customers;
+    if (positiveMrrStart < period.start.unix() || positiveMrrStart > period.end.unix()) return customers;
+
+    const firstPositiveSnapshot = moment.unix(positiveMrrStart);
+    const mrr = wasSubscriptionMrrActiveAt(subscription, firstPositiveSnapshot)
+      ? getSubscriptionMrr(subscription, firstPositiveSnapshot)
+      : 0;
+    if (mrr <= 0) return customers;
+
+    customers.set(customerId, (customers.get(customerId) || 0) + mrr);
+    return customers;
+  }, new Map());
+}
+
+function sumMapValues(values) {
+  return Array.from(values.values()).reduce((sum, value) => sum + value, 0);
 }
 
 function matchesCurrency(row, currency) {
@@ -897,6 +981,9 @@ async function fetchSubscriptionsForCompiledMetric(connection, config) {
     },
     expand: Array.from(new Set([
       ...(config.expand || []),
+      "data.customer",
+      "data.discounts",
+      "data.items.data.discounts",
       "data.items.data.price",
     ])),
   };
@@ -919,7 +1006,7 @@ function calculateRecurringMetricRows(subscriptions, config, metricKey) {
     })).filter((item) => item.mrr > 0);
     const mrr = activeSubscriptions.reduce((total, item) => total + item.mrr, 0);
     const activeSubscriptionRows = activeSubscriptions.map((item) => item.subscription);
-    const customers = new Set(activeSubscriptionRows.map((subscription) => subscription.customer).filter(Boolean));
+    const customers = new Set(activeSubscriptionRows.map(getCustomerId).filter(Boolean));
     let value = mrr;
 
     if (metricKey === "arr") value = mrr * 12;
@@ -948,19 +1035,30 @@ function calculateChurnMetricRows(subscriptions, config, metricKey) {
   return periods.map((period) => {
     const startingSnapshot = period.start.clone();
     const endingSnapshot = getSubscriptionSnapshot(period, end);
-    const startingSubscriptions = filteredSubscriptions.filter((subscription) => {
-      return wasSubscriptionMrrActiveAt(subscription, startingSnapshot)
-        && getSubscriptionMrr(subscription, startingSnapshot) > 0;
+    const startingCustomerMrr = getActiveCustomerMrrAt(filteredSubscriptions, startingSnapshot);
+    const endingCustomerMrr = getActiveCustomerMrrAt(filteredSubscriptions, endingSnapshot);
+    const newCustomerMrr = getNewActiveCustomerMrrDuring(filteredSubscriptions, period, startingCustomerMrr);
+    const churnCandidateIds = new Set([
+      ...startingCustomerMrr.keys(),
+      ...newCustomerMrr.keys(),
+    ]);
+    const churnedCustomerIds = Array.from(churnCandidateIds).filter((customerId) => {
+      if (endingCustomerMrr.has(customerId)) return false;
+      return filteredSubscriptions.some((subscription) => {
+        return getCustomerId(subscription) === customerId
+          && (wasSubscriptionCanceledDuring(subscription, period) || getSubscriptionMrr(subscription, endingSnapshot) <= 0);
+      });
     });
-    const canceledSubscriptions = filteredSubscriptions.filter((subscription) => {
-      return wasSubscriptionCanceledDuring(subscription, period);
-    });
-    const startingMrr = startingSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription, startingSnapshot), 0);
-    const canceledMrr = canceledSubscriptions.reduce((total, subscription) => total + getSubscriptionMrr(subscription, endingSnapshot), 0);
+    const startingMrr = sumMapValues(startingCustomerMrr);
+    const newMrr = sumMapValues(newCustomerMrr);
+    const canceledMrr = churnedCustomerIds.reduce((total, customerId) => {
+      return total + (startingCustomerMrr.get(customerId) || newCustomerMrr.get(customerId) || 0);
+    }, 0);
     let value = 0;
 
     if (metricKey === "subscriber_churn_rate") {
-      value = startingSubscriptions.length > 0 ? canceledSubscriptions.length / startingSubscriptions.length : 0;
+      const denominator = startingCustomerMrr.size + newCustomerMrr.size;
+      value = denominator > 0 ? churnedCustomerIds.length / denominator : 0;
     } else {
       value = startingMrr > 0 ? canceledMrr / startingMrr : 0;
     }
@@ -969,11 +1067,44 @@ function calculateChurnMetricRows(subscriptions, config, metricKey) {
       period: period.key,
       dimension: period.key,
       value,
-      recordsProcessed: startingSubscriptions.length + canceledSubscriptions.length,
+      recordsProcessed: filteredSubscriptions.length,
       startingMrr,
+      newMrr,
       canceledMrr,
-      startingSubscribers: startingSubscriptions.length,
-      canceledSubscribers: canceledSubscriptions.length,
+      startingSubscribers: startingCustomerMrr.size,
+      newSubscribers: newCustomerMrr.size,
+      canceledSubscribers: churnedCustomerIds.length,
+      churnedSubscribers: churnedCustomerIds.length,
+    };
+  });
+}
+
+function calculateActiveSubscriberRows(subscriptions, config) {
+  const interval = config.dimension?.interval || "month";
+  const { start, end } = getDateWindow(config);
+  const currency = config.currency && config.currency !== "auto" ? String(config.currency).toLowerCase() : null;
+  const periods = getPeriodRange(start, end, interval);
+  const filteredSubscriptions = subscriptions.filter((subscription) => matchesCurrency(subscription, currency));
+
+  return periods.map((period) => {
+    const snapshot = getSubscriptionSnapshot(period, end);
+    const activeCustomerMrr = getActiveCustomerMrrAt(filteredSubscriptions, snapshot);
+    const activeSubscriptions = filteredSubscriptions.filter((subscription) => {
+      return wasSubscriptionMrrActiveAt(subscription, snapshot)
+        && getSubscriptionMrr(subscription, snapshot) > 0;
+    });
+
+    return {
+      period: period.key,
+      dimension: period.key,
+      value: activeCustomerMrr.size,
+      currency: getCompiledCurrency(config, activeSubscriptions),
+      recordsProcessed: activeSubscriptions.length,
+      activeSubscribers: activeCustomerMrr.size,
+      activeCustomers: activeCustomerMrr.size,
+      activeSubscriptions: activeSubscriptions.length,
+      activeMrr: sumMapValues(activeCustomerMrr),
+      snapshotAt: snapshot.unix(),
     };
   });
 }
@@ -1009,49 +1140,42 @@ async function calculateNetCashFlow(connection, config) {
   };
 }
 
+function calculateCustomerLifetimeValueRows(subscriptions, config) {
+  const arpaRows = calculateRecurringMetricRows(subscriptions, config, "arpa");
+  const churnRows = calculateChurnMetricRows(subscriptions, config, "subscriber_churn_rate");
+
+  return arpaRows.map((arpaRow, index) => {
+    const churnRow = churnRows[index] || {};
+    const subscriberChurnRate = Number(churnRow.value || 0);
+    const averageRevenuePerUser = Number(arpaRow.value || 0);
+    return {
+      period: arpaRow.period,
+      dimension: arpaRow.dimension,
+      value: subscriberChurnRate > 0 ? averageRevenuePerUser / subscriberChurnRate : averageRevenuePerUser,
+      currency: arpaRow.currency,
+      recordsProcessed: Number(arpaRow.recordsProcessed || 0) + Number(churnRow.recordsProcessed || 0),
+      averageRevenuePerUser,
+      averageRevenuePerCustomer: averageRevenuePerUser,
+      subscriberChurnRate,
+      averageChurnRate: subscriberChurnRate,
+      activeSubscribers: arpaRow.activeCustomers,
+      churnedSubscribers: churnRow.churnedSubscribers || churnRow.canceledSubscribers || 0,
+    };
+  });
+}
+
 async function calculateCustomerLifetimeValue(connection, config) {
-  const invoiceResource = STRIPE_RESOURCES.invoices;
   const subscriptionFetch = await fetchSubscriptionsForCompiledMetric(connection, config);
-  const invoiceFetch = await fetchStripeRows(connection, {
-    ...config,
-    resource: "invoices",
-    mode: "raw",
-  }, invoiceResource);
-  const paidInvoices = applyLocalFilters(invoiceFetch.rows, [
-    ...(config.filters || []),
-    { field: "status", operator: "is", value: "paid" },
-  ]);
-  const revenue = paidInvoices.reduce((total, invoice) => total + Number(invoice.amount_paid || 0), 0);
-  const payingCustomers = new Set(paidInvoices.map((invoice) => invoice.customer).filter(Boolean));
-  const churnRows = calculateChurnMetricRows(subscriptionFetch.rows, config, "subscriber_churn_rate");
-  const churnRateValues = churnRows.map((row) => row.value).filter((value) => value > 0);
-  const averageChurnRate = churnRateValues.length > 0
-    ? churnRateValues.reduce((sum, value) => sum + value, 0) / churnRateValues.length
-    : 0;
-  const averageRevenuePerCustomer = payingCustomers.size > 0 ? revenue / payingCustomers.size : 0;
-  const value = averageChurnRate > 0
-    ? averageRevenuePerCustomer / averageChurnRate
-    : averageRevenuePerCustomer;
-  const { end } = getDateWindow(config);
+  const filteredRows = applyLocalFilters(subscriptionFetch.rows, config.filters);
 
   return {
-    data: [{
-      period: getPeriodMoment(end, config.dimension?.interval || "month").format("YYYY-MM-DD"),
-      dimension: "Customer lifetime value",
-      value,
-      currency: getCompiledCurrency(config, paidInvoices),
-      recordsProcessed: paidInvoices.length + subscriptionFetch.recordsProcessed,
-      averageRevenuePerCustomer,
-      averageChurnRate,
-      payingCustomers: payingCustomers.size,
-    }],
-    recordsProcessed: paidInvoices.length + subscriptionFetch.recordsProcessed,
-    capped: subscriptionFetch.capped || invoiceFetch.capped,
-    maxRecords: Math.max(subscriptionFetch.maxRecords, invoiceFetch.maxRecords),
+    data: calculateCustomerLifetimeValueRows(filteredRows, config),
+    recordsProcessed: subscriptionFetch.recordsProcessed,
+    capped: subscriptionFetch.capped,
+    maxRecords: subscriptionFetch.maxRecords,
     warnings: [
       ...buildWarnings(subscriptionFetch, config),
-      ...buildWarnings(invoiceFetch, config),
-      "Customer lifetime value is estimated from paid invoices and subscriber churn. If no churn is detected, it falls back to average revenue per paying customer.",
+      "Customer lifetime value is estimated from ARPA divided by subscriber churn rate. If no churn is detected, it falls back to ARPA.",
     ],
   };
 }
@@ -1059,12 +1183,17 @@ async function calculateCustomerLifetimeValue(connection, config) {
 async function calculateRecurringCompiledMetric(connection, config, metricKey) {
   const fetchResult = await fetchSubscriptionsForCompiledMetric(connection, config);
   const filteredRows = applyLocalFilters(fetchResult.rows, config.filters);
-  const data = ["gross_mrr_churn_rate", "net_mrr_churn_rate", "subscriber_churn_rate"].includes(metricKey)
-    ? calculateChurnMetricRows(filteredRows, config, metricKey)
-    : calculateRecurringMetricRows(filteredRows, config, metricKey);
+  let data;
+  if (["gross_mrr_churn_rate", "net_mrr_churn_rate", "subscriber_churn_rate"].includes(metricKey)) {
+    data = calculateChurnMetricRows(filteredRows, config, metricKey);
+  } else if (metricKey === "active_subscribers") {
+    data = calculateActiveSubscriberRows(filteredRows, config);
+  } else {
+    data = calculateRecurringMetricRows(filteredRows, config, metricKey);
+  }
   const warnings = [
     ...buildWarnings(fetchResult, config),
-    "Recurring revenue metrics use Stripe-style MRR rules where possible: monthly-normalized licensed recurring prices for active and past_due subscriptions, excluding trialing, unpaid/canceled, free, metered, and tax amounts. Historical price changes and multi-currency conversion may still require a later accounting-grade pass.",
+    "Recurring revenue metrics use Stripe-style MRR rules where possible: monthly-normalized licensed recurring prices for active and past_due subscriptions, excluding trialing, unpaid/canceled, free, metered, and tax amounts, with active recurring customer, subscription, and item discounts subtracted when Stripe returns them. Historical price changes and multi-currency conversion may still require a later accounting-grade pass.",
   ];
 
   if (metricKey === "net_mrr_churn_rate") {
@@ -1194,6 +1323,9 @@ module.exports = {
     applyLocalFilters,
     buildListParams,
     buildSearchParams,
+    calculateActiveSubscriberRows,
+    calculateChurnMetricRows,
+    calculateCustomerLifetimeValueRows,
     calculateRecurringMetricRows,
     getPriceMonthlyAmount,
     getSubscriptionMrr,

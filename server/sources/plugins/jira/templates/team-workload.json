@@ -102,7 +102,8 @@
       "type": "bar",
       "requiredDatasetIds": ["open_by_assignee"],
       "layoutIntent": { "kind": "comparison", "priority": 10 },
-      "cdc": { "datasetTemplateId": "open_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Open issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true }
+      "cdc": { "datasetTemplateId": "open_by_assignee", "xAxis": "root[].assignee", "yAxis": "root[].issueCount", "yAxisOperation": "none", "legend": "Open issues", "datasetColor": "rgba(66, 133, 244, 1)", "fillColor": "rgba(66, 133, 244, 0.14)", "fill": true },
+      "dataLabels": true
     },
     {
       "id": "wip-by-assignee",

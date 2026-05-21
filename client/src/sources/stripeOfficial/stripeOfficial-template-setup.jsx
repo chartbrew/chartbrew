@@ -109,6 +109,7 @@ const RESOURCE_LABELS = {
 };
 
 const COMPILED_METRIC_LABELS = {
+  active_subscribers: "Active subscribers",
   arpa: "ARPA",
   arr: "ARR",
   customer_lifetime_value: "Customer lifetime value",
@@ -160,7 +161,7 @@ const CARD_META = {
   },
   "starter-metrics:active-subscriptions": {
     group: "subscriptions",
-    caveat: "Current active subscription count. Not grouped by created date.",
+    caveat: "Current active subscribers with positive MRR.",
     recommended: true,
   },
   "starter-metrics:new-subscriptions-over-time": {
@@ -178,7 +179,7 @@ const CARD_META = {
   },
   "compiled-metrics:mrr": {
     group: "business",
-    caveat: "Last 12 months, monthly only. Excludes taxes, discounts, metered usage, multi-currency conversion, and historical price changes.",
+    caveat: "Last 12 months, monthly only. Excludes taxes, metered usage, multi-currency conversion, and historical price changes; subtracts active recurring customer, subscription, and item discounts returned by Stripe.",
     recommended: true,
   },
   "compiled-metrics:arr": {
@@ -196,7 +197,7 @@ const CARD_META = {
   },
   "compiled-metrics:gross-mrr-churn-rate": {
     group: "business",
-    caveat: "Last 12 months, monthly percentage based on canceled subscriptions in the period.",
+    caveat: "Last 12 months, monthly percentage based on churned customer MRR.",
   },
   "compiled-metrics:net-mrr-churn-rate": {
     group: "business",
@@ -204,11 +205,11 @@ const CARD_META = {
   },
   "compiled-metrics:subscriber-churn-rate": {
     group: "business",
-    caveat: "Canceled subscribers divided by starting subscribers.",
+    caveat: "Churned subscribers divided by starting subscribers plus new subscribers.",
   },
   "compiled-metrics:customer-lifetime-value": {
     group: "business",
-    caveat: "Estimated from paid invoices and subscriber churn; falls back to average revenue per paying customer.",
+    caveat: "Estimated from ARPA divided by subscriber churn; falls back to ARPA when churn is unavailable.",
   },
 };
 
