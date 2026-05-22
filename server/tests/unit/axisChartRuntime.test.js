@@ -104,7 +104,7 @@ describe("AxisChart runtime date handling", () => {
     expect(result.configuration.data.datasets[1].label).toBe("Dataset 2");
   });
 
-  it("sums numeric rows in the same date bucket when no y-axis operation is selected", async () => {
+  it("sums numeric rows in the same date bucket when sum is selected", async () => {
     const chart = {
       id: 1492,
       type: "line",
@@ -123,7 +123,7 @@ describe("AxisChart runtime date handling", () => {
         dateField: "root[].period",
         xAxis: "root[].period",
         yAxis: "root[].created",
-        yAxisOperation: "none",
+        yAxisOperation: "sum",
         legend: "Created",
         fieldsSchema: {
           "root[].period": "date",
@@ -142,5 +142,45 @@ describe("AxisChart runtime date handling", () => {
 
     expect(result.configuration.data.labels).toEqual(["Apr", "May"]);
     expect(result.configuration.data.datasets[0].data).toEqual([4, 2]);
+  });
+
+  it("keeps the latest numeric row in a date bucket when no y-axis operation is selected", async () => {
+    const chart = {
+      id: 1493,
+      type: "line",
+      timeInterval: "month",
+      includeZeros: false,
+      displayLegend: true,
+      ChartDatasetConfigs: [{
+        id: "cdc-1",
+        legend: "MRR",
+      }],
+    };
+
+    const datasets = [{
+      options: {
+        id: "cdc-1",
+        dateField: "root[].date",
+        xAxis: "root[].date",
+        yAxis: "root[].mrr",
+        yAxisOperation: "none",
+        legend: "MRR",
+        fieldsSchema: {
+          "root[].date": "date",
+          "root[].mrr": "number",
+        },
+      },
+      data: [
+        { date: "2026-05-01T00:00:00.000Z", mrr: 105783 },
+        { date: "2026-05-05T00:00:00.000Z", mrr: 108683 },
+        { date: "2026-05-20T00:00:00.000Z", mrr: 114483 },
+      ],
+    }];
+
+    const axisChart = new AxisChart({ chart, datasets }, "UTC");
+    const result = await axisChart.plot(false, [], {});
+
+    expect(result.configuration.data.labels).toEqual(["May"]);
+    expect(result.configuration.data.datasets[0].data).toEqual([114483]);
   });
 });

@@ -227,8 +227,9 @@ export function getDefaultsForResource(resource, currentConfiguration = {}) {
       : { type: "sprint_summary" };
     return {
       ...base,
+      boardId: currentConfiguration.boardId || "",
       sprintId: currentConfiguration.sprintId || "",
-      jql: currentConfiguration.jql || "",
+      jql: currentConfiguration.resource === "sprint_issues" ? currentConfiguration.jql || "" : "",
       transform: sprintIssueTransform,
       pagination: currentConfiguration.pagination,
     };

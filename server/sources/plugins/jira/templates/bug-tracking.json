@@ -116,8 +116,8 @@
       "requiredDatasetIds": ["bug_trend"],
       "layoutIntent": { "kind": "trend", "priority": 20 },
       "cdcs": [
-        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].created", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Created", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true },
-        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].resolved", "dateField": "root[].period", "yAxisOperation": "none", "legend": "Resolved", "datasetColor": "#0FC457", "fillColor": "rgba(15, 196, 87, 0.12)", "fill": true }
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].created", "dateField": "root[].period", "yAxisOperation": "sum", "legend": "Created", "datasetColor": "#EF4444", "fillColor": "rgba(239, 68, 68, 0.12)", "fill": true },
+        { "datasetTemplateId": "bug_trend", "xAxis": "root[].period", "yAxis": "root[].resolved", "dateField": "root[].period", "yAxisOperation": "sum", "legend": "Resolved", "datasetColor": "#0FC457", "fillColor": "rgba(15, 196, 87, 0.12)", "fill": true }
       ]
     },
     {

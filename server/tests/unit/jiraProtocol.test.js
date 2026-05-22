@@ -392,6 +392,338 @@ describe("Jira protocol", () => {
     });
   });
 
+  it("requests mapped story point fields for sprint summaries", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockImplementation((connection, route, options) => {
+        const requestedFields = String(options.qs.fields || "").split(",");
+        const includesStoryPoints = requestedFields.includes("customfield_10016");
+        const withStoryPoints = (fields, storyPoints) => ({
+          ...fields,
+          ...(includesStoryPoints ? { customfield_10016: storyPoints } : {}),
+        });
+
+        return Promise.resolve({
+          issues: [{
+            key: "CHART-1",
+            fields: withStoryPoints({
+              summary: "Complete first story",
+              status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+              issuetype: { name: "Story" },
+            }, 5),
+          }, {
+            key: "CHART-2",
+            fields: withStoryPoints({
+              summary: "Complete second story",
+              status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+              issuetype: { name: "Story" },
+            }, 8),
+          }, {
+            key: "CHART-3",
+            fields: withStoryPoints({
+              summary: "Carry over story",
+              status: { name: "In Progress", statusCategory: { name: "In Progress" } },
+              issuetype: { name: "Story" },
+            }, 2),
+          }],
+          total: 3,
+        });
+      });
+    vi.spyOn(jiraConnection, "listStatuses")
+      .mockResolvedValue([{ id: "10002", name: "Done", statusCategory: "Done", statusCategoryKey: "done" }]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    const response = await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+        options: {
+          jira: {
+            fieldMappings: {
+              storyPoints: "customfield_10016",
+            },
+          },
+        },
+      },
+      dataRequest: {
+        id: 13,
+        configuration: {
+          source: "jira",
+          resource: "sprint_issues",
+          mode: "visual",
+          sprintId: "123",
+          jql: "project = CHART",
+          transform: { type: "sprint_summary" },
+          fields: ["key", "summary", "status", "issuetype"],
+          pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(response.responseData.data).toEqual([{
+      committedIssues: 3,
+      completedIssues: 2,
+      completionRate: 2 / 3,
+      committedStoryPoints: 15,
+      completedStoryPoints: 13,
+    }]);
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: expect.objectContaining({
+        fields: "key,summary,status,issuetype,customfield_10016",
+      }),
+    });
+  });
+
+  it("detects missing story point mappings before sprint summary requests", async () => {
+    vi.spyOn(jiraConnection, "detectFieldMappings")
+      .mockResolvedValue({
+        fieldMappings: {
+          storyPoints: "customfield_10016",
+        },
+        candidates: {},
+      });
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockImplementation((connection, route, options) => {
+        const requestedFields = String(options.qs.fields || "").split(",");
+        const includesStoryPoints = requestedFields.includes("customfield_10016");
+
+        return Promise.resolve({
+          issues: [{
+            key: "CHART-1",
+            fields: {
+              summary: "Complete first story",
+              status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+              issuetype: { name: "Story" },
+              ...(includesStoryPoints ? { customfield_10016: 5 } : {}),
+            },
+          }],
+          total: 1,
+        });
+      });
+    vi.spyOn(jiraConnection, "listStatuses")
+      .mockResolvedValue([{ id: "10002", name: "Done", statusCategory: "Done", statusCategoryKey: "done" }]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    const response = await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+        options: {
+          jira: {},
+        },
+      },
+      dataRequest: {
+        id: 14,
+        configuration: {
+          source: "jira",
+          resource: "sprint_issues",
+          mode: "visual",
+          sprintId: "123",
+          jql: "project = CHART",
+          transform: { type: "sprint_summary" },
+          fields: ["key", "summary", "status", "issuetype"],
+          pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(response.responseData.data).toEqual([{
+      committedIssues: 1,
+      completedIssues: 1,
+      completionRate: 1,
+      committedStoryPoints: 5,
+      completedStoryPoints: 5,
+    }]);
+    expect(jiraConnection.detectFieldMappings).toHaveBeenCalledWith(expect.any(Object));
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: expect.objectContaining({
+        fields: "key,summary,status,issuetype,customfield_10016",
+      }),
+    });
+  });
+
+  it("uses the selected board estimation field for sprint story points", async () => {
+    vi.spyOn(jiraConnection, "getBoardConfiguration")
+      .mockResolvedValue({
+        id: 289,
+        estimation: {
+          type: "field",
+          field: {
+            displayName: "Story point estimate",
+            fieldId: "customfield_10042",
+          },
+        },
+      });
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockImplementation((connection, route, options) => {
+        const requestedFields = String(options.qs.fields || "").split(",");
+        const includesBoardStoryPoints = requestedFields.includes("customfield_10042");
+
+        return Promise.resolve({
+          issues: [{
+            key: "CHART-1",
+            fields: {
+              summary: "Complete board-estimated story",
+              status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+              issuetype: { name: "Story" },
+              customfield_10016: null,
+              ...(includesBoardStoryPoints ? { customfield_10042: 13 } : {}),
+            },
+          }],
+          total: 1,
+        });
+      });
+    vi.spyOn(jiraConnection, "listStatuses")
+      .mockResolvedValue([{ id: "10002", name: "Done", statusCategory: "Done", statusCategoryKey: "done" }]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    const response = await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+        options: {
+          jira: {
+            fieldMappings: {
+              storyPoints: "customfield_10016",
+            },
+          },
+        },
+      },
+      dataRequest: {
+        id: 15,
+        configuration: {
+          source: "jira",
+          resource: "sprint_issues",
+          mode: "visual",
+          boardId: "289",
+          sprintId: "123",
+          jql: "project = CHART",
+          transform: { type: "sprint_summary" },
+          fields: ["key", "summary", "status", "issuetype"],
+          pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(response.responseData.data).toEqual([{
+      committedIssues: 1,
+      completedIssues: 1,
+      completionRate: 1,
+      committedStoryPoints: 13,
+      completedStoryPoints: 13,
+    }]);
+    expect(jiraConnection.getBoardConfiguration).toHaveBeenCalledWith(expect.any(Object), {
+      boardId: "289",
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: expect.objectContaining({
+        fields: "key,summary,status,issuetype,customfield_10042",
+      }),
+    });
+  });
+
+  it("uses selected board done column statuses for sprint completion", async () => {
+    vi.spyOn(jiraConnection, "getBoardConfiguration")
+      .mockResolvedValue({
+        id: 289,
+        estimation: {
+          type: "field",
+          field: {
+            displayName: "Story point estimate",
+            fieldId: "customfield_10042",
+          },
+        },
+        columnConfig: {
+          columns: [{
+            name: "In Progress",
+            statuses: [{ id: "10002" }],
+          }, {
+            name: "Done",
+            statuses: [{ id: "10099" }],
+          }],
+        },
+      });
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValue({
+        issues: [{
+          key: "CHART-1",
+          fields: {
+            summary: "Actually done on board",
+            status: { id: "10099", name: "QA Complete", statusCategory: { name: "In Progress" } },
+            issuetype: { name: "Story" },
+            customfield_10042: 13,
+          },
+        }, {
+          key: "CHART-2",
+          fields: {
+            summary: "Still in progress",
+            status: { id: "10002", name: "In Review", statusCategory: { name: "In Progress" } },
+            issuetype: { name: "Story" },
+            customfield_10042: 8,
+          },
+        }],
+        total: 2,
+      });
+    vi.spyOn(jiraConnection, "listStatuses")
+      .mockResolvedValue([]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    const response = await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+      },
+      dataRequest: {
+        id: 16,
+        configuration: {
+          source: "jira",
+          resource: "sprint_issues",
+          mode: "visual",
+          boardId: "289",
+          sprintId: "123",
+          transform: { type: "sprint_summary" },
+          fields: ["key", "summary", "status", "issuetype"],
+          pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(response.responseData.data).toEqual([{
+      committedIssues: 2,
+      completedIssues: 1,
+      completionRate: 0.5,
+      committedStoryPoints: 21,
+      completedStoryPoints: 13,
+    }]);
+  });
+
   it("omits unresolved variable JQL from sprint issue requests", async () => {
     vi.spyOn(jiraConnection, "jiraRequest")
       .mockResolvedValueOnce({
@@ -427,12 +759,58 @@ describe("Jira protocol", () => {
 
     expect(rows.map((row) => row.key)).toEqual(["CHART-1"]);
     expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
-      qs: {
+      qs: expect.objectContaining({
         fields: "key,summary,status,issuetype",
         startAt: 0,
         maxResults: 100,
-      },
+      }),
     });
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].qs.jql).toBeUndefined();
+  });
+
+  it("does not apply JQL filters to sprint summary requests", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "CHART-1",
+          fields: {
+            summary: "Sprint issue",
+            status: { name: "Done", statusCategory: { name: "Done" } },
+            issuetype: { name: "Story" },
+          },
+        }],
+        total: 1,
+      });
+
+    const rows = await jiraProtocol.fetchJiraRows({
+      id: 7,
+      type: "jira",
+      subType: "jira",
+      host: "https://chartbrew.atlassian.net",
+      authentication: {
+        email: "raz@example.com",
+        apiToken: "token",
+      },
+    }, {
+      source: "jira",
+      resource: "sprint_issues",
+      mode: "visual",
+      sprintId: "123",
+      jql: "created >= 2026-04-21 AND created <= 2026-05-21 ORDER BY updated DESC",
+      fields: ["key", "summary", "status", "issuetype"],
+      transform: { type: "sprint_summary" },
+      pagination: { startAt: 0, maxResults: 100, maxRecords: 100 },
+    });
+
+    expect(rows.map((row) => row.key)).toEqual(["CHART-1"]);
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: expect.objectContaining({
+        fields: "key,summary,status,issuetype",
+        startAt: 0,
+        maxResults: 100,
+      }),
+    });
+    expect(jiraConnection.jiraRequest.mock.calls[0][2].qs.jql).toBeUndefined();
   });
 
   it("runs Agile board resources through Jira source actions", async () => {

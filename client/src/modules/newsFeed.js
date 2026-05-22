@@ -11,6 +11,19 @@ function uniqueStrings(values) {
     .filter(Boolean)));
 }
 
+function normalizeLabelKey(value) {
+  return normalizeString(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeTags(tags, category) {
+  const categoryKey = normalizeLabelKey(category);
+
+  return uniqueStrings(tags).filter((tag) => normalizeLabelKey(tag) !== categoryKey);
+}
+
 export function normalizeNewsFeed(rawFeed) {
   const safeFeed = rawFeed && typeof rawFeed === "object" ? rawFeed : {};
   const rawItems = Array.isArray(safeFeed.items) ? safeFeed.items : [];
@@ -20,6 +33,7 @@ export function normalizeNewsFeed(rawFeed) {
       const id = normalizeString(item?.id);
       const title = normalizeString(item?.title);
       const excerpt = normalizeString(item?.excerpt);
+      const category = normalizeString(item?.category);
 
       if (!id || !title || !excerpt) return null;
 
@@ -28,8 +42,8 @@ export function normalizeNewsFeed(rawFeed) {
         title,
         excerpt,
         publishedAt: normalizeString(item?.publishedAt),
-        category: normalizeString(item?.category),
-        tags: uniqueStrings(item?.tags),
+        category,
+        tags: normalizeTags(item?.tags, category),
         coverImage: normalizeString(item?.coverImage),
         coverImageAlt: normalizeString(item?.coverImageAlt) || title,
         url: normalizeString(item?.url),

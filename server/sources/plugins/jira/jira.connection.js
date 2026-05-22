@@ -168,6 +168,14 @@ function listBoards(connection, params = {}) {
   });
 }
 
+function getBoardConfiguration(connection, params = {}) {
+  if (!params.boardId) {
+    throw new Error("boardId is required");
+  }
+
+  return jiraRequest(connection, `/rest/agile/1.0/board/${params.boardId}/configuration`);
+}
+
 function listSprints(connection, params = {}) {
   if (!params.boardId) {
     throw new Error("boardId is required");
@@ -285,6 +293,7 @@ function previewJql(connection, params = {}) {
 module.exports = {
   detectFieldMappings,
   detectFieldMappingsFromFields,
+  getBoardConfiguration,
   getCredentials,
   getMyself,
   getSafeJiraErrorMessage,

@@ -47,12 +47,28 @@ test("normalizeNewsFeed keeps only renderable news items", () => {
       excerpt: "Cleaner dashboards.",
       publishedAt: "2026-05-01T06:01:17.000Z",
       category: "updates",
-      tags: ["updates", "story"],
+      tags: ["story"],
       coverImage: "https://chartbrew.com/banner.webp",
       coverImageAlt: "Chartbrew v5 banner",
       url: "https://chartbrew.com/blog/chartbrew-v5-launch",
     },
   ]);
+});
+
+test("normalizeNewsFeed removes tags that duplicate the category", () => {
+  const items = normalizeNewsFeed({
+    items: [
+      {
+        id: "postgres-tutorial",
+        title: "Postgres tutorial",
+        excerpt: "A tutorial.",
+        category: "tutorial",
+        tags: ["tutorial", "PostgreSQL", "Tutorial"],
+      },
+    ],
+  });
+
+  assert.deepEqual(items[0].tags, ["PostgreSQL"]);
 });
 
 test("seen news ids are persisted and used to calculate unread items", () => {

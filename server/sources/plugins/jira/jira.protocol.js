@@ -10,7 +10,7 @@ const {
   failConnectorAudit,
 } = require("../../shared/connectorRuntime");
 const jiraConnection = require("./jira.connection");
-const { DEFAULT_FIELDS, JIRA_RESOURCES } = require("./jira.resources");
+const { DEFAULT_FIELDS, FIELD_MAPPING_NAMES, JIRA_RESOURCES } = require("./jira.resources");
 
 const DEFAULT_CONFIGURATION = {
   source: "jira",
@@ -261,13 +261,57 @@ function getDoneStatusLookup(statuses = []) {
   return lookup;
 }
 
-async function loadDoneStatusLookup(connection) {
+function addBoardDoneColumnStatuses(lookup, boardConfiguration = {}) {
+  const columns = boardConfiguration?.columnConfig?.columns || [];
+  const doneColumns = columns.filter((column) => normalizeLookupValue(column.name) === "done");
+
+  doneColumns.forEach((column) => {
+    (column.statuses || []).forEach((status) => {
+      if (status.id) lookup.ids.add(String(status.id));
+      if (status.name) lookup.names.add(normalizeLookupValue(status.name));
+    });
+  });
+
+  return lookup;
+}
+
+async function loadBoardConfiguration(connection, config = {}) {
+  if (!config.boardId) return null;
+
+  try {
+    return await jiraConnection.getBoardConfiguration(connection, {
+      boardId: config.boardId,
+    });
+  } catch (error) {
+    return null;
+  }
+}
+
+async function loadDoneStatusLookup(connection, config = {}, boardConfiguration = null) {
+  const lookup = getDefaultDoneStatusLookup();
+
   try {
     const statuses = await jiraConnection.listStatuses(connection);
-    return getDoneStatusLookup(statuses);
+    const statusLookup = getDoneStatusLookup(statuses);
+    statusLookup.ids.forEach((id) => lookup.ids.add(id));
+    statusLookup.names.forEach((name) => lookup.names.add(name));
   } catch (error) {
-    return getDefaultDoneStatusLookup();
+    // Keep default done status names if Jira status lookup fails.
   }
+
+  if (config.resource === "sprint_issues" && config.boardId) {
+    const boardConfig = boardConfiguration || await loadBoardConfiguration(connection, config);
+    addBoardDoneColumnStatuses(lookup, boardConfig);
+  }
+
+  return lookup;
+}
+
+function isDoneStatus(status = {}, doneStatusLookup = null) {
+  const lookup = doneStatusLookup || getDefaultDoneStatusLookup();
+  return isDoneStatusCategory(status.statusCategory || {})
+    || (status.id && lookup.ids.has(String(status.id)))
+    || lookup.names.has(normalizeLookupValue(status.name));
 }
 
 function getChangelogHistories(issue = {}) {
@@ -280,7 +324,7 @@ function getDoneAtFromChangelog(issue, doneStatusLookup) {
   const fields = issue.fields || {};
   const currentStatus = fields.status || {};
 
-  if (!isDoneStatusCategory(currentStatus.statusCategory || {})) {
+  if (!isDoneStatus(currentStatus, doneStatusLookup)) {
     return null;
   }
 
@@ -324,7 +368,7 @@ function normalizeIssue(issue, fieldMappings = {}, options = {}) {
     updatedAt: fields.updated || null,
     resolvedAt: fields.resolutiondate || null,
     doneAt: doneAtFromChangelog || fields.resolutiondate || null,
-    isDone: isDoneStatusCategory(fields.status?.statusCategory || {}),
+    isDone: isDoneStatus(fields.status || {}, options.doneStatusLookup),
     storyPoints: Number(readMappedField(fields, fieldMappings.storyPoints) || 0),
     severity: readMappedField(fields, fieldMappings.severity),
     team: readMappedField(fields, fieldMappings.team),
@@ -407,7 +451,7 @@ function transformCreatedResolvedTrend(rows, transform = {}) {
 }
 
 function transformSprintSummary(rows) {
-  const completedRows = rows.filter((row) => row.statusCategory === "Done");
+  const completedRows = rows.filter((row) => row.isDone);
   const totalStoryPoints = rows.reduce((sum, row) => sum + Number(row.storyPoints || 0), 0);
   const completedStoryPoints = completedRows.reduce((sum, row) => sum + Number(row.storyPoints || 0), 0);
 
@@ -443,6 +487,49 @@ function getFieldMappings(connection) {
   return getJiraOptions(connection).fieldMappings || {};
 }
 
+function shouldDetectFieldMappings(fieldMappings = {}) {
+  return Object.keys(FIELD_MAPPING_NAMES).some((fieldName) => !fieldMappings[fieldName]);
+}
+
+async function getBoardEstimationFieldMapping(connection, config = {}, boardConfiguration = null) {
+  if (config.resource !== "sprint_issues" || !config.boardId) {
+    return {};
+  }
+
+  try {
+    const boardConfig = boardConfiguration || await loadBoardConfiguration(connection, config);
+    const fieldId = boardConfig?.estimation?.type === "field"
+      ? boardConfig.estimation?.field?.fieldId
+      : null;
+    return fieldId ? { storyPoints: fieldId } : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+async function resolveFieldMappings(connection, config = {}, boardConfiguration = null) {
+  const savedFieldMappings = getFieldMappings(connection);
+  const boardFieldMappings = await getBoardEstimationFieldMapping(connection, config, boardConfiguration);
+  const baseFieldMappings = {
+    ...savedFieldMappings,
+    ...boardFieldMappings,
+  };
+
+  if (!shouldDetectFieldMappings(baseFieldMappings)) {
+    return baseFieldMappings;
+  }
+
+  try {
+    const detected = await jiraConnection.detectFieldMappings(connection);
+    return {
+      ...(detected?.fieldMappings || {}),
+      ...baseFieldMappings,
+    };
+  } catch (error) {
+    return baseFieldMappings;
+  }
+}
+
 function getSearchRoute(config) {
   if (config.resource === "sprint_issues") {
     if (!config.sprintId) {
@@ -457,6 +544,20 @@ function getSearchRoute(config) {
 function normalizeFields(fields) {
   if (Array.isArray(fields)) return fields;
   return String(fields || "").split(",").map((field) => field.trim()).filter(Boolean);
+}
+
+function getMappedFieldIds(fieldMappings = {}) {
+  return Object.values(fieldMappings)
+    .flatMap((fieldId) => (Array.isArray(fieldId) ? fieldId : [fieldId]))
+    .map((fieldId) => String(fieldId || "").trim())
+    .filter(Boolean);
+}
+
+function getRequestFields(config, fieldMappings = {}) {
+  return Array.from(new Set([
+    ...normalizeFields(config.fields),
+    ...getMappedFieldIds(fieldMappings),
+  ]));
 }
 
 function shouldIncludeDoneAt(config = {}) {
@@ -478,12 +579,12 @@ function getExpandValues(config = {}) {
   return expandValues;
 }
 
-function buildIssueSearchBody(config, nextPageToken = null) {
+function buildIssueSearchBody(config, nextPageToken = null, fieldMappings = {}) {
   const maxResults = Math.min(Number(config.pagination?.maxResults || 100), 100);
   const expand = getExpandValues(config);
   const body = {
     jql: config.jql,
-    fields: normalizeFields(config.fields),
+    fields: getRequestFields(config, fieldMappings),
     maxResults,
   };
 
@@ -563,7 +664,7 @@ function getCreatedResolvedTrendConfigs(config = {}) {
   }];
 }
 
-async function fetchIssueRows(connection, config) {
+async function fetchIssueRows(connection, config, fieldMappings = {}) {
   const rows = [];
   const maxRecords = Math.min(Number(config.pagination?.maxRecords || 5000), 10000);
   let nextPageToken = null;
@@ -573,7 +674,7 @@ async function fetchIssueRows(connection, config) {
     // oxlint-disable-next-line no-await-in-loop
     const response = await jiraConnection.jiraRequest(connection, getSearchRoute(config), {
       method: "POST",
-      body: buildIssueSearchBody(config, nextPageToken),
+      body: buildIssueSearchBody(config, nextPageToken, fieldMappings),
     });
     const pageRows = Array.isArray(response?.issues) ? response.issues : [];
     rows.push(...pageRows);
@@ -584,16 +685,16 @@ async function fetchIssueRows(connection, config) {
   return rows.slice(0, maxRecords);
 }
 
-async function fetchCreatedResolvedTrendIssueRows(connection, config) {
+async function fetchCreatedResolvedTrendIssueRows(connection, config, fieldMappings = {}) {
   const trendConfigs = getCreatedResolvedTrendConfigs(config);
   if (!trendConfigs) {
-    return fetchIssueRows(connection, config);
+    return fetchIssueRows(connection, config, fieldMappings);
   }
 
   const rows = [];
 
   await trendConfigs.reduce((promise, trendConfig) => promise.then(async () => {
-    const trendRows = await fetchIssueRows(connection, trendConfig.config);
+    const trendRows = await fetchIssueRows(connection, trendConfig.config, fieldMappings);
     rows.push(...trendRows.map((row) => ({
       ...row,
       _trendEvent: trendConfig.event,
@@ -603,17 +704,17 @@ async function fetchCreatedResolvedTrendIssueRows(connection, config) {
   return rows;
 }
 
-function buildSprintIssueSearchParams(config, startAt) {
+function buildSprintIssueSearchParams(config, startAt, fieldMappings = {}) {
   const maxResults = Math.min(Number(config.pagination?.maxResults || 100), 100);
   const expand = getExpandValues(config);
   const params = {
-    fields: Array.isArray(config.fields) ? config.fields.join(",") : config.fields,
+    fields: getRequestFields(config, fieldMappings).join(","),
     startAt,
     maxResults,
   };
   const jql = String(config.jql || "").trim();
 
-  if (jql && !jql.includes("{{")) {
+  if (jql && !jql.includes("{{") && config.transform?.type !== "sprint_summary") {
     params.jql = jql;
   }
 
@@ -624,7 +725,7 @@ function buildSprintIssueSearchParams(config, startAt) {
   return params;
 }
 
-async function fetchJiraRows(connection, config) {
+async function fetchJiraRows(connection, config, fieldMappings = getFieldMappings(connection)) {
   if (config.resource === "boards") {
     const boards = await jiraConnection.listBoards(connection, {
       maxResults: Math.min(Number(config.pagination?.maxRecords || 50), 50),
@@ -652,10 +753,10 @@ async function fetchJiraRows(connection, config) {
 
   if (config.resource === "issues") {
     if (config.transform?.type === "created_resolved_trend") {
-      return fetchCreatedResolvedTrendIssueRows(connection, config);
+      return fetchCreatedResolvedTrendIssueRows(connection, config, fieldMappings);
     }
 
-    return fetchIssueRows(connection, config);
+    return fetchIssueRows(connection, config, fieldMappings);
   }
 
   const rows = [];
@@ -667,7 +768,7 @@ async function fetchJiraRows(connection, config) {
   while (hasMore && rows.length < maxRecords) {
     // oxlint-disable-next-line no-await-in-loop
     const response = await jiraConnection.jiraRequest(connection, getSearchRoute(config), {
-      qs: buildSprintIssueSearchParams(config, startAt),
+      qs: buildSprintIssueSearchParams(config, startAt, fieldMappings),
     });
     const pageRows = Array.isArray(response?.issues) ? response.issues : [];
     rows.push(...pageRows);
@@ -760,10 +861,13 @@ async function runDataRequest({
   }
 
   try {
-    const jiraRows = await fetchJiraRows(savedConnection, config);
-    const fieldMappings = getFieldMappings(savedConnection);
+    const boardConfiguration = config.resource === "sprint_issues"
+      ? await loadBoardConfiguration(savedConnection, config)
+      : null;
+    const fieldMappings = await resolveFieldMappings(savedConnection, config, boardConfiguration);
+    const jiraRows = await fetchJiraRows(savedConnection, config, fieldMappings);
     const includeDoneAt = shouldIncludeDoneAt(config);
-    const doneStatusLookup = includeDoneAt ? await loadDoneStatusLookup(savedConnection) : null;
+    const doneStatusLookup = includeDoneAt ? await loadDoneStatusLookup(savedConnection, config, boardConfiguration) : null;
     const normalizedRows = ["issues", "sprint_issues"].includes(config.resource)
       ? jiraRows.map((issue) => normalizeIssue(issue, fieldMappings, { includeDoneAt, doneStatusLookup }))
       : jiraRows;

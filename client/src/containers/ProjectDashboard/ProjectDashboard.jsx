@@ -874,7 +874,7 @@ function ProjectDashboard() {
             <div
               className={"w-full box-shadow-none radius-0"}
             >
-              <div className="flex flex-row justify-between w-full py-1">
+              <div className="flex flex-row justify-between w-full">
                 <div className="flex flex-row items-center gap-1">
                   {projectMembers?.length > 0 && (
                     <>

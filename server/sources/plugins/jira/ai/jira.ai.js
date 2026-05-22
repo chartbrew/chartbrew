@@ -475,7 +475,7 @@ function getChartSpec(config, question, chartType) {
       title,
       xAxis: "root[].period",
       yAxis: "root[].created",
-      yAxisOperation: "none",
+      yAxisOperation: "sum",
       dateField: "root[].period",
       timeInterval: transform.interval || "day",
       pointRadius: 0,

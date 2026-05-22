@@ -86,7 +86,7 @@ describe("Jira chart templates", () => {
     });
   });
 
-  it("sets dateField for date-based chart dataset configs", () => {
+  it("sets dateField and sum operation for Jira trend count chart configs", () => {
     TEMPLATE_SLUGS.forEach((slug) => {
       const template = loadTemplate("jira", slug);
       const datasetsById = new Map(template.datasets.map((dataset) => [dataset.id, dataset]));
@@ -97,9 +97,10 @@ describe("Jira chart templates", () => {
           const fields = dataset?.fieldsSchema || {};
 
           if (fields[cdc.xAxis] !== "date") return;
+          if (!["root[].created", "root[].resolved"].includes(cdc.yAxis)) return;
 
           expect(cdc.dateField, `${slug}:${chart.id} is missing dateField`).toBe(cdc.xAxis);
-          expect(cdc.yAxisOperation, `${slug}:${chart.id} should let AxisChart aggregate date buckets`).toBe("none");
+          expect(cdc.yAxisOperation, `${slug}:${chart.id} should sum coarser date buckets`).toBe("sum");
         });
       });
     });
