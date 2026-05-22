@@ -1,7 +1,7 @@
 function repairSourceDatasetIntent(source, payload) {
   const repair = source.backend?.ai?.repairDatasetIntent?.({
     name: payload.name,
-    question: payload.question,
+    question: mergeQuestionContext(payload.question, payload.original_question, payload.name),
     configuration: payload.configuration,
   });
 

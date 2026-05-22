@@ -30,6 +30,9 @@ function extractAssigneeQuery(question = "", overrides = {}) {
   const currentWorkMatch = String(question || "").match(/\b(?:is|are)\s+([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)\s+(?:working|doing)/);
   if (currentWorkMatch) return currentWorkMatch[1].trim();
 
+  const completedWorkMatch = String(question || "").match(/\b(?:did|has|have)\s+([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)\s+(?:complete|completed|finish|finished|close|closed|resolve|resolved)\b/);
+  if (completedWorkMatch) return completedWorkMatch[1].trim();
+
   const possessiveMatch = String(question || "").match(/\b([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)'s\s+(?:tasks|issues|work)\b/);
   return possessiveMatch ? possessiveMatch[1].trim() : null;
 }
@@ -56,6 +59,7 @@ function shouldResolveUser(question = "", intent = {}) {
     || normalizedQuestion.includes("workload for")
     || normalizedQuestion.includes("workload by")
     || normalizedQuestion.includes("working on")
+    || /\b(?:did|has|have)\s+[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?\s+(?:complete|completed|finish|finished|close|closed|resolve|resolved)\b/.test(String(question || ""))
     || /\bfor\s+[A-Z][a-zA-Z]+/.test(String(question || ""))
     || /\bby\s+[A-Z][a-zA-Z]+/.test(String(question || ""));
 }

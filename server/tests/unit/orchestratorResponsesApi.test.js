@@ -7,6 +7,7 @@ const {
   buildAssistantMessageFromResponse,
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
+  collectRecentSourceContext,
   sanitizeToolError,
   buildUsageRecordFromResponse,
   availableTools,
@@ -127,6 +128,32 @@ describe("orchestrator Responses API adapters", () => {
     expect(message).toContain("\"id\": \"active_sprint\"");
     expect(message).toContain("\"label\": \"Use the active sprint\"");
     expect(message).toContain("\"action\": \"reply\"");
+  });
+
+  it("collects recent Jira source context from prior tool results", () => {
+    const context = collectRecentSourceContext([{
+      role: "tool",
+      name: "source_search_records",
+      content: JSON.stringify({
+        source: "jira",
+        status: "ok",
+        configuration: {
+          projectIdOrKey: "D2371",
+          boardId: "289",
+          sprintId: "123",
+        },
+        resolution: {
+          project: { key: "D2371" },
+          board: { id: "289", name: "D2371 Scrum Board" },
+          sprint: { id: "123", name: "FLS2.0 Sprint 17" },
+        },
+      }),
+    }]);
+
+    expect(context).toContain("Jira project D2371");
+    expect(context).toContain("board 289");
+    expect(context).toContain("sprint 123");
+    expect(context).toContain("overrides.project");
   });
 
   it("redacts sensitive request details from tool errors", () => {

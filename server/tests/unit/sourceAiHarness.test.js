@@ -933,6 +933,25 @@ describe("Source AI harness", () => {
     expectToolOutputContract(result);
   });
 
+  it("stops Jira active sprint record searches to ask for project context", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
+    const listBoardsSpy = vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([]);
+
+    const result = await sourceSearchRecords({
+      team_id: TOOL_TEAM_ID,
+      connection_id: toolHarnessConnections.jira.id,
+      source_id: "jira",
+      question: "How many story points did Razvan complete in the last Sprint?",
+      row_limit: 10,
+    });
+
+    expect(result.status).toBe("needs_disambiguation");
+    expect(result.needs_user_input).toBe(true);
+    expect(result.prompt).toContain("Which Jira project");
+    expect(listBoardsSpy).not.toHaveBeenCalled();
+    expectToolOutputContract(result);
+  });
+
   it("keeps Jira fallback plans usable for preview", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(toolHarnessConnections.jira);
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{ id: "10001", key: "A4321", name: "A4321 Project" }]);
@@ -1065,7 +1084,7 @@ describe("Source AI harness", () => {
       team_id: 7,
       ghost: true,
     });
-    vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
+    const createDatasetSpy = vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
       id: 99,
       name: "Orders",
       DataRequests: [{ id: 1001 }],
@@ -1099,6 +1118,76 @@ describe("Source AI harness", () => {
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
+    });
+  });
+
+  it("repairs Jira completed story point temporary KPI payloads to sum values", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
+      id: 42,
+      team_id: 7,
+      type: "jira",
+      subType: "jira",
+      host: "https://chartbrew.atlassian.net",
+      authentication: {
+        email: "raz@example.com",
+        apiToken: "token",
+      },
+      options: { jira: {} },
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      id: 77,
+      team_id: 7,
+      ghost: true,
+    });
+    const createDatasetSpy = vi.spyOn(DatasetController.prototype, "createWithDataRequests").mockResolvedValue({
+      id: 99,
+      name: "Completed story points",
+      DataRequests: [{ id: 1001 }],
+    });
+    const createChartSpy = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({
+      id: 55,
+      name: "Completed story points",
+      type: "kpi",
+      project_id: 77,
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      team_id: 7,
+      connection_id: 42,
+      name: "Razvan's completed story points in the last sprint",
+      original_question: "How many story points did Razvan complete in the last Sprint for D2371?",
+      type: "kpi",
+      yAxis: "root[].storyPoints",
+      yAxisOperation: "none",
+      configuration: {
+        source: "jira",
+        resource: "sprint_issues",
+        mode: "visual",
+        jql: "project IN (\"D2371\") AND assignee IN (\"raz-account\") ORDER BY updated DESC",
+        fields: ["key", "summary", "status", "assignee", "storyPoints"],
+        transform: { type: "raw" },
+        sprintId: "1160",
+        boardId: "289",
+        projectIdOrKey: "D2371",
+      },
+    });
+    const datasetPayload = createDatasetSpy.mock.calls[0][0];
+    const chartPayload = createChartSpy.mock.calls[0][0];
+
+    expect(datasetPayload.dataRequests[0].configuration.jql).toContain("statusCategory = \"Done\"");
+    expectChartDatasetConfigContract({
+      chartType: chartPayload.type,
+      chartDatasetConfig: chartPayload.chartDatasetConfigs[0],
+      expected: {
+        dataset_id: 99,
+        xAxis: "root[].storyPoints",
+        yAxis: "root[].storyPoints",
+        yAxisOperation: "sum",
+      },
+    });
+    expect(result.intent_repair).toMatchObject({
+      repaired: true,
     });
   });
 

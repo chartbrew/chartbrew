@@ -75,6 +75,12 @@ async function createTemporaryChart(payload) {
     conditions = repairedPayload.conditions ?? conditions;
     variables = repairedPayload.variables ?? variables;
     spec = repairedPayload.spec || spec;
+    if (repairedPayload.intentRepair?.repaired) {
+      type = spec.type ?? type;
+      xAxis = spec.xAxis ?? xAxis;
+      yAxis = spec.yAxis ?? yAxis;
+      yAxisOperation = spec.yAxisOperation ?? yAxisOperation;
+    }
     const chartSanitization = removeCompiledMetricAccumulation({
       configuration,
       type,

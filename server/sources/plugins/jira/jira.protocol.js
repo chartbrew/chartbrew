@@ -785,6 +785,27 @@ async function fetchJiraRows(connection, config, fieldMappings = getFieldMapping
   return rows.slice(0, maxRecords);
 }
 
+async function fetchNormalizedRows(connection, config) {
+  const boardConfiguration = config.resource === "sprint_issues"
+    ? await loadBoardConfiguration(connection, config)
+    : null;
+  const fieldMappings = await resolveFieldMappings(connection, config, boardConfiguration);
+  const jiraRows = await fetchJiraRows(connection, config, fieldMappings);
+  const includeDoneAt = shouldIncludeDoneAt(config);
+  const doneStatusLookup = includeDoneAt ? await loadDoneStatusLookup(connection, config, boardConfiguration) : null;
+  const normalizedRows = ["issues", "sprint_issues"].includes(config.resource)
+    ? jiraRows.map((issue) => normalizeIssue(issue, fieldMappings, { includeDoneAt, doneStatusLookup }))
+    : jiraRows;
+
+  return {
+    boardConfiguration,
+    fieldMappings,
+    includeDoneAt,
+    jiraRows,
+    normalizedRows,
+  };
+}
+
 async function testConnection({ connection }) {
   const myself = await jiraConnection.getMyself(connection);
   return {
@@ -861,16 +882,7 @@ async function runDataRequest({
   }
 
   try {
-    const boardConfiguration = config.resource === "sprint_issues"
-      ? await loadBoardConfiguration(savedConnection, config)
-      : null;
-    const fieldMappings = await resolveFieldMappings(savedConnection, config, boardConfiguration);
-    const jiraRows = await fetchJiraRows(savedConnection, config, fieldMappings);
-    const includeDoneAt = shouldIncludeDoneAt(config);
-    const doneStatusLookup = includeDoneAt ? await loadDoneStatusLookup(savedConnection, config, boardConfiguration) : null;
-    const normalizedRows = ["issues", "sprint_issues"].includes(config.resource)
-      ? jiraRows.map((issue) => normalizeIssue(issue, fieldMappings, { includeDoneAt, doneStatusLookup }))
-      : jiraRows;
+    const { jiraRows, normalizedRows } = await fetchNormalizedRows(savedConnection, config);
     const transformedRows = transformRows(normalizedRows, config);
     const dataToCache = {
       dataRequest,
@@ -941,6 +953,7 @@ module.exports = {
   applyVariables,
   assertValidConfiguration,
   fetchJiraRows,
+  fetchNormalizedRows,
   getBuilderMetadata,
   getDefaultDataRequest,
   getSchema,

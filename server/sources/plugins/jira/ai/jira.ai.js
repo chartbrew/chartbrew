@@ -32,6 +32,7 @@ const SOURCE_INSTRUCTIONS = [
   "Use grouped, created_resolved_trend, sprint_summary, stale_table, or raw transforms to return chart-friendly rows.",
   "Keep previews capped. Use source_preview_configuration before creating charts when the user asks for unfamiliar JQL or sprint data.",
   "For Jira follow-ups, reuse previously resolved sprintId, boardId, and project key as source_plan_dataset overrides when they are visible in prior tool results.",
+  "For active sprint questions without a project key or sprint override, ask which Jira project to use before searching records or planning a dataset.",
 ].join("\n");
 
 const DISCOVERY_TARGETS = [
@@ -225,7 +226,7 @@ function buildJql({ question = "", overrides = {}, intent = {} } = {}) {
 
   if (projectValue) clauses.push(`project IN (${quoteList(projectValue)})`);
   if (intent.issueType || overrides.issueType) clauses.push(`issuetype = ${quoteList(intent.issueType || overrides.issueType)}`);
-  if (overrides.statusCategory) clauses.push(`statusCategory = ${quoteList(overrides.statusCategory)}`);
+  if (overrides.statusCategory || intent.statusCategory) clauses.push(`statusCategory = ${quoteList(overrides.statusCategory || intent.statusCategory)}`);
   if (intent.statusCategoryNotDone || overrides.statusCategoryNotDone) clauses.push("statusCategory != Done");
   if (overrides.status) clauses.push(`status = ${quoteList(overrides.status)}`);
   if (overrides.assignee) clauses.push(`assignee IN (${quoteList(overrides.assignee)})`);
@@ -296,6 +297,27 @@ function resolveIntent(question = "", overrides = {}) {
       needsVersion: true,
       transform: { type: "grouped", groupBy: "statusCategory", metric: "count" },
       chartType: "bar",
+    };
+  }
+
+  if (
+    normalizedQuestion.includes("sprint")
+    && (normalizedQuestion.includes("story point") || normalizedQuestion.includes("story points"))
+    && (
+      normalizedQuestion.includes("completed")
+      || normalizedQuestion.includes("complete")
+      || normalizedQuestion.includes("done")
+      || normalizedQuestion.includes("finished")
+    )
+  ) {
+    return {
+      id: "sprint_completed_story_points",
+      resource: "sprint_issues",
+      needsSprint: true,
+      needsUser: true,
+      statusCategory: "Done",
+      transform: { type: "raw" },
+      chartType: "kpi",
     };
   }
 
@@ -458,6 +480,17 @@ function getChartSpec(config, question, chartType) {
   const transform = config.transform || {};
   const title = makeTitle(question, config);
 
+  if (chartType === "kpi" && String(question || "").toLowerCase().includes("story point")) {
+    return {
+      type: "kpi",
+      title,
+      xAxis: "root[].storyPoints",
+      yAxis: "root[].storyPoints",
+      yAxisOperation: "sum",
+      legend: "Completed pts",
+    };
+  }
+
   if (transform.type === "grouped") {
     return {
       type: chartType || "bar",
@@ -520,6 +553,53 @@ function getChartSpec(config, question, chartType) {
     yAxisOperation: "count",
     subType: "AddTimeseries",
     legend: "Issues",
+  };
+}
+
+function appendJqlClause(jql = "", clause = "") {
+  const normalizedJql = String(jql || "").trim();
+  const normalizedClause = String(clause || "").trim();
+  if (!normalizedJql || !normalizedClause) return normalizedJql;
+  if (normalizedJql.toLowerCase().includes(normalizedClause.toLowerCase())) return normalizedJql;
+
+  const orderMatch = normalizedJql.match(/\s+ORDER\s+BY\s+[\s\S]*$/i);
+  if (!orderMatch) return `${normalizedJql} AND ${normalizedClause}`;
+
+  const baseJql = normalizedJql.slice(0, orderMatch.index).trim();
+  return `${baseJql} AND ${normalizedClause}${orderMatch[0]}`;
+}
+
+function shouldRepairCompletedStoryPointsKpi({ question = "", configuration = {} } = {}) {
+  const normalizedQuestion = String(question || "").toLowerCase();
+  return configuration.source === SOURCE_ID
+    && configuration.resource === "sprint_issues"
+    && normalizedQuestion.includes("sprint")
+    && normalizedQuestion.includes("story point")
+    && (
+      normalizedQuestion.includes("completed")
+      || normalizedQuestion.includes("complete")
+      || normalizedQuestion.includes("done")
+      || normalizedQuestion.includes("finished")
+    );
+}
+
+function repairDatasetIntent({ question = "", configuration = {} } = {}) {
+  if (!shouldRepairCompletedStoryPointsKpi({ question, configuration })) return null;
+
+  const repairedConfiguration = {
+    ...configuration,
+    jql: appendJqlClause(configuration.jql, "statusCategory = \"Done\""),
+    transform: { type: "raw" },
+  };
+  const validation = validateConfiguration(repairedConfiguration);
+  const chartSpec = getChartSpec(validation.configuration, question, "kpi");
+
+  return {
+    repaired: validation.valid,
+    repairReason: "Use a KPI sum of completed Jira story points instead of the last issue estimate.",
+    configuration: validation.configuration,
+    chartSpec,
+    validation,
   };
 }
 
@@ -643,6 +723,38 @@ function buildProjectStatusFallback({
   };
 }
 
+function hasSprintProjectContext(question = "", overrides = {}) {
+  return Boolean(
+    overrides.sprintId
+    || overrides.project
+    || overrides.projects
+    || overrides.projectIdOrKey
+    || extractProjectKey(question, overrides)
+  );
+}
+
+function buildProjectDisambiguation({
+  intent,
+  resolution = {},
+  warnings = [],
+} = {}) {
+  return {
+    status: "needs_disambiguation",
+    source: SOURCE_ID,
+    message: "Which Jira project should I use for the active sprint?",
+    options: [],
+    resolution,
+    actions: buildActions(intent, resolution),
+    warnings,
+    errors: [],
+    rationale: {
+      intent: intent.id,
+      resource: intent.resource,
+      transform: intent.transform,
+    },
+  };
+}
+
 function getProjectStatusFallbackConfiguration(configuration = {}) {
   const projectKey = configuration.projectIdOrKey && !String(configuration.projectIdOrKey).includes("{{")
     ? configuration.projectIdOrKey
@@ -679,6 +791,11 @@ async function planDataset({
   const intent = resolveIntent(question, overrides);
   const normalizedQuestion = question.toLowerCase();
   const issueType = overrides.issueType || intent.issueType || (normalizedQuestion.includes("bug") || normalizedQuestion.includes("defect") ? "Bug" : undefined);
+
+  if (intent.resource === "sprint_issues" && !hasSprintProjectContext(question, overrides)) {
+    return buildProjectDisambiguation({ intent });
+  }
+
   const resolvedContext = await jiraResolver.resolveContext({
     connection,
     question,
@@ -741,6 +858,7 @@ async function planDataset({
         resource: intent.resource,
         issueType,
         priority: normalizedQuestion.includes("blocker") ? "Blocker" : undefined,
+        statusCategory: intent.statusCategory,
         skipDefaultDateWindow: intent.id === "release_progress" || intent.skipDefaultDateWindow,
         statusCategoryNotDone: intent.statusCategoryNotDone,
       },
@@ -875,13 +993,7 @@ async function searchRecords({
       maxRecords,
     },
   };
-  const jiraRows = await jiraProtocol.fetchJiraRows(connection, configuration);
-  const fieldMappings = connection?.options?.jira?.fieldMappings || {};
-  const normalizedRows = ["issues", "sprint_issues"].includes(configuration.resource)
-    ? jiraRows.map((issue) => jiraProtocol.normalizeIssue(issue, fieldMappings, {
-      includeDoneAt: Boolean(configuration.includeDoneAt),
-    }))
-    : jiraRows;
+  const { normalizedRows } = await jiraProtocol.fetchNormalizedRows(connection, configuration);
   const rows = normalizedRows
     .slice(0, maxRecords)
     .map((row) => pickSearchRecordFields(row, fields));
@@ -917,25 +1029,18 @@ async function previewConfiguration({ connection, configuration, rowLimit = 25 }
   };
   let previewConfigToUse = previewConfig;
   let fallbackMessage = null;
-  let jiraRows;
+  let normalizedRows;
 
   try {
-    jiraRows = await jiraProtocol.fetchJiraRows(connection, previewConfigToUse);
+    ({ normalizedRows } = await jiraProtocol.fetchNormalizedRows(connection, previewConfigToUse));
   } catch (error) {
     if (previewConfig.resource !== "sprint_issues" || !shouldFallbackSprintPreview(error)) throw error;
 
     previewConfigToUse = getProjectStatusFallbackConfiguration(previewConfig);
-    jiraRows = await jiraProtocol.fetchJiraRows(connection, previewConfigToUse);
+    ({ normalizedRows } = await jiraProtocol.fetchNormalizedRows(connection, previewConfigToUse));
     fallbackMessage = `I could not preview sprint issues, so I used the project status breakdown instead: ${error.message}`;
   }
 
-  const includeDoneAt = Boolean(previewConfigToUse.includeDoneAt)
-    || ["created_resolved_trend", "sprint_summary"].includes(previewConfigToUse.transform?.type);
-  const normalizedRows = ["issues", "sprint_issues"].includes(previewConfigToUse.resource)
-    ? jiraRows.map((issue) => jiraProtocol.normalizeIssue(issue, connection?.options?.jira?.fieldMappings || {}, {
-      includeDoneAt,
-    }))
-    : jiraRows;
   const rows = jiraProtocol.transformRows(normalizedRows, previewConfigToUse);
 
   return {
@@ -1000,6 +1105,7 @@ module.exports = {
   planDataset,
   previewConfiguration,
   recommendTemplates,
+  repairDatasetIntent,
   resolveContext,
   searchRecords,
   validateConfiguration,

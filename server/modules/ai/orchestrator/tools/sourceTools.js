@@ -60,6 +60,19 @@ function mergeQuestionContext(question, originalQuestion) {
   return `${question}\nOriginal user request: ${originalQuestion}`;
 }
 
+function withDisambiguationPrompt(result) {
+  if (result?.status !== "needs_disambiguation") {
+    return result;
+  }
+
+  return {
+    ...result,
+    needs_user_input: true,
+    prompt: result.message || "Choose an option before I continue.",
+    options: Array.isArray(result.options) ? result.options : [],
+  };
+}
+
 async function sourceGetCapabilities(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "getCapabilities");
@@ -113,16 +126,7 @@ async function sourcePlanDataset(payload) {
     mode: payload.mode || "preview",
   });
 
-  if (result?.status === "needs_disambiguation") {
-    return {
-      ...result,
-      needs_user_input: true,
-      prompt: result.message || "Choose an option before I continue.",
-      options: Array.isArray(result.options) ? result.options : [],
-    };
-  }
-
-  return result;
+  return withDisambiguationPrompt(result);
 }
 
 async function sourceResolveContext(payload) {
@@ -179,7 +183,7 @@ async function sourceSearchRecords(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "searchRecords");
 
-  return tool({
+  const result = await tool({
     connection,
     question: mergeQuestionContext(payload.question, payload.original_question),
     resource: payload.resource,
@@ -189,6 +193,8 @@ async function sourceSearchRecords(payload) {
     rowLimit: payload.row_limit,
     overrides: payload.overrides || {},
   });
+
+  return withDisambiguationPrompt(result);
 }
 
 async function sourceValidateConfiguration(payload) {

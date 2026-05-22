@@ -102,6 +102,182 @@ describe("Jira AI planner", () => {
     });
   });
 
+  it("asks for a Jira project before resolving active sprint story points", async () => {
+    const listBoardsSpy = vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([]);
+    const listSprintsSpy = vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);
+
+    const plan = await jiraAi.planDataset({
+      connection: { id: 42, type: "jira", subType: "jira" },
+      question: "How many story points did Razvan complete in the last Sprint?",
+    });
+
+    expect(plan.status).toBe("needs_disambiguation");
+    expect(plan.message).toContain("Which Jira project");
+    expect(plan.rationale).toMatchObject({
+      intent: "sprint_completed_story_points",
+      resource: "sprint_issues",
+    });
+    expect(listBoardsSpy).not.toHaveBeenCalled();
+    expect(listSprintsSpy).not.toHaveBeenCalled();
+  });
+
+  it("plans completed sprint story points by assignee after the project is supplied", async () => {
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "A4321 Sprint 14",
+      state: "active",
+    }]);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+    }]);
+
+    const plan = await jiraAi.planDataset({
+      connection: { id: 42, type: "jira", subType: "jira" },
+      question: "How many story points did Razvan complete in the last Sprint?",
+      overrides: {
+        project: "A4321",
+      },
+    });
+
+    expect(plan.status).toBe("ok");
+    expect(plan.rationale.intent).toBe("sprint_completed_story_points");
+    expect(plan.configuration).toMatchObject({
+      resource: "sprint_issues",
+      sprintId: "123",
+      boardId: "77",
+      projectIdOrKey: "A4321",
+      transform: {
+        type: "raw",
+      },
+    });
+    expect(plan.configuration.jql).toContain("project IN (\"A4321\")");
+    expect(plan.configuration.jql).toContain("statusCategory = \"Done\"");
+    expect(plan.configuration.jql).toContain("assignee IN (\"raz-account\")");
+    expect(plan.chartSpec).toMatchObject({
+      type: "kpi",
+      yAxis: "root[].storyPoints",
+      yAxisOperation: "sum",
+    });
+  });
+
+  it("uses the board estimation field when searching sprint story points", async () => {
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "D2371",
+      name: "D2371 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 289,
+      name: "D2371 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "FLS2.0 Sprint 17",
+      state: "active",
+    }]);
+    vi.spyOn(jiraConnection, "listUsers").mockResolvedValue([{
+      accountId: "raz-account",
+      displayName: "Razvan Ilin",
+    }]);
+    vi.spyOn(jiraConnection, "getBoardConfiguration").mockResolvedValue({
+      id: 289,
+      estimation: {
+        type: "field",
+        field: {
+          displayName: "Story point estimate",
+          fieldId: "customfield_10042",
+        },
+      },
+    });
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockImplementation((connection, route, options) => {
+        const requestedFields = String(options.qs.fields || "").split(",");
+        const includesStoryPoints = requestedFields.includes("customfield_10042");
+
+        return Promise.resolve({
+          issues: [{
+            key: "D2371-1",
+            fields: {
+              summary: "Complete sprint story",
+              status: { name: "Done", statusCategory: { name: "Done", key: "done" } },
+              assignee: { displayName: "Razvan Ilin" },
+              issuetype: { name: "Story" },
+              updated: "2026-05-22T00:00:00.000Z",
+              ...(includesStoryPoints ? { customfield_10042: 8 } : {}),
+            },
+          }],
+          total: 1,
+        });
+      });
+
+    const result = await jiraAi.searchRecords({
+      connection: {
+        id: 42,
+        type: "jira",
+        subType: "jira",
+        options: { jira: {} },
+      },
+      question: "How many story points did Razvan complete in the last Sprint?",
+      overrides: {
+        project: "D2371",
+      },
+      fields: ["key", "status", "assignee", "storyPoints"],
+      rowLimit: 10,
+    });
+
+    expect(result.status).toBe("ok");
+    expect(result.rows).toEqual([expect.objectContaining({
+      key: "D2371-1",
+      assignee: "Razvan Ilin",
+      storyPoints: 8,
+    })]);
+    expect(jiraConnection.getBoardConfiguration).toHaveBeenCalledWith(expect.any(Object), {
+      boardId: "289",
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/agile/1.0/sprint/123/issue", {
+      qs: expect.objectContaining({
+        fields: expect.stringContaining("customfield_10042"),
+      }),
+    });
+  });
+
+  it("repairs completed story point KPI bindings from raw sprint issue searches", () => {
+    const repair = jiraAi.repairDatasetIntent({
+      question: "How many story points did Razvan complete in the last Sprint for D2371?",
+      configuration: {
+        source: "jira",
+        resource: "sprint_issues",
+        mode: "visual",
+        jql: "project IN (\"D2371\") AND assignee IN (\"raz-account\") ORDER BY updated DESC",
+        fields: ["key", "summary", "status", "assignee", "storyPoints"],
+        transform: { type: "raw" },
+        sprintId: "1160",
+        boardId: "289",
+        projectIdOrKey: "D2371",
+      },
+    });
+
+    expect(repair.repaired).toBe(true);
+    expect(repair.configuration.jql).toContain("statusCategory = \"Done\"");
+    expect(repair.chartSpec).toMatchObject({
+      type: "kpi",
+      yAxis: "root[].storyPoints",
+      yAxisOperation: "sum",
+    });
+  });
+
   it("returns resolution and correction actions for active sprint status", async () => {
     vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
       id: "10001",
@@ -319,32 +495,34 @@ describe("Jira AI planner", () => {
   });
 
   it("normalizes preview issues with doneAt when requested", async () => {
-    vi.spyOn(jiraProtocol, "fetchJiraRows").mockResolvedValue([{
-      key: "A4321-1",
-      fields: {
-        summary: "Ship release checklist",
-        project: { key: "A4321" },
-        status: {
-          name: "Done",
-          statusCategory: {
-            key: "done",
+    vi.spyOn(jiraConnection, "jiraRequest").mockResolvedValue({
+      issues: [{
+        key: "A4321-1",
+        fields: {
+          summary: "Ship release checklist",
+          project: { key: "A4321" },
+          status: {
             name: "Done",
+            statusCategory: {
+              key: "done",
+              name: "Done",
+            },
           },
+          created: "2026-01-01T00:00:00.000Z",
+          updated: "2026-01-04T00:00:00.000Z",
+          resolutiondate: null,
         },
-        created: "2026-01-01T00:00:00.000Z",
-        updated: "2026-01-04T00:00:00.000Z",
-        resolutiondate: null,
-      },
-      changelog: {
-        histories: [{
-          created: "2026-01-03T12:00:00.000Z",
-          items: [{
-            field: "status",
-            toString: "Done",
+        changelog: {
+          histories: [{
+            created: "2026-01-03T12:00:00.000Z",
+            items: [{
+              field: "status",
+              toString: "Done",
+            }],
           }],
-        }],
-      },
-    }]);
+        },
+      }],
+    });
 
     const preview = await jiraAi.previewConfiguration({
       connection: { id: 42 },
@@ -364,21 +542,23 @@ describe("Jira AI planner", () => {
   });
 
   it("falls back to project status when sprint issue preview fails", async () => {
-    const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
-    const fetchSpy = vi.spyOn(jiraProtocol, "fetchJiraRows");
-    fetchSpy
+    vi.spyOn(jiraConnection, "getBoardConfiguration").mockResolvedValue(null);
+    const requestSpy = vi.spyOn(jiraConnection, "jiraRequest");
+    requestSpy
       .mockRejectedValueOnce(new Error("400 - The sprint field is invalid"))
-      .mockResolvedValueOnce([{
-        key: "A4321-1",
-        fields: {
-          summary: "Fallback issue",
-          project: { key: "A4321" },
-          issuetype: { name: "Story" },
-          status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
-          created: "2026-05-01T00:00:00.000Z",
-          updated: "2026-05-02T00:00:00.000Z",
-        },
-      }]);
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "A4321-1",
+          fields: {
+            summary: "Fallback issue",
+            project: { key: "A4321" },
+            issuetype: { name: "Story" },
+            status: { name: "In Progress", statusCategory: { name: "In Progress", key: "indeterminate" } },
+            created: "2026-05-01T00:00:00.000Z",
+            updated: "2026-05-02T00:00:00.000Z",
+          },
+        }],
+      });
 
     const preview = await jiraAi.previewConfiguration({
       connection: { id: 42 },
@@ -404,23 +584,16 @@ describe("Jira AI planner", () => {
       expect.stringContaining("400 - The sprint field is invalid"),
     ]));
     expect(preview.rows).toEqual([{ status: "In Progress", issueCount: 1, storyPoints: 0 }]);
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
-    expect(fetchSpy.mock.calls[1][1]).toMatchObject({
-      resource: "issues",
-      sprintId: undefined,
-      boardId: undefined,
-      projectIdOrKey: "A4321",
-      transform: { type: "grouped", groupBy: "status", metric: "count" },
-      includeDoneAt: false,
-    });
-    expect(fetchSpy.mock.calls[1][1].jql).toContain("project IN (\"A4321\")");
-    expect(fetchSpy.mock.calls[1][1].jql).toContain("statusCategory != Done");
-    expect(fetchSpy.mock.calls[1][1].jql).not.toContain("created >=");
+    expect(requestSpy).toHaveBeenCalledTimes(2);
+    expect(requestSpy.mock.calls[1][1]).toBe("/rest/api/3/search/jql");
+    expect(requestSpy.mock.calls[1][2].body.jql).toContain("project IN (\"A4321\")");
+    expect(requestSpy.mock.calls[1][2].body.jql).toContain("statusCategory != Done");
+    expect(requestSpy.mock.calls[1][2].body.jql).not.toContain("created >=");
   });
 
   it("does not fallback for generic missing resource preview errors", async () => {
-    const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
-    const fetchSpy = vi.spyOn(jiraProtocol, "fetchJiraRows")
+    vi.spyOn(jiraConnection, "getBoardConfiguration").mockResolvedValue(null);
+    const requestSpy = vi.spyOn(jiraConnection, "jiraRequest")
       .mockRejectedValueOnce(new Error("404 - Project does not exist"));
 
     await expect(jiraAi.previewConfiguration({
@@ -440,12 +613,12 @@ describe("Jira AI planner", () => {
       },
     })).rejects.toThrow("404 - Project does not exist");
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(requestSpy).toHaveBeenCalledTimes(1);
   });
 
   it("does not fallback for generic missing field preview errors", async () => {
-    const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
-    const fetchSpy = vi.spyOn(jiraProtocol, "fetchJiraRows")
+    vi.spyOn(jiraConnection, "getBoardConfiguration").mockResolvedValue(null);
+    const requestSpy = vi.spyOn(jiraConnection, "jiraRequest")
       .mockRejectedValueOnce(new Error("400 - Field not found"));
 
     await expect(jiraAi.previewConfiguration({
@@ -465,7 +638,7 @@ describe("Jira AI planner", () => {
       },
     })).rejects.toThrow("400 - Field not found");
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(requestSpy).toHaveBeenCalledTimes(1);
   });
 
   it("returns a useful fallback when no active sprint can be resolved", async () => {

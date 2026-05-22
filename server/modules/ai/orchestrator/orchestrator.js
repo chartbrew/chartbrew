@@ -917,6 +917,7 @@ ${ENTITY_CREATION_RULES}
      * Use source_resolve_context when a Jira follow-up needs to inspect or correct project, board, sprint, version, or user context.
      * Use source_run_action for bounded Jira metadata lookups such as users, projects, boards, sprints, versions, or JQL validation.
      * Use source_search_records for answer-first Jira issue lists before creating datasets. This is preferred for prompts like "what is Raz working on", "show open issues assigned to X", "show blockers", or "what is in the active sprint".
+     * For Jira active sprint questions without visible project or sprint context, ask for the project first. After the project is known, pass it as overrides.project to source_search_records or source_plan_dataset so Jira can resolve the active sprint directly.
      * Call source_plan_dataset with the user's business question. Use mode="preview" for exploration or temporary charts, and mode="persist" before saved datasets, saved charts, or dashboards so ambiguous source context can be clarified. Do not invent API routes or configuration fields.
      * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
      * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
@@ -1285,6 +1286,57 @@ function buildResponseInputFromMessages(messages) {
   return input;
 }
 
+function parseToolResultContent(content) {
+  if (!content || typeof content !== "string") return null;
+
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    return null;
+  }
+}
+
+function getJiraResolution(result = {}) {
+  if (result.source !== "jira") return null;
+  if (result.resolution?.entities) return result.resolution.entities;
+  return result.resolution || {};
+}
+
+function extractJiraContext(result = {}) {
+  const resolution = getJiraResolution(result);
+  const configuration = result.configuration || result.dataRequest?.configuration || {};
+  if (!resolution) return null;
+
+  const projectKey = resolution.project?.key || configuration.projectIdOrKey;
+  const boardId = resolution.board?.id || configuration.boardId;
+  const boardName = resolution.board?.name;
+  const sprintId = resolution.sprint?.id || configuration.sprintId;
+  const sprintName = resolution.sprint?.name;
+
+  if (!projectKey && !boardId && !sprintId) return null;
+
+  return [
+    projectKey ? `Jira project ${projectKey}` : null,
+    boardId ? `board ${boardId}${boardName ? ` (${boardName})` : ""}` : null,
+    sprintId ? `sprint ${sprintId}${sprintName ? ` (${sprintName})` : ""}` : null,
+  ].filter(Boolean).join(", ");
+}
+
+function collectRecentSourceContext(history = []) {
+  const recentMessages = Array.isArray(history) ? history.slice(-30).reverse() : [];
+  const jiraContext = recentMessages
+    .filter((message) => message.role === "tool")
+    .map((message) => extractJiraContext(parseToolResultContent(message.content)))
+    .find(Boolean);
+
+  if (!jiraContext) return "";
+
+  return [
+    `RECENT_SOURCE_CONTEXT: ${jiraContext}.`,
+    "For Jira follow-up or correction requests, reuse this context as overrides.project, overrides.boardId, and overrides.sprintId unless the user changes it.",
+  ].join("\n");
+}
+
 function buildResponseTools(toolDefinitions) {
   return toolDefinitions.map((tool) => ({
     type: "function",
@@ -1553,6 +1605,14 @@ async function orchestrate(
     };
     persistedMessages.push(contextMessage);
     modelMessages.push(contextMessage);
+  }
+
+  const recentSourceContext = collectRecentSourceContext(sanitizedHistory);
+  if (recentSourceContext) {
+    modelMessages.push({
+      role: "assistant",
+      content: recentSourceContext,
+    });
   }
 
   // Add user message
@@ -1829,6 +1889,7 @@ module.exports = {
   buildSemanticLayer,
   buildResponseInputFromMessages,
   buildAssistantMessageFromResponse,
+  collectRecentSourceContext,
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
   sanitizeToolError,
