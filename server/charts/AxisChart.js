@@ -1018,7 +1018,6 @@ class AxisChart {
 
   /* OPERATIONS */
   operate(data, xData, xType, yType, op, yAxis, averageByTotal) {
-    const explicitOperations = ["avg", "max", "min", "sum"];
     const yData = {};
     data.map((item, index) => {
       let key = item.x;
@@ -1080,12 +1079,8 @@ class AxisChart {
           finalItem = nestedResult;
         }
       } else {
-        const shouldSumDateBucket = xType === "date"
-          && yType === "number"
-          && !explicitOperations.includes(op);
-
         finalItem = finalItem[yData[key].length - 1];
-        if ((op === "sum" || shouldSumDateBucket) && yType === "number") {
+        if (op === "sum" && yType === "number") {
           finalItem = _.reduce(yData[key], (sum, n) => {
             const value = n instanceof Object ? 0 : Number(n);
             return sum + (Number.isNaN(value) ? 0 : value);
