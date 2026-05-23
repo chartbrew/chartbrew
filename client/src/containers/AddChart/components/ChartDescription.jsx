@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Accordion, Button, Chip, ProgressCircle, EmptyState, InputGroup, Table, TextField, cn,
   Tabs,
@@ -70,9 +70,12 @@ function ChartDescription(props) {
     onCreateDataset,
   } = props;
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("datasets");
+  const [activeTab, setActiveTab] = useState(() => (
+    searchParams.get("tab") === "templates" ? "templates" : "datasets"
+  ));
   const [expandedTemplateKeys, setExpandedTemplateKeys] = useState(new Set());
 
   const dispatch = useDispatch();
@@ -190,6 +193,15 @@ function ChartDescription(props) {
   }, [searchValue, activeTab]);
 
   useEffect(() => {
+    const tab = searchParams.get("tab");
+    const nextTab = tab === "templates" ? "templates" : "datasets";
+
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+  }, [activeTab, searchParams]);
+
+  useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
@@ -216,6 +228,20 @@ function ChartDescription(props) {
     if (!template?.isAvailable) {
       navigate(`/connections/new?type=${template.requiredConnection?.subType || template.source}`);
     }
+  };
+
+  const _onChangeTab = (key) => {
+    const nextTab = key === "templates" ? "templates" : "datasets";
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (nextTab === "templates") {
+      nextParams.set("tab", "templates");
+    } else {
+      nextParams.delete("tab");
+    }
+
+    setActiveTab(nextTab);
+    setSearchParams(nextParams, { replace: true });
   };
 
   const _onExpandedTemplatesChange = (keys) => {
@@ -386,7 +412,7 @@ function ChartDescription(props) {
         </div>
       </div>
       <div className="h-4" />
-      <Tabs selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key)}>
+      <Tabs selectedKey={activeTab} onSelectionChange={_onChangeTab}>
         <Tabs.ListContainer className="max-w-md">
           <Tabs.List>
             <Tabs.Tab id="datasets">

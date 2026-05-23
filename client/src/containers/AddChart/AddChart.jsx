@@ -22,6 +22,7 @@ import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import { placeNewWidget } from "../../modules/autoLayout";
 import { chartColors } from "../../config/colors";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
+import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 
@@ -185,8 +186,11 @@ function AddChart() {
   const _onCreateFromDataset = async (dataset) => {
     setCreatingDatasetId(dataset.id);
 
+    let initialDataFetchStarted = false;
+
     try {
       const datasetName = getDatasetDisplayName(dataset) || "Untitled dataset";
+      const defaultBindings = getDefaultCdcBindings(dataset);
       const chart = await _createChart(datasetName);
 
       await dispatch(createCdc({
@@ -198,24 +202,24 @@ function AddChart() {
           datasetColor: chartColors.blue.hex,
           fill: false,
           order: 0,
+          ...defaultBindings,
         },
       })).unwrap();
 
-      try {
-        await dispatch(runQuery({
-          project_id: chart.project_id,
-          chart_id: chart.id,
-          noSource: false,
-          skipParsing: false,
-          getCache: true,
-        })).unwrap();
-      } catch (error) {
-        // The chart editor can recover from a failed first run.
-      }
+      initialDataFetchStarted = true;
+      await dispatch(runQuery({
+        project_id: chart.project_id,
+        chart_id: chart.id,
+        noSource: false,
+        skipParsing: false,
+        getCache: true,
+      })).unwrap();
 
       navigate(`${chart.id}/edit`);
     } catch (error) {
-      toast.error("Oups! Can't create the chart. Please try again.");
+      toast.error(initialDataFetchStarted
+        ? "We couldn't fetch data for this chart yet. Please check the dataset and try again."
+        : "Oups! Can't create the chart. Please try again.");
     } finally {
       setCreatingDatasetId(null);
     }

@@ -27,7 +27,6 @@ import {
   LuMonitorSmartphone,
   LuMonitorUp,
   LuArrowDownRight,
-  LuPlug,
   LuTvMinimal,
   LuChevronDown,
   LuSettings,
@@ -51,7 +50,6 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
-import Row from "../../components/Row";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import Text from "../../components/Text";
 import { selectProjectMembers, selectTeam } from "../../slices/team";
@@ -66,10 +64,10 @@ import { displayInitials } from "../../modules/utils";
 import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
-import { selectConnections } from "../../slices/connection";
 import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
 import SuspenseLoader from "../../components/SuspenseLoader";
 import { buildChartRuntimeRequest } from "../../modules/chartRuntimeFilters";
+import DashboardStarter from "./components/DashboardStarter";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -153,7 +151,6 @@ function ProjectDashboard() {
   const project = useSelector(selectProject);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
-  const connections = useSelector(selectConnections);
 
   const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
@@ -865,10 +862,11 @@ function ProjectDashboard() {
   const projectMemberStackVisible = projectMemberStackOverflow > 0
     ? projectMemberStack.slice(0, projectMemberStackMax - 1)
     : projectMemberStack.slice(0, projectMemberStackMax);
+  const currentDashboardCharts = charts.filter((chart) => `${chart.project_id}` === params.projectId);
 
   return (
     <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>
-      {charts && charts.length > 0
+      {charts && currentDashboardCharts.length > 0
         && (
           <div ref={dashboardParentRef}>
             <div
@@ -1185,47 +1183,13 @@ function ProjectDashboard() {
         }}
         ref={dashboardRef}
       >
-        {charts.length === 0 && !chartsLoading && (
-          <div className="flex flex-col justify-center pt-10">
-            <Row justify="center" align="center">
-              <span className="text-4xl font-bold font-tw">
-                Welcome to your dashboard
-              </span>
-            </Row>
-            <div className="h-1" />
-            {_canAccess("projectAdmin") && (
-              <>
-                <Row justify="center" align="center">
-                  <span>
-                    {"It looks empty over here. Let's get you started!"}
-                  </span>
-                </Row>
-                <div className="h-4" />
-                <div className="flex flex-row justify-center gap-2">
-                  <Button
-                    size="lg"
-                    variant={connections.length > 0 ? "tertiary" : "primary"}
-                    onPress={() => navigate("/connections/new")}
-                  >
-                    Create a connection
-                    <LuPlug size={22} />
-                  </Button>
-                  {connections.length > 0 && (
-                    <Button
-                      size="lg"
-                      onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
-                    >
-                      Create a chart
-                      <LuChartPie size={22} />
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+        {currentDashboardCharts.length === 0 && !chartsLoading && (
+          <DashboardStarter
+            projectId={params.projectId}
+          />
         )}
 
-        {layouts && charts.filter((c) => `${c.project_id}` === params.projectId).length > 0 && (
+        {layouts && currentDashboardCharts.length > 0 && (
           <ResponsiveGridLayout
             className="layout dashboard-tutorial"
             layouts={layouts}

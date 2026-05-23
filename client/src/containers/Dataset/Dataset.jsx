@@ -18,6 +18,7 @@ import { getTeams, selectTeam } from "../../slices/team";
 import { getProjects, selectProjects } from "../../slices/project";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDashboardLayout from "../../modules/getDashboardLayout";
+import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
 import { placeNewWidget } from "../../modules/autoLayout";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 
@@ -204,6 +205,7 @@ function Dataset() {
       if (fromChart === "create") {
         const chartId = query.get("chart_id");
         const projectId = query.get("project_id");
+        const defaultBindings = getDefaultCdcBindings(dataset);
 
         await dispatch(updateChart({
           project_id: projectId,
@@ -220,6 +222,7 @@ function Dataset() {
             datasetColor: chartColors.blue.hex,
             fill: false,
             order: 0,
+            ...defaultBindings,
           },
         })).unwrap();
 
@@ -291,6 +294,7 @@ function Dataset() {
       const charts = await dispatch(getProjectCharts({ project_id: projectId })).unwrap();
       const chartLayout = getNewChartLayoutForProject(charts || []);
       const trimmedName = datasetName.trim() || getDatasetDisplayName(dataset) || "Untitled dataset";
+      const defaultBindings = getDefaultCdcBindings(dataset);
 
       const chart = await dispatch(createChart({
         project_id: projectId,
@@ -310,20 +314,17 @@ function Dataset() {
           datasetColor: chartColors.blue.hex,
           fill: false,
           order: 0,
+          ...defaultBindings,
         },
       })).unwrap();
 
-      try {
-        await dispatch(runQuery({
-          project_id: projectId,
-          chart_id: chart.id,
-          noSource: false,
-          skipParsing: false,
-          getCache: true,
-        })).unwrap();
-      } catch (queryError) {
-        // The chart editor can recover from a failed first run.
-      }
+      await dispatch(runQuery({
+        project_id: projectId,
+        chart_id: chart.id,
+        noSource: false,
+        skipParsing: false,
+        getCache: true,
+      })).unwrap();
 
       setCreateChartModalOpen(false);
       setCreateChartSelectedProjectKey(null);
