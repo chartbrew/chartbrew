@@ -58,6 +58,7 @@ function getConfiguration(dataRequest = {}) {
   return {
     ...DEFAULT_CONFIGURATION,
     ...configuration,
+    jql: sanitizeJqlInClauses(configuration.jql || DEFAULT_CONFIGURATION.jql),
     fields: configuration.fields || DEFAULT_CONFIGURATION.fields,
     transform: {
       ...DEFAULT_CONFIGURATION.transform,
@@ -579,11 +580,47 @@ function getExpandValues(config = {}) {
   return expandValues;
 }
 
+function splitJqlListValues(value = "") {
+  const values = [];
+  let currentValue = "";
+  let inQuotes = false;
+  let isEscaped = false;
+
+  String(value || "").split("").forEach((character) => {
+    if (character === "\"" && !isEscaped) {
+      inQuotes = !inQuotes;
+    }
+
+    if (character === "," && !inQuotes) {
+      values.push(currentValue.trim());
+      currentValue = "";
+    } else {
+      currentValue += character;
+    }
+
+    isEscaped = character === "\\" && !isEscaped;
+    if (character !== "\\") {
+      isEscaped = false;
+    }
+  });
+
+  values.push(currentValue.trim());
+  return values.filter(Boolean);
+}
+
+function sanitizeJqlInClauses(jql = "") {
+  return String(jql || "").replace(/\bIN\s*\(([^()]*)\)/gi, (match, listValue) => {
+    const values = splitJqlListValues(listValue);
+    if (values.length === 0) return match;
+    return match.replace(listValue, values.join(", "));
+  });
+}
+
 function buildIssueSearchBody(config, nextPageToken = null, fieldMappings = {}) {
   const maxResults = Math.min(Number(config.pagination?.maxResults || 100), 100);
   const expand = getExpandValues(config);
   const body = {
-    jql: config.jql,
+    jql: sanitizeJqlInClauses(config.jql),
     fields: getRequestFields(config, fieldMappings),
     maxResults,
   };
@@ -623,6 +660,12 @@ function getTrendDateRange(config = {}) {
   return { startDate, endDate };
 }
 
+function removeTrendDateClause(jql = "", field, operator) {
+  const escapedField = String(field).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedOperator = String(operator).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return String(jql || "").replace(new RegExp(`\\s+AND\\s+${escapedField}\\s*${escapedOperator}\\s*("(?:\\\\"|[^"])*"|now\\(\\)|[^\\s)]+)`, "gi"), "");
+}
+
 function getTrendBaseJql(jql = "") {
   const withoutOrder = stripOrderBy(jql);
   const templateDateBlockIndex = withoutOrder.search(/\s+AND\s+\(\(\s*created\s*>=/i);
@@ -630,12 +673,14 @@ function getTrendBaseJql(jql = "") {
     return withoutOrder.slice(0, templateDateBlockIndex).trim();
   }
 
-  return withoutOrder
-    .replace(/\s+AND\s+created\s*>=\s*[^\s)]+/gi, "")
-    .replace(/\s+AND\s+created\s*<=\s*[^\s)]+/gi, "")
-    .replace(/\s+AND\s+statusCategoryChangedDate\s*>=\s*[^\s)]+/gi, "")
-    .replace(/\s+AND\s+statusCategoryChangedDate\s*<=\s*[^\s)]+/gi, "")
-    .trim();
+  return [
+    ["created", ">="],
+    ["created", "<="],
+    ["statusCategoryChangedDate", ">="],
+    ["statusCategoryChangedDate", "<="],
+  ].reduce((baseJql, [field, operator]) => {
+    return removeTrendDateClause(baseJql, field, operator);
+  }, withoutOrder).trim();
 }
 
 function appendJqlClause(baseJql, clause) {
@@ -712,7 +757,7 @@ function buildSprintIssueSearchParams(config, startAt, fieldMappings = {}) {
     startAt,
     maxResults,
   };
-  const jql = String(config.jql || "").trim();
+  const jql = sanitizeJqlInClauses(config.jql).trim();
 
   if (jql && !jql.includes("{{") && config.transform?.type !== "sprint_summary") {
     params.jql = jql;

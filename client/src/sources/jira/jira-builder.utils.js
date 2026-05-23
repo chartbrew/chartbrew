@@ -83,11 +83,20 @@ function inferProjectValueFromJql(jql = "") {
   return equalsMatch?.[1]?.trim() || "";
 }
 
+function normalizeCsvValue(value = "") {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function normalizeVisualConfig(visual = {}) {
   const defaultRange = getDefaultDateRange();
 
   return {
     ...visual,
+    projects: normalizeCsvValue(visual.projects),
     dateField: visual.dateField || "created",
     startDate: normalizeDateRangeValue(visual.startDate, defaultRange.startDate),
     endDate: normalizeDateRangeValue(visual.endDate, defaultRange.endDate),
@@ -161,8 +170,9 @@ export function buildJqlFromVisualConfig(configuration) {
   const dateField = visual.dateField || "created";
   const jqlDateField = getJqlDateField(dateField);
   const isDoneDateField = dateField === "doneAt";
+  const projects = normalizeCsvValue(visual.projects);
 
-  addClause(clauses, visual.projects ? `project IN (${visual.projects})` : null);
+  addClause(clauses, projects ? `project IN (${projects})` : null);
   addClause(clauses, visual.issueType ? `issuetype = ${quoteJqlValue(visual.issueType)}` : null);
   addClause(clauses, isDoneDateField ? "statusCategory = Done" : null);
   addClause(clauses, !isDoneDateField && visual.statusCategory ? `statusCategory = ${quoteJqlValue(visual.statusCategory)}` : null);

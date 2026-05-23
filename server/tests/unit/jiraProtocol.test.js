@@ -264,6 +264,53 @@ describe("Jira protocol", () => {
     });
   });
 
+  it("keeps now() date variables valid when splitting Jira trend searches", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValueOnce({ issues: [] })
+      .mockResolvedValueOnce({ issues: [] });
+    vi.spyOn(jiraConnection, "listStatuses").mockResolvedValue([]);
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+      },
+      dataRequest: {
+        id: 18,
+        configuration: {
+          source: "jira",
+          resource: "issues",
+          mode: "visual",
+          includeDoneAt: true,
+          jql: "project IN (D2371) AND created >= -365d AND created <= now() ORDER BY updated DESC",
+          transform: { type: "created_resolved_trend", interval: "day" },
+          pagination: { maxResults: 100, maxRecords: 1000 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(jiraConnection.jiraRequest).toHaveBeenNthCalledWith(1, expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: "project IN (D2371) AND created >= -365d AND created <= now() ORDER BY created ASC",
+      }),
+    });
+    expect(jiraConnection.jiraRequest).toHaveBeenNthCalledWith(2, expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: "project IN (D2371) AND statusCategory = Done AND statusCategoryChangedDate >= -365d AND statusCategoryChangedDate <= now() ORDER BY updated ASC",
+      }),
+    });
+  });
+
   it("runs issue searches and caches normalized response data", async () => {
     vi.spyOn(jiraConnection, "jiraRequest")
       .mockResolvedValueOnce({
@@ -330,6 +377,52 @@ describe("Jira protocol", () => {
         data: [expect.objectContaining({ key: "CHART-1" })],
       },
     }));
+  });
+
+  it("removes empty values from Jira IN clauses before issue searches", async () => {
+    vi.spyOn(jiraConnection, "jiraRequest")
+      .mockResolvedValueOnce({
+        issues: [{
+          key: "CHART-1",
+          fields: {
+            summary: "Open issue",
+            status: { name: "To Do", statusCategory: { name: "To Do" } },
+          },
+        }],
+      });
+    vi.spyOn(drCacheController, "create").mockResolvedValue({});
+
+    await jiraProtocol.runDataRequest({
+      connection: {
+        id: 7,
+        type: "jira",
+        subType: "jira",
+        host: "https://chartbrew.atlassian.net",
+        authentication: {
+          email: "raz@example.com",
+          apiToken: "token",
+        },
+      },
+      dataRequest: {
+        id: 17,
+        configuration: {
+          source: "jira",
+          resource: "issues",
+          mode: "jql",
+          jql: "project IN (CHART,) AND assignee IN (\"raz-account\", ) ORDER BY updated DESC",
+          transform: { type: "raw" },
+          pagination: { maxResults: 100, maxRecords: 100 },
+        },
+      },
+      getCache: false,
+    });
+
+    expect(jiraConnection.jiraRequest).toHaveBeenCalledWith(expect.any(Object), "/rest/api/3/search/jql", {
+      method: "POST",
+      body: expect.objectContaining({
+        jql: "project IN (CHART) AND assignee IN (\"raz-account\") ORDER BY updated DESC",
+      }),
+    });
   });
 
   it("paginates issue searches with nextPageToken", async () => {
