@@ -1,6 +1,7 @@
 const db = require("../models/models");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
+const ProjectController = require("./ProjectController");
 const { listTemplates, loadTemplate } = require("../sources/shared/templates/chartTemplateLoader");
 const { buildTemplateLayouts } = require("../sources/shared/templates/chartTemplateLayout");
 const { getSourceById } = require("../sources");
@@ -85,6 +86,7 @@ class ChartTemplateController {
   constructor() {
     this.chartController = new ChartController();
     this.datasetController = new DatasetController();
+    this.projectController = new ProjectController();
   }
 
   triggerChartUpdates(charts, user) {
@@ -305,38 +307,12 @@ class ChartTemplateController {
       throw new Error("Unsupported dashboard type");
     }
 
-    const name = dashboard.name || "Stripe Revenue";
-    const project = await db.Project.create({
+    const name = dashboard.name || "AI Dashboard";
+    return this.projectController.create(user.id, {
       team_id: teamId,
       name,
       ghost: false,
     }, { transaction });
-
-    const brewName = `${name.replace(/[\W_]+/g, "_")}_${project.id}`;
-    await project.update({ brewName }, { transaction });
-
-    await db.ProjectRole.create({
-      project_id: project.id,
-      user_id: user.id,
-      role: "teamOwner",
-    }, { transaction });
-
-    const teamRoles = await db.TeamRole.findAll({
-      where: { team_id: teamId },
-      transaction,
-    });
-
-    await Promise.all(teamRoles.map((role) => {
-      if (role.user_id !== user.id && role.role !== "teamOwner") {
-        return Promise.resolve();
-      }
-
-      return role.update({
-        projects: addProjectToList(role.projects, project.id),
-      }, { transaction });
-    }));
-
-    return project;
   }
 }
 

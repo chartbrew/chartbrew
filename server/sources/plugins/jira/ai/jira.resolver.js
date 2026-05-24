@@ -132,27 +132,35 @@ function assignBoardAndSprint(entities, sprint, confidence) {
 }
 
 async function resolveBoardAndSprint({ connection, entities, overrides = {}, mode = "preview" }) {
-  if (overrides.sprintId) {
+  const sprintOverride = firstOverrideValue(overrides.sprintId);
+  const boardOverride = firstOverrideValue(overrides.boardId);
+
+  if (sprintOverride && boardOverride) {
     entities.sprint = {
-      id: String(overrides.sprintId),
+      id: sprintOverride,
       confidence: 1,
     };
-    if (overrides.boardId) {
-      entities.board = {
-        id: String(overrides.boardId),
-        confidence: 1,
-      };
-    }
+    entities.board = {
+      id: boardOverride,
+      confidence: 1,
+    };
     return { needsDisambiguation: false, options: [] };
+  }
+
+  if (sprintOverride) {
+    entities.sprint = {
+      id: sprintOverride,
+      confidence: 1,
+    };
   }
 
   if (!connection || !entities.project?.key) return { needsDisambiguation: false, options: [] };
 
   let boards = [];
-  if (overrides.boardId) {
+  if (boardOverride) {
     boards = [{
-      id: overrides.boardId,
-      name: `Board ${overrides.boardId}`,
+      id: boardOverride,
+      name: `Board ${boardOverride}`,
       type: "scrum",
     }];
   } else {
@@ -177,10 +185,10 @@ async function resolveBoardAndSprint({ connection, entities, overrides = {}, mod
       const sprints = await jiraConnection.listSprints(connection, {
         boardId: board.id,
         maxResults: 50,
-        state: "active",
+        state: sprintOverride ? undefined : "active",
       });
       return (Array.isArray(sprints) ? sprints : [])
-        .filter((sprint) => sprint.state === "active")
+        .filter((sprint) => sprintOverride ? String(sprint.id) === sprintOverride : sprint.state === "active")
         .map((sprint) => ({
           ...sprint,
           id: String(sprint.id),
@@ -197,7 +205,9 @@ async function resolveBoardAndSprint({ connection, entities, overrides = {}, mod
 
   const options = activeSprints.slice(0, 4).map(buildSprintOption);
 
-  if (activeSprints.length === 1) {
+  if (sprintOverride && activeSprints.length >= 1) {
+    assignBoardAndSprint(entities, activeSprints[0], 1);
+  } else if (activeSprints.length === 1) {
     assignBoardAndSprint(entities, activeSprints[0], 0.95);
   } else if (activeSprints.length > 1 && mode === "persist") {
     return { needsDisambiguation: true, options };

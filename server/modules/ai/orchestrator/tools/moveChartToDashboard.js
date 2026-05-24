@@ -89,7 +89,7 @@ async function moveChartToDashboard(payload) {
     try {
       const ChartController = require("../../../controllers/ChartController"); // eslint-disable-line
       const chartController = new ChartController();
-      chartController.updateChartData(chart_id, null, {});
+      chartController.updateChartData(chart_id, null, {}).catch(() => null);
     } catch {
       // Ignore background update errors
     }

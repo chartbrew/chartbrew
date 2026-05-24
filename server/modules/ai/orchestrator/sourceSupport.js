@@ -23,11 +23,24 @@ function sourceSupportsSourceTools(source) {
 
 }
 
+function sourceSupportsDashboardTemplates(source) {
+  return Boolean(
+    source?.templates?.directory
+    && Array.isArray(source?.templates?.chartTemplates)
+    && source.templates.chartTemplates.length > 0
+    && source?.backend?.getDefaultDataRequest
+  );
+}
+
 function sourceSupportsOrchestrator(source) {
   return Boolean(
     source
     && isSourceServerEnabled(source)
-    && (sourceSupportsQueryGeneration(source) || sourceSupportsSourceTools(source))
+    && (
+      sourceSupportsQueryGeneration(source)
+      || sourceSupportsSourceTools(source)
+      || sourceSupportsDashboardTemplates(source)
+    )
   );
 }
 
@@ -49,12 +62,22 @@ function getQueryGenerationSources() {
   });
 }
 
+function getTemplateSources() {
+  return getSources().filter((source) => {
+    return source && isSourceServerEnabled(source) && sourceSupportsDashboardTemplates(source);
+  });
+}
+
 function getSupportedConnectionTypes() {
   return [...new Set(getOrchestratorSources().map((source) => source.type))];
 }
 
 function getSupportedSourceIds() {
   return getOrchestratorSources().map((source) => source.id);
+}
+
+function getTemplateSourceIds() {
+  return getTemplateSources().map((source) => source.id);
 }
 
 function getQueryGenerationSourceIds() {
@@ -140,9 +163,12 @@ module.exports = {
   getSupportedDialectIds,
   getSupportedSourceIds,
   getSupportedSourceForConnection,
+  getTemplateSourceIds,
+  getTemplateSources,
   isConnectionSupported,
   requireSourceById,
   requireSupportedSourceForConnection,
+  sourceSupportsDashboardTemplates,
   sourceSupportsQueryGeneration,
   sourceSupportsSourceTools,
   sourceUsesSourceOwnedConfiguration,

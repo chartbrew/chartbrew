@@ -42,7 +42,7 @@ module.exports = {
     templates: {
       datasets: true,
       charts: true,
-      dashboards: false,
+      dashboards: true,
     },
     ai: {
       canGenerateDatasets: true,

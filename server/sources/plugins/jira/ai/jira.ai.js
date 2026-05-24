@@ -27,7 +27,7 @@ const TEMPLATE_RECOMMENDATIONS = [{
 
 const SOURCE_INSTRUCTIONS = [
   "Jira is a source-owned configuration connector for Jira Cloud only. Return DataRequest.configuration objects with source=jira; do not invent REST routes.",
-  "Use issue search and JQL for issue datasets. Use sprint_issues with sprintId for Agile sprint datasets.",
+  "Use issue search and JQL for issue datasets. Use sprint_issues with sprintId and boardId for Agile sprint datasets.",
   "Use normalized issue fields such as key, summary, status, statusCategory, assignee, priority, issueType, createdAt, updatedAt, resolvedAt, doneAt, isDone, storyPoints, fixVersions, and epicKey.",
   "Use grouped, created_resolved_trend, sprint_summary, stale_table, or raw transforms to return chart-friendly rows.",
   "Keep previews capped. Use source_preview_configuration before creating charts when the user asks for unfamiliar JQL or sprint data.",
@@ -154,6 +154,74 @@ function recommendTemplates({ question = "" } = {}) {
         ...template,
         recommendedCharts: template.charts.filter((chart) => chartIds.includes(chart.id)),
       })),
+  };
+}
+
+async function prepareTemplateVariables({
+  connection = null,
+  templateSlug = "",
+  question = "",
+  variableDefaults = {},
+} = {}) {
+  const sprintDefault = variableDefaults.sprint_id || variableDefaults.sprintId;
+  const boardDefault = variableDefaults.board_id || variableDefaults.boardId;
+
+  if (templateSlug !== "sprint-health" || (sprintDefault && boardDefault)) {
+    return {
+      variableDefaults,
+    };
+  }
+
+  const resolvedContext = await jiraResolver.resolveContext({
+    connection,
+    question,
+    overrides: {
+      ...variableDefaults,
+      sprintId: sprintDefault,
+      boardId: boardDefault,
+      project: variableDefaults.project || variableDefaults.projects,
+    },
+    intent: {
+      id: "sprint_status",
+      resource: "sprint_issues",
+    },
+    mode: "persist",
+  });
+  const resolution = resolvedContext.entities || {};
+
+  if (resolvedContext.needsDisambiguation) {
+    return {
+      source: SOURCE_ID,
+      status: "needs_disambiguation",
+      needs_user_input: true,
+      prompt: "I found multiple active Jira sprints. Which one should this dashboard use?",
+      options: resolvedContext.options || [],
+      resolution,
+    };
+  }
+
+  if (!resolution.sprint?.id || !resolution.board?.id) {
+    return {
+      source: SOURCE_ID,
+      status: "needs_more_context",
+      needs_user_input: true,
+      prompt: "I need a Jira project with a sprint and board before I can create this sprint health dashboard.",
+      options: [],
+      resolution,
+    };
+  }
+
+  return {
+    source: SOURCE_ID,
+    status: "ok",
+    variableDefaults: {
+      ...variableDefaults,
+      sprint_id: resolution.sprint.id,
+      board_id: resolution.board?.id,
+      project: resolution.project?.key || variableDefaults.project,
+      projects: resolution.project?.key || variableDefaults.projects,
+    },
+    resolution,
   };
 }
 
@@ -1104,6 +1172,7 @@ module.exports = {
   listTemplates: getTemplates,
   planDataset,
   previewConfiguration,
+  prepareTemplateVariables,
   recommendTemplates,
   repairDatasetIntent,
   resolveContext,

@@ -7,6 +7,7 @@ const {
   buildAssistantMessageFromResponse,
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
+  appendDashboardLinksToAssistantMessage,
   collectRecentSourceContext,
   sanitizeToolError,
   buildUsageRecordFromResponse,
@@ -111,6 +112,44 @@ describe("orchestrator Responses API adapters", () => {
     });
 
     expect(message).toBe("I created Total sessions.");
+  });
+
+  it("builds a fallback dashboard creation message with a dashboard link", () => {
+    const message = buildFallbackAssistantMessage({
+      toolResults: [{
+        content: JSON.stringify({
+          dashboard_created: true,
+          dashboard_url: "http://localhost:4019/dashboard/77",
+        }),
+      }],
+    });
+
+    expect(message).toBe("I created the dashboard.\n\n[Open dashboard](http://localhost:4019/dashboard/77)");
+  });
+
+  it("appends dashboard links to assistant messages after dashboard creation", () => {
+    const message = appendDashboardLinksToAssistantMessage("Your sprint health dashboard is ready.", [{
+      content: JSON.stringify({
+        dashboard_created: true,
+        dashboard_url: "http://localhost:4019/dashboard/77",
+      }),
+    }]);
+
+    expect(message).toBe("Your sprint health dashboard is ready.\n\n[Open dashboard](http://localhost:4019/dashboard/77)");
+  });
+
+  it("does not append duplicate dashboard links", () => {
+    const message = appendDashboardLinksToAssistantMessage(
+      "Your dashboard is ready: http://localhost:4019/dashboard/77",
+      [{
+        content: JSON.stringify({
+          dashboard_created: true,
+          dashboard_url: "http://localhost:4019/dashboard/77",
+        }),
+      }]
+    );
+
+    expect(message).toBe("Your dashboard is ready: http://localhost:4019/dashboard/77");
   });
 
   it("builds a persisted assistant message with quick replies for disambiguation", () => {

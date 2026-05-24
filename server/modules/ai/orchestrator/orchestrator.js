@@ -27,6 +27,7 @@ const {
   getSupportedDialectIds,
   getSupportedSourceIds,
   getSupportedSourceForConnection,
+  getTemplateSourceIds,
 } = require("./sourceSupport");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
@@ -55,6 +56,8 @@ const {
   updateDataset,
   updateChart,
   createTemporaryChart,
+  createDashboard,
+  createDashboardChart,
   createDashboardFromTemplate,
   moveChartToDashboard,
   disambiguate,
@@ -90,6 +93,8 @@ const TEAM_SCOPED_TOOLS = new Set([
   "update_dataset",
   "update_chart",
   "create_temporary_chart",
+  "create_dashboard",
+  "create_dashboard_chart",
   "create_dashboard_from_template",
   "move_chart_to_dashboard",
   "source_get_capabilities",
@@ -109,6 +114,7 @@ const TEAM_SCOPED_TOOLS = new Set([
 ]);
 
 const USER_SCOPED_TOOLS = new Set([
+  "create_dashboard",
   "create_dashboard_from_template",
 ]);
 
@@ -116,6 +122,8 @@ const ORIGINAL_QUESTION_TOOLS = new Set([
   "create_dataset",
   "create_chart",
   "create_temporary_chart",
+  "create_dashboard_chart",
+  "create_dashboard_from_template",
   "source_resolve_context",
   "source_search_records",
   "source_plan_dataset",
@@ -126,6 +134,7 @@ async function availableTools() {
   const supportedSourceList = formatSupportedSourceList();
   const supportedDialectIds = getSupportedDialectIds();
   const supportedSourceIds = getSupportedSourceIds();
+  const templateSourceIds = getTemplateSourceIds();
   const queryGenerationDialectIds = getQueryGenerationDialectIds();
   const queryGenerationSourceIds = getQueryGenerationSourceIds();
 
@@ -480,7 +489,7 @@ async function availableTools() {
     {
       name: "create_chart",
       displayName: "Create chart",
-      description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard (e.g., 'add to Sales Dashboard', 'place in Marketing dashboard'). DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user.",
+      description: "Create a chart and place it on a visible project/dashboard. CRITICAL: ONLY use this when the user EXPLICITLY requests placing a chart in a specific dashboard, including a new dashboard created with create_dashboard in this same workflow. DEFAULT to create_temporary_chart instead. Use the EXACT project_id specified by the user or returned by create_dashboard.",
       parameters: {
         type: "object",
         properties: {
@@ -624,7 +633,7 @@ async function availableTools() {
     {
       name: "create_temporary_chart",
       displayName: "Create chart preview",
-      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. This creates a reusable dataset plus a ChartDatasetConfig that owns the series bindings. Use this for ALL chart creation requests UNLESS the user explicitly says 'add to [dashboard]' or 'place in [dashboard]'.",
+      description: "DEFAULT tool for creating charts. Create a temporary preview chart that shows the data visually without placing it in a visible dashboard. This creates a reusable dataset plus a ChartDatasetConfig that owns the series bindings. Use this for chart creation requests UNLESS the user explicitly says to create a dashboard, add to a dashboard, or place in a dashboard.",
       parameters: {
         type: "object",
         properties: {
@@ -695,13 +704,76 @@ async function availableTools() {
       // }
     },
     {
-      name: "create_dashboard_from_template",
-      displayName: "Create dashboard from template",
-      description: "Create a full dashboard/project from a source-owned template bundle. This is generic across template-backed sources. Use only when the user asks to create a full dashboard, dashboard bundle, or starter dashboard; use create_temporary_chart for one-off charts.",
+      name: "create_dashboard",
+      displayName: "Create dashboard",
+      description: "Create an empty visible dashboard/project. Use this for multi-source dashboard requests, then create datasets/charts or template dashboards into the returned project_id.",
       parameters: {
         type: "object",
         properties: {
-          source_id: { type: "string", enum: supportedSourceIds, description: "Source plugin id that owns the template, for example jira or stripeOfficial" },
+          name: { type: "string", description: "Name for the new dashboard" }
+        },
+        required: ["name"]
+      }
+      // returns: { project_id, name, dashboard_url }
+    },
+    {
+      name: "create_dashboard_chart",
+      displayName: "Create dashboard chart",
+      description: "Create a reusable dataset and chart directly inside a visible dashboard in one operation. Use this after create_dashboard for custom mixed-source dashboard charts from databases, APIs, or source-owned planned configurations. Prefer this over separate create_dataset then create_chart calls when the destination dashboard is already known.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_id: { type: "string", description: "Dashboard/project ID where the chart should be placed" },
+          connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
+          name: { type: "string", description: "Chart and dataset name/title" },
+          legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend" },
+          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          subType: { type: "string", description: "Chart subtype, for example AddTimeseries for KPI totals" },
+          displayLegend: { type: "boolean" },
+          pointRadius: { type: "integer" },
+          dataLabels: { type: "boolean" },
+          includeZeros: { type: "boolean" },
+          timeInterval: { type: "string", enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
+          stacked: { type: "boolean" },
+          horizontal: { type: "boolean" },
+          xLabelTicks: { type: "string", enum: ["default", "half", "third", "fourth", "showAll"] },
+          showGrowth: { type: "boolean" },
+          invertGrowth: { type: "boolean" },
+          mode: { type: "string", enum: ["chart", "kpichart"] },
+          maxValue: { type: "integer" },
+          minValue: { type: "integer" },
+          ranges: { type: "array", items: { type: "object" } },
+          xAxis: { type: "string", description: "ChartDatasetConfig x-axis field using traversal syntax" },
+          xAxisOperation: { type: "string" },
+          yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax" },
+          yAxisOperation: { type: "string", enum: ["none", "sum", "avg", "min", "max", "count"], default: "none" },
+          dateField: { type: "string" },
+          dateFormat: { type: "string" },
+          query: { type: "string", description: "Source query for query-based sources" },
+          method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"] },
+          route: { type: "string" },
+          itemsLimit: { type: "integer" },
+          conditions: { type: "array", items: { type: "object" } },
+          configuration: { type: "object", description: "DataRequest dialect-specific settings for source-owned connectors" },
+          variables: { type: "array", items: { type: "string" }, default: [] },
+          variableBindings: { type: "array", items: { type: "object" } },
+          transform: { type: "object" },
+          formula: { type: "string" },
+          seriesConfiguration: { type: "object" },
+          spec: { type: "object", description: "Alternative chart specification object" }
+        },
+        required: ["project_id", "connection_id", "name"]
+      }
+      // returns: { chart_id, dataset_id, data_request_id, project_id, dashboard_url, chart_url }
+    },
+    {
+      name: "create_dashboard_from_template",
+      displayName: "Create dashboard from template",
+      description: "Create a full dashboard/project from a source-owned template bundle. This is generic across template-backed sources. Use when the user asks for a full source-specific dashboard, dashboard bundle, or starter dashboard. For multi-source dashboard requests, first use create_dashboard, then call this with dashboard.type=existing and the returned project_id.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_id: { type: "string", enum: templateSourceIds, description: "Source plugin id that owns the template, for example jira, stripe, or stripeOfficial" },
           template_slug: { type: "string", description: "Template slug from source_list_templates or source_recommend_templates" },
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           dashboard: {
@@ -783,6 +855,10 @@ async function callTool(name, payload) {
         return updateChart(payload);
       case "create_temporary_chart":
         return createTemporaryChart(payload);
+      case "create_dashboard":
+        return createDashboard(payload);
+      case "create_dashboard_chart":
+        return createDashboardChart(payload);
       case "create_dashboard_from_template":
         return createDashboardFromTemplate(payload);
       case "move_chart_to_dashboard":
@@ -884,6 +960,8 @@ ${ENTITY_CREATION_RULES}
 - Execute source queries and summarize results
 - Suggest appropriate chart types for data
 - Create datasets and charts in projects
+- Create empty dashboards for mixed-source dashboard requests
+- Create source-backed charts directly in known dashboards with one tool call
 - Create full dashboards from source-owned template bundles when the user asks for a starter dashboard or dashboard pack
 - Create temporary charts when no project is specified, then move them to dashboards upon user confirmation
 - Inform users when they request unsupported data sources that these will be available when the corresponding source plugin declares AI query support
@@ -913,7 +991,7 @@ ${ENTITY_CREATION_RULES}
      * Summarize the results
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
    - For source-owned configuration connections:
-     * Call source_get_capabilities or source_list_resources when you need source context
+     * Call source_get_capabilities or source_list_resources only when you truly need source context that is not already known. Do not call them as a default prerequisite for dashboard creation.
      * Use source_resolve_context when a Jira follow-up needs to inspect or correct project, board, sprint, version, or user context.
      * Use source_run_action for bounded Jira metadata lookups such as users, projects, boards, sprints, versions, or JQL validation.
      * Use source_search_records for answer-first Jira issue lists before creating datasets. This is preferred for prompts like "what is Raz working on", "show open issues assigned to X", "show blockers", or "what is in the active sprint".
@@ -922,7 +1000,8 @@ ${ENTITY_CREATION_RULES}
      * For generic API connections: prefer source AI Context. If the source identifies a recognizable provider and returns status="needs_model_planning" or modelFallbackAllowed=true, you may use your provider/API knowledge as a fallback. In that case, call create_temporary_chart/create_dataset with explicit method, route, itemsLimit, pagination/body/header assumptions, and chart bindings. Do not use provider memory for unknown hosts.
      * Call source_validate_configuration or source_preview_configuration when you need validation, compact rows, or warnings before answering
      * For charts, pass the planned configuration to create_temporary_chart by default
-     * For full dashboard requests, call source_recommend_templates or source_list_templates, then create_dashboard_from_template with a source-owned template slug
+     * For full single-source dashboard requests, call source_recommend_templates or source_list_templates, then create_dashboard_from_template with a source-owned template slug
+     * For mixed-source dashboard requests, call create_dashboard first, then add each requested chart to that returned project_id. Use create_dashboard_from_template with dashboard.type="existing" for source-owned template sections, and create_dashboard_chart for custom charts from databases or source-owned planned configurations.
      * If the user explicitly names a dashboard/project, create the dataset with create_dataset and then place the chart with create_chart using the planned chartSpec bindings
      * If a source tool returns status="needs_more_context" without modelFallbackAllowed, stop the creation flow and guide the user with the tool message. If editConnectionUrl is present, include it as a markdown link. If contextInstructions or exampleAiContext are present, summarize exactly what to paste.
      * If a chart creation tool returns chart_created=true and snapshot_status="unavailable", say the chart was created and mention only that the rendered preview is not available yet. Do not describe that as a failed or blocked chart.
@@ -933,7 +1012,7 @@ ${ENTITY_CREATION_RULES}
    **🚨 IMPORTANT: Temporary charts are the DEFAULT. Only place charts in visible dashboards when explicitly requested by the user.**
    
    **Deciding between create_chart and create_temporary_chart:**
-   - **DEFAULT: ALWAYS use create_temporary_chart** unless the user explicitly requests dashboard placement
+   - **DEFAULT: ALWAYS use create_temporary_chart** unless the user explicitly requests dashboard placement or asks to create a new dashboard
    - **Use create_temporary_chart when**:
      * User says: "create a chart showing X"
      * User says: "visualize this data"
@@ -946,7 +1025,17 @@ ${ENTITY_CREATION_RULES}
      * User says: "add this to the Marketing dashboard"
      * User says: "place this chart on [Dashboard Name]"
      * User says: "save this chart to [Dashboard Name]"
+     * User says: "create a new dashboard with X, Y, and Z" after create_dashboard returns a project_id
      * **Must include BOTH: (1) chart creation intent AND (2) explicit dashboard/project name**
+
+   **New dashboard workflow:**
+   - If the user asks to create a new dashboard, use create_dashboard with a concise dashboard name
+   - Use the returned project_id as the destination for every requested chart
+   - For source-owned templates such as Jira sprint health, call create_dashboard_from_template with dashboard.type="existing" and that project_id
+   - For database/query-based charts, use create_dashboard_chart so the dataset and chart are created in one operation
+   - For source-owned planned charts that are not covered by a template, use source_plan_dataset with mode="persist", then pass the planned configuration and chartSpec fields to create_dashboard_chart
+   - Avoid source_get_capabilities and source_list_resources in this workflow unless a source_plan_dataset or template tool says more context is needed
+   - Do not tell the user that brand-new dashboards cannot be created; create_dashboard is available for this
    
    **Temporary chart workflow:**
    - Create the temporary preview chart automatically
@@ -1374,7 +1463,40 @@ function parseToolResultContent(content) {
   }
 }
 
+function getCreatedDashboardLinks(toolResults = []) {
+  return toolResults
+    .map((result) => parseToolResultContent(result.content))
+    .filter((result) => result?.dashboard_created && result?.dashboard_url)
+    .map((result) => ({
+      label: result.dashboard_name || result.name || "Open dashboard",
+      url: result.dashboard_url,
+    }));
+}
+
+function appendDashboardLinksToAssistantMessage(content = "", toolResults = []) {
+  const dashboardLinks = getCreatedDashboardLinks(toolResults)
+    .filter((link) => !content.includes(link.url));
+
+  if (dashboardLinks.length === 0) {
+    return content;
+  }
+
+  const links = dashboardLinks
+    .map((link) => `[${link.label}](${link.url})`)
+    .join("\n");
+
+  return [content, links].filter(Boolean).join("\n\n");
+}
+
 function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}) {
+  const dashboardLinks = getCreatedDashboardLinks(toolResults);
+  if (dashboardLinks.length > 0) {
+    return appendDashboardLinksToAssistantMessage(
+      `I created ${dashboardLinks.length === 1 ? "the dashboard" : `${dashboardLinks.length} dashboards`}.`,
+      toolResults
+    );
+  }
+
   const createdCharts = toolResults
     .map((result) => parseToolResultContent(result.content))
     .filter((result) => result?.chart_created || result?.chart_id);
@@ -1644,7 +1766,7 @@ async function orchestrate(
       input: buildResponseInputFromMessages(modelMessages),
       tools,
       tool_choice: "auto",
-      parallel_tool_calls: false,
+      parallel_tool_calls: true,
       reasoning: {
         effort: "medium",
       },
@@ -1665,7 +1787,7 @@ async function orchestrate(
   // Initial API call
   let response = await createModelResponse();
   let assistantMessage = buildAssistantMessageFromResponse(response);
-  const maxIterations = 10; // Prevent infinite loops
+  const maxIterations = 16; // Prevent infinite loops while allowing mixed-source dashboard creation
   let iterations = 0;
 
   // Handle tool calls in a loop
@@ -1846,6 +1968,7 @@ async function orchestrate(
       snapshots,
     });
   }
+  assistantMessage.content = appendDashboardLinksToAssistantMessage(assistantMessage.content, lastToolResults);
 
   // Add final assistant message
   if (assistantMessage.content) {
@@ -1892,6 +2015,7 @@ module.exports = {
   collectRecentSourceContext,
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
+  appendDashboardLinksToAssistantMessage,
   sanitizeToolError,
   buildUsageRecordFromResponse,
 };

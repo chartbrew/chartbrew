@@ -132,6 +132,21 @@ describe("Jira chart templates", () => {
     ]));
   });
 
+  it("requires board and sprint variables for Jira sprint issue datasets", () => {
+    const template = loadTemplate("jira", "sprint-health");
+
+    template.datasets
+      .filter((dataset) => dataset.dataRequest?.configuration?.resource === "sprint_issues")
+      .forEach((dataset) => {
+        expect(dataset.dataRequest.configuration.sprintId).toBe("{{sprint_id}}");
+        expect(dataset.dataRequest.configuration.boardId).toBe("{{board_id}}");
+        expect(dataset.dataRequest.variableBindings).toEqual(expect.arrayContaining([
+          expect.objectContaining({ name: "sprint_id", type: "number", required: true }),
+          expect.objectContaining({ name: "board_id", type: "number", required: true }),
+        ]));
+      });
+  });
+
   it("uses the shared restrained chart palette for Jira chart datasets", () => {
     TEMPLATE_SLUGS.forEach((slug) => {
       const template = loadTemplate("jira", slug);

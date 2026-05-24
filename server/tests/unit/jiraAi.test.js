@@ -102,6 +102,76 @@ describe("Jira AI planner", () => {
     });
   });
 
+  it("prepares sprint-health template defaults from active sprint context", async () => {
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "A4321 Sprint 14",
+      state: "active",
+    }]);
+
+    const prepared = await jiraAi.prepareTemplateVariables({
+      connection: { id: 42, type: "jira", subType: "jira" },
+      templateSlug: "sprint-health",
+      question: "Create a sprint health dashboard for A4321",
+      variableDefaults: {},
+    });
+
+    expect(prepared.variableDefaults).toMatchObject({
+      sprint_id: "123",
+      board_id: "77",
+      project: "A4321",
+      projects: "A4321",
+    });
+    expect(prepared.resolution.sprint).toMatchObject({
+      id: "123",
+      name: "A4321 Sprint 14",
+    });
+  });
+
+  it("prepares missing board defaults when the sprint is already supplied", async () => {
+    vi.spyOn(jiraConnection, "listProjects").mockResolvedValue([{
+      id: "10001",
+      key: "A4321",
+      name: "A4321 Project",
+    }]);
+    vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([{
+      id: 77,
+      name: "A4321 Scrum Board",
+      type: "scrum",
+    }]);
+    vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([{
+      id: 123,
+      name: "A4321 Sprint 14",
+      state: "active",
+    }]);
+
+    const prepared = await jiraAi.prepareTemplateVariables({
+      connection: { id: 42, type: "jira", subType: "jira" },
+      templateSlug: "sprint-health",
+      question: "Create a sprint health dashboard for A4321",
+      variableDefaults: {
+        sprint_id: "123",
+      },
+    });
+
+    expect(prepared.variableDefaults).toMatchObject({
+      sprint_id: "123",
+      board_id: "77",
+      project: "A4321",
+      projects: "A4321",
+    });
+  });
+
   it("asks for a Jira project before resolving active sprint story points", async () => {
     const listBoardsSpy = vi.spyOn(jiraConnection, "listBoards").mockResolvedValue([]);
     const listSprintsSpy = vi.spyOn(jiraConnection, "listSprints").mockResolvedValue([]);

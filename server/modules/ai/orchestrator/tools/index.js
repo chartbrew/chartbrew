@@ -10,6 +10,8 @@ const createChart = require("./createChart");
 const updateDataset = require("./updateDataset");
 const updateChart = require("./updateChart");
 const createTemporaryChart = require("./createTemporaryChart");
+const createDashboard = require("./createDashboard");
+const createDashboardChart = require("./createDashboardChart");
 const createDashboardFromTemplate = require("./createDashboardFromTemplate");
 const moveChartToDashboard = require("./moveChartToDashboard");
 const disambiguate = require("./disambiguate");
@@ -46,6 +48,8 @@ module.exports = {
   updateDataset,
   updateChart,
   createTemporaryChart,
+  createDashboard,
+  createDashboardChart,
   createDashboardFromTemplate,
   moveChartToDashboard,
   disambiguate,

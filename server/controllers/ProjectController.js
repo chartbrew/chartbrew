@@ -58,25 +58,38 @@ class ProjectController {
       });
   }
 
-  create(userId, data) {
+  create(userId, data, options = {}) {
     let newProject = {};
-    return db.Project.create(data)
+    const { transaction } = options;
+
+    return db.Project.create(data, { transaction })
       .then((project) => {
         newProject = project;
-        return this.updateProjectRole(project.id, userId, "teamOwner");
+        return this.updateProjectRole(project.id, userId, "teamOwner", options);
       })
       .then(() => {
         const brewName = `${newProject.name.replace(/[\W_]+/g, "_")}_${newProject.id}`;
+        if (transaction) {
+          return db.Project.update({ brewName }, { where: { id: newProject.id }, transaction });
+        }
+
         return this.update(newProject.id, { brewName });
       })
       .then(() => {
         // now update the projects access in TeamRole
-        return this.teamController.addProjectAccess(data.team_id, userId, newProject.id);
+        return this.teamController.addProjectAccess(data.team_id, userId, newProject.id, options);
       })
       .then(() => {
-        return this.teamController.addProjectAccessToOwner(data.team_id, newProject.id);
+        return this.teamController.addProjectAccessToOwner(data.team_id, newProject.id, options);
       })
       .then(() => {
+        if (transaction) {
+          return db.Project.findOne({
+            where: { id: newProject.id },
+            transaction,
+          });
+        }
+
         return this.findById(newProject.id);
       })
       .catch((error) => {
@@ -119,24 +132,27 @@ class ProjectController {
       });
   }
 
-  updateProjectRole(projectId, userId, role) {
+  updateProjectRole(projectId, userId, role, options = {}) {
+    const { transaction } = options;
+
     return db.ProjectRole.findOne({
       where: {
         project_id: projectId,
         user_id: userId,
-      }
+      },
+      transaction,
     })
       .then((projectRole) => {
         if (projectRole) {
           projectRole.setDataValue("role", role);
-          return projectRole.save();
+          return projectRole.save({ transaction });
         }
 
         return db.ProjectRole.create({
           project_id: projectId,
           user_id: userId,
           role,
-        });
+        }, { transaction });
       })
       .then((projectRole) => {
         return projectRole;
@@ -251,7 +267,7 @@ class ProjectController {
                 noSource: false,
                 skipParsing: false,
                 getCache: false,
-              });
+              }).catch(() => null);
             });
           }
         }, 2000);

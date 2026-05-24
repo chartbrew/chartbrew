@@ -39,6 +39,12 @@ describe("AI orchestrator team scope", () => {
         subType: null,
         name: "Generic API",
       },
+      {
+        id: 15,
+        type: "api",
+        subType: "stripe",
+        name: "Legacy Stripe",
+      },
     ]);
 
     const result = await listConnections({ team_id: 7 });
@@ -71,6 +77,13 @@ describe("AI orchestrator team scope", () => {
         source_id: "api",
         source_name: "API",
         name: "Generic API",
+      }, {
+        id: 15,
+        type: "api",
+        subType: "stripe",
+        source_id: "stripe",
+        source_name: "Stripe Legacy",
+        name: "Legacy Stripe",
       }],
     });
   });

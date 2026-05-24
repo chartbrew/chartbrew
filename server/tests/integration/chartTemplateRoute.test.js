@@ -252,6 +252,49 @@ describe("ChartTemplateRoute", () => {
     expect(projectBinding.required).toBe(true);
   });
 
+  it("applies sprint and board defaults when creating Jira sprint datasets", async () => {
+    const seeded = await seedJiraTemplateSetup(models);
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/chart-templates/jira/sprint-health/create`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        connection_id: seeded.connection.id,
+        dashboard: { type: "existing", project_id: seeded.project.id },
+        dataset_template_ids: ["sprint_summary"],
+        chart_template_ids: [],
+        variable_defaults: {
+          sprint_id: "123",
+          board_id: "77",
+        },
+      })
+      .expect(200);
+
+    const dataRequest = await models.DataRequest.findOne({
+      where: { dataset_id: response.body.datasets[0].id },
+    });
+    const bindings = await models.VariableBinding.findAll({
+      where: {
+        entity_type: "DataRequest",
+        entity_id: `${dataRequest.id}`,
+      },
+    });
+    const bindingsByName = new Map(bindings.map((binding) => [binding.name, binding]));
+
+    expect(dataRequest.configuration).toEqual(expect.objectContaining({
+      sprintId: "{{sprint_id}}",
+      boardId: "{{board_id}}",
+    }));
+    expect(bindingsByName.get("sprint_id")).toEqual(expect.objectContaining({
+      default_value: "123",
+      required: true,
+    }));
+    expect(bindingsByName.get("board_id")).toEqual(expect.objectContaining({
+      default_value: "77",
+      required: true,
+    }));
+  });
+
   it("creates Jira template charts with complete dataset config fields", async () => {
     const seeded = await seedJiraTemplateSetup(models);
 

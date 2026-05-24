@@ -1,6 +1,7 @@
 const {
   requireSupportedSourceForConnection,
 } = require("../sourceSupport");
+const { listTemplates } = require("../../../../sources/shared/templates/chartTemplateLoader");
 const {
   normalizeTeamId,
   requireConnectionForTeam,
@@ -100,19 +101,34 @@ async function sourceGetSampleData(payload) {
 
 async function sourceListTemplates(payload) {
   const { connection, source } = await getScopedSource(payload);
-  const tool = requireAiTool(source, "listTemplates");
+  const tool = source.backend?.ai?.listTemplates;
 
-  return tool({ connection });
+  if (typeof tool === "function") {
+    return tool({ connection });
+  }
+
+  return {
+    source: source.id,
+    templates: listTemplates(source.id),
+  };
 }
 
 async function sourceRecommendTemplates(payload) {
   const { connection, source } = await getScopedSource(payload);
-  const tool = requireAiTool(source, "recommendTemplates");
+  const tool = source.backend?.ai?.recommendTemplates;
 
-  return tool({
-    connection,
-    question: payload.question,
-  });
+  if (typeof tool === "function") {
+    return tool({
+      connection,
+      question: payload.question,
+    });
+  }
+
+  return {
+    source: source.id,
+    status: "ok",
+    recommendations: listTemplates(source.id),
+  };
 }
 
 async function sourcePlanDataset(payload) {

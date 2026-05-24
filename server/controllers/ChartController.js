@@ -1544,11 +1544,7 @@ class ChartController {
 
     // Run the chart update in the background to populate chartData
     if (!skipBackgroundUpdate) {
-      try {
-        this.updateChartData(chart.id, user, {});
-      } catch {
-        // Ignore background update errors
-      }
+      this.updateChartData(chart.id, user, {}).catch(() => null);
     }
 
     // Return the full chart with all chart dataset configs

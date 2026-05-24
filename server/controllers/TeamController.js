@@ -159,9 +159,11 @@ class TeamController {
       });
   }
 
-  addProjectAccess(teamId, userId, projectId) {
+  addProjectAccess(teamId, userId, projectId, options = {}) {
     let gTeamRole;
-    return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
+    const { transaction } = options;
+
+    return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId }, transaction })
       .then((teamRole) => {
         gTeamRole = teamRole;
 
@@ -169,20 +171,22 @@ class TeamController {
         if (_.indexOf(newProjects, parseInt(projectId, 10)) > -1) return teamRole;
 
         newProjects.push(parseInt(projectId, 10));
-        return db.TeamRole.update({ projects: newProjects }, { where: { id: teamRole.id } });
+        return db.TeamRole.update({ projects: newProjects }, { where: { id: teamRole.id }, transaction });
       })
       .then(() => {
-        return db.TeamRole.findByPk(gTeamRole.id);
+        return db.TeamRole.findByPk(gTeamRole.id, { transaction });
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
       });
   }
 
-  addProjectAccessToOwner(teamId, projectId) {
-    return db.TeamRole.findOne({ where: { team_id: teamId, role: "teamOwner" } })
+  addProjectAccessToOwner(teamId, projectId, options = {}) {
+    const { transaction } = options;
+
+    return db.TeamRole.findOne({ where: { team_id: teamId, role: "teamOwner" }, transaction })
       .then((teamRole) => {
-        return this.addProjectAccess(teamId, teamRole.user_id, projectId);
+        return this.addProjectAccess(teamId, teamRole.user_id, projectId, options);
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
