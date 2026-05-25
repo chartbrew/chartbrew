@@ -4,6 +4,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const { getProjectSnapshotTimezone } = require("../modules/projectSnapshotTimezone");
+const { getWeekdayNumber, shouldRunOnWeekday } = require("../modules/scheduleWeekdays");
 
 function buildJobId(entity, id) {
   return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
@@ -37,6 +38,7 @@ async function checkSnapshots(queue) {
       const {
         frequency,
         dayOfWeek,
+        daysOfWeek,
         time,
         frequencyNumber,
       } = project.snapshotSchedule || {};
@@ -50,7 +52,7 @@ async function checkSnapshots(queue) {
       let shouldSend = false;
 
       if (!lastSnapshot) {
-        shouldSend = true;
+        shouldSend = frequency !== "daily" || shouldRunOnWeekday(daysOfWeek, now);
       } else if (frequency === "daily") {
         const sendTime = DateTime.now()
           .setZone(timezone)
@@ -60,22 +62,9 @@ async function checkSnapshots(queue) {
 
         // Check if we're past today's send time and haven't sent today yet
         const lastSnapshotToday = lastSnapshot && lastSnapshot.hasSame(sendTime, "day");
-        shouldSend = now > sendTime && !lastSnapshotToday;
+        shouldSend = shouldRunOnWeekday(daysOfWeek, now) && now > sendTime && !lastSnapshotToday;
       } else if (frequency === "weekly" && dayOfWeek) {
-        let weekdayNumber;
-        if (typeof dayOfWeek === "number") {
-          weekdayNumber = dayOfWeek;
-        } else if (typeof dayOfWeek === "string") {
-          weekdayNumber = {
-            monday: 1,
-            tuesday: 2,
-            wednesday: 3,
-            thursday: 4,
-            friday: 5,
-            saturday: 6,
-            sunday: 7
-          }[dayOfWeek.toLowerCase()];
-        }
+        const weekdayNumber = getWeekdayNumber(dayOfWeek);
 
         if (weekdayNumber) {
           // Find the most recent occurrence of the target weekday

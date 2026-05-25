@@ -34,6 +34,7 @@ import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { API_HOST } from "../../../config/settings";
 import { selectProjectMembers } from "../../../slices/team";
 import { useNavigate, useParams } from "react-router";
+import ScheduleDaysOfWeek, { allDayValues, daysOfWeek, hasValidDailyDays } from "./ScheduleDaysOfWeek";
 
 const getMachineTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -99,6 +100,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
       timezone: project.timezone || project?.snapshotSchedule?.timezone || getMachineTimezone(),
       frequency: project.snapshotSchedule?.frequency || undefined,
       dayOfWeek: project.snapshotSchedule?.dayOfWeek || undefined,
+      daysOfWeek: project.snapshotSchedule?.daysOfWeek || undefined,
       frequencyNumber: project.snapshotSchedule?.frequencyNumber || undefined,
       time: project.snapshotSchedule?.time ? new Time(project.snapshotSchedule.time?.hour, project.snapshotSchedule.time?.minute) : undefined,
       mediums: project.snapshotSchedule?.mediums || {
@@ -122,15 +124,18 @@ function SnapshotSchedule({ isOpen, onClose }) {
     { label: "Every X minutes", value: "every_x_minutes" },
   ];
 
-  const daysOfWeek = [
-    { label: "Monday", value: "monday" },
-    { label: "Tuesday", value: "tuesday" },
-    { label: "Wednesday", value: "wednesday" },
-    { label: "Thursday", value: "thursday" },
-    { label: "Friday", value: "friday" },
-    { label: "Saturday", value: "saturday" },
-    { label: "Sunday", value: "sunday" },
-  ];
+  const _prepareScheduleForSave = (scheduleData) => {
+    const preparedSchedule = { ...scheduleData };
+
+    if (preparedSchedule.frequency !== "daily") {
+      delete preparedSchedule.daysOfWeek;
+    } else if (!Array.isArray(preparedSchedule.daysOfWeek)
+      || preparedSchedule.daysOfWeek.length === allDayValues.length) {
+      delete preparedSchedule.daysOfWeek;
+    }
+
+    return preparedSchedule;
+  };
 
   const _onChangeMediums = (medium) => {
     setSchedule({
@@ -172,7 +177,8 @@ function SnapshotSchedule({ isOpen, onClose }) {
 
   const _onSave = async () => {
     setIsLoading(true);
-    const { timezone, ...snapshotSchedule } = schedule;
+    const { timezone, ...snapshotScheduleData } = schedule;
+    const snapshotSchedule = _prepareScheduleForSave(snapshotScheduleData);
     const response = await dispatch(updateProject({
       project_id: project.id,
       data: { 
@@ -225,6 +231,10 @@ function SnapshotSchedule({ isOpen, onClose }) {
     }
 
     if (schedule.frequency === "daily" && !schedule.time) {
+      return false;
+    }
+
+    if (schedule.frequency === "daily" && !hasValidDailyDays(schedule.daysOfWeek)) {
       return false;
     }
 
@@ -392,6 +402,12 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 </>
               )}
             </div>
+            {schedule.frequency === "daily" && (
+              <ScheduleDaysOfWeek
+                selectedDays={schedule.daysOfWeek}
+                onChange={(selectedDays) => setSchedule({ ...schedule, daysOfWeek: selectedDays })}
+              />
+            )}
             <div className="h-2" />
             <div className="flex flex-col gap-2">
               <div className="flex flex-row items-center gap-2">

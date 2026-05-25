@@ -14,6 +14,7 @@ const {
   updateRunContext,
 } = require("../modules/updateAudit");
 const { getProjectUpdateTimezone } = require("../modules/projectSnapshotTimezone");
+const { getWeekdayNumber, shouldRunOnWeekday } = require("../modules/scheduleWeekdays");
 
 function parsePositiveInt(value, fallback) {
   const parsedValue = parseInt(value, 10);
@@ -153,6 +154,7 @@ async function updateDashboards(queue) {
       const {
         frequency,
         dayOfWeek,
+        daysOfWeek,
         time,
         frequencyNumber,
       } = dashboard.updateSchedule || {};
@@ -166,7 +168,7 @@ async function updateDashboards(queue) {
       let shouldUpdate = false;
 
       if (!lastUpdated) {
-        shouldUpdate = true;
+        shouldUpdate = frequency !== "daily" || shouldRunOnWeekday(daysOfWeek, now);
       } else if (frequency === "daily") {
         const updateTime = DateTime.now()
           .setZone(timezone)
@@ -176,22 +178,11 @@ async function updateDashboards(queue) {
             second: 0,
             millisecond: 0
           });
-        shouldUpdate = now > updateTime && now.diff(lastUpdated, "days").as("days") >= 1;
+        shouldUpdate = shouldRunOnWeekday(daysOfWeek, now)
+          && now > updateTime
+          && now.diff(lastUpdated, "days").as("days") >= 1;
       } else if (frequency === "weekly" && dayOfWeek) {
-        let weekdayNumber;
-        if (typeof dayOfWeek === "number") {
-          weekdayNumber = dayOfWeek;
-        } else if (typeof dayOfWeek === "string") {
-          weekdayNumber = {
-            monday: 1,
-            tuesday: 2,
-            wednesday: 3,
-            thursday: 4,
-            friday: 5,
-            saturday: 6,
-            sunday: 7
-          }[dayOfWeek.toLowerCase()];
-        }
+        const weekdayNumber = getWeekdayNumber(dayOfWeek);
 
         if (weekdayNumber) {
           const updateTime = DateTime.now()

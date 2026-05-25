@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { Time } from "@internationalized/date";
 import { selectCharts, updateChart } from "../../../slices/chart";
+import ScheduleDaysOfWeek, { allDayValues, daysOfWeek, hasValidDailyDays } from "./ScheduleDaysOfWeek";
 
 const getMachineTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -34,6 +35,7 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
       timezone: project.timezone || project?.updateSchedule?.timezone || getMachineTimezone(),
       frequency: project.updateSchedule?.frequency || undefined,
       dayOfWeek: project.updateSchedule?.dayOfWeek || undefined,
+      daysOfWeek: project.updateSchedule?.daysOfWeek || undefined,
       frequencyNumber: project.updateSchedule?.frequencyNumber || undefined,
       time: project.updateSchedule?.time ? new Time(project.updateSchedule.time?.hour, project.updateSchedule.time?.minute) : undefined,
     });
@@ -47,19 +49,23 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
     { label: "Every X minutes", value: "every_x_minutes" },
   ];
 
-  const daysOfWeek = [
-    { label: "Monday", value: "monday" },
-    { label: "Tuesday", value: "tuesday" },
-    { label: "Wednesday", value: "wednesday" },
-    { label: "Thursday", value: "thursday" },
-    { label: "Friday", value: "friday" },
-    { label: "Saturday", value: "saturday" },
-    { label: "Sunday", value: "sunday" },
-  ];
+  const _prepareScheduleForSave = (scheduleData) => {
+    const preparedSchedule = { ...scheduleData };
+
+    if (preparedSchedule.frequency !== "daily") {
+      delete preparedSchedule.daysOfWeek;
+    } else if (!Array.isArray(preparedSchedule.daysOfWeek)
+      || preparedSchedule.daysOfWeek.length === allDayValues.length) {
+      delete preparedSchedule.daysOfWeek;
+    }
+
+    return preparedSchedule;
+  };
 
   const _onSave = async () => {
     setIsLoading(true);
-    const { timezone, ...updateSchedule } = schedule;
+    const { timezone, ...updateScheduleData } = schedule;
+    const updateSchedule = _prepareScheduleForSave(updateScheduleData);
     const response = await dispatch(updateProject({
       project_id: project.id,
       data: {
@@ -114,6 +120,10 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
     }
 
     if (schedule.frequency === "daily" && !schedule.time) {
+      return false;
+    }
+
+    if (schedule.frequency === "daily" && !hasValidDailyDays(schedule.daysOfWeek)) {
       return false;
     }
 
@@ -251,6 +261,12 @@ function UpdateSchedule({ isOpen, onClose, openSnapshotSchedule }) {
               </>
             )}
           </div>
+          {schedule.frequency === "daily" && (
+            <ScheduleDaysOfWeek
+              selectedDays={schedule.daysOfWeek}
+              onChange={(selectedDays) => setSchedule({ ...schedule, daysOfWeek: selectedDays })}
+            />
+          )}
           <div className="flex flex-col gap-2">
             <div className="flex flex-row items-center gap-2">
               <div className="flex flex-col gap-1 w-full">
