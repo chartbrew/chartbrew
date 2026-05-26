@@ -1385,7 +1385,7 @@ function ProjectDashboard() {
               <div className="flex gap-2 items-center">
                 <Dropdown>
                   <Dropdown.Trigger>
-                    <Button size="sm" variant="tertiary">
+                    <Button size="sm" variant="secondary">
                       <LuLayoutDashboard />
                       Auto-layout
                       <LuChevronDown />
