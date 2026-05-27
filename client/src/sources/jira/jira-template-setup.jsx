@@ -642,6 +642,11 @@ function JiraTemplateSetup(props) {
     }
   };
 
+  useEffect(() => {
+    if (!createResult?.project_id || isCreating || actionMode !== "dashboard") return;
+    navigate(`/dashboard/${createResult.project_id}`);
+  }, [actionMode, createResult?.project_id, isCreating, navigate]);
+
   const openCreatedContent = () => {
     if (actionMode === "dashboard" && createResult?.project_id) {
       navigate(`/dashboard/${createResult.project_id}`);

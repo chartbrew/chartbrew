@@ -179,6 +179,7 @@ function StripeTemplateSetup(props) {
   const [selectedChartIds, setSelectedChartIds] = useState([]);
   const [initializedTemplateId, setInitializedTemplateId] = useState(null);
   const [isSyntheticLoading, setIsSyntheticLoading] = useState(false);
+  const [hasStartedCreate, setHasStartedCreate] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -228,6 +229,11 @@ function StripeTemplateSetup(props) {
       }
     };
   }, [result]);
+
+  useEffect(() => {
+    if (!hasStartedCreate || !showCreateResult || !result?.project_id) return;
+    navigate(`/dashboard/${result.project_id}`);
+  }, [hasStartedCreate, navigate, result?.project_id, showCreateResult]);
 
   const _toggleDataset = (datasetId) => {
     if (!template) return;
@@ -282,6 +288,7 @@ function StripeTemplateSetup(props) {
       ? { type: "new", name: newDashboardName || "Stripe Revenue" }
       : { type: "existing", project_id: selectedProjectId };
 
+    setHasStartedCreate(true);
     dispatch(createFromChartTemplate({
       team_id: teamId,
       source: template.source,

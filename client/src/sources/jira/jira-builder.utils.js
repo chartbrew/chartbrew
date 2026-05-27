@@ -106,6 +106,7 @@ export function normalizeVisualConfig(visual = {}) {
 export function mergeConfiguration(dataRequest) {
   const requestConfiguration = dataRequest?.configuration || {};
   const requestVisual = requestConfiguration.visual || {};
+  const hasExplicitVisualConfig = Object.prototype.hasOwnProperty.call(requestConfiguration, "visual");
   const inferredVisual = {
     projects: requestVisual.projects || inferProjectValueFromJql(requestConfiguration.jql),
     startDate: requestVisual.startDate || inferVisualValueFromJql(requestConfiguration.jql, [
@@ -140,7 +141,7 @@ export function mergeConfiguration(dataRequest) {
     }),
   };
 
-  if ((mergedConfiguration.mode || "visual") === "visual") {
+  if ((mergedConfiguration.mode || "visual") === "visual" && hasExplicitVisualConfig) {
     return {
       ...mergedConfiguration,
       jql: buildJqlFromVisualConfig(mergedConfiguration),
@@ -164,6 +165,14 @@ function getJqlDateField(dateField) {
   return dateField || "created";
 }
 
+function getJqlEndDateValue(value) {
+  const dateValue = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return `"${dateValue} 23:59"`;
+  }
+  return value;
+}
+
 export function buildJqlFromVisualConfig(configuration) {
   const visual = configuration.visual || {};
   const clauses = [];
@@ -180,7 +189,7 @@ export function buildJqlFromVisualConfig(configuration) {
   addClause(clauses, visual.priority ? `priority = ${quoteJqlValue(visual.priority)}` : null);
   addClause(clauses, visual.fixVersion ? `fixVersion = ${quoteJqlValue(visual.fixVersion)}` : null);
   addClause(clauses, visual.startDate ? `${jqlDateField} >= ${visual.startDate}` : null);
-  addClause(clauses, visual.endDate ? `${jqlDateField} <= ${visual.endDate}` : null);
+  addClause(clauses, visual.endDate ? `${jqlDateField} <= ${getJqlEndDateValue(visual.endDate)}` : null);
 
   const query = clauses.join(" AND ");
   return query ? `${query} ORDER BY ${isDoneDateField ? "updated" : jqlDateField} DESC` : "ORDER BY updated DESC";
