@@ -55,6 +55,12 @@ function DatasetList() {
     navigate("/datasets/new");
   };
 
+  useEffect(() => {
+    if (team?.id) {
+      dispatch(getDatasets({ team_id: team.id }));
+    }
+  }, [dispatch, team?.id]);
+
   const _onToggleSelectionMode = () => {
     setSelectionModeEnabled((prev) => {
       if (prev) {

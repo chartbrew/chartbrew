@@ -6,8 +6,14 @@ import { API_HOST } from "../config/settings";
 const initialState = {
   loading: false,
   error: false,
+  teamId: null,
   data: [],
   responses: [],
+};
+
+const isCurrentTeamAction = (state, action) => {
+  const teamId = action.meta?.arg?.team_id;
+  return !teamId || `${state.teamId}` === `${teamId}`;
 };
 
 export const getDatasets = createAsyncThunk(
@@ -526,7 +532,8 @@ export const datasetSlice = createSlice({
   name: "dataset",
   initialState,
   reducers: {
-    clearDatasets: (state) => {
+    clearDatasets: (state, action) => {
+      state.teamId = action.payload?.team_id || null;
       state.data = [];
       state.responses = [];
     },
@@ -534,14 +541,27 @@ export const datasetSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // getDatasets
-      .addCase(getDatasets.pending, (state) => {
+      .addCase(getDatasets.pending, (state, action) => {
         state.loading = true;
+        if (`${state.teamId}` !== `${action.meta.arg.team_id}`) {
+          state.data = [];
+          state.responses = [];
+        }
+        state.teamId = action.meta.arg.team_id;
       })
       .addCase(getDatasets.fulfilled, (state, action) => {
+        if (`${state.teamId}` !== `${action.meta.arg.team_id}`) {
+          return;
+        }
+
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(getDatasets.rejected, (state) => {
+      .addCase(getDatasets.rejected, (state, action) => {
+        if (`${state.teamId}` !== `${action.meta.arg.team_id}`) {
+          return;
+        }
+
         state.loading = false;
         state.error = true;
       })
@@ -551,6 +571,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(getDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         if (state.data.find((dataset) => dataset.id === action.payload.id)) {
           state.data = state.data.map((dataset) =>
@@ -561,7 +583,9 @@ export const datasetSlice = createSlice({
           state.data.push(action.payload);
         }
       })
-      .addCase(getDataset.rejected, (state) => {
+      .addCase(getDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -571,6 +595,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(saveNewDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         if (state.data.find((dataset) => dataset.id === action.payload.id)) {
           state.data = state.data.map((dataset) =>
@@ -581,7 +607,9 @@ export const datasetSlice = createSlice({
           state.data.push(action.payload);
         }
       })
-      .addCase(saveNewDataset.rejected, (state) => {
+      .addCase(saveNewDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -591,6 +619,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(updateDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         if (state.data.find((dataset) => dataset.id === action.payload.id)) {
           state.data = state.data.map((dataset) =>
@@ -611,7 +641,9 @@ export const datasetSlice = createSlice({
           state.data.push(action.payload);
         }
       })
-      .addCase(updateDataset.rejected, (state) => {
+      .addCase(updateDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -621,10 +653,14 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(deleteDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.filter((dataset) => dataset.id !== action.meta.arg.dataset_id);
       })
-      .addCase(deleteDataset.rejected, (state) => {
+      .addCase(deleteDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -634,6 +670,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(runRequest.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         const datasetId = parseInt(action.meta.arg.dataset_id, 10);
         const indexReq = state.responses.findIndex(
           (response) => response.dataset_id === datasetId
@@ -654,7 +692,9 @@ export const datasetSlice = createSlice({
 
         state.loading = false;
       })
-      .addCase(runRequest.rejected, (state) => {
+      .addCase(runRequest.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -664,6 +704,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(getDataRequestsByDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -675,7 +717,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(getDataRequestsByDataset.rejected, (state) => {
+      .addCase(getDataRequestsByDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -685,6 +729,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(createDataRequest.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -699,7 +745,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(createDataRequest.rejected, (state) => {
+      .addCase(createDataRequest.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -709,6 +757,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(updateDataRequest.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -725,7 +775,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(updateDataRequest.rejected, (state) => {
+      .addCase(updateDataRequest.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -735,6 +787,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(deleteDataRequest.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -748,13 +802,17 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(deleteDataRequest.rejected, (state) => {
+      .addCase(deleteDataRequest.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
 
       // runDataRequest
       .addCase(runDataRequest.pending, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = true;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -776,6 +834,8 @@ export const datasetSlice = createSlice({
         });
       })
       .addCase(runDataRequest.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === parseInt(action.meta.arg.dataset_id, 10) && dataset.DataRequests) {
@@ -815,6 +875,8 @@ export const datasetSlice = createSlice({
         });
       })
       .addCase(runDataRequest.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -841,10 +903,14 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(duplicateDataset.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = [action.payload, ...state.data];
       })
-      .addCase(duplicateDataset.rejected, (state) => {
+      .addCase(duplicateDataset.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -854,6 +920,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(createDatasetVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -865,7 +933,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(createDatasetVariableBinding.rejected, (state) => {
+      .addCase(createDatasetVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -875,6 +945,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(updateDatasetVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -891,7 +963,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(updateDatasetVariableBinding.rejected, (state) => {
+      .addCase(updateDatasetVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -901,6 +975,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(deleteDatasetVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -909,7 +985,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(deleteDatasetVariableBinding.rejected, (state) => {
+      .addCase(deleteDatasetVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -919,6 +997,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(createVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -935,7 +1015,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(createVariableBinding.rejected, (state) => {
+      .addCase(createVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -945,6 +1027,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(updateVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -961,7 +1045,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(updateVariableBinding.rejected, (state) => {
+      .addCase(updateVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       })
@@ -971,6 +1057,8 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(deleteVariableBinding.fulfilled, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.data = state.data.map((dataset) => {
           if (dataset.id === action.meta.arg.dataset_id) {
@@ -987,7 +1075,9 @@ export const datasetSlice = createSlice({
           return dataset;
         });
       })
-      .addCase(deleteVariableBinding.rejected, (state) => {
+      .addCase(deleteVariableBinding.rejected, (state, action) => {
+        if (!isCurrentTeamAction(state, action)) return;
+
         state.loading = false;
         state.error = true;
       });
@@ -996,11 +1086,24 @@ export const datasetSlice = createSlice({
 
 export const { clearDatasets } = datasetSlice.actions;
 
-export const selectDatasets = (state) => state.dataset.data;
-export const selectDatasetsNoDrafts = (state) => state.dataset.data.filter((dataset) => !dataset.draft);
-export const selectResponses = (state) => state.dataset.responses;
+export const selectDatasetStateMatchesActiveTeam = (state) => (
+  state.team?.active?.id && state.dataset.teamId
+    ? `${state.team.active.id}` === `${state.dataset.teamId}`
+    : false
+);
+export const selectDatasets = (state) => (
+  selectDatasetStateMatchesActiveTeam(state) ? state.dataset.data : []
+);
+export const selectDatasetsNoDrafts = (state) => selectDatasets(state).filter((dataset) => !dataset.draft);
+export const selectResponses = (state) => (
+  selectDatasetStateMatchesActiveTeam(state) ? state.dataset.responses : []
+);
 const EMPTY_DATA_REQUESTS = [];
 export const selectDataRequests = (state, datasetId) => {
+  if (!selectDatasetStateMatchesActiveTeam(state)) {
+    return EMPTY_DATA_REQUESTS;
+  }
+
   const dataset = state.dataset.data.find((dataset) => dataset.id === parseInt(datasetId, 10));
   if (dataset?.DataRequests) {
     return dataset.DataRequests;

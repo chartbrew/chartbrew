@@ -83,7 +83,6 @@ function UserDashboard(props) {
       if (selectedTeam) {
         dispatch(saveActiveTeam(selectedTeam));
         dispatch(getTeamMembers({ team_id: selectedTeam.id }));
-        dispatch(getDatasets({ team_id: selectedTeam.id }));
 
         const welcome = new URLSearchParams(window.location.search).get("welcome");
         if (welcome) {
@@ -98,8 +97,9 @@ function UserDashboard(props) {
       dispatch(getTeamMembers({ team_id: team.id }));
       dispatch(getTeamConnections({ team_id: team.id }));
       dispatch(getProjects({ team_id: team.id }));
+      dispatch(getDatasets({ team_id: team.id }));
     }
-  }, [team]);
+  }, [team?.id]);
 
   const _checkParameters = () => {
     const params = new URLSearchParams(window.location.search);
