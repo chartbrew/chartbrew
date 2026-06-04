@@ -32,6 +32,13 @@ function runChartQuery(options) {
   return sqlProtocol.runChartQuery(options);
 }
 
+function applyVariables(options) {
+  return sqlProtocol.applyVariables({
+    ...options,
+    escapeBackslash: true,
+  });
+}
+
 function generateQuery({
   schema,
   question,
@@ -42,7 +49,7 @@ function generateQuery({
 }
 
 module.exports = {
-  applyVariables: sqlProtocol.applyVariables,
+  applyVariables,
   closeSqlConnection: sqlProtocol.closeSqlConnection,
   generateQuery,
   getSchema,

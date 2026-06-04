@@ -18,6 +18,7 @@ const {
 const {
   applySqlVariables,
 } = require("../../sources/shared/sql/sql.variables.js");
+const mysqlProtocol = require("../../sources/plugins/mysql/mysql.protocol.js");
 
 describe("source-owned variable processors", () => {
   it("applies SQL variables with quoting, escaping, defaults, and required checks", () => {
@@ -48,6 +49,64 @@ describe("source-owned variable processors", () => {
 
     expect(() => applySqlVariables(dataRequest, {}))
       .toThrow("Required variable 'name' has no value provided and no default value");
+  });
+
+  it("treats SQL variable replacement values as literals", () => {
+    const dataRequest = {
+      query: "select * from users where name = '{{name}}' and role = 'user'",
+      VariableBindings: [{
+        name: "name",
+        type: "string",
+        required: true,
+      }],
+    };
+
+    const result = applySqlVariables(dataRequest, { name: "x$' OR 1=1 -- " });
+
+    expect(result.processedQuery).toBe(
+      "select * from users where name = 'x$'' OR 1=1 -- ' and role = 'user'"
+    );
+  });
+
+  it("escapes backslashes in SQL string variables when requested", () => {
+    const dataRequest = {
+      query: "select * from users where name = {{name}}",
+      VariableBindings: [{
+        name: "name",
+        type: "string",
+        required: true,
+      }],
+    };
+
+    const result = applySqlVariables(
+      dataRequest,
+      { name: "x\\' OR 1=1 -- " },
+      { escapeBackslash: true }
+    );
+
+    expect(result.processedQuery).toBe(
+      "select * from users where name = 'x\\\\'' OR 1=1 -- '"
+    );
+  });
+
+  it("escapes backslashes through the MySQL protocol variable processor", () => {
+    const dataRequest = {
+      query: "select * from users where name = {{name}}",
+      VariableBindings: [{
+        name: "name",
+        type: "string",
+        required: true,
+      }],
+    };
+
+    const result = mysqlProtocol.applyVariables({
+      dataRequest,
+      variables: { name: "x\\' OR 1=1 -- " },
+    });
+
+    expect(result.processedQuery).toBe(
+      "select * from users where name = 'x\\\\'' OR 1=1 -- '"
+    );
   });
 
   it("applies API variables to route, headers, and body while preserving date placeholders", () => {

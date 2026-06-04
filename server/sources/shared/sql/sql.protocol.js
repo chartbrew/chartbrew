@@ -209,8 +209,8 @@ async function runChartQuery({ connection, query }) {
 }
 
 module.exports = {
-  applyVariables({ dataRequest, variables }) {
-    return applySqlVariables(dataRequest, variables);
+  applyVariables({ dataRequest, variables, escapeBackslash }) {
+    return applySqlVariables(dataRequest, variables, { escapeBackslash });
   },
   applyUploadedFiles,
   closeSqlConnection,

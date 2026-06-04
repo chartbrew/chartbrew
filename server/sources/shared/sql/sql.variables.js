@@ -3,14 +3,21 @@ const {
   hasProvidedValue,
 } = require("../variables/stringVariables");
 
-function escapeSqlString(value, isAlreadyQuoted) {
+function escapeSqlString(value, isAlreadyQuoted, options = {}) {
   const stringValue = String(value);
+  const escapedValue = (options.escapeBackslash ? stringValue.replace(/\\/g, "\\\\") : stringValue)
+    .replace(/'/g, "''");
+
   return isAlreadyQuoted
-    ? stringValue.replace(/'/g, "''").replace(/"/g, "\"\"")
-    : `'${stringValue.replace(/'/g, "''")}'`;
+    ? escapedValue.replace(/"/g, "\"\"")
+    : `'${escapedValue}'`;
 }
 
-function formatSqlVariableValue(value, binding, isAlreadyQuoted) {
+function replaceSqlPlaceholder(query, placeholder, value) {
+  return query.replace(placeholder, () => value);
+}
+
+function formatSqlVariableValue(value, binding, isAlreadyQuoted, options = {}) {
   switch (binding?.type) {
     case "number":
       return Number.isNaN(Number(value)) ? "0" : String(value);
@@ -19,11 +26,11 @@ function formatSqlVariableValue(value, binding, isAlreadyQuoted) {
     case "date":
     case "string":
     default:
-      return escapeSqlString(value, isAlreadyQuoted);
+      return escapeSqlString(value, isAlreadyQuoted, options);
   }
 }
 
-function applySqlVariables(dataRequest, variables = {}) {
+function applySqlVariables(dataRequest, variables = {}, options = {}) {
   const originalDataRequest = dataRequest;
 
   if (!originalDataRequest.query
@@ -65,14 +72,16 @@ function applySqlVariables(dataRequest, variables = {}) {
     const hasDefaultValue = hasProvidedValue(binding?.default_value);
 
     if (hasRuntimeValue) {
-      processedQuery = processedQuery.replace(
+      processedQuery = replaceSqlPlaceholder(
+        processedQuery,
         variable.placeholder,
-        formatSqlVariableValue(runtimeValue, binding, variable.isAlreadyQuoted)
+        formatSqlVariableValue(runtimeValue, binding, variable.isAlreadyQuoted, options)
       );
     } else if (hasDefaultValue && binding) {
-      processedQuery = processedQuery.replace(
+      processedQuery = replaceSqlPlaceholder(
+        processedQuery,
         variable.placeholder,
-        formatSqlVariableValue(binding.default_value, binding, variable.isAlreadyQuoted)
+        formatSqlVariableValue(binding.default_value, binding, variable.isAlreadyQuoted, options)
       );
     } else {
       if (binding?.required) {
