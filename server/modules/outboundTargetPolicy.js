@@ -34,6 +34,12 @@ const PRIVATE_IPV6_BLOCKLIST = new net.BlockList();
   ["fe80::", 10],
   ["ff00::", 8],
   ["2001:db8::", 32],
+  // NAT64 / DNS64 translation prefixes (RFC 6052 well-known, RFC 8215 local-use).
+  // On a NAT64 network these embed an IPv4 address in the low 32 bits, so the
+  // private/metadata IPv4 ranges are reachable through them. Block the prefixes
+  // outright in addition to the embedded-IPv4 unwrapping below.
+  ["64:ff9b::", 96],
+  ["64:ff9b:1::", 48],
 ].forEach(([address, prefix]) => {
   PRIVATE_IPV6_BLOCKLIST.addSubnet(address, prefix, "ipv6");
 });
@@ -122,6 +128,45 @@ function isMetadataHostname(hostname) {
   return METADATA_HOSTNAMES.has(hostname);
 }
 
+// NAT64 / DNS64 prefixes (RFC 6052 well-known 64:ff9b::/96, RFC 8215 local-use
+// 64:ff9b:1::/48). An IPv6 address inside one of these prefixes carries an IPv4
+// address in its low 32 bits; on a NAT64 network the gateway translates it back
+// to that IPv4 host. Extract the embedded IPv4 so it is checked against the IPv4
+// private/metadata blocklists (mirrors the existing "::ffff:" mapped handling).
+const NAT64_BLOCKLIST = new net.BlockList();
+NAT64_BLOCKLIST.addSubnet("64:ff9b::", 96, "ipv6");
+NAT64_BLOCKLIST.addSubnet("64:ff9b:1::", 48, "ipv6");
+
+function getNat64EmbeddedIpv4(address) {
+  if (net.isIP(address) !== 6) return null;
+  if (!NAT64_BLOCKLIST.check(address, "ipv6")) return null;
+
+  // Expand to full hextets and read the trailing 32 bits as IPv4 octets.
+  const groups = expandIpv6(address);
+  if (!groups) return null;
+  const lo = (groups[6] << 16) | groups[7]; // last two 16-bit groups = 32-bit IPv4
+  const ipv4 = [(lo >>> 24) & 0xff, (lo >>> 16) & 0xff, (lo >>> 8) & 0xff, lo & 0xff].join(".");
+  return net.isIP(ipv4) === 4 ? ipv4 : null;
+}
+
+function expandIpv6(address) {
+  // Returns an array of 8 numeric hextets, or null if not a valid IPv6 literal.
+  const stripped = address.replace(/^\[|\]$/g, "");
+  if (net.isIP(stripped) !== 6) return null;
+  const [head, tail] = stripped.split("::");
+  const headParts = head ? head.split(":") : [];
+  const tailParts = tail !== undefined && tail !== "" ? tail.split(":") : [];
+  const fill = 8 - headParts.length - tailParts.length;
+  if (fill < 0) return null;
+  const parts = [
+    ...headParts,
+    ...Array(tail !== undefined ? fill : 0).fill("0"),
+    ...tailParts,
+  ];
+  if (parts.length !== 8) return null;
+  return parts.map((p) => parseInt(p || "0", 16) & 0xffff);
+}
+
 function isMetadataAddress(address) {
   if (METADATA_IP_ADDRESSES.has(address)) return true;
 
@@ -130,13 +175,20 @@ function isMetadataAddress(address) {
     return METADATA_IP_ADDRESSES.has(mappedIpv4);
   }
 
+  const nat64Ipv4 = getNat64EmbeddedIpv4(address);
+  if (nat64Ipv4) {
+    return METADATA_IP_ADDRESSES.has(nat64Ipv4);
+  }
+
   return false;
 }
 
 function getMappedIpv4(address) {
-  if (!address.startsWith("::ffff:")) return null;
-  const mappedIpv4 = address.replace("::ffff:", "");
-  return net.isIP(mappedIpv4) === 4 ? mappedIpv4 : null;
+  if (address.startsWith("::ffff:")) {
+    const mappedIpv4 = address.replace("::ffff:", "");
+    return net.isIP(mappedIpv4) === 4 ? mappedIpv4 : null;
+  }
+  return getNat64EmbeddedIpv4(address);
 }
 
 function isPrivateOrReservedAddress(address) {
