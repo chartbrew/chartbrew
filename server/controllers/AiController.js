@@ -4,6 +4,16 @@ const { orchestrate, availableTools } = require("../modules/ai/orchestrator/orch
 const db = require("../models/models");
 const socketManager = require("../modules/socketManager");
 
+function assertConversationOwnership(conversation, userId) {
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  if (`${conversation.user_id}` !== `${userId}`) {
+    throw new Error("Conversation does not belong to this user");
+  }
+}
+
 async function getOrchestration(
   teamId,
   question,
@@ -20,9 +30,10 @@ async function getOrchestration(
     if (!conversation) {
       throw new Error("Conversation not found");
     }
-    if (conversation.team_id !== teamId) {
+    if (`${conversation.team_id}` !== `${teamId}`) {
       throw new Error("Conversation does not belong to this team");
     }
+    assertConversationOwnership(conversation, userId);
   } else {
     // Create new conversation
     conversation = await db.AiConversation.create({
@@ -227,7 +238,7 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
   return conversationsWithUsage;
 }
 
-async function getConversation(conversationId, teamId) {
+async function getConversation(conversationId, teamId, userId) {
   const conversation = await db.AiConversation.findOne({
     where: {
       id: conversationId,
@@ -235,9 +246,7 @@ async function getConversation(conversationId, teamId) {
     },
   });
 
-  if (!conversation) {
-    throw new Error("Conversation not found");
-  }
+  assertConversationOwnership(conversation, userId);
 
   // Load messages from AiMessage table
   const messages = await db.AiMessage.findAll({
@@ -289,7 +298,7 @@ async function getConversation(conversationId, teamId) {
   };
 }
 
-async function deleteConversation(conversationId, teamId) {
+async function deleteConversation(conversationId, teamId, userId) {
   const conversation = await db.AiConversation.findOne({
     where: {
       id: conversationId,
@@ -297,9 +306,7 @@ async function deleteConversation(conversationId, teamId) {
     },
   });
 
-  if (!conversation) {
-    throw new Error("Conversation not found");
-  }
+  assertConversationOwnership(conversation, userId);
 
   // Delete messages (AiMessage cascade delete will handle this)
   await db.AiMessage.destroy({

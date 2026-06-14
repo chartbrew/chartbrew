@@ -1,7 +1,11 @@
 const { Server } = require("socket.io");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const Redis = require("ioredis");
+const jwt = require("jsonwebtoken");
 const { getRedisOptions } = require("../redisConnection");
+const db = require("../models/models");
+
+const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 /**
  * Socket.IO Manager for Chartbrew
@@ -20,6 +24,53 @@ class SocketManager {
     this.roomConnections = new Map(); // room -> Set of socket IDs
     this.pubClient = null;
     this.subClient = null;
+  }
+
+  async authenticateToken(token) {
+    if (!token) {
+      throw new Error("Token is required");
+    }
+
+    const blacklisted = await db.TokenBlacklist.findOne({ where: { token } });
+    if (blacklisted) {
+      throw new Error("Unauthorized access");
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, settings.encryptionKey);
+    } catch (error) {
+      decoded = jwt.verify(token, settings.secret);
+    }
+
+    if (!decoded?.id) {
+      throw new Error("Unauthorized access");
+    }
+
+    const user = await db.User.findByPk(decoded.id);
+    if (!user) {
+      throw new Error("Unauthorized access");
+    }
+
+    return user;
+  }
+
+  async canJoinConversation(userId, conversationId, teamId = null) {
+    if (!userId || !conversationId) {
+      return false;
+    }
+
+    const where = {
+      id: conversationId,
+      user_id: userId,
+    };
+
+    if (teamId) {
+      where.team_id = teamId;
+    }
+
+    const conversation = await db.AiConversation.findOne({ where });
+    return Boolean(conversation);
   }
 
   async initialize(server) {
@@ -130,22 +181,26 @@ class SocketManager {
   setupConnectionHandling() {
     this.io.on("connection", (socket) => {
       // Authentication middleware
-      socket.on("authenticate", (data) => {
-        const { userId, teamId } = data;
-        if (!userId) {
-          socket.emit("authenticated", { success: false, error: "User ID required" });
+      socket.on("authenticate", async (data) => {
+        const { token, teamId } = data;
+        let user;
+
+        try {
+          user = await this.authenticateToken(token);
+        } catch (error) {
+          socket.emit("authenticated", { success: false, error: error.message || "Unauthorized access" });
           return;
         }
 
         // Remove old connection for this user if exists
-        const existingSocket = this.activeConnections.get(userId);
+        const existingSocket = this.activeConnections.get(user.id);
         if (existingSocket && existingSocket.id !== socket.id) {
           existingSocket.disconnect(true);
         }
 
-        this.activeConnections.set(userId, socket);
+        this.activeConnections.set(user.id, socket);
         // oxlint-disable-next-line no-param-reassign
-        socket.userId = userId;
+        socket.userId = user.id;
         // oxlint-disable-next-line no-param-reassign
         socket.teamId = teamId;
 
@@ -156,14 +211,14 @@ class SocketManager {
         }
 
         // Join user room for private messages
-        socket.join(`user:${userId}`);
-        this.addToRoom(`user:${userId}`, socket.id);
+        socket.join(`user:${user.id}`);
+        this.addToRoom(`user:${user.id}`, socket.id);
 
         socket.emit("authenticated", { success: true });
       });
 
       // Handle conversation room joining
-      socket.on("join-conversation", (data) => {
+      socket.on("join-conversation", async (data) => {
         const { conversationId } = data;
         if (!conversationId) {
           return;
@@ -171,6 +226,12 @@ class SocketManager {
 
         if (!socket.userId) {
           // Not authenticated yet, queue this for after authentication
+          return;
+        }
+
+        const canJoin = await this.canJoinConversation(socket.userId, conversationId, socket.teamId);
+        if (!canJoin) {
+          socket.emit("conversation-join-denied", { conversationId });
           return;
         }
 

@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import { API_HOST } from "../config/settings";
+import { getAuthToken } from "./auth";
 
 /**
  * Singleton Socket.IO client for Chartbrew AI
@@ -58,12 +59,16 @@ class SocketClient {
       // Handle connection
       this.socket.on("connect", () => {
         // Authenticate immediately after connect
-        this.socket.emit("authenticate", { userId, teamId });
+        this.socket.emit("authenticate", { token: getAuthToken(), teamId });
       });
 
       // Handle successful authentication
-      this.socket.once("authenticated", () => {
+      this.socket.once("authenticated", (data) => {
         clearTimeout(timeout);
+        if (data?.success === false) {
+          reject(new Error(data.error || "Socket authentication failed"));
+          return;
+        }
         this.isAuthenticated = true;
         resolve();
       });
@@ -85,12 +90,23 @@ class SocketClient {
 
       // Handle reconnection
       this.socket.on("reconnect", () => {
+        this.isAuthenticated = false;
+
         // Re-authenticate after reconnection
-        this.socket.emit("authenticate", { userId, teamId });
-        
-        // Rejoin all conversation rooms
-        this.conversationRooms.forEach((conversationId) => {
-          this.socket.emit("join-conversation", { conversationId });
+        this.socket.emit("authenticate", { token: getAuthToken(), teamId });
+
+        this.socket.once("authenticated", (data) => {
+          if (data?.success === false) {
+            console.warn("Socket re-authentication failed:", data.error);
+            return;
+          }
+
+          this.isAuthenticated = true;
+
+          // Rejoin all conversation rooms after authentication is restored
+          this.conversationRooms.forEach((conversationId) => {
+            this.socket.emit("join-conversation", { conversationId });
+          });
         });
       });
     });
@@ -178,4 +194,3 @@ class SocketClient {
 // Export singleton instance
 const socketClient = new SocketClient();
 export default socketClient;
-

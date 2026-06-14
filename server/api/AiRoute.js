@@ -72,6 +72,12 @@ module.exports = (app) => {
       );
       return res.json({ orchestration });
     } catch (error) {
+      if (error.message === "Conversation does not belong to this user") {
+        return res.status(403).json({ error: error.message });
+      }
+      if (error.message === "Conversation not found") {
+        return res.status(404).json({ error: error.message });
+      }
       return res.status(500).json({ error: error.message });
     }
   });
@@ -116,9 +122,15 @@ module.exports = (app) => {
     }
 
     try {
-      const conversation = await getConversation(conversationId, teamId);
+      const conversation = await getConversation(conversationId, teamId, req.user.id);
       return res.json({ conversation });
     } catch (error) {
+      if (error.message === "Conversation does not belong to this user") {
+        return res.status(403).json({ error: error.message });
+      }
+      if (error.message === "Conversation not found") {
+        return res.status(404).json({ error: error.message });
+      }
       return res.status(500).json({ error: error.message });
     }
   });
@@ -133,9 +145,15 @@ module.exports = (app) => {
     }
 
     try {
-      const result = await deleteConversation(conversationId, teamId);
+      const result = await deleteConversation(conversationId, teamId, req.user.id);
       return res.json(result);
     } catch (error) {
+      if (error.message === "Conversation does not belong to this user") {
+        return res.status(403).json({ error: error.message });
+      }
+      if (error.message === "Conversation not found") {
+        return res.status(404).json({ error: error.message });
+      }
       return res.status(500).json({ error: error.message });
     }
   });
