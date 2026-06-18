@@ -6,10 +6,89 @@ const {
 } = require("../sourceSupport");
 const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
 
+const DEFAULT_ROW_LIMIT = 1000;
+const MAX_ROW_LIMIT = 10000;
+const SQL_LIMIT_SOURCES = ["postgres", "mysql", "clickhouse"];
+
+const DANGEROUS_SQL_PATTERNS = [
+  /\bdrop\b/i,
+  /\bdelete\b/i,
+  /\bupdate\b/i,
+  /\binsert\b/i,
+  /\btruncate\b/i,
+  /\balter\b/i,
+  /\bcreate\b/i,
+  /\binto\b/i,
+  /\bpg_read_file\s*\(/i,
+  /\bpg_read_binary_file\s*\(/i,
+  /\bpg_ls_dir\s*\(/i,
+  /\blo_export\s*\(/i,
+  /\blo_import\s*\(/i,
+  /\bcopy\b[\s\S]*\bto\s+program\b/i,
+  /\binto\s+(out|dump)file\b/i,
+  /\bload_file\s*\(/i,
+  /\bload\s+data\b/i,
+  /\bgrant\b/i,
+  /\brevoke\b/i,
+  /\bexec(ute)?\b/i,
+  /\bcall\b/i,
+  /\bfile\s*\(/i,
+  /\burl\s*\(/i,
+];
+
+function getSafeRowLimit(rowLimit) {
+  const parsedRowLimit = Number(rowLimit);
+
+  if (!Number.isInteger(parsedRowLimit) || parsedRowLimit <= 0) {
+    return DEFAULT_ROW_LIMIT;
+  }
+
+  return Math.min(parsedRowLimit, MAX_ROW_LIMIT);
+}
+
+function normalizeSqlQuery(query) {
+  if (typeof query !== "string") {
+    throw new Error("query must be a string");
+  }
+
+  let normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    throw new Error("query is required");
+  }
+
+  normalizedQuery = normalizedQuery.replace(/;\s*$/, "").trim();
+
+  const upperQuery = normalizedQuery.toUpperCase();
+
+  if (!upperQuery.startsWith("SELECT") && !upperQuery.startsWith("WITH")) {
+    throw new Error("Only SELECT/WITH queries are allowed");
+  }
+
+  if (normalizedQuery.includes(";")) {
+    throw new Error("Multi-statement queries are not allowed");
+  }
+
+  if (/--|\/\*|\*\//.test(normalizedQuery)) {
+    throw new Error("SQL comments are not allowed in AI queries");
+  }
+
+  if (DANGEROUS_SQL_PATTERNS.some((pattern) => pattern.test(normalizedQuery))) {
+    throw new Error("Query contains blocked operations");
+  }
+
+  return normalizedQuery;
+}
+
+function hasLimitClause(query) {
+  return /\blimit\b/i.test(query);
+}
+
 async function runQuery(payload) {
   const {
-    connection_id, query, configuration = null, row_limit = 1000, timeout_ms = 8000, team_id
+    connection_id, query, configuration = null, row_limit = DEFAULT_ROW_LIMIT, timeout_ms = 8000, team_id
   } = payload;
+  const safeRowLimit = getSafeRowLimit(row_limit);
 
   if (!team_id) {
     throw new Error("team_id is required to run queries");
@@ -31,24 +110,14 @@ async function runQuery(payload) {
       throw new Error(`${source.name} uses source-owned configuration tools. Use source_preview_configuration for previews and create_temporary_chart for charts instead of run_query.`);
     }
 
-    // Add LIMIT clause if not present to respect row_limit
-    let limitedQuery = query ? query.trim() : null;
+    let limitedQuery = query || null;
     if (limitedQuery) {
-      // Validate that the query is read-only (whole words only)
-      const forbiddenKeywords = ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE"];
-      const upperQuery = limitedQuery.toUpperCase();
-      const hasForbiddenKeyword = forbiddenKeywords.some((keyword) => {
-        // Use word boundaries to avoid false positives
-        const regex = new RegExp(`\\b${keyword}\\b`, "i");
-        return regex.test(upperQuery);
-      });
-
-      if (hasForbiddenKeyword) {
-        throw new Error("Only read-only queries (SELECT) are allowed");
+      if (SQL_LIMIT_SOURCES.includes(source.type)) {
+        limitedQuery = normalizeSqlQuery(limitedQuery);
       }
 
-      if (!upperQuery.includes("LIMIT") && ["postgres", "mysql", "clickhouse"].includes(source.type)) {
-        limitedQuery = `${limitedQuery.replace(/;$/, "")} LIMIT ${row_limit}`;
+      if (!hasLimitClause(limitedQuery) && SQL_LIMIT_SOURCES.includes(source.type)) {
+        limitedQuery = `${limitedQuery} LIMIT ${safeRowLimit}`;
       }
     }
 
@@ -100,7 +169,7 @@ async function runQuery(payload) {
         : [];
 
       return {
-        rows: data.slice(0, row_limit),
+        rows: data.slice(0, safeRowLimit),
         columns,
         rowCount: data.length,
         elapsedMs,

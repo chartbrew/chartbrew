@@ -1703,7 +1703,7 @@ async function orchestrate(
         total_tokens: 0
       },
       usageRecords: [{
-        model: openAiModel || "gpt-5-nano",
+        model: openAiModel || "gpt-5.4-nano",
         prompt_tokens: 0,
         completion_tokens: 0,
         total_tokens: 0,
@@ -1714,7 +1714,7 @@ async function orchestrate(
   }
 
   const systemPrompt = buildSystemPrompt(semanticLayer, conversation);
-  const modelName = openAiModel || "gpt-5-nano";
+  const modelName = openAiModel || "gpt-5.4-nano";
   const persistedMessages = [...sanitizedHistory];
   const modelMessages = sanitizedHistory.filter((message) => message.role !== "system");
 
