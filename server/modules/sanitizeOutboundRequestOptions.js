@@ -14,6 +14,7 @@ const DISALLOWED_OPTION_KEYS = [
   "pool",
   "forever",
   "localAddress",
+  "lookup",
 ];
 
 function defaultPortForProtocol(protocol) {

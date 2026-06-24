@@ -71,6 +71,18 @@ describe("sanitizeOutboundRequestOptions", () => {
       code: "SSRF_BLOCKED",
       reason: "disallowed_request_option",
     });
+
+    const lookupError = captureError(() => {
+      sanitizeOutboundRequestOptions({
+        url: "https://api.example.com/resource",
+        lookup: () => {},
+      });
+    });
+
+    expect(lookupError).toMatchObject({
+      code: "SSRF_BLOCKED",
+      reason: "disallowed_request_option",
+    });
   });
 
   it("requires absolute URLs", () => {
