@@ -19,9 +19,14 @@ const DANGEROUS_SQL_PATTERNS = [
   /\balter\b/i,
   /\bcreate\b/i,
   /\binto\b/i,
-  /\bpg_read_file\s*\(/i,
-  /\bpg_read_binary_file\s*\(/i,
-  /\bpg_ls_dir\s*\(/i,
+  // Block the whole PostgreSQL filesystem-access family in one pattern:
+  // pg_read_file, pg_read_binary_file, pg_read_server_file(s), pg_stat_file,
+  // pg_ls_dir, pg_ls_logdir, pg_ls_waldir, pg_ls_tmpdir,
+  // pg_ls_archive_statusdir, pg_current_logfile, plus any future siblings.
+  // The optional leading and trailing double-quote also covers the
+  // quoted-identifier call form ("pg_read_file"(...)), which Postgres
+  // accepts and which the per-function \bpg_read_file\b patterns missed.
+  /(?:\b|")pg_(?:read|stat|ls|current_logfile)[a-z0-9_]*"?\s*\(/i,
   /\blo_export\s*\(/i,
   /\blo_import\s*\(/i,
   /\bcopy\b[\s\S]*\bto\s+program\b/i,
