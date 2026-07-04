@@ -19,6 +19,7 @@ const {
   applySqlVariables,
 } = require("../../sources/shared/sql/sql.variables.js");
 const mysqlProtocol = require("../../sources/plugins/mysql/mysql.protocol.js");
+const clickhouseProtocol = require("../../sources/plugins/clickhouse/clickhouse.protocol.js");
 
 describe("source-owned variable processors", () => {
   it("applies SQL variables with quoting, escaping, defaults, and required checks", () => {
@@ -100,6 +101,26 @@ describe("source-owned variable processors", () => {
     };
 
     const result = mysqlProtocol.applyVariables({
+      dataRequest,
+      variables: { name: "x\\' OR 1=1 -- " },
+    });
+
+    expect(result.processedQuery).toBe(
+      "select * from users where name = 'x\\\\'' OR 1=1 -- '"
+    );
+  });
+
+  it("escapes backslashes through the ClickHouse protocol variable processor", () => {
+    const dataRequest = {
+      query: "select * from users where name = {{name}}",
+      VariableBindings: [{
+        name: "name",
+        type: "string",
+        required: true,
+      }],
+    };
+
+    const result = clickhouseProtocol.applyVariables({
       dataRequest,
       variables: { name: "x\\' OR 1=1 -- " },
     });

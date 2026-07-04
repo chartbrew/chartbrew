@@ -154,7 +154,7 @@ function generateQuery({
 
 module.exports = {
   applyVariables({ dataRequest, variables }) {
-    return applySqlVariables(dataRequest, variables);
+    return applySqlVariables(dataRequest, variables, { escapeBackslash: true });
   },
   applyUploadedFiles,
   generateQuery,
