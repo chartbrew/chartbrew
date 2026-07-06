@@ -27,8 +27,8 @@ const DANGEROUS_SQL_PATTERNS = [
   // quoted-identifier call form ("pg_read_file"(...)), which Postgres
   // accepts and which the per-function \bpg_read_file\b patterns missed.
   /(?:\b|")pg_(?:read|stat|ls|current_logfile)[a-z0-9_]*"?\s*\(/i,
-  /\blo_export\s*\(/i,
-  /\blo_import\s*\(/i,
+  /(?:\b|")lo_export"?\s*\(/i,
+  /(?:\b|")lo_import"?\s*\(/i,
   /\bcopy\b[\s\S]*\bto\s+program\b/i,
   /\binto\s+(out|dump)file\b/i,
   /\bload_file\s*\(/i,

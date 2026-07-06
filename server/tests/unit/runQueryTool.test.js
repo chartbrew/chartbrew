@@ -133,6 +133,23 @@ describe("run_query AI tool", () => {
     expect(db.Dataset.create).not.toHaveBeenCalled();
   });
 
+  it("rejects quoted-identifier forms of PostgreSQL large-object file functions", async () => {
+    for (const query of [
+      "SELECT \"lo_import\"('/etc/passwd')",
+      "SELECT \"lo_export\"(123, '/tmp/exported')",
+    ]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(runQuery({
+        team_id: 7,
+        connection_id: 42,
+        query,
+        row_limit: 5,
+      })).rejects.toThrow("Query contains blocked operations");
+    }
+
+    expect(db.Dataset.create).not.toHaveBeenCalled();
+  });
+
   it("still allows a benign SELECT that mentions a file-like column name", async () => {
     const postgres = getSourceById("postgres");
     vi.spyOn(postgres.backend, "runDataRequest").mockResolvedValue({
