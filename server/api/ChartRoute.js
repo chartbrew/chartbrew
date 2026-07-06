@@ -17,6 +17,7 @@ const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
 } = require("../modules/outboundTargetPolicy");
+const { verifyProjectPassword } = require("../modules/projectPassword");
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const apiLimiter = (max = 10) => {
@@ -126,7 +127,8 @@ module.exports = (app) => {
     }
 
     const passwordInput = getPublicPasswordInput(req);
-    if (project.passwordProtected && passwordInput !== project.password && !hasAuthenticatedProjectAccess) {
+    const isPasswordCorrect = await verifyProjectPassword(passwordInput, project.password);
+    if (project.passwordProtected && !isPasswordCorrect && !hasAuthenticatedProjectAccess) {
       return Promise.reject(401);
     }
 
@@ -254,7 +256,8 @@ module.exports = (app) => {
       return false;
     }
 
-    if (project?.passwordProtected && passwordInput !== project.password) {
+    const isPasswordCorrect = await verifyProjectPassword(passwordInput, project.password);
+    if (project?.passwordProtected && !isPasswordCorrect) {
       return false;
     }
 
@@ -332,7 +335,7 @@ module.exports = (app) => {
 
       const shareToken = req.query.token || req.body?.token;
       if (!shareToken) {
-        const passwordInput = req.query.pass || req.headers.pass || req.body?.password;
+        const passwordInput = getPublicPasswordInput(req);
         const allowPublicAccess = await isPublicProjectFilterAllowed(project, chart, passwordInput);
         if (allowPublicAccess) {
           return next();
@@ -382,8 +385,9 @@ module.exports = (app) => {
         }
 
         if (project.passwordProtected) {
-          const passwordInput = req.query.pass || req.headers.pass || req.body?.password;
-          if (passwordInput !== project.password) {
+          const passwordInput = getPublicPasswordInput(req);
+          const isPasswordCorrect = await verifyProjectPassword(passwordInput, project.password);
+          if (!isPasswordCorrect) {
             return res.status(403).json({ message: "Enter the correct password" });
           }
         }

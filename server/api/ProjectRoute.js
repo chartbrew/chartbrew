@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const rateLimit = require("express-rate-limit");
 const { nanoid } = require("nanoid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
@@ -13,6 +14,7 @@ const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
+const { verifyProjectPassword } = require("../modules/projectPassword");
 const {
   MAX_LOGO_UPLOAD_SIZE_BYTES,
   buildSafeLogoFilename,
@@ -20,6 +22,18 @@ const {
   isValidLogoImageBuffer,
   resolveSafeUploadPath,
 } = require("../modules/logoUploadSecurity");
+
+const getProjectPasswordInput = (req) => {
+  return req.headers.pass || req.query.pass || req.query.password || req.body?.password;
+};
+
+const apiLimiter = (max = 10, windowMinutes = 1) => {
+  return rateLimit({
+    windowMs: windowMinutes * 60 * 1000,
+    max,
+    skip: (req) => !getProjectPasswordInput(req),
+  });
+};
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -315,7 +329,7 @@ module.exports = (app) => {
   /*
   ** Route to get a project with a public dashboard
   */
-  app.get("/project/dashboard/:brewName", getUserFromToken, async (req, res) => {
+  app.get("/project/dashboard/:brewName", apiLimiter(5, 15), getUserFromToken, async (req, res) => {
     let processedProject;
     try {
       const project = await projectController.getPublicDashboard(req.params.brewName);
@@ -398,9 +412,10 @@ module.exports = (app) => {
         if (sharePolicy.visibility !== "public") {
           // SharePolicy exists and requires token verification
           if (!req.query.token) {
+            const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
             if (project.public
               && project.passwordProtected
-              && req.query.pass === project.password
+              && isPasswordCorrect
             ) {
               // Allow password access for backwards compatibility if no token provided
               return res.status(200).send(processedProject);
@@ -420,7 +435,8 @@ module.exports = (app) => {
 
             // SECURITY: If dashboard is password protected, require password even with valid token
             if (project.passwordProtected) {
-              if (!req.query.pass || req.query.pass !== project.password) {
+              const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
+              if (!isPasswordCorrect) {
                 return res.status(403).send("Enter the correct password");
               }
             }
@@ -459,7 +475,8 @@ module.exports = (app) => {
         if (Object.keys(urlVariables).length > 0) {
           // SECURITY: If dashboard is password protected, require password for URL variables
           if (project.passwordProtected) {
-            if (!req.query.pass || req.query.pass !== project.password) {
+            const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
+            if (!isPasswordCorrect) {
               return res.status(403).send("Enter the correct password");
             }
           }
@@ -480,11 +497,12 @@ module.exports = (app) => {
         return res.status(200).send(processedProject);
       }
 
-      if (project.public && project.passwordProtected && req.query.pass === project.password) {
+      const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
+      if (project.public && project.passwordProtected && isPasswordCorrect) {
         return res.status(200).send(processedProject);
       }
 
-      if (project.public && project.passwordProtected && req.query.pass !== project.password) {
+      if (project.public && project.passwordProtected && !isPasswordCorrect) {
         return res.status(403).send("Enter the correct password");
       }
 
@@ -503,7 +521,7 @@ module.exports = (app) => {
   /*
   ** Route to get a project with a share policy
   */
-  app.get("/project/:brew_name/report", getUserFromToken, async (req, res) => {
+  app.get("/project/:brew_name/report", apiLimiter(5, 15), getUserFromToken, async (req, res) => {
     return projectController.findBySharePolicy(
       req.params.brew_name, req.headers.pass, req.query, req.user,
     )

@@ -1,4 +1,3 @@
-const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
 const { cloneDeep } = require("lodash");
 
@@ -7,6 +6,7 @@ const TeamController = require("./TeamController");
 const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
+const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -100,9 +100,9 @@ class ProjectController {
   update(id, data) {
     const newFields = normalizeProjectScheduleTimezones(data);
     return this.findById(id)
-      .then((project) => {
-        if (data.passwordProtected && !project.password) {
-          newFields.password = nanoid(8);
+      .then(async () => {
+        if (Object.prototype.hasOwnProperty.call(newFields, "password")) {
+          newFields.password = await hashProjectPassword(newFields.password);
         }
         return db.Project.update(newFields, { where: { id } });
       })
@@ -539,7 +539,8 @@ class ProjectController {
 
       // Handle password protection
       if (project.passwordProtected) {
-        if (!password || password !== project.password) {
+        const isPasswordCorrect = await verifyProjectPassword(password, project.password);
+        if (!isPasswordCorrect) {
           return Promise.reject("403");
         }
       }

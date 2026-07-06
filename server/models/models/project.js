@@ -1,4 +1,5 @@
 const { normalizeProjectScheduleTimezones } = require("../../modules/projectSnapshotTimezone");
+const { hashProjectPassword } = require("../../modules/projectPassword");
 
 module.exports = (sequelize, DataTypes) => {
   const Project = sequelize.define("Project", {
@@ -126,6 +127,18 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     freezeTableName: true,
+    hooks: {
+      beforeCreate: async (project) => {
+        if (project.password) {
+          project.password = await hashProjectPassword(project.password);
+        }
+      },
+      beforeUpdate: async (project) => {
+        if (project.changed("password") && project.password) {
+          project.password = await hashProjectPassword(project.password);
+        }
+      },
+    },
   });
 
   Project.associate = (models) => {

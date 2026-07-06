@@ -189,10 +189,6 @@ export const getPublicDashboard = createAsyncThunk(
     // Build query parameters
     const urlParams = new URLSearchParams();
     
-    if (password) {
-      urlParams.append("pass", password);
-    }
-
     if (token) {
       urlParams.append("token", token);
     }
@@ -208,6 +204,10 @@ export const getPublicDashboard = createAsyncThunk(
 
     if (urlParams.toString()) {
       url += `?${urlParams.toString()}`;
+    }
+
+    if (password) {
+      headers.append("pass", password);
     }
 
     const response = await fetch(url, { headers, cache: "no-store" });

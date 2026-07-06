@@ -38,6 +38,7 @@ function SharingSettings(props) {
   const [urlLoading, setUrlLoading] = useState(false);
   const [shareToken, setShareToken] = useState("");
   const [shareLoading, setShareLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [parameters, setParameters] = useState([]);
   const [allowParams, setAllowParams] = useState(false);
   const [expirationDate, setExpirationDate] = useState("");
@@ -52,7 +53,8 @@ function SharingSettings(props) {
   useEffect(() => {
     if (project && project.id) {
       setNewBrewName(project.brewName);
-      setNewPassword(project.password);
+      setNewPassword("");
+      setShowPasswordForm(project.passwordProtected && !project.password);
       _initializeSharing();
     }
   }, [project]);
@@ -150,6 +152,13 @@ function SharingSettings(props) {
 
   const _onTogglePassword = (value) => {
     setPasswordLoading(true);
+    if (value) {
+      setShowPasswordForm(!project.password);
+    } else {
+      setShowPasswordForm(false);
+      setNewPassword("");
+    }
+
     dispatch(updateProject({ project_id: project.id, data: { passwordProtected: value } }))
       .then(() => {
         if (value) {
@@ -174,6 +183,8 @@ function SharingSettings(props) {
         }
 
         toast.success("New password saved!");
+        setNewPassword("");
+        setShowPasswordForm(false);
       })
   };
 
@@ -741,7 +752,31 @@ function SharingSettings(props) {
                 </Tooltip>
               </div>
             </div>
-            {project.passwordProtected && (
+            {project.passwordProtected && project.password && !showPasswordForm && (
+              <Alert status="success" className="shadow-none mt-2 border border-divider">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>Password is set</Alert.Title>
+                  <Alert.Description>
+                    Viewers outside your team need the report password to open this dashboard.
+                  </Alert.Description>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onPress={() => {
+                        setNewPassword("");
+                        setShowPasswordForm(true);
+                      }}
+                    >
+                      <LuRefreshCcw size={16} />
+                      Set new password
+                    </Button>
+                  </div>
+                </Alert.Content>
+              </Alert>
+            )}
+            {project.passwordProtected && (!project.password || showPasswordForm) && (
               <>
                 <Row>
                   <Input
@@ -761,7 +796,6 @@ function SharingSettings(props) {
                     isDisabled={
                       !project.passwordProtected
                       || !newPassword
-                      || project.password === newPassword
                     }
                     size="sm"
                   >
