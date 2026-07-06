@@ -4,9 +4,20 @@ const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const apiProtocol = require("../sources/shared/protocols/api.protocol");
 
-function sanitizeConnectionWriteData(data = {}) {
+const sshSecretFields = ["sshPassword", "sshPrivateKey", "sshPassphrase"];
+
+function sanitizeConnectionWriteData(data = {}, options = {}) {
   const sanitizedData = { ...data };
   delete sanitizedData.allowPrivateHost;
+
+  if (options.preserveEmptySshSecrets) {
+    sshSecretFields.forEach((field) => {
+      if (sanitizedData[field] === null || sanitizedData[field] === undefined || sanitizedData[field] === "") {
+        delete sanitizedData[field];
+      }
+    });
+  }
+
   return sanitizedData;
 }
 
@@ -123,7 +134,7 @@ class ConnectionController {
   }
 
   update(id, data) {
-    return db.Connection.update(sanitizeConnectionWriteData(data), { where: { id } })
+    return db.Connection.update(sanitizeConnectionWriteData(data, { preserveEmptySshSecrets: true }), { where: { id } })
       .then(() => {
         return this.findById(id);
       })

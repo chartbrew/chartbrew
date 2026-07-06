@@ -10,6 +10,23 @@ const sc = simplecrypt({
   salt: "10",
 });
 
+function setEncryptedText(field, val) {
+  if (!val) return val;
+  return this.setDataValue(field, encrypt(val));
+}
+
+function getEncryptedText(field) {
+  try {
+    return decrypt(this.getDataValue(field));
+  } catch (e) {
+    try {
+      return sc.decrypt(this.getDataValue(field));
+    } catch (e) {
+      return this.getDataValue(field);
+    }
+  }
+}
+
 module.exports = (sequelize, DataTypes) => {
   const Connection = sequelize.define("Connection", {
     id: {
@@ -293,25 +310,61 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
     },
     sshHost: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshHost", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshHost");
+      },
     },
     sshPort: {
       type: DataTypes.INTEGER,
     },
     sshUsername: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshUsername", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshUsername");
+      },
     },
     sshPassword: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshPassword", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshPassword");
+      },
     },
     sshPrivateKey: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshPrivateKey", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshPrivateKey");
+      },
     },
     sshPassphrase: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshPassphrase", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshPassphrase");
+      },
     },
     sshJumpHost: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      set(val) {
+        return setEncryptedText.call(this, "sshJumpHost", val);
+      },
+      get() {
+        return getEncryptedText.call(this, "sshJumpHost");
+      },
     },
     sshJumpPort: {
       type: DataTypes.INTEGER,

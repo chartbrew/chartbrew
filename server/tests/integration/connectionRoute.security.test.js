@@ -502,4 +502,117 @@ describe("ConnectionRoute project scoping", () => {
     expect(savedConnection.allowPrivateHost).toBeNull();
     expect(response.body.allowPrivateHost).toBeNull();
   });
+
+  it("preserves existing SSH secrets when an update payload sends empty values", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const connection = await models.Connection.create(connectionFactory.build({
+      team_id: seeded.team.id,
+      type: "postgres",
+      subType: "postgres",
+      useSsh: true,
+      sshHost: "ssh.example.com",
+      sshUsername: "deploy",
+      sshPassword: "existing-password",
+      sshPrivateKey: ".connectionFiles/existing-key",
+      sshPassphrase: "existing-passphrase",
+    }));
+
+    await request(app)
+      .put(`/team/${seeded.team.id}/connections/${connection.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        name: "updated ssh connection",
+        sshPassword: "",
+        sshPrivateKey: null,
+        sshPassphrase: "",
+      })
+      .expect(200);
+
+    const savedConnection = await models.Connection.findByPk(connection.id);
+
+    expect(savedConnection.name).toBe("updated ssh connection");
+    expect(savedConnection.sshPassword).toBe("existing-password");
+    expect(savedConnection.sshPrivateKey).toBe(".connectionFiles/existing-key");
+    expect(savedConnection.sshPassphrase).toBe("existing-passphrase");
+  });
+
+  it("stores SSH connection fields encrypted at rest while reading plaintext through the model", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const connection = await models.Connection.create(connectionFactory.build({
+      team_id: seeded.team.id,
+      type: "postgres",
+      subType: "postgres",
+      useSsh: true,
+      sshHost: "ssh.example.com",
+      sshUsername: "deploy",
+      sshPassword: "ssh-password",
+      sshPrivateKey: ".connectionFiles/private-key",
+      sshPassphrase: "key-passphrase",
+      sshJumpHost: "bastion.example.com",
+    }));
+
+    const [rawConnection] = await models.sequelize.query(
+      "SELECT sshHost, sshUsername, sshPassword, sshPrivateKey, sshPassphrase, sshJumpHost FROM `Connection` WHERE id = :id",
+      {
+        replacements: { id: connection.id },
+        type: models.sequelize.QueryTypes.SELECT,
+      }
+    );
+    const savedConnection = await models.Connection.findByPk(connection.id);
+
+    expect(savedConnection.sshHost).toBe("ssh.example.com");
+    expect(savedConnection.sshUsername).toBe("deploy");
+    expect(savedConnection.sshPassword).toBe("ssh-password");
+    expect(savedConnection.sshPrivateKey).toBe(".connectionFiles/private-key");
+    expect(savedConnection.sshPassphrase).toBe("key-passphrase");
+    expect(savedConnection.sshJumpHost).toBe("bastion.example.com");
+
+    expect(rawConnection.sshHost).not.toBe("ssh.example.com");
+    expect(rawConnection.sshUsername).not.toBe("deploy");
+    expect(rawConnection.sshPassword).not.toBe("ssh-password");
+    expect(rawConnection.sshPrivateKey).not.toBe(".connectionFiles/private-key");
+    expect(rawConnection.sshPassphrase).not.toBe("key-passphrase");
+    expect(rawConnection.sshJumpHost).not.toBe("bastion.example.com");
+  });
+
+  it("redacts SSH secrets from connection API responses while exposing presence flags", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const connection = await models.Connection.create(connectionFactory.build({
+      team_id: seeded.team.id,
+      type: "postgres",
+      subType: "postgres",
+      useSsh: true,
+      sshHost: "ssh.example.com",
+      sshUsername: "deploy",
+      sshPassword: "ssh-password",
+      sshPrivateKey: ".connectionFiles/private-key",
+      sshPassphrase: "key-passphrase",
+    }));
+
+    const getResponse = await request(app)
+      .get(`/team/${seeded.team.id}/connections/${connection.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+
+    expect(getResponse.body).not.toHaveProperty("sshPassword");
+    expect(getResponse.body).not.toHaveProperty("sshPrivateKey");
+    expect(getResponse.body).not.toHaveProperty("sshPassphrase");
+    expect(getResponse.body.hasSshPassword).toBe(true);
+    expect(getResponse.body.hasSshPrivateKey).toBe(true);
+    expect(getResponse.body.hasSshPassphrase).toBe(true);
+
+    const listResponse = await request(app)
+      .get(`/team/${seeded.team.id}/connections`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    const listedConnection = listResponse.body.find((item) => item.id === connection.id);
+
+    expect(listedConnection).toBeDefined();
+    expect(listedConnection).not.toHaveProperty("sshPassword");
+    expect(listedConnection).not.toHaveProperty("sshPrivateKey");
+    expect(listedConnection).not.toHaveProperty("sshPassphrase");
+    expect(listedConnection.hasSshPassword).toBe(true);
+    expect(listedConnection.hasSshPrivateKey).toBe(true);
+    expect(listedConnection.hasSshPassphrase).toBe(true);
+  });
 });

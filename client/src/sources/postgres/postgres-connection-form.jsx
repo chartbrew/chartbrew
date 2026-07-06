@@ -27,6 +27,7 @@ import Text from "../../components/Text";
 import { useTheme } from "../../modules/ThemeContext";
 import { testRequest, testRequestWithFiles } from "../../slices/connection";
 import { selectTeam } from "../../slices/team";
+import { hasSshCredential, stripEmptySshSecrets } from "../shared/sql/sshSecrets";
 
 const formStrings = {
   postgres: {
@@ -184,7 +185,7 @@ function PostgresConnectionForm(props) {
         }, 100);
         return;
       }
-      if (!connection.sshPassword && !sshFiles.sshPrivateKey) {
+      if (!hasSshCredential(connection, sshFiles)) {
         setTimeout(() => {
           setErrors({ ...errors, sshPassword: "Please provide either a password or a private key" });
         }, 100);
@@ -218,7 +219,7 @@ function PostgresConnectionForm(props) {
           files.sshPrivateKey = sshFiles.sshPrivateKey;
         }
         
-        onComplete(newConnection, files)
+        onComplete(stripEmptySshSecrets(newConnection), files)
           .then(() => setLoading(false))
           .catch(() => setLoading(false));
       }
@@ -717,7 +718,7 @@ function PostgresConnectionForm(props) {
                   {sshFilesErrors.sshPrivateKey}
                 </span>
               )}
-              {!sshFilesErrors.sshPrivateKey && connection.sshPrivateKey && (
+              {!sshFilesErrors.sshPrivateKey && (connection.sshPrivateKey || connection.hasSshPrivateKey) && (
                 <LuCircleCheck className="text-success" size={20} />
               )}
             </Row>

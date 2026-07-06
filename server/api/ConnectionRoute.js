@@ -51,6 +51,19 @@ module.exports = (app) => {
     return res.status(error.statusCode || 400).send(serializeSourceDisabledError(error));
   };
 
+  const redactConnectionSecrets = (connection) => {
+    const redactedConnection = connection?.toJSON ? connection.toJSON() : { ...connection };
+
+    redactedConnection.hasSshPassword = Boolean(redactedConnection.sshPassword);
+    redactedConnection.hasSshPrivateKey = Boolean(redactedConnection.sshPrivateKey);
+    redactedConnection.hasSshPassphrase = Boolean(redactedConnection.sshPassphrase);
+    delete redactedConnection.sshPassword;
+    delete redactedConnection.sshPrivateKey;
+    delete redactedConnection.sshPassphrase;
+
+    return redactedConnection;
+  };
+
   const checkAccess = (req) => {
     let gProject;
     return projectController.findById(req.params.project_id)
@@ -145,7 +158,7 @@ module.exports = (app) => {
 
     return connectionController.findAll()
       .then((connections) => {
-        return res.status(200).send(connections);
+        return res.status(200).send(connections.map(redactConnectionSecrets));
       })
       .catch((error) => {
         return res.status(400).send(error);
@@ -163,9 +176,10 @@ module.exports = (app) => {
 
     try {
       const connections = await connectionController.findByTeam(team_id);
+      const redactedConnections = connections.map(redactConnectionSecrets);
 
       if (req.user.projects) {
-        let filteredConnections = connections.filter((connection) => {
+        let filteredConnections = redactedConnections.filter((connection) => {
           if (!connection.project_ids) return false;
           return connection.project_ids.some((projectId) => {
             return req.user.projects.includes(projectId);
@@ -174,7 +188,7 @@ module.exports = (app) => {
 
         if (req.user.permittedFields) {
           filteredConnections = filteredConnections.map((connection) => {
-            const newConnection = connection.toJSON();
+            const newConnection = { ...connection };
             Object.keys(newConnection).forEach((key) => {
               if (!req.user.permittedFields.includes(key)) {
                 newConnection[key] = null;
@@ -187,7 +201,7 @@ module.exports = (app) => {
         return res.status(200).send(filteredConnections);
       }
 
-      return res.status(200).send(connections);
+      return res.status(200).send(redactedConnections);
     } catch (err) {
       return res.status(400).json({ message: err.message });
     }
@@ -213,7 +227,7 @@ module.exports = (app) => {
       if (source?.backend?.afterConnectionCreated) {
         Promise.resolve(source.backend.afterConnectionCreated({ connection })).catch(() => {});
       }
-      return res.status(200).send(connection);
+      return res.status(200).send(redactConnectionSecrets(connection));
     } catch (error) {
       if (error.message === "401") {
         return res.status(401).send({ error: "Not authorized" });
@@ -231,7 +245,7 @@ module.exports = (app) => {
   app.post("/team/:team_id/connections/:connection_id/duplicate", verifyToken, checkPermissions("createOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.duplicateConnection(req.params.connection_id, req.body.name)
       .then((connection) => {
-        return res.status(200).send(connection);
+        return res.status(200).send(redactConnectionSecrets(connection));
       })
       .catch((error) => {
         return res.status(400).send(error);
@@ -245,13 +259,14 @@ module.exports = (app) => {
   app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
     return connectionController.findByIdAndTeam(req.params.connection_id, req.params.team_id)
       .then((connection) => {
-        let newConnection = connection;
+        let newConnection = connection.toJSON();
         if (!req.user.isEditor) {
           newConnection.password = "";
         }
 
+        newConnection = redactConnectionSecrets(newConnection);
+
         if (req.user.permittedFields) {
-          newConnection = connection.toJSON();
           Object.keys(newConnection).forEach((key) => {
             if (!req.user.permittedFields.includes(key)) {
               newConnection[key] = null;
@@ -286,10 +301,10 @@ module.exports = (app) => {
         return connectionController.findByProject(req.params.project_id);
       })
       .then((connections) => {
-        let filteredConnections = connections;
+        let filteredConnections = connections.map(redactConnectionSecrets);
         if (req.user.permittedFields) {
-          filteredConnections = connections.map((connection) => {
-            const newConnection = connection.toJSON();
+          filteredConnections = filteredConnections.map((connection) => {
+            const newConnection = { ...connection };
             Object.keys(newConnection).forEach((key) => {
               if (!req.user.permittedFields.includes(key)) {
                 newConnection[key] = null;
@@ -318,7 +333,7 @@ module.exports = (app) => {
 
     return connectionController.update(req.params.connection_id, req.body)
       .then((connection) => {
-        return res.status(200).send(connection);
+        return res.status(200).send(redactConnectionSecrets(connection));
       })
       .catch((error) => {
         if (error.message === "401") {
@@ -385,7 +400,7 @@ module.exports = (app) => {
         return connectionController.update(req.params.connection_id, files);
       })
       .then((connection) => {
-        return res.status(200).send(connection);
+        return res.status(200).send(redactConnectionSecrets(connection));
       })
       .catch((error) => {
         return res.status(400).send(error);
