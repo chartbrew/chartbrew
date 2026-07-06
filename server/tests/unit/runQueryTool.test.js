@@ -96,6 +96,61 @@ describe("run_query AI tool", () => {
     expect(db.Dataset.create).not.toHaveBeenCalled();
   });
 
+  it("rejects quoted-identifier forms of blocked filesystem functions", async () => {
+    await expect(runQuery({
+      team_id: 7,
+      connection_id: 42,
+      query: "SELECT \"pg_read_file\"('/etc/passwd')",
+      row_limit: 5,
+    })).rejects.toThrow("Query contains blocked operations");
+
+    await expect(runQuery({
+      team_id: 7,
+      connection_id: 42,
+      query: "SELECT convert_from(\"pg_read_binary_file\"('/etc/passwd'), 'UTF8')",
+      row_limit: 5,
+    })).rejects.toThrow("Query contains blocked operations");
+
+    expect(db.Dataset.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects sibling PostgreSQL filesystem functions not previously enumerated", async () => {
+    for (const query of [
+      "SELECT pg_stat_file('/etc/passwd')",
+      "SELECT name FROM pg_ls_waldir()",
+      "SELECT * FROM pg_ls_logdir()",
+      "SELECT pg_current_logfile()",
+    ]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(runQuery({
+        team_id: 7,
+        connection_id: 42,
+        query,
+        row_limit: 5,
+      })).rejects.toThrow("Query contains blocked operations");
+    }
+
+    expect(db.Dataset.create).not.toHaveBeenCalled();
+  });
+
+  it("still allows a benign SELECT that mentions a file-like column name", async () => {
+    const postgres = getSourceById("postgres");
+    vi.spyOn(postgres.backend, "runDataRequest").mockResolvedValue({
+      responseData: {
+        data: [{ file_name: "report.pdf" }],
+      },
+    });
+
+    const result = await runQuery({
+      team_id: 7,
+      connection_id: 42,
+      query: "SELECT file_name FROM documents",
+      row_limit: 5,
+    });
+
+    expect(result.rows).toEqual([{ file_name: "report.pdf" }]);
+  });
+
   it("rejects writable CTEs", async () => {
     await expect(runQuery({
       team_id: 7,
