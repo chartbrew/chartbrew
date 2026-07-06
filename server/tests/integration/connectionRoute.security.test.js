@@ -551,8 +551,20 @@ describe("ConnectionRoute project scoping", () => {
       sshJumpHost: "bastion.example.com",
     }));
 
+    const queryGenerator = models.sequelize.getQueryInterface().queryGenerator;
+    const connectionTable = queryGenerator.quoteTable("Connection");
+    const idColumn = queryGenerator.quoteIdentifier("id");
+    const sshColumns = [
+      "sshHost",
+      "sshUsername",
+      "sshPassword",
+      "sshPrivateKey",
+      "sshPassphrase",
+      "sshJumpHost",
+    ].map((field) => queryGenerator.quoteIdentifier(field)).join(", ");
+
     const [rawConnection] = await models.sequelize.query(
-      "SELECT sshHost, sshUsername, sshPassword, sshPrivateKey, sshPassphrase, sshJumpHost FROM `Connection` WHERE id = :id",
+      `SELECT ${sshColumns} FROM ${connectionTable} WHERE ${idColumn} = :id`,
       {
         replacements: { id: connection.id },
         type: models.sequelize.QueryTypes.SELECT,
