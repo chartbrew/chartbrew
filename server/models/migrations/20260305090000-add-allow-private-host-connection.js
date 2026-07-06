@@ -11,7 +11,7 @@ module.exports = {
 
     await queryInterface.bulkUpdate(
       "Connection",
-      { allowPrivateHost: true },
+      { allowPrivateHost: null },
       { type: "api" }
     );
   },

@@ -4,6 +4,12 @@ const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const apiProtocol = require("../sources/shared/protocols/api.protocol");
 
+function sanitizeConnectionWriteData(data = {}) {
+  const sanitizedData = { ...data };
+  delete sanitizedData.allowPrivateHost;
+  return sanitizedData;
+}
+
 class ConnectionController {
   constructor() {
     this.projectController = new ProjectController();
@@ -105,9 +111,9 @@ class ConnectionController {
   }
 
   async create(data) {
-    const dataToSave = { ...data };
+    const dataToSave = sanitizeConnectionWriteData(data);
 
-    if (!data.type) data.type = "mongodb"; // eslint-disable-line
+    if (!dataToSave.type) dataToSave.type = "mongodb"; // eslint-disable-line
 
     return db.Connection.create(dataToSave)
       .then((connection) => connection)
@@ -117,7 +123,7 @@ class ConnectionController {
   }
 
   update(id, data) {
-    return db.Connection.update(data, { where: { id } })
+    return db.Connection.update(sanitizeConnectionWriteData(data), { where: { id } })
       .then(() => {
         return this.findById(id);
       })

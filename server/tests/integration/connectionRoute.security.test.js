@@ -132,6 +132,27 @@ async function seedProjectScopedAccess(models) {
   };
 }
 
+async function seedTeamAdminAccess(models) {
+  const user = await models.User.create(userFactory.build());
+  const team = await models.Team.create(teamFactory.build());
+
+  await models.TeamRole.create({
+    team_id: team.id,
+    user_id: user.id,
+    role: "teamAdmin",
+  });
+
+  return {
+    team,
+    user,
+    token: generateTestToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    }),
+  };
+}
+
 describe("ConnectionRoute project scoping", () => {
   let app;
   let models;
@@ -433,5 +454,52 @@ describe("ConnectionRoute project scoping", () => {
 
     expect(response.body).toEqual({ error: "Not authorized" });
     expect(apiTestSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not allow team admins to set private-host access when creating API connections", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/connections`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        type: "api",
+        subType: "api",
+        name: "internal probe",
+        host: "http://192.168.1.100:8080",
+        team_id: seeded.team.id,
+        allowPrivateHost: true,
+      })
+      .expect(200);
+
+    const savedConnection = await models.Connection.findByPk(response.body.id);
+
+    expect(savedConnection.allowPrivateHost).toBeNull();
+    expect(response.body.allowPrivateHost).toBeNull();
+  });
+
+  it("does not allow team admins to enable private-host access when updating API connections", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const connection = await models.Connection.create(connectionFactory.build({
+      team_id: seeded.team.id,
+      type: "api",
+      subType: "api",
+      host: "https://api.example.com",
+      allowPrivateHost: null,
+    }));
+
+    const response = await request(app)
+      .put(`/team/${seeded.team.id}/connections/${connection.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        name: "updated probe",
+        allowPrivateHost: true,
+      })
+      .expect(200);
+
+    const savedConnection = await models.Connection.findByPk(connection.id);
+
+    expect(savedConnection.allowPrivateHost).toBeNull();
+    expect(response.body.allowPrivateHost).toBeNull();
   });
 });
