@@ -81,6 +81,26 @@ function getQueryToExecute(query) {
   return formattedQuery;
 }
 
+function serializeMongoString(value) {
+  return JSON.stringify(String(value))
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+function getStringReplacement(variable, value) {
+  if (variable.isAlreadyQuoted) {
+    return {
+      target: `${variable.quoteCharacter}${variable.placeholder}${variable.quoteCharacter}`,
+      value: serializeMongoString(value),
+    };
+  }
+
+  return {
+    target: variable.placeholder,
+    value: serializeMongoString(value),
+  };
+}
+
 function applyMongoVariables(dataRequest, variables = {}) {
   const originalDataRequest = dataRequest;
 
@@ -113,6 +133,7 @@ function applyMongoVariables(dataRequest, variables = {}) {
       placeholder: match[0],
       name: variableName,
       isAlreadyQuoted,
+      quoteCharacter: isAlreadyQuoted ? beforeChar : null,
     });
   }
 
@@ -126,64 +147,72 @@ function applyMongoVariables(dataRequest, variables = {}) {
 
     if (hasRuntimeValue) {
       let replacementValue = runtimeValue;
+      let replacementTarget = variable.placeholder;
 
       if (binding?.type) {
         switch (binding.type) {
-          case "string":
-            replacementValue = variable.isAlreadyQuoted
-              ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
-              : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+          case "string": {
+            const replacement = getStringReplacement(variable, runtimeValue);
+            replacementTarget = replacement.target;
+            replacementValue = replacement.value;
             break;
+          }
           case "number":
             replacementValue = Number.isNaN(Number(runtimeValue)) ? "0" : Number(runtimeValue);
             break;
           case "boolean":
             replacementValue = (runtimeValue === "true" || runtimeValue === true) ? "true" : "false";
             break;
-          case "date":
-            replacementValue = variable.isAlreadyQuoted
-              ? String(runtimeValue)
-              : `"${String(runtimeValue)}"`;
+          case "date": {
+            const replacement = getStringReplacement(variable, runtimeValue);
+            replacementTarget = replacement.target;
+            replacementValue = replacement.value;
             break;
-          default:
-            replacementValue = variable.isAlreadyQuoted
-              ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
-              : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+          }
+          default: {
+            const replacement = getStringReplacement(variable, runtimeValue);
+            replacementTarget = replacement.target;
+            replacementValue = replacement.value;
+          }
         }
       } else {
-        replacementValue = variable.isAlreadyQuoted
-          ? String(runtimeValue).replace(/"/g, "\\\"").replace(/'/g, "\\'")
-          : `"${String(runtimeValue).replace(/"/g, "\\\"")}"`;
+        const replacement = getStringReplacement(variable, runtimeValue);
+        replacementTarget = replacement.target;
+        replacementValue = replacement.value;
       }
 
-      processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
+      processedQuery = processedQuery.replace(replacementTarget, replacementValue);
     } else if (hasDefaultValue && binding) {
       let replacementValue = binding.default_value;
+      let replacementTarget = variable.placeholder;
 
       switch (binding.type) {
-        case "string":
-          replacementValue = variable.isAlreadyQuoted
-            ? binding.default_value.replace(/"/g, "\\\"").replace(/'/g, "\\'")
-            : `"${binding.default_value.replace(/"/g, "\\\"")}"`;
+        case "string": {
+          const replacement = getStringReplacement(variable, binding.default_value);
+          replacementTarget = replacement.target;
+          replacementValue = replacement.value;
           break;
+        }
         case "number":
           replacementValue = Number.isNaN(Number(binding.default_value)) ? "0" : Number(binding.default_value);
           break;
         case "boolean":
           replacementValue = binding.default_value === "true" || binding.default_value === true ? "true" : "false";
           break;
-        case "date":
-          replacementValue = variable.isAlreadyQuoted
-            ? binding.default_value
-            : `"${binding.default_value}"`;
+        case "date": {
+          const replacement = getStringReplacement(variable, binding.default_value);
+          replacementTarget = replacement.target;
+          replacementValue = replacement.value;
           break;
-        default:
-          replacementValue = variable.isAlreadyQuoted
-            ? binding.default_value.replace(/"/g, "\\\"").replace(/'/g, "\\'")
-            : `"${binding.default_value.replace(/"/g, "\\\"")}"`;
+        }
+        default: {
+          const replacement = getStringReplacement(variable, binding.default_value);
+          replacementTarget = replacement.target;
+          replacementValue = replacement.value;
+        }
       }
 
-      processedQuery = processedQuery.replace(variable.placeholder, replacementValue);
+      processedQuery = processedQuery.replace(replacementTarget, replacementValue);
     } else {
       if (binding?.required) {
         throw new Error(`Required variable '${variable.name}' has no value provided and no default value`);

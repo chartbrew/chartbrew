@@ -826,6 +826,54 @@ describe("source registry", () => {
       .toBe("collection('users').find({})");
   });
 
+  it("keeps MongoDB date variables inside string literals", () => {
+    const injectedValue = "2020-01-01\", \"password\": {\"$regex\":\"^secret\"} })//";
+    const result = mongodbProtocol.applyMongoVariables({
+      query: "connection.collection(\"users\").find({ createdAt: \"{{date}}\" })",
+      VariableBindings: [{
+        name: "date",
+        type: "date",
+        required: true,
+      }],
+    }, { date: injectedValue });
+
+    expect(result.processedQuery).toBe(
+      `connection.collection("users").find({ createdAt: ${JSON.stringify(injectedValue)} })`
+    );
+    expect(mongodbProtocol.getQueryToExecute(result.processedQuery)).toBe(
+      `collection("users").find({ createdAt: ${JSON.stringify(injectedValue)} })`
+    );
+  });
+
+  it("safely serializes quoted MongoDB string and date defaults", () => {
+    const unsafeDefault = "value'\"\\\n})//";
+    const stringResult = mongodbProtocol.applyMongoVariables({
+      query: "connection.collection('users').find({ name: '{{name}}' })",
+      VariableBindings: [{
+        name: "name",
+        type: "string",
+        default_value: unsafeDefault,
+      }],
+    });
+    const dateResult = mongodbProtocol.applyMongoVariables({
+      query: "connection.collection('users').find({ createdAt: '{{date}}' })",
+      VariableBindings: [{
+        name: "date",
+        type: "date",
+        default_value: unsafeDefault,
+      }],
+    });
+
+    expect(stringResult.processedQuery).toBe(
+      `connection.collection('users').find({ name: ${JSON.stringify(unsafeDefault)} })`
+    );
+    expect(dateResult.processedQuery).toBe(
+      `connection.collection('users').find({ createdAt: ${JSON.stringify(unsafeDefault)} })`
+    );
+    expect(() => mongodbProtocol.getQueryToExecute(stringResult.processedQuery)).not.toThrow();
+    expect(() => mongodbProtocol.getQueryToExecute(dateResult.processedQuery)).not.toThrow();
+  });
+
   it("tests saved MongoDB connections by opening the connection without enumerating collections", async () => {
     const listCollections = vi.fn();
     const close = vi.fn().mockResolvedValue();
