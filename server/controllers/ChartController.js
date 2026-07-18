@@ -1,7 +1,6 @@
 const moment = require("moment");
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
-const jwt = require("jsonwebtoken");
 
 const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
 const {
@@ -20,6 +19,11 @@ const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
+const {
+  signShareToken,
+  validateShareTokenPolicy,
+  verifyShareToken,
+} = require("../modules/shareToken");
 const {
   completeRun,
   failRun,
@@ -1205,14 +1209,8 @@ class ChartController {
     }
 
     // check if the token from the query parameters is valid
-    const decodedToken = jwt.verify(queryParams.token, settings.secret);
-    if (decodedToken?.sub?.type !== "Chart" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
-      return Promise.reject("Invalid token");
-    }
-
-    if (decodedToken?.exp < Date.now() / 1000) {
-      return Promise.reject("Token expired");
-    }
+    const decodedToken = verifyShareToken(queryParams.token);
+    validateShareTokenPolicy(decodedToken, sharePolicy, "Chart", sharePolicy.entity_id);
 
     const chart = await this.findById(sharePolicy.entity_id);
     const project = await db.Project.findByPk(chart.project_id);
@@ -1317,15 +1315,23 @@ class ChartController {
       return Promise.reject("Share policy not found");
     }
 
-    const payload = {
-      sub: { type: "Chart", id: chartId, sharePolicyId: sharePolicy.id },
-    };
+    if (sharePolicy.entity_type !== "Chart" || `${sharePolicy.entity_id}` !== `${chartId}`) {
+      return Promise.reject("Share policy not found");
+    }
 
-    if (data?.share_policy) {
-      await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
+    if (data?.share_policy || sharePolicy.token_version < 2) {
+      await db.SharePolicy.update({
+        ...(data?.share_policy || {}),
+        token_version: 2,
+      }, { where: { id: sharePolicy.id } });
       // Refresh the sharePolicy to get updated data
       sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
+
+    const payload = {
+      version: 2,
+      sub: { type: "Chart", id: chartId, sharePolicyId: sharePolicy.id },
+    };
 
     let expiresIn = "99999d";
     if (data?.exp) {
@@ -1340,13 +1346,13 @@ class ChartController {
       }
     }
 
-    const token = jwt.sign(payload, settings.secret, { expiresIn });
+    const token = signShareToken(payload, { expiresIn });
 
     // Use the SharePolicy's share_string instead of Chartshares
     const shareString = sharePolicy.share_string;
     const url = `${settings.client}/chart/${shareString}/share?token=${token}`;
 
-    return { token, url };
+    return { token, url, sharePolicy };
   }
 
   async createShare(chartId) {

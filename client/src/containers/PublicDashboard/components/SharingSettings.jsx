@@ -5,7 +5,7 @@ import {
   Drawer, Checkbox, Spinner, Label,
   Alert,
 } from "@heroui/react";
-import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft } from "react-icons/lu";
+import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft, LuTriangleAlert } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -64,9 +64,13 @@ function SharingSettings(props) {
       setParameters(selectedPolicy.params || []);
       setAllowParams(selectedPolicy.allow_params || false);
       setExpirationDate(selectedPolicy.expires_at || "");
-      _generateTokenForPolicy(selectedPolicy);
+      if (selectedPolicy.token_version >= 2) {
+        _generateTokenForPolicy(selectedPolicy);
+      } else {
+        setShareToken("");
+      }
     }
-  }, [selectedPolicy]);
+  }, [selectedPolicy?.id]);
 
   const _initializeSharing = async () => {
     // Initialize with new SharePolicies system only
@@ -255,6 +259,16 @@ function SharingSettings(props) {
         },
       }));
       const token = data?.payload?.token || "";
+      const securePolicy = data?.payload?.sharePolicy;
+
+      if (securePolicy) {
+        setSharePolicies((currentPolicies) => currentPolicies.map((currentPolicy) => {
+          return currentPolicy.id === securePolicy.id ? securePolicy : currentPolicy;
+        }));
+        if (selectedPolicy?.id === securePolicy.id) {
+          setSelectedPolicy(securePolicy);
+        }
+      }
 
       if (updateCurrentToken) {
         setShareToken(token);
@@ -268,6 +282,13 @@ function SharingSettings(props) {
       if (updateCurrentToken) {
         setShareLoading(false);
       }
+    }
+  };
+
+  const _onGenerateSecureLink = async () => {
+    const token = await _generateTokenForPolicy(selectedPolicy);
+    if (token) {
+      toast.success("New link generated. Replace the old link wherever it is used.");
     }
   };
 
@@ -433,6 +454,33 @@ function SharingSettings(props) {
 
     return (
       <div className="space-y-6">
+        {selectedPolicy.token_version < 2 && (
+          <div
+            className="rounded-lg border border-warning/30 bg-warning/10 p-4"
+            role="status"
+          >
+            <div className="flex items-start gap-3">
+              <LuTriangleAlert className="mt-0.5 shrink-0 text-warning" size={18} aria-hidden />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold">This link will be restricted soon</div>
+                <p className="mt-1 text-sm leading-5 text-foreground-600">
+                  For security reasons, generate a new link and replace this one wherever it is used.
+                </p>
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  variant="outline"
+                  onPress={_onGenerateSecureLink}
+                  isPending={shareLoading}
+                >
+                  {shareLoading ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
+                  Generate new link
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {shareToken && (
           <>
             <div className="space-y-2">
@@ -877,7 +925,25 @@ function SharingSettings(props) {
                       onClick={() => setSelectedPolicy(policy)}
                     >
                       <div className="flex flex-col">
-                        <div className="font-medium text-sm">Link {index + 1}</div>
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <span>Link {index + 1}</span>
+                          {policy.token_version < 2 && (
+                            <Tooltip delay={0}>
+                              <Tooltip.Trigger>
+                                <span
+                                  aria-label={`Link ${index + 1} needs a security update`}
+                                  className="inline-flex text-warning"
+                                  role="img"
+                                >
+                                  <LuTriangleAlert size={16} />
+                                </span>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content className="max-w-xs">
+                                This link will be restricted soon for security reasons. Please generate a new one as soon as possible.
+                              </Tooltip.Content>
+                            </Tooltip>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500">
                           {policy.expires_at ? `Expires on ${new Date(policy.expires_at).toLocaleDateString()}` : "Never expires"}
                         </div>

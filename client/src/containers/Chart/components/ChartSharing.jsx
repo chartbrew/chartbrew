@@ -5,7 +5,7 @@ import {
   Radio, RadioGroup, Spinner, Switch, TextField, Tooltip, ListBox,
   Chip,
 } from "@heroui/react"
-import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw } from "react-icons/lu";
+import { LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuTriangleAlert } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import { toast } from "react-hot-toast";
@@ -45,9 +45,13 @@ function ChartSharing({ chart, isOpen, onClose }) {
       setParameters(selectedPolicy.params || []);
       setAllowParams(selectedPolicy.allow_params || false);
       setExpirationDate(selectedPolicy.expires_at || "");
-      _generateTokenForPolicy(selectedPolicy);
+      if (selectedPolicy.token_version >= 2) {
+        _generateTokenForPolicy(selectedPolicy);
+      } else {
+        setShareToken("");
+      }
     }
-  }, [selectedPolicy]);
+  }, [selectedPolicy?.id]);
 
   const _initializeSharing = async () => {
     // Determine if we're in legacy mode
@@ -131,10 +135,29 @@ function ChartSharing({ chart, isOpen, onClose }) {
         },
       }));
       setShareToken(data?.payload?.token);
+
+      if (data?.payload?.sharePolicy) {
+        const securePolicy = data.payload.sharePolicy;
+        setSharePolicies((currentPolicies) => currentPolicies.map((currentPolicy) => {
+          return currentPolicy.id === securePolicy.id ? securePolicy : currentPolicy;
+        }));
+        setSelectedPolicy(securePolicy);
+      }
+
+      return data?.payload?.token || "";
     } catch (error) {
       toast.error("Failed to generate share token");
+      return "";
+    } finally {
+      setShareLoading(false);
     }
-    setShareLoading(false);
+  };
+
+  const _onGenerateSecureLink = async () => {
+    const token = await _generateTokenForPolicy(selectedPolicy);
+    if (token) {
+      toast.success("New link generated. Replace the old link wherever it is used.");
+    }
   };
 
   const _onCreateNewPolicy = async () => {
@@ -380,6 +403,22 @@ function ChartSharing({ chart, isOpen, onClose }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-row items-center gap-2">
                       <div className="font-medium">Link {index + 1}</div>
+                      {policy.token_version < 2 && (
+                        <Tooltip delay={0}>
+                          <Tooltip.Trigger>
+                            <span
+                              aria-label={`Link ${index + 1} needs a security update`}
+                              className="inline-flex text-warning"
+                              role="img"
+                            >
+                              <LuTriangleAlert size={16} />
+                            </span>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content className="max-w-xs">
+                            This link will be restricted soon for security reasons. Generate a new one.
+                          </Tooltip.Content>
+                        </Tooltip>
+                      )}
                       <Chip
                         variant="soft"
                         size="sm"
@@ -443,6 +482,33 @@ function ChartSharing({ chart, isOpen, onClose }) {
 
     return (
       <div className="space-y-6 pb-4">
+        {selectedPolicy.token_version < 2 && (
+          <div
+            className="rounded-lg border border-warning/30 bg-warning/10 p-4"
+            role="status"
+          >
+            <div className="flex items-start gap-3">
+              <LuTriangleAlert className="mt-0.5 shrink-0 text-warning" size={18} aria-hidden />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold">This link will be restricted soon</div>
+                <p className="mt-1 text-sm leading-5 text-foreground-600">
+                  For security reasons, generate a new link and replace this one wherever it is used.
+                </p>
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  variant="secondary"
+                  onPress={_onGenerateSecureLink}
+                  isPending={shareLoading}
+                >
+                  {shareLoading ? <ButtonSpinner /> : <LuRefreshCcw size={16} />}
+                  Generate new link
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {shareToken && (
           <>
             <div className="space-y-4">

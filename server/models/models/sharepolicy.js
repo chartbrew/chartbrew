@@ -45,6 +45,11 @@ module.exports = (sequelize, DataTypes) => {
     expires_at: {
       type: DataTypes.DATE,
     },
+    token_version: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 2,
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,

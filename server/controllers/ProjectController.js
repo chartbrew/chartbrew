@@ -1,4 +1,3 @@
-const jwt = require("jsonwebtoken");
 const { cloneDeep } = require("lodash");
 
 const db = require("../models/models");
@@ -7,6 +6,11 @@ const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
+const {
+  signShareToken,
+  validateShareTokenPolicy,
+  verifyShareToken,
+} = require("../modules/shareToken");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -407,15 +411,23 @@ class ProjectController {
       return Promise.reject("Share policy not found");
     }
 
-    const payload = {
-      sub: { type: "Project", id: projectId, sharePolicyId: sharePolicy.id },
-    };
+    if (sharePolicy.entity_type !== "Project" || `${sharePolicy.entity_id}` !== `${projectId}`) {
+      return Promise.reject("Share policy not found");
+    }
 
-    if (data?.share_policy) {
-      await db.SharePolicy.update(data.share_policy, { where: { id: sharePolicy.id } });
+    if (data?.share_policy || sharePolicy.token_version < 2) {
+      await db.SharePolicy.update({
+        ...(data?.share_policy || {}),
+        token_version: 2,
+      }, { where: { id: sharePolicy.id } });
       // Refresh the sharePolicy to get updated data
       sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
+
+    const payload = {
+      version: 2,
+      sub: { type: "Project", id: projectId, sharePolicyId: sharePolicy.id },
+    };
 
     let expiresIn = "99999d";
     if (data?.exp) {
@@ -430,13 +442,13 @@ class ProjectController {
       }
     }
 
-    const token = jwt.sign(payload, settings.secret, { expiresIn });
+    const token = signShareToken(payload, { expiresIn });
 
     // Use the SharePolicy's share_string for the URL
     const project = await this.findById(projectId);
     const url = `${settings.client}/report/${project.brewName}?token=${token}`;
 
-    return { token, url };
+    return { token, url, sharePolicy };
   }
 
   /**
@@ -514,7 +526,7 @@ class ProjectController {
 
     if (!overridePolicy) {
       // Check if the token from the query parameters is valid
-      const decodedToken = await jwt.verify(queryParams.token, settings.secret);
+      const decodedToken = verifyShareToken(queryParams.token);
       if (!decodedToken?.sub?.sharePolicyId) {
         return Promise.reject("Invalid token");
       }
@@ -524,13 +536,7 @@ class ProjectController {
         return Promise.reject("Share policy not found");
       }
 
-      if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${sharePolicy.entity_id}`) {
-        return Promise.reject("Invalid token");
-      }
-
-      if (decodedToken?.exp < Date.now() / 1000) {
-        return Promise.reject("Token expired");
-      }
+      validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
 
       // Check if the project is public (required for SharePolicy access)
       if (!project.public) {

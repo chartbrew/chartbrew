@@ -1,6 +1,7 @@
 module.exports = {
   port: process.env.CB_API_PORT_DEV,
   secret: process.env.CB_SECRET_DEV,
+  allowLegacyShareTokens: process.env.CB_ALLOW_LEGACY_SHARE_TOKENS_DEV === "1",
   encryptionKey: process.env.CB_ENCRYPTION_KEY_DEV,
   client: process.env.VITE_APP_CLIENT_HOST_DEV,
   api: process.env.CB_API_HOST_DEV,

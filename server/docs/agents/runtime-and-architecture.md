@@ -18,8 +18,9 @@ This document covers the foundational architecture of the Chartbrew backend: how
 - Many modules load settings with:
   - `process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev")`
 - Key env vars used by auth:
-  - `CB_SECRET_DEV` (legacy token secret + `simplecrypt` secret)
-  - `CB_ENCRYPTION_KEY_DEV` (JWT secret used by current auth flow)
+  - `CB_SECRET_DEV` (legacy `simplecrypt` secret)
+  - `CB_ALLOW_LEGACY_SHARE_TOKENS_DEV` (temporary opt-in verification for pre-v2 share tokens)
+  - `CB_ENCRYPTION_KEY_DEV` (JWT secret used by current auth and share-token flows)
   - `CB_RESTRICT_SIGNUP_DEV` (restrict signup once users exist)
   - `CB_RESTRICT_TEAMS_DEV` (restrict team auto-creation on signup)
 
@@ -43,4 +44,3 @@ This document covers the foundational architecture of the Chartbrew backend: how
 - All models are Sequelize models defined in [`server/models/models/`](../models/models/)
 - Models are exported through [`server/models/models/index.js`](../models/models/index.js)
 - Common models include: `User`, `Team`, `Project`, `Connection`, `DataRequest`, `Dataset`, `Chart`, `ChartDatasetConfig`, `VariableBinding`
-

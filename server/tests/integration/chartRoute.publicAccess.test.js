@@ -19,7 +19,7 @@ const ChartController = require("../../controllers/ChartController.js");
 function generateProjectShareToken(projectId, sharePolicyId) {
   return jwt.sign(
     { sub: { type: "Project", id: projectId, sharePolicyId } },
-    process.env.CB_SECRET_DEV,
+    process.env.CB_ENCRYPTION_KEY_DEV,
     { expiresIn: "1h" }
   );
 }
@@ -87,6 +87,71 @@ describe("ChartRoute public access", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("rejects forged private chart share tokens signed with the legacy secret", async () => {
+    const seeded = await seedPublicChart(models, {
+      projectOverrides: { public: false },
+      chartOverrides: { onReport: false },
+    });
+    const sharePolicy = await models.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: seeded.chart.id,
+      visibility: "private",
+    });
+    const tokenPayload = {
+      sub: { type: "Chart", id: seeded.chart.id, sharePolicyId: sharePolicy.id },
+    };
+    const validToken = jwt.sign(tokenPayload, process.env.CB_ENCRYPTION_KEY_DEV, {
+      algorithm: "HS256",
+      expiresIn: "1h",
+    });
+    const forgedToken = jwt.sign(tokenPayload, process.env.CB_SECRET_DEV, {
+      algorithm: "HS256",
+      expiresIn: "1h",
+    });
+
+    const validResponse = await request(app)
+      .get(`/chart/share/${sharePolicy.share_string}`)
+      .query({ token: validToken })
+      .expect(200);
+
+    expect(validResponse.body.chartData).toEqual(seeded.chart.chartData);
+
+    await request(app)
+      .get(`/chart/share/${sharePolicy.share_string}`)
+      .query({ token: forgedToken })
+      .expect(401);
+
+    await request(app)
+      .post(`/project/${seeded.project.id}/chart/${seeded.chart.id}/filter`)
+      .query({ token: forgedToken })
+      .send({ filters: [] })
+      .expect(401);
+  });
+
+  it("marks existing share policies secure when generating a replacement token", async () => {
+    const seeded = await seedPublicChart(models);
+    const sharePolicy = await models.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: seeded.chart.id,
+      visibility: "private",
+      token_version: 1,
+    });
+    const chartController = new ChartController();
+
+    const result = await chartController.generateShareToken(seeded.chart.id, {
+      sharePolicyId: sharePolicy.id,
+      exp: new Date(Date.now() + 60 * 60 * 1000),
+    });
+    const decodedToken = jwt.verify(result.token, process.env.CB_ENCRYPTION_KEY_DEV, {
+      algorithms: ["HS256"],
+    });
+
+    expect(decodedToken.version).toBe(2);
+    expect(result.sharePolicy.token_version).toBe(2);
+    await sharePolicy.reload();
+    expect(sharePolicy.token_version).toBe(2);
   });
 
   it("blocks direct public chart retrieval for charts hidden from the report", async () => {

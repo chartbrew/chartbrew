@@ -18,6 +18,7 @@ const {
   serializeOutboundPolicyError,
 } = require("../modules/outboundTargetPolicy");
 const { verifyProjectPassword } = require("../modules/projectPassword");
+const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const apiLimiter = (max = 10) => {
@@ -60,13 +61,9 @@ module.exports = (app) => {
     }
 
     try {
-      const decodedToken = jwt.verify(shareToken, settings.secret);
-      if (!decodedToken?.sub?.sharePolicyId || decodedToken?.sub?.type !== "Project") {
-        return false;
-      }
-
-      return `${decodedToken.sub.id}` === `${project.id}`
-        && `${decodedToken.sub.sharePolicyId}` === `${sharePolicy.id}`;
+      const decodedToken = verifyShareToken(shareToken);
+      validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
+      return true;
     } catch (_error) {
       return false;
     }
@@ -345,7 +342,7 @@ module.exports = (app) => {
 
       let decodedToken;
       try {
-        decodedToken = jwt.verify(shareToken, settings.secret);
+        decodedToken = verifyShareToken(shareToken);
       } catch (error) {
         return res.status(401).json({ message: "Not authorized" });
       }
@@ -364,11 +361,9 @@ module.exports = (app) => {
       }
 
       if (decodedToken.sub.type === "Chart") {
-        const tokenMatchesChart = `${decodedToken.sub.id}` === `${chart.id}`;
-        const policyMatchesChart = sharePolicy.entity_type === "Chart"
-          && `${sharePolicy.entity_id}` === `${chart.id}`;
-
-        if (!tokenMatchesChart || !policyMatchesChart) {
+        try {
+          validateShareTokenPolicy(decodedToken, sharePolicy, "Chart", chart.id);
+        } catch (error) {
           return res.status(401).json({ message: "Not authorized" });
         }
 
@@ -376,11 +371,9 @@ module.exports = (app) => {
       }
 
       if (decodedToken.sub.type === "Project") {
-        const tokenMatchesProject = `${decodedToken.sub.id}` === `${project.id}`;
-        const policyMatchesProject = sharePolicy.entity_type === "Project"
-          && `${sharePolicy.entity_id}` === `${project.id}`;
-
-        if (!tokenMatchesProject || !policyMatchesProject) {
+        try {
+          validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
+        } catch (error) {
           return res.status(401).json({ message: "Not authorized" });
         }
 
@@ -776,8 +769,17 @@ module.exports = (app) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
-        if (error?.message === "401") {
+        if (
+          error?.message === "401"
+          || error?.message === "Invalid share token"
+          || error?.message === "Share policy has expired"
+          || error?.name === "JsonWebTokenError"
+          || error?.name === "TokenExpiredError"
+        ) {
           return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error?.message === "Share policy is disabled") {
+          return res.status(403).send({ error: "Not authorized" });
         }
         if (error?.message?.indexOf("413") > -1) {
           return res.status(413).send(error);
@@ -792,8 +794,8 @@ module.exports = (app) => {
   */
   app.post("/project/:project_id/chart/:chart_id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     return chartController.generateShareToken(req.params.chart_id, req.body)
-      .then(({ token, url }) => {
-        return res.status(200).send({ token, url });
+      .then(({ token, url, sharePolicy }) => {
+        return res.status(200).send({ token, url, sharePolicy });
       })
       .catch((error) => {
         return res.status(400).send(error);

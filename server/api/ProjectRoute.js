@@ -15,6 +15,7 @@ const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
 const { verifyProjectPassword } = require("../modules/projectPassword");
+const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
 const {
   MAX_LOGO_UPLOAD_SIZE_BYTES,
   buildSafeLogoFilename,
@@ -424,14 +425,8 @@ module.exports = (app) => {
           }
 
           try {
-            const decodedToken = jwt.verify(req.query.token, settings.encryptionKey);
-            if (decodedToken?.sub?.type !== "Project" || `${decodedToken?.sub?.id}` !== `${project.id}`) {
-              return res.status(401).send("Invalid token");
-            }
-
-            if (decodedToken?.exp < Date.now() / 1000) {
-              return res.status(401).send("Token expired");
-            }
+            const decodedToken = verifyShareToken(req.query.token);
+            validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
 
             // SECURITY: If dashboard is password protected, require password even with valid token
             if (project.passwordProtected) {
@@ -529,13 +524,23 @@ module.exports = (app) => {
         return res.status(200).send(processedProject);
       })
       .catch((error) => {
-        if (error?.indexOf("401") > -1) {
+        const errorMessage = error?.message || `${error}`;
+        if (
+          errorMessage.indexOf("401") > -1
+          || errorMessage === "Invalid share token"
+          || errorMessage === "Share policy has expired"
+          || error?.name === "JsonWebTokenError"
+          || error?.name === "TokenExpiredError"
+        ) {
           return res.status(401).send({ error: "Not authorized" });
         }
-        if (error?.indexOf("403") > -1) {
+        if (errorMessage === "Share policy is disabled") {
+          return res.status(403).send({ error: "Not authorized" });
+        }
+        if (errorMessage.indexOf("403") > -1) {
           return res.status(403).send({ error: "Enter the correct password" });
         }
-        if (error?.indexOf("413") > -1) {
+        if (errorMessage.indexOf("413") > -1) {
           return res.status(413).send(error);
         }
         return res.status(400).send(error);
@@ -722,8 +727,8 @@ module.exports = (app) => {
   */
   app.post("/project/:id/share/token", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     return projectController.generateShareToken(req.params.id, req.body)
-      .then(({ token, url }) => {
-        return res.status(200).send({ token, url });
+      .then(({ token, url, sharePolicy }) => {
+        return res.status(200).send({ token, url, sharePolicy });
       })
       .catch((error) => {
         return res.status(400).send(error);
