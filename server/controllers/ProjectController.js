@@ -325,7 +325,7 @@ class ProjectController {
     const newFields = Object.fromEntries(
       Object.entries(data).filter(([field]) => field === "name")
     );
-    return db.Variable.create({ ...newFields, project_id: projectId })
+    return db.Variable.create({ ...newFields, project_id: parseInt(projectId, 10) })
       .then((variable) => {
         return variable;
       })
@@ -369,7 +369,7 @@ class ProjectController {
     );
     return db.DashboardFilter.create({
       ...newFields,
-      project_id: projectId,
+      project_id: parseInt(projectId, 10),
     })
       .then((dashboardFilter) => {
         return dashboardFilter;

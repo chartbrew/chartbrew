@@ -3,6 +3,10 @@ import {
 } from "vitest";
 import request from "supertest";
 import { createRequire } from "module";
+import crypto from "crypto";
+import fs from "fs/promises";
+import os from "os";
+import path from "path";
 
 import { createTestApp } from "../helpers/testApp.js";
 import { testDbManager } from "../helpers/testDbManager.js";
@@ -17,6 +21,7 @@ const require = createRequire(import.meta.url);
 const ConnectionController = require("../../controllers/ConnectionController.js");
 const CustomerioConnection = require("../../sources/plugins/customerio/customerio.connection.js");
 const { getSourceById } = require("../../sources");
+const { CONNECTION_FILES_DIRECTORY } = require("../../modules/connectionFiles.js");
 
 async function seedProjectScopedAccess(models) {
   const user = await models.User.create(userFactory.build());
@@ -626,5 +631,194 @@ describe("ConnectionRoute project scoping", () => {
     expect(listedConnection.hasSshPassword).toBe(true);
     expect(listedConnection.hasSshPrivateKey).toBe(true);
     expect(listedConnection.hasSshPassphrase).toBe(true);
+  });
+
+  it("ignores attacker-controlled certificate paths in JSON writes", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const markerPath = path.join(os.tmpdir(), `chartbrew-connection-marker-${crypto.randomUUID()}`);
+    await fs.writeFile(markerPath, "do not delete");
+
+    try {
+      const createResponse = await request(app)
+        .post(`/team/${seeded.team.id}/connections`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .send({
+          name: "Path injection connection",
+          type: "api",
+          subType: "rest",
+          host: "https://api.example.com",
+          sslCa: markerPath,
+          sslCert: markerPath,
+          sslKey: markerPath,
+          sshPrivateKey: markerPath,
+        })
+        .expect(200);
+
+      let savedConnection = await models.Connection.findByPk(createResponse.body.id);
+      expect(savedConnection.sslCa).toBeNull();
+      expect(savedConnection.sslCert).toBeNull();
+      expect(savedConnection.sslKey).toBeNull();
+      expect(savedConnection.sshPrivateKey).toBeNull();
+
+      await request(app)
+        .put(`/team/${seeded.team.id}/connections/${savedConnection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .send({ sslCa: markerPath, sshPrivateKey: markerPath })
+        .expect(200);
+
+      savedConnection = await models.Connection.findByPk(savedConnection.id);
+      expect(savedConnection.sslCa).toBeNull();
+      expect(savedConnection.sshPrivateKey).toBeNull();
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${savedConnection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      expect(await fs.readFile(markerPath, "utf8")).toBe("do not delete");
+    } finally {
+      await fs.rm(markerPath, { force: true });
+    }
+  });
+
+  it("does not delete unmanaged paths stored before the security fix", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const markerPath = path.join(os.tmpdir(), `chartbrew-legacy-marker-${crypto.randomUUID()}`);
+    await fs.writeFile(markerPath, "legacy row must not delete this");
+
+    try {
+      const connection = await models.Connection.create(connectionFactory.build({
+        team_id: seeded.team.id,
+        sslCa: markerPath,
+        sshPrivateKey: markerPath,
+      }));
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${connection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      expect(await fs.readFile(markerPath, "utf8")).toBe("legacy row must not delete this");
+    } finally {
+      await fs.rm(markerPath, { force: true });
+    }
+  });
+
+  it("forces new connections to belong to the team in the route", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const otherTeam = await models.Team.create(teamFactory.build());
+
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/connections`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        name: "Team-bound connection",
+        type: "api",
+        subType: "rest",
+        host: "https://api.example.com",
+        team_id: otherTeam.id,
+      })
+      .expect(200);
+
+    expect(response.body.team_id).toBe(seeded.team.id);
+  });
+
+  it("deletes legitimate managed connection files", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const storedPath = path.join(".connectionFiles", crypto.randomBytes(16).toString("hex"));
+    const absolutePath = path.resolve(storedPath);
+    await fs.mkdir(CONNECTION_FILES_DIRECTORY, { recursive: true });
+    await fs.writeFile(absolutePath, "managed certificate");
+
+    try {
+      const connection = await models.Connection.create(connectionFactory.build({
+        team_id: seeded.team.id,
+        sslCa: storedPath,
+      }));
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${connection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      await expect(fs.access(absolutePath)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      await fs.rm(absolutePath, { force: true });
+    }
+  });
+
+  it("duplicates managed connection files without sharing their lifecycle", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const originalPath = path.join(".connectionFiles", crypto.randomBytes(16).toString("hex"));
+    const originalAbsolutePath = path.resolve(originalPath);
+    let duplicatePath;
+    await fs.mkdir(CONNECTION_FILES_DIRECTORY, { recursive: true });
+    await fs.writeFile(originalAbsolutePath, "encrypted certificate contents");
+
+    try {
+      const originalConnection = await models.Connection.create(connectionFactory.build({
+        team_id: seeded.team.id,
+        sslCa: originalPath,
+      }));
+
+      const duplicateResponse = await request(app)
+        .post(`/team/${seeded.team.id}/connections/${originalConnection.id}/duplicate`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .send({ name: "Independent duplicate" })
+        .expect(200);
+      const duplicateConnection = await models.Connection.findByPk(duplicateResponse.body.id);
+      duplicatePath = duplicateConnection.sslCa;
+
+      expect(duplicatePath).not.toBe(originalPath);
+      expect(await fs.readFile(path.resolve(duplicatePath), "utf8"))
+        .toBe("encrypted certificate contents");
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${duplicateConnection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      expect(await fs.readFile(originalAbsolutePath, "utf8"))
+        .toBe("encrypted certificate contents");
+      await expect(fs.access(path.resolve(duplicatePath))).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      await fs.rm(originalAbsolutePath, { force: true });
+      if (duplicatePath) await fs.rm(path.resolve(duplicatePath), { force: true });
+    }
+  });
+
+  it("preserves managed files still referenced by historical duplicates", async () => {
+    const seeded = await seedTeamAdminAccess(models);
+    const sharedPath = path.join(".connectionFiles", crypto.randomBytes(16).toString("hex"));
+    const sharedAbsolutePath = path.resolve(sharedPath);
+    await fs.mkdir(CONNECTION_FILES_DIRECTORY, { recursive: true });
+    await fs.writeFile(sharedAbsolutePath, "shared legacy certificate");
+
+    try {
+      const firstConnection = await models.Connection.create(connectionFactory.build({
+        team_id: seeded.team.id,
+        sslCa: sharedPath,
+      }));
+      const secondConnection = await models.Connection.create(connectionFactory.build({
+        team_id: seeded.team.id,
+        sslCa: sharedPath,
+      }));
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${firstConnection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      expect(await fs.readFile(sharedAbsolutePath, "utf8")).toBe("shared legacy certificate");
+
+      await request(app)
+        .delete(`/team/${seeded.team.id}/connections/${secondConnection.id}`)
+        .set("Authorization", `Bearer ${seeded.token}`)
+        .expect(200);
+
+      await expect(fs.access(sharedAbsolutePath)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      await fs.rm(sharedAbsolutePath, { force: true });
+    }
   });
 });

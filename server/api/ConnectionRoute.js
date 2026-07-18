@@ -8,6 +8,10 @@ const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const { encryptFile } = require("../modules/fileEncryption");
 const {
+  CONNECTION_FILE_FIELDS,
+  removeManagedConnectionFile,
+} = require("../modules/connectionFiles");
+const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
 } = require("../modules/outboundTargetPolicy");
@@ -215,15 +219,20 @@ module.exports = (app) => {
   */
   app.post("/team/:team_id/connections", verifyToken, checkPermissions("createOwn"), async (req, res) => {
     try {
-      const source = findSourceForConnection(req.body);
+      const routeTeamId = parseInt(req.params.team_id, 10);
+      const requestData = { ...req.body, team_id: routeTeamId };
+      const source = findSourceForConnection(requestData);
       if (source?.backend?.prepareConnectionData || source?.backend?.afterConnectionCreated) {
         assertSourceServerEnabled(source);
       }
 
       const connectionData = source?.backend?.prepareConnectionData
-        ? await source.backend.prepareConnectionData({ connection: req.body })
-        : req.body;
-      const connection = await connectionController.create(connectionData);
+        ? await source.backend.prepareConnectionData({ connection: requestData })
+        : requestData;
+      const connection = await connectionController.create({
+        ...connectionData,
+        team_id: routeTeamId,
+      });
       if (source?.backend?.afterConnectionCreated) {
         Promise.resolve(source.backend.afterConnectionCreated({ connection })).catch(() => {});
       }
@@ -384,6 +393,19 @@ module.exports = (app) => {
       return res.status(400).send({ error: "No files were uploaded" });
     }
 
+    const seenFields = new Set();
+    const hasInvalidFiles = req.files.some((file) => {
+      if (!CONNECTION_FILE_FIELDS.includes(file.fieldname) || seenFields.has(file.fieldname)) {
+        return true;
+      }
+      seenFields.add(file.fieldname);
+      return false;
+    });
+    if (hasInvalidFiles) {
+      return Promise.all(req.files.map((file) => removeManagedConnectionFile(file.path)))
+        .then(() => res.status(400).send({ error: "Invalid connection file field" }));
+    }
+
     // update the fields with the paths of the files
     const files = {};
     const encryptionPromises = [];
@@ -397,12 +419,15 @@ module.exports = (app) => {
     // Wait for all files to be encrypted before updating the connection
     return Promise.all(encryptionPromises)
       .then(() => {
-        return connectionController.update(req.params.connection_id, files);
+        return connectionController.update(req.params.connection_id, files, {
+          allowManagedFilePaths: true,
+        });
       })
       .then((connection) => {
         return res.status(200).send(redactConnectionSecrets(connection));
       })
-      .catch((error) => {
+      .catch(async (error) => {
+        await Promise.all(req.files.map((file) => removeManagedConnectionFile(file.path)));
         return res.status(400).send(error);
       });
   });

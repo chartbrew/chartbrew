@@ -1,14 +1,32 @@
-const fs = require("fs");
+const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const apiProtocol = require("../sources/shared/protocols/api.protocol");
+const {
+  CONNECTION_FILE_FIELDS,
+  copyManagedConnectionFile,
+  isManagedConnectionFile,
+  removeManagedConnectionFile,
+  resolveManagedConnectionFile,
+} = require("../modules/connectionFiles");
 
 const sshSecretFields = ["sshPassword", "sshPrivateKey", "sshPassphrase"];
 
 function sanitizeConnectionWriteData(data = {}, options = {}) {
   const sanitizedData = { ...data };
   delete sanitizedData.allowPrivateHost;
+
+  CONNECTION_FILE_FIELDS.forEach((field) => {
+    if (!options.allowManagedFilePaths) {
+      delete sanitizedData[field];
+      return;
+    }
+
+    if (sanitizedData[field] && !isManagedConnectionFile(sanitizedData[field])) {
+      delete sanitizedData[field];
+    }
+  });
 
   if (options.preserveEmptySshSecrets) {
     sshSecretFields.forEach((field) => {
@@ -133,8 +151,11 @@ class ConnectionController {
       });
   }
 
-  update(id, data) {
-    return db.Connection.update(sanitizeConnectionWriteData(data, { preserveEmptySshSecrets: true }), { where: { id } })
+  update(id, data, options = {}) {
+    return db.Connection.update(sanitizeConnectionWriteData(data, {
+      allowManagedFilePaths: options.allowManagedFilePaths,
+      preserveEmptySshSecrets: true,
+    }), { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -157,23 +178,26 @@ class ConnectionController {
     }
 
     const connection = await this.findById(id);
-    // remove certificates and keys if present
-    try {
-      if (connection.sslCa) {
-        fs.unlink(connection.sslCa, () => {});
-      }
-      if (connection.sslCert) {
-        fs.unlink(connection.sslCert, () => {});
-      }
-      if (connection.sslKey) {
-        fs.unlink(connection.sslKey, () => {});
-      }
-      if (connection.sshPrivateKey) {
-        fs.unlink(connection.sshPrivateKey, () => {});
-      }
-    } catch (e) {
-      //
-    }
+    const otherConnections = await db.Connection.findAll({
+      attributes: ["id", ...CONNECTION_FILE_FIELDS],
+      where: { id: { [Op.ne]: id } },
+    });
+    const referencedPaths = new Set();
+    otherConnections.forEach((otherConnection) => {
+      CONNECTION_FILE_FIELDS.forEach((field) => {
+        const referencedPath = resolveManagedConnectionFile(otherConnection[field]);
+        if (referencedPath) referencedPaths.add(referencedPath);
+      });
+    });
+
+    const connectionPaths = new Set();
+    CONNECTION_FILE_FIELDS.forEach((field) => {
+      const managedPath = resolveManagedConnectionFile(connection[field]);
+      if (managedPath) connectionPaths.add(managedPath);
+    });
+    await Promise.all([...connectionPaths]
+      .filter((filePath) => !referencedPaths.has(filePath))
+      .map((filePath) => removeManagedConnectionFile(filePath)));
 
     return db.Connection.destroy({ where: { id } })
       .then(() => {
@@ -273,8 +297,30 @@ class ConnectionController {
       connectionToSave.name = name;
     }
 
-    const newConnection = await db.Connection.create(connectionToSave);
-    return newConnection;
+    const copiedFiles = [];
+    try {
+      const copyResults = await Promise.allSettled(CONNECTION_FILE_FIELDS.map(async (field) => {
+        if (!connectionToSave[field]) return { field, copiedPath: null, unchanged: true };
+        const copiedPath = await copyManagedConnectionFile(connectionToSave[field]);
+        return { field, copiedPath, unchanged: false };
+      }));
+      const failedCopy = copyResults.find((result) => result.status === "rejected");
+
+      copyResults.forEach((result) => {
+        if (result.status !== "fulfilled" || result.value.unchanged) return;
+        connectionToSave[result.value.field] = result.value.copiedPath;
+        if (result.value.copiedPath) copiedFiles.push(result.value.copiedPath);
+      });
+
+      if (failedCopy) {
+        throw failedCopy.reason;
+      }
+
+      return await db.Connection.create(connectionToSave);
+    } catch (error) {
+      await Promise.all(copiedFiles.map((filePath) => removeManagedConnectionFile(filePath)));
+      throw error;
+    }
   }
 
 }
