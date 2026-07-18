@@ -20,6 +20,7 @@ const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
 const {
+  signLegacyShareToken,
   signShareToken,
   validateShareTokenPolicy,
   verifyShareToken,
@@ -1319,17 +1320,22 @@ class ChartController {
       return Promise.reject("Share policy not found");
     }
 
-    if (data?.share_policy || sharePolicy.token_version < 2) {
+    const preserveLegacyToken = data?.preserveLegacy === true && sharePolicy.token_version < 2;
+    const policyUpdates = {
+      ...(data?.share_policy || {}),
+      ...(!preserveLegacyToken ? { token_version: 2 } : {}),
+    };
+
+    if (data?.share_policy || (!preserveLegacyToken && sharePolicy.token_version < 2)) {
       await db.SharePolicy.update({
-        ...(data?.share_policy || {}),
-        token_version: 2,
+        ...policyUpdates,
       }, { where: { id: sharePolicy.id } });
       // Refresh the sharePolicy to get updated data
       sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
 
     const payload = {
-      version: 2,
+      version: preserveLegacyToken ? 1 : 2,
       sub: { type: "Chart", id: chartId, sharePolicyId: sharePolicy.id },
     };
 
@@ -1346,7 +1352,9 @@ class ChartController {
       }
     }
 
-    const token = signShareToken(payload, { expiresIn });
+    const token = preserveLegacyToken
+      ? signLegacyShareToken(payload, { expiresIn })
+      : signShareToken(payload, { expiresIn });
 
     // Use the SharePolicy's share_string instead of Chartshares
     const shareString = sharePolicy.share_string;

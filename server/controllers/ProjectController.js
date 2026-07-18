@@ -7,12 +7,36 @@ const { snapDashboard } = require("../modules/snapshots");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
 const {
+  signLegacyShareToken,
   signShareToken,
   validateShareTokenPolicy,
   verifyShareToken,
 } = require("../modules/shareToken");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+
+const PROJECT_UPDATE_FIELDS = new Set([
+  "name",
+  "brewName",
+  "dashboardTitle",
+  "description",
+  "backgroundColor",
+  "titleColor",
+  "headerCode",
+  "footerCode",
+  "logo",
+  "logoLink",
+  "public",
+  "passwordProtected",
+  "password",
+  "timezone",
+  "ghost",
+  "updateSchedule",
+  "snapshotSchedule",
+  "lastUpdatedAt",
+  "lastSnapshotSentAt",
+  "currentSnapshot",
+]);
 
 class ProjectController {
   constructor() {
@@ -102,7 +126,10 @@ class ProjectController {
   }
 
   update(id, data) {
-    const newFields = normalizeProjectScheduleTimezones(data);
+    const normalizedFields = normalizeProjectScheduleTimezones(data);
+    const newFields = Object.fromEntries(
+      Object.entries(normalizedFields).filter(([field]) => PROJECT_UPDATE_FIELDS.has(field))
+    );
     return this.findById(id)
       .then(async () => {
         if (Object.prototype.hasOwnProperty.call(newFields, "password")) {
@@ -295,7 +322,10 @@ class ProjectController {
   }
 
   createVariable(projectId, data) {
-    return db.Variable.create({ project_id: projectId, ...data })
+    const newFields = Object.fromEntries(
+      Object.entries(data).filter(([field]) => field === "name")
+    );
+    return db.Variable.create({ ...newFields, project_id: projectId })
       .then((variable) => {
         return variable;
       })
@@ -304,21 +334,25 @@ class ProjectController {
       });
   }
 
-  updateVariable(variableId, data) {
-    return db.Variable.update(data, { where: { id: variableId } })
-      .then(() => {
-        return this.findById(variableId);
+  updateVariable(projectId, variableId, data) {
+    const newFields = Object.fromEntries(
+      Object.entries(data).filter(([field]) => field === "name")
+    );
+    return db.Variable.update(
+      newFields,
+      { where: { id: variableId, project_id: projectId } }
+    )
+      .then(([updated]) => {
+        if (!updated) return null;
+        return db.Variable.findOne({ where: { id: variableId, project_id: projectId } });
       })
       .catch((error) => {
         return Promise.reject(error);
       });
   }
 
-  deleteVariable(variableId) {
-    return db.Variable.destroy({ where: { id: variableId } })
-      .then(() => {
-        return { removed: true };
-      })
+  deleteVariable(projectId, variableId) {
+    return db.Variable.destroy({ where: { id: variableId, project_id: projectId } })
       .catch((error) => {
         return Promise.reject(error);
       });
@@ -330,8 +364,11 @@ class ProjectController {
   }
 
   createDashboardFilter(projectId, data) {
+    const newFields = Object.fromEntries(
+      Object.entries(data).filter(([field]) => ["configuration", "onReport"].includes(field))
+    );
     return db.DashboardFilter.create({
-      ...data,
+      ...newFields,
       project_id: projectId,
     })
       .then((dashboardFilter) => {
@@ -342,8 +379,10 @@ class ProjectController {
       });
   }
 
-  getDashboardFilter(dashboardFilterId) {
-    return db.DashboardFilter.findByPk(dashboardFilterId)
+  getDashboardFilter(projectId, dashboardFilterId) {
+    return db.DashboardFilter.findOne({
+      where: { id: dashboardFilterId, project_id: projectId },
+    })
       .then((dashboardFilter) => {
         return dashboardFilter;
       })
@@ -365,21 +404,26 @@ class ProjectController {
       });
   }
 
-  updateDashboardFilter(dashboardFilterId, data) {
-    return db.DashboardFilter.update(data, { where: { id: dashboardFilterId } })
-      .then(() => {
-        return this.getDashboardFilter(dashboardFilterId);
+  updateDashboardFilter(projectId, dashboardFilterId, data) {
+    const newFields = Object.fromEntries(
+      Object.entries(data).filter(([field]) => ["configuration", "onReport"].includes(field))
+    );
+    return db.DashboardFilter.update(newFields, {
+      where: { id: dashboardFilterId, project_id: projectId },
+    })
+      .then(([updated]) => {
+        if (!updated) return null;
+        return this.getDashboardFilter(projectId, dashboardFilterId);
       })
       .catch((error) => {
         return Promise.reject(error);
       });
   }
 
-  deleteDashboardFilter(dashboardFilterId) {
-    return db.DashboardFilter.destroy({ where: { id: dashboardFilterId } })
-      .then(() => {
-        return { removed: true };
-      })
+  deleteDashboardFilter(projectId, dashboardFilterId) {
+    return db.DashboardFilter.destroy({
+      where: { id: dashboardFilterId, project_id: projectId },
+    })
       .catch((error) => {
         return Promise.reject(error);
       });
@@ -415,17 +459,22 @@ class ProjectController {
       return Promise.reject("Share policy not found");
     }
 
-    if (data?.share_policy || sharePolicy.token_version < 2) {
+    const preserveLegacyToken = data?.preserveLegacy === true && sharePolicy.token_version < 2;
+    const policyUpdates = {
+      ...(data?.share_policy || {}),
+      ...(!preserveLegacyToken ? { token_version: 2 } : {}),
+    };
+
+    if (data?.share_policy || (!preserveLegacyToken && sharePolicy.token_version < 2)) {
       await db.SharePolicy.update({
-        ...(data?.share_policy || {}),
-        token_version: 2,
+        ...policyUpdates,
       }, { where: { id: sharePolicy.id } });
       // Refresh the sharePolicy to get updated data
       sharePolicy = await db.SharePolicy.findByPk(sharePolicy.id);
     }
 
     const payload = {
-      version: 2,
+      version: preserveLegacyToken ? 1 : 2,
       sub: { type: "Project", id: projectId, sharePolicyId: sharePolicy.id },
     };
 
@@ -442,7 +491,9 @@ class ProjectController {
       }
     }
 
-    const token = signShareToken(payload, { expiresIn });
+    const token = preserveLegacyToken
+      ? signLegacyShareToken(payload, { expiresIn })
+      : signShareToken(payload, { expiresIn });
 
     // Use the SharePolicy's share_string for the URL
     const project = await this.findById(projectId);

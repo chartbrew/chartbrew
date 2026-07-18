@@ -15,6 +15,7 @@ import { projectFactory } from "../factories/projectFactory.js";
 
 const require = createRequire(import.meta.url);
 const ChartController = require("../../controllers/ChartController.js");
+const settings = require("../../settings-dev.js");
 
 function generateProjectShareToken(projectId, sharePolicyId) {
   return jwt.sign(
@@ -152,6 +153,36 @@ describe("ChartRoute public access", () => {
     expect(result.sharePolicy.token_version).toBe(2);
     await sharePolicy.reload();
     expect(sharePolicy.token_version).toBe(2);
+  });
+
+  it("keeps legacy policies unchanged when copying their link", async () => {
+    const seeded = await seedPublicChart(models);
+    const sharePolicy = await models.SharePolicy.create({
+      entity_type: "Chart",
+      entity_id: seeded.chart.id,
+      visibility: "private",
+      token_version: 1,
+    });
+    const chartController = new ChartController();
+    const previousValue = settings.allowLegacyShareTokens;
+    settings.allowLegacyShareTokens = true;
+
+    try {
+      const result = await chartController.generateShareToken(seeded.chart.id, {
+        sharePolicyId: sharePolicy.id,
+        preserveLegacy: true,
+      });
+      const decodedToken = jwt.verify(result.token, process.env.CB_SECRET_DEV, {
+        algorithms: ["HS256"],
+      });
+
+      expect(decodedToken.version).toBe(1);
+      expect(result.sharePolicy.token_version).toBe(1);
+      await sharePolicy.reload();
+      expect(sharePolicy.token_version).toBe(1);
+    } finally {
+      settings.allowLegacyShareTokens = previousValue;
+    }
   });
 
   it("blocks direct public chart retrieval for charts hidden from the report", async () => {

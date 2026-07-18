@@ -43,20 +43,21 @@ module.exports = (app) => {
   const checkPermissions = (actionType = "readOwn") => {
     return async (req, res, next) => {
       const projectId = req.params.id;
-      const teamId = req.params.team_id || req.body?.team_id;
 
       let teamRole;
       let project;
+      let teamId;
 
       if (projectId) {
-        project = await projectController.findById(projectId);
+        project = await db.Project.findByPk(projectId, { attributes: ["id", "team_id"] });
         if (!project) return res.status(404).json({ message: "Project not found" });
+        teamId = project.team_id;
+      } else {
+        teamId = req.params.team_id || req.body?.team_id;
       }
 
       if (teamId) {
         teamRole = await teamController.getTeamRole(teamId, req.user.id);
-      } else {
-        teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
       }
 
       if (!teamRole?.role) {
@@ -604,8 +605,9 @@ module.exports = (app) => {
   ** Route to update a project variable
   */
   app.put("/project/:id/variables/:variableId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return projectController.updateVariable(req.params.variableId, req.body)
+    return projectController.updateVariable(req.params.id, req.params.variableId, req.body)
       .then((variable) => {
+        if (!variable) return res.status(404).send({ error: "Variable not found" });
         return res.status(200).send(variable);
       })
       .catch((error) => {
@@ -617,8 +619,9 @@ module.exports = (app) => {
   ** Route to delete a project variable
   */
   app.delete("/project/:id/variables/:variableId", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
-    return projectController.deleteVariable(req.params.variableId)
-      .then(() => {
+    return projectController.deleteVariable(req.params.id, req.params.variableId)
+      .then((removed) => {
+        if (!removed) return res.status(404).send({ error: "Variable not found" });
         return res.status(200).send({ removed: true });
       })
       .catch((error) => {
@@ -659,8 +662,9 @@ module.exports = (app) => {
   ** Route to get a dashboard filter
   */
   app.get("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return projectController.getDashboardFilter(req.params.dashboardFilterId)
+    return projectController.getDashboardFilter(req.params.id, req.params.dashboardFilterId)
       .then((dashboardFilter) => {
+        if (!dashboardFilter) return res.status(404).send({ error: "Dashboard filter not found" });
         return res.status(200).send(dashboardFilter);
       });
   });
@@ -684,8 +688,9 @@ module.exports = (app) => {
   ** Route to update a dashboard filter
   */
   app.put("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return projectController.updateDashboardFilter(req.params.dashboardFilterId, req.body)
+    return projectController.updateDashboardFilter(req.params.id, req.params.dashboardFilterId, req.body)
       .then((dashboardFilter) => {
+        if (!dashboardFilter) return res.status(404).send({ error: "Dashboard filter not found" });
         return res.status(200).send(dashboardFilter);
       })
       .catch((error) => {
@@ -698,8 +703,9 @@ module.exports = (app) => {
   ** Route to delete a dashboard filter
   */
   app.delete("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return projectController.deleteDashboardFilter(req.params.dashboardFilterId)
-      .then(() => {
+    return projectController.deleteDashboardFilter(req.params.id, req.params.dashboardFilterId)
+      .then((removed) => {
+        if (!removed) return res.status(404).send({ error: "Dashboard filter not found" });
         return res.status(200).send({ removed: true });
       })
       .catch((error) => {

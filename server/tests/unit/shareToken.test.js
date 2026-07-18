@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 
 const require = createRequire(import.meta.url);
 const {
+  signLegacyShareToken,
   signShareToken,
   validateShareTokenPolicy,
   verifyShareToken,
@@ -30,18 +31,31 @@ describe("shareToken", () => {
   });
 
   it("accepts legacy tokens only when compatibility is enabled", () => {
-    const token = jwt.sign(
-      { sub: { type: "Chart", id: 42, sharePolicyId: 7 } },
-      process.env.CB_SECRET_DEV,
-      { algorithm: "HS256" }
-    );
-
     const previousValue = settings.allowLegacyShareTokens;
     settings.allowLegacyShareTokens = true;
 
-    expect(verifyShareToken(token).sub).toEqual({ type: "Chart", id: 42, sharePolicyId: 7 });
+    try {
+      const token = signLegacyShareToken(
+        { sub: { type: "Chart", id: 42, sharePolicyId: 7 } }
+      );
 
-    settings.allowLegacyShareTokens = previousValue;
+      expect(verifyShareToken(token).sub).toEqual({ type: "Chart", id: 42, sharePolicyId: 7 });
+    } finally {
+      settings.allowLegacyShareTokens = previousValue;
+    }
+  });
+
+  it("does not sign legacy tokens when compatibility is disabled", () => {
+    const previousValue = settings.allowLegacyShareTokens;
+    settings.allowLegacyShareTokens = false;
+
+    try {
+      expect(() => signLegacyShareToken(
+        { sub: { type: "Chart", id: 42, sharePolicyId: 7 } }
+      )).toThrow("Legacy share tokens are disabled");
+    } finally {
+      settings.allowLegacyShareTokens = previousValue;
+    }
   });
 
   it("rejects legacy tokens when compatibility is disabled", () => {
@@ -53,9 +67,11 @@ describe("shareToken", () => {
     const previousValue = settings.allowLegacyShareTokens;
     settings.allowLegacyShareTokens = false;
 
-    expect(() => verifyShareToken(token)).toThrow("invalid signature");
-
-    settings.allowLegacyShareTokens = previousValue;
+    try {
+      expect(() => verifyShareToken(token)).toThrow("invalid signature");
+    } finally {
+      settings.allowLegacyShareTokens = previousValue;
+    }
   });
 
   it("rejects unexpected algorithms", () => {

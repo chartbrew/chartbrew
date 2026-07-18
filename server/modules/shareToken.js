@@ -6,6 +6,14 @@ function signShareToken(payload, options = {}) {
   return jwt.sign(payload, settings.encryptionKey, { ...options, algorithm: "HS256" });
 }
 
+function signLegacyShareToken(payload, options = {}) {
+  if (!settings.allowLegacyShareTokens) {
+    throw new Error("Legacy share tokens are disabled");
+  }
+
+  return jwt.sign(payload, settings.secret, { ...options, algorithm: "HS256" });
+}
+
 function verifyShareToken(token) {
   try {
     return jwt.verify(token, settings.encryptionKey, { algorithms: ["HS256"] });
@@ -41,6 +49,7 @@ function validateShareTokenPolicy(decodedToken, sharePolicy, entityType, entityI
 }
 
 module.exports = {
+  signLegacyShareToken,
   signShareToken,
   validateShareTokenPolicy,
   verifyShareToken,

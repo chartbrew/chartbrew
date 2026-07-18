@@ -239,6 +239,7 @@ function SharingSettings(props) {
 
     const {
       exp = policy.expires_at,
+      preserveLegacy = false,
       updateCurrentToken = true,
     } = options;
 
@@ -256,6 +257,7 @@ function SharingSettings(props) {
             allow_params: policy.allow_params,
           },
           exp,
+          preserveLegacy,
         },
       }));
       const token = data?.payload?.token || "";
@@ -295,6 +297,7 @@ function SharingSettings(props) {
   const _getUrlForPolicy = async (policy) => {
     const token = await _generateTokenForPolicy(policy, {
       exp: policy.expires_at,
+      preserveLegacy: policy.token_version < 2,
       updateCurrentToken: false,
     });
 
