@@ -1,11 +1,9 @@
 const { Server } = require("socket.io");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const Redis = require("ioredis");
-const jwt = require("jsonwebtoken");
 const { getRedisOptions } = require("../redisConnection");
 const db = require("../models/models");
-
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const verifySessionToken = require("./verifySessionToken");
 
 /**
  * Socket.IO Manager for Chartbrew
@@ -36,12 +34,7 @@ class SocketManager {
       throw new Error("Unauthorized access");
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, settings.encryptionKey);
-    } catch (error) {
-      decoded = jwt.verify(token, settings.secret);
-    }
+    const decoded = verifySessionToken(token);
 
     if (!decoded?.id) {
       throw new Error("Unauthorized access");

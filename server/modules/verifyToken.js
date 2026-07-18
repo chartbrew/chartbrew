@@ -1,9 +1,6 @@
-const jwt = require("jsonwebtoken");
-
 const db = require("../models/models");
 const userResponse = require("./userResponse");
-
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const verifySessionToken = require("./verifySessionToken");
 
 module.exports = async (req, res, next) => {
   const token = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : "";
@@ -14,19 +11,10 @@ module.exports = async (req, res, next) => {
     } catch (e) { /** */ }
 
     let decoded;
-
     try {
-      decoded = await jwt.verify(token, settings.encryptionKey);
+      decoded = verifySessionToken(token);
     } catch (err) {
-      //
-    }
-
-    if (!decoded?.id) {
-      try {
-        decoded = await jwt.verify(token, settings.secret);
-      } catch (err) {
-        return res.status(401).send("Unauthorized access.");
-      }
+      return res.status(401).send("Unauthorized access.");
     }
 
     if (!decoded?.id) return res.status(401).send("Unauthorized access.");

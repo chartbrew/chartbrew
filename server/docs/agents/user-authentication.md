@@ -21,7 +21,7 @@ This document covers all authentication and user management flows in Chartbrew.
 ## Token Verification
 
 - **Module**: [`server/modules/verifyToken.js`](../modules/verifyToken.js)
-- Verifies first with `settings.encryptionKey`, then falls back to `settings.secret`
+- Verifies HS256 session tokens only with `settings.encryptionKey`
 - Loads the user from DB and places a sanitized user on `req.user`
 
 ## 2FA Endpoints
@@ -77,4 +77,3 @@ This document covers all authentication and user management flows in Chartbrew.
 - **Admin listing**: `GET /user`
   - Protected by `verifyToken` and checks `req.user.admin`
   - Note: admins are intended to be set **only in DB**, not via API
-

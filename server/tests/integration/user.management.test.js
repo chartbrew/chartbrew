@@ -2,6 +2,7 @@ import {
   describe, it, expect, beforeAll
 } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import { createTestAppWithUserRoutes } from "../helpers/testApp.js";
 import { testDbManager } from "../helpers/index.js";
 import { userFactory } from "../factories/userFactory.js";
@@ -75,6 +76,27 @@ describe("User Management API", () => {
 
     app = await createTestAppWithUserRoutes();
     models = await getModels();
+  });
+
+  describe("session authentication", () => {
+    it("rejects forged user sessions signed with the legacy secret", async () => {
+      const testUser = await models.User.create(userFactory.build());
+      const forgedToken = jwt.sign(
+        { id: testUser.id },
+        process.env.CB_SECRET_DEV,
+        { algorithm: "HS256" }
+      );
+
+      await request(app)
+        .get(`/user/${testUser.id}`)
+        .set(getAuthHeaders(forgedToken))
+        .expect(401);
+
+      await request(app)
+        .post("/user/relog")
+        .set(getAuthHeaders(forgedToken))
+        .expect(401);
+    });
   });
 
   describe("PUT /user/:id (profile update)", () => {
