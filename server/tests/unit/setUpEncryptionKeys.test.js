@@ -1,7 +1,10 @@
+import { createRequire } from "module";
+import { describe, expect, it } from "vitest";
+
+const require = createRequire(import.meta.url);
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { describe, expect, it } = require("vitest");
 
 const setUpEncryptionKeys = require("../../modules/setUpEncryptionKeys");
 const {

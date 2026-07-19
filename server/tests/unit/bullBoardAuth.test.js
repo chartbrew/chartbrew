@@ -1,6 +1,11 @@
+import { createRequire } from "module";
+import {
+  afterEach, beforeEach, describe, expect, it,
+} from "vitest";
+
+const require = createRequire(import.meta.url);
 const express = require("express");
 const request = require("supertest");
-const { afterEach, beforeEach, describe, expect, it } = require("vitest");
 
 const bullBoardAuth = require("../../middlewares/bullBoardAuth");
 
