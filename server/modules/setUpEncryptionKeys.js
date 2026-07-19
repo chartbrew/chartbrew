@@ -1,4 +1,4 @@
-const fs = require("fs").promises;
+const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
 
@@ -9,44 +9,59 @@ function generateAESKey() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// Read the .env file, update the CB_ENCRYPTION_KEY variable, or add it if it doesn't exist
-async function updateKeys(envVar) {
+function generatePassword() {
+  return crypto.randomBytes(24).toString("base64url");
+}
+
+function setEnvDefault(data, envVar, value) {
+  const keyRegex = new RegExp(`^${envVar}=(.*)$`, "m");
+  const match = data.match(keyRegex);
+
+  if (match?.[1]) {
+    return { data, value: match[1], updated: false };
+  }
+
+  if (match) {
+    return {
+      data: data.replace(keyRegex, `${envVar}=${value}`),
+      value,
+      updated: true,
+    };
+  }
+
+  return {
+    data: `${data.trim()}\n${envVar}=${value}\n`,
+    value,
+    updated: true,
+  };
+}
+
+// Populate generated secrets before dotenv loads so they are available on the first startup.
+function setUpEncryptionKeys(targetEnvPath = envPath) {
   try {
-    const data = await fs.readFile(envPath, "utf8");
+    let data = fs.readFileSync(targetEnvPath, "utf8");
+    const defaults = [
+      ["CB_ENCRYPTION_KEY_DEV", generateAESKey],
+      ["CB_ENCRYPTION_KEY", generateAESKey],
+      ["CB_BULLMQ_USERNAME", () => "chartbrew"],
+      ["CB_BULLMQ_PASSWORD", generatePassword],
+    ];
 
-    let updatedData = data;
-    const keyRegex = new RegExp(`^${envVar}=(.*)$`, "m");
-    const match = data.match(keyRegex);
+    defaults.forEach(([envVar, generateValue]) => {
+      const result = setEnvDefault(data, envVar, generateValue());
+      data = result.data;
 
-    if (match) {
-      // envVar exists
-      if (match[1]) {
-        // envVar has a value, do nothing
-        return;
-      } else {
-        // 'envVar=' found but no value, update the key
-        updatedData = data.replace(keyRegex, `${envVar}=${generateAESKey()}`);
-        console.log(`Set up encryption key ${envVar}`); // eslint-disable-line
+      if (result.updated) {
+        console.log(`Set up ${envVar}`); // eslint-disable-line
       }
-    } else {
-      // envVar not found, add the variable and the generated key
-      updatedData = `${data.trim()}\n${envVar}=${generateAESKey()}\n`;
-      console.log(`Set up encryption key ${envVar}`); // eslint-disable-line
-    }
+    });
 
-    // Write the updates back to the .env file
-    await fs.writeFile(envPath, updatedData, "utf8");
+    fs.writeFileSync(targetEnvPath, data, "utf8");
   } catch (e) {
-    console.error("The encryption key could not be set up. Please ensure you have CB_ENCRYPTION_KEY_DEV and CB_ENCRYPTION_KEY in your .env file."); // eslint-disable-line
+    console.error("Application secrets could not be set up. Please configure the encryption keys and BullMQ dashboard credentials in your environment."); // eslint-disable-line
   }
 }
 
-module.exports = async () => {
-  await updateKeys("CB_ENCRYPTION_KEY_DEV");
-  await updateKeys("CB_ENCRYPTION_KEY");
-
-  return true;
-};
-
-updateKeys("CB_ENCRYPTION_KEY_DEV");
-updateKeys("CB_ENCRYPTION_KEY");
+module.exports = setUpEncryptionKeys;
+module.exports.generatePassword = generatePassword;
+module.exports.setEnvDefault = setEnvDefault;

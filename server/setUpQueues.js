@@ -4,6 +4,7 @@ const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 
 const { getQueueOptions } = require("./redisConnection");
+const bullBoardAuth = require("./middlewares/bullBoardAuth");
 const updateCharts = require("./crons/updateCharts");
 const updateDashboards = require("./crons/updateDashboards");
 const sendSnapshots = require("./crons/sendSnapshots");
@@ -186,7 +187,7 @@ const setUpQueues = (app) => {
     },
   });
 
-  app.use("/apps/queues", (req, res, next) => {
+  app.use("/apps/queues", bullBoardAuth, (req, res, next) => {
     res.setHeader("Content-Security-Policy", "default-src 'self'; img-src *;"); // Allow images to load from any source
     next();
   }, serverAdapter.getRouter());

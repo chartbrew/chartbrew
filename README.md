@@ -112,11 +112,15 @@ You will need a 32 bytes AES encryption key for the `CB_ENCRYPTION_KEY` variable
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
+The BullMQ admin dashboard at `/apps/queues` is protected with HTTP Basic Auth. Set `CB_BULLMQ_USERNAME` and `CB_BULLMQ_PASSWORD`; for local `.env` installations, Chartbrew defaults the username to `chartbrew` and generates a random password on first startup.
+
 ```sh
 docker pull razvanilin/chartbrew
 
 docker run -p 4019:4019 -p 4018:4018 \
   -e CB_ENCRYPTION_KEY=your_32_bytes_key \
+  -e CB_BULLMQ_USERNAME=chartbrew \
+  -e CB_BULLMQ_PASSWORD=your_strong_random_password \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_API_PORT=4019 \
   -e CB_DB_HOST=host.docker.internal \
