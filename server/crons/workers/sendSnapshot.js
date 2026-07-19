@@ -6,6 +6,10 @@ const fs = require("fs");
 
 const mail = require("../../modules/mail");
 const { snapDashboard } = require("../../modules/snapshots");
+const {
+  getEnabledSnapshotIntegrations,
+  getSnapshotEmailRecipients,
+} = require("../../modules/snapshotChannels");
 const db = require("../../models/models");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
@@ -142,22 +146,29 @@ module.exports = async (job) => {
     throw new Error("Project not found");
   }
 
+  const emailRecipients = getSnapshotEmailRecipients(project.snapshotSchedule);
+  const enabledIntegrationConfigs = getEnabledSnapshotIntegrations(project.snapshotSchedule);
+
+  let integrations = [];
+  if (enabledIntegrationConfigs.length > 0) {
+    integrations = await db.Integration.findAll({
+      where: {
+        id: {
+          [Op.in]: enabledIntegrationConfigs.map((integration) => integration.integration_id),
+        },
+      },
+    });
+  }
+
+  if (emailRecipients.length === 0 && integrations.length === 0) {
+    return true;
+  }
+
   // Take the snapshot
   const snapshotPath = await snapDashboard(project, project.snapshotSchedule);
 
   if (!snapshotPath) {
     throw new Error("Failed to take snapshot");
-  }
-
-  let integrations = [];
-  if (project.snapshotSchedule?.integrations) {
-    integrations = await db.Integration.findAll({
-      where: {
-        id: {
-          [Op.in]: project.snapshotSchedule?.integrations?.map((i) => i.integration_id),
-        },
-      },
-    });
   }
 
   let sentToAtLeastOneChannel = false;
@@ -167,7 +178,7 @@ module.exports = async (job) => {
     const emailSent = await sendSnapshotToEmail(
       project,
       snapshotPath,
-      project.snapshotSchedule?.customEmails
+      emailRecipients
     );
     if (emailSent) {
       sentToAtLeastOneChannel = true;
@@ -190,7 +201,7 @@ module.exports = async (job) => {
     }
   }
 
-  const hasConfiguredEmail = !!project.snapshotSchedule?.mediums?.email?.enabled;
+  const hasConfiguredEmail = emailRecipients.length > 0;
   const hasConfiguredIntegrations = integrations.length > 0;
 
   if ((hasConfiguredEmail || hasConfiguredIntegrations) && !sentToAtLeastOneChannel) {

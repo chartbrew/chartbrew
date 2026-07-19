@@ -5,6 +5,7 @@ const { Op } = require("sequelize");
 const db = require("../models/models");
 const { getProjectSnapshotTimezone } = require("../modules/projectSnapshotTimezone");
 const { getWeekdayNumber, shouldRunOnWeekday } = require("../modules/scheduleWeekdays");
+const { hasSnapshotChannels } = require("../modules/snapshotChannels");
 
 function buildJobId(entity, id) {
   return `${entity}_${id}_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
@@ -35,6 +36,10 @@ async function checkSnapshots(queue) {
     }
 
     const snapshotChecks = projects.map(async (project) => {
+      if (!hasSnapshotChannels(project.snapshotSchedule)) {
+        return;
+      }
+
       const {
         frequency,
         dayOfWeek,

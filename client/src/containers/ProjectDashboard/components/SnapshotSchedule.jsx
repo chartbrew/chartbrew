@@ -220,9 +220,21 @@ function SnapshotSchedule({ isOpen, onClose }) {
     setIsLoading(false);
   };
 
+  const _hasSelectedChannel = () => {
+    const hasEmailRecipient = schedule.mediums.email?.enabled
+      && customEmails.some((email) => typeof email === "string" && email.trim());
+    const hasEnabledIntegration = selectedIntegrations.some((integration) => integration.enabled);
+
+    return hasEmailRecipient || hasEnabledIntegration;
+  };
+
   const _canSave = () => {
     // validate if any information is missing from the schedule
     if (!schedule.frequency) {
+      return false;
+    }
+
+    if (!_hasSelectedChannel()) {
       return false;
     }
 
@@ -522,6 +534,12 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 <Tooltip.Content>Refresh list</Tooltip.Content>
               </Tooltip>
             </div>
+
+            {!_hasSelectedChannel() && (
+              <div className="text-xs text-danger">
+                Add at least one email recipient or select an integration.
+              </div>
+            )}
 
             {schedule.mediums.email?.enabled && (
               <>
