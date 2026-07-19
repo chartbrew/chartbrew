@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v5.2.2",
+  "version": "v5.2.3",
   "packageManager": "npm@11.11.0",
   "description": "",
   "main": "index.js",
