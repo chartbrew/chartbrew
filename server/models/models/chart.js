@@ -55,6 +55,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       description: "When was chartData last updated"
     },
+    visualization: {
+      type: DataTypes.TEXT("long"),
+      description: "Canonical renderer-neutral visualization specification",
+      set(val) {
+        return this.setDataValue("visualization", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("visualization"));
+        } catch (e) {
+          return this.getDataValue("visualization");
+        }
+      }
+    },
     displayLegend: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

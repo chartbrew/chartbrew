@@ -19,6 +19,18 @@ const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
+const { VisualizationEngine } = require("../visualization/VisualizationEngine");
+const { legacyChartToVisualization } = require("../visualization/legacyChartToVisualization");
+const {
+  applyCdcCompatibilityUpdate,
+  applyChartCompatibilityUpdate,
+  removeBindingLayers,
+} = require("../visualization/compatibilityUpdates");
+const {
+  isLegacyOwnedVisualization,
+  shouldSyncLegacyCdc,
+  shouldSyncLegacyChart,
+} = require("../visualization/legacyVisualizationSync");
 const {
   signLegacyShareToken,
   signShareToken,
@@ -36,7 +48,6 @@ const {
 
 // charts
 const AxisChart = require("../charts/AxisChart");
-const TableView = require("../charts/TableView");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -167,6 +178,45 @@ class ChartController {
       });
   }
 
+  async syncLegacyVisualization(chartId, options = {}, compatibility = {}) {
+    const chart = await this.findById(chartId, null, options);
+    if (!chart) return chart;
+
+    if (!isLegacyOwnedVisualization(chart.visualization)) {
+      let visualization = chart.visualization;
+      if (compatibility.chartData) {
+        visualization = applyChartCompatibilityUpdate(visualization, compatibility.chartData);
+      }
+      if (compatibility.cdcData) {
+        visualization = applyCdcCompatibilityUpdate(
+          visualization,
+          compatibility.bindingId,
+          compatibility.cdcData
+        );
+      }
+      if (compatibility.removeBinding) {
+        visualization = removeBindingLayers(visualization, compatibility.removeBinding);
+      }
+      if (JSON.stringify(visualization) === JSON.stringify(chart.visualization)) return chart;
+      await db.Chart.update(
+        { visualization },
+        { transaction: options.transaction, where: { id: chartId } }
+      );
+      return this.findById(chartId, null, options);
+    }
+
+    const result = legacyChartToVisualization(chart);
+    if (!result.valid) {
+      throw new Error(result.errors.join("; "));
+    }
+
+    await db.Chart.update(
+      { visualization: result.visualization },
+      { transaction: options.transaction, where: { id: chartId } }
+    );
+    return this.findById(chartId, null, options);
+  }
+
   update(id, data, user, justUpdates) {
     if (data.autoUpdate || data.autoUpdate === 0) {
       return db.Chart.update(data, {
@@ -194,6 +244,12 @@ class ChartController {
           } else {
             return this.findById(id);
           }
+        })
+        .then(async (chart) => {
+          if (shouldSyncLegacyChart(data)) {
+            return this.syncLegacyVisualization(id, {}, { chartData: data });
+          }
+          return chart;
         })
         .catch((error) => {
           return new Promise((resolve, reject) => reject(error));
@@ -254,6 +310,12 @@ class ChartController {
         } else {
           return this.findById(id);
         }
+      })
+      .then(async (chart) => {
+        if (shouldSyncLegacyChart(data)) {
+          return this.syncLegacyVisualization(id, {}, { chartData: data });
+        }
+        return chart;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -367,7 +429,6 @@ class ChartController {
 
   updateChartData(id, user, {
     noSource,
-    skipParsing,
     filters,
     isExport,
     getCache,
@@ -390,7 +451,6 @@ class ChartController {
     const shouldFinalizeAuditRun = Boolean(chartTraceContext) && finalizeRun !== false;
     let chartPersistEvent;
     let effectiveNoSource = noSource;
-    let effectiveSkipParsing = skipParsing;
     let effectiveGetCache = getCache;
     const requestedGetCache = Boolean(getCache);
     const shouldReadRuntimeCache = requestedGetCache;
@@ -526,7 +586,6 @@ class ChartController {
             chartVariantHash: runtimeContext?.chartVariantHash || null,
           });
           effectiveNoSource = false;
-          effectiveSkipParsing = false;
           effectiveGetCache = false;
         }
 
@@ -683,25 +742,19 @@ class ChartController {
         }
 
         try {
-          if (isExport) {
-            return dataExtractor(chartData, effectiveFilters, project?.timezone);
-          }
+          const visualizationEngine = new VisualizationEngine({
+            ...chartData,
+            timezone: project?.timezone,
+          });
+          const engineOptions = {
+            filters: effectiveFilters,
+            timezone: project?.timezone,
+            variables: effectiveVariables,
+          };
 
-          if (gChart.type === "table") {
-            const extractedData = dataExtractor(chartData, effectiveFilters, project?.timezone);
-            const tableView = new TableView();
-            return tableView.getTableData(extractedData, chartData, project?.timezone);
-          }
-
-          let reallySkipParsing = effectiveSkipParsing;
-          if (!chartData?.chart?.chartData) {
-            reallySkipParsing = false;
-          }
-
-          const axisChart = new AxisChart(chartData, project?.timezone);
-
-          return Promise.resolve(axisChart.plot(reallySkipParsing, effectiveFilters, effectiveVariables))
-            .catch((error) => Promise.reject(toAuditError(error, "transform")));
+          return isExport
+            ? visualizationEngine.export(engineOptions)
+            : visualizationEngine.render(engineOptions);
         } catch (error) {
           return Promise.reject(toAuditError(error, "transform"));
         }
@@ -1425,7 +1478,8 @@ class ChartController {
       legend: data.legend || getDatasetName(dataset),
       chart_id: chartId,
     })
-      .then((chartDatasetConfig) => {
+      .then(async (chartDatasetConfig) => {
+        await this.syncLegacyVisualization(chartId);
         return chartDatasetConfig;
       })
       .catch((err) => {
@@ -1433,18 +1487,34 @@ class ChartController {
       });
   }
 
-  updateChartDatasetConfig(id, data) {
+  async updateChartDatasetConfig(id, data) {
     return db.ChartDatasetConfig.update(data, { where: { id } })
-      .then(() => {
-        return db.ChartDatasetConfig.findByPk(id);
+      .then(async () => {
+        const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
+        if (chartDatasetConfig && shouldSyncLegacyCdc(data)) {
+          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
+            bindingId: chartDatasetConfig.id,
+            cdcData: data,
+          });
+        }
+        return chartDatasetConfig;
       })
       .catch((err) => {
         return Promise.reject(err);
       });
   }
 
-  deleteChartDatasetConfig(id) {
+  async deleteChartDatasetConfig(id) {
+    const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
     return db.ChartDatasetConfig.destroy({ where: { id } })
+      .then(async (result) => {
+        if (chartDatasetConfig) {
+          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
+            removeBinding: chartDatasetConfig.id,
+          });
+        }
+        return result;
+      })
       .catch((err) => {
         return Promise.reject(err);
       });
@@ -1485,7 +1555,7 @@ class ChartController {
       "timeInterval", "autoUpdate", "draft", "mode", "maxValue", "minValue",
       "disabledExport", "onReport", "xLabelTicks", "stacked", "horizontal",
       "showGrowth", "invertGrowth", "layout", "snapshotToken", "isLogarithmic",
-      "content", "ranges", "dashedLastPoint", "defaultRowsPerPage"
+      "content", "ranges", "dashedLastPoint", "defaultRowsPerPage", "visualization"
     ];
 
     allowedFields.forEach((field) => {
@@ -1555,6 +1625,8 @@ class ChartController {
         })
       );
     }
+
+    await this.syncLegacyVisualization(chart.id, { transaction });
 
     // Run the chart update in the background to populate chartData
     if (!skipBackgroundUpdate) {

@@ -1,0 +1,261 @@
+export const AGGREGATIONS = [{ id: "none", label: "No aggregation" }, {
+  id: "count",
+  label: "Count",
+}, {
+  id: "sum",
+  label: "Sum",
+}, {
+  id: "avg",
+  label: "Average",
+}, {
+  id: "min",
+  label: "Minimum",
+}, {
+  id: "max",
+  label: "Maximum",
+}];
+
+const METRIC_MARKS = new Set(["kpi", "avg", "gauge"]);
+const CATEGORY_MARKS = new Set(["pie", "doughnut", "radar", "polar"]);
+
+function createLayerId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `layer-${Date.now().toString(36)}`;
+}
+
+export function getFieldSemanticType(fieldType) {
+  if (fieldType === "date") return "temporal";
+  if (fieldType === "number") return "quantitative";
+  if (fieldType === "boolean") return "boolean";
+  if (fieldType === "object") return "record";
+  return "nominal";
+}
+
+export function getDimensionRole(layer) {
+  return layer?.encoding?.time ? "time" : "category";
+}
+
+function getDateFieldScore(field) {
+  const name = `${field}`.split(".").pop().replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if (name === "createdat" || name === "createddate") return 0;
+  if (name.includes("created")) return 1;
+  if (name === "timestamp") return 2;
+  if (name.includes("timestamp")) return 3;
+  if (name.includes("date")) return 4;
+  return 5;
+}
+
+export function getPreferredDateField(fieldOptions = []) {
+  return fieldOptions
+    .map((field, index) => ({ ...field, index, score: getDateFieldScore(field.value) }))
+    .filter((field) => field.type === "date")
+    .sort((left, right) => left.score - right.score || left.index - right.index)[0]?.value || null;
+}
+
+export function getVisualizationTimeField(visualization, bindingId) {
+  const layer = (visualization?.layers || []).find((item) => {
+    return `${item.bindingId}` === `${bindingId}` && item.encoding?.time?.field;
+  });
+  return layer?.encoding?.time?.field || null;
+}
+
+export function getLayerFieldRequirements(mark) {
+  if (mark === "table") return { collection: true };
+  if (mark === "matrix") return { dimension: true, value: true };
+  if (METRIC_MARKS.has(mark)) return { value: true };
+  if (CATEGORY_MARKS.has(mark)) {
+    return { dimension: true, value: true, breakdown: mark === "radar" };
+  }
+  return { dimension: true, value: true, breakdown: true };
+}
+
+export function isVisualizationReady(visualization) {
+  if (!visualization?.layers?.length) return false;
+  return visualization.layers.every((layer) => {
+    const requirements = getLayerFieldRequirements(layer.mark);
+    if (requirements.collection) return Boolean(layer.rowPath);
+    if (requirements.dimension && !layer.encoding?.time && !layer.encoding?.category) return false;
+    if (requirements.value && !layer.encoding?.value?.field) return false;
+    return true;
+  });
+}
+
+function makeNativeVisualization(visualization) {
+  const metadata = { ...(visualization?.metadata || {}) };
+  delete metadata.migratedFrom;
+  delete metadata.migrationWarnings;
+  return {
+    version: 2,
+    ...visualization,
+    metadata: {
+      ...metadata,
+      createdBy: metadata.createdBy || "visualization-editor",
+    },
+    layers: (visualization?.layers || []).map((layer) => ({ ...layer })),
+  };
+}
+
+export function updateVisualizationLayer(visualization, layerId, updater) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.layers = nextVisualization.layers.map((layer) => {
+    return layer.id === layerId ? updater({ ...layer }) : layer;
+  });
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
+export function updateLayerMark(visualization, layerId, mark) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const previousEncoding = layer.encoding || {};
+    let encoding = {};
+    if (mark === "matrix") {
+      encoding = {
+        ...(previousEncoding.time ? { time: previousEncoding.time } : {}),
+        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
+      };
+    } else if (METRIC_MARKS.has(mark)) {
+      encoding = previousEncoding.value ? { value: previousEncoding.value } : {};
+      if (mark === "avg" && encoding.value) {
+        encoding.value = { ...encoding.value, aggregate: "avg" };
+      }
+    } else if (CATEGORY_MARKS.has(mark)) {
+      const dimension = previousEncoding.category || previousEncoding.time;
+      encoding = {
+        ...(dimension ? { category: { ...dimension, type: "nominal" } } : {}),
+        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
+        ...(mark === "radar" && previousEncoding.breakdown
+          ? { breakdown: previousEncoding.breakdown }
+          : {}),
+      };
+    } else if (mark !== "table") {
+      encoding = {
+        ...(previousEncoding.time ? { time: previousEncoding.time } : {}),
+        ...(previousEncoding.category ? { category: previousEncoding.category } : {}),
+        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
+        ...(previousEncoding.breakdown ? { breakdown: previousEncoding.breakdown } : {}),
+      };
+    }
+
+    return {
+      ...layer,
+      encoding,
+      mark,
+      rowPath: mark === "table" ? layer.rowPath || "root[]" : layer.rowPath,
+    };
+  });
+}
+
+export function updateLayerField(visualization, layerId, role, fieldOption) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const encoding = { ...(layer.encoding || {}) };
+    const nextLayer = { ...layer };
+
+    if (role === "dimension") {
+      delete encoding.category;
+      delete encoding.time;
+      if (fieldOption) {
+        const dimensionRole = fieldOption.type === "date" ? "time" : "category";
+        encoding[dimensionRole] = {
+          field: fieldOption.value,
+          type: getFieldSemanticType(fieldOption.type),
+        };
+      }
+    } else if (fieldOption) {
+      encoding[role] = {
+        ...(encoding[role] || {}),
+        field: fieldOption.value,
+        type: role === "value" ? "quantitative" : getFieldSemanticType(fieldOption.type),
+      };
+    } else {
+      delete encoding[role];
+    }
+
+    if (role === "value" && fieldOption
+      && (!layer.name || /^(Layer|Metric|Value) \d+$/.test(layer.name))) {
+      nextLayer.name = fieldOption.text || fieldOption.value;
+    }
+
+    return { ...nextLayer, encoding };
+  });
+}
+
+export function updateLayerAggregation(visualization, layerId, aggregate) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => ({
+    ...layer,
+    encoding: {
+      ...layer.encoding,
+      value: {
+        ...layer.encoding?.value,
+        aggregate,
+      },
+    },
+  }));
+}
+
+export function updateLayerRowPath(visualization, layerId, rowPath) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const nextLayer = { ...layer };
+
+    if (rowPath) {
+      nextLayer.rowPath = rowPath;
+    } else {
+      delete nextLayer.rowPath;
+    }
+
+    return nextLayer;
+  });
+}
+
+export function updateSeriesColor(visualization, layerId, seriesId, color) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const style = { ...(layer.style || {}) };
+    const series = { ...(style.series || {}) };
+
+    if (color) {
+      series[seriesId] = {
+        ...(series[seriesId] || {}),
+        color,
+        fillColor: color,
+      };
+    } else {
+      delete series[seriesId];
+    }
+
+    if (Object.keys(series).length > 0) style.series = series;
+    else delete style.series;
+
+    return { ...layer, style };
+  });
+}
+
+export function addVisualizationLayer(visualization, bindingId, options = {}) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  const sourceLayer = options.sourceLayer || nextVisualization.layers.find((layer) => {
+    return `${layer.bindingId}` === `${bindingId}`;
+  });
+  const metric = Boolean(options.metric);
+  const encoding = metric ? {
+    ...(sourceLayer?.encoding?.time ? { time: sourceLayer.encoding.time } : {}),
+    ...(sourceLayer?.encoding?.category ? { category: sourceLayer.encoding.category } : {}),
+  } : {};
+  nextVisualization.layers.push({
+    bindingId,
+    encoding,
+    id: options.id || createLayerId(),
+    mark: sourceLayer?.mark || "line",
+    name: metric ? `Value ${nextVisualization.layers.length + 1}` : `Layer ${nextVisualization.layers.length + 1}`,
+    orientation: "vertical",
+    stack: "none",
+    style: {},
+    transforms: [],
+  });
+  nextVisualization.status = "draft";
+  return nextVisualization;
+}
+
+export function removeVisualizationLayer(visualization, layerId) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.layers = nextVisualization.layers.filter((layer) => layer.id !== layerId);
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}

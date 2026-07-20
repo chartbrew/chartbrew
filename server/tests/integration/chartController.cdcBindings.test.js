@@ -206,4 +206,75 @@ describe("ChartController CDC bindings", () => {
       new Date("2020-01-01T00:00:00.000Z").getTime()
     );
   });
+
+  it("keeps legacy-owned specs synchronized without overwriting native specs", async () => {
+    const team = await models.Team.create({ name: "Visualization Sync Team" });
+    const project = await models.Project.create({
+      team_id: team.id,
+      name: "Visualization Sync Project",
+      brewName: "visualization-sync-project",
+      ghost: false,
+    });
+    const chart = await models.Chart.create({
+      project_id: project.id,
+      name: "Synchronized Chart",
+      type: "bar",
+      draft: false,
+    });
+    const dataset = await models.Dataset.create({
+      team_id: team.id,
+      project_ids: [project.id],
+      draft: false,
+      name: "Revenue",
+      fieldsSchema: {
+        "root[].month": "string",
+        "root[].revenue": "number",
+      },
+    });
+    const controller = new ChartController();
+    const cdc = await controller.createChartDatasetConfig(chart.id, {
+      dataset_id: dataset.id,
+      legend: "Revenue",
+      xAxis: "root[].month",
+      yAxis: "root[].revenue",
+      yAxisOperation: "sum",
+    });
+
+    let refreshedChart = await controller.findById(chart.id);
+    expect(refreshedChart.visualization.metadata.migratedFrom).toBe("legacy");
+    expect(refreshedChart.visualization.layers[0].encoding.value.aggregate).toBe("sum");
+
+    await controller.updateChartDatasetConfig(cdc.id, {
+      formula: "${val / 100}",
+      yAxisOperation: "avg",
+    });
+    await controller.update(chart.id, { stacked: true });
+    refreshedChart = await controller.findById(chart.id);
+    expect(refreshedChart.visualization.layers[0].encoding.value).toEqual(expect.objectContaining({
+      aggregate: "avg",
+      formula: "${val / 100}",
+    }));
+    expect(refreshedChart.visualization.layers[0].stack).toBe("normal");
+
+    const nativeVisualization = {
+      version: 2,
+      metadata: { createdBy: "visualization-editor" },
+      layers: [{
+        id: "native",
+        bindingId: cdc.id,
+        mark: "bar",
+        encoding: {
+          category: { field: "root[].month", type: "nominal" },
+          value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+        },
+      }],
+    };
+    await controller.update(chart.id, { visualization: nativeVisualization });
+    await controller.updateChartDatasetConfig(cdc.id, { legend: "Changed legacy label" });
+    refreshedChart = await controller.findById(chart.id);
+    expect(refreshedChart.visualization).toEqual(expect.objectContaining({
+      metadata: { createdBy: "visualization-editor" },
+    }));
+    expect(refreshedChart.visualization.layers[0].id).toBe("native");
+  });
 });

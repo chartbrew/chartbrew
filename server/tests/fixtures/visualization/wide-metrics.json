@@ -1,0 +1,5 @@
+[
+  { "month": "2026-01-01", "revenue": 240, "cost": 110, "margin": 130 },
+  { "month": "2026-02-01", "revenue": 310, "cost": 145, "margin": 165 },
+  { "month": "2026-03-01", "revenue": 285, "cost": 125, "margin": 160 }
+]

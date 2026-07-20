@@ -17,6 +17,7 @@ function ColorPickerControl(props) {
   const {
     ariaLabel,
     className,
+    clearLabel = "Remove color",
     fallbackColor = "#000000",
     onChange,
     onClear,
@@ -116,7 +117,7 @@ function ColorPickerControl(props) {
 
         {showClearButton && typeof onClear === "function" && (
           <Button className="justify-start" size="sm" variant="ghost" onPress={onClear}>
-            Remove color
+            {clearLabel}
           </Button>
         )}
       </ColorPicker.Popover>
@@ -127,6 +128,7 @@ function ColorPickerControl(props) {
 ColorPickerControl.propTypes = {
   ariaLabel: PropTypes.string.isRequired,
   className: PropTypes.string,
+  clearLabel: PropTypes.string,
   fallbackColor: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   onClear: PropTypes.func,

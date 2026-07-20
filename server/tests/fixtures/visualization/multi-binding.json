@@ -1,0 +1,10 @@
+{
+  "actual": [
+    { "month": "2026-01", "value": 80 },
+    { "month": "2026-02", "value": 92 }
+  ],
+  "target": [
+    { "month": "2026-01", "value": 85 },
+    { "month": "2026-02", "value": 90 }
+  ]
+}
