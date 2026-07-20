@@ -95,10 +95,20 @@ function getSeriesStyle(layer, series, options = {}) {
   };
 }
 
+function getAvailableCatalog(layerFrame) {
+  const visible = layerFrame.series || [];
+  const visibleIds = new Set(visible.map((series) => series.id));
+  return [
+    ...visible,
+    ...(layerFrame.availableSeries || []).filter((series) => !visibleIds.has(series.id)),
+  ];
+}
+
 function buildSeriesStyleMap(frame, visualization) {
   const entries = frame.layers.flatMap((layerFrame) => {
     const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    return layerFrame.series.map((series) => ({ layer, layerFrame, series }));
+    return getAvailableCatalog(layerFrame)
+      .map((series) => ({ layer, layerFrame, series }));
   });
   const usedColors = new Set(entries.map(({ layer, series }) => {
     const overrides = layer.style?.series || {};
@@ -121,6 +131,24 @@ function buildSeriesMetadata(frame, visualization) {
   return frame.layers.flatMap((layerFrame) => {
     const layer = visualization.layers.find((item) => item.id === layerFrame.id);
     return layerFrame.series.map((series) => {
+      const style = styles.get(series.id);
+      return {
+        ...series,
+        bindingId: layerFrame.bindingId,
+        color: style.datasetColor,
+        fillColor: style.fillColor,
+        layerId: layerFrame.id,
+        layerName: layer?.name || null,
+      };
+    });
+  });
+}
+
+function buildAvailableSeriesMetadata(frame, visualization) {
+  const styles = buildSeriesStyleMap(frame, visualization);
+  return frame.layers.flatMap((layerFrame) => {
+    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
+    return getAvailableCatalog(layerFrame).map((series) => {
       const style = styles.get(series.id);
       return {
         ...series,
@@ -167,7 +195,7 @@ function buildChartJsDatasets(frame, spec, domain, missingValue) {
       configs.push({
         ...style,
         formula: layer.encoding.value?.formula || null,
-        goal: layer.goal ?? null,
+        goal: layer.encoding.breakdown ? null : layer.goal ?? null,
         id: series.id,
       });
     });
@@ -237,6 +265,7 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
   buildChartMetrics(configuration, compiled.configs, chartWithSeries);
 
   configuration.meta = {
+    availableSeries: buildAvailableSeriesMetadata(frame, visualization),
     frameVersion: frame.version,
     series: buildSeriesMetadata(frame, visualization),
     visualizationVersion: visualization.version,
@@ -255,10 +284,12 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
 module.exports = {
   SERIES_COLORS,
   buildChartJsDatasets,
+  buildAvailableSeriesMetadata,
   buildSeriesMetadata,
   buildSeriesStyleMap,
   compileChartJsCartesian,
   getDomain,
+  getAvailableCatalog,
   getSeriesStyle,
   getStableColor,
 };

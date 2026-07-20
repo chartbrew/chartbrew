@@ -78,6 +78,72 @@ const {
 } = require("./tools");
 const { chartColors } = require("../../../charts/colors");
 
+const AI_FIELD_ENCODING_SCHEMA = {
+  type: "object",
+  properties: {
+    field: { type: "string", description: "Dataset field path, usually using root[].field traversal syntax." },
+    type: { type: "string", enum: ["nominal", "ordinal", "quantitative", "temporal", "boolean", "record"] },
+    aggregate: { type: "string", enum: ["none", "sum", "avg", "min", "max", "count"] },
+    title: { type: "string" },
+    nullPolicy: { type: "string", enum: ["exclude", "preserve", "label"] },
+    nullLabel: { type: "string" },
+    formula: { type: "string" },
+  },
+  required: ["field"],
+  additionalProperties: false,
+};
+
+const AI_ENCODING_SCHEMA = {
+  type: "object",
+  description: "Renderer-neutral semantic field roles. Never use x or y. For line/bar use time or category plus value, and optionally breakdown.",
+  properties: {
+    time: AI_FIELD_ENCODING_SCHEMA,
+    category: AI_FIELD_ENCODING_SCHEMA,
+    value: AI_FIELD_ENCODING_SCHEMA,
+    breakdown: AI_FIELD_ENCODING_SCHEMA,
+    row: AI_FIELD_ENCODING_SCHEMA,
+    column: AI_FIELD_ENCODING_SCHEMA,
+    columns: { type: "array", items: AI_FIELD_ENCODING_SCHEMA },
+  },
+  additionalProperties: false,
+};
+
+const AI_VISUALIZATION_SCHEMA = {
+  type: "object",
+  description: "Complete canonical visualization specification. Every layer must use semantic encoding roles; never use x or y.",
+  properties: {
+    version: { type: "integer", enum: [2] },
+    status: { type: "string", enum: ["ready", "draft", "orphan"] },
+    layers: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          bindingId: { type: ["string", "number"] },
+          mark: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          name: { type: "string" },
+          rowPath: { type: "string" },
+          encoding: AI_ENCODING_SCHEMA,
+          transforms: { type: "array", items: { type: "object" } },
+          style: { type: "object" },
+          options: { type: "object" },
+          stack: { type: "string", enum: ["none", "normal", "percent"] },
+          orientation: { type: "string", enum: ["vertical", "horizontal"] },
+          goal: { type: ["number", "null"] },
+          content: { type: ["string", "null"] },
+        },
+        required: ["id", "mark", "encoding"],
+        additionalProperties: false,
+      },
+    },
+    settings: { type: "object" },
+    metadata: { type: "object" },
+  },
+  required: ["version", "layers"],
+  additionalProperties: false,
+};
+
 // Make global variables available to tool functions
 global.openaiClient = openaiClient;
 global.openAiModel = openAiModel;
@@ -539,6 +605,8 @@ async function availableTools() {
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
           formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
+          encoding: AI_ENCODING_SCHEMA,
+          visualization: AI_VISUALIZATION_SCHEMA,
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
         required: ["project_id", "dataset_id", "name"]
@@ -615,6 +683,9 @@ async function availableTools() {
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
           formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
+          encoding: AI_ENCODING_SCHEMA,
+          visualization: AI_VISUALIZATION_SCHEMA,
+          layer_id: { type: "string", description: "Canonical value layer ID to update when the chart has multiple values." },
           datasetColor: { type: "string", description: "Color for the dataset in this chart" },
           fillColor: { type: "string", description: "Fill color for area charts" },
           fill: { type: "boolean", description: "Fill area under line" },
@@ -694,6 +765,8 @@ async function availableTools() {
           transform: { type: "object", description: "Data transformation rules" },
           formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
+          encoding: AI_ENCODING_SCHEMA,
+          visualization: AI_VISUALIZATION_SCHEMA,
           spec: { type: "object", description: "Alternative: Chart specification object (backward compatibility)" }
         },
         required: ["connection_id", "name"]
@@ -760,6 +833,8 @@ async function availableTools() {
           transform: { type: "object" },
           formula: { type: "string" },
           seriesConfiguration: { type: "object" },
+          encoding: AI_ENCODING_SCHEMA,
+          visualization: AI_VISUALIZATION_SCHEMA,
           spec: { type: "object", description: "Alternative chart specification object" }
         },
         required: ["project_id", "connection_id", "name"]

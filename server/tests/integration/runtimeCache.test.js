@@ -34,6 +34,37 @@ describe("Runtime cache integration", () => {
     await runtimeCache.resetForTests();
   });
 
+  it("includes the canonical visualization in the chart fingerprint", async () => {
+    const team = await models.Team.create({ name: "Fingerprint Team" });
+    const project = await models.Project.create({
+      team_id: team.id,
+      name: "Fingerprint Project",
+      brewName: "fingerprint-project",
+      ghost: false,
+    });
+    const chart = await models.Chart.create({
+      project_id: project.id,
+      name: "Fingerprint Chart",
+      type: "bar",
+      draft: false,
+      visualization: {
+        version: 2,
+        layers: [{ id: "value", bindingId: 1, mark: "bar", encoding: {} }],
+      },
+    });
+    const before = await runtimeCache.buildChartVersion(chart.id, "UTC");
+
+    await chart.update({
+      visualization: {
+        version: 2,
+        layers: [{ id: "value", bindingId: 1, mark: "bar", encoding: {}, goal: 500 }],
+      },
+    }, { silent: true });
+    const after = await runtimeCache.buildChartVersion(chart.id, "UTC");
+
+    expect(after).not.toBe(before);
+  });
+
   it("reuses the chart-result cache for identical runtime filter combinations", async () => {
     const team = await models.Team.create({ name: "Runtime Cache Team" });
     const project = await models.Project.create({

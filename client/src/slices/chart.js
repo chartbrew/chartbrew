@@ -399,11 +399,11 @@ export const getSharedChart = createAsyncThunk(
 
 export const exportChart = createAsyncThunk(
   "chart/exportChart",
-  async ({ project_id, chartIds, filters }) => {
+  async ({ project_id, chartIds, filters, mode = "source" }) => {
     const token = getAuthToken();
     const url = `${API_HOST}/project/${project_id}/chart/export`;
     const method = "POST";
-    const body = JSON.stringify({ chartIds, filters });
+    const body = JSON.stringify({ chartIds, filters, mode });
 
     const headers = new Headers({
       "Content-Type": "application/json",

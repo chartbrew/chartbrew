@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import {
   Button, Checkbox, Label, Separator, Tooltip, Link as LinkNext,
+  Tabs,
 } from "@heroui/react";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import { LuCheckCheck, LuEye, LuEyeOff, LuFileDown, LuX } from "react-icons/lu";
@@ -12,6 +13,7 @@ function ChartExport(props) {
     charts, onExport, onUpdate, loading, error, showDisabled,
   } = props;
   const [selectedIds, setSelectedIds] = useState([]);
+  const [exportMode, setExportMode] = useState("shown");
 
   const _onSelectChart = (id) => {
     const foundIndex = _.indexOf(selectedIds, id);
@@ -44,6 +46,31 @@ function ChartExport(props) {
       <div>
         Select which charts you want to export
       </div>
+      <div className="h-4" />
+      <Tabs
+        aria-label="Export data shape"
+        selectedKey={exportMode}
+        onSelectionChange={setExportMode}
+      >
+        <Tabs.ListContainer>
+          <Tabs.List className="w-full">
+            <Tabs.Tab id="shown">
+              Chart as shown
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="source">
+              Source rows
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
+        <Tabs.Panel id="shown" className="pt-2 text-sm text-foreground-500">
+          Exports displayed categories and generated series after grouping, aggregation, and filters.
+        </Tabs.Panel>
+        <Tabs.Panel id="source" className="pt-2 text-sm text-foreground-500">
+          Exports the filtered rows behind each selected dataset before chart grouping.
+        </Tabs.Panel>
+      </Tabs>
       <div className="h-4" />
       <div className="flex flex-row flex-wrap gap-2">
         <Button
@@ -141,7 +168,7 @@ function ChartExport(props) {
       <div className="h-8" />
       <div>
         <Button
-          onPress={() => onExport(selectedIds)}
+          onPress={() => onExport(selectedIds, exportMode)}
           isPending={loading}
           color="primary"
           fullWidth

@@ -257,7 +257,12 @@ describe("Generic API AI layer", () => {
       })],
     }));
     expect(createChartSpy).toHaveBeenCalledWith(expect.objectContaining({
+      visualization: expect.objectContaining({
+        version: 2,
+        metadata: expect.objectContaining({ createdBy: "ai" }),
+      }),
       chartDatasetConfigs: [expect.objectContaining({
+        templateBindingId: "binding-1",
         xAxis: "root[]",
       })],
     }), null);

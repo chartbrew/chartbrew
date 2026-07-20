@@ -25,20 +25,24 @@ function getUniqueName(configuration, baseName) {
 
 function compileTabularExport({ conditionsOptions, datasets, visualization }) {
   const configuration = {};
+  const exportedBindings = new Set();
 
   visualization.layers.forEach((layer, index) => {
     if (layer.bindingId === null || layer.bindingId === undefined) return;
+    const bindingKey = `${layer.bindingId}`;
+    if (exportedBindings.has(bindingKey)) return;
     const dataset = datasets.find((item) => `${getBindingId(item)}` === `${layer.bindingId}`);
     if (!dataset) return;
+    exportedBindings.add(bindingKey);
 
     const selectors = getEncodingSelectors(layer.encoding);
     const rows = selectRows(dataset.data, selectors, layer.rowPath);
-    const layerFilters = layer.transforms.filter((transform) => transform.type === "filter");
+    const layerFilters = (layer.transforms || []).filter((transform) => transform.type === "filter");
     const filteredRows = applyRowTransforms(rows, layerFilters);
     const exportedRows = applyLegacyTabularOptions(filteredRows, dataset.options);
-    const baseName = layer.name
-      || dataset.options?.legend
+    const baseName = dataset.options?.legend
       || dataset.options?.name
+      || layer.name
       || `Dataset ${index + 1}`;
     configuration[getUniqueName(configuration, baseName)] = exportedRows;
   });

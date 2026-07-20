@@ -3,6 +3,7 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const { VisualizationEngine } = require("../../visualization/VisualizationEngine.js");
+const { compileTabularExport } = require("../../visualization/compilers/tabularExport.js");
 
 function buildEngine(mark, encoding, data, layer = {}, chart = {}) {
   return new VisualizationEngine({
@@ -142,6 +143,81 @@ describe("visualization output compilers", () => {
     expect(result.configuration).toEqual({
       "Program revenue": [{ currency: "EUR", program: "Ceramics", revenue: 80 }],
     });
+  });
+
+  it("exports chart-as-shown rows with generated series as columns", () => {
+    const engine = buildEngine("bar", {
+      category: { field: "root[].program", type: "nominal" },
+      breakdown: { field: "root[].level", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [
+      { program: "Ceramics", level: "Starter", revenue: 80 },
+      { program: "Ceramics", level: "Advanced", revenue: 120 },
+      { program: "Writing", level: "Starter", revenue: 40 },
+    ], { name: "Program revenue" }, { name: "Revenue" });
+    const result = engine.export({ mode: "shown" });
+
+    expect(result.exportMode).toBe("shown");
+    expect(result.configuration.Revenue).toEqual([
+      { Category: "Ceramics", Advanced: 120, Starter: 80 },
+      { Category: "Writing", Advanced: null, Starter: 40 },
+    ]);
+  });
+
+  it("does not repeat one value-layer goal across generated breakdown series", () => {
+    const result = buildEngine("bar", {
+      category: { field: "root[].month", type: "nominal" },
+      breakdown: { field: "root[].segment", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [
+      { month: "Jan", segment: "A", revenue: 80 },
+      { month: "Jan", segment: "B", revenue: 120 },
+    ], { goal: 500, name: "Revenue" }).render();
+
+    expect(result.configuration.goals).toEqual([]);
+  });
+
+  it("keeps Other and hidden candidates in generated-series display metadata", () => {
+    const result = buildEngine("bar", {
+      category: { field: "root[].month", type: "nominal" },
+      breakdown: { field: "root[].segment", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [
+      { month: "Jan", segment: "A", revenue: 80 },
+      { month: "Jan", segment: "B", revenue: 60 },
+      { month: "Jan", segment: "C", revenue: 10 },
+    ], {
+      options: { series: { includeOther: true, limit: 1 } },
+    }).render();
+
+    expect(result.configuration.meta.availableSeries.map((series) => series.label))
+      .toEqual(["A", "Other", "B", "C"]);
+  });
+
+  it("exports shared source rows once when multiple value layers use one binding", () => {
+    const result = compileTabularExport({
+      conditionsOptions: [],
+      datasets: [{
+        options: { id: "shared", legend: "Financials" },
+        data: [{ month: "Jan", revenue: 100, cost: 60 }],
+      }],
+      visualization: {
+        version: 2,
+        layers: ["revenue", "cost"].map((field) => ({
+          id: field,
+          name: field,
+          bindingId: "shared",
+          mark: "line",
+          encoding: {
+            category: { field: "root[].month", type: "nominal" },
+            value: { field: `root[].${field}`, type: "quantitative" },
+          },
+        })),
+      },
+    });
+
+    expect(Object.keys(result.configuration)).toEqual(["Financials"]);
+    expect(result.configuration.Financials).toEqual([{ month: "Jan", revenue: 100, cost: 60 }]);
   });
 
   it("compiles matrix points across the configured date window", () => {

@@ -8,8 +8,10 @@ import {
   isVisualizationReady,
   updateBindingFill,
   updateLayerField,
+  updateLayerGoal,
   updateLayerMark,
   updateLayerRowPath,
+  updateLayerSeriesOptions,
   updateSeriesColor,
 } from "./visualization.js";
 import { chartColors, getChartColorForKey } from "../config/colors.js";
@@ -138,6 +140,33 @@ test("fill settings use one opacity while preserving each series hue", () => {
   assert.equal(next.layers[0].style.fillOpacity, 0.35);
   assert.equal(next.layers[0].style.fillColor, undefined);
   assert.equal(next.layers[0].options.markState.bar.fillOpacity, 0.35);
+});
+
+test("goals belong to one selected value layer", () => {
+  const withSecondValue = addVisualizationLayer(visualization, "cdc-income", {
+    id: "cost",
+    metric: true,
+  });
+  const next = updateLayerGoal(withSecondValue, "cost", 2500);
+
+  assert.equal(next.layers[0].goal, undefined);
+  assert.equal(next.layers[1].goal, 2500);
+});
+
+test("generated-series controls stay on their selected layer", () => {
+  const next = updateLayerSeriesOptions(visualization, "income", {
+    hidden: ["series-b"],
+    includeOther: true,
+    limit: 8,
+    order: ["series-c", "series-a"],
+  });
+
+  assert.deepEqual(next.layers[0].options.series, {
+    hidden: ["series-b"],
+    includeOther: true,
+    limit: 8,
+    order: ["series-c", "series-a"],
+  });
 });
 
 test("add value reuses the dimension but creates a draft visual layer", () => {

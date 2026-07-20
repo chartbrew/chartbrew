@@ -324,4 +324,104 @@ describe("visualization frame builder", () => {
       layerId: "segments",
     })]);
   });
+
+  it("limits generated series and combines the remainder into Other", () => {
+    const frame = buildVisualizationFrame({
+      visualization: {
+        version: 2,
+        layers: [{
+          id: "segments",
+          bindingId: "cdc-segments",
+          mark: "bar",
+          encoding: {
+            category: { field: "root[].category", type: "nominal" },
+            value: { field: "root[].value", type: "quantitative", aggregate: "sum" },
+            breakdown: { field: "root[].segment", type: "nominal" },
+          },
+          options: { series: { limit: 2, includeOther: true } },
+        }],
+      },
+      datasets: [{
+        options: { id: "cdc-segments" },
+        data: [
+          { category: "Jan", segment: "A", value: 10 },
+          { category: "Jan", segment: "B", value: 8 },
+          { category: "Jan", segment: "C", value: 2 },
+          { category: "Jan", segment: "D", value: 1 },
+        ],
+      }],
+    });
+
+    expect(frame.layers[0].series.map((series) => series.label)).toEqual(["A", "B", "Other"]);
+    expect(frame.layers[0].rows.find((row) => row.breakdown.startsWith("\u0000"))?.value)
+      .toBe(3);
+  });
+
+  it("hides and explicitly orders generated series by stable ID", () => {
+    const data = [
+      { category: "Jan", segment: "A", value: 10 },
+      { category: "Jan", segment: "B", value: 8 },
+      { category: "Jan", segment: "C", value: 2 },
+    ];
+    const baseLayer = {
+      id: "segments",
+      bindingId: "cdc-segments",
+      mark: "bar",
+      encoding: {
+        category: { field: "root[].category", type: "nominal" },
+        value: { field: "root[].value", type: "quantitative", aggregate: "sum" },
+        breakdown: { field: "root[].segment", type: "nominal" },
+      },
+    };
+    const initial = buildVisualizationFrame({
+      visualization: { version: 2, layers: [baseLayer] },
+      datasets: [{ options: { id: "cdc-segments" }, data }],
+    });
+    const ids = getSeriesIdsByLabel(initial);
+    const configured = buildVisualizationFrame({
+      visualization: {
+        version: 2,
+        layers: [{
+          ...baseLayer,
+          options: { series: { hidden: [ids.B], order: [ids.C, ids.A] } },
+        }],
+      },
+      datasets: [{ options: { id: "cdc-segments" }, data }],
+    });
+
+    expect(configured.layers[0].series.map((series) => series.label)).toEqual(["C", "A"]);
+    expect(configured.layers[0].rows.some((row) => row.breakdown === "B")).toBe(false);
+  });
+
+  it("keeps a searchable catalog while bounding a high-cardinality render", () => {
+    const data = Array.from({ length: 100 }, (_, index) => ({
+      category: "Current",
+      segment: `Segment ${`${index + 1}`.padStart(3, "0")}`,
+      value: 100 - index,
+    }));
+    const frame = buildVisualizationFrame({
+      visualization: {
+        version: 2,
+        layers: [{
+          id: "segments",
+          bindingId: "cdc-segments",
+          mark: "bar",
+          encoding: {
+            category: { field: "root[].category", type: "nominal" },
+            value: { field: "root[].value", type: "quantitative", aggregate: "sum" },
+            breakdown: { field: "root[].segment", type: "nominal" },
+          },
+          options: { series: { limit: 10, includeOther: true } },
+        }],
+      },
+      datasets: [{ options: { id: "cdc-segments" }, data }],
+    });
+
+    expect(frame.layers[0].availableSeries).toHaveLength(100);
+    expect(frame.layers[0].series).toHaveLength(11);
+    expect(frame.warnings).toEqual([expect.objectContaining({
+      code: "HIGH_BREAKDOWN_CARDINALITY",
+      count: 100,
+    })]);
+  });
 });

@@ -35,6 +35,7 @@ const {
   shouldSyncLegacyCdc,
   shouldSyncLegacyChart,
 } = require("../visualization/legacyVisualizationSync");
+const { remapVisualizationBindings } = require("../visualization/remapBindings");
 const {
   signLegacyShareToken,
   signShareToken,
@@ -483,6 +484,7 @@ class ChartController {
     noSource,
     filters,
     isExport,
+    exportMode,
     getCache,
     cacheOnly = false,
     variables,
@@ -805,7 +807,7 @@ class ChartController {
           };
 
           return isExport
-            ? visualizationEngine.export(engineOptions)
+            ? visualizationEngine.export({ ...engineOptions, mode: exportMode || "source" })
             : visualizationEngine.render(engineOptions);
         } catch (error) {
           return Promise.reject(toAuditError(error, "transform"));
@@ -825,6 +827,7 @@ class ChartController {
               isTimeseries: chartData?.isTimeseries || false,
               datasetCount: chartData?.configuration?.data?.datasets?.length || 0,
               labelCount: chartData?.configuration?.data?.labels?.length || 0,
+              visualizationAdapted: Boolean(chartData?.adapted),
             });
           }
 
@@ -1164,7 +1167,7 @@ class ChartController {
       });
   }
 
-  exportChartData(userId, chartIds, filters, projectId) {
+  exportChartData(userId, chartIds, filters, projectId, exportMode = "source") {
     const parsedChartIds = Array.isArray(chartIds)
       ? [...new Set(chartIds
         .map((id) => Number(id))
@@ -1200,7 +1203,8 @@ class ChartController {
                 noSource: false,
                 skipParsing: false,
                 filters,
-                isExport: true
+                isExport: true,
+                exportMode,
               },
             )
               .then((data) => {
@@ -1653,6 +1657,7 @@ class ChartController {
     }
 
     // Create all chart dataset configs
+    let createdChartDatasetConfigs = [];
     if (chartDatasetConfigs && chartDatasetConfigs.length > 0) {
       // Fetch datasets to get their legend for default values
       const datasetIds = chartDatasetConfigs.map((cdc) => cdc.dataset_id).filter(Boolean);
@@ -1665,7 +1670,7 @@ class ChartController {
         datasetMap[ds.id] = ds;
       });
 
-      await Promise.all(
+      createdChartDatasetConfigs = await Promise.all(
         chartDatasetConfigs.map((cdcData) => {
           const dataset = datasetMap[cdcData.dataset_id];
 
@@ -1674,10 +1679,27 @@ class ChartController {
             chart_id: chart.id,
             legend: cdcData.legend || getDatasetName(dataset) || null
           };
+          [
+            "Dataset",
+            "bindingId",
+            "createdAt",
+            "id",
+            "templateBindingId",
+            "updatedAt",
+          ].forEach((field) => delete cdcToCreate[field]);
 
           return db.ChartDatasetConfig.create(cdcToCreate, { transaction });
         })
       );
+    }
+
+    if (cleanChartData.visualization && createdChartDatasetConfigs.length > 0) {
+      const visualization = remapVisualizationBindings(
+        cleanChartData.visualization,
+        chartDatasetConfigs,
+        createdChartDatasetConfigs
+      );
+      await chart.update({ visualization }, { transaction });
     }
 
     await this.syncLegacyVisualization(chart.id, { transaction });

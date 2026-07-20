@@ -332,4 +332,54 @@ describe("ChartController CDC bindings", () => {
     expect(refreshedChart.visualization.layers).toHaveLength(2);
     expect(refreshedChart.visualization.layers[1].bindingId).toBe(expensesCdc.id);
   });
+
+  it("remaps cloned visualization bindings to newly created CDC IDs", async () => {
+    const team = await models.Team.create({ name: "Clone Team" });
+    const project = await models.Project.create({
+      team_id: team.id,
+      name: "Clone Project",
+      brewName: "clone-project",
+      ghost: false,
+    });
+    const dataset = await models.Dataset.create({
+      team_id: team.id,
+      project_ids: [project.id],
+      draft: false,
+      name: "Clone Dataset",
+      fieldsSchema: {
+        "root[].month": "string",
+        "root[].revenue": "number",
+      },
+    });
+    const controller = new ChartController();
+    const created = await controller.createWithChartDatasetConfigs({
+      project_id: project.id,
+      name: "Cloned Chart",
+      type: "bar",
+      draft: false,
+      visualization: {
+        version: 2,
+        metadata: { createdBy: "visualization-editor" },
+        layers: [{
+          id: "revenue",
+          bindingId: "orders-binding",
+          mark: "bar",
+          encoding: {
+            category: { field: "root[].month", type: "nominal" },
+            value: { field: "root[].revenue", type: "quantitative", aggregate: "sum" },
+          },
+        }],
+      },
+      chartDatasetConfigs: [{
+        templateBindingId: "orders-binding",
+        dataset_id: dataset.id,
+        xAxis: "root[].month",
+        yAxis: "root[].revenue",
+      }],
+    }, null, { skipBackgroundUpdate: true });
+
+    expect(created.visualization.layers[0].bindingId)
+      .toBe(created.ChartDatasetConfigs[0].id);
+    expect(created.visualization.layers[0].bindingId).not.toBe("orders-binding");
+  });
 });

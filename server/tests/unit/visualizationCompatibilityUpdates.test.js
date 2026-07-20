@@ -71,6 +71,25 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[1].encoding.value.title).toBe("Cost");
   });
 
+  it("mirrors a legacy CDC goal only to its primary value layer", () => {
+    const visualization = {
+      ...nativeVisualization,
+      layers: [
+        nativeVisualization.layers[0],
+        {
+          ...nativeVisualization.layers[0],
+          id: "cost",
+          name: "Cost",
+        },
+      ],
+    };
+
+    const next = applyCdcCompatibilityUpdate(visualization, "cdc-income", { goal: 2500 });
+
+    expect(next.layers[0].goal).toBe(2500);
+    expect(next.layers[1].goal).toBeUndefined();
+  });
+
   it("keeps a native spec valid when the legacy chart-type control changes", () => {
     const next = applyChartCompatibilityUpdate(nativeVisualization, { type: "kpi" });
 

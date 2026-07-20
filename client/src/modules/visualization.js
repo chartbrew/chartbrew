@@ -316,6 +316,26 @@ export function updateLayerAggregation(visualization, layerId, aggregate) {
   }));
 }
 
+export function updateLayerGoal(visualization, layerId, goal) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => ({
+    ...layer,
+    goal: goal === null || goal === "" ? null : Number(goal),
+  }));
+}
+
+export function updateLayerSeriesOptions(visualization, layerId, changes) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => ({
+    ...layer,
+    options: {
+      ...(layer.options || {}),
+      series: {
+        ...(layer.options?.series || {}),
+        ...changes,
+      },
+    },
+  }));
+}
+
 export function updateLayerRowPath(visualization, layerId, rowPath) {
   return updateVisualizationLayer(visualization, layerId, (layer) => {
     const nextLayer = { ...layer };

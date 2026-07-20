@@ -14,6 +14,7 @@ import {
   Modal,
   Popover,
   ScrollShadow,
+  SearchField,
   Spinner,
   Switch,
   Tabs,
@@ -22,13 +23,17 @@ import {
   TextField,
 } from "@heroui/react";
 import { commonColors } from "../../../lib/themeTokens";
-import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
+import { TbMathFunctionY } from "react-icons/tb";
 import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
   LuPlug,
   LuWandSparkles, LuCircleX,
   LuVariable,
+  LuChevronDown,
+  LuChevronUp,
+  LuEye,
+  LuEyeOff,
 } from "react-icons/lu";
 
 import Text from "../../../components/Text";
@@ -54,7 +59,11 @@ import ChartDatasetDataSetup from "./ChartDatasetDataSetup";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import ColorPickerControl from "../../../components/ColorPickerControl";
 import { getRgbColorChannels } from "../../../modules/colorPicker";
-import { updateBindingFill, updateSeriesColor } from "../../../modules/visualization";
+import {
+  updateBindingFill,
+  updateLayerSeriesOptions,
+  updateSeriesColor,
+} from "../../../modules/visualization";
 
 function getFillSliderColor(color, opacity) {
   const { red, green, blue } = getRgbColorChannels(color, chartColors.blue.hex);
@@ -169,13 +178,13 @@ function ChartDatasetConfig(props) {
 
   const [formula, setFormula] = useState("");
   const [maxRecords, setMaxRecords] = useState("");
-  const [goal, setGoal] = useState("");
   const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
   const [editConfirmation, setEditConfirmation] = useState(false);
   const [variables, setVariables] = useState([]);
   const [variableValues, setVariableValues] = useState({});
   const [activeTab, setActiveTab] = useState("data-setup");
+  const [seriesSearch, setSeriesSearch] = useState("");
 
   const cdc = useSelector((state) => selectCdc(state, chartId, cdcId));
   const dataset = useSelector((state) => (
@@ -189,7 +198,11 @@ function ChartDatasetConfig(props) {
     return `${layer.bindingId}` === `${cdc?.id}`;
   });
   const bindingLayerIds = new Set(bindingLayers.map((layer) => layer.id));
-  const runtimeSeries = (chart?.chartData?.meta?.series || []).filter((series) => {
+  const runtimeSeries = (
+    chart?.chartData?.meta?.availableSeries
+    || chart?.chartData?.meta?.series
+    || []
+  ).filter((series) => {
     return bindingLayerIds.has(series.layerId);
   });
   const usesGeneratedSeriesColors = runtimeSeries.length > 0 && (
@@ -207,7 +220,6 @@ function ChartDatasetConfig(props) {
   useEffect(() => {
     setFormula(cdc?.formula || "");
     setMaxRecords(cdc?.maxRecords || "");
-    setGoal(cdc?.goal || "");
   }, [cdc, dataset]);
 
   useEffect(() => {
@@ -366,6 +378,42 @@ function ChartDatasetConfig(props) {
       series.layerId,
       series.id,
       color
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
+  const _getLayerSeriesOptions = (series) => {
+    return _getSeriesLayer(series)?.options?.series || {};
+  };
+
+  const _onToggleSeries = (series) => {
+    const options = _getLayerSeriesOptions(series);
+    const hidden = new Set(options.hidden || []);
+    if (hidden.has(series.id)) hidden.delete(series.id);
+    else hidden.add(series.id);
+    const visualization = updateLayerSeriesOptions(
+      chart.visualization,
+      series.layerId,
+      { hidden: [...hidden] }
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
+  const _onMoveSeries = (series, offset) => {
+    const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
+    const configuredOrder = _getLayerSeriesOptions(series).order || [];
+    const order = [
+      ...configuredOrder.filter((id) => layerSeries.some((item) => item.id === id)),
+      ...layerSeries.map((item) => item.id).filter((id) => !configuredOrder.includes(id)),
+    ];
+    const currentIndex = order.indexOf(series.id);
+    const nextIndex = currentIndex + offset;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= order.length) return;
+    [order[currentIndex], order[nextIndex]] = [order[nextIndex], order[currentIndex]];
+    const visualization = updateLayerSeriesOptions(
+      chart.visualization,
+      series.layerId,
+      { order }
     );
     _onUpdateVisualization({ refresh: true, visualization });
   };
@@ -551,6 +599,9 @@ function ChartDatasetConfig(props) {
   const fillBaseColor = runtimeSeries[0]
     ? _getSeriesColor(runtimeSeries[0])
     : cdc.datasetColor || chartColors.blue.hex;
+  const visibleRuntimeSeries = runtimeSeries.filter((series) => {
+    return series.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
+  });
 
   return (
     <div>
@@ -605,34 +656,89 @@ function ChartDatasetConfig(props) {
 
                 {usesGeneratedSeriesColors ? (
                   <>
+                    {runtimeSeries.length > 6 && (
+                      <SearchField
+                        className="mt-2"
+                        name={`series-search-${cdc.id}`}
+                        value={seriesSearch}
+                        variant="secondary"
+                        onChange={setSeriesSearch}
+                      >
+                        <Label>Find a series</Label>
+                        <SearchField.Group>
+                          <SearchField.SearchIcon />
+                          <SearchField.Input placeholder="Search generated series" />
+                          <SearchField.ClearButton />
+                        </SearchField.Group>
+                      </SearchField>
+                    )}
                     <ScrollShadow className="mt-2 max-h-[240px]">
-                      <div className="flex flex-wrap gap-2 py-1">
-                        {runtimeSeries.map((series) => {
+                      <div className="flex flex-col gap-1 py-1">
+                        {visibleRuntimeSeries.map((series) => {
                           const seriesColor = _getSeriesColor(series);
                           const overrideColor = _getSeriesOverrideColor(series);
+                          const seriesOptions = _getLayerSeriesOptions(series);
+                          const isHidden = (seriesOptions.hidden || []).includes(series.id);
+                          const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
+                          const seriesIndex = layerSeries.findIndex((item) => item.id === series.id);
                           return (
-                            <ColorPickerControl
+                            <div
                               key={series.id}
-                              ariaLabel={`Change ${series.label} series color`}
-                              clearLabel="Use automatic color"
-                              fallbackColor={getChartColorForKey(series.id)}
-                              onChange={(color) => _onChangeSeriesColor(series, color)}
-                              onClear={() => _onChangeSeriesColor(series, null)}
-                              presetColors={Object.values(chartColors).map((color) => color.hex)}
-                              renderTrigger={({ color }) => (
-                                <Chip size="lg" variant="secondary" className="cursor-pointer">
-                                  <span
-                                    aria-hidden
-                                    className="size-3 shrink-0 rounded-full"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  <Chip.Label>{series.label}</Chip.Label>
-                                </Chip>
-                              )}
-                              showClearButton={Boolean(overrideColor)}
-                              value={seriesColor}
-                              valueFormat="hex"
-                            />
+                              className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-content2/50"
+                            >
+                              <div className={isHidden ? "min-w-0 flex-1 opacity-50" : "min-w-0 flex-1"}>
+                                <ColorPickerControl
+                                  ariaLabel={`Change ${series.label} series color`}
+                                  clearLabel="Use automatic color"
+                                  fallbackColor={getChartColorForKey(series.id)}
+                                  onChange={(color) => _onChangeSeriesColor(series, color)}
+                                  onClear={() => _onChangeSeriesColor(series, null)}
+                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                  renderTrigger={({ color }) => (
+                                    <Chip size="lg" variant="secondary" className="max-w-full cursor-pointer">
+                                      <span
+                                        aria-hidden
+                                        className="size-3 shrink-0 rounded-full"
+                                        style={{ backgroundColor: color }}
+                                      />
+                                      <Chip.Label className="truncate">{series.label}</Chip.Label>
+                                    </Chip>
+                                  )}
+                                  showClearButton={Boolean(overrideColor)}
+                                  value={seriesColor}
+                                  valueFormat="hex"
+                                />
+                              </div>
+                              <Button
+                                aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
+                                isIconOnly
+                                size="sm"
+                                variant="tertiary"
+                                onPress={() => _onToggleSeries(series)}
+                              >
+                                {isHidden ? <LuEyeOff /> : <LuEye />}
+                              </Button>
+                              <Button
+                                aria-label={`Move ${series.label} up`}
+                                isDisabled={seriesIndex === 0}
+                                isIconOnly
+                                size="sm"
+                                variant="tertiary"
+                                onPress={() => _onMoveSeries(series, -1)}
+                              >
+                                <LuChevronUp />
+                              </Button>
+                              <Button
+                                aria-label={`Move ${series.label} down`}
+                                isDisabled={seriesIndex === layerSeries.length - 1}
+                                isIconOnly
+                                size="sm"
+                                variant="tertiary"
+                                onPress={() => _onMoveSeries(series, 1)}
+                              >
+                                <LuChevronDown />
+                              </Button>
+                            </div>
                           );
                         })}
                       </div>
@@ -961,66 +1067,6 @@ function ChartDatasetConfig(props) {
                 )}
               </div>
 
-              <div className="h-4" />
-              <Separator />
-              <div className="h-4" />
-
-              <div>
-                {!goal && (
-                  <div>
-                    <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
-                      <TbProgressCheck size={24} />
-                      <div className="w-2" />
-                      <div className="text-sm text-foreground">Set a goal</div>
-                    </Link>
-                  </div>
-                )}
-                {goal && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-row gap-2 items-center">
-                      <div className="text-sm text-foreground">{"Goal"}</div>
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div><LuInfo size={16} /></div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="max-w-sm">
-                          A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)
-                        </Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Input
-                        placeholder="Enter your goal here"
-                        value={goal}
-                        onChange={(event) => setGoal(event.target.value)}
-                        variant="secondary"
-                        labelPlacement="outside"
-                      />
-                      {`${goal}` !== `${cdc.goal || ""}` && (
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={() => _onUpdateCdc({ goal })}>
-                              <LuCircleCheck className={"text-success"} />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Save goal</Tooltip.Content>
-                        </Tooltip>
-                      )}
-                      <Tooltip>
-                        <Tooltip.Trigger className="flex justify-center">
-                          <Link onPress={() => {
-                            _onUpdateCdc({ goal: null });
-                            setGoal("");
-                          }}>
-                            <LuCircleX className="text-danger" />
-                          </Link>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Remove goal</Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                  </div>
-                )}
-              </div>
             </>
           )}
         </Tabs.Panel>

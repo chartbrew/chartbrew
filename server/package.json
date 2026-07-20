@@ -19,6 +19,7 @@
     "lint:fix": "oxlint --fix",
     "db:migrate": "cd models && npx sequelize-cli db:migrate",
     "viz:migration-audit": "node scripts/auditVisualizationMigration.js",
+    "viz:corpus-audit": "node scripts/auditVisualizationCorpus.js",
     "precommit": "lint-staged",
     "install:playwright": "npx --yes playwright install chromium --with-deps",
     "postinstall": "node scripts/installPlaywright.js"

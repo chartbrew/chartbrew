@@ -609,6 +609,7 @@ class RuntimeCacheService {
         "invertGrowth",
         "isLogarithmic",
         "ranges",
+        "visualization",
         "updatedAt",
       ],
       include: [{

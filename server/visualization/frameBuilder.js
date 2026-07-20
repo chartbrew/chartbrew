@@ -8,6 +8,7 @@ const { applyFrameTransforms, applyRowTransforms } = require("./transforms");
 
 const FRAME_VERSION = 1;
 const DEFAULT_CARDINALITY_WARNING = 50;
+const OTHER_BREAKDOWN_VALUE = "\u0000chartbrew-other";
 
 function getEncodingSelectors(encoding) {
   return Object.values(encoding).flatMap((definition) => {
@@ -104,17 +105,77 @@ function buildSeriesCatalog(layer, rows) {
       byKey.set(key, {
         id: createSeriesId(layer.id, row.breakdown),
         key,
-        label: getSeriesLabel(row.breakdown, breakdown.nullLabel || "Unclassified"),
+        label: row.breakdown === OTHER_BREAKDOWN_VALUE
+          ? layer.options?.series?.otherLabel || "Other"
+          : getSeriesLabel(row.breakdown, breakdown.nullLabel || "Unclassified"),
         value: row.breakdown,
       });
     }
     row.__seriesId = byKey.get(key).id;
   });
 
+  const order = layer.options?.series?.order || [];
   return [...byKey.values()].sort((left, right) => {
+    const leftIndex = order.indexOf(left.id);
+    const rightIndex = order.indexOf(right.id);
+    if (leftIndex >= 0 || rightIndex >= 0) {
+      if (leftIndex < 0) return 1;
+      if (rightIndex < 0) return -1;
+      if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+    }
     const byLabel = left.label.localeCompare(right.label);
     return byLabel === 0 ? left.key.localeCompare(right.key) : byLabel;
   });
+}
+
+function applySeriesOptions(layer, rows) {
+  if (!layer.encoding.breakdown) return { cardinality: 1, rows };
+  const options = layer.options?.series || {};
+  const totals = new Map();
+  rows.forEach((row) => {
+    const id = createSeriesId(layer.id, row.breakdown);
+    const numericValue = Number(row.value);
+    totals.set(id, (totals.get(id) || 0) + (Number.isFinite(numericValue) ? numericValue : 0));
+  });
+  const cardinality = totals.size;
+  const hidden = new Set(options.hidden || []);
+  let visibleRows = rows.filter((row) => !hidden.has(createSeriesId(layer.id, row.breakdown)));
+  const limit = Number(options.limit);
+  if (!Number.isInteger(limit) || limit <= 0 || totals.size <= limit) {
+    return { cardinality, rows: visibleRows };
+  }
+
+  const visibleTotals = [...totals.entries()]
+    .filter(([id]) => !hidden.has(id))
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]));
+  const topSeries = new Set(visibleTotals.slice(0, limit).map(([id]) => id));
+  if (!options.includeOther) {
+    return {
+      cardinality,
+      rows: visibleRows.filter((row) => topSeries.has(createSeriesId(layer.id, row.breakdown))),
+    };
+  }
+
+  const grouped = new Map();
+  visibleRows.forEach((row) => {
+    const seriesId = createSeriesId(layer.id, row.breakdown);
+    const nextRow = topSeries.has(seriesId)
+      ? row
+      : { ...row, breakdown: OTHER_BREAKDOWN_VALUE };
+    const groupKey = JSON.stringify(Object.entries(nextRow)
+      .filter(([role]) => role !== "value")
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([role, value]) => [role, serializeTypedValue(value)]));
+    const existing = grouped.get(groupKey);
+    if (!existing) {
+      grouped.set(groupKey, { ...nextRow });
+      return;
+    }
+    const numericValue = Number(nextRow.value);
+    existing.value = (Number(existing.value) || 0)
+      + (Number.isFinite(numericValue) ? numericValue : 0);
+  });
+  return { cardinality, rows: [...grouped.values()] };
 }
 
 function buildLayerFrame(layer, data, options = {}) {
@@ -154,15 +215,21 @@ function buildLayerFrame(layer, data, options = {}) {
   if (projection.dimensionRoles.includes("time")) {
     outputRows.sort((left, right) => left.time - right.time);
   }
+  const seriesResult = applySeriesOptions(layer, outputRows);
+  const availableSeries = buildSeriesCatalog(
+    layer,
+    outputRows.map((row) => ({ ...row }))
+  );
+  outputRows = seriesResult.rows;
   outputRows = applyFrameTransforms(outputRows, frameTransforms);
   const series = buildSeriesCatalog(layer, outputRows);
   const cardinalityWarning = options.cardinalityWarning || DEFAULT_CARDINALITY_WARNING;
 
-  if (layer.encoding.breakdown && series.length > cardinalityWarning) {
+  if (layer.encoding.breakdown && seriesResult.cardinality > cardinalityWarning) {
     warnings.push({
       code: "HIGH_BREAKDOWN_CARDINALITY",
-      count: series.length,
-      message: `Breakdown generated ${series.length} series`,
+      count: seriesResult.cardinality,
+      message: `Breakdown generated ${seriesResult.cardinality} series`,
       threshold: cardinalityWarning,
     });
   }
@@ -179,6 +246,7 @@ function buildLayerFrame(layer, data, options = {}) {
     fields: layer.encoding,
     id: layer.id,
     mark: layer.mark,
+    availableSeries,
     rows: outputRows,
     series,
     stats: {
@@ -240,5 +308,6 @@ module.exports = {
   buildLayerFrame,
   buildSeriesCatalog,
   buildVisualizationFrame,
+  applySeriesOptions,
   normalizeDimensionValue,
 };

@@ -43,6 +43,7 @@ import {
   runQueryWithFilters, runQuery, changeOrder, updateChart, selectCharts,
   clearStagedCharts,
   createChart,
+  exportChart,
   stageChart,
   removeLocalChart,
   shouldSkipFiltering,
@@ -643,11 +644,23 @@ function ProjectDashboard() {
     setViewExport(true);
   };
 
-  const _onExport = (ids) => {
+  const _onExport = async (ids, exportMode = "shown") => {
     setExportLoading(true);
     setExportError(false);
-    
+
     try {
+      if (exportMode === "source") {
+        await dispatch(exportChart({
+          project_id: params.projectId,
+          chartIds: ids,
+          filters: filters?.[params.projectId] || [],
+          mode: "source",
+        })).unwrap();
+        toast.success(`${ids.length} chart(s) exported successfully`);
+        setViewExport(false);
+        return;
+      }
+
       // Get the selected charts by their IDs
       const selectedCharts = charts.filter(chart => ids.includes(chart.id));
       
@@ -668,13 +681,13 @@ function ProjectDashboard() {
       // Use client-side export with the already filtered data
       exportMultipleChartsToExcel(exportableCharts, "chartbrew-dashboard-export.xlsx");
       toast.success(`${exportableCharts.length} chart(s) exported successfully`);
-      setExportLoading(false);
       setViewExport(false);
     } catch (error) {
       console.error("Export error:", error);
       toast.error(error.message || "Failed to export charts");
-      setExportLoading(false);
       setExportError(true);
+    } finally {
+      setExportLoading(false);
     }
   };
 

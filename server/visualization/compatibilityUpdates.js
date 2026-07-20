@@ -273,7 +273,7 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
     return {
       ...layer,
       encoding,
-      ...(data.goal !== undefined ? { goal: data.goal } : {}),
+      ...(data.goal !== undefined && isPrimaryBindingLayer ? { goal: data.goal } : {}),
       ...(data.legend !== undefined && isPrimaryBindingLayer ? { name: data.legend } : {}),
       options: {
         ...options,

@@ -1,6 +1,10 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { normalizeTeamId, requireDatasetForTeam } = require("./teamScope");
+const { applyCdcCompatibilityUpdate, applyChartCompatibilityUpdate } = require("../../../../visualization/compatibilityUpdates");
+const { legacyChartToVisualization } = require("../../../../visualization/legacyChartToVisualization");
+const { isLegacyOwnedVisualization } = require("../../../../visualization/legacyVisualizationSync");
+const { finalizeAiVisualization } = require("../../../../visualization/aiVisualization");
 
 async function updateChart(payload) {
   const {
@@ -10,7 +14,8 @@ async function updateChart(payload) {
     xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
     conditions, formula, seriesConfiguration,
-    datasetColor, fillColor, fill, multiFill, excludedFields, sort, columnsOrder, maxRecords, goal
+    datasetColor, fillColor, fill, multiFill, excludedFields, sort, columnsOrder, maxRecords, goal,
+    encoding, visualization, layer_id
   } = payload;
 
   if (!chart_id) {
@@ -175,6 +180,8 @@ async function updateChart(payload) {
       || chartSpec.formula !== undefined
       || chartSpec.configuration !== undefined;
 
+    let updatedCdcId = null;
+    let appliedConfigUpdates = {};
     if (shouldUpdateCdc) {
       const configWhere = { chart_id };
       if (dataset_id) {
@@ -186,6 +193,7 @@ async function updateChart(payload) {
       });
 
       if (chartDatasetConfig) {
+        updatedCdcId = chartDatasetConfig.id;
         const configUpdates = {};
 
         if (legend !== undefined) {
@@ -311,12 +319,62 @@ async function updateChart(payload) {
         }
 
         if (Object.keys(configUpdates).length > 0) {
+          appliedConfigUpdates = configUpdates;
           await db.ChartDatasetConfig.update(
             configUpdates, { where: { id: chartDatasetConfig.id } }
           );
         }
       }
     }
+
+    const canonicalController = new ChartController();
+    const refreshedChart = await canonicalController.findById(chart_id, null, {
+      reconcileVisualizationBindings: false,
+    });
+    let canonicalVisualization;
+    if (visualization || chartSpec.visualization) {
+      canonicalVisualization = visualization || chartSpec.visualization;
+    } else if (!refreshedChart.visualization || isLegacyOwnedVisualization(refreshedChart.visualization)) {
+      canonicalVisualization = legacyChartToVisualization(refreshedChart).visualization;
+    } else {
+      canonicalVisualization = refreshedChart.visualization;
+      if (Object.keys(chartUpdates).length > 0) {
+        canonicalVisualization = applyChartCompatibilityUpdate(
+          canonicalVisualization,
+          chartUpdates
+        );
+      }
+      if (updatedCdcId && Object.keys(appliedConfigUpdates).length > 0) {
+        canonicalVisualization = applyCdcCompatibilityUpdate(
+          canonicalVisualization,
+          updatedCdcId,
+          appliedConfigUpdates
+        );
+      }
+    }
+    const semanticEncoding = encoding || chartSpec.encoding;
+    if (semanticEncoding) {
+      const targetLayer = canonicalVisualization.layers.find((layer) => layer.id === layer_id)
+        || canonicalVisualization.layers.find((layer) => `${layer.bindingId}` === `${updatedCdcId}`)
+        || canonicalVisualization.layers[0];
+      canonicalVisualization = {
+        ...canonicalVisualization,
+        layers: canonicalVisualization.layers.map((layer) => {
+          return layer.id === targetLayer?.id ? { ...layer, encoding: semanticEncoding } : layer;
+        }),
+      };
+    }
+    canonicalVisualization = {
+      ...canonicalVisualization,
+      metadata: {
+        ...(canonicalVisualization.metadata || {}),
+        createdBy: "ai",
+      },
+    };
+    delete canonicalVisualization.metadata.migratedFrom;
+    delete canonicalVisualization.metadata.migrationWarnings;
+    canonicalVisualization = finalizeAiVisualization(canonicalVisualization);
+    await db.Chart.update({ visualization: canonicalVisualization }, { where: { id: chart_id } });
 
     // Run the chart update in the background
     try {

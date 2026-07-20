@@ -911,7 +911,8 @@ module.exports = (app) => {
       req.user.id,
       req.body.chartIds,
       req.body.filters,
-      req.params.project_id
+      req.params.project_id,
+      req.body.mode || "source"
     )
       .then((data) => {
         return spreadsheetExport(data);
@@ -938,7 +939,8 @@ module.exports = (app) => {
           null,
           [req.params.chart_id],
           req.body.filters,
-          req.params.project_id
+          req.params.project_id,
+          req.body.mode || "source"
         );
       })
       .then((data) => {

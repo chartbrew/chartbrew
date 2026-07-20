@@ -7,12 +7,15 @@ import {
   Autocomplete,
   Button,
   Chip,
+  Description,
   EmptyState,
   Label,
   ListBox,
+  NumberField,
   SearchField,
   Select,
   Separator,
+  Switch,
   Tooltip,
   useFilter,
 } from "@heroui/react";
@@ -38,7 +41,9 @@ import {
   removeVisualizationLayer,
   updateLayerAggregation,
   updateLayerField,
+  updateLayerGoal,
   updateLayerRowPath,
+  updateLayerSeriesOptions,
 } from "../../../modules/visualization";
 import { runRequest as runDatasetRequest, updateDataset } from "../../../slices/dataset";
 import canAccess from "../../../config/canAccess";
@@ -46,6 +51,115 @@ import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
 
 const MULTI_VALUE_MARKS = new Set(["bar", "line", "radar"]);
+
+function LayerGoalField({ initialValue, onSave }) {
+  const [value, setValue] = useState(initialValue ?? undefined);
+  const hasGoal = Number.isFinite(value);
+  const hasChanges = value !== initialValue;
+
+  return (
+    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+      <NumberField
+        name="value-goal"
+        value={value}
+        variant="secondary"
+        onChange={setValue}
+      >
+        <Label>Goal</Label>
+        <NumberField.Group>
+          <NumberField.Input placeholder="Enter a target value" />
+        </NumberField.Group>
+        <Description>Used by this value’s KPI progress indicator.</Description>
+      </NumberField>
+      <div className="mt-3 flex gap-2">
+        <Button
+          isDisabled={!hasGoal || !hasChanges}
+          size="sm"
+          variant="secondary"
+          onPress={() => onSave(value)}
+        >
+          Save goal
+        </Button>
+        {initialValue !== null && initialValue !== undefined && (
+          <Button
+            size="sm"
+            variant="tertiary"
+            onPress={() => {
+              setValue(undefined);
+              onSave(null);
+            }}
+          >
+            Remove
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+LayerGoalField.propTypes = {
+  initialValue: PropTypes.number,
+  onSave: PropTypes.func.isRequired,
+};
+
+function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
+  const [limit, setLimit] = useState(initialLimit ?? undefined);
+  const [includeOther, setIncludeOther] = useState(initialIncludeOther);
+  const hasLimit = Number.isInteger(limit) && limit > 0;
+  const hasChanges = limit !== initialLimit || includeOther !== initialIncludeOther;
+
+  return (
+    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+      <NumberField
+        minValue={1}
+        name="generated-series-limit"
+        value={limit}
+        variant="secondary"
+        onChange={setLimit}
+      >
+        <Label>Top series</Label>
+        <NumberField.Group>
+          <NumberField.Input placeholder="Show every series" />
+        </NumberField.Group>
+        <Description>Ranks series by their total value across the chart.</Description>
+      </NumberField>
+      <Switch
+        className="mt-3"
+        isDisabled={!hasLimit}
+        isSelected={includeOther}
+        onChange={setIncludeOther}
+      >
+        <Switch.Control><Switch.Thumb /></Switch.Control>
+        <Switch.Content><Label>Combine the remainder as Other</Label></Switch.Content>
+      </Switch>
+      <div className="mt-3 flex gap-2">
+        <Button
+          isDisabled={!hasChanges || !hasLimit}
+          size="sm"
+          variant="secondary"
+          onPress={() => onSave({ includeOther, limit })}
+        >
+          Apply
+        </Button>
+        {initialLimit && (
+          <Button
+            size="sm"
+            variant="tertiary"
+            onPress={() => onSave({ includeOther: false, limit: null })}
+          >
+            Show all
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+SeriesLimitControl.propTypes = {
+  initialIncludeOther: PropTypes.bool,
+  initialLimit: PropTypes.number,
+  onSave: PropTypes.func.isRequired,
+};
 
 function getValueLabel(layer, index) {
   const configuredLabel = layer.encoding?.value?.title || layer.name;
@@ -399,6 +513,21 @@ function ChartDatasetDataSetup({
                       </Select.Popover>
                     </Select>
 
+                    {["kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
+                      <LayerGoalField
+                        key={`${selectedLayer.id}-${selectedLayer.goal ?? "none"}`}
+                        initialValue={selectedLayer.goal}
+                        onSave={(goal) => {
+                          const nextVisualization = updateLayerGoal(
+                            chart.visualization,
+                            selectedLayer.id,
+                            goal
+                          );
+                          _commitVisualization(nextVisualization);
+                        }}
+                      />
+                    )}
+
                     {canAddValue && (
                       <Button
                         className="self-start"
@@ -450,6 +579,22 @@ function ChartDatasetDataSetup({
                 )}
               </div>
             </div>
+          )}
+
+          {breakdownField && (
+            <SeriesLimitControl
+              key={`${selectedLayer.id}-${selectedLayer.options?.series?.limit || "all"}-${selectedLayer.options?.series?.includeOther || false}`}
+              initialIncludeOther={Boolean(selectedLayer.options?.series?.includeOther)}
+              initialLimit={selectedLayer.options?.series?.limit}
+              onSave={(changes) => {
+                const nextVisualization = updateLayerSeriesOptions(
+                  chart.visualization,
+                  selectedLayer.id,
+                  changes
+                );
+                _commitVisualization(nextVisualization);
+              }}
+            />
           )}
 
           {layerWarnings.map((warning) => (

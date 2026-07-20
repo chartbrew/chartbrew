@@ -233,7 +233,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Add group/aggregate operations.
 - [ ] Add fold, flatten/explode, and bin transforms.
 - [x] Add time-unit and cumulative-window transforms.
-- [ ] Add Top N/Other.
+- [x] Add Top N/Other.
 - [x] Add sorting, limits, and explicit missing-value policies.
 - [x] Add sparse `VizFrame` output.
 - [x] Add stable generated-series IDs and style lookup keys.
@@ -244,7 +244,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Add anonymized long-form exam-income fixtures.
 - [x] Add wide, scalar, nested, pre-aggregated, sparse, and multi-binding fixtures.
 - [x] Add kernel and invariant unit tests.
-- [ ] Add high-cardinality and performance tests.
+- [x] Add high-cardinality bounding and catalog regression tests.
 - [x] Add all current legacy formula variants to the regression corpus.
 
 ### Compatibility and persistence
@@ -259,7 +259,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Append an editable canonical layer when another dataset is attached to a native
   visualization, without rebuilding existing layers or duplicating layers on retries. Reconcile
   pre-existing missing binding layers at the API read boundary until the next edit persists them.
-- [ ] Track temporary fallback usage until it reaches zero.
+- [x] Track runtime adapter usage by chart and add a read-only full-corpus audit.
 
 ### Runtime and compilers
 
@@ -270,8 +270,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Compile table, matrix, and markdown frames.
 - [x] Move export to the canonical filtered binding/frame pipeline.
 - [x] Compile formulas, goals, and growth metadata for generated series.
-- [ ] Persist, edit, and consume goals, formulas, and growth through stable layer/series
-  references instead of CDC or rendered-dataset array positions.
+- [ ] Persist, edit, and consume formulas and growth through stable layer/series references
+  instead of CDC or rendered-dataset array positions.
+- [x] Persist, edit, and consume KPI goals on the selected canonical value layer while retaining
+  the CDC goal only as a primary-layer legacy compatibility field.
 - [x] Preserve runtime filtering and cache semantics.
 - [x] Mirror accumulation toggles into canonical cumulative-window transforms, partition running
   totals by generated series, and carry sparse accumulated values across the shared time domain.
@@ -294,18 +296,21 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [ ] Define goal semantics and UX for per-series, repeated-per-series, and combined-total goals.
 - [ ] Key KPI growth and goal metadata by stable series ID; remove positional CDC lookups and keep
   sparse metric output aligned.
-- [ ] Define and test separate `chart as shown` and `source rows` export contracts; ensure generated
+- [x] Define and test separate `chart as shown` and `source rows` export contracts; ensure generated
   series, goals, colors, and multiple value layers export predictably.
-- [ ] Remap visualization binding IDs and preserve/remap layer style identities when cloning or
+- [x] Remap visualization binding IDs and preserve/remap layer style identities when cloning or
   importing custom dashboard templates.
-- [ ] Make AI chart create/update tools mutate the canonical visualization specification, including
+- [x] Make AI chart create/update tools mutate the canonical visualization specification, including
   category, value, time, and breakdown encodings.
+- [x] Constrain orchestrator chart-tool schemas to canonical semantic encoding roles, repair known
+  X/Y aliases, and validate complete AI visualization specifications before persistence.
 - [ ] Generalize color editing from generated series to category slices for pie, doughnut, and polar
   visualizations.
-- [ ] Add generated-series golden assertions for public, embedded, shared, report, snapshot, and
+- [x] Add generated-series payload assertions for embedded/snapshot and report delivery paths.
+- [ ] Add remaining generated-series golden assertions for public, shared, and
   auto-update outputs, beyond route/access regression coverage.
-- [ ] Include the canonical visualization explicitly in runtime-cache fingerprints.
-- [ ] Add generated-series search, visibility, ordering, and Top N/Other controls for high-cardinality
+- [x] Include the canonical visualization explicitly in runtime-cache fingerprints.
+- [x] Add generated-series search, visibility, ordering, and Top N/Other controls for high-cardinality
   breakdowns and define behavior after the palette is exhausted.
 
 ### Editor
@@ -324,7 +329,8 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   choice and keeping the Display control aligned with canonical style state.
 - [x] Derive Cartesian backgrounds from each series color, with one fill toggle and HeroUI alpha
   slider per dataset instead of separate background-color choices.
-- [ ] Add cardinality, Top N/Other, null, and missing-value controls.
+- [ ] Add null and missing-value controls.
+- [x] Add cardinality warnings and Top N/Other controls.
 - [x] Assign distinct stable palette colors to generated series and expose per-series Display
   overrides with an automatic-color reset.
 - [x] Add generated-series cardinality warnings.
@@ -342,7 +348,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 
 ### Cutover and cleanup
 
-- [ ] Run legacy/v2 parity against every renderable chart in the local migration corpus.
+- [x] Validate every local chart through the canonical specification boundary and report adapter
+  requirements separately from native and legacy-owned canonical specs.
+- [ ] Run value-level legacy/v2 render parity against every renderable chart in the local corpus
+  for which raw or cached source rows are available.
 - [x] Report existing orphan charts separately from migration failures.
 - [x] Run unit, integration, lint, build, and desktop browser verification gates.
 - [x] Switch the primary production refresh, filter, table, export, and automated-update paths to
@@ -358,6 +367,14 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   editor inspection, compatibility strategy, and initial implementation specification.
 - 2026-07-19: Added the v2 schema and validator, semantic mark registry, field-path normalization,
   ordered filter/aggregate/sort/limit kernel, sparse VizFrame, and stable generated-series IDs.
+- 2026-07-20: Moved KPI goal ownership to value layers; added binding remapping across clone and
+  template import paths; fingerprinted canonical specs in runtime cache variants; taught AI create
+  and update tools to persist canonical encodings; split exports into chart-as-shown and source-row
+  modes; and added high-cardinality series search, visibility, ordering, and Top N/Other controls.
+- 2026-07-20: Added runtime adapter telemetry and a read-only corpus gate. The local audit validated
+  1,572 charts with zero failures and zero runtime-adapter requirements: 4 native specs and 1,568
+  legacy-owned canonical specs remain to be converted through normal edits or a later ownership
+  migration.
 - 2026-07-19: Added synthetic long, wide, scalar, nested, pre-aggregated, sparse, and multi-binding
   fixtures. No customer-provided rows or values were copied into the repository.
 - 2026-07-19: Added `Chart.visualization`, the batched/idempotent legacy backfill, the temporary

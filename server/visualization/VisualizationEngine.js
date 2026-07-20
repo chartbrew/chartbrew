@@ -4,6 +4,8 @@ const { compileChartJsMatrix } = require("./compilers/chartJsMatrix");
 const { METRIC_MARKS, compileChartJsMetric } = require("./compilers/chartJsMetric");
 const { compileChartJsTable } = require("./compilers/chartJsTable");
 const { compileTabularExport } = require("./compilers/tabularExport");
+const { compileShownExport } = require("./compilers/shownExport");
+const { recordAdapterUsage } = require("./adapterUsage");
 const { filterVisualizationDatasets } = require("./filterDatasets");
 const { buildVisualizationFrame } = require("./frameBuilder");
 const { legacyChartToVisualization } = require("./legacyChartToVisualization");
@@ -34,6 +36,8 @@ function resolveVisualization(chart) {
   if (!converted.valid) {
     throw new Error(converted.errors.join("; "));
   }
+
+  recordAdapterUsage(chart);
 
   return {
     adapted: true,
@@ -136,6 +140,16 @@ class VisualizationEngine {
   }
 
   export(options = {}) {
+    if (options.mode === "shown") {
+      const rendered = this.render(options);
+      return {
+        adapted: rendered.adapted,
+        conditionsOptions: rendered.conditionsOptions,
+        configuration: compileShownExport(rendered.configuration, this.chart),
+        exportMode: "shown",
+        visualization: rendered.visualization,
+      };
+    }
     const resolved = this.buildFrame(options);
     return {
       ...compileTabularExport({
@@ -144,6 +158,7 @@ class VisualizationEngine {
         visualization: resolved.visualization,
       }),
       adapted: resolved.adapted,
+      exportMode: "source",
       visualization: resolved.visualization,
     };
   }
