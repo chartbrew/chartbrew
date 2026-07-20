@@ -8,6 +8,36 @@ const { applyValueFormula } = require("../valueFormula");
 
 const SERIES_COLORS = Object.values(chartColors).map((color) => color.hex);
 
+function clampOpacity(opacity) {
+  const numericOpacity = Number(opacity);
+  if (!Number.isFinite(numericOpacity)) return null;
+  return Math.min(1, Math.max(0, numericOpacity));
+}
+
+function applyColorAlpha(color, opacity) {
+  const normalizedOpacity = clampOpacity(opacity);
+  if (normalizedOpacity === null || typeof color !== "string") return color;
+
+  const hex = color.trim().match(/^#([a-f\d]{3,4}|[a-f\d]{6}|[a-f\d]{8})$/i);
+  if (hex) {
+    const value = hex[1].length <= 4
+      ? hex[1].slice(0, 3).split("").map((character) => `${character}${character}`).join("")
+      : hex[1].slice(0, 6);
+    const red = Number.parseInt(value.slice(0, 2), 16);
+    const green = Number.parseInt(value.slice(2, 4), 16);
+    const blue = Number.parseInt(value.slice(4, 6), 16);
+    return `rgba(${red}, ${green}, ${blue}, ${normalizedOpacity})`;
+  }
+
+  const rgb = color.trim().match(/^rgba?\(\s*([^,]+),\s*([^,]+),\s*([^,)]+)(?:,\s*[^)]+)?\)$/i);
+  if (rgb) return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${normalizedOpacity})`;
+
+  const hsl = color.trim().match(/^hsla?\(\s*([^,]+),\s*([^,]+),\s*([^,)]+)(?:,\s*[^)]+)?\)$/i);
+  if (hsl) return `hsla(${hsl[1]}, ${hsl[2]}, ${hsl[3]}, ${normalizedOpacity})`;
+
+  return color;
+}
+
 function getStableColor(seriesId, usedColors = new Set()) {
   const hashPart = `${seriesId}`.replace(/[^a-f0-9]/gi, "").slice(-8);
   const preferredIndex = Number.parseInt(hashPart || "0", 16) % SERIES_COLORS.length;
@@ -48,13 +78,17 @@ function getSeriesStyle(layer, series, options = {}) {
   const isBreakdown = Boolean(layer.encoding.breakdown);
   const defaultColor = isBreakdown ? generatedColor : layer.style?.color || generatedColor;
   const color = override.color || defaultColor;
+  const fillOpacity = clampOpacity(override.fillOpacity ?? layer.style?.fillOpacity);
   const defaultFillColor = isBreakdown ? color : layer.style?.fillColor || color;
-  const fillColor = override.fillColor || defaultFillColor;
+  const fillColor = fillOpacity === null
+    ? override.fillColor || defaultFillColor
+    : applyColorAlpha(color, fillOpacity);
 
   return {
     datasetColor: color,
     fill: override.fill ?? layer.style?.fill ?? isBreakdown,
     fillColor,
+    fillOpacity,
     legend: override.label || series.label,
     multiFill: override.multiFill ?? layer.style?.multiFill ?? false,
     pointRadius: override.pointRadius ?? layer.style?.pointRadius ?? null,
@@ -85,13 +119,16 @@ function buildSeriesStyleMap(frame, visualization) {
 function buildSeriesMetadata(frame, visualization) {
   const styles = buildSeriesStyleMap(frame, visualization);
   return frame.layers.flatMap((layerFrame) => {
+    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
     return layerFrame.series.map((series) => {
       const style = styles.get(series.id);
       return {
         ...series,
+        bindingId: layerFrame.bindingId,
         color: style.datasetColor,
         fillColor: style.fillColor,
         layerId: layerFrame.id,
+        layerName: layer?.name || null,
       };
     });
   });
@@ -108,16 +145,21 @@ function buildChartJsDatasets(frame, spec, domain, missingValue) {
 
     layerFrame.series.forEach((series) => {
       const valuesByDimension = new Map();
+      const isCumulative = layer.transforms.some((transform) => {
+        return transform.type === "window" && transform.operation === "cumulativeSum";
+      });
       layerFrame.rows.forEach((row) => {
         if (row.__seriesId !== series.id) return;
         valuesByDimension.set(serializeTypedValue(row[dimensionRole]), row.value);
       });
 
       const style = styles.get(series.id);
+      let cumulativeValue = 0;
       datasets.push([...domain.keys()].map((key) => {
-        if (!valuesByDimension.has(key)) return missingValue;
+        if (!valuesByDimension.has(key) && !isCumulative) return missingValue;
+        if (valuesByDimension.has(key)) cumulativeValue = valuesByDimension.get(key);
         return applyValueFormula(
-          valuesByDimension.get(key),
+          cumulativeValue,
           layer.encoding.value?.formula,
           { formatted: ["kpi", "avg", "gauge"].includes(layer.mark) }
         );

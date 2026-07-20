@@ -1,38 +1,157 @@
+const { validateVisualizationSpec } = require("./spec");
+
+const DEFAULT_BAR_FILL_OPACITY = 0.65;
+const DEFAULT_LINE_FILL_OPACITY = 0.2;
+
 function cloneVisualization(visualization) {
   return JSON.parse(JSON.stringify(visualization));
 }
 
-function getEncodingForMark(layer, mark) {
-  const encoding = layer.encoding || {};
+function cloneEncoding(encoding = {}) {
+  return Object.entries(encoding).reduce((copy, [role, definition]) => {
+    copy[role] = Array.isArray(definition)
+      ? definition.map((item) => ({ ...item }))
+      : { ...definition };
+    return copy;
+  }, {});
+}
+
+function getEncodingCandidates(layer, markState) {
+  return [
+    layer.encoding || {},
+    ...Object.values(markState).reverse().map((state) => state.encoding || {}),
+  ];
+}
+
+function getEncodingForMark(layer, mark, markState = layer.options?.markState || {}) {
+  const saved = markState[mark];
+  if (saved?.encoding) return cloneEncoding(saved.encoding);
+
+  const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
   if (["kpi", "avg", "gauge"].includes(mark)) {
-    return encoding.value ? {
+    const source = candidates.find((encoding) => encoding.value) || {};
+    return source.value ? {
       value: {
-        ...encoding.value,
+        ...source.value,
         ...(mark === "avg" ? { aggregate: "avg" } : {}),
       },
     } : {};
   }
   if (mark === "matrix") {
+    const source = candidates.find((encoding) => encoding.time && encoding.value)
+      || candidates.find((encoding) => encoding.value)
+      || {};
     return {
-      ...(encoding.time ? { time: encoding.time } : {}),
-      ...(encoding.value ? { value: encoding.value } : {}),
+      ...(source.time ? { time: { ...source.time } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
     };
   }
   if (["pie", "doughnut", "polar", "radar"].includes(mark)) {
-    const category = encoding.category || encoding.time;
+    const source = candidates.find((encoding) => {
+      return (encoding.category || encoding.time) && encoding.value;
+    }) || {};
+    const category = source.category || source.time;
     return {
       ...(category ? { category: { ...category, type: "nominal" } } : {}),
-      ...(encoding.value ? { value: encoding.value } : {}),
-      ...(mark === "radar" && encoding.breakdown ? { breakdown: encoding.breakdown } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+      ...(mark === "radar" && source.breakdown
+        ? { breakdown: { ...source.breakdown } }
+        : {}),
     };
   }
+
+  const source = candidates.find((encoding) => {
+    return (encoding.time || encoding.category) && encoding.value;
+  }) || candidates.find((encoding) => encoding.value) || {};
   return {
-    ...(encoding.time ? { time: encoding.time } : {}),
-    ...(encoding.category ? { category: encoding.category } : {}),
-    ...(encoding.value ? { value: encoding.value } : {}),
-    ...(encoding.breakdown ? { breakdown: encoding.breakdown } : {}),
+    ...(source.time ? { time: { ...source.time } } : {}),
+    ...(source.category ? { category: { ...source.category } } : {}),
+    ...(source.value ? { value: { ...source.value } } : {}),
+    ...(source.breakdown ? { breakdown: { ...source.breakdown } } : {}),
   };
+}
+
+function getStyleForMark(layer, mark, saved = {}) {
+  const style = { ...(layer.style || {}) };
+  if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
+    style.fill = saved.fill;
+  } else if (mark === "bar") {
+    style.fill = true;
+  } else if (mark === "line") {
+    style.fill = false;
+  }
+  if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
+    style.fillOpacity = saved.fillOpacity;
+  } else if (mark === "bar") {
+    style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
+  } else if (mark === "line") {
+    style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
+  }
+  return style;
+}
+
+function updateLayerMark(layer, mark) {
+  const savedMark = layer.options?.markState?.[mark] || {};
+  if (layer.mark === mark) {
+    if (
+      !["bar", "line"].includes(mark)
+      || (
+        Object.prototype.hasOwnProperty.call(savedMark, "fill")
+        && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
+      )
+    ) {
+      return { ...layer };
+    }
+    return {
+      ...layer,
+      style: getStyleForMark(layer, mark, savedMark),
+    };
+  }
+
+  const options = { ...(layer.options || {}) };
+  const markState = {
+    ...(options.markState || {}),
+    [layer.mark]: {
+      ...(options.markState?.[layer.mark] || {}),
+      encoding: cloneEncoding(layer.encoding),
+      ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
+      ...(layer.style?.fillOpacity !== undefined
+        ? { fillOpacity: layer.style.fillOpacity }
+        : {}),
+      ...(layer.rowPath ? { rowPath: layer.rowPath } : {}),
+    },
+  };
+  options.markState = markState;
+  const saved = markState[mark];
+
+  return {
+    ...layer,
+    encoding: getEncodingForMark(layer, mark, markState),
+    mark,
+    options,
+    rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
+    style: getStyleForMark(layer, mark, saved),
+  };
+}
+
+function setCumulativeTransform(transforms = [], enabled) {
+  const next = transforms.filter((transform) => {
+    return transform.type !== "window" || transform.operation !== "cumulativeSum";
+  });
+  if (!enabled) return next;
+
+  const transform = {
+    operation: "cumulativeSum",
+    role: "value",
+    type: "window",
+  };
+  const frameTransformIndex = next.findIndex((item) => {
+    return item.type === "sort" || item.type === "limit";
+  });
+  if (frameTransformIndex >= 0) next.splice(frameTransformIndex, 0, transform);
+  else next.push(transform);
+  return next;
 }
 
 function applyChartCompatibilityUpdate(visualization, data = {}) {
@@ -41,6 +160,7 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
 
   next.layers = next.layers.map((layer) => {
     const mark = data.type || layer.mark;
+    const markedLayer = data.type ? updateLayerMark(layer, mark) : layer;
     let orientation = layer.orientation;
     let stack = layer.stack;
     if (data.horizontal !== undefined) {
@@ -49,14 +169,21 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     if (data.stacked !== undefined) {
       stack = data.stacked ? "normal" : "none";
     }
+    const transforms = data.subType !== undefined
+      ? setCumulativeTransform(
+        markedLayer.transforms,
+        `${data.subType}`.includes("AddTimeseries")
+          && !["table", "matrix", "markdown"].includes(mark)
+      )
+      : markedLayer.transforms;
     return {
-      ...layer,
+      ...markedLayer,
       ...(data.content !== undefined && mark === "markdown" ? { content: data.content } : {}),
-      encoding: data.type ? getEncodingForMark(layer, mark) : layer.encoding,
       mark,
       orientation,
       ...(mark === "table" ? { rowPath: layer.rowPath || "root[]" } : {}),
       stack,
+      transforms,
     };
   });
 
@@ -95,8 +222,11 @@ function replaceTransform(transforms, type, replacement) {
 
 function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
   const next = cloneVisualization(visualization);
+  let bindingLayerIndex = 0;
   next.layers = next.layers.map((layer) => {
     if (`${layer.bindingId}` !== `${bindingId}`) return layer;
+    const isPrimaryBindingLayer = bindingLayerIndex === 0;
+    bindingLayerIndex += 1;
 
     const style = { ...(layer.style || {}) };
     const styleFields = ["datasetColor", "fill", "fillColor", "multiFill", "pointRadius"];
@@ -108,6 +238,22 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
     const encoding = { ...(layer.encoding || {}) };
     if (data.formula !== undefined && encoding.value) {
       encoding.value = { ...encoding.value, formula: data.formula || null };
+    }
+    if (data.legend !== undefined && isPrimaryBindingLayer) {
+      style.label = data.legend;
+      if (encoding.value) {
+        encoding.value = { ...encoding.value, title: data.legend };
+      }
+    }
+    const options = { ...(layer.options || {}) };
+    if (data.fill !== undefined) {
+      options.markState = {
+        ...(options.markState || {}),
+        [layer.mark]: {
+          ...(options.markState?.[layer.mark] || {}),
+          fill: data.fill,
+        },
+      };
     }
     let transforms = layer.transforms || [];
     if (data.sort !== undefined) {
@@ -128,9 +274,9 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
       ...layer,
       encoding,
       ...(data.goal !== undefined ? { goal: data.goal } : {}),
-      ...(data.legend !== undefined ? { name: data.legend } : {}),
+      ...(data.legend !== undefined && isPrimaryBindingLayer ? { name: data.legend } : {}),
       options: {
-        ...(layer.options || {}),
+        ...options,
         ...(data.columnsOrder !== undefined ? { columnsOrder: data.columnsOrder } : {}),
         ...(data.configuration !== undefined ? { configuration: data.configuration } : {}),
         ...(data.excludedFields !== undefined ? { excludedFields: data.excludedFields } : {}),
@@ -149,7 +295,25 @@ function removeBindingLayers(visualization, bindingId) {
   return next;
 }
 
+function addBindingLayer(visualization, layer) {
+  const next = cloneVisualization(visualization);
+  next.layers = Array.isArray(next.layers) ? next.layers : [];
+
+  if (next.layers.some((item) => `${item.bindingId}` === `${layer.bindingId}`)) {
+    return next;
+  }
+
+  next.layers.push(cloneVisualization(layer));
+  const validation = validateVisualizationSpec({
+    ...next,
+    status: "ready",
+  });
+  next.status = validation.valid ? "ready" : "draft";
+  return next;
+}
+
 module.exports = {
+  addBindingLayer,
   applyCdcCompatibilityUpdate,
   applyChartCompatibilityUpdate,
   getEncodingForMark,

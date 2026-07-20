@@ -39,9 +39,11 @@ function compileChartJsMatrix({ chart, frame, timezone, visualization }) {
     frameVersion: frame.version,
     series: [{
       ...series,
+      bindingId: layerFrame.bindingId,
       color: style.datasetColor,
       fillColor: style.fillColor,
       layerId: layer.id,
+      layerName: layer.name || null,
     }],
     visualizationVersion: visualization.version,
     warnings: frame.warnings,

@@ -6,6 +6,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  ColorSlider,
   Separator,
   Input,
   InputGroup,
@@ -14,6 +15,7 @@ import {
   Popover,
   ScrollShadow,
   Spinner,
+  Switch,
   Tabs,
   Tooltip,
   Label,
@@ -51,7 +53,116 @@ import { useTheme } from "../../../modules/ThemeContext";
 import ChartDatasetDataSetup from "./ChartDatasetDataSetup";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import ColorPickerControl from "../../../components/ColorPickerControl";
-import { updateSeriesColor } from "../../../modules/visualization";
+import { getRgbColorChannels } from "../../../modules/colorPicker";
+import { updateBindingFill, updateSeriesColor } from "../../../modules/visualization";
+
+function getFillSliderColor(color, opacity) {
+  const { red, green, blue } = getRgbColorChannels(color, chartColors.blue.hex);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
+function FillOpacityControl(props) {
+  const {
+    color,
+    controlId,
+    fill,
+    onFillChange,
+    onOpacityChange,
+    opacity,
+  } = props;
+
+  return (
+    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+      <Switch
+        id={controlId}
+        isSelected={fill}
+        onChange={onFillChange}
+      >
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+        <Switch.Content>
+          <Label htmlFor={controlId}>Fill background</Label>
+        </Switch.Content>
+      </Switch>
+
+      <ColorSlider
+        aria-label="Fill opacity"
+        channel="alpha"
+        className="mt-3 gap-1"
+        colorSpace="rgb"
+        defaultValue={getFillSliderColor(color, opacity)}
+        isDisabled={!fill}
+        onChangeEnd={(nextColor) => {
+          const nextOpacity = nextColor.toFormat("rgb").getChannelValue("alpha");
+          onOpacityChange(Number(nextOpacity.toFixed(2)));
+        }}
+      >
+        <div className="flex items-center justify-between text-xs font-medium text-muted">
+          <Label>Opacity</Label>
+          <ColorSlider.Output />
+        </div>
+        <ColorSlider.Track>
+          <ColorSlider.Thumb />
+        </ColorSlider.Track>
+      </ColorSlider>
+    </div>
+  );
+}
+
+FillOpacityControl.propTypes = {
+  color: PropTypes.string.isRequired,
+  controlId: PropTypes.string.isRequired,
+  fill: PropTypes.bool.isRequired,
+  onFillChange: PropTypes.func.isRequired,
+  onOpacityChange: PropTypes.func.isRequired,
+  opacity: PropTypes.number.isRequired,
+};
+
+function DatasetLabelField({ initialValue, onSave }) {
+  const [value, setValue] = useState(initialValue);
+  const nextValue = value.trim();
+  const hasChanges = Boolean(nextValue) && nextValue !== initialValue;
+
+  const _save = () => {
+    if (hasChanges) onSave(nextValue);
+  };
+
+  return (
+    <TextField className="w-full" name="dataset-label">
+      <Label>Dataset label</Label>
+      <InputGroup fullWidth variant="secondary">
+        <InputGroup.Input
+          placeholder="Enter a label for this dataset"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              _save();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setValue(initialValue);
+            }
+          }}
+        />
+        {hasChanges && (
+          <InputGroup.Suffix className="pr-2 border-none">
+            <Button size="sm" variant="secondary" onPress={_save}>
+              Save
+            </Button>
+          </InputGroup.Suffix>
+        )}
+      </InputGroup>
+    </TextField>
+  );
+}
+
+DatasetLabelField.propTypes = {
+  initialValue: PropTypes.string.isRequired,
+  onSave: PropTypes.func.isRequired,
+};
 
 function ChartDatasetConfig(props) {
   const { chartId, cdcId, dataRequests, onRemove } = props;
@@ -259,6 +370,15 @@ function ChartDatasetConfig(props) {
     _onUpdateVisualization({ refresh: true, visualization });
   };
 
+  const _onChangeFill = (fill, fillOpacity) => {
+    const visualization = updateBindingFill(
+      chart.visualization,
+      cdc.id,
+      { fill, fillOpacity }
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
   const _getDatasetColor = (datasetColor) => ({
     cursor: "pointer",
     backgroundColor: datasetColor === "rgba(0,0,0,0)" ? primary : datasetColor,
@@ -422,6 +542,15 @@ function ChartDatasetConfig(props) {
   }
 
   const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled dataset";
+  const fillLayer = bindingLayers[0];
+  const fillEnabled = fillLayer?.style?.fill ?? cdc.fill ?? chart.type === "bar";
+  const configuredFillOpacity = fillLayer?.style?.fillOpacity;
+  const fillOpacity = Number.isFinite(configuredFillOpacity)
+    ? Math.min(1, Math.max(0, configuredFillOpacity))
+    : (chart.type === "bar" ? 0.65 : 0.2);
+  const fillBaseColor = runtimeSeries[0]
+    ? _getSeriesColor(runtimeSeries[0])
+    : cdc.datasetColor || chartColors.blue.hex;
 
   return (
     <div>
@@ -449,6 +578,12 @@ function ChartDatasetConfig(props) {
         </Tabs.ListContainer>
         <Tabs.Panel id="data-setup">
           <div className="h-2" />
+          <DatasetLabelField
+            key={cdc.id}
+            initialValue={seriesLabel}
+            onSave={(label) => _onUpdateCdc({ legend: label })}
+          />
+          <div className="h-4" />
           <ChartDatasetDataSetup
             cdc={cdc}
             dataset={dataset}
@@ -520,17 +655,18 @@ function ChartDatasetConfig(props) {
                             />
                           )}
                           value={cdc.datasetColor}
+                          valueFormat="hex"
                         />
                       </div>
                     </div>
                     <div className="h-2" />
 
-                    {chart.type !== "matrix" && (
+                    {!["line", "bar", "matrix"].includes(chart.type) && (
                       <Row align={"center"} justify={"space-between"}>
                         <Row align={"center"}>
                           <Checkbox
                             id={`cdc-fill-${cdc.id}`}
-                            isSelected={cdc.fill}
+                            isSelected={bindingLayers[0]?.style?.fill ?? cdc.fill}
                             onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
                             isDisabled={cdc.multiFill}
                             variant="secondary"
@@ -564,7 +700,7 @@ function ChartDatasetConfig(props) {
                     )}
                     <div className="h-2" />
 
-                    {chart.type !== "line" && chart.type !== "matrix" && (
+                    {!["line", "bar", "matrix"].includes(chart.type) && (
                       <Row>
                         <Checkbox
                           id={`cdc-multifill-${cdc.id}`}
@@ -584,7 +720,7 @@ function ChartDatasetConfig(props) {
                       </Row>
                     )}
 
-                    {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
+                    {!["line", "bar", "matrix"].includes(chart.type) && cdc.multiFill && (
                       <>
                         <div className="h-4" />
                         <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
@@ -612,6 +748,21 @@ function ChartDatasetConfig(props) {
                         <div className="h-4" />
                       </>
                     )}
+                  </>
+                )}
+
+                {["line", "bar"].includes(chart.type) && (
+                  <>
+                    <div className="h-4" />
+                    <FillOpacityControl
+                      key={`${cdc.id}-${fillBaseColor}-${fillOpacity}`}
+                      color={fillBaseColor}
+                      controlId={`cdc-fill-background-${cdc.id}`}
+                      fill={Boolean(fillEnabled)}
+                      opacity={fillOpacity}
+                      onFillChange={(selected) => _onChangeFill(selected, fillOpacity)}
+                      onOpacityChange={(opacity) => _onChangeFill(fillEnabled, opacity)}
+                    />
                   </>
                 )}
               </div>

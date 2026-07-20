@@ -66,6 +66,9 @@ describe("Chart.js cartesian visualization compiler", () => {
     expect(result.configuration.options.scales.x.stacked).toBe(true);
     expect(result.configuration.options.scales.y.stacked).toBe(true);
     expect(result.configuration.meta.series).toHaveLength(3);
+    expect(result.configuration.meta.series.every((series) => {
+      return series.bindingId === "cdc-income" && series.layerId === "income";
+    })).toBe(true);
   });
 
   it("assigns the same series colors when input rows are reordered", () => {
@@ -109,6 +112,73 @@ describe("Chart.js cartesian visualization compiler", () => {
 
     expect(overridden.configuration.data.datasets[0].backgroundColor).toBe("#112233");
     expect(overridden.configuration.meta.series[0].color).toBe("#112233");
+  });
+
+  it("derives every fill from its series color with one shared opacity", () => {
+    const input = buildChart(readFixture("exam-income-long.json"));
+    input.chart.visualization.layers[0].style = {
+      fill: true,
+      fillOpacity: 0.35,
+    };
+    const automatic = new VisualizationEngine(input).render();
+    const firstSeries = automatic.configuration.meta.series[0];
+
+    input.chart.visualization.layers[0].style.series = {
+      [firstSeries.id]: {
+        color: "#112233",
+        fillColor: "#FFFFFF",
+      },
+    };
+    const overridden = new VisualizationEngine(input).render();
+    const datasets = overridden.configuration.data.datasets;
+
+    expect(datasets[0].borderColor).toBe("#112233");
+    expect(datasets[0].backgroundColor).toBe("rgba(17, 34, 51, 0.35)");
+    expect(datasets.every((dataset) => dataset.backgroundColor.endsWith(", 0.35)")))
+      .toBe(true);
+    expect(new Set(datasets.map((dataset) => dataset.backgroundColor)).size).toBe(3);
+  });
+
+  it("carries every accumulated breakdown series across sparse dates", () => {
+    const input = {
+      chart: {
+        id: 3,
+        type: "bar",
+        displayLegend: true,
+        includeZeros: false,
+        mode: "chart",
+        visualization: {
+          version: 2,
+          layers: [{
+            id: "running-segments",
+            bindingId: "cdc-running-segments",
+            mark: "bar",
+            encoding: {
+              time: { field: "root[].date", timeUnit: "day", type: "temporal" },
+              value: { field: "root[].value", type: "quantitative", aggregate: "sum" },
+              breakdown: { field: "root[].segment", type: "nominal" },
+            },
+            transforms: [{ operation: "cumulativeSum", role: "value", type: "window" }],
+          }],
+        },
+      },
+      datasets: [{
+        options: { id: "cdc-running-segments" },
+        data: [
+          { date: "2026-01-01", segment: "Enterprise", value: 10 },
+          { date: "2026-01-01", segment: "Self-serve", value: 1 },
+          { date: "2026-02-01", segment: "Enterprise", value: 20 },
+          { date: "2026-03-01", segment: "Self-serve", value: 3 },
+        ],
+      }],
+    };
+    const result = new VisualizationEngine(input).render();
+    const byLabel = Object.fromEntries(result.configuration.data.datasets.map((dataset) => {
+      return [dataset.label, dataset.data];
+    }));
+
+    expect(byLabel.Enterprise).toEqual([10, 30, 30]);
+    expect(byLabel["Self-serve"]).toEqual([1, 1, 4]);
   });
 
   it("adapts an unmigrated legacy chart before compiling it", () => {

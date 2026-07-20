@@ -1,4 +1,5 @@
 const { getFieldValue } = require("./fieldPath");
+const { serializeTypedValue } = require("./seriesIdentity");
 
 function isNullish(value) {
   return value === null || value === undefined;
@@ -78,7 +79,7 @@ function applyWindowTransform(rows, transform) {
   const totals = new Map();
 
   return rows.map((row) => {
-    const partition = row[partitionRole] ?? "__all__";
+    const partition = serializeTypedValue(row[partitionRole] ?? "__all__");
     const numericValue = Number(row[role]);
     const nextValue = (totals.get(partition) || 0)
       + (Number.isFinite(numericValue) ? numericValue : 0);

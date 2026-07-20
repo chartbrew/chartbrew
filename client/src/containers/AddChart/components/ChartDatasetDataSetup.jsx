@@ -41,7 +41,6 @@ import {
   updateLayerRowPath,
 } from "../../../modules/visualization";
 import { runRequest as runDatasetRequest, updateDataset } from "../../../slices/dataset";
-import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import canAccess from "../../../config/canAccess";
 import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
@@ -266,13 +265,7 @@ function ChartDatasetDataSetup({
       {selectedLayer && (
         <>
           <div>
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <div className="font-semibold text-foreground">Fields</div>
-                <div className="text-sm text-foreground-500">
-                  {`Choose how fields from ${getDatasetDisplayName(dataset) || "this dataset"} appear in the chart.`}
-                </div>
-              </div>
+            <div className="mb-4 flex items-start">
               {canAccess("projectAdmin", user.id, team?.TeamRoles) && (
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -280,10 +273,9 @@ function ChartDatasetDataSetup({
                       aria-label="Edit dataset"
                       variant="tertiary"
                       size="sm"
-                      isIconOnly
                       onPress={onEditDataset}
                     >
-                      <LuSettings size={16} />
+                      <LuSettings size={16} /> Edit dataset
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Edit dataset</Tooltip.Content>

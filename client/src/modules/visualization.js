@@ -17,6 +17,8 @@ export const AGGREGATIONS = [{ id: "none", label: "No aggregation" }, {
 
 const METRIC_MARKS = new Set(["kpi", "avg", "gauge"]);
 const CATEGORY_MARKS = new Set(["pie", "doughnut", "radar", "polar"]);
+const DEFAULT_BAR_FILL_OPACITY = 0.65;
+const DEFAULT_LINE_FILL_OPACITY = 0.2;
 
 function createLayerId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -104,45 +106,167 @@ export function updateVisualizationLayer(visualization, layerId, updater) {
   return nextVisualization;
 }
 
+function cloneEncoding(encoding = {}) {
+  return Object.entries(encoding).reduce((copy, [role, definition]) => {
+    copy[role] = Array.isArray(definition)
+      ? definition.map((item) => ({ ...item }))
+      : { ...definition };
+    return copy;
+  }, {});
+}
+
+function getEncodingCandidates(layer, markState) {
+  return [
+    layer.encoding || {},
+    ...Object.values(markState).reverse().map((state) => state.encoding || {}),
+  ];
+}
+
+function getEncodingForMark(layer, mark, markState) {
+  const saved = markState[mark];
+  if (saved?.encoding) return cloneEncoding(saved.encoding);
+
+  const candidates = getEncodingCandidates(layer, markState);
+  if (mark === "table" || mark === "markdown") return {};
+  if (METRIC_MARKS.has(mark)) {
+    const source = candidates.find((encoding) => encoding.value) || {};
+    return source.value ? {
+      value: {
+        ...source.value,
+        ...(mark === "avg" ? { aggregate: "avg" } : {}),
+      },
+    } : {};
+  }
+  if (mark === "matrix") {
+    const source = candidates.find((encoding) => encoding.time && encoding.value)
+      || candidates.find((encoding) => encoding.value)
+      || {};
+    return {
+      ...(source.time ? { time: { ...source.time } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+    };
+  }
+  if (CATEGORY_MARKS.has(mark)) {
+    const source = candidates.find((encoding) => {
+      return (encoding.category || encoding.time) && encoding.value;
+    }) || {};
+    const dimension = source.category || source.time;
+    return {
+      ...(dimension ? { category: { ...dimension, type: "nominal" } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+      ...(mark === "radar" && source.breakdown
+        ? { breakdown: { ...source.breakdown } }
+        : {}),
+    };
+  }
+
+  const source = candidates.find((encoding) => {
+    return (encoding.time || encoding.category) && encoding.value;
+  }) || candidates.find((encoding) => encoding.value) || {};
+  return {
+    ...(source.time ? { time: { ...source.time } } : {}),
+    ...(source.category ? { category: { ...source.category } } : {}),
+    ...(source.value ? { value: { ...source.value } } : {}),
+    ...(source.breakdown ? { breakdown: { ...source.breakdown } } : {}),
+  };
+}
+
+function getStyleForMark(layer, mark, saved = {}) {
+  const style = { ...(layer.style || {}) };
+  if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
+    style.fill = saved.fill;
+  } else if (mark === "bar") {
+    style.fill = true;
+  } else if (mark === "line") {
+    style.fill = false;
+  }
+  if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
+    style.fillOpacity = saved.fillOpacity;
+  } else if (mark === "bar") {
+    style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
+  } else if (mark === "line") {
+    style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
+  }
+  return style;
+}
+
 export function updateLayerMark(visualization, layerId, mark) {
   return updateVisualizationLayer(visualization, layerId, (layer) => {
-    const previousEncoding = layer.encoding || {};
-    let encoding = {};
-    if (mark === "matrix") {
-      encoding = {
-        ...(previousEncoding.time ? { time: previousEncoding.time } : {}),
-        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
-      };
-    } else if (METRIC_MARKS.has(mark)) {
-      encoding = previousEncoding.value ? { value: previousEncoding.value } : {};
-      if (mark === "avg" && encoding.value) {
-        encoding.value = { ...encoding.value, aggregate: "avg" };
+    const savedMark = layer.options?.markState?.[mark] || {};
+    if (layer.mark === mark) {
+      if (
+        !["bar", "line"].includes(mark)
+        || (
+          Object.prototype.hasOwnProperty.call(savedMark, "fill")
+          && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
+        )
+      ) {
+        return layer;
       }
-    } else if (CATEGORY_MARKS.has(mark)) {
-      const dimension = previousEncoding.category || previousEncoding.time;
-      encoding = {
-        ...(dimension ? { category: { ...dimension, type: "nominal" } } : {}),
-        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
-        ...(mark === "radar" && previousEncoding.breakdown
-          ? { breakdown: previousEncoding.breakdown }
-          : {}),
-      };
-    } else if (mark !== "table") {
-      encoding = {
-        ...(previousEncoding.time ? { time: previousEncoding.time } : {}),
-        ...(previousEncoding.category ? { category: previousEncoding.category } : {}),
-        ...(previousEncoding.value ? { value: previousEncoding.value } : {}),
-        ...(previousEncoding.breakdown ? { breakdown: previousEncoding.breakdown } : {}),
+      return {
+        ...layer,
+        style: getStyleForMark(layer, mark, savedMark),
       };
     }
 
+    const options = { ...(layer.options || {}) };
+    const markState = {
+      ...(options.markState || {}),
+      [layer.mark]: {
+        ...(options.markState?.[layer.mark] || {}),
+        encoding: cloneEncoding(layer.encoding),
+        ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
+        ...(layer.style?.fillOpacity !== undefined
+          ? { fillOpacity: layer.style.fillOpacity }
+          : {}),
+        ...(layer.rowPath ? { rowPath: layer.rowPath } : {}),
+      },
+    };
+    options.markState = markState;
+    const saved = markState[mark];
+
     return {
       ...layer,
-      encoding,
+      encoding: getEncodingForMark(layer, mark, markState),
       mark,
-      rowPath: mark === "table" ? layer.rowPath || "root[]" : layer.rowPath,
+      options,
+      rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
+      style: getStyleForMark(layer, mark, saved),
     };
   });
+}
+
+export function updateBindingFill(visualization, bindingId, { fill, fillOpacity }) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  const normalizedOpacity = Math.min(1, Math.max(0, Number(fillOpacity)));
+
+  nextVisualization.layers = nextVisualization.layers.map((layer) => {
+    if (`${layer.bindingId}` !== `${bindingId}`) return layer;
+
+    const style = {
+      ...(layer.style || {}),
+      fill: Boolean(fill),
+      fillOpacity: Number.isFinite(normalizedOpacity)
+        ? normalizedOpacity
+        : (layer.mark === "bar" ? DEFAULT_BAR_FILL_OPACITY : DEFAULT_LINE_FILL_OPACITY),
+      multiFill: false,
+    };
+    delete style.fillColor;
+
+    const options = { ...(layer.options || {}) };
+    options.markState = {
+      ...(options.markState || {}),
+      [layer.mark]: {
+        ...(options.markState?.[layer.mark] || {}),
+        fill: style.fill,
+        fillOpacity: style.fillOpacity,
+      },
+    };
+
+    return { ...layer, options, style };
+  });
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
 }
 
 export function updateLayerField(visualization, layerId, role, fieldOption) {

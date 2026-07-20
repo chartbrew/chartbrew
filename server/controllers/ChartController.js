@@ -20,8 +20,12 @@ const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
 const { VisualizationEngine } = require("../visualization/VisualizationEngine");
-const { legacyChartToVisualization } = require("../visualization/legacyChartToVisualization");
 const {
+  buildLegacyLayer,
+  legacyChartToVisualization,
+} = require("../visualization/legacyChartToVisualization");
+const {
+  addBindingLayer,
   applyCdcCompatibilityUpdate,
   applyChartCompatibilityUpdate,
   removeBindingLayers,
@@ -77,6 +81,35 @@ function createRuntimeShortCircuit(chart) {
 
 function isRuntimeShortCircuit(value) {
   return Boolean(value && value.__runtimeCachedChart);
+}
+
+function reconcileVisualizationBindings(chart) {
+  if (!chart || isLegacyOwnedVisualization(chart.visualization)) return chart;
+
+  let visualization = chart.visualization;
+  (chart.ChartDatasetConfigs || []).forEach((cdc, index) => {
+    visualization = addBindingLayer(
+      visualization,
+      buildLegacyLayer(chart, cdc, index)
+    );
+  });
+  if (chart.type || chart.subType) {
+    visualization = applyChartCompatibilityUpdate(visualization, {
+      ...(chart.type ? { type: chart.type } : {}),
+      ...(chart.subType ? { subType: chart.subType } : {}),
+    });
+  }
+
+  if (JSON.stringify(visualization) !== JSON.stringify(chart.visualization)) {
+    if (typeof chart.set === "function") {
+      chart.set("visualization", visualization);
+      chart.changed("visualization", false);
+    } else {
+      chart.visualization = visualization;
+    }
+  }
+
+  return chart;
 }
 
 function getSourceRuntimeFiltersForDataset(runtimeContext, cdc, fallbackFilters = []) {
@@ -171,7 +204,9 @@ class ChartController {
 
     return db.Chart.findOne(customQuery || query)
       .then((chart) => {
-        return chart;
+        return options.reconcileVisualizationBindings === false
+          ? chart
+          : reconcileVisualizationBindings(chart);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -179,11 +214,17 @@ class ChartController {
   }
 
   async syncLegacyVisualization(chartId, options = {}, compatibility = {}) {
-    const chart = await this.findById(chartId, null, options);
+    const chart = await this.findById(chartId, null, {
+      ...options,
+      reconcileVisualizationBindings: false,
+    });
     if (!chart) return chart;
 
     if (!isLegacyOwnedVisualization(chart.visualization)) {
-      let visualization = chart.visualization;
+      let visualization = applyChartCompatibilityUpdate(chart.visualization, {
+        ...(chart.type ? { type: chart.type } : {}),
+        ...(chart.subType ? { subType: chart.subType } : {}),
+      });
       if (compatibility.chartData) {
         visualization = applyChartCompatibilityUpdate(visualization, compatibility.chartData);
       }
@@ -196,6 +237,17 @@ class ChartController {
       }
       if (compatibility.removeBinding) {
         visualization = removeBindingLayers(visualization, compatibility.removeBinding);
+      }
+      if (compatibility.addBinding) {
+        const bindingIndex = chart.ChartDatasetConfigs.findIndex((cdc) => {
+          return `${cdc.id}` === `${compatibility.addBinding}`;
+        });
+        if (bindingIndex >= 0) {
+          visualization = addBindingLayer(
+            visualization,
+            buildLegacyLayer(chart, chart.ChartDatasetConfigs[bindingIndex], bindingIndex)
+          );
+        }
       }
       if (JSON.stringify(visualization) === JSON.stringify(chart.visualization)) return chart;
       await db.Chart.update(
@@ -1479,7 +1531,9 @@ class ChartController {
       chart_id: chartId,
     })
       .then(async (chartDatasetConfig) => {
-        await this.syncLegacyVisualization(chartId);
+        await this.syncLegacyVisualization(chartId, {}, {
+          addBinding: chartDatasetConfig.id,
+        });
         return chartDatasetConfig;
       })
       .catch((err) => {

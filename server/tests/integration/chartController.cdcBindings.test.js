@@ -276,5 +276,60 @@ describe("ChartController CDC bindings", () => {
       metadata: { createdBy: "visualization-editor" },
     }));
     expect(refreshedChart.visualization.layers[0].id).toBe("native");
+    const persistedNativeChart = await controller.findById(chart.id, null, {
+      reconcileVisualizationBindings: false,
+    });
+    expect(persistedNativeChart.visualization.layers[0].style.fill).toBe(true);
+
+    const expensesDataset = await models.Dataset.create({
+      team_id: team.id,
+      project_ids: [project.id],
+      draft: false,
+      name: "Expenses",
+      fieldsSchema: {
+        "root[].month": "string",
+        "root[].expenses": "number",
+      },
+    });
+    const expensesCdc = await controller.createChartDatasetConfig(chart.id, {
+      dataset_id: expensesDataset.id,
+      legend: "Expenses",
+      xAxis: "root[].month",
+      yAxis: "root[].expenses",
+      yAxisOperation: "sum",
+    });
+    refreshedChart = await controller.findById(chart.id);
+
+    expect(refreshedChart.visualization.metadata).toEqual({
+      createdBy: "visualization-editor",
+    });
+    expect(refreshedChart.visualization.layers).toHaveLength(2);
+    expect(refreshedChart.visualization.layers[0].id).toBe("native");
+    expect(refreshedChart.visualization.layers[1]).toEqual(expect.objectContaining({
+      bindingId: expensesCdc.id,
+      encoding: {
+        category: { field: "root[].month", type: "nominal" },
+        value: expect.objectContaining({
+          aggregate: "sum",
+          field: "root[].expenses",
+          type: "quantitative",
+        }),
+      },
+      mark: "bar",
+      name: "Expenses",
+    }));
+
+    await models.Chart.update(
+      { visualization: nativeVisualization },
+      { where: { id: chart.id } }
+    );
+    const storedChart = await controller.findById(chart.id, null, {
+      reconcileVisualizationBindings: false,
+    });
+    expect(storedChart.visualization.layers).toHaveLength(1);
+
+    refreshedChart = await controller.findById(chart.id);
+    expect(refreshedChart.visualization.layers).toHaveLength(2);
+    expect(refreshedChart.visualization.layers[1].bindingId).toBe(expensesCdc.id);
   });
 });

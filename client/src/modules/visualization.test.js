@@ -6,6 +6,7 @@ import {
   getPreferredDateField,
   getVisualizationTimeField,
   isVisualizationReady,
+  updateBindingFill,
   updateLayerField,
   updateLayerMark,
   updateLayerRowPath,
@@ -57,7 +58,86 @@ test("value-only marks remove axis encodings", () => {
   const next = updateLayerMark(visualization, "income", "kpi");
 
   assert.deepEqual(Object.keys(next.layers[0].encoding), ["value"]);
+  assert.deepEqual(
+    next.layers[0].options.markState.bar.encoding,
+    visualization.layers[0].encoding
+  );
   assert.equal(isVisualizationReady(next), true);
+});
+
+test("switching back from KPI restores the previous line fields", () => {
+  const lineVisualization = {
+    ...visualization,
+    layers: [{
+      ...visualization.layers[0],
+      mark: "line",
+      encoding: {
+        ...visualization.layers[0].encoding,
+        breakdown: { field: "root[].level", type: "nominal" },
+      },
+    }],
+  };
+  const kpi = updateLayerMark(lineVisualization, "income", "kpi");
+  const restored = updateLayerMark(kpi, "income", "line");
+
+  assert.deepEqual(restored.layers[0].encoding, lineVisualization.layers[0].encoding);
+  assert.equal(restored.layers[0].mark, "line");
+  assert.equal(restored.status, "ready");
+});
+
+test("each chart type remembers its own value aggregation", () => {
+  const average = updateLayerMark(visualization, "income", "avg");
+  const restored = updateLayerMark(average, "income", "bar");
+
+  assert.equal(average.layers[0].encoding.value.aggregate, "avg");
+  assert.equal(restored.layers[0].encoding.value.aggregate, "sum");
+});
+
+test("bar charts are filled by default and preserve an explicit bar fill choice", () => {
+  const lineVisualization = {
+    ...visualization,
+    layers: [{
+      ...visualization.layers[0],
+      mark: "line",
+      style: { fill: false },
+    }],
+  };
+  const bar = updateLayerMark(lineVisualization, "income", "bar");
+  const explicitlyUnfilled = {
+    ...bar,
+    layers: [{
+      ...bar.layers[0],
+      options: {
+        ...bar.layers[0].options,
+        markState: {
+          ...bar.layers[0].options.markState,
+          bar: { fill: false },
+        },
+      },
+      style: { ...bar.layers[0].style, fill: false },
+    }],
+  };
+  const restored = updateLayerMark(
+    updateLayerMark(explicitlyUnfilled, "income", "line"),
+    "income",
+    "bar"
+  );
+
+  assert.equal(bar.layers[0].style.fill, true);
+  assert.equal(bar.layers[0].style.fillOpacity, 0.65);
+  assert.equal(restored.layers[0].style.fill, false);
+});
+
+test("fill settings use one opacity while preserving each series hue", () => {
+  const next = updateBindingFill(visualization, "cdc-income", {
+    fill: true,
+    fillOpacity: 0.35,
+  });
+
+  assert.equal(next.layers[0].style.fill, true);
+  assert.equal(next.layers[0].style.fillOpacity, 0.35);
+  assert.equal(next.layers[0].style.fillColor, undefined);
+  assert.equal(next.layers[0].options.markState.bar.fillOpacity, 0.35);
 });
 
 test("add value reuses the dimension but creates a draft visual layer", () => {

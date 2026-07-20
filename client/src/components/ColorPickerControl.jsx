@@ -96,15 +96,17 @@ function ColorPickerControl(props) {
           </ColorSlider.Track>
         </ColorSlider>
 
-        <ColorSlider aria-label={`${ariaLabel} alpha`} channel="alpha" className="gap-1 px-1" colorSpace="rgb">
-          <div className="flex items-center justify-between text-xs font-medium text-muted">
-            <Label>Alpha</Label>
-            <ColorSlider.Output />
-          </div>
-          <ColorSlider.Track>
-            <ColorSlider.Thumb />
-          </ColorSlider.Track>
-        </ColorSlider>
+        {valueFormat !== "hex" && (
+          <ColorSlider aria-label={`${ariaLabel} alpha`} channel="alpha" className="gap-1 px-1" colorSpace="rgb">
+            <div className="flex items-center justify-between text-xs font-medium text-muted">
+              <Label>Alpha</Label>
+              <ColorSlider.Output />
+            </div>
+            <ColorSlider.Track>
+              <ColorSlider.Thumb />
+            </ColorSlider.Track>
+          </ColorSlider>
+        )}
 
         <ColorField aria-label={`${ariaLabel} hex input`}>
           <ColorField.Group variant="secondary">

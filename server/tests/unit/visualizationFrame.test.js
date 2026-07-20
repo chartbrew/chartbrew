@@ -257,6 +257,41 @@ describe("visualization frame builder", () => {
     expect(frame.layers[0].rows.map((row) => row.value)).toEqual([10, 30, 60]);
   });
 
+  it("calculates cumulative values independently for every breakdown series", () => {
+    const frame = buildVisualizationFrame({
+      visualization: {
+        version: 2,
+        layers: [{
+          id: "running-segments",
+          bindingId: "cdc-running-segments",
+          mark: "bar",
+          encoding: {
+            time: { field: "root[].date", timeUnit: "day", type: "temporal" },
+            value: { aggregate: "sum", field: "root[].value", type: "quantitative" },
+            breakdown: { field: "root[].segment", type: "nominal" },
+          },
+          transforms: [{ operation: "cumulativeSum", role: "value", type: "window" }],
+        }],
+      },
+      datasets: [{
+        options: { id: "cdc-running-segments" },
+        data: [
+          { date: "2026-02-01", segment: "Enterprise", value: 20 },
+          { date: "2026-01-01", segment: "Self-serve", value: 1 },
+          { date: "2026-01-01", segment: "Enterprise", value: 10 },
+          { date: "2026-03-01", segment: "Self-serve", value: 3 },
+          { date: "2026-02-01", segment: "Self-serve", value: 2 },
+        ],
+      }],
+    });
+    const rows = frame.layers[0].rows;
+
+    expect(rows.filter((row) => row.breakdown === "Enterprise").map((row) => row.value))
+      .toEqual([10, 30]);
+    expect(rows.filter((row) => row.breakdown === "Self-serve").map((row) => row.value))
+      .toEqual([1, 3, 6]);
+  });
+
   it("warns about high-cardinality breakdowns without densifying the frame", () => {
     const frame = buildVisualizationFrame({
       visualization: {

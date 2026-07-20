@@ -256,6 +256,9 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Persist canonical specs on edit and creation.
 - [x] Refresh legacy-owned persisted specs through an immutable follow-up migration.
 - [x] Synchronize legacy editor writes without overwriting native v2 specifications.
+- [x] Append an editable canonical layer when another dataset is attached to a native
+  visualization, without rebuilding existing layers or duplicating layers on retries. Reconcile
+  pre-existing missing binding layers at the API read boundary until the next edit persists them.
 - [ ] Track temporary fallback usage until it reaches zero.
 
 ### Runtime and compilers
@@ -270,17 +273,22 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [ ] Persist, edit, and consume goals, formulas, and growth through stable layer/series
   references instead of CDC or rendered-dataset array positions.
 - [x] Preserve runtime filtering and cache semantics.
+- [x] Mirror accumulation toggles into canonical cumulative-window transforms, partition running
+  totals by generated series, and carry sparse accumulated values across the shared time domain.
 - [x] Cover the existing public, shared, embedded, report, snapshot, template, and auto-update
   routes with the full integration regression suite.
 - [ ] Add direct golden assertions for alerts and metric selection against generated-series IDs.
+- [x] Add generated-series alert matching and structured email rendering unit coverage.
 
 ### Dependent systems audit
 
 - [x] Inventory CDC/dataset-to-series assumptions across server and client consumers.
-- [ ] Replace alert targeting by `cdc_id` with an explicit generated-series metric target, with
-  `specific series`, `any series`, and aggregate scopes.
-- [ ] Migrate or pause ambiguous existing alerts instead of silently targeting the first generated
-  series; include the series identity in alert-event deduplication.
+- [x] Preserve existing `cdc_id` alert ownership as an `any generated series` scope and evaluate
+  every runtime series produced by that binding in one grouped notification.
+- [x] Include stable series and layer identity in new alert events and deduplicate time-series
+  triggers by series plus point instead of point label alone.
+- [ ] Consider optional `specific series` and aggregate alert scopes after the dataset-scoped alert
+  workflow has production usage; generated series must never be persisted as CDC rows.
 - [ ] Move formula, goal, sort, and limit ownership from the data binding to the value layer where
   the behavior is presentation-specific.
 - [ ] Define goal semantics and UX for per-series, repeated-per-series, and combined-total goals.
@@ -310,6 +318,12 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Allow a selected breakdown field to be cleared without removing its dataset or value.
 - [x] Replace Add metric/Add layer terminology with a contextual Add another value action; keep
   visual layers internal to the engine.
+- [x] Restore dataset-label editing and synchronize the primary canonical value label without
+  overwriting labels for additional values or generated breakdown series.
+- [x] Fill newly selected bar marks by default while preserving an explicit per-mark unfilled
+  choice and keeping the Display control aligned with canonical style state.
+- [x] Derive Cartesian backgrounds from each series color, with one fill toggle and HeroUI alpha
+  slider per dataset instead of separate background-color choices.
 - [ ] Add cardinality, Top N/Other, null, and missing-value controls.
 - [x] Assign distinct stable palette colors to generated series and expose per-series Display
   overrides with an automatic-color reset.
@@ -320,6 +334,8 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Verify no new avoidable `useEffect` state synchronization.
 - [x] Keep the existing ChartPreview toolbar as the single visualization-type control; the
   semantic Build panel reacts to it without presenting a duplicate selector.
+- [x] Preserve per-chart-type field configuration so value-only and passthrough marks do not erase
+  category, time, breakdown, row-path, or aggregation choices when users switch back.
 - [x] Verify semantic controls, accessible labels, and light/dark behavior on desktop.
 - [ ] Verify the complete editor at phone widths after the existing global Sidebar shell overflow
   is fixed.
@@ -396,3 +412,28 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - 2026-07-20: Added the native HeroUI autocomplete clear action to the optional breakdown field.
   Clearing it removes the breakdown encoding, generated-series configuration, and saved selection
   while preserving the dataset, category, and value fields.
+- 2026-07-20: Updated dataset alerts to evaluate every generated series for their binding and send
+  one grouped notification per alert. New alert-event triggers carry stable series/layer identity,
+  sparse nulls cannot trigger numeric rules, and email/webhook entries identify the matching series,
+  category or date, and value. Existing single-series alerts retain their original scope without a
+  database migration.
+- 2026-07-20: Made visualization-type switching non-destructive. Each layer now remembers the field
+  encoding and row collection used by every visited chart type; Line/Bar category, time, breakdown,
+  value, and aggregation settings are restored after visiting KPI, Average, Gauge, Table, or a
+  category chart. Inactive fields remain outside the active compiler contract.
+- 2026-07-20: Fixed additional-dataset setup for native visualizations. Creating another data
+  binding now appends one canonical layer with inferred fields, preserves all existing native
+  layers and metadata, and remains idempotent across retries. Canonical chart reads also reconcile
+  bindings added before the fix without mutating the database. The client query refresh receives
+  the updated specification, so the new dataset's field selectors appear in Build immediately.
+- 2026-07-20: Restored dataset-label editing in Build without adding derived-state effects. A rename
+  updates the CDC and primary canonical layer/value label, while labels for additional values and
+  generated breakdown series remain independent.
+- 2026-07-20: Restored accumulation for native multi-series charts. The chart toggle now adds or
+  removes a cumulative-window transform on every compatible layer; running totals are partitioned
+  by stable breakdown value and carried across sparse dates. Bar marks now start filled, while an
+  explicit unfilled choice is remembered when switching visualization types.
+- 2026-07-20: Simplified Cartesian fill styling in Display. Line and bar series now reuse their
+  own automatic or overridden hue for the background, while one toggle and HeroUI alpha slider
+  control whether it is filled and how strongly. Per-mark fill state survives chart-type changes,
+  and untouched legacy fill colors remain compatible until the new control is used.

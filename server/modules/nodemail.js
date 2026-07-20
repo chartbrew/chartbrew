@@ -41,6 +41,12 @@ async function renderEmailTemplate(templateName, props) {
   }));
 }
 
+function formatChartAlertItem(item) {
+  if (typeof item === "string") return item;
+  const series = item.seriesLabel ? `${item.seriesLabel} — ` : "";
+  return `${series}${item.label}: ${item.value}`;
+}
+
 module.exports.sendInvite = (invite, admin, teamName) => {
   const inviteUrl = `${settings.client}/invite?team_id=${invite.team_id}&token=${invite.token}`;
 
@@ -109,7 +115,7 @@ module.exports.sendChartAlert = async (data) => {
   message.text += `${data.thresholdText}`;
   message.text += "\n";
   for (let i = 0; i < data.alerts.length; i++) {
-    message.text += `${data.alerts[i]}`;
+    message.text += formatChartAlertItem(data.alerts[i]);
     message.text += "\n";
   }
   message.text += `Check your dashboard here: ${data.dashboardUrl}`;

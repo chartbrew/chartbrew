@@ -67,7 +67,17 @@ describe("nodemail React Email templates", () => {
       chartName: "Revenue by day",
       recipients: ["alerts@example.com"],
       thresholdText: "Chartbrew found some values above your threshold of 200.",
-      alerts: ["2026-04-03: 245", "2026-04-04: 261"],
+      alerts: [{
+        label: "2026-04-03",
+        seriesId: "enterprise",
+        seriesLabel: "Enterprise",
+        value: 245,
+      }, {
+        label: "2026-04-04",
+        seriesId: "self-serve",
+        seriesLabel: "Self-serve",
+        value: 261,
+      }],
       dashboardUrl,
       snapshotUrl,
     });
@@ -75,9 +85,10 @@ describe("nodemail React Email templates", () => {
     const message = JSON.parse(result.message);
     const html = normalizeHtml(message.html);
     expect(message.subject).toBe("Chartbrew - Revenue by day alert");
-    expect(message.text).toContain("2026-04-03: 245");
+    expect(message.text).toContain("Enterprise — 2026-04-03: 245");
     expect(message.text).toContain(dashboardUrl);
     expect(html).toContain("Revenue by day has a new alert");
+    expect(html).toContain("Enterprise");
     expect(html).toContain("2026-04-04: 261");
     expect(html).toContain(snapshotUrl);
     expect(html).toContain(dashboardUrl);
