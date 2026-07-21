@@ -51,8 +51,12 @@ function buildChartMetrics(configuration, configs, chart) {
     if (current !== null) {
       const comparison = getGrowth(current, previous, Boolean(chart.invertGrowth));
       growth.push({
+        color: config.datasetColor || null,
         comparison,
+        datasetIndex: index,
         label: dataset.label,
+        layerId: config.layerId || dataset.layerId || null,
+        seriesId: config.id || dataset.id || null,
         status: getStatus(comparison),
         value: formatMetricValue(current, config.formula),
       });
@@ -65,7 +69,9 @@ function buildChartMetrics(configuration, configs, chart) {
         formattedMax: `${parsed.prefix}${formatCompactNumber(goal)}${parsed.suffix}`,
         formattedValue: formatMetricValue(current, config.formula),
         goalIndex: index,
+        layerId: config.layerId || dataset.layerId || null,
         max: goal,
+        seriesId: config.id || dataset.id || null,
         value: current,
       });
     }

@@ -21,6 +21,28 @@ class NewPieChart {
       mode: "nearest",
     };
 
+    if (this.chart.type === "pie") {
+      config.data.datasets = config.data.datasets.map((dataset) => ({
+        ...dataset,
+        borderColor: "transparent",
+        borderWidth: 0,
+        hoverBorderWidth: 0,
+        hoverOffset: 4,
+        spacing: 0,
+      }));
+    }
+
+    if (this.chart.type === "doughnut") {
+      config.data.datasets = config.data.datasets.map((dataset) => ({
+        ...dataset,
+        borderColor: "transparent",
+        borderWidth: 2,
+        hoverBorderWidth: 2,
+        hoverOffset: 4,
+        spacing: 0,
+      }));
+    }
+
     return config;
   }
 }

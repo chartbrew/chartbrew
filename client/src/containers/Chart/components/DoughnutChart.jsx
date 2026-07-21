@@ -74,6 +74,16 @@ const dataLabelsPlugin = {
   borderRadius: 4,
 };
 
+function getChartSurfaceColor(context, fallback) {
+  let element = context?.chart?.canvas;
+  while (element) {
+    const color = globalThis.getComputedStyle?.(element).backgroundColor;
+    if (color && color !== "transparent" && color !== "rgba(0, 0, 0, 0)") return color;
+    element = element.parentElement;
+  }
+  return fallback;
+}
+
 function DoughnutChart(props) {
   const {
     chart, redraw, redrawComplete,
@@ -136,6 +146,13 @@ function DoughnutChart(props) {
 
     // Ensure backgroundColor array exists and has enough colors
     data.datasets = data.datasets.map(dataset => {
+      const surfaceFallback = semanticColors[theme].content1.DEFAULT;
+      dataset.borderColor = (context) => getChartSurfaceColor(context, surfaceFallback);
+      dataset.borderWidth = 2;
+      dataset.hoverBorderColor = dataset.borderColor;
+      dataset.hoverBorderWidth = 2;
+      dataset.spacing = 0;
+
       // If dataset already has backgroundColor array, use it
       if (dataset.backgroundColor && Array.isArray(dataset.backgroundColor)) {
         return dataset;

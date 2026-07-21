@@ -1,6 +1,6 @@
 # Data Visualization Pipeline
 
-This document explains how Chartbrew connects to data sources, creates datasets, and generates visualizations. This is critical documentation for understanding the charting algorithm before any rewrite.
+This document explains how Chartbrew connects to data sources, creates datasets, and compiles canonical visualization specifications.
 
 ## Architecture Overview
 
@@ -10,8 +10,10 @@ The data flow follows this hierarchy:
 flowchart TD
     Connection[Connection<br/>Data Source] -->|executes| DataRequest[DataRequest<br/>Query]
     DataRequest -->|belongs to| Dataset[Dataset<br/>Reusable Data + Joins]
-    Dataset -->|bound through| ChartDatasetConfig[ChartDatasetConfig<br/>Active Viz Settings]
-    ChartDatasetConfig -->|belongs to| Chart[Chart<br/>Visualization]
+    Dataset -->|bound through| ChartDatasetConfig[ChartDatasetConfig<br/>Data Binding + Compatibility]
+    ChartDatasetConfig -->|referenced by bindingId| Visualization[Chart.visualization<br/>Semantic Layers]
+    Visualization -->|compiled by| Engine[VisualizationEngine<br/>VizFrame + Output Compiler]
+    Engine --> Chart[Chart.js / Table / Export Payload]
     
     VariableBinding[VariableBinding] -.->|can attach to| DataRequest
     VariableBinding -.->|can attach to| Dataset
@@ -108,7 +110,7 @@ A DataRequest represents a single query to a Connection. Multiple DataRequests c
 
 A Dataset represents reusable source data and join configuration. It owns the query grouping, access scope, schema, and join behavior, but it no longer owns the active chart visualization settings.
 
-The old dataset-side visualization fields still exist in [`models/models/dataset.js`](../../models/models/dataset.js) as legacy/compatibility fields. New chart rendering should read and write visualization settings through ChartDatasetConfig.
+The old dataset-side visualization fields still exist in [`models/models/dataset.js`](../../models/models/dataset.js) as legacy compatibility fields. New chart rendering reads semantic fields and presentation settings from `Chart.visualization`; ChartDatasetConfig remains the reusable-data binding and compatibility bridge.
 
 ### Core Fields
 
@@ -167,14 +169,15 @@ These fields remain on Dataset for older charts and callers during the CDC migra
 
 ### Overview
 
-ChartDatasetConfig maps Datasets to Charts and is now the active visualization layer. It allows one reusable Dataset to appear in multiple Charts, or multiple times in the same Chart, with different axes, filters, formulas, table settings, colors, labels, ordering, and variable overrides.
+ChartDatasetConfig maps Datasets to Charts. A canonical visualization layer references it through `bindingId`, allowing one dataset result to power multiple value layers and generated breakdown series without adding CDC rows.
 
-During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, then calls `resolveChartDatasetOptions(cdc, dataset.options)` so CDC fields override any legacy Dataset options before AxisChart/TableView receives the data.
+During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, overlays compatibility options, and passes the bound results to `VisualizationEngine`. The engine filters rows, builds a sparse `VizFrame`, and selects the Chart.js, metric, table, matrix, markdown, or export compiler.
 
 ### Ownership Rule
 
 - Dataset owns source/query concerns: DataRequests, joins, schema, access scope, and reusable dataset name.
-- ChartDatasetConfig owns chart-specific visualization concerns: axes, aggregations, date parsing, conditions, formula, legend, colors, table settings, record limits, goals, order, and CDC variable defaults.
+- `Chart.visualization.layers` owns semantic fields, aggregation, breakdown, transforms, formulas, goals, generated-series settings, and styles.
+- ChartDatasetConfig owns the dataset binding, query-variable defaults, chart-local conditions, date-filter compatibility, and legacy fields required by unmigrated callers.
 - Dataset legacy visualization fields are fallback compatibility only. Do not add new visualization behavior to Dataset.
 
 ### Configuration Fields
@@ -234,7 +237,7 @@ During chart rendering, [`ChartController.updateChartData()`](../../controllers/
 
 **Location**: Lines 297-512 in [`ChartController.js`](../../controllers/ChartController.js)
 
-This is **THE charting pipeline** - critical for understanding before any rewrite.
+This is the chart-runtime entry point. `VisualizationEngine` is the presentation boundary; do not add new parsing behavior to `AxisChart`.
 
 #### Parameters
 

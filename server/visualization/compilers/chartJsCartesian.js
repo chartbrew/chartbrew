@@ -7,6 +7,7 @@ const { expandTimeValues, formatTimeValues } = require("../time");
 const { applyValueFormula } = require("../valueFormula");
 
 const SERIES_COLORS = Object.values(chartColors).map((color) => color.hex);
+const DEFAULT_RADAR_FILL_OPACITY = 0.15;
 
 function clampOpacity(opacity) {
   const numericOpacity = Number(opacity);
@@ -78,19 +79,26 @@ function getSeriesStyle(layer, series, options = {}) {
   const isBreakdown = Boolean(layer.encoding.breakdown);
   const defaultColor = isBreakdown ? generatedColor : layer.style?.color || generatedColor;
   const color = override.color || defaultColor;
-  const fillOpacity = clampOpacity(override.fillOpacity ?? layer.style?.fillOpacity);
-  const defaultFillColor = isBreakdown ? color : layer.style?.fillColor || color;
+  const configuredFillOpacity = clampOpacity(override.fillOpacity ?? layer.style?.fillOpacity);
+  const fillOpacity = configuredFillOpacity === null && layer.mark === "radar"
+    ? DEFAULT_RADAR_FILL_OPACITY
+    : configuredFillOpacity;
+  const defaultFillColor = layer.mark === "radar" || isBreakdown
+    ? color
+    : layer.style?.fillColor || color;
   const fillColor = fillOpacity === null
     ? override.fillColor || defaultFillColor
     : applyColorAlpha(color, fillOpacity);
 
   return {
     datasetColor: color,
-    fill: override.fill ?? layer.style?.fill ?? isBreakdown,
+    fill: override.fill ?? layer.style?.fill ?? (layer.mark === "radar" ? false : isBreakdown),
     fillColor,
     fillOpacity,
     legend: override.label || series.label,
-    multiFill: override.multiFill ?? layer.style?.multiFill ?? false,
+    multiFill: layer.mark === "radar"
+      ? false
+      : override.multiFill ?? layer.style?.multiFill ?? false,
     pointRadius: override.pointRadius ?? layer.style?.pointRadius ?? null,
   };
 }
@@ -197,6 +205,7 @@ function buildChartJsDatasets(frame, spec, domain, missingValue) {
         formula: layer.encoding.value?.formula || null,
         goal: layer.encoding.breakdown ? null : layer.goal ?? null,
         id: series.id,
+        layerId: layer.id,
       });
     });
   });

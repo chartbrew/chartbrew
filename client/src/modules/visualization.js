@@ -19,6 +19,7 @@ const METRIC_MARKS = new Set(["kpi", "avg", "gauge"]);
 const CATEGORY_MARKS = new Set(["pie", "doughnut", "radar", "polar"]);
 const DEFAULT_BAR_FILL_OPACITY = 0.65;
 const DEFAULT_LINE_FILL_OPACITY = 0.2;
+const DEFAULT_RADAR_FILL_OPACITY = 0.15;
 
 function createLayerId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -177,7 +178,7 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fill = saved.fill;
   } else if (mark === "bar") {
     style.fill = true;
-  } else if (mark === "line") {
+  } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
@@ -186,6 +187,12 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
+  } else if (mark === "radar") {
+    style.fillOpacity = DEFAULT_RADAR_FILL_OPACITY;
+  }
+  if (mark === "radar") {
+    delete style.fillColor;
+    style.multiFill = false;
   }
   return style;
 }
@@ -195,7 +202,7 @@ export function updateLayerMark(visualization, layerId, mark) {
     const savedMark = layer.options?.markState?.[mark] || {};
     if (layer.mark === mark) {
       if (
-        !["bar", "line"].includes(mark)
+        !["bar", "line", "radar"].includes(mark)
         || (
           Object.prototype.hasOwnProperty.call(savedMark, "fill")
           && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -248,7 +255,11 @@ export function updateBindingFill(visualization, bindingId, { fill, fillOpacity 
       fill: Boolean(fill),
       fillOpacity: Number.isFinite(normalizedOpacity)
         ? normalizedOpacity
-        : (layer.mark === "bar" ? DEFAULT_BAR_FILL_OPACITY : DEFAULT_LINE_FILL_OPACITY),
+        : layer.mark === "bar"
+          ? DEFAULT_BAR_FILL_OPACITY
+          : layer.mark === "radar"
+            ? DEFAULT_RADAR_FILL_OPACITY
+            : DEFAULT_LINE_FILL_OPACITY,
       multiFill: false,
     };
     delete style.fillColor;
@@ -320,6 +331,19 @@ export function updateLayerGoal(visualization, layerId, goal) {
   return updateVisualizationLayer(visualization, layerId, (layer) => ({
     ...layer,
     goal: goal === null || goal === "" ? null : Number(goal),
+  }));
+}
+
+export function updateLayerFormula(visualization, layerId, formula) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => ({
+    ...layer,
+    encoding: {
+      ...layer.encoding,
+      value: {
+        ...layer.encoding?.value,
+        formula: formula || null,
+      },
+    },
   }));
 }
 

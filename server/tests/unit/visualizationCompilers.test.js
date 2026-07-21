@@ -46,7 +46,92 @@ describe("visualization output compilers", () => {
     expect(result.configuration.data.labels).toEqual(["Direct", "Partner"]);
     expect(result.configuration.data.datasets).toHaveLength(1);
     expect(result.configuration.data.datasets[0].data).toEqual([55, 25]);
+    expect(result.configuration.data.datasets[0].backgroundColor).toHaveLength(2);
+    expect(result.configuration.meta.categories.map((category) => category.label))
+      .toEqual(["Direct", "Partner"]);
+    expect(result.configuration.meta.categories.map((category) => category.color))
+      .toEqual(result.configuration.data.datasets[0].backgroundColor);
+    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
+      borderColor: "transparent",
+      borderWidth: 2,
+      hoverBorderWidth: 2,
+      hoverOffset: 4,
+      spacing: 0,
+    }));
     expect(result.configuration.options.scales.x.display).toBe(false);
+  });
+
+  it("uses the same neutral arc treatment for pie charts", () => {
+    const result = buildEngine("pie", {
+      category: { field: "root[].channel", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [
+      { channel: "Direct", revenue: 55 },
+      { channel: "Partner", revenue: 25 },
+    ]).render();
+
+    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
+      borderColor: "transparent",
+      borderWidth: 0,
+      hoverOffset: 4,
+      spacing: 0,
+    }));
+  });
+
+  it("keeps category slice colors stable and supports canonical overrides", () => {
+    const data = [
+      { channel: "Direct", revenue: 55 },
+      { channel: "Partner", revenue: 25 },
+    ];
+    const automatic = buildEngine("doughnut", {
+      category: { field: "root[].channel", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, data).render();
+    const direct = automatic.configuration.meta.categories.find((category) => {
+      return category.label === "Direct";
+    });
+    const overridden = buildEngine("doughnut", {
+      category: { field: "root[].channel", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [...data].reverse(), {
+      style: { series: { [direct.id]: { color: "#112233" } } },
+    }).render();
+    const overriddenDirect = overridden.configuration.meta.categories.find((category) => {
+      return category.label === "Direct";
+    });
+
+    expect(overriddenDirect.id).toBe(direct.id);
+    expect(overriddenDirect.color).toBe("#112233");
+    expect(overridden.configuration.data.datasets[0].backgroundColor[
+      overridden.configuration.data.labels.indexOf("Direct")
+    ]).toBe("#112233");
+  });
+
+  it("compiles radar fill from the series primary color and opacity", () => {
+    const result = buildEngine("radar", {
+      category: { field: "root[].team", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].score", type: "quantitative" },
+    }, [
+      { score: 80, team: "Sales" },
+      { score: 65, team: "Marketing" },
+      { score: 90, team: "Development" },
+    ], {
+      style: {
+        color: "#2563EB",
+        fill: true,
+        fillColor: "#DB2777",
+        fillOpacity: 0.2,
+        multiFill: true,
+      },
+    }).render();
+
+    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
+      backgroundColor: "rgba(37, 99, 235, 0.2)",
+      borderColor: "#2563EB",
+      datalabels: { display: false },
+      fill: true,
+    }));
+    expect(result.configuration.data.datasets[0].backgroundColor).not.toBeInstanceOf(Array);
   });
 
   it("compiles a value-only KPI with a formula and goal", () => {

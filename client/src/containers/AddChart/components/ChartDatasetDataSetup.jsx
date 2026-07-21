@@ -117,11 +117,13 @@ function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
         variant="secondary"
         onChange={setLimit}
       >
-        <Label>Top series</Label>
+        <Label>Show top series</Label>
         <NumberField.Group>
-          <NumberField.Input placeholder="Show every series" />
+          <NumberField.DecrementButton />
+          <NumberField.Input size="" />
+          <NumberField.IncrementButton />
         </NumberField.Group>
-        <Description>Ranks series by their total value across the chart.</Description>
+        <Description>Limit the number of series to show.</Description>
       </NumberField>
       <Switch
         className="mt-3"

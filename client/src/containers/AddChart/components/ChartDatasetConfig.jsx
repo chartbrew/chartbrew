@@ -61,6 +61,7 @@ import ColorPickerControl from "../../../components/ColorPickerControl";
 import { getRgbColorChannels } from "../../../modules/colorPicker";
 import {
   updateBindingFill,
+  updateLayerFormula,
   updateLayerSeriesOptions,
   updateSeriesColor,
 } from "../../../modules/visualization";
@@ -95,26 +96,27 @@ function FillOpacityControl(props) {
         </Switch.Content>
       </Switch>
 
-      <ColorSlider
-        aria-label="Fill opacity"
-        channel="alpha"
-        className="mt-3 gap-1"
-        colorSpace="rgb"
-        defaultValue={getFillSliderColor(color, opacity)}
-        isDisabled={!fill}
-        onChangeEnd={(nextColor) => {
-          const nextOpacity = nextColor.toFormat("rgb").getChannelValue("alpha");
-          onOpacityChange(Number(nextOpacity.toFixed(2)));
-        }}
-      >
-        <div className="flex items-center justify-between text-xs font-medium text-muted">
-          <Label>Opacity</Label>
-          <ColorSlider.Output />
-        </div>
-        <ColorSlider.Track>
-          <ColorSlider.Thumb />
-        </ColorSlider.Track>
-      </ColorSlider>
+      {fill && (
+        <ColorSlider
+          aria-label="Fill opacity"
+          channel="alpha"
+          className="mt-3 gap-1"
+          colorSpace="rgb"
+          defaultValue={getFillSliderColor(color, opacity)}
+          onChangeEnd={(nextColor) => {
+            const nextOpacity = nextColor.toFormat("rgb").getChannelValue("alpha");
+            onOpacityChange(Number(nextOpacity.toFixed(2)));
+          }}
+        >
+          <div className="flex items-center justify-between text-xs font-medium text-muted">
+            <Label>Opacity</Label>
+            <ColorSlider.Output />
+          </div>
+          <ColorSlider.Track>
+            <ColorSlider.Thumb />
+          </ColorSlider.Track>
+        </ColorSlider>
+      )}
     </div>
   );
 }
@@ -205,7 +207,13 @@ function ChartDatasetConfig(props) {
   ).filter((series) => {
     return bindingLayerIds.has(series.layerId);
   });
-  const usesGeneratedSeriesColors = runtimeSeries.length > 0 && (
+  const runtimeCategories = (chart?.chartData?.meta?.categories || []).filter((category) => {
+    return bindingLayerIds.has(category.layerId);
+  });
+  const usesCategorySliceColors = ["pie", "doughnut", "polar"].includes(chart?.type)
+    && runtimeCategories.length > 0;
+  const colorItems = usesCategorySliceColors ? runtimeCategories : runtimeSeries;
+  const usesGeneratedSeriesColors = usesCategorySliceColors || runtimeSeries.length > 0 && (
     runtimeSeries.length > 1
     || bindingLayers.some((layer) => Boolean(layer.encoding?.breakdown))
   );
@@ -506,16 +514,34 @@ function ChartDatasetConfig(props) {
 
   const _onExampleFormula = () => {
     setFormula("${val / 100}");
-    _onUpdateCdc({ formula: "${val / 100}" });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula: "${val / 100}" },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, "${val / 100}"),
+    });
   };
 
   const _onRemoveFormula = () => {
     setFormula("");
-    _onUpdateCdc({ formula: "" });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula: "" },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, null),
+    });
   };
 
   const _onApplyFormula = () => {
-    _onUpdateCdc({ formula });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, formula),
+    });
   };
 
   const _onSaveVariableValue = (variableName, value) => {
@@ -595,12 +621,12 @@ function ChartDatasetConfig(props) {
   const configuredFillOpacity = fillLayer?.style?.fillOpacity;
   const fillOpacity = Number.isFinite(configuredFillOpacity)
     ? Math.min(1, Math.max(0, configuredFillOpacity))
-    : (chart.type === "bar" ? 0.65 : 0.2);
+    : (chart.type === "bar" ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
   const fillBaseColor = runtimeSeries[0]
     ? _getSeriesColor(runtimeSeries[0])
     : cdc.datasetColor || chartColors.blue.hex;
-  const visibleRuntimeSeries = runtimeSeries.filter((series) => {
-    return series.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
+  const visibleColorItems = colorItems.filter((item) => {
+    return item.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
   });
 
   return (
@@ -652,11 +678,13 @@ function ChartDatasetConfig(props) {
           {chart.type !== "table" && (
             <>
               <div className="chart-cdc-colors">
-                <div className="font-bold">{"Series colors"}</div>
+                <div className="font-bold">
+                  {usesCategorySliceColors ? "Slice colors" : "Series colors"}
+                </div>
 
                 {usesGeneratedSeriesColors ? (
                   <>
-                    {runtimeSeries.length > 6 && (
+                    {colorItems.length > 6 && (
                       <SearchField
                         className="mt-2"
                         name={`series-search-${cdc.id}`}
@@ -667,14 +695,14 @@ function ChartDatasetConfig(props) {
                         <Label>Find a series</Label>
                         <SearchField.Group>
                           <SearchField.SearchIcon />
-                          <SearchField.Input placeholder="Search generated series" />
+                          <SearchField.Input placeholder={usesCategorySliceColors ? "Search slices" : "Search generated series"} />
                           <SearchField.ClearButton />
                         </SearchField.Group>
                       </SearchField>
                     )}
                     <ScrollShadow className="mt-2 max-h-[240px]">
                       <div className="flex flex-col gap-1 py-1">
-                        {visibleRuntimeSeries.map((series) => {
+                        {visibleColorItems.map((series) => {
                           const seriesColor = _getSeriesColor(series);
                           const overrideColor = _getSeriesOverrideColor(series);
                           const seriesOptions = _getLayerSeriesOptions(series);
@@ -709,35 +737,39 @@ function ChartDatasetConfig(props) {
                                   valueFormat="hex"
                                 />
                               </div>
-                              <Button
-                                aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
-                                isIconOnly
-                                size="sm"
-                                variant="tertiary"
-                                onPress={() => _onToggleSeries(series)}
-                              >
-                                {isHidden ? <LuEyeOff /> : <LuEye />}
-                              </Button>
-                              <Button
-                                aria-label={`Move ${series.label} up`}
-                                isDisabled={seriesIndex === 0}
-                                isIconOnly
-                                size="sm"
-                                variant="tertiary"
-                                onPress={() => _onMoveSeries(series, -1)}
-                              >
-                                <LuChevronUp />
-                              </Button>
-                              <Button
-                                aria-label={`Move ${series.label} down`}
-                                isDisabled={seriesIndex === layerSeries.length - 1}
-                                isIconOnly
-                                size="sm"
-                                variant="tertiary"
-                                onPress={() => _onMoveSeries(series, 1)}
-                              >
-                                <LuChevronDown />
-                              </Button>
+                              {!usesCategorySliceColors && (
+                                <>
+                                  <Button
+                                    aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onToggleSeries(series)}
+                                  >
+                                    {isHidden ? <LuEyeOff /> : <LuEye />}
+                                  </Button>
+                                  <Button
+                                    aria-label={`Move ${series.label} up`}
+                                    isDisabled={seriesIndex === 0}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onMoveSeries(series, -1)}
+                                  >
+                                    <LuChevronUp />
+                                  </Button>
+                                  <Button
+                                    aria-label={`Move ${series.label} down`}
+                                    isDisabled={seriesIndex === layerSeries.length - 1}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onMoveSeries(series, 1)}
+                                  >
+                                    <LuChevronDown />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           );
                         })}
@@ -767,7 +799,7 @@ function ChartDatasetConfig(props) {
                     </div>
                     <div className="h-2" />
 
-                    {!["line", "bar", "matrix"].includes(chart.type) && (
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
                       <Row align={"center"} justify={"space-between"}>
                         <Row align={"center"}>
                           <Checkbox
@@ -806,7 +838,7 @@ function ChartDatasetConfig(props) {
                     )}
                     <div className="h-2" />
 
-                    {!["line", "bar", "matrix"].includes(chart.type) && (
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
                       <Row>
                         <Checkbox
                           id={`cdc-multifill-${cdc.id}`}
@@ -826,7 +858,7 @@ function ChartDatasetConfig(props) {
                       </Row>
                     )}
 
-                    {!["line", "bar", "matrix"].includes(chart.type) && cdc.multiFill && (
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && cdc.multiFill && (
                       <>
                         <div className="h-4" />
                         <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
@@ -857,7 +889,7 @@ function ChartDatasetConfig(props) {
                   </>
                 )}
 
-                {["line", "bar"].includes(chart.type) && (
+                {["line", "bar", "radar"].includes(chart.type) && (
                   <>
                     <div className="h-4" />
                     <FillOpacityControl

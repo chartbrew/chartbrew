@@ -2,6 +2,7 @@ const { validateVisualizationSpec } = require("./spec");
 
 const DEFAULT_BAR_FILL_OPACITY = 0.65;
 const DEFAULT_LINE_FILL_OPACITY = 0.2;
+const DEFAULT_RADAR_FILL_OPACITY = 0.15;
 
 function cloneVisualization(visualization) {
   return JSON.parse(JSON.stringify(visualization));
@@ -78,7 +79,7 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fill = saved.fill;
   } else if (mark === "bar") {
     style.fill = true;
-  } else if (mark === "line") {
+  } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
@@ -87,6 +88,12 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
+  } else if (mark === "radar") {
+    style.fillOpacity = DEFAULT_RADAR_FILL_OPACITY;
+  }
+  if (mark === "radar") {
+    delete style.fillColor;
+    style.multiFill = false;
   }
   return style;
 }
@@ -95,7 +102,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["bar", "line"].includes(mark)
+      !["bar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")

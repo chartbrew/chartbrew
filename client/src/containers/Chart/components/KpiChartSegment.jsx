@@ -65,11 +65,7 @@ function KpiChartSegment(props) {
               <div>
                 <Text size="sm" className={"text-default-600"}>
                   <span
-                    style={
-                      chart.ChartDatasetConfigs
-                      && chart.ChartDatasetConfigs[index]
-                      && styles.datasetLabelColor(chart.ChartDatasetConfigs[index].datasetColor)
-                    }
+                    style={c.color ? styles.datasetLabelColor(c.color) : undefined}
                   >
                     {c.label}
                   </span>

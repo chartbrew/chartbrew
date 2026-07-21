@@ -172,6 +172,29 @@ describe("native visualization compatibility updates", () => {
     expect(roundTrip.layers[0].style.fill).toBe(false);
   });
 
+  it("initializes radar charts with an optional same-color fill", () => {
+    const radar = applyChartCompatibilityUpdate({
+      ...nativeVisualization,
+      layers: [{
+        ...nativeVisualization.layers[0],
+        style: {
+          color: "#2563EB",
+          fill: true,
+          fillColor: "#DB2777",
+          multiFill: true,
+        },
+      }],
+    }, { type: "radar" });
+
+    expect(radar.layers[0].style).toEqual(expect.objectContaining({
+      color: "#2563EB",
+      fill: false,
+      fillOpacity: 0.15,
+      multiFill: false,
+    }));
+    expect(radar.layers[0].style.fillColor).toBeUndefined();
+  });
+
   it("initializes the row collection when the preview control selects a table", () => {
     const next = applyChartCompatibilityUpdate(nativeVisualization, { type: "table" });
 

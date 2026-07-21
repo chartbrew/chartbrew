@@ -135,6 +135,11 @@ function PieChart(props) {
 
     // Ensure backgroundColor array exists and has enough colors
     data.datasets = data.datasets.map(dataset => {
+      dataset.borderColor = "transparent";
+      dataset.borderWidth = 0;
+      dataset.hoverBorderWidth = 0;
+      dataset.spacing = 0;
+
       // If dataset already has backgroundColor array, use it
       if (dataset.backgroundColor && Array.isArray(dataset.backgroundColor)) {
         return dataset;

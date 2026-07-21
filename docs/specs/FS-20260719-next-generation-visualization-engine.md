@@ -270,7 +270,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Compile table, matrix, and markdown frames.
 - [x] Move export to the canonical filtered binding/frame pipeline.
 - [x] Compile formulas, goals, and growth metadata for generated series.
-- [ ] Persist, edit, and consume formulas and growth through stable layer/series references
+- [x] Persist, edit, and consume formulas and growth through stable layer/series references
   instead of CDC or rendered-dataset array positions.
 - [x] Persist, edit, and consume KPI goals on the selected canonical value layer while retaining
   the CDC goal only as a primary-layer legacy compatibility field.
@@ -279,7 +279,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   totals by generated series, and carry sparse accumulated values across the shared time domain.
 - [x] Cover the existing public, shared, embedded, report, snapshot, template, and auto-update
   routes with the full integration regression suite.
-- [ ] Add direct golden assertions for alerts and metric selection against generated-series IDs.
+- [x] Add direct golden assertions for alerts and metric selection against generated-series IDs.
 - [x] Add generated-series alert matching and structured email rendering unit coverage.
 
 ### Dependent systems audit
@@ -293,8 +293,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   workflow has production usage; generated series must never be persisted as CDC rows.
 - [ ] Move formula, goal, sort, and limit ownership from the data binding to the value layer where
   the behavior is presentation-specific.
-- [ ] Define goal semantics and UX for per-series, repeated-per-series, and combined-total goals.
-- [ ] Key KPI growth and goal metadata by stable series ID; remove positional CDC lookups and keep
+- [x] Define goal semantics and UX: goals belong to a value layer and are intentionally suppressed
+  when breakdown produces multiple generated series; per-series and combined goals are future scopes.
+- [x] Key KPI growth and goal metadata by stable series ID; retain positional fields only as a
+  legacy-client fallback and keep
   sparse metric output aligned.
 - [x] Define and test separate `chart as shown` and `source rows` export contracts; ensure generated
   series, goals, colors, and multiple value layers export predictably.
@@ -304,10 +306,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   category, value, time, and breakdown encodings.
 - [x] Constrain orchestrator chart-tool schemas to canonical semantic encoding roles, repair known
   X/Y aliases, and validate complete AI visualization specifications before persistence.
-- [ ] Generalize color editing from generated series to category slices for pie, doughnut, and polar
+- [x] Generalize color editing from generated series to category slices for pie, doughnut, and polar
   visualizations.
 - [x] Add generated-series payload assertions for embedded/snapshot and report delivery paths.
-- [ ] Add remaining generated-series golden assertions for public, shared, and
+- [x] Add remaining generated-series golden assertions for public, shared, and
   auto-update outputs, beyond route/access regression coverage.
 - [x] Include the canonical visualization explicitly in runtime-cache fingerprints.
 - [x] Add generated-series search, visibility, ordering, and Top N/Other controls for high-cardinality
@@ -356,10 +358,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Run unit, integration, lint, build, and desktop browser verification gates.
 - [x] Switch the primary production refresh, filter, table, export, and automated-update paths to
   the new facade.
-- [ ] Confirm fallback usage is zero.
+- [x] Confirm fallback usage is zero.
 - [ ] Remove `AxisChart` and duplicated table/export parsing.
 - [ ] Remove deprecated visualization fields in a contract migration.
-- [ ] Update architecture and filtering documentation.
+- [x] Update architecture and filtering documentation.
 
 ## Progress Log
 
@@ -438,6 +440,10 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   encoding and row collection used by every visited chart type; Line/Bar category, time, breakdown,
   value, and aggregation settings are restored after visiting KPI, Average, Gauge, Table, or a
   category chart. Inactive fields remain outside the active compiler contract.
+- 2026-07-20: Added stable per-category color identities and Display chips for pie, doughnut, and
+  polar slices. Metric growth and goals now carry stable layer/series IDs through the compiler and
+  KPI renderer, while positional indices remain compatibility-only. The local corpus audit covered
+  1,575 charts with zero failures and zero adapter requirements (8 native, 1,567 legacy-owned).
 - 2026-07-20: Fixed additional-dataset setup for native visualizations. Creating another data
   binding now appends one canonical layer with inferred fields, preserves all existing native
   layers and metadata, and remains idempotent across retries. Canonical chart reads also reconcile

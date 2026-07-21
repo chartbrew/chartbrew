@@ -8,6 +8,7 @@ import {
   isVisualizationReady,
   updateBindingFill,
   updateLayerField,
+  updateLayerFormula,
   updateLayerGoal,
   updateLayerMark,
   updateLayerRowPath,
@@ -237,6 +238,32 @@ test("series color overrides are stable and can return to automatic", () => {
     Object.values(chartColors).some((color) => color.hex === getChartColorForKey("series-1234abcd")),
     true
   );
+});
+
+test("radar charts default to an unfilled primary-color shape", () => {
+  const radar = updateLayerMark(visualization, "income", "radar");
+
+  assert.equal(radar.layers[0].style.fill, false);
+  assert.equal(radar.layers[0].style.fillOpacity, 0.15);
+  assert.equal(radar.layers[0].style.multiFill, false);
+  assert.equal(radar.layers[0].style.fillColor, undefined);
+});
+
+test("radar fill keeps one primary color and stores only opacity", () => {
+  const radar = updateLayerMark(visualization, "income", "radar");
+  const filled = updateBindingFill(radar, "cdc-income", { fill: true, fillOpacity: 0.28 });
+
+  assert.equal(filled.layers[0].style.fill, true);
+  assert.equal(filled.layers[0].style.fillOpacity, 0.28);
+  assert.equal(filled.layers[0].style.multiFill, false);
+  assert.equal(filled.layers[0].style.fillColor, undefined);
+});
+
+test("formulas belong to the selected canonical value layer", () => {
+  const next = updateLayerFormula(visualization, "income", "${val / 100}");
+
+  assert.equal(next.layers[0].encoding.value.formula, "${val / 100}");
+  assert.equal(next.layers[1]?.encoding?.value?.formula, undefined);
 });
 
 test("date fields prefer the semantic time binding and created dates", () => {

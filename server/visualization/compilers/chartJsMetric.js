@@ -25,6 +25,7 @@ function buildMetricDatasets(frame, visualization) {
         formula: layer.encoding.value?.formula || null,
         goal: layer.goal ?? null,
         id: series.id,
+        layerId: layer.id,
       });
     });
   });

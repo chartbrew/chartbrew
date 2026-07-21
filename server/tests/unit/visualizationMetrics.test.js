@@ -13,13 +13,20 @@ describe("visualization chart metrics", () => {
     };
 
     buildChartMetrics(configuration, [{
+      datasetColor: "#112233",
       formula: "${val}",
       goal: 200,
+      id: "series-revenue",
+      layerId: "revenue",
     }], { invertGrowth: false });
 
     expect(configuration.growth).toEqual([{
+      color: "#112233",
       comparison: 25,
+      datasetIndex: 0,
       label: "Revenue",
+      layerId: "revenue",
+      seriesId: "series-revenue",
       status: "positive",
       value: "$125",
     }]);
@@ -27,7 +34,9 @@ describe("visualization chart metrics", () => {
       formattedMax: "$200",
       formattedValue: "$125",
       goalIndex: 0,
+      layerId: "revenue",
       max: 200,
+      seriesId: "series-revenue",
       value: 125,
     }]);
   });

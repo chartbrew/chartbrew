@@ -15,7 +15,9 @@ class NewBarChart {
       const datasetConfig = this.chart.ChartDatasetConfigs[i];
 
       const formattedDataset = {
+        id: datasetConfig.id,
         label: datasetConfig.legend,
+        layerId: datasetConfig.layerId,
         data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],
         borderWidth: 1.5,
         hoverBorderWidth: 3,
@@ -74,6 +76,10 @@ class NewBarChart {
             formattedDataset.datalabels.display = true;
           }
         }
+      }
+
+      if (this.chart.type === "radar") {
+        formattedDataset.datalabels = { display: false };
       }
 
       formattedDatasets.push(formattedDataset);
