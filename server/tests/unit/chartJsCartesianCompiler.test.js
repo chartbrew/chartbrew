@@ -85,6 +85,33 @@ describe("Chart.js cartesian visualization compiler", () => {
     expect(reversedColors).toEqual(normalColors);
   });
 
+  it("uses the canonical legend setting for Cartesian charts", () => {
+    const input = buildChart(readFixture("exam-income-long.json"));
+    input.chart.displayLegend = true;
+    input.chart.visualization.settings = {
+      legend: { visible: false },
+    };
+
+    const result = new VisualizationEngine(input).render();
+
+    expect(result.configuration.options.plugins.legend.display).toBe(false);
+  });
+
+  it("can render sparse category and series combinations as zero", () => {
+    const input = buildChart(readFixture("exam-income-long.json"));
+    input.chart.visualization.settings = {
+      missingValues: { policy: "zero" },
+    };
+
+    const result = new VisualizationEngine(input).render();
+    const byLabel = Object.fromEntries(result.configuration.data.datasets.map((dataset) => {
+      return [dataset.label, dataset.data];
+    }));
+
+    expect(byLabel.Advanced).toEqual([165, 140, 0]);
+    expect(byLabel.Unclassified).toEqual([0, 0, 120]);
+  });
+
   it("assigns palette colors to breakdown series and supports stable overrides", () => {
     const input = buildChart(readFixture("exam-income-long.json"));
     input.chart.visualization.layers[0].style = {

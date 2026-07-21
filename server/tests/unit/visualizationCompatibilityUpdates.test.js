@@ -102,6 +102,14 @@ describe("native visualization compatibility updates", () => {
     expect(next.metadata.createdBy).toBe("visualization-editor");
   });
 
+  it("preserves an explicit hidden legend in canonical settings", () => {
+    const next = applyChartCompatibilityUpdate(nativeVisualization, {
+      displayLegend: false,
+    });
+
+    expect(next.settings.legend.visible).toBe(false);
+  });
+
   it("restores category, value, and breakdown after a KPI round trip", () => {
     const kpi = applyChartCompatibilityUpdate(nativeVisualization, { type: "kpi" });
     const restored = applyChartCompatibilityUpdate(kpi, { type: "bar" });

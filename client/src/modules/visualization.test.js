@@ -11,8 +11,11 @@ import {
   updateLayerFormula,
   updateLayerGoal,
   updateLayerMark,
+  updateLayerNullHandling,
   updateLayerRowPath,
   updateLayerSeriesOptions,
+  updateLegendVisibility,
+  updateMissingValuePolicy,
   updateSeriesColor,
 } from "./visualization.js";
 import { chartColors, getChartColorForKey } from "../config/colors.js";
@@ -55,6 +58,62 @@ test("clearing a breakdown removes the generated-series encoding", () => {
   assert.equal(Object.hasOwn(next.layers[0].encoding, "breakdown"), false);
   assert.equal(next.layers.length, 1);
   assert.equal(next.status, "ready");
+});
+
+test("empty dimension values can be grouped under a custom label", () => {
+  const next = updateLayerNullHandling(
+    visualization,
+    "income",
+    "dimension",
+    "label",
+    "No program"
+  );
+
+  assert.equal(next.layers[0].encoding.category.nullPolicy, "label");
+  assert.equal(next.layers[0].encoding.category.nullLabel, "No program");
+});
+
+test("empty breakdown handling can return to the default exclusion policy", () => {
+  const withBreakdown = updateLayerField(visualization, "income", "breakdown", {
+    type: "string",
+    value: "root[].level",
+  });
+  const labeled = updateLayerNullHandling(
+    withBreakdown,
+    "income",
+    "breakdown",
+    "label",
+    "No level"
+  );
+  const excluded = updateLayerNullHandling(labeled, "income", "breakdown", "exclude");
+
+  assert.equal(excluded.layers[0].encoding.breakdown.nullPolicy, undefined);
+  assert.equal(excluded.layers[0].encoding.breakdown.nullLabel, undefined);
+});
+
+test("empty dimension values can be preserved without a display label", () => {
+  const next = updateLayerNullHandling(
+    visualization,
+    "income",
+    "dimension",
+    "preserve"
+  );
+
+  assert.equal(next.layers[0].encoding.category.nullPolicy, "preserve");
+  assert.equal(next.layers[0].encoding.category.nullLabel, undefined);
+});
+
+test("missing chart points can be explicitly treated as zero", () => {
+  const next = updateMissingValuePolicy(visualization, "zero");
+
+  assert.equal(next.settings.missingValues.policy, "zero");
+  assert.equal(next.metadata.createdBy, "visualization-editor");
+});
+
+test("legend visibility is stored in canonical chart settings", () => {
+  const next = updateLegendVisibility(visualization, false);
+
+  assert.equal(next.settings.legend.visible, false);
 });
 
 test("value-only marks remove axis encodings", () => {

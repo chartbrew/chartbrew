@@ -327,6 +327,53 @@ export function updateLayerAggregation(visualization, layerId, aggregate) {
   }));
 }
 
+export function updateLayerNullHandling(visualization, layerId, role, policy, nullLabel) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const encoding = cloneEncoding(layer.encoding);
+    const encodingRole = role === "dimension" ? getDimensionRole(layer) : role;
+    if (!encoding[encodingRole]) return layer;
+
+    if (policy === "label") {
+      encoding[encodingRole].nullPolicy = "label";
+      encoding[encodingRole].nullLabel = nullLabel?.trim() || "Unclassified";
+    } else if (policy === "preserve") {
+      encoding[encodingRole].nullPolicy = "preserve";
+      delete encoding[encodingRole].nullLabel;
+    } else {
+      delete encoding[encodingRole].nullPolicy;
+      delete encoding[encodingRole].nullLabel;
+    }
+
+    return { ...layer, encoding };
+  });
+}
+
+export function updateMissingValuePolicy(visualization, policy) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.settings = {
+    ...(nextVisualization.settings || {}),
+    missingValues: {
+      ...(nextVisualization.settings?.missingValues || {}),
+      policy: policy === "zero" ? "zero" : "preserve",
+    },
+  };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
+export function updateLegendVisibility(visualization, visible) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.settings = {
+    ...(nextVisualization.settings || {}),
+    legend: {
+      ...(nextVisualization.settings?.legend || {}),
+      visible: Boolean(visible),
+    },
+  };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
 export function updateLayerGoal(visualization, layerId, goal) {
   return updateVisualizationLayer(visualization, layerId, (layer) => ({
     ...layer,

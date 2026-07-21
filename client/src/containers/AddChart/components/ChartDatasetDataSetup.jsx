@@ -3,12 +3,14 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
+  Accordion,
   Alert,
   Autocomplete,
   Button,
   Chip,
   Description,
   EmptyState,
+  InputGroup,
   Label,
   ListBox,
   NumberField,
@@ -16,6 +18,7 @@ import {
   Select,
   Separator,
   Switch,
+  TextField,
   Tooltip,
   useFilter,
 } from "@heroui/react";
@@ -42,6 +45,7 @@ import {
   updateLayerAggregation,
   updateLayerField,
   updateLayerGoal,
+  updateLayerNullHandling,
   updateLayerRowPath,
   updateLayerSeriesOptions,
 } from "../../../modules/visualization";
@@ -51,6 +55,103 @@ import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
 
 const MULTI_VALUE_MARKS = new Set(["bar", "line", "radar"]);
+const NULL_POLICY_OPTIONS = [{
+  id: "exclude",
+  label: "Ignore empty rows",
+}, {
+  id: "label",
+  label: "Group as a named value",
+}, {
+  id: "preserve",
+  label: "Keep as an empty value",
+}];
+
+function EmptyValueControl({
+  description,
+  label,
+  name,
+  nullLabel,
+  onChange,
+  policy,
+}) {
+  const [labelValue, setLabelValue] = useState(nullLabel || "Unclassified");
+  const nextLabel = labelValue.trim();
+  const hasLabelChanges = Boolean(nextLabel) && nextLabel !== (nullLabel || "Unclassified");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Select
+        aria-label={label}
+        onChange={(nextPolicy) => {
+          onChange(nextPolicy, nextPolicy === "label" ? nextLabel || "Unclassified" : null);
+        }}
+        selectionMode="single"
+        value={policy}
+        variant="secondary"
+      >
+        <Label>{label}</Label>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Description>{description}</Description>
+        <Select.Popover>
+          <ListBox>
+            {NULL_POLICY_OPTIONS.map((option) => (
+              <ListBox.Item key={option.id} id={option.id} textValue={option.label}>
+                {option.label}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
+
+      {policy === "label" && (
+        <TextField name={`${name}-null-label`}>
+          <Label>Group label</Label>
+          <InputGroup fullWidth variant="secondary">
+            <InputGroup.Input
+              placeholder="Unclassified"
+              value={labelValue}
+              onChange={(event) => setLabelValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && hasLabelChanges) {
+                  event.preventDefault();
+                  onChange("label", nextLabel);
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setLabelValue(nullLabel || "Unclassified");
+                }
+              }}
+            />
+            {hasLabelChanges && (
+              <InputGroup.Suffix className="border-none pr-2">
+                <Button size="sm" variant="secondary" onPress={() => onChange("label", nextLabel)}>
+                  Save
+                </Button>
+              </InputGroup.Suffix>
+            )}
+          </InputGroup>
+        </TextField>
+      )}
+    </div>
+  );
+}
+
+EmptyValueControl.propTypes = {
+  description: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  nullLabel: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  policy: PropTypes.oneOf(["exclude", "label", "preserve"]).isRequired,
+};
+
+EmptyValueControl.defaultProps = {
+  nullLabel: null,
+};
 
 function LayerGoalField({ initialValue, onSave }) {
   const [value, setValue] = useState(initialValue ?? undefined);
@@ -109,7 +210,7 @@ function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
   const hasChanges = limit !== initialLimit || includeOther !== initialIncludeOther;
 
   return (
-    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+    <div className="flex flex-col gap-3">
       <NumberField
         minValue={1}
         name="generated-series-limit"
@@ -117,16 +218,15 @@ function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
         variant="secondary"
         onChange={setLimit}
       >
-        <Label>Show top series</Label>
+        <Label>Number of series</Label>
         <NumberField.Group>
           <NumberField.DecrementButton />
-          <NumberField.Input size="" />
+          <NumberField.Input />
           <NumberField.IncrementButton />
         </NumberField.Group>
         <Description>Limit the number of series to show.</Description>
       </NumberField>
       <Switch
-        className="mt-3"
         isDisabled={!hasLimit}
         isSelected={includeOther}
         onChange={setIncludeOther}
@@ -134,7 +234,7 @@ function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
         <Switch.Control><Switch.Thumb /></Switch.Control>
         <Switch.Content><Label>Combine the remainder as Other</Label></Switch.Content>
       </Switch>
-      <div className="mt-3 flex gap-2">
+      <div className="flex gap-2">
         <Button
           isDisabled={!hasChanges || !hasLimit}
           size="sm"
@@ -284,8 +384,10 @@ function ChartDatasetDataSetup({
   const requirements = getLayerFieldRequirements(selectedLayer?.mark || chart.type);
   const dimensionRole = getDimensionRole(selectedLayer);
   const dimensionField = selectedLayer?.encoding?.[dimensionRole]?.field || null;
+  const dimensionNullPolicy = selectedLayer?.encoding?.[dimensionRole]?.nullPolicy || "exclude";
   const valueField = selectedLayer?.encoding?.value?.field || null;
   const breakdownField = selectedLayer?.encoding?.breakdown?.field || null;
+  const breakdownNullPolicy = selectedLayer?.encoding?.breakdown?.nullPolicy || "exclude";
   const timeField = getVisualizationTimeField(chart.visualization, cdc.id);
   const dateField = cdc.dateField || timeField || getPreferredDateField(dateFieldOptions);
   const canAddValue = MULTI_VALUE_MARKS.has(selectedLayer?.mark || chart.type);
@@ -373,6 +475,16 @@ function ChartDatasetDataSetup({
     });
     const newLayer = nextVisualization.layers[nextVisualization.layers.length - 1];
     setSelectedLayerId(newLayer.id);
+    _commitVisualization(nextVisualization);
+  };
+  const _updateNullHandling = (role, policy, nullLabel) => {
+    const nextVisualization = updateLayerNullHandling(
+      chart.visualization,
+      selectedLayer.id,
+      role,
+      policy,
+      nullLabel
+    );
     _commitVisualization(nextVisualization);
   };
 
@@ -545,59 +657,139 @@ function ChartDatasetDataSetup({
                 )}
 
                 {requirements.breakdown && (
-                  <FieldPicker
-                    label="Break down by"
-                    placeholder="Select a series field"
-                    description="Creates one series for every unique value without another dataset."
-                    fieldOptions={fieldOptions.filter((field) => field.type !== "array")}
-                    isClearable
-                    isPending={loadingFields}
-                    value={breakdownField}
-                    onChange={(value) => _updateField("breakdown", value)}
-                  />
+                  <>
+                    <FieldPicker
+                      label="Break down by"
+                      placeholder="Select a series field"
+                      description="Creates one series for every unique value without another dataset."
+                      fieldOptions={fieldOptions.filter((field) => field.type !== "array")}
+                      isClearable
+                      isPending={loadingFields}
+                      value={breakdownField}
+                      onChange={(value) => _updateField("breakdown", value)}
+                    />
+
+                    {breakdownField && generatedSeries.length > 0 && (
+                      <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          <div className="text-xs font-medium text-foreground-500">
+                            Generated series
+                          </div>
+                          <Chip size="sm" variant="soft" color="accent">
+                            {generatedSeries.length}
+                          </Chip>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {generatedSeries.slice(0, 6).map((series) => (
+                            <Chip key={series.id} size="sm" variant="secondary">
+                              {series.label}
+                            </Chip>
+                          ))}
+                          {generatedSeries.length > 6 && (
+                            <Chip size="sm" variant="secondary">
+                              {`+${generatedSeries.length - 6}`}
+                            </Chip>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {requirements.dimension && dimensionField && (
+                  <Accordion
+                    aria-label="Data grouping options"
+                    className="bg-surface-secondary"
+                    variant="surface"
+                  >
+                    <Accordion.Item id="empty-values" textValue="Empty values">
+                      <Accordion.Heading>
+                        <Accordion.Trigger>
+                          <span className="flex min-w-0 flex-1 flex-col items-start text-left">
+                            <span className="text-sm font-medium">Empty values</span>
+                            <span className="truncate text-xs font-normal text-muted">
+                              {dimensionNullPolicy !== "exclude"
+                                || (breakdownField && breakdownNullPolicy !== "exclude")
+                                ? "Custom empty-value handling"
+                                : "Ignoring empty rows"}
+                            </span>
+                          </span>
+                          <Accordion.Indicator />
+                        </Accordion.Trigger>
+                      </Accordion.Heading>
+                      <Accordion.Panel>
+                        <Accordion.Body className="flex flex-col gap-4">
+                          <EmptyValueControl
+                            key={`${selectedLayer.id}-${dimensionRole}-${selectedLayer.encoding?.[dimensionRole]?.nullLabel || "default"}`}
+                            description="Controls rows where the category or time field is empty."
+                            label="Empty categories"
+                            name={`${selectedLayer.id}-${dimensionRole}`}
+                            nullLabel={selectedLayer.encoding?.[dimensionRole]?.nullLabel}
+                            policy={dimensionNullPolicy}
+                            onChange={(policy, nullLabel) => {
+                              _updateNullHandling("dimension", policy, nullLabel);
+                            }}
+                          />
+
+                          {breakdownField && (
+                            <>
+                              <Separator />
+                              <EmptyValueControl
+                                key={`${selectedLayer.id}-breakdown-${selectedLayer.encoding?.breakdown?.nullLabel || "default"}`}
+                                description="Controls rows where the series field is empty."
+                                label="Empty breakdown values"
+                                name={`${selectedLayer.id}-breakdown`}
+                                nullLabel={selectedLayer.encoding?.breakdown?.nullLabel}
+                                policy={breakdownNullPolicy}
+                                onChange={(policy, nullLabel) => {
+                                  _updateNullHandling("breakdown", policy, nullLabel);
+                                }}
+                              />
+                            </>
+                          )}
+                        </Accordion.Body>
+                      </Accordion.Panel>
+                    </Accordion.Item>
+
+                    {breakdownField && (
+                      <Accordion.Item id="series-limit" textValue="Show top series">
+                        <Accordion.Heading>
+                          <Accordion.Trigger>
+                            <span className="flex min-w-0 flex-1 flex-col items-start text-left">
+                              <span className="text-sm font-medium">Show top series</span>
+                              <span className="truncate text-xs font-normal text-muted">
+                                {selectedLayer.options?.series?.limit
+                                  ? `Top ${selectedLayer.options.series.limit}${selectedLayer.options.series.includeOther ? " + Other" : ""}`
+                                  : "Showing all series"}
+                              </span>
+                            </span>
+                            <Accordion.Indicator />
+                          </Accordion.Trigger>
+                        </Accordion.Heading>
+                        <Accordion.Panel>
+                          <Accordion.Body>
+                            <SeriesLimitControl
+                              key={`${selectedLayer.id}-${selectedLayer.options?.series?.limit || "all"}-${selectedLayer.options?.series?.includeOther || false}`}
+                              initialIncludeOther={Boolean(selectedLayer.options?.series?.includeOther)}
+                              initialLimit={selectedLayer.options?.series?.limit}
+                              onSave={(changes) => {
+                                const nextVisualization = updateLayerSeriesOptions(
+                                  chart.visualization,
+                                  selectedLayer.id,
+                                  changes
+                                );
+                                _commitVisualization(nextVisualization);
+                              }}
+                            />
+                          </Accordion.Body>
+                        </Accordion.Panel>
+                      </Accordion.Item>
+                    )}
+                  </Accordion>
                 )}
               </div>
             )}
           </div>
-
-          {breakdownField && generatedSeries.length > 0 && (
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <div className="text-xs font-medium text-foreground-500">
-                  Generated series
-                </div>
-                <Chip size="sm" variant="soft" color="accent">
-                  {generatedSeries.length}
-                </Chip>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {generatedSeries.slice(0, 6).map((series) => (
-                  <Chip key={series.id} size="sm" variant="secondary">
-                    {series.label}
-                  </Chip>
-                ))}
-                {generatedSeries.length > 6 && (
-                  <Chip size="sm" variant="secondary">{`+${generatedSeries.length - 6}`}</Chip>
-                )}
-              </div>
-            </div>
-          )}
-
-          {breakdownField && (
-            <SeriesLimitControl
-              key={`${selectedLayer.id}-${selectedLayer.options?.series?.limit || "all"}-${selectedLayer.options?.series?.includeOther || false}`}
-              initialIncludeOther={Boolean(selectedLayer.options?.series?.includeOther)}
-              initialLimit={selectedLayer.options?.series?.limit}
-              onSave={(changes) => {
-                const nextVisualization = updateLayerSeriesOptions(
-                  chart.visualization,
-                  selectedLayer.id,
-                  changes
-                );
-                _commitVisualization(nextVisualization);
-              }}
-            />
-          )}
 
           {layerWarnings.map((warning) => (
             <Alert status="warning" key={`${warning.code}-${warning.layerId}`}>

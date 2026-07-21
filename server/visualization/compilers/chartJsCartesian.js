@@ -248,6 +248,7 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
   const chartWithSeries = {
     ...chart,
     ChartDatasetConfigs: compiled.configs,
+    displayLegend: visualization.settings?.legend?.visible ?? chart.displayLegend ?? true,
     horizontal: visualization.layers.some((layer) => layer.orientation === "horizontal"),
     stacked: visualization.layers.some((layer) => layer.stack !== "none"),
     type: mark,

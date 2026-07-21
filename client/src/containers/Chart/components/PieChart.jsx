@@ -28,7 +28,6 @@ ChartJS.register(
 const dataLabelsPlugin = {
   color: "#fff",
   font: {
-    weight: "bold",
     size: 10,
     family: "Inter",
   },

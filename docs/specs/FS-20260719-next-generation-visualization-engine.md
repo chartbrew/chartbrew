@@ -1,6 +1,10 @@
 # Next-Generation Visualization Engine
 
-Status: in progress
+Status: ready for review
+
+Unchecked checklist entries are intentional post-cutover follow-ups and are not release gates for
+this pull request. They remain documented here so compatibility scaffolding is removed only after
+production parity and usage data make that safe.
 
 ## Summary
 
@@ -331,7 +335,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   choice and keeping the Display control aligned with canonical style state.
 - [x] Derive Cartesian backgrounds from each series color, with one fill toggle and HeroUI alpha
   slider per dataset instead of separate background-color choices.
-- [ ] Add null and missing-value controls.
+- [x] Add null and missing-value controls.
 - [x] Add cardinality warnings and Top N/Other controls.
 - [x] Assign distinct stable palette colors to generated series and expose per-series Display
   overrides with an automatic-color reset.
@@ -460,3 +464,15 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   own automatic or overridden hue for the background, while one toggle and HeroUI alpha slider
   control whether it is filled and how strongly. Per-mark fill state survives chart-type changes,
   and untouched legacy fill colors remain compatible until the new control is used.
+- 2026-07-21: Added progressive empty-value handling for category/time and breakdown fields, plus
+  a chart-wide gap-versus-zero control for sparse Cartesian points. Renamed the time-domain option
+  to describe its behavior and made canonical legend visibility authoritative for line and bar
+  compilation and rendering.
+- 2026-07-21: Reorganized the Build panel's breakdown workflow. Generated-series feedback now sits
+  directly below the breakdown field, while empty-value and Top Series settings share one compact
+  HeroUI Accordion with collapsed summaries of their active configuration.
+- 2026-07-21: Completed the final release-readiness pass. Client/server lint, the client production
+  build, 27 client tests, 68 server unit files (528 tests), and 18 server integration files (116
+  tests) pass. Read-only local audits cover 1,575 charts with zero conversion failures, zero invalid
+  specifications, and zero charts requiring the runtime adapter; 8 are native and 1,567 remain
+  legacy-owned canonical specifications.

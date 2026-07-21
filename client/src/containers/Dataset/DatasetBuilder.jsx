@@ -621,6 +621,7 @@ function DatasetBuilder(props) {
             chart={chart}
             onChange={_onChangeGlobalSettings}
             onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+            onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
           />
         )}
       </div>

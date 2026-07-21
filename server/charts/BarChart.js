@@ -48,34 +48,19 @@ class NewBarChart {
           }),
           display: "auto",
         };
-        if (this.chart.type === "bar") {
-          formattedDataset.datalabels.align = this.chart.horizontal ? "end" : "start";
-          formattedDataset.datalabels.anchor = "end";
-          if (this.chart.stacked) {
-            if (i === this.datasets.length - 1 && this.datasets.length > 1) {
-              formattedDataset.datalabels.offset = -16;
-              formattedDataset.datalabels.color = datasetConfig.fillColor;
-            }
-            formattedDataset.datalabels.display = true;
-          }
-        }
       } else {
         formattedDataset.datalabels = {
           color: this.chart.type === "bar" || this.chart.type === "radar" ? getContrastYIQ(datasetConfig.fillColor) : "#fff",
           display: "auto",
         };
+      }
 
-        if (this.chart.type === "bar") {
-          formattedDataset.datalabels.align = this.chart.horizontal ? "end" : "start";
-          formattedDataset.datalabels.anchor = "end";
-          if (this.chart.stacked) {
-            if (i === this.datasets.length - 1 && this.datasets.length > 1) {
-              formattedDataset.datalabels.offset = -16;
-              formattedDataset.datalabels.color = datasetConfig.fillColor;
-            }
-            formattedDataset.datalabels.display = true;
-          }
-        }
+      if (this.chart.type === "bar") {
+        formattedDataset.datalabels.align = "start";
+        formattedDataset.datalabels.anchor = "end";
+        formattedDataset.datalabels.clamp = true;
+        formattedDataset.datalabels.clip = true;
+        formattedDataset.datalabels.offset = 0;
       }
 
       if (this.chart.type === "radar") {
