@@ -385,11 +385,11 @@ function MailgunTemplate(props) {
                       if (selected !== wasSelected) _onChangeSelectedCharts(chart.tid);
                     }}
                   >
-                    <Checkbox.Control className="size-4 shrink-0">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
                     <Checkbox.Content>
-                      <Label htmlFor={`mailgun-chart-${chart.tid}`} className="text-sm">{chart.name}</Label>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      {chart.name}
                     </Checkbox.Content>
                   </Checkbox>
                 </div>

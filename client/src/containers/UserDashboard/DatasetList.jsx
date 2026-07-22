@@ -545,9 +545,11 @@ function DatasetList() {
               {selectionModeEnabled && (
                 <Table.Column className="w-12 pr-0">
                   <Checkbox aria-label="Select all datasets" slot="selection" variant="secondary">
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
+                    <Checkbox.Content>
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
                   </Checkbox>
                 </Table.Column>
               )}
@@ -613,9 +615,11 @@ function DatasetList() {
                     {selectionModeEnabled && (
                       <Table.Cell className="pr-0">
                         <Checkbox aria-label={`Select ${getDatasetDisplayName(dataset)}`} slot="selection" variant="secondary">
-                          <Checkbox.Control>
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
+                          <Checkbox.Content>
+                            <Checkbox.Control>
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                          </Checkbox.Content>
                         </Checkbox>
                       </Table.Cell>
                     )}

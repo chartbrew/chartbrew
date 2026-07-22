@@ -129,9 +129,11 @@ function TemplateSelectionTile(props) {
         variant="secondary"
         className="absolute right-5 top-5"
       >
-        <Checkbox.Control>
-          <Checkbox.Indicator />
-        </Checkbox.Control>
+        <Checkbox.Content>
+          <Checkbox.Control>
+            <Checkbox.Indicator />
+          </Checkbox.Control>
+        </Checkbox.Content>
       </Checkbox>
 
       <div className="flex w-full flex-row items-center gap-2 pr-10">

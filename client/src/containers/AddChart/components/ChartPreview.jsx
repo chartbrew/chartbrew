@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, Label, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
+  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
@@ -243,11 +243,11 @@ function ChartPreview(props) {
                   onChange={changeCache}
                   variant="secondary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="chart-preview-use-cache" className="text-sm">Use cached data</Label>
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Use cached data
                   </Checkbox.Content>
                 </Checkbox>
                 <Tooltip>
@@ -584,11 +584,11 @@ function ChartPreview(props) {
               isDisabled={chart.type === "kpi" || chart.type === "avg"}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-preview-kpi-mode" className="text-sm">Show KPI on chart</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Show KPI on chart
               </Checkbox.Content>
             </Checkbox>
             <Checkbox
@@ -598,11 +598,11 @@ function ChartPreview(props) {
               isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-preview-growth" className="text-sm">Show growth</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Show growth
               </Checkbox.Content>
             </Checkbox>
             <Checkbox
@@ -611,11 +611,11 @@ function ChartPreview(props) {
               onChange={_onChangeInvertGrowth}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-preview-invert-growth" className="text-sm">Invert growth</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Invert growth
               </Checkbox.Content>
             </Checkbox>
           </div>

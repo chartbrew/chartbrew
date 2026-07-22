@@ -130,11 +130,11 @@ function DataTransform({ isOpen, onClose, onSave, initialTransform }) {
               setEditorValue(JSON.stringify({ ...transformConfig, enabled: value }, null, 2));
             }}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="data-transform-enabled">Enable transformation</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              Enable transformation
             </Switch.Content>
           </Switch>
 

@@ -13,8 +13,8 @@
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"
   },
   "dependencies": {
-    "@heroui/react": "^3.0.1",
-    "@heroui/styles": "^3.0.1",
+    "@heroui/react": "^3.2.2",
+    "@heroui/styles": "^3.2.2",
     "@internationalized/date": "^3.5.3",
     "@monaco-editor/react": "^4.7.0",
     "@reduxjs/toolkit": "^2.2.1",

@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Input, Chip, Checkbox, Separator,
-  ProgressCircle, ListBox, Select, Label,
+  ProgressCircle, ListBox, Select,
 } from "@heroui/react";
 import { isEqual } from "lodash";
 import { LuCheck, LuCloud, LuFolder, LuUser, LuWrench, LuX } from "react-icons/lu";
@@ -582,11 +582,11 @@ function CustomerQuery(props) {
           isSelected={populateAttributes}
           onChange={onChangeAttributes}
         >
-          <Checkbox.Control className="size-4 shrink-0">
-            <Checkbox.Indicator />
-          </Checkbox.Control>
           <Checkbox.Content>
-            <Label htmlFor="cio-customer-populate-attributes" className="text-sm">{"Get customers' attributes"}</Label>
+            <Checkbox.Control className="size-4 shrink-0">
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            {"Get customers' attributes"}
           </Checkbox.Content>
         </Checkbox>
       </Row>

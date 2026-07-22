@@ -11,7 +11,6 @@ import {
   Tabs,
   ProgressCircle,
   Badge,
-  Label,
 } from "@heroui/react";
 import AceEditor from "../../../components/CodeEditor";
 import toast from "react-hot-toast";
@@ -449,11 +448,11 @@ function SqlBuilder(props) {
               onChange={(selected) => setInvalidateCache(!selected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="sqlbuilder-use-cache" className="text-sm">Use cached data</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Use cached data
               </Checkbox.Content>
             </Checkbox>
             <div className="w-1" />

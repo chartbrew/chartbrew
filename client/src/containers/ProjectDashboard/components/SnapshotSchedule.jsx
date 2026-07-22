@@ -693,11 +693,11 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 isSelected={schedule.removeStyling}
                 onChange={(isSelected) => setSchedule({ ...schedule, removeStyling: isSelected })}
               >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label htmlFor="snapshot-remove-styling" className="text-sm">Remove styling</Label>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Remove styling
                 </Checkbox.Content>
               </Checkbox>
               <Checkbox
@@ -706,11 +706,11 @@ function SnapshotSchedule({ isOpen, onClose }) {
                 isSelected={schedule.removeHeader}
                 onChange={(isSelected) => setSchedule({ ...schedule, removeHeader: isSelected })}
               >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label htmlFor="snapshot-remove-header" className="text-sm">Remove header</Label>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Remove header
                 </Checkbox.Content>
               </Checkbox>
             </div>

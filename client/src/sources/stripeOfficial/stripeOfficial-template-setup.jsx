@@ -357,9 +357,11 @@ function MetricCard(props) {
         </span>
         <span onClick={(event) => event.stopPropagation()}>
           <Checkbox isSelected={isSelected} onPress={() => onToggle(card.key)} variant="secondary">
-            <Checkbox.Control>
-              <Checkbox.Indicator />
-            </Checkbox.Control>
+            <Checkbox.Content>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+            </Checkbox.Content>
           </Checkbox>
         </span>
       </div>

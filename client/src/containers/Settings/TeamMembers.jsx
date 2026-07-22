@@ -493,11 +493,11 @@ function TeamMembers(props) {
                             }}
                             variant="secondary"
                           >
-                            <Checkbox.Control className="size-4 shrink-0">
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
                             <Checkbox.Content>
-                              <Label htmlFor={`team-member-${changedMember.id}-project-${project.id}`} className="text-sm">{project.name}</Label>
+                              <Checkbox.Control className="size-4 shrink-0">
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              {project.name}
                             </Checkbox.Content>
                           </Checkbox>
                         </div>
@@ -526,11 +526,11 @@ function TeamMembers(props) {
                         onChange={_onChangeExport}
                         variant="secondary"
                       >
-                        <Checkbox.Control className="size-4 shrink-0">
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
                         <Checkbox.Content>
-                          <Label htmlFor={`team-member-export-${changedMember.id}`} className="text-sm">Allow data export</Label>
+                          <Checkbox.Control className="size-4 shrink-0">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          Allow data export
                         </Checkbox.Content>
                       </Checkbox>
                     </div>

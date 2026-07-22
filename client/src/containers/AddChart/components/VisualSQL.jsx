@@ -1486,8 +1486,22 @@ function VisualSQL({ schema, query, updateQuery, type, onVariableClick }) {
               value={orderByOrder}
               onChange={(e) => setOrderByOrder(e.target.value)}
             >
-              <Radio value="ASC">Ascending</Radio>
-              <Radio value="DESC">Descending</Radio>
+              <Radio value="ASC">
+                <Radio.Content>
+                  <Radio.Control>
+                    <Radio.Indicator />
+                  </Radio.Control>
+                  Ascending
+                </Radio.Content>
+              </Radio>
+              <Radio value="DESC">
+                <Radio.Content>
+                  <Radio.Control>
+                    <Radio.Indicator />
+                  </Radio.Control>
+                  Descending
+                </Radio.Content>
+              </Radio>
             </RadioGroup>
           </Modal.Body>
           <Modal.Footer>

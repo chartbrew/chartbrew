@@ -494,11 +494,11 @@ function ActivitiesQuery({
             isSelected={deleted}
             onChange={_handleDeletedChange}
           >
-            <Checkbox.Control className="size-4 shrink-0">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
             <Checkbox.Content>
-              <Label htmlFor="cio-activities-include-deleted" className="text-sm">Include deleted people</Label>
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              Include deleted people
             </Checkbox.Content>
           </Checkbox>
         </div>

@@ -465,11 +465,11 @@ function PostgresConnectionForm(props) {
             isSelected={connection.ssl || false}
             onChange={(selected) => _onChangeSSL(selected)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="postgres-connection-ssl">{"Enable SSL"}</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              {"Enable SSL"}
             </Switch.Content>
           </Switch>
         </Row>
@@ -620,16 +620,14 @@ function PostgresConnectionForm(props) {
             isSelected={connection.useSsh || false}
             onChange={(selected) => setConnection({ ...connection, useSsh: selected })}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="postgres-connection-ssh-tunnel">
-                <div className="flex items-center gap-2">
-                  {"Use SSH Tunnel"}
-                  <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
-                </div>
-              </Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <div className="flex items-center gap-2">
+                {"Use SSH Tunnel"}
+                <Chip variant="secondary" size="sm" className="rounded-sm">{"New!"}</Chip>
+              </div>
             </Switch.Content>
           </Switch>
         </Row>

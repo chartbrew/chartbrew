@@ -256,11 +256,11 @@ function StripeOfficialAdvancedOptions() {
                 isSelected={Boolean(configuration.rawObjectMode)}
                 onChange={(isSelected) => updateConfiguration({ rawObjectMode: isSelected })}
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
                 <Switch.Content>
-                  <Label className="text-sm">Return full Stripe objects</Label>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  Return full Stripe objects
                 </Switch.Content>
               </Switch>
             )}
@@ -270,12 +270,12 @@ function StripeOfficialAdvancedOptions() {
               isSelected={configuration.queryMode === "search"}
               onChange={toggleSearchMode}
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
               <Switch.Content>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
                 <div className="flex flex-row flex-wrap items-center gap-2">
-                  <Label className="text-sm">Use Stripe Search API</Label>
+                  Use Stripe Search API
                   {!searchSupported && <Chip size="sm" variant="soft">not supported</Chip>}
                 </div>
               </Switch.Content>
@@ -305,11 +305,11 @@ function StripeOfficialAdvancedOptions() {
                       onChange={(isSelected) => toggleExpandField(field.value, isSelected)}
                       variant="secondary"
                     >
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
                       <Checkbox.Content>
-                        <Label>{field.label}</Label>
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        {field.label}
                       </Checkbox.Content>
                     </Checkbox>
                   ))}

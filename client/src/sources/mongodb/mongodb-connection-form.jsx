@@ -385,11 +385,11 @@ function MongoConnectionForm(props) {
                   onChange={(selected) => setConnection({ ...connection, srv: selected })}
                   variant="secondary"
                 >
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="mongo-connection-srv">Use MongoDB 3.6 SRV URI connection string</Label>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Use MongoDB 3.6 SRV URI connection string
                   </Checkbox.Content>
                 </Checkbox>
                 <Tooltip delay={0}>

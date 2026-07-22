@@ -215,9 +215,11 @@ function SlackIntegration({ integration }) {
               size="sm"
               aria-label="Allow all channels"
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
+              <Switch.Content>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch.Content>
             </Switch>
           </div>
         </div>

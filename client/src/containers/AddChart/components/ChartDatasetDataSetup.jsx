@@ -231,8 +231,12 @@ function SeriesLimitControl({ initialIncludeOther, initialLimit, onSave }) {
         isSelected={includeOther}
         onChange={setIncludeOther}
       >
-        <Switch.Control><Switch.Thumb /></Switch.Control>
-        <Switch.Content><Label>Combine the remainder as Other</Label></Switch.Content>
+        <Switch.Content>
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          Combine the remainder as Other
+        </Switch.Content>
       </Switch>
       <div className="flex gap-2">
         <Button

@@ -87,11 +87,11 @@ function ApiPagination(props) {
           isSelected={pagination}
           onChange={(selected) => onPaginationChanged("pagination", selected)}
         >
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
           <Switch.Content>
-            <Label htmlFor="api-pagination-enable">Enable pagination on this request</Label>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            Enable pagination on this request
           </Switch.Content>
         </Switch>
       </div>

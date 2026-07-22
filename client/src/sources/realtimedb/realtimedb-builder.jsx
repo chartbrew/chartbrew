@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, InputGroup, Separator, Chip, Checkbox, Tooltip,
   Badge,
-  Label,
 } from "@heroui/react";
 import AceEditor from "../../components/CodeEditor";
 import toast from "react-hot-toast";
@@ -639,11 +638,11 @@ function RealtimeDbBuilder(props) {
               onChange={(selected) => setInvalidateCache(!selected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="realtimedb-use-cache" className="text-sm">Use cache</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Use cache
               </Checkbox.Content>
             </Checkbox>
             <div className="w-2" />

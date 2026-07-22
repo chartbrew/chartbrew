@@ -571,11 +571,11 @@ function DatasetAlerts(props) {
                       isSelected={newAlert.oneTime}
                       onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
                     >
-                      <Checkbox.Control className="size-4 shrink-0">
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
                       <Checkbox.Content>
-                        <Label htmlFor="dataset-alert-one-time" className="text-sm">Disable this alert after sending once</Label>
+                        <Checkbox.Control className="size-4 shrink-0">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        Disable this alert after sending once
                       </Checkbox.Content>
                     </Checkbox>
                   </Row>
@@ -617,13 +617,11 @@ function DatasetAlerts(props) {
               isSelected={newAlert.active}
               onChange={(selected) => setNewAlert({ ...newAlert, active: selected })}
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
               <Switch.Content>
-                <Label htmlFor="dataset-alert-active">
-                  {newAlert.active ? "Alert enabled" : "Alert disabled"}
-                </Label>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                {newAlert.active ? "Alert enabled" : "Alert disabled"}
               </Switch.Content>
             </Switch>
             <div className="w-2" />

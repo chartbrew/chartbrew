@@ -88,11 +88,11 @@ function FillOpacityControl(props) {
         isSelected={fill}
         onChange={onFillChange}
       >
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
         <Switch.Content>
-          <Label htmlFor={controlId}>Fill background</Label>
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          Fill background
         </Switch.Content>
       </Switch>
 
@@ -809,11 +809,11 @@ function ChartDatasetConfig(props) {
                             isDisabled={cdc.multiFill}
                             variant="secondary"
                           >
-                            <Checkbox.Control className="size-4 shrink-0">
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
                             <Checkbox.Content>
-                              <Label htmlFor={`cdc-fill-${cdc.id}`} className="text-sm">Fill Color</Label>
+                              <Checkbox.Control className="size-4 shrink-0">
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              Fill Color
                             </Checkbox.Content>
                           </Checkbox>
                         </Row>
@@ -848,11 +848,11 @@ function ChartDatasetConfig(props) {
                           }}
                           variant="secondary"
                         >
-                          <Checkbox.Control className="size-4 shrink-0">
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
                           <Checkbox.Content>
-                            <Label htmlFor={`cdc-multifill-${cdc.id}`} className="text-sm">Multiple colors</Label>
+                            <Checkbox.Control className="size-4 shrink-0">
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                            Multiple colors
                           </Checkbox.Content>
                         </Checkbox>
                       </Row>

@@ -152,11 +152,11 @@ function TeamSettings() {
             isSelected={team.allowReportExport}
             onChange={(selected) => _onToggleReportExport(selected)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="team-settings-allow-report-export">Allow public exports</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              Allow public exports
             </Switch.Content>
           </Switch>
           <Tooltip>
@@ -173,11 +173,11 @@ function TeamSettings() {
             isSelected={team.allowReportRefresh}
             onChange={(selected) => _onToggleReportRefresh(selected)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="team-settings-allow-report-refresh">Allow report refresh</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              Allow report refresh
             </Switch.Content>
           </Switch>
           <Tooltip>
@@ -196,11 +196,11 @@ function TeamSettings() {
             isSelected={team.showBranding}
             onChange={(selected) => _onToggleBranding(selected)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="team-settings-show-branding">Show Chartbrew branding</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              Show Chartbrew branding
             </Switch.Content>
           </Switch>
           <Tooltip>

@@ -4,7 +4,6 @@ import {
   Accordion,
   Button,
   Checkbox,
-  Label,
 } from "@heroui/react";
 import { LuCheckCheck } from "react-icons/lu";
 import DateRangeFilter from "./DateRangeFilter";
@@ -129,13 +128,11 @@ function EditDateRangeFilter({
                           isDisabled={isSelected && selectedCharts.length === 1}
                           onChange={() => _handleChartSelection(chart.id)}
                         >
-                          <Checkbox.Control className="size-4 shrink-0">
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
                           <Checkbox.Content>
-                            <Label htmlFor={`date-filter-chart-${chart.id}`} className="text-sm">
-                              {chart.name}
-                            </Label>
+                            <Checkbox.Control className="size-4 shrink-0">
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                            {chart.name}
                           </Checkbox.Content>
                         </Checkbox>
                       );

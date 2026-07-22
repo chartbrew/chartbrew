@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Separator, Input, InputGroup, Switch, Tooltip, RadioGroup, Radio,
-  Drawer, Checkbox, Spinner, Label,
+  Drawer, Checkbox, Spinner,
   Alert,
 } from "@heroui/react";
 import { LuChevronsRight, LuCopy, LuCopyCheck, LuExternalLink, LuInfo, LuPlus, LuX, LuTrash2, LuShare2, LuRefreshCcw, LuPalette, LuShare, LuArrowLeft, LuTriangleAlert } from "react-icons/lu";
@@ -554,27 +554,27 @@ function SharingSettings(props) {
             onChange={setEmbedTheme}
           >
             <Radio value="os">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">System default</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                System default
               </Radio.Content>
             </Radio>
             <Radio value="dark">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">Dark</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                Dark
               </Radio.Content>
             </Radio>
             <Radio value="light">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">Light</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                Light
               </Radio.Content>
             </Radio>
           </RadioGroup>
@@ -654,11 +654,11 @@ function SharingSettings(props) {
               onChange={(selected) => setAllowParams(selected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="sharing-settings-allow-params" className="text-sm">Allow parameters in the URL</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Allow parameters in the URL
               </Checkbox.Content>
             </Checkbox>
             <Tooltip delay={0}>
@@ -756,11 +756,11 @@ function SharingSettings(props) {
                   isSelected={project.public}
                   onChange={_onTogglePublic}
                 >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
                   <Switch.Content>
-                    <Label htmlFor="sharing-settings-allow-public">Allow sharing</Label>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Allow sharing
                   </Switch.Content>
                 </Switch>
                 <div className="w-1" />
@@ -785,11 +785,11 @@ function SharingSettings(props) {
                   isReadOnly={passwordLoading}
                   aria-busy={passwordLoading}
                 >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
                   <Switch.Content>
-                    <Label htmlFor="sharing-settings-require-password">Require password to view</Label>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Require password to view
                   </Switch.Content>
                 </Switch>
                 <div className="w-1" />
@@ -1053,11 +1053,11 @@ function SharingSettings(props) {
                 isSelected={project.Team && project.Team.showBranding}
                 onChange={_onToggleBranding}
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
                 <Switch.Content>
-                  <Label htmlFor="sharing-settings-branding">Show Chartbrew branding</Label>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  Show Chartbrew branding
                 </Switch.Content>
               </Switch>
             </Row>

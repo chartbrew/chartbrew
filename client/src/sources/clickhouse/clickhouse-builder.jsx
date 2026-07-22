@@ -393,11 +393,11 @@ function ClickHouseBuilder(props) {
               isSelected={!invalidateCache}
               onChange={(selected) => setInvalidateCache(!selected)}
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="clickhouse-use-cache" className="text-sm">Use cached data</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Use cached data
               </Checkbox.Content>
             </Checkbox>
             <div className="w-1" />
@@ -673,9 +673,11 @@ function ClickHouseBuilder(props) {
                 size="sm"
                 aria-label="Required"
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
               </Switch>
             </div>
           </Drawer.Body>

@@ -95,6 +95,10 @@
   [data-theme="light"] {
     color-scheme: light;
 
+    /* Preserve the pre-HeroUI 3.2 tooltip timing. */
+    --tooltip-delay: 700ms;
+    --tooltip-close-delay: 0ms;
+
     --cb-primary-100: #CBEAFD;
     --cb-primary-200: #98E7FB;
     --cb-primary-300: #64CFF5;

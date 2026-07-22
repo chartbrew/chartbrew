@@ -389,11 +389,11 @@ function TableDataFormattingModal(props) {
                   className="w-full"
                   variant="secondary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="table-format-thousands" className="text-sm">Use thousands separator</Label>
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Use thousands separator
                   </Checkbox.Content>
                 </Checkbox>
               </div>
@@ -405,11 +405,11 @@ function TableDataFormattingModal(props) {
                   className="w-full"
                   variant="secondary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="table-format-decimals" className="text-sm">Allow decimals</Label>
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Allow decimals
                   </Checkbox.Content>
                 </Checkbox>
               </div>

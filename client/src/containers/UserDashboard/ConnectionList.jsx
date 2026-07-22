@@ -378,11 +378,11 @@ function ConnectionList() {
                   isSelected={deleteRelatedDatasets}
                   variant="secondary"
                 >
-                  <Checkbox.Control className="size-4 shrink-0">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
-                    <Label htmlFor="connection-delete-related-datasets" className="text-sm">Delete related datasets</Label>
+                    <Checkbox.Control className="size-4 shrink-0">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Delete related datasets
                   </Checkbox.Content>
                 </Checkbox>
                 <div className="flex flex-row items-center gap-1">

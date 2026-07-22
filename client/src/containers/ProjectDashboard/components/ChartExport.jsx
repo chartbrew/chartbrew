@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Label, Separator, Tooltip, Link as LinkNext,
+  Button, Checkbox, Separator, Tooltip, Link as LinkNext,
   Tabs,
 } from "@heroui/react";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
@@ -106,11 +106,11 @@ function ChartExport(props) {
                     }}
                     variant="secondary"
                   >
-                    <Checkbox.Control className="size-4 shrink-0">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
                     <Checkbox.Content>
-                      <Label htmlFor={`chart-export-${chart.id}`} className="text-sm">{chart.name}</Label>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      {chart.name}
                     </Checkbox.Content>
                   </Checkbox>
                   {showDisabled && (

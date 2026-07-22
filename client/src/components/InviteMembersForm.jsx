@@ -129,15 +129,13 @@ function InviteMembersForm(props) {
               <Label className="font-bold">Select a role</Label>
               {roleOptions.map((option) => (
                 <Radio key={option.value} value={option.value}>
-                  <Radio.Control>
-                    <Radio.Indicator />
-                  </Radio.Control>
                   <Radio.Content>
-                    <div className="flex flex-col gap-0.5">
-                      <Label className="text-sm font-medium">{option.label}</Label>
-                      <Description className="text-sm text-default-500">{option.description}</Description>
-                    </div>
+                    <Radio.Control>
+                      <Radio.Indicator />
+                    </Radio.Control>
+                    {option.label}
                   </Radio.Content>
+                  <Description className="text-sm text-default-500">{option.description}</Description>
                 </Radio>
               ))}
             </RadioGroup>
@@ -196,11 +194,11 @@ function InviteMembersForm(props) {
                                 if (selected !== wasSelected) _onChangeProjectAccess(project.id);
                               }}
                             >
-                              <Checkbox.Control className="size-4 shrink-0">
-                                <Checkbox.Indicator />
-                              </Checkbox.Control>
                               <Checkbox.Content>
-                                <Label htmlFor={`invite-project-${project.id}`} className="text-sm">{project.name}</Label>
+                                <Checkbox.Control className="size-4 shrink-0">
+                                  <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                {project.name}
                               </Checkbox.Content>
                             </Checkbox>
                           </div>
@@ -240,11 +238,11 @@ function InviteMembersForm(props) {
               onChange={(isSelected) => setExportAllowed(isSelected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="invite-export-allowed" className="text-sm">Allow data export</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Allow data export
               </Checkbox.Content>
             </Checkbox>
           </div>

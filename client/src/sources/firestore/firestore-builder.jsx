@@ -848,11 +848,11 @@ function FirestoreBuilder(props) {
               }
               size="sm"
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
               <Switch.Content>
-                <Label htmlFor="firestore-subcollections">Add sub-collections to the response</Label>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                Add sub-collections to the response
               </Switch.Content>
             </Switch>
           </Row>
@@ -987,11 +987,11 @@ function FirestoreBuilder(props) {
                 isSelected={!invalidateCache}
                 onChange={(selected) => setInvalidateCache(!selected)}
               >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label htmlFor="firestore-use-cache" className="text-sm">Use cached data</Label>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Use cached data
                 </Checkbox.Content>
               </Checkbox>
               <div className="w-2" />

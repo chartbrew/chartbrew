@@ -618,11 +618,11 @@ function DatasetFilters(props) {
               }}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="dataset-filter-hide-values" className="text-sm">Hide existing values from the filter dropdown</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Hide existing values from the filter dropdown
               </Checkbox.Content>
             </Checkbox>
           </Modal.Body>
@@ -751,9 +751,11 @@ function DatasetFilters(props) {
                 size="sm"
                 aria-label="Required"
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
               </Switch>
             </div>
           </Drawer.Body>

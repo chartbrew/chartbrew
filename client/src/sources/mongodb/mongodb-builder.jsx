@@ -12,7 +12,6 @@ import {
   Popover,
   Tabs,
   Tooltip,
-  Label,
 } from "@heroui/react";
 import AceEditor from "../../components/CodeEditor";
 import toast from "react-hot-toast";
@@ -404,11 +403,11 @@ function MongoQueryBuilder(props) {
               onChange={(selected) => setInvalidateCache(!selected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="mongo-query-use-cache" className="text-sm">Use cached data</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Use cached data
               </Checkbox.Content>
             </Checkbox>
             <div className="w-2" />

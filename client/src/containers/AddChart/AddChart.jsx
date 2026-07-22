@@ -576,9 +576,11 @@ function AddChart() {
                   onChange={(selected) => _onChangeChart({ draft: selected })}
                   aria-label="Draft mode"
                 >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Content>
                 </Switch>
               </div>
               <Button

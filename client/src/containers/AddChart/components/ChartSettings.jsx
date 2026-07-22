@@ -270,11 +270,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               className="chart-settings-relative"
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-current-end" className="text-sm">Auto-update the date range</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Auto-update the date range
               </Checkbox.Content>
             </Checkbox>
             <Tooltip delay={0}>
@@ -322,11 +322,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             onChange={(selected) => onChange({ fixedStartDate: selected })}
             variant="secondary"
           >
-            <Checkbox.Control className="size-4 shrink-0">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
             <Checkbox.Content>
-              <Label htmlFor="chart-settings-fixed-start" className="text-sm">Fix the start date</Label>
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              Fix the start date
             </Checkbox.Content>
           </Checkbox>
         </div>
@@ -368,11 +368,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => onChange({ includeZeros: selected })}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-include-zeros" className="text-sm">Fill missing time intervals</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Fill missing time intervals
               </Checkbox.Content>
             </Checkbox>
           )}
@@ -423,11 +423,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => _onAddPoints(selected ? 3 : 0)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-data-points" className="text-sm">Data points</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Data points
               </Checkbox.Content>
             </Checkbox>
           </div>
@@ -440,11 +440,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => onChange({ stacked: selected })}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-stacked" className="text-sm">Stack datasets</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Stack datasets
               </Checkbox.Content>
             </Checkbox>
           </div>
@@ -457,11 +457,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => onChange({ horizontal: selected })}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-horizontal" className="text-sm">Horizontal bars</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Horizontal bars
               </Checkbox.Content>
             </Checkbox>
           </div>
@@ -474,11 +474,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             isDisabled={chart.type === "matrix"}
             variant="secondary"
           >
-            <Checkbox.Control className="size-4 shrink-0">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
             <Checkbox.Content>
-              <Label htmlFor="chart-settings-legend" className="text-sm">Legend</Label>
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              Legend
             </Checkbox.Content>
           </Checkbox>
         </div>
@@ -490,11 +490,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             isDisabled={chart.type === "matrix"}
             variant="secondary"
           >
-            <Checkbox.Control className="size-4 shrink-0">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
             <Checkbox.Content>
-              <Label htmlFor="chart-settings-data-labels" className="text-sm">Data labels</Label>
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              Data labels
             </Checkbox.Content>
           </Checkbox>
         </div>
@@ -535,11 +535,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => onChange({ isLogarithmic: selected })}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-log-scale" className="text-sm">Logarithmic scale</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Logarithmic scale
               </Checkbox.Content>
             </Checkbox>
           </div>
@@ -552,11 +552,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               onChange={(selected) => onChange({ dashedLastPoint: selected })}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-settings-dashed-last" className="text-sm">Dashed last point</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Dashed last point
               </Checkbox.Content>
             </Checkbox>
           </div>

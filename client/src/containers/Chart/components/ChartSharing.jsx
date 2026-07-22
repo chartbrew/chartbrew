@@ -583,27 +583,27 @@ function ChartSharing({ chart, isOpen, onClose }) {
             onChange={setEmbedTheme}
           >
             <Radio value="os">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">System default</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                System default
               </Radio.Content>
             </Radio>
             <Radio value="dark">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">Dark</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                Dark
               </Radio.Content>
             </Radio>
             <Radio value="light">
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
               <Radio.Content>
-                <Label className="text-sm">Light</Label>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                Light
               </Radio.Content>
             </Radio>
           </RadioGroup>
@@ -685,11 +685,11 @@ function ChartSharing({ chart, isOpen, onClose }) {
               onChange={(selected) => setAllowParams(selected)}
               variant="secondary"
             >
-              <Checkbox.Control className="size-4 shrink-0">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label htmlFor="chart-sharing-allow-params" className="text-sm">Allow parameters in the URL</Label>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Allow parameters in the URL
               </Checkbox.Content>
             </Checkbox>
             <Tooltip delay={0}>
@@ -748,11 +748,11 @@ function ChartSharing({ chart, isOpen, onClose }) {
                 onChange={_onToggleShareable}
                 className="mr-4"
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
                 <Switch.Content>
-                  <Label htmlFor="chart-sharing-enable">Enable sharing</Label>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  Enable sharing
                 </Switch.Content>
               </Switch>
             </Modal.Header>

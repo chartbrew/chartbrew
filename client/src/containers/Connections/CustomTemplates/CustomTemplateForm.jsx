@@ -4,7 +4,7 @@ import _ from "lodash";
 import {
   Autocomplete,
   Avatar,
-  Button, Checkbox, Chip, Separator, EmptyState, Label, ListBox, Modal, SearchField, Switch, useFilter,
+  Button, Checkbox, Chip, Separator, EmptyState, ListBox, Modal, SearchField, Switch, useFilter,
 } from "@heroui/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuDatabase, LuTrash, LuX,
@@ -239,11 +239,11 @@ function CustomTemplateForm(props) {
                   onChange={(selected) => setNewDatasets(selected)}
                   isDisabled={!canChangeNewDatasets}
                 >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
                   <Switch.Content>
-                    <Label htmlFor="custom-template-new-datasets">{"Create new datasets"}</Label>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    {"Create new datasets"}
                   </Switch.Content>
                 </Switch>
               </Row>
@@ -285,11 +285,11 @@ function CustomTemplateForm(props) {
                     }}
                     variant="secondary"
                   >
-                    <Checkbox.Control className="size-4 shrink-0">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
                     <Checkbox.Content>
-                      <Label htmlFor={`custom-template-chart-${chart.tid}`} className="text-sm">{chart.name}</Label>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      {chart.name}
                     </Checkbox.Content>
                   </Checkbox>
                 </Row>

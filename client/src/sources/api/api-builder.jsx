@@ -13,7 +13,6 @@ import {
   Select,
   Popover,
   Badge,
-  Label,
   ListBox
 } from "@heroui/react";
 import AceEditor from "../../components/CodeEditor";
@@ -809,11 +808,11 @@ function ApiBuilder(props) {
                       onChange={(selected) => setApiRequest({ ...apiRequest, useGlobalHeaders: selected })}
                       variant="secondary"
                     >
-                      <Checkbox.Control className="size-4 shrink-0">
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
                       <Checkbox.Content>
-                        <Label htmlFor="apibuilder-global-headers" className="text-sm">Include connection headers</Label>
+                        <Checkbox.Control className="size-4 shrink-0">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        Include connection headers
                       </Checkbox.Content>
                     </Checkbox>
                   </Row>
@@ -1029,11 +1028,11 @@ function ApiBuilder(props) {
                 onChange={(selected) => setInvalidateCache(!selected)}
                 variant="secondary"
               >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label htmlFor="apibuilder-use-cache" className="text-sm">Use cache</Label>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Use cache
                 </Checkbox.Content>
               </Checkbox>
               <Tooltip>

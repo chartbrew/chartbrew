@@ -309,11 +309,11 @@ function WebhookIntegrations({ teamId }) {
                     }}
                     variant="secondary"
                   >
-                    <Checkbox.Control className="size-4 shrink-0">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
                     <Checkbox.Content>
-                      <Label htmlFor="webhook-slack-mode" className="text-sm">This is a Slack webhook</Label>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      This is a Slack webhook
                     </Checkbox.Content>
                   </Checkbox>
                   <div className="w-3" />

@@ -397,11 +397,11 @@ function JiraConfigStep() {
               isDisabled={doneAtAutoEnabled}
               onChange={(isSelected) => updateConfiguration({ includeDoneAt: isSelected })}
             >
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
               <Switch.Content>
-                <Label className="text-sm">Fetch done date from status history</Label>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                Fetch done date from status history
               </Switch.Content>
             </Switch>
             <div className="flex items-center gap-2">

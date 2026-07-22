@@ -292,11 +292,11 @@ function ClickHouseConnectionForm(props) {
             isSelected={connection.ssl || false}
             onChange={(selected) => _onChangeSSL(selected)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
             <Switch.Content>
-              <Label htmlFor="clickhouse-connection-ssl">{"Enable SSL"}</Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              {"Enable SSL"}
             </Switch.Content>
           </Switch>
         </div>

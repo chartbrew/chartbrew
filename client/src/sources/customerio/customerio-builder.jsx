@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Button,
   Checkbox,
-  Label,
   Tooltip,
   Separator,
   Tabs,
@@ -399,11 +398,11 @@ function CustomerioBuilder(props) {
                 isSelected={!invalidateCache}
                 onChange={(selected) => setInvalidateCache(!selected)}
               >
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label htmlFor="customerio-use-cache" className="text-sm">Use cache</Label>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Use cache
                 </Checkbox.Content>
               </Checkbox>
               <div className="w-1" />

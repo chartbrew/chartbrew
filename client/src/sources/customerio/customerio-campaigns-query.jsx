@@ -5,7 +5,6 @@ import {
   Button,
   Separator,
   Input,
-  Label,
   Popover,
   Switch,
   Tooltip,
@@ -603,11 +602,11 @@ function CampaignsQuery(props) {
                       onChange={(selected) => setConfig({ ...config, unique: selected })}
                       size="sm"
                     >
-                      <Switch.Control>
-                        <Switch.Thumb />
-                      </Switch.Control>
                       <Switch.Content>
-                        <Label htmlFor="campaigns-query-unique">Unique clicks per customer</Label>
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
+                        Unique clicks per customer
                       </Switch.Content>
                     </Switch>
                   </div>
