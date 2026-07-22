@@ -18,59 +18,111 @@ import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
-import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
+import {
+  formatValueWithFormula,
+  getTooltipFormulas,
+  tooltipPlugin,
+} from "./ChartTooltip";
 import { chartColors } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
 );
 
-const dataLabelsPlugin = {
-  color: "#fff",
-  font: {
-    size: 10,
-    family: "Inter",
-  },
-  padding: 4,
-  formatter: (value, context) => {
-    let formattedValue = value;
-    try {
-      formattedValue = parseFloat(value);
-    } catch (e) {
-      // do nothing
+function toFiniteNumber(value) {
+  const parsed = typeof value === "number" ? value : parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatChartNumber(value) {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 20 });
+}
+
+function getVisibleDatasetTotal(chartInstance, dataset) {
+  return dataset.data.reduce((total, value, index) => {
+    if (!chartInstance.getDataVisibility(index)) return total;
+    return total + (toFiniteNumber(value) || 0);
+  }, 0);
+}
+
+function getVisibleChartTotal(chartInstance) {
+  return chartInstance.data.datasets.reduce((total, dataset, datasetIndex) => {
+    if (!chartInstance.isDatasetVisible(datasetIndex)) return total;
+    return total + getVisibleDatasetTotal(chartInstance, dataset);
+  }, 0);
+}
+
+function getDataLabelsPlugin(format, formulas) {
+  return {
+    color: "#fff",
+    font: {
+      size: 10,
+      family: "Inter",
+    },
+    padding: 4,
+    formatter: (value, context) => {
+      const formattedValue = toFiniteNumber(value);
+      if (formattedValue === null) return "";
+
+      if (format === "value") {
+        return formatValueWithFormula(
+          formatChartNumber(formattedValue),
+          formulas[context.datasetIndex]
+        );
+      }
+
+      const total = getVisibleDatasetTotal(context.chart, context.dataset);
+      if (total === 0) return "0%";
+      return `${((formattedValue / total) * 100).toFixed(2)}%`;
+    },
+    display(context) {
+      const { dataset } = context;
+      const count = dataset.data.length;
+      const value = toFiniteNumber(dataset.data[context.dataIndex]);
+      return value !== null && value > count * 1.5;
+    },
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    borderRadius: 4,
+  };
+}
+
+const doughnutCenterTotalPlugin = {
+  id: "doughnutCenterTotal",
+  afterDatasetsDraw(chartInstance, _args, options) {
+    const meta = chartInstance.data.datasets
+      .map((_, index) => chartInstance.getDatasetMeta(index))
+      .find((datasetMeta) => datasetMeta.data.length > 0);
+    const firstArc = meta?.data?.[0];
+    if (!firstArc?.innerRadius) return;
+
+    const total = getVisibleChartTotal(chartInstance);
+    const value = formatValueWithFormula(formatChartNumber(total), options.formula);
+    const { ctx } = chartInstance;
+    const { x, y, innerRadius } = firstArc;
+    const maxTextWidth = innerRadius * 1.65;
+    const preferredFontSize = Math.min(28, Math.max(12, innerRadius * 0.34));
+    let fontSize = preferredFontSize;
+
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `600 ${fontSize}px Inter`;
+    while (fontSize > 10 && ctx.measureText(value).width > maxTextWidth) {
+      fontSize -= 1;
+      ctx.font = `600 ${fontSize}px Inter`;
     }
 
-    const hiddens = context.chart._hiddenIndices;
-    let total = 0;
-    const datapoints = context.dataset.data;
-    datapoints.forEach((val, i) => {
-      let formattedVal = val;
-      try {
-        formattedVal = parseFloat(val);
-      } catch (e) {
-        // do nothing
-      }
-      if (hiddens[i] !== undefined) {
-        if (!hiddens[i]) {
-          total += formattedVal;
-        }
-      } else {
-        total += formattedVal;
-      }
-    });
+    const showLabel = innerRadius >= 28;
+    ctx.fillStyle = options.color;
+    ctx.fillText(value, x, showLabel ? y + (fontSize * 0.25) : y, maxTextWidth);
 
-    const percentage = `${((formattedValue / total) * 100).toFixed(2)}%`;
-    const out = percentage;
-    return out;
+    if (showLabel) {
+      ctx.fillStyle = options.labelColor;
+      ctx.font = `500 ${Math.min(11, Math.max(9, innerRadius * 0.14))}px Inter`;
+      ctx.fillText("Total", x, y - (fontSize * 0.65), maxTextWidth);
+    }
+    ctx.restore();
   },
-  display(context) {
-    const { dataset } = context;
-    const count = dataset.data.length;
-    const value = dataset.data[context.dataIndex];
-    return value > count * 1.5;
-  },
-  backgroundColor: "rgba(0, 0, 0, 0.2)",
-  borderRadius: 4,
 };
 
 function getChartSurfaceColor(context, fallback) {
@@ -108,17 +160,32 @@ function DoughnutChart(props) {
       }
 
       // Add tooltip configuration
+      const tooltipFormulas = getTooltipFormulas(chart);
+      const formulas = Object.values(tooltipFormulas);
+      const centerFormula = formulas.length > 0
+        && formulas[0]
+        && formulas.every((formula) => formula === formulas[0])
+        ? formulas[0]
+        : null;
       newOptions.plugins = {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
-          formulas: getTooltipFormulas(chart),
+          formulas: tooltipFormulas,
           isCategoryChart: true,
+        },
+        doughnutCenterTotal: {
+          color: semanticColors[theme].foreground.DEFAULT,
+          labelColor: semanticColors[theme].foreground[500],
+          formula: centerFormula,
         },
       };
 
       // Add datalabels plugin
-      newOptions.plugins.datalabels = chart?.dataLabels ? dataLabelsPlugin : { formatter: () => "" };
+      const dataLabelsFormat = chart.visualization?.settings?.dataLabelsFormat || "percentage";
+      newOptions.plugins.datalabels = chart?.dataLabels
+        ? getDataLabelsPlugin(dataLabelsFormat, tooltipFormulas)
+        : { formatter: () => "" };
 
       return newOptions;
     }
@@ -183,7 +250,7 @@ function DoughnutChart(props) {
             data={_getChartData()}
             options={_getChartOptions()}
             redraw={redraw}
-            plugins={[ChartDataLabels]}
+            plugins={[ChartDataLabels, doughnutCenterTotalPlugin]}
           />
         </ChartErrorBoundary>
       )}

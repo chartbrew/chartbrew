@@ -7,6 +7,7 @@ import {
   getVisualizationTimeField,
   isVisualizationReady,
   updateBindingFill,
+  updateDataLabelsFormat,
   updateLayerField,
   updateLayerFormula,
   updateLayerGoal,
@@ -108,6 +109,15 @@ test("missing chart points can be explicitly treated as zero", () => {
 
   assert.equal(next.settings.missingValues.policy, "zero");
   assert.equal(next.metadata.createdBy, "visualization-editor");
+});
+
+test("data label format is stored in canonical chart settings", () => {
+  const values = updateDataLabelsFormat(visualization, "value");
+  const percentages = updateDataLabelsFormat(values, "invalid");
+
+  assert.equal(values.settings.dataLabelsFormat, "value");
+  assert.equal(percentages.settings.dataLabelsFormat, "percentage");
+  assert.equal(values.metadata.createdBy, "visualization-editor");
 });
 
 test("legend visibility is stored in canonical chart settings", () => {

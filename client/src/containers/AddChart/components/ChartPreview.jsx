@@ -45,7 +45,7 @@ function ChartPreview(props) {
 
   useEffect(() => {
     setRedraw(true);
-  }, [chart.dataLabels, chart.type]);
+  }, [chart.dataLabels, chart.type, chart.visualization?.settings?.dataLabelsFormat]);
 
   useEffect(() => {
     setRanges(chart.ranges || [{ 

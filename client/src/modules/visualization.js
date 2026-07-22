@@ -361,6 +361,16 @@ export function updateMissingValuePolicy(visualization, policy) {
   return nextVisualization;
 }
 
+export function updateDataLabelsFormat(visualization, format) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.settings = {
+    ...(nextVisualization.settings || {}),
+    dataLabelsFormat: format === "value" ? "value" : "percentage",
+  };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
 export function updateLegendVisibility(visualization, visible) {
   const nextVisualization = makeNativeVisualization(visualization);
   nextVisualization.settings = {

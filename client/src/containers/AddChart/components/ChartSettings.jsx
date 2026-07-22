@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Description, Separator, Input, Tooltip, Modal, Select,
+  Button, Checkbox, Separator, Input, Tooltip, Modal, Select,
   Label, ListBox,
   TextField,
 } from "@heroui/react";
@@ -14,7 +14,10 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import DateRangeFilter from "../../ProjectDashboard/components/DateRangeFilter";
-import { updateMissingValuePolicy } from "../../../modules/visualization";
+import {
+  updateDataLabelsFormat,
+  updateMissingValuePolicy,
+} from "../../../modules/visualization";
 
 const xLabelOptions = [{
   key: "default",
@@ -73,6 +76,14 @@ const missingValueOptions = [{
   value: "zero",
 }];
 
+const dataLabelsFormatOptions = [{
+  text: "Percentages",
+  value: "percentage",
+}, {
+  text: "Values",
+  value: "value",
+}];
+
 const tableRowOptions = [{
   text: "5 rows per page",
   value: "5",
@@ -108,6 +119,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   const [datesFormat, setDatesFormat] = useState(null);
   const hasTimeEncoding = chart.visualization?.layers?.some((layer) => layer.encoding?.time);
   const missingValuePolicy = chart.visualization?.settings?.missingValues?.policy || "preserve";
+  const dataLabelsFormat = chart.visualization?.settings?.dataLabelsFormat || "percentage";
   const legendVisible = chart.visualization?.settings?.legend?.visible
     ?? chart.displayLegend
     ?? true;
@@ -369,22 +381,21 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
 
       {["line", "bar"].includes(chart.type) && chart.visualization && (
         <div className="mt-4 max-w-md">
-          <div className="mb-2 text-sm font-semibold text-foreground">Missing data</div>
           <Select
-            aria-label="Missing points"
+            aria-label="Missing data"
             onChange={(policy) => {
               onVisualizationChange(updateMissingValuePolicy(chart.visualization, policy));
             }}
             selectionMode="single"
+            size="sm"
             value={missingValuePolicy}
             variant="secondary"
           >
-            <Label>Missing points</Label>
+            <Label>Missing data</Label>
             <Select.Trigger>
               <Select.Value />
               <Select.Indicator />
             </Select.Trigger>
-            <Description>Choose whether absent category or series combinations remain gaps.</Description>
             <Select.Popover>
               <ListBox>
                 {missingValueOptions.map((option) => (
@@ -487,6 +498,35 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox.Content>
           </Checkbox>
         </div>
+        {chart.type === "doughnut" && chart.dataLabels && chart.visualization && (
+          <div>
+            <Select
+              aria-label="Data label format"
+              onChange={(format) => {
+                onVisualizationChange(updateDataLabelsFormat(chart.visualization, format));
+              }}
+              selectionMode="single"
+              value={dataLabelsFormat}
+              variant="secondary"
+            >
+              <Label>Data label format</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {dataLabelsFormatOptions.map((option) => (
+                    <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                      {option.text}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          </div>
+        )}
         {(chart.type === "line" || chart.type === "bar") && (
           <div>
             <Checkbox
