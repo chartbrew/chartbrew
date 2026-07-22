@@ -61,7 +61,7 @@
     "remark-gfm": "^4.0.0",
     "socket.io-client": "^4.8.1",
     "styled-components": "^4.4.1",
-    "tailwind-merge": "^3.4.0",
+    "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.2.2",
     "uuid": "^9.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
