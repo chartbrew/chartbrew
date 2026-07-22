@@ -16,7 +16,7 @@ import {
 import { cloneDeep } from "lodash";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-import { tooltipPlugin } from "./ChartTooltip";
+import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { chartColors } from "../../../config/colors";
@@ -128,6 +128,7 @@ function PolarChart(props) {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
+          formulas: getTooltipFormulas(chart),
           isCategoryChart: true,
         },
       };

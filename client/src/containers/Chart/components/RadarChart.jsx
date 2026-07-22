@@ -15,7 +15,7 @@ import {
 import { semanticColors } from "../../../lib/themeTokens";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { cloneDeep } from "lodash";
-import { tooltipPlugin } from "./ChartTooltip";
+import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -91,6 +91,7 @@ function RadarChart(props) {
         } : { display: false },
         tooltip: {
           ...tooltipPlugin,
+          formulas: getTooltipFormulas(chart),
           isCategoryChart: true,
         },
       };

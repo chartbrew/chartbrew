@@ -13,7 +13,7 @@ import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
-import { tooltipPlugin } from "./ChartTooltip";
+import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import { cn } from "../../../modules/utils";
 
 ChartJS.register(
@@ -120,7 +120,10 @@ function LineChart(props) {
       // Make sure plugins object exists
       newOptions.plugins = {
         ...newOptions.plugins,
-        tooltip: tooltipPlugin,
+        tooltip: {
+          ...tooltipPlugin,
+          formulas: getTooltipFormulas(chart),
+        },
         // Make sure the tooltip interaction mode is set
         interaction: {
           mode: "index",

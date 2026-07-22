@@ -18,7 +18,7 @@ import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
-import { tooltipPlugin } from "./ChartTooltip";
+import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import { chartColors } from "../../../config/colors";
 
 ChartJS.register(
@@ -111,6 +111,7 @@ function PieChart(props) {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
+          formulas: getTooltipFormulas(chart),
           isCategoryChart: true,
         },
       };

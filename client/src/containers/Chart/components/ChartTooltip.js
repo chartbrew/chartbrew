@@ -19,6 +19,13 @@ const createTooltipTextElement = (tagName, className, text) => {
 };
 
 const parseTooltipBodyLine = (body, index) => {
+  if (body && typeof body === "object") {
+    return {
+      category: body.category || `Series ${index + 1}`,
+      value: body.value == null ? "" : String(body.value).trim(),
+    };
+  }
+
   if (typeof body === "string") {
     if (body.includes(":")) {
       const separatorIndex = body.indexOf(":");
@@ -37,6 +44,44 @@ const parseTooltipBodyLine = (body, index) => {
   return {
     category: `Series ${index + 1}`,
     value: body == null ? "" : String(body).trim(),
+  };
+};
+
+export const formatValueWithFormula = (value, formula) => {
+  if (typeof formula !== "string") return value;
+
+  const openIndex = formula.indexOf("{");
+  const closeIndex = formula.indexOf("}", openIndex + 1);
+  if (openIndex === -1 || closeIndex === -1) return value;
+
+  return `${formula.slice(0, openIndex)}${value ?? ""}${formula.slice(closeIndex + 1)}`;
+};
+
+export const getTooltipFormulas = (chart) => {
+  const datasets = chart?.chartData?.data?.datasets || [];
+  const layers = chart?.visualization?.layers || [];
+  const runtimeSeries = chart?.chartData?.meta?.series || [];
+
+  return Object.fromEntries(datasets.map((dataset, index) => {
+    if (dataset.formula) return [index, dataset.formula];
+
+    const layerId = dataset.layerId || runtimeSeries[index]?.layerId;
+    const layer = layers.find((item) => item.id === layerId) || layers[index];
+    const formula = layer?.encoding?.value?.formula
+      || chart?.ChartDatasetConfigs?.[index]?.formula
+      || null;
+    return [index, formula];
+  }));
+};
+
+export const formatTooltipBodyLine = (body, dataPoint, index, formula) => {
+  const displayFormula = dataPoint?.dataset?.formula || formula;
+  if (!displayFormula) return body;
+
+  const parsedBody = parseTooltipBodyLine(body, index);
+  return {
+    category: dataPoint?.dataset?.label || parsedBody.category,
+    value: formatValueWithFormula(dataPoint.formattedValue ?? parsedBody.value, displayFormula),
   };
 };
 
@@ -110,7 +155,11 @@ export const tooltipPlugin = {
     // Set Text
     if (tooltipModel.body) {
       const titleLines = tooltipModel.title || [];
-      const bodyLines = tooltipModel.body.map(b => b.lines[0]);
+      const bodyLines = tooltipModel.body.map((body, index) => {
+        const dataPoint = tooltipModel.dataPoints?.[index];
+        const formula = context.tooltip.options.formulas?.[dataPoint?.datasetIndex];
+        return formatTooltipBodyLine(body.lines[0], dataPoint, index, formula);
+      });
       const isCategoryChart = context.tooltip.options.isCategoryChart;
       tooltipEl.replaceChildren(
         generateTooltipContent(titleLines, bodyLines, tooltipModel.labelColors, isCategoryChart)

@@ -15,6 +15,7 @@ class NewLineChart {
     for (let i = 0; i < this.chart.ChartDatasetConfigs.length; i++) {
       const datasetConfig = this.chart.ChartDatasetConfigs[i];
       const formattedDataset = {
+        formula: datasetConfig.formula || null,
         label: datasetConfig.legend,
         data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],
       };

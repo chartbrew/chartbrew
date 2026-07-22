@@ -14,7 +14,7 @@ import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
-import { tooltipPlugin } from "./ChartTooltip";
+import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import { getBarDataLabelDisplay } from "./barDataLabels";
 
 ChartJS.register(
@@ -122,6 +122,7 @@ function BarChart(props) {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
+          formulas: getTooltipFormulas(chart),
           isCategoryChart,
         },
       };

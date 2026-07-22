@@ -15,6 +15,7 @@ class NewBarChart {
       const datasetConfig = this.chart.ChartDatasetConfigs[i];
 
       const formattedDataset = {
+        formula: datasetConfig.formula || null,
         id: datasetConfig.id,
         label: datasetConfig.legend,
         layerId: datasetConfig.layerId,

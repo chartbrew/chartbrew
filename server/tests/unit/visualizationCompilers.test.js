@@ -134,6 +134,30 @@ describe("visualization output compilers", () => {
     expect(result.configuration.data.datasets[0].backgroundColor).not.toBeInstanceOf(Array);
   });
 
+  it.each(["bar", "line"])(
+    "keeps %s formula values numeric and exposes the formula for display formatting",
+    (mark) => {
+      const formula = "${val / 100}";
+      const result = buildEngine(mark, {
+        category: { field: "root[].month", type: "nominal" },
+        value: {
+          aggregate: "sum",
+          field: "root[].amount",
+          formula,
+          type: "quantitative",
+        },
+      }, [
+        { amount: 1234, month: "Jan" },
+        { amount: 5678, month: "Feb" },
+      ], { name: "Revenue" }).render();
+
+      expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
+        data: [12.34, 56.78],
+        formula,
+      }));
+    },
+  );
+
   it("compiles a value-only KPI with a formula and goal", () => {
     const result = buildEngine("kpi", {
       value: {
