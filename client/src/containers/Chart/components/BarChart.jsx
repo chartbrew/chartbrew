@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -6,8 +6,8 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, BarElement,
   Title, Tooltip, Legend, Filler, LogarithmicScale,
 } from "chart.js";
-import { semanticColors } from "../../../lib/themeTokens";
 import { cloneDeep } from "lodash";
+import { semanticColors } from "../../../lib/themeTokens";
 import { cn } from "../../../modules/utils";
 
 import KpiChartSegment from "./KpiChartSegment";
@@ -16,6 +16,12 @@ import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import { getBarDataLabelDisplay } from "./barDataLabels";
+import ChartPerformanceNotice from "./ChartPerformanceNotice";
+import {
+  applyCartesianPerformanceOptions,
+  compactBarChartData,
+  getCartesianChartComplexity,
+} from "./cartesianChartPerformance";
 
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, PointElement, BarElement, Title, Tooltip, Legend, Filler,
@@ -29,6 +35,10 @@ function BarChart(props) {
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
   const chartRef = useRef(null);
+  const complexity = useMemo(() => {
+    return getCartesianChartComplexity(chart.chartData?.data, "bar");
+  }, [chart.chartData?.data]);
+  const tooltipFormulas = useMemo(() => getTooltipFormulas(chart), [chart]);
 
   useEffect(() => {
     if (redraw) {
@@ -47,7 +57,7 @@ function BarChart(props) {
     };
   }, []);
 
-  const _getChartOptions = () => {
+  const chartOptions = useMemo(() => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
       const newOptions = cloneDeep(chart.chartData.options);
@@ -122,20 +132,20 @@ function BarChart(props) {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
-          formulas: getTooltipFormulas(chart),
+          formulas: tooltipFormulas,
           isCategoryChart,
         },
       };
 
       newOptions.plugins.datalabels = chart?.dataLabels ? _getDatalabelsOptions() : { formatter: () => "" };
 
-      return newOptions;
+      return applyCartesianPerformanceOptions(newOptions, complexity, "bar");
     }
 
     return chart.chartData?.options;
-  };
+  }, [chart, complexity, redraw, theme, tooltipFormulas]);
 
-  const _getDatalabelsOptions = () => {
+  function _getDatalabelsOptions() {
     return {
       align: "start",
       anchor: "end",
@@ -149,15 +159,27 @@ function BarChart(props) {
       offset: 0,
       padding: 4,
       borderRadius: 4,
-      formatter: Math.round,
+      formatter: (value) => {
+        const rawValue = value && typeof value === "object"
+          ? value[chart.horizontal ? "x" : "y"]
+          : value;
+        return Math.round(rawValue);
+      },
     };
-  };
+  }
 
-  const _getChartData = () => {
+  const chartData = useMemo(() => {
     if (!chart?.chartData?.data) return null;
     if (!chart?.chartData?.data?.datasets) return chart.chartData.data;
 
-    const newChartData = cloneDeep(chart.chartData.data);
+    const baseChartData = complexity.highDensity
+      && complexity.presentPointCount < complexity.densePointCount
+      ? compactBarChartData(chart.chartData.data, chart.horizontal)
+      : chart.chartData.data;
+    const newChartData = {
+      ...baseChartData,
+      datasets: baseChartData.datasets.map((dataset) => ({ ...dataset })),
+    };
 
     newChartData?.datasets?.forEach((dataset, index) => {
       newChartData.datasets[index].datalabels = {
@@ -172,7 +194,7 @@ function BarChart(props) {
     });
 
     return newChartData;
-  };
+  }, [chart.chartData?.data, chart.horizontal, complexity]);
 
   return (
     <>
@@ -183,14 +205,18 @@ function BarChart(props) {
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
             <div className={chart.mode !== "kpichart" ? "h-full" : "h-full pb-[50px]"}>
-              <ChartErrorBoundary>
-                <Bar
-                  data={_getChartData()}
-                  options={_getChartOptions()}
-                  redraw={redraw}
-                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
-                />
-              </ChartErrorBoundary>
+              {complexity.blocked ? (
+                <ChartPerformanceNotice complexity={complexity} />
+              ) : (
+                <ChartErrorBoundary>
+                  <Bar
+                    data={chartData}
+                    options={chartOptions}
+                    redraw={redraw}
+                    plugins={chart.dataLabels ? [ChartDataLabels] : []}
+                  />
+                </ChartErrorBoundary>
+              )}
             </div>
           )}
         </div>

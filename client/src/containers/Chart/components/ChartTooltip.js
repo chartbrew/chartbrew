@@ -1,7 +1,7 @@
 export const createTooltipElement = () => {
   const tooltipEl = document.createElement("div");
   tooltipEl.id = "chartjs-tooltip";
-  tooltipEl.className = "absolute pointer-events-none opacity-0 min-w-[120px] bg-white dark:bg-gray-800 rounded-lg shadow-md px-1 transition-all duration-150 ease-out z-[9999]";
+  tooltipEl.className = "absolute pointer-events-none opacity-0 min-w-[120px] bg-white dark:bg-gray-800 rounded-lg shadow-md px-1 transition-opacity duration-150 ease-out z-[9999]";
   document.body.appendChild(tooltipEl);
   return tooltipEl;
 };
@@ -61,17 +61,32 @@ export const getTooltipFormulas = (chart) => {
   const datasets = chart?.chartData?.data?.datasets || [];
   const layers = chart?.visualization?.layers || [];
   const runtimeSeries = chart?.chartData?.meta?.series || [];
+  const layersById = new Map(layers.map((layer) => [layer.id, layer]));
 
   return Object.fromEntries(datasets.map((dataset, index) => {
     if (dataset.formula) return [index, dataset.formula];
 
     const layerId = dataset.layerId || runtimeSeries[index]?.layerId;
-    const layer = layers.find((item) => item.id === layerId) || layers[index];
+    const layer = layersById.get(layerId) || layers[index];
     const formula = layer?.encoding?.value?.formula
       || chart?.ChartDatasetConfigs?.[index]?.formula
       || null;
     return [index, formula];
   }));
+};
+
+let activeTooltipElement = null;
+let activeTooltipChart = null;
+let activeTooltipSignature = null;
+let activeTooltipSize = null;
+
+const getTooltipSignature = (tooltipModel) => {
+  const title = (tooltipModel.title || []).join("\u0000");
+  const body = (tooltipModel.body || []).map((item) => item.lines?.[0] || "").join("\u0000");
+  const points = (tooltipModel.dataPoints || []).map((point) => {
+    return `${point.datasetIndex}:${point.dataIndex}:${point.formattedValue}`;
+  }).join("\u0000");
+  return `${title}\u0001${body}\u0001${points}`;
 };
 
 export const formatTooltipBodyLine = (body, dataPoint, index, formula) => {
@@ -145,6 +160,13 @@ export const tooltipPlugin = {
       tooltipEl = createTooltipElement();
     }
 
+    if (activeTooltipElement !== tooltipEl || activeTooltipChart !== context.chart) {
+      activeTooltipElement = tooltipEl;
+      activeTooltipChart = context.chart;
+      activeTooltipSignature = null;
+      activeTooltipSize = null;
+    }
+
     // Hide if no tooltip
     const tooltipModel = context.tooltip;
     if (tooltipModel.opacity === 0) {
@@ -154,16 +176,21 @@ export const tooltipPlugin = {
 
     // Set Text
     if (tooltipModel.body) {
-      const titleLines = tooltipModel.title || [];
-      const bodyLines = tooltipModel.body.map((body, index) => {
-        const dataPoint = tooltipModel.dataPoints?.[index];
-        const formula = context.tooltip.options.formulas?.[dataPoint?.datasetIndex];
-        return formatTooltipBodyLine(body.lines[0], dataPoint, index, formula);
-      });
-      const isCategoryChart = context.tooltip.options.isCategoryChart;
-      tooltipEl.replaceChildren(
-        generateTooltipContent(titleLines, bodyLines, tooltipModel.labelColors, isCategoryChart)
-      );
+      const signature = getTooltipSignature(tooltipModel);
+      if (signature !== activeTooltipSignature) {
+        const titleLines = tooltipModel.title || [];
+        const bodyLines = tooltipModel.body.map((body, index) => {
+          const dataPoint = tooltipModel.dataPoints?.[index];
+          const formula = context.tooltip.options.formulas?.[dataPoint?.datasetIndex];
+          return formatTooltipBodyLine(body.lines[0], dataPoint, index, formula);
+        });
+        const isCategoryChart = context.tooltip.options.isCategoryChart;
+        tooltipEl.replaceChildren(
+          generateTooltipContent(titleLines, bodyLines, tooltipModel.labelColors, isCategoryChart)
+        );
+        activeTooltipSignature = signature;
+        activeTooltipSize = null;
+      }
     }
 
     // Get window dimensions
@@ -172,14 +199,17 @@ export const tooltipPlugin = {
     
     // Get positions
     const position = context.chart.canvas.getBoundingClientRect();
-    const tooltipWidth = tooltipEl.offsetWidth;
-    const tooltipHeight = tooltipEl.offsetHeight;
+    if (!activeTooltipSize) {
+      activeTooltipSize = {
+        height: tooltipEl.offsetHeight,
+        width: tooltipEl.offsetWidth,
+      };
+    }
+    const tooltipWidth = activeTooltipSize.width;
+    const tooltipHeight = activeTooltipSize.height;
     
     const cursorX = position.left + window.pageXOffset + tooltipModel.caretX;
     const cursorY = position.top + window.pageYOffset + tooltipModel.caretY;
-
-    // Position tooltip with transition
-    tooltipEl.style.transition = "all 150ms ease-out";
 
     // Check chart type
     const chartType = context.chart.config.type;
@@ -238,9 +268,6 @@ export const tooltipPlugin = {
       tooltipEl.style.top = cursorY + "px";
     }
     
-    // Add a small delay before showing the tooltip
-    requestAnimationFrame(() => {
-      tooltipEl.style.opacity = "1";
-    });
+    tooltipEl.style.opacity = "1";
   }
-}; 
+};

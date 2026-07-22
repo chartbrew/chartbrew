@@ -178,15 +178,22 @@ function buildChartJsDatasets(frame, spec, domain, missingValue) {
   frame.layers.forEach((layerFrame) => {
     const layer = spec.layers.find((item) => item.id === layerFrame.id);
     const dimensionRole = getDimensionRole(layerFrame);
+    const valuesBySeries = new Map();
+
+    layerFrame.rows.forEach((row) => {
+      if (!valuesBySeries.has(row.__seriesId)) {
+        valuesBySeries.set(row.__seriesId, new Map());
+      }
+      valuesBySeries.get(row.__seriesId).set(
+        serializeTypedValue(row[dimensionRole]),
+        row.value
+      );
+    });
 
     layerFrame.series.forEach((series) => {
-      const valuesByDimension = new Map();
+      const valuesByDimension = valuesBySeries.get(series.id) || new Map();
       const isCumulative = layer.transforms.some((transform) => {
         return transform.type === "window" && transform.operation === "cumulativeSum";
-      });
-      layerFrame.rows.forEach((row) => {
-        if (row.__seriesId !== series.id) return;
-        valuesByDimension.set(serializeTypedValue(row[dimensionRole]), row.value);
       });
 
       const style = styles.get(series.id);

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -6,15 +6,19 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title,
   Tooltip, Legend, Filler, LogarithmicScale,
 } from "chart.js";
-import { semanticColors } from "../../../lib/themeTokens";
 import { cloneDeep } from "lodash";
-
+import { semanticColors } from "../../../lib/themeTokens";
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 import { getTooltipFormulas, tooltipPlugin } from "./ChartTooltip";
 import { cn } from "../../../modules/utils";
+import ChartPerformanceNotice from "./ChartPerformanceNotice";
+import {
+  applyCartesianPerformanceOptions,
+  getCartesianChartComplexity,
+} from "./cartesianChartPerformance";
 
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -47,6 +51,10 @@ function LineChart(props) {
   const { isDark } = useTheme();
   const theme = isDark ? "dark" : "light";
   const chartRef = useRef(null);
+  const complexity = useMemo(() => {
+    return getCartesianChartComplexity(chart.chartData?.data, "line");
+  }, [chart.chartData?.data]);
+  const tooltipFormulas = useMemo(() => getTooltipFormulas(chart), [chart]);
 
   useEffect(() => {
     if (redraw) {
@@ -56,7 +64,7 @@ function LineChart(props) {
     }
   }, [redraw]);
 
-  const _getChartOptions = () => {
+  const chartOptions = useMemo(() => {
     if (chart.chartData?.options) {
       const newOptions = cloneDeep(chart.chartData.options);
 
@@ -122,12 +130,7 @@ function LineChart(props) {
         ...newOptions.plugins,
         tooltip: {
           ...tooltipPlugin,
-          formulas: getTooltipFormulas(chart),
-        },
-        // Make sure the tooltip interaction mode is set
-        interaction: {
-          mode: "index",
-          intersect: false,
+          formulas: tooltipFormulas,
         },
       };
 
@@ -139,11 +142,11 @@ function LineChart(props) {
         intersect: false,
       };
 
-      return newOptions;
+      return applyCartesianPerformanceOptions(newOptions, complexity, "line");
     }
 
     return chart.chartData?.options;
-  };
+  }, [chart, complexity, redraw, theme, tooltipFormulas]);
 
   useEffect(() => {
     return () => {
@@ -154,12 +157,14 @@ function LineChart(props) {
     };
   }, []);
 
-  const getChartData = () => {
+  const chartData = useMemo(() => {
     if (!chart.chartData?.data || !chart.chartData.data.datasets) return null;
 
-    const newData = cloneDeep(chart.chartData.data);
-    if (chart.dashedLastPoint) {
-      newData.datasets = newData.datasets.map(dataset => ({
+    if (!chart.dashedLastPoint) return chart.chartData.data;
+
+    return {
+      ...chart.chartData.data,
+      datasets: chart.chartData.data.datasets.map(dataset => ({
         ...dataset,
         segment: {
           borderDash: (ctx) => {
@@ -168,10 +173,9 @@ function LineChart(props) {
             return ctx.p1DataIndex === dataLength - 1 ? [5, 10] : [];
           }
         }
-      }));
-    }
-    return newData;
-  };
+      })),
+    };
+  }, [chart.chartData?.data, chart.dashedLastPoint]);
 
   return (
     <>
@@ -182,14 +186,18 @@ function LineChart(props) {
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
             <div className={chart.mode !== "kpichart" ? "h-full" : "h-full pb-[50px]"}>
-              <ChartErrorBoundary>
-                <Line
-                  data={getChartData()}
-                  options={_getChartOptions()}
-                  redraw={redraw}
-                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
-                />
-              </ChartErrorBoundary>
+              {complexity.blocked ? (
+                <ChartPerformanceNotice complexity={complexity} />
+              ) : (
+                <ChartErrorBoundary>
+                  <Line
+                    data={chartData}
+                    options={chartOptions}
+                    redraw={redraw}
+                    plugins={chart.dataLabels ? [ChartDataLabels] : []}
+                  />
+                </ChartErrorBoundary>
+              )}
             </div>
           )}
         </div>
