@@ -15,6 +15,7 @@ import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 import { tooltipPlugin } from "./ChartTooltip";
+import { getBarDataLabelDisplay } from "./barDataLabels";
 
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, PointElement, BarElement, Title, Tooltip, Legend, Filler,
@@ -65,8 +66,13 @@ function BarChart(props) {
       if (newOptions.scales?.x?.ticks) {
         newOptions.scales.x.ticks.color = semanticColors[theme].foreground.DEFAULT;
       }
-      if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
+      if (newOptions.plugins?.legend) {
+        newOptions.plugins.legend.display = chart.visualization?.settings?.legend?.visible
+          ?? chart.displayLegend
+          ?? newOptions.plugins.legend.display;
+        if (newOptions.plugins.legend.labels) {
+          newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
+        }
       }
 
       if (newOptions?.scales?.x?.ticks && newOptions?.scales?.y?.ticks) {
@@ -130,12 +136,16 @@ function BarChart(props) {
 
   const _getDatalabelsOptions = () => {
     return {
+      align: "start",
+      anchor: "end",
+      clamp: true,
+      clip: true,
+      display: getBarDataLabelDisplay,
       font: {
-        weight: "bold",
         size: 10,
         family: "Inter",
-        color: "white"
       },
+      offset: 0,
       padding: 4,
       borderRadius: 4,
       formatter: Math.round,
@@ -149,9 +159,15 @@ function BarChart(props) {
     const newChartData = cloneDeep(chart.chartData.data);
 
     newChartData?.datasets?.forEach((dataset, index) => {
-      if (dataset?.datalabels && index === chart.chartData.data.datasets.length - 1) {
-        newChartData.datasets[index].datalabels.color = semanticColors[theme].default[800];
-      }
+      newChartData.datasets[index].datalabels = {
+        ...(dataset.datalabels || {}),
+        align: "start",
+        anchor: "end",
+        clamp: true,
+        clip: true,
+        display: getBarDataLabelDisplay,
+        offset: 0,
+      };
     });
 
     return newChartData;

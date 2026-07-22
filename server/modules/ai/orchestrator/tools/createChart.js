@@ -3,6 +3,7 @@ const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
 const { normalizeTeamId, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
+const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 
 const chartController = new ChartController();
 
@@ -29,7 +30,7 @@ async function createChart(payload) {
     dataLabels, includeZeros, timeInterval, stacked, horizontal,
     xLabelTicks, showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
-    conditions, formula, seriesConfiguration,
+    conditions, formula, seriesConfiguration, encoding, visualization,
   } = payload;
 
   if (!project_id) {
@@ -89,6 +90,34 @@ async function createChart(payload) {
     const resolvedXAxis = resolveXAxis({
       chartType, xAxis, yAxis, chartSpec
     });
+    const canonicalVisualization = buildAiVisualization({
+      bindingId: "binding-1",
+      chart: {
+        ...chartSpec,
+        name,
+        type: chartType,
+        stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked,
+        horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal,
+      },
+      cdc: {
+        xAxis: resolvedXAxis,
+        xAxisOperation: xAxisOperation ?? chartSpec.xAxisOperation,
+        yAxis: yAxis ?? chartSpec.yAxis,
+        yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation ?? "none",
+        dateField: dateField ?? chartSpec.dateField,
+        formula: formula ?? chartSpec.formula,
+        goal: chartSpec.goal,
+        legend: legend ?? chartSpec.legend ?? getDatasetName(dataset),
+        datasetColor: chartSpec.datasetColor || chartSpec.options?.color || "#4285F4",
+        fillColor: chartSpec.fillColor,
+        fill: chartSpec.fill || false,
+        multiFill: chartSpec.multiFill || false,
+        pointRadius: pointRadius || chartSpec.pointRadius || 0,
+      },
+      encoding: encoding || chartSpec.encoding,
+      goal: chartSpec.goal,
+      visualization: visualization || chartSpec.visualization,
+    });
 
     // Check if project is a ghost project
     const project = await requireProjectForTeam(project_id, normalizedTeamId);
@@ -135,8 +164,10 @@ async function createChart(payload) {
       maxValue: maxValue || chartSpec.maxValue,
       minValue: minValue || chartSpec.minValue,
       ranges: ranges || chartSpec.ranges,
+      visualization: canonicalVisualization,
       layout: chartSpec.layout, // Will be auto-calculated if not provided
       chartDatasetConfigs: [{
+        templateBindingId: "binding-1",
         dataset_id,
         xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? chartSpec.xAxisOperation,

@@ -8,7 +8,12 @@ import ChartbrewLayout from "./components/chartbrew-layout";
 export type ChartAlertEmailProps = {
   chartName: string;
   thresholdText: string;
-  alerts: string[];
+  alerts: Array<string | {
+    label: string;
+    seriesId?: string | null;
+    seriesLabel?: string | null;
+    value: string | number;
+  }>;
   dashboardUrl: string;
   snapshotUrl?: string | null;
   browserUrl?: string;
@@ -22,6 +27,18 @@ export const DEFAULT_CHART_ALERT_EMAIL_PROPS = {
   logoUrl: "https://cdn2.chartbrew.com/logos/logo-light.png",
   supportEmail: "",
 } as const;
+
+function normalizeAlertItem(alert: ChartAlertEmailProps["alerts"][number]) {
+  if (typeof alert === "string") {
+    return {
+      label: alert,
+      seriesId: null,
+      seriesLabel: null,
+      value: null,
+    };
+  }
+  return alert;
+}
 
 export default function ChartAlertEmail(props: ChartAlertEmailProps) {
   const appName = props.appName ?? DEFAULT_CHART_ALERT_EMAIL_PROPS.appName;
@@ -41,12 +58,25 @@ export default function ChartAlertEmail(props: ChartAlertEmailProps) {
         <Text style={styles.bodyCopy}>{props.thresholdText}</Text>
 
         <Section style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Triggered points</Text>
-          {props.alerts.map((alert) => (
-            <Text key={alert} style={styles.alertItem}>
-              {alert}
-            </Text>
-          ))}
+          <Text style={styles.summaryTitle}>
+            {`${props.alerts.length} triggered value${props.alerts.length === 1 ? "" : "s"}`}
+          </Text>
+          {props.alerts.map((alert, index) => {
+            const item = normalizeAlertItem(alert);
+            return (
+              <Section
+                key={`${item.seriesId || item.seriesLabel || "series"}-${item.label}-${index}`}
+                style={styles.alertItem}
+              >
+                {item.seriesLabel ? (
+                  <Text style={styles.seriesLabel}>{item.seriesLabel}</Text>
+                ) : null}
+                <Text style={styles.alertValue}>
+                  {item.value === null ? item.label : `${item.label}: ${item.value}`}
+                </Text>
+              </Section>
+            );
+          })}
         </Section>
 
         <Section style={styles.buttonWrap}>
@@ -92,7 +122,17 @@ type PreviewableEmail = typeof ChartAlertEmail & {
 (ChartAlertEmail as PreviewableEmail).PreviewProps = {
   chartName: "Revenue by day",
   thresholdText: "Chartbrew found some values above your threshold of 200.",
-  alerts: ["2026-04-03: 245", "2026-04-04: 261"],
+  alerts: [{
+    label: "2026-04-03",
+    seriesId: "enterprise",
+    seriesLabel: "Enterprise",
+    value: 245,
+  }, {
+    label: "2026-04-04",
+    seriesId: "self-serve",
+    seriesLabel: "Self-serve",
+    value: 261,
+  }],
   dashboardUrl: "https://app.chartbrew.com/dashboard/123",
   snapshotUrl: "https://dummyimage.com/1200x630/e8eef5/1f2937.png&text=Revenue+Alert",
 };
@@ -139,6 +179,20 @@ const styles = {
   },
   alertItem: {
     margin: "0 0 10px",
+    padding: "12px 14px",
+    backgroundColor: "#ffffff",
+    borderRadius: "8px",
+    border: "1px solid #f3d29b",
+  },
+  seriesLabel: {
+    margin: "0 0 3px",
+    fontSize: "13px",
+    lineHeight: "1.4",
+    fontWeight: "700",
+    color: "#9a3412",
+  },
+  alertValue: {
+    margin: "0",
     fontSize: "15px",
     lineHeight: "1.6",
     color: "#7c2d12",

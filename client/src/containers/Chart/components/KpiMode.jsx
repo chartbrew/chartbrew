@@ -103,13 +103,15 @@ function KpiMode(props) {
     );
   };
 
-  const _hasGoal = (goals, index) => {
-    return goals && goals.length > 0 && goals.find((g) => g.goalIndex === index);
+  const _getMetric = (items, dataset, index) => {
+    return items?.find((item) => item.seriesId && dataset.id && item.seriesId === dataset.id)
+      || items?.find((item) => item.datasetIndex === index || item.goalIndex === index);
   };
 
-  const _renderGoal = (goals, index) => {
-    const goal = goals.find((g) => g.goalIndex === index);
-    const color = chart.ChartDatasetConfigs[index] && chart.ChartDatasetConfigs[index].datasetColor;
+  const _renderGoal = (goal, index) => {
+    const series = chart.chartData?.meta?.series?.find((item) => item.id === goal?.seriesId);
+    const color = series?.color
+      || chart.ChartDatasetConfigs[index]?.datasetColor;
     if (!goal) return (<span />);
     const {
       max, value, formattedMax,
@@ -153,11 +155,13 @@ function KpiMode(props) {
       )}
       {chart?.chartData?.data?.datasets.map((dataset, index) => {
         if (isCompact && index > 0) return null;
+        const goal = _getMetric(chart.chartData.goals, dataset, index);
+        const growth = _getMetric(chart.chartData.growth, dataset, index);
 
         return (
-          <div key={dataset.label} className={`p-2 ${_hasGoal(chart.chartData.goals, index) && isCompact ? "w-full" : ""} gap-4`}>
+          <div key={dataset.id || dataset.label} className={`p-2 ${goal && isCompact ? "w-full" : ""} gap-4`}>
             {chart.ChartDatasetConfigs[index] && (
-              <div className={`flex items-center ${_hasGoal(chart.chartData.goals, index) ? "justify-start" : "justify-center"}`}>
+              <div className={`flex items-center ${goal ? "justify-start" : "justify-center"}`}>
                 <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
                   <span>
                     {dataset.label}
@@ -166,29 +170,29 @@ function KpiMode(props) {
               </div>
             )}
 
-            <div className={`flex items-center ${_hasGoal(chart.chartData.goals, index) ? "justify-between" : "justify-center"} gap-4`}>
+            <div className={`flex items-center ${goal ? "justify-between" : "justify-center"} gap-4`}>
               <div
                 className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tw`}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}
               </div>
-              {_hasGoal(chart.chartData.goals, index) && chart.showGrowth && chart.chartData.growth && (
+              {goal && chart.showGrowth && growth && (
                 <div>
-                  {_renderGrowth(chart.chartData.growth[index])}
+                  {_renderGrowth(growth)}
                 </div>
               )}
             </div>
             
-            {!_hasGoal(chart.chartData.goals, index) && chart.showGrowth && chart.chartData.growth && (
+            {!goal && chart.showGrowth && growth && (
               <Row justify="center" align="center">
-                {_renderGrowth(chart.chartData.growth[index])}
+                {_renderGrowth(growth)}
               </Row>
             )}
 
-            {_hasGoal(chart.chartData.goals, index) && (
+            {goal && (
               <Row justify="center" align="center">
-                {_renderGoal(chart.chartData.goals, index)}
+                {_renderGoal(goal, index)}
               </Row>
             )}
           </div>

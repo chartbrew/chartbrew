@@ -131,6 +131,36 @@ describe("ChartRoute public access", () => {
       .expect(401);
   });
 
+  it("preserves generated series in embedded and snapshot chart payloads", async () => {
+    const generatedChartData = {
+      data: {
+        labels: ["Jan", "Feb"],
+        datasets: [
+          { label: "Professional", data: [12, 14] },
+          { label: "Amateur", data: [8, 11] },
+        ],
+      },
+      meta: {
+        series: [
+          { id: "type:professional", label: "Professional" },
+          { id: "type:amateur", label: "Amateur" },
+        ],
+      },
+    };
+    const seeded = await seedPublicChart(models, {
+      chartOverrides: { chartData: generatedChartData, public: true },
+    });
+
+    const response = await request(app)
+      .get(`/chart/${seeded.chart.id}/embedded`)
+      .query({ isSnapshot: "true" })
+      .expect(200);
+
+    expect(response.body.chartData.data.datasets.map((dataset) => dataset.label))
+      .toEqual(["Professional", "Amateur"]);
+    expect(response.body.chartData.meta.series).toHaveLength(2);
+  });
+
   it("marks existing share policies secure when generating a replacement token", async () => {
     const seeded = await seedPublicChart(models);
     const sharePolicy = await models.SharePolicy.create({

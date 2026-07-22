@@ -5,6 +5,8 @@ import {
   Avatar,
   Button,
   Checkbox,
+  Chip,
+  ColorSlider,
   Separator,
   Input,
   InputGroup,
@@ -12,27 +14,39 @@ import {
   Modal,
   Popover,
   ScrollShadow,
+  SearchField,
   Spinner,
+  Switch,
   Tabs,
   Tooltip,
   Label,
   TextField,
 } from "@heroui/react";
 import { commonColors } from "../../../lib/themeTokens";
-import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
+import { TbMathFunctionY } from "react-icons/tb";
 import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
   LuPlug,
   LuWandSparkles, LuCircleX,
   LuVariable,
+  LuChevronDown,
+  LuChevronUp,
+  LuEye,
+  LuEyeOff,
 } from "react-icons/lu";
 
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { removeCdc, runQuery, selectCdc, updateCdc } from "../../../slices/chart";
+import {
+  removeCdc,
+  runQuery,
+  selectCdc,
+  updateCdc,
+  updateChart,
+} from "../../../slices/chart";
 import DatasetAlerts from "./DatasetAlerts";
-import { chartColors, primary } from "../../../config/colors";
+import { chartColors, getChartColorForKey, primary } from "../../../config/colors";
 import { flatMap } from "lodash";
 import TableConfiguration from "../../../components/TableConfiguration";
 import FormulaTips from "../../../components/FormulaTips";
@@ -44,20 +58,135 @@ import { useTheme } from "../../../modules/ThemeContext";
 import ChartDatasetDataSetup from "./ChartDatasetDataSetup";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import ColorPickerControl from "../../../components/ColorPickerControl";
+import { getRgbColorChannels } from "../../../modules/colorPicker";
+import {
+  updateBindingFill,
+  updateLayerFormula,
+  updateLayerSeriesOptions,
+  updateSeriesColor,
+} from "../../../modules/visualization";
+
+function getFillSliderColor(color, opacity) {
+  const { red, green, blue } = getRgbColorChannels(color, chartColors.blue.hex);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
+function FillOpacityControl(props) {
+  const {
+    color,
+    controlId,
+    fill,
+    onFillChange,
+    onOpacityChange,
+    opacity,
+  } = props;
+
+  return (
+    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+      <Switch
+        id={controlId}
+        isSelected={fill}
+        onChange={onFillChange}
+      >
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+        <Switch.Content>
+          <Label htmlFor={controlId}>Fill background</Label>
+        </Switch.Content>
+      </Switch>
+
+      {fill && (
+        <ColorSlider
+          aria-label="Fill opacity"
+          channel="alpha"
+          className="mt-3 gap-1"
+          colorSpace="rgb"
+          defaultValue={getFillSliderColor(color, opacity)}
+          onChangeEnd={(nextColor) => {
+            const nextOpacity = nextColor.toFormat("rgb").getChannelValue("alpha");
+            onOpacityChange(Number(nextOpacity.toFixed(2)));
+          }}
+        >
+          <div className="flex items-center justify-between text-xs font-medium text-muted">
+            <Label>Opacity</Label>
+            <ColorSlider.Output />
+          </div>
+          <ColorSlider.Track>
+            <ColorSlider.Thumb />
+          </ColorSlider.Track>
+        </ColorSlider>
+      )}
+    </div>
+  );
+}
+
+FillOpacityControl.propTypes = {
+  color: PropTypes.string.isRequired,
+  controlId: PropTypes.string.isRequired,
+  fill: PropTypes.bool.isRequired,
+  onFillChange: PropTypes.func.isRequired,
+  onOpacityChange: PropTypes.func.isRequired,
+  opacity: PropTypes.number.isRequired,
+};
+
+function DatasetLabelField({ initialValue, onSave }) {
+  const [value, setValue] = useState(initialValue);
+  const nextValue = value.trim();
+  const hasChanges = Boolean(nextValue) && nextValue !== initialValue;
+
+  const _save = () => {
+    if (hasChanges) onSave(nextValue);
+  };
+
+  return (
+    <TextField className="w-full" name="dataset-label">
+      <Label>Dataset label</Label>
+      <InputGroup fullWidth variant="secondary">
+        <InputGroup.Input
+          placeholder="Enter a label for this dataset"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              _save();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setValue(initialValue);
+            }
+          }}
+        />
+        {hasChanges && (
+          <InputGroup.Suffix className="pr-2 border-none">
+            <Button size="sm" variant="secondary" onPress={_save}>
+              Save
+            </Button>
+          </InputGroup.Suffix>
+        )}
+      </InputGroup>
+    </TextField>
+  );
+}
+
+DatasetLabelField.propTypes = {
+  initialValue: PropTypes.string.isRequired,
+  onSave: PropTypes.func.isRequired,
+};
 
 function ChartDatasetConfig(props) {
   const { chartId, cdcId, dataRequests, onRemove } = props;
 
-  const [legend, setLegend] = useState("");
   const [formula, setFormula] = useState("");
   const [maxRecords, setMaxRecords] = useState("");
-  const [goal, setGoal] = useState("");
   const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
   const [editConfirmation, setEditConfirmation] = useState(false);
   const [variables, setVariables] = useState([]);
   const [variableValues, setVariableValues] = useState({});
   const [activeTab, setActiveTab] = useState("data-setup");
+  const [seriesSearch, setSeriesSearch] = useState("");
 
   const cdc = useSelector((state) => selectCdc(state, chartId, cdcId));
   const dataset = useSelector((state) => (
@@ -67,6 +196,27 @@ function ChartDatasetConfig(props) {
   ));
   const drs = dataset?.DataRequests || [];
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
+  const bindingLayers = (chart?.visualization?.layers || []).filter((layer) => {
+    return `${layer.bindingId}` === `${cdc?.id}`;
+  });
+  const bindingLayerIds = new Set(bindingLayers.map((layer) => layer.id));
+  const runtimeSeries = (
+    chart?.chartData?.meta?.availableSeries
+    || chart?.chartData?.meta?.series
+    || []
+  ).filter((series) => {
+    return bindingLayerIds.has(series.layerId);
+  });
+  const runtimeCategories = (chart?.chartData?.meta?.categories || []).filter((category) => {
+    return bindingLayerIds.has(category.layerId);
+  });
+  const usesCategorySliceColors = ["pie", "doughnut", "polar"].includes(chart?.type)
+    && runtimeCategories.length > 0;
+  const colorItems = usesCategorySliceColors ? runtimeCategories : runtimeSeries;
+  const usesGeneratedSeriesColors = usesCategorySliceColors || runtimeSeries.length > 0 && (
+    runtimeSeries.length > 1
+    || bindingLayers.some((layer) => Boolean(layer.encoding?.breakdown))
+  );
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
 
@@ -77,9 +227,7 @@ function ChartDatasetConfig(props) {
 
   useEffect(() => {
     setFormula(cdc?.formula || "");
-    setLegend(cdc?.legend || getDatasetDisplayName(dataset));
     setMaxRecords(cdc?.maxRecords || "");
-    setGoal(cdc?.goal || "");
   }, [cdc, dataset]);
 
   useEffect(() => {
@@ -195,15 +343,96 @@ function ChartDatasetConfig(props) {
       });
   };
 
-  const _onSaveLegend = () => {
-    dispatch(updateCdc({
+  const _onUpdateVisualization = ({ cdcChanges, chartChanges, refresh, visualization }) => {
+    const updates = [dispatch(updateChart({
       project_id: params.projectId,
       chart_id: chartId,
-      cdc_id: cdc.id,
-      data: { legend },
-    })).then(() => {
-      _onRunQuery(true);
+      data: {
+        ...chartChanges,
+        visualization,
+      },
+    }))];
+    if (cdcChanges) {
+      updates.push(dispatch(updateCdc({
+        project_id: params.projectId,
+        chart_id: chartId,
+        cdc_id: cdc.id,
+        data: cdcChanges,
+      })));
+    }
+    Promise.all(updates).then(() => {
+      if (refresh) _onRunQuery(false);
     });
+  };
+
+  const _getSeriesLayer = (series) => bindingLayers.find((layer) => {
+    return layer.id === series.layerId;
+  });
+
+  const _getSeriesOverrideColor = (series) => {
+    const layer = _getSeriesLayer(series);
+    return layer?.style?.series?.[series.id]?.color
+      || layer?.style?.series?.[series.key]?.color
+      || null;
+  };
+
+  const _getSeriesColor = (series) => {
+    return _getSeriesOverrideColor(series) || series.color || getChartColorForKey(series.id);
+  };
+
+  const _onChangeSeriesColor = (series, color) => {
+    const visualization = updateSeriesColor(
+      chart.visualization,
+      series.layerId,
+      series.id,
+      color
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
+  const _getLayerSeriesOptions = (series) => {
+    return _getSeriesLayer(series)?.options?.series || {};
+  };
+
+  const _onToggleSeries = (series) => {
+    const options = _getLayerSeriesOptions(series);
+    const hidden = new Set(options.hidden || []);
+    if (hidden.has(series.id)) hidden.delete(series.id);
+    else hidden.add(series.id);
+    const visualization = updateLayerSeriesOptions(
+      chart.visualization,
+      series.layerId,
+      { hidden: [...hidden] }
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
+  const _onMoveSeries = (series, offset) => {
+    const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
+    const configuredOrder = _getLayerSeriesOptions(series).order || [];
+    const order = [
+      ...configuredOrder.filter((id) => layerSeries.some((item) => item.id === id)),
+      ...layerSeries.map((item) => item.id).filter((id) => !configuredOrder.includes(id)),
+    ];
+    const currentIndex = order.indexOf(series.id);
+    const nextIndex = currentIndex + offset;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= order.length) return;
+    [order[currentIndex], order[nextIndex]] = [order[nextIndex], order[currentIndex]];
+    const visualization = updateLayerSeriesOptions(
+      chart.visualization,
+      series.layerId,
+      { order }
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
+  };
+
+  const _onChangeFill = (fill, fillOpacity) => {
+    const visualization = updateBindingFill(
+      chart.visualization,
+      cdc.id,
+      { fill, fillOpacity }
+    );
+    _onUpdateVisualization({ refresh: true, visualization });
   };
 
   const _getDatasetColor = (datasetColor) => ({
@@ -285,16 +514,34 @@ function ChartDatasetConfig(props) {
 
   const _onExampleFormula = () => {
     setFormula("${val / 100}");
-    _onUpdateCdc({ formula: "${val / 100}" });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula: "${val / 100}" },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, "${val / 100}"),
+    });
   };
 
   const _onRemoveFormula = () => {
     setFormula("");
-    _onUpdateCdc({ formula: "" });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula: "" },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, null),
+    });
   };
 
   const _onApplyFormula = () => {
-    _onUpdateCdc({ formula });
+    const layer = bindingLayers[0];
+    if (!layer) return;
+    _onUpdateVisualization({
+      cdcChanges: { formula },
+      refresh: true,
+      visualization: updateLayerFormula(chart.visualization, layer.id, formula),
+    });
   };
 
   const _onSaveVariableValue = (variableName, value) => {
@@ -368,21 +615,33 @@ function ChartDatasetConfig(props) {
     );
   }
 
-  const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled series";
+  const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled dataset";
+  const fillLayer = bindingLayers[0];
+  const fillEnabled = fillLayer?.style?.fill ?? cdc.fill ?? chart.type === "bar";
+  const configuredFillOpacity = fillLayer?.style?.fillOpacity;
+  const fillOpacity = Number.isFinite(configuredFillOpacity)
+    ? Math.min(1, Math.max(0, configuredFillOpacity))
+    : (chart.type === "bar" ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
+  const fillBaseColor = runtimeSeries[0]
+    ? _getSeriesColor(runtimeSeries[0])
+    : cdc.datasetColor || chartColors.blue.hex;
+  const visibleColorItems = colorItems.filter((item) => {
+    return item.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
+  });
 
   return (
     <div>
       <Tabs
         selectedKey={activeTab}
         onSelectionChange={(key) => setActiveTab(key)}
-        aria-label="Series configuration"
+        aria-label="Visualization configuration"
         fullWidth
       >
         <Tabs.ListContainer>
           <Tabs.List className="w-full">
             <Tabs.Tab id="data-setup">
               <Tabs.Indicator />
-              Data setup
+              Build
             </Tabs.Tab>
             <Tabs.Tab id="display">
               <Tabs.Indicator />
@@ -396,17 +655,19 @@ function ChartDatasetConfig(props) {
         </Tabs.ListContainer>
         <Tabs.Panel id="data-setup">
           <div className="h-2" />
+          <DatasetLabelField
+            key={cdc.id}
+            initialValue={seriesLabel}
+            onSave={(label) => _onUpdateCdc({ legend: label })}
+          />
+          <div className="h-4" />
           <ChartDatasetDataSetup
             cdc={cdc}
             dataset={dataset}
             chart={chart}
             teamId={team?.id}
-            legend={legend}
-            onSaveLegend={{
-              onChange: (event) => setLegend(event.target.value),
-              onSave: _onSaveLegend,
-            }}
             onUpdateCdc={_onUpdateCdc}
+            onUpdateVisualization={_onUpdateVisualization}
             onEditDataset={_onEditDataset}
           />
         </Tabs.Panel>
@@ -417,114 +678,229 @@ function ChartDatasetConfig(props) {
           {chart.type !== "table" && (
             <>
               <div className="chart-cdc-colors">
-                <div className="font-bold">{"Series colors"}</div>
-                <div className="h-2" />
-
-                <div className="flex flex-row justify-between items-center">
-                  <div className="text-sm">Primary color</div>
-                  <div>
-                    <ColorPickerControl
-                      ariaLabel="Primary series color"
-                      fallbackColor={chartColors.blue.hex}
-                      onChange={_onChangeDatasetColor}
-                      presetColors={Object.values(chartColors).map((color) => color.hex)}
-                      renderTrigger={() => (
-                        <div
-                          style={_getDatasetColor(cdc.datasetColor)}
-                          className="w-full h-8 rounded-3xl pl-[100px]"
-                        />
-                      )}
-                      value={cdc.datasetColor}
-                    />
-                  </div>
+                <div className="font-bold">
+                  {usesCategorySliceColors ? "Slice colors" : "Series colors"}
                 </div>
-                <div className="h-2" />
 
-                {chart.type !== "matrix" && (
-                  <Row align={"center"} justify={"space-between"}>
-                    <Row align={"center"}>
-                      <Checkbox
-                        id={`cdc-fill-${cdc.id}`}
-                        isSelected={cdc.fill}
-                        onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
-                        isDisabled={cdc.multiFill}
+                {usesGeneratedSeriesColors ? (
+                  <>
+                    {colorItems.length > 6 && (
+                      <SearchField
+                        className="mt-2"
+                        name={`series-search-${cdc.id}`}
+                        value={seriesSearch}
                         variant="secondary"
+                        onChange={setSeriesSearch}
                       >
-                        <Checkbox.Control className="size-4 shrink-0">
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Content>
-                          <Label htmlFor={`cdc-fill-${cdc.id}`} className="text-sm">Fill Color</Label>
-                        </Checkbox.Content>
-                      </Checkbox>
-                    </Row>
-                    {cdc.fill && !cdc.multiFill && (
+                        <Label>Find a series</Label>
+                        <SearchField.Group>
+                          <SearchField.SearchIcon />
+                          <SearchField.Input placeholder={usesCategorySliceColors ? "Search slices" : "Search generated series"} />
+                          <SearchField.ClearButton />
+                        </SearchField.Group>
+                      </SearchField>
+                    )}
+                    <ScrollShadow className="mt-2 max-h-[240px]">
+                      <div className="flex flex-col gap-1 py-1">
+                        {visibleColorItems.map((series) => {
+                          const seriesColor = _getSeriesColor(series);
+                          const overrideColor = _getSeriesOverrideColor(series);
+                          const seriesOptions = _getLayerSeriesOptions(series);
+                          const isHidden = (seriesOptions.hidden || []).includes(series.id);
+                          const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
+                          const seriesIndex = layerSeries.findIndex((item) => item.id === series.id);
+                          return (
+                            <div
+                              key={series.id}
+                              className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-content2/50"
+                            >
+                              <div className={isHidden ? "min-w-0 flex-1 opacity-50" : "min-w-0 flex-1"}>
+                                <ColorPickerControl
+                                  ariaLabel={`Change ${series.label} series color`}
+                                  clearLabel="Use automatic color"
+                                  fallbackColor={getChartColorForKey(series.id)}
+                                  onChange={(color) => _onChangeSeriesColor(series, color)}
+                                  onClear={() => _onChangeSeriesColor(series, null)}
+                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                  renderTrigger={({ color }) => (
+                                    <Chip size="lg" variant="secondary" className="max-w-full cursor-pointer">
+                                      <span
+                                        aria-hidden
+                                        className="size-3 shrink-0 rounded-full"
+                                        style={{ backgroundColor: color }}
+                                      />
+                                      <Chip.Label className="truncate">{series.label}</Chip.Label>
+                                    </Chip>
+                                  )}
+                                  showClearButton={Boolean(overrideColor)}
+                                  value={seriesColor}
+                                  valueFormat="hex"
+                                />
+                              </div>
+                              {!usesCategorySliceColors && (
+                                <>
+                                  <Button
+                                    aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onToggleSeries(series)}
+                                  >
+                                    {isHidden ? <LuEyeOff /> : <LuEye />}
+                                  </Button>
+                                  <Button
+                                    aria-label={`Move ${series.label} up`}
+                                    isDisabled={seriesIndex === 0}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onMoveSeries(series, -1)}
+                                  >
+                                    <LuChevronUp />
+                                  </Button>
+                                  <Button
+                                    aria-label={`Move ${series.label} down`}
+                                    isDisabled={seriesIndex === layerSeries.length - 1}
+                                    isIconOnly
+                                    size="sm"
+                                    variant="tertiary"
+                                    onPress={() => _onMoveSeries(series, 1)}
+                                  >
+                                    <LuChevronDown />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollShadow>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="text-sm">Primary color</div>
                       <div>
                         <ColorPickerControl
-                          ariaLabel="Fill color"
+                          ariaLabel="Primary series color"
                           fallbackColor={chartColors.blue.hex}
-                          onChange={(color) => _onChangeFillColor(color)}
+                          onChange={_onChangeDatasetColor}
                           presetColors={Object.values(chartColors).map((color) => color.hex)}
                           renderTrigger={() => (
                             <div
-                              style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
+                              style={_getDatasetColor(cdc.datasetColor)}
                               className="w-full h-8 rounded-3xl pl-[100px]"
                             />
                           )}
-                          value={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
+                          value={cdc.datasetColor}
+                          valueFormat="hex"
                         />
                       </div>
-                    )}
-                  </Row>
-                )}
-                <div className="h-2" />
+                    </div>
+                    <div className="h-2" />
 
-                {chart.type !== "line" && chart.type !== "matrix" && (
-                  <Row>
-                    <Checkbox
-                      id={`cdc-multifill-${cdc.id}`}
-                      isSelected={cdc.multiFill}
-                      onChange={(selected) => {
-                        if (selected !== cdc.multiFill) _onChangeMultiFill();
-                      }}
-                      variant="secondary"
-                    >
-                      <Checkbox.Control className="size-4 shrink-0">
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                      <Checkbox.Content>
-                        <Label htmlFor={`cdc-multifill-${cdc.id}`} className="text-sm">Multiple colors</Label>
-                      </Checkbox.Content>
-                    </Checkbox>
-                  </Row>
-                )}
-
-                {chart.type !== "line" && chart.type !== "matrix" && cdc.multiFill && (
-                  <>
-                    <div className="h-4" />
-                    <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
-                      {dataItems?.labels?.map((label, index) => (
-                        <Row key={label} justify={"space-between"}>
-                          <Text size="sm">{label}</Text>
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
+                      <Row align={"center"} justify={"space-between"}>
+                        <Row align={"center"}>
+                          <Checkbox
+                            id={`cdc-fill-${cdc.id}`}
+                            isSelected={bindingLayers[0]?.style?.fill ?? cdc.fill}
+                            onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
+                            isDisabled={cdc.multiFill}
+                            variant="secondary"
+                          >
+                            <Checkbox.Control className="size-4 shrink-0">
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                            <Checkbox.Content>
+                              <Label htmlFor={`cdc-fill-${cdc.id}`} className="text-sm">Fill Color</Label>
+                            </Checkbox.Content>
+                          </Checkbox>
+                        </Row>
+                        {cdc.fill && !cdc.multiFill && (
                           <div>
                             <ColorPickerControl
-                              ariaLabel={`${label} fill color`}
+                              ariaLabel="Fill color"
                               fallbackColor={chartColors.blue.hex}
-                              onChange={(color) => _onChangeFillColor(color, index)}
+                              onChange={(color) => _onChangeFillColor(color)}
                               presetColors={Object.values(chartColors).map((color) => color.hex)}
                               renderTrigger={() => (
                                 <div
-                                  style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                                  className="w-full h-8 rounded-3xl"
+                                  style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
+                                  className="w-full h-8 rounded-3xl pl-[100px]"
                                 />
                               )}
-                              value={cdc.fillColor[index]}
+                              value={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
                             />
                           </div>
-                        </Row>
-                      ))}
-                    </ScrollShadow>
+                        )}
+                      </Row>
+                    )}
+                    <div className="h-2" />
+
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
+                      <Row>
+                        <Checkbox
+                          id={`cdc-multifill-${cdc.id}`}
+                          isSelected={cdc.multiFill}
+                          onChange={(selected) => {
+                            if (selected !== cdc.multiFill) _onChangeMultiFill();
+                          }}
+                          variant="secondary"
+                        >
+                          <Checkbox.Control className="size-4 shrink-0">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Content>
+                            <Label htmlFor={`cdc-multifill-${cdc.id}`} className="text-sm">Multiple colors</Label>
+                          </Checkbox.Content>
+                        </Checkbox>
+                      </Row>
+                    )}
+
+                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && cdc.multiFill && (
+                      <>
+                        <div className="h-4" />
+                        <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
+                          {dataItems?.labels?.map((label, index) => (
+                            <Row key={label} justify={"space-between"}>
+                              <Text size="sm">{label}</Text>
+                              <div>
+                                <ColorPickerControl
+                                  ariaLabel={`${label} fill color`}
+                                  fallbackColor={chartColors.blue.hex}
+                                  onChange={(color) => _onChangeFillColor(color, index)}
+                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                  renderTrigger={() => (
+                                    <div
+                                      style={_getDatasetColor(cdc.fillColor[index] || "white")}
+                                      className="w-full h-8 rounded-3xl"
+                                    />
+                                  )}
+                                  value={cdc.fillColor[index]}
+                                />
+                              </div>
+                            </Row>
+                          ))}
+                        </ScrollShadow>
+                        <div className="h-4" />
+                      </>
+                    )}
+                  </>
+                )}
+
+                {["line", "bar", "radar"].includes(chart.type) && (
+                  <>
                     <div className="h-4" />
+                    <FillOpacityControl
+                      key={`${cdc.id}-${fillBaseColor}-${fillOpacity}`}
+                      color={fillBaseColor}
+                      controlId={`cdc-fill-background-${cdc.id}`}
+                      fill={Boolean(fillEnabled)}
+                      opacity={fillOpacity}
+                      onFillChange={(selected) => _onChangeFill(selected, fillOpacity)}
+                      onOpacityChange={(opacity) => _onChangeFill(fillEnabled, opacity)}
+                    />
                   </>
                 )}
               </div>
@@ -723,66 +1099,6 @@ function ChartDatasetConfig(props) {
                 )}
               </div>
 
-              <div className="h-4" />
-              <Separator />
-              <div className="h-4" />
-
-              <div>
-                {!goal && (
-                  <div>
-                    <Link onPress={() => setGoal(1000)} className="flex items-center cursor-pointer chart-cdc-goal">
-                      <TbProgressCheck size={24} />
-                      <div className="w-2" />
-                      <div className="text-sm text-foreground">Set a goal</div>
-                    </Link>
-                  </div>
-                )}
-                {goal && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-row gap-2 items-center">
-                      <div className="text-sm text-foreground">{"Goal"}</div>
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div><LuInfo size={16} /></div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="max-w-sm">
-                          A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)
-                        </Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Input
-                        placeholder="Enter your goal here"
-                        value={goal}
-                        onChange={(event) => setGoal(event.target.value)}
-                        variant="secondary"
-                        labelPlacement="outside"
-                      />
-                      {`${goal}` !== `${cdc.goal || ""}` && (
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={() => _onUpdateCdc({ goal })}>
-                              <LuCircleCheck className={"text-success"} />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Save goal</Tooltip.Content>
-                        </Tooltip>
-                      )}
-                      <Tooltip>
-                        <Tooltip.Trigger className="flex justify-center">
-                          <Link onPress={() => {
-                            _onUpdateCdc({ goal: null });
-                            setGoal("");
-                          }}>
-                            <LuCircleX className="text-danger" />
-                          </Link>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Remove goal</Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                  </div>
-                )}
-              </div>
             </>
           )}
         </Tabs.Panel>
@@ -918,7 +1234,7 @@ function ChartDatasetConfig(props) {
           size="sm"
           onPress={_onRemoveCdc}
         >
-          {`Remove ${seriesLabel}`}
+          {`Remove dataset: ${seriesLabel}`}
         </Button>
       </div>
 

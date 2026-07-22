@@ -42,7 +42,8 @@ function getProjectPermissionHandler(method, path) {
   const registry = createRouteRegistry();
   const projectRoute = require("../../api/ProjectRoute.js");
   projectRoute(registry.app);
-  return registry.getHandlers(method, path)[1];
+  const handlers = registry.getHandlers(method, path);
+  return handlers.at(-2);
 }
 
 describe("project tenant authorization", () => {

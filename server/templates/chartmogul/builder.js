@@ -1,6 +1,7 @@
 const _ = require("lodash");
 
 const db = require("../../models/models");
+const { createTemplateCharts } = require("../createTemplateCharts");
 
 module.exports = async (
   teamId, projectId, token, key, dashboardOrder, modelTemplate, charts, connection_id
@@ -38,30 +39,7 @@ module.exports = async (
 
   await Promise.all(datasetPromises);
 
-  const chartPromises = [];
-  // now go through all the charts
-  model.Charts.forEach((chart) => {
-    const newChart = chart;
-    newChart.project_id = projectId;
-
-    chartPromises.push(
-      db.Chart.create(newChart)
-        .then((createdChart) => {
-          chart.ChartDatasetConfigs.forEach((cdc) => {
-            const newCdc = {
-              ...cdc,
-              chart_id: createdChart.id,
-              dataset_id: datasetMapping[cdc.td_id],
-            };
-            db.ChartDatasetConfig.create(newCdc);
-          });
-
-          return createdChart;
-        })
-    );
-  });
-
-  return Promise.all(chartPromises)
+  return createTemplateCharts(model.Charts, projectId, datasetMapping)
     .catch((err) => {
       return err;
     });

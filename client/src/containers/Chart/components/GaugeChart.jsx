@@ -159,7 +159,6 @@ function GaugeChart({ chart, redraw, redrawComplete }) {
           },
           color: "#fff",
           font: {
-            weight: "bold",
             size: 10,
             family: "Inter",
           },

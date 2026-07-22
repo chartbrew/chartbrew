@@ -250,4 +250,29 @@ describe("orchestrator Responses API adapters", () => {
     expect(tool.parameters.properties.source_id.enum).not.toContain("jira");
     expect(tool.parameters.properties.preferred_dialect.enum).not.toContain("jira");
   });
+
+  it("only advertises semantic visualization encoding roles to chart tools", async () => {
+    const tools = await availableTools();
+    const chartToolNames = [
+      "create_chart",
+      "update_chart",
+      "create_temporary_chart",
+      "create_dashboard_chart",
+    ];
+
+    chartToolNames.forEach((toolName) => {
+      const tool = tools.find((candidate) => candidate.name === toolName);
+      const encodingSchema = tool.parameters.properties.encoding;
+      const layerEncodingSchema = tool.parameters.properties.visualization
+        .properties.layers.items.properties.encoding;
+
+      expect(encodingSchema.additionalProperties).toBe(false);
+      expect(encodingSchema.properties).toHaveProperty("time");
+      expect(encodingSchema.properties).toHaveProperty("category");
+      expect(encodingSchema.properties).toHaveProperty("value");
+      expect(encodingSchema.properties).not.toHaveProperty("x");
+      expect(encodingSchema.properties).not.toHaveProperty("y");
+      expect(layerEncodingSchema).toBe(encodingSchema);
+    });
+  });
 });

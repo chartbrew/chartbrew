@@ -22,7 +22,6 @@ ChartJS.register(
 
 const dataLabelsPlugin = {
   font: {
-    weight: "bold",
     size: 10,
     family: "Inter",
   },
@@ -75,8 +74,13 @@ function LineChart(props) {
       if (newOptions.scales?.x?.ticks) {
         newOptions.scales.x.ticks.color = semanticColors[theme].foreground.DEFAULT;
       }
-      if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
+      if (newOptions.plugins?.legend) {
+        newOptions.plugins.legend.display = chart.visualization?.settings?.legend?.visible
+          ?? chart.displayLegend
+          ?? newOptions.plugins.legend.display;
+        if (newOptions.plugins.legend.labels) {
+          newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
+        }
       }
 
       // sizing changes

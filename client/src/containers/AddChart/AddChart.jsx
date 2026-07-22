@@ -25,6 +25,7 @@ import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
+import { updateLegendVisibility } from "../../modules/visualization";
 
 const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
 const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
@@ -265,6 +266,9 @@ function AddChart() {
       isLogarithmic: typeof isLogarithmic !== "undefined" ? isLogarithmic : newChart.isLogarithmic,
       dashedLastPoint: typeof dashedLastPoint !== "undefined" ? dashedLastPoint : newChart.dashedLastPoint,
       defaultRowsPerPage: typeof defaultRowsPerPage !== "undefined" ? defaultRowsPerPage : newChart.defaultRowsPerPage,
+      ...(typeof displayLegend !== "undefined" && newChart.visualization ? {
+        visualization: updateLegendVisibility(newChart.visualization, displayLegend),
+      } : {}),
     };
 
     let skipParsing = false;
@@ -610,6 +614,7 @@ function AddChart() {
                 chart={newChart}
                 onChange={_onChangeGlobalSettings}
                 onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+                onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
               />
             )}
           </div>

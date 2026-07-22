@@ -1,0 +1,10 @@
+{
+  "data": {
+    "items": [
+      { "channel": "Direct", "region": "East", "total": 80 },
+      { "channel": "Partner", "region": "East", "total": 45 },
+      { "channel": "Direct", "region": "West", "total": 95 }
+    ]
+  },
+  "meta": { "page": 1 }
+}

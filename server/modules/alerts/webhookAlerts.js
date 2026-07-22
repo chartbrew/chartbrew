@@ -21,16 +21,19 @@ function send(data) {
   } else if (alert.type === "threshold_between") {
     title = `Chartbrew found some values between your thresholds of *${lower}* and *${upper}*.`;
   } else if (alert.type === "threshold_outside") {
-    title = `Chartbrew found some values your thresholds of *${lower}* and *${upper}*.`;
+    title = `Chartbrew found some values outside your thresholds of *${lower}* and *${upper}*.`;
+  } else if (alert.type === "anomaly") {
+    title = "Chartbrew detected unusual behavior in one or more series.";
   }
 
   const valueSections = [];
   alertsFound.forEach((a) => {
+    const seriesPrefix = a.seriesLabel ? `*${a.seriesLabel}* — ` : "";
     valueSections.push({
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${a.label}*: ${a.value}`,
+        text: `${seriesPrefix}*${a.label}*: ${a.value}`,
       },
     });
   });

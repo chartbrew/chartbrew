@@ -45,6 +45,7 @@ function getChartTemplateOptions(chartTemplate) {
     "disabledExport", "onReport", "xLabelTicks", "stacked", "horizontal",
     "showGrowth", "invertGrowth", "layout", "snapshotToken", "isLogarithmic",
     "content", "ranges", "dashedLastPoint", "defaultRowsPerPage",
+    "visualization",
   ];
 
   return allowedFields.reduce((options, field) => {
@@ -254,6 +255,7 @@ class ChartTemplateController {
             timeInterval: chartTemplate.chart?.timeInterval || "month",
             horizontal: chartTemplate.chart?.horizontal || false,
             ...getChartTemplateOptions(chartTemplate),
+            visualization: chartTemplate.visualization || chartTemplate.chart?.visualization,
             layout: generatedLayouts[chartTemplate.id] || chartTemplate.chart?.layout,
             chartDatasetConfigs,
           }, user, { transaction, skipBackgroundUpdate: true });

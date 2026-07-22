@@ -19,6 +19,7 @@ import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
 import { selectProjects } from "../../../slices/project";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
+import getDefaultCdcBindings from "../../../modules/getDefaultCdcBindings";
 
 function ChartDatasets(props) {
   const { chartId, user } = props;
@@ -94,6 +95,7 @@ function ChartDatasets(props) {
 
   const _onCreateCdc = (datasetId) => {
     const selectedDataset = datasets.find((dataset) => dataset.id === datasetId);
+    const defaultBindings = getDefaultCdcBindings(selectedDataset);
     // find out the perfect color for the new cdc
     const existingColors = chart.ChartDatasetConfigs.map((cdc) => cdc.datasetColor.toLowerCase());
     const newColor = Object.values(chartColors).find((color) => !existingColors.includes(color.hex.toLowerCase()) && !existingColors.includes(color.rgb))
@@ -106,8 +108,9 @@ function ChartDatasets(props) {
         dataset_id: datasetId,
         legend: getDatasetDisplayName(selectedDataset),
         datasetColor: newColor.hex,
-        fill: false,
+        fill: chart.type === "bar",
         order: chart.ChartDatasetConfigs[chart.ChartDatasetConfigs.length - 1]?.order + 1 || 0,
+        ...defaultBindings,
       },
     }))
       .then((res) => {
@@ -160,7 +163,10 @@ function ChartDatasets(props) {
   return (
     <div>
       <div className="flex flex-row justify-between items-center">
-        <div className="font-bold">Chart Series</div>
+        <div>
+          <div className="font-bold">Datasets</div>
+          <div className="text-xs text-foreground-500">Choose reusable data, then define visual fields below.</div>
+        </div>
         <div className="flex flex-row gap-1 items-center">
           {canAccess("teamAdmin", user.id, team?.TeamRoles) && addMode && (
             <Button
@@ -181,7 +187,7 @@ function ChartDatasets(props) {
               className="chart-cdc-add"
             >
               {!addMode ? <LuPlus /> : null}
-              {!addMode && "Add series"}
+              {!addMode && "Add dataset"}
               {addMode && <LuMinus />}
             </Button>
           )}
@@ -322,7 +328,7 @@ function ChartDatasets(props) {
             onPress={() => navigate(`/datasets/new?create=true&project_id=${chart.project_id}&chart_id=${chart.id}`)}
             fullWidth
           >
-            Create series
+            Create dataset
           </Button>
         </div>
       )}

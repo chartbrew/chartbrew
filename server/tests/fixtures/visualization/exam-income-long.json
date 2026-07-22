@@ -1,0 +1,81 @@
+{
+  "rows": [
+    {
+      "program": "Ceramics",
+      "level": "Starter",
+      "registrations": 4,
+      "unit_price": 30,
+      "currency": "nzd",
+      "revenue": 120,
+      "audience": "community",
+      "occurred_on": "2026-01-12",
+      "region": "North"
+    },
+    {
+      "program": "Ceramics",
+      "level": "Starter",
+      "registrations": 2,
+      "unit_price": 30,
+      "currency": "nzd",
+      "revenue": 60,
+      "audience": "community",
+      "occurred_on": "2026-02-08",
+      "region": "North"
+    },
+    {
+      "program": "Ceramics",
+      "level": "Advanced",
+      "registrations": 3,
+      "unit_price": 55,
+      "currency": "nzd",
+      "revenue": 165,
+      "audience": "commercial",
+      "occurred_on": "2026-02-20",
+      "region": "South"
+    },
+    {
+      "program": "Photography",
+      "level": "Starter",
+      "registrations": 5,
+      "unit_price": 25,
+      "currency": "nzd",
+      "revenue": 125,
+      "audience": "community",
+      "occurred_on": "2026-01-18",
+      "region": "South"
+    },
+    {
+      "program": "Photography",
+      "level": "Advanced",
+      "registrations": 2,
+      "unit_price": 70,
+      "currency": "nzd",
+      "revenue": 140,
+      "audience": "commercial",
+      "occurred_on": "2026-03-03",
+      "region": "North"
+    },
+    {
+      "program": "Writing",
+      "level": null,
+      "registrations": 3,
+      "unit_price": 40,
+      "currency": "nzd",
+      "revenue": 120,
+      "audience": "community",
+      "occurred_on": "2026-02-14",
+      "region": "Central"
+    },
+    {
+      "program": "Writing",
+      "level": "Starter",
+      "registrations": 4,
+      "unit_price": 28,
+      "currency": "sgd",
+      "revenue": 112,
+      "audience": "community",
+      "occurred_on": "2026-01-22",
+      "region": "Central"
+    }
+  ]
+}

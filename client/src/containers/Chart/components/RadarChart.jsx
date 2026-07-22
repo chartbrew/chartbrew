@@ -13,11 +13,17 @@ import {
   Filler,
 } from "chart.js";
 import { semanticColors } from "../../../lib/themeTokens";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { cloneDeep } from "lodash";
 import { tooltipPlugin } from "./ChartTooltip";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import { useTheme } from "../../../modules/ThemeContext";
+
+const getDataLabelAngle = (context) => {
+  const labelCount = context.chart.data.labels?.length || 1;
+  return -90 + ((context.dataIndex * 360) / labelCount);
+};
 
 ChartJS.register(
   CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
@@ -56,6 +62,10 @@ function RadarChart(props) {
             pointLabels: {
               color: semanticColors[theme].foreground.DEFAULT,
             },
+            ticks: {
+              backdropColor: "transparent",
+              display: false,
+            },
           }
         };
       }
@@ -66,6 +76,19 @@ function RadarChart(props) {
       // Add tooltip configuration
       newOptions.plugins = {
         ...newOptions.plugins,
+        datalabels: chart.dataLabels ? {
+          color: semanticColors[theme].foreground.DEFAULT,
+          display: "auto",
+          font: {
+            family: "Inter",
+            size: 10,
+          },
+          formatter: Math.round,
+          padding: 2,
+          anchor: "center",
+          align: getDataLabelAngle,
+          offset: 0,
+        } : { display: false },
         tooltip: {
           ...tooltipPlugin,
           isCategoryChart: true,
@@ -76,6 +99,24 @@ function RadarChart(props) {
     }
 
     return chart.chartData?.options;
+  };
+
+  const _getChartData = () => {
+    const data = cloneDeep(chart.chartData.data);
+    if (!data?.datasets) return data;
+
+    data.datasets = data.datasets.map((dataset) => ({
+      ...dataset,
+      datalabels: chart.dataLabels ? {
+        ...(dataset.datalabels || {}),
+        color: semanticColors[theme].foreground.DEFAULT,
+        display: "auto",
+        anchor: "center",
+        align: getDataLabelAngle,
+        offset: 4,
+      } : { display: false },
+    }));
+    return data;
   };
 
   // Add cleanup effect
@@ -93,9 +134,10 @@ function RadarChart(props) {
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <Radar
-            data={chart.chartData.data}
+            data={_getChartData()}
             options={_getChartOptions()}
             redraw={redraw}
+            plugins={chart.dataLabels ? [ChartDataLabels] : []}
           />
         </ChartErrorBoundary>
       )}

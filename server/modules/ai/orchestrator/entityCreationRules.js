@@ -68,10 +68,12 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - ranges: array - gauge ranges [{min, max, label, color}] (optional)
 - layout: object - grid layout {lg: [x,y,w,h], ...} (only required if the user specifies a layout, auto-calculated if not provided)
 
-**ChartDatasetConfig:**
-- Required: chart_id, dataset_id
-- Set legend (short and concise, appears on hover), order=1, datasetColor="#4285F4" (all configurable)
-- IMPORTANT: ChartDatasetConfig owns visualization binding fields. Put xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat, and conditions here, not on Dataset.
+**Visualization and ChartDatasetConfig:**
+- Required ChartDatasetConfig fields: chart_id, dataset_id. The CDC binds reusable data to the chart; it does not own visual series.
+- Prefer canonical visualization.encoding roles: category or time, value, and optional breakdown. Use a complete visualization specification for multiple values/layers.
+- Put goals on the intended canonical value layer. Never copy one CDC goal to every value or generated series.
+- Legacy xAxis/yAxis arguments remain accepted for compatibility, but new chart plans should send encoding or visualization.
+- Set the CDC legend (short and concise), order=1, and datasetColor="#4285F4" for compatibility metadata.
 - IMPORTANT: Suggest a separate short legend for ChartDatasetConfig (different from chart name). Default to dataset.name || dataset.legend when no custom legend is provided.
 - xAxis: string - X axis field from query results (use 'root[].field_name' for arrays)
 - yAxis: string - Y axis field from query results (use 'root[].field_name' for arrays)
@@ -91,12 +93,12 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - sort: string - "asc"|"desc" for tables (optional)
 - columnsOrder: array - custom table columns (optional)
 - maxRecords: integer - limit records (optional)
-- goal: integer - KPI target value (optional)
+- goal: integer - legacy KPI target fallback; prefer layer.goal in the canonical visualization
 - configuration: object - dataset settings (default: {})
 
 **Sequence:**
 1. Create Dataset with DataRequest using quick-create (team_id, connection_id, name, query or configuration, draft=false, dataRequests array)
-2. Create Chart with ChartDatasetConfig using quick-create (project_id, dataset_id, name, type, draft=false, chartDatasetConfigs array including xAxis/yAxis/date bindings on the CDC)
+2. Create Chart with ChartDatasetConfig and canonical visualization using quick-create. Bind visualization layers to the supplied template binding and describe fields with category/time, value, and optional breakdown encodings.
 
 **Source-owned configuration sequence:**
 1. Use source_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query or run_query for configuration-based sources.

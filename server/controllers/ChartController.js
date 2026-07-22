@@ -19,6 +19,23 @@ const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
+const { VisualizationEngine } = require("../visualization/VisualizationEngine");
+const {
+  buildLegacyLayer,
+  legacyChartToVisualization,
+} = require("../visualization/legacyChartToVisualization");
+const {
+  addBindingLayer,
+  applyCdcCompatibilityUpdate,
+  applyChartCompatibilityUpdate,
+  removeBindingLayers,
+} = require("../visualization/compatibilityUpdates");
+const {
+  isLegacyOwnedVisualization,
+  shouldSyncLegacyCdc,
+  shouldSyncLegacyChart,
+} = require("../visualization/legacyVisualizationSync");
+const { remapVisualizationBindings } = require("../visualization/remapBindings");
 const {
   signLegacyShareToken,
   signShareToken,
@@ -36,7 +53,6 @@ const {
 
 // charts
 const AxisChart = require("../charts/AxisChart");
-const TableView = require("../charts/TableView");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -66,6 +82,35 @@ function createRuntimeShortCircuit(chart) {
 
 function isRuntimeShortCircuit(value) {
   return Boolean(value && value.__runtimeCachedChart);
+}
+
+function reconcileVisualizationBindings(chart) {
+  if (!chart || isLegacyOwnedVisualization(chart.visualization)) return chart;
+
+  let visualization = chart.visualization;
+  (chart.ChartDatasetConfigs || []).forEach((cdc, index) => {
+    visualization = addBindingLayer(
+      visualization,
+      buildLegacyLayer(chart, cdc, index)
+    );
+  });
+  if (chart.type || chart.subType) {
+    visualization = applyChartCompatibilityUpdate(visualization, {
+      ...(chart.type ? { type: chart.type } : {}),
+      ...(chart.subType ? { subType: chart.subType } : {}),
+    });
+  }
+
+  if (JSON.stringify(visualization) !== JSON.stringify(chart.visualization)) {
+    if (typeof chart.set === "function") {
+      chart.set("visualization", visualization);
+      chart.changed("visualization", false);
+    } else {
+      chart.visualization = visualization;
+    }
+  }
+
+  return chart;
 }
 
 function getSourceRuntimeFiltersForDataset(runtimeContext, cdc, fallbackFilters = []) {
@@ -160,11 +205,69 @@ class ChartController {
 
     return db.Chart.findOne(customQuery || query)
       .then((chart) => {
-        return chart;
+        return options.reconcileVisualizationBindings === false
+          ? chart
+          : reconcileVisualizationBindings(chart);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  async syncLegacyVisualization(chartId, options = {}, compatibility = {}) {
+    const chart = await this.findById(chartId, null, {
+      ...options,
+      reconcileVisualizationBindings: false,
+    });
+    if (!chart) return chart;
+
+    if (!isLegacyOwnedVisualization(chart.visualization)) {
+      let visualization = applyChartCompatibilityUpdate(chart.visualization, {
+        ...(chart.type ? { type: chart.type } : {}),
+        ...(chart.subType ? { subType: chart.subType } : {}),
+      });
+      if (compatibility.chartData) {
+        visualization = applyChartCompatibilityUpdate(visualization, compatibility.chartData);
+      }
+      if (compatibility.cdcData) {
+        visualization = applyCdcCompatibilityUpdate(
+          visualization,
+          compatibility.bindingId,
+          compatibility.cdcData
+        );
+      }
+      if (compatibility.removeBinding) {
+        visualization = removeBindingLayers(visualization, compatibility.removeBinding);
+      }
+      if (compatibility.addBinding) {
+        const bindingIndex = chart.ChartDatasetConfigs.findIndex((cdc) => {
+          return `${cdc.id}` === `${compatibility.addBinding}`;
+        });
+        if (bindingIndex >= 0) {
+          visualization = addBindingLayer(
+            visualization,
+            buildLegacyLayer(chart, chart.ChartDatasetConfigs[bindingIndex], bindingIndex)
+          );
+        }
+      }
+      if (JSON.stringify(visualization) === JSON.stringify(chart.visualization)) return chart;
+      await db.Chart.update(
+        { visualization },
+        { transaction: options.transaction, where: { id: chartId } }
+      );
+      return this.findById(chartId, null, options);
+    }
+
+    const result = legacyChartToVisualization(chart);
+    if (!result.valid) {
+      throw new Error(result.errors.join("; "));
+    }
+
+    await db.Chart.update(
+      { visualization: result.visualization },
+      { transaction: options.transaction, where: { id: chartId } }
+    );
+    return this.findById(chartId, null, options);
   }
 
   update(id, data, user, justUpdates) {
@@ -194,6 +297,12 @@ class ChartController {
           } else {
             return this.findById(id);
           }
+        })
+        .then(async (chart) => {
+          if (shouldSyncLegacyChart(data)) {
+            return this.syncLegacyVisualization(id, {}, { chartData: data });
+          }
+          return chart;
         })
         .catch((error) => {
           return new Promise((resolve, reject) => reject(error));
@@ -254,6 +363,12 @@ class ChartController {
         } else {
           return this.findById(id);
         }
+      })
+      .then(async (chart) => {
+        if (shouldSyncLegacyChart(data)) {
+          return this.syncLegacyVisualization(id, {}, { chartData: data });
+        }
+        return chart;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -367,9 +482,9 @@ class ChartController {
 
   updateChartData(id, user, {
     noSource,
-    skipParsing,
     filters,
     isExport,
+    exportMode,
     getCache,
     cacheOnly = false,
     variables,
@@ -390,7 +505,6 @@ class ChartController {
     const shouldFinalizeAuditRun = Boolean(chartTraceContext) && finalizeRun !== false;
     let chartPersistEvent;
     let effectiveNoSource = noSource;
-    let effectiveSkipParsing = skipParsing;
     let effectiveGetCache = getCache;
     const requestedGetCache = Boolean(getCache);
     const shouldReadRuntimeCache = requestedGetCache;
@@ -526,7 +640,6 @@ class ChartController {
             chartVariantHash: runtimeContext?.chartVariantHash || null,
           });
           effectiveNoSource = false;
-          effectiveSkipParsing = false;
           effectiveGetCache = false;
         }
 
@@ -683,25 +796,19 @@ class ChartController {
         }
 
         try {
-          if (isExport) {
-            return dataExtractor(chartData, effectiveFilters, project?.timezone);
-          }
+          const visualizationEngine = new VisualizationEngine({
+            ...chartData,
+            timezone: project?.timezone,
+          });
+          const engineOptions = {
+            filters: effectiveFilters,
+            timezone: project?.timezone,
+            variables: effectiveVariables,
+          };
 
-          if (gChart.type === "table") {
-            const extractedData = dataExtractor(chartData, effectiveFilters, project?.timezone);
-            const tableView = new TableView();
-            return tableView.getTableData(extractedData, chartData, project?.timezone);
-          }
-
-          let reallySkipParsing = effectiveSkipParsing;
-          if (!chartData?.chart?.chartData) {
-            reallySkipParsing = false;
-          }
-
-          const axisChart = new AxisChart(chartData, project?.timezone);
-
-          return Promise.resolve(axisChart.plot(reallySkipParsing, effectiveFilters, effectiveVariables))
-            .catch((error) => Promise.reject(toAuditError(error, "transform")));
+          return isExport
+            ? visualizationEngine.export({ ...engineOptions, mode: exportMode || "source" })
+            : visualizationEngine.render(engineOptions);
         } catch (error) {
           return Promise.reject(toAuditError(error, "transform"));
         }
@@ -720,6 +827,7 @@ class ChartController {
               isTimeseries: chartData?.isTimeseries || false,
               datasetCount: chartData?.configuration?.data?.datasets?.length || 0,
               labelCount: chartData?.configuration?.data?.labels?.length || 0,
+              visualizationAdapted: Boolean(chartData?.adapted),
             });
           }
 
@@ -1059,7 +1167,7 @@ class ChartController {
       });
   }
 
-  exportChartData(userId, chartIds, filters, projectId) {
+  exportChartData(userId, chartIds, filters, projectId, exportMode = "source") {
     const parsedChartIds = Array.isArray(chartIds)
       ? [...new Set(chartIds
         .map((id) => Number(id))
@@ -1095,7 +1203,8 @@ class ChartController {
                 noSource: false,
                 skipParsing: false,
                 filters,
-                isExport: true
+                isExport: true,
+                exportMode,
               },
             )
               .then((data) => {
@@ -1425,7 +1534,10 @@ class ChartController {
       legend: data.legend || getDatasetName(dataset),
       chart_id: chartId,
     })
-      .then((chartDatasetConfig) => {
+      .then(async (chartDatasetConfig) => {
+        await this.syncLegacyVisualization(chartId, {}, {
+          addBinding: chartDatasetConfig.id,
+        });
         return chartDatasetConfig;
       })
       .catch((err) => {
@@ -1433,18 +1545,34 @@ class ChartController {
       });
   }
 
-  updateChartDatasetConfig(id, data) {
+  async updateChartDatasetConfig(id, data) {
     return db.ChartDatasetConfig.update(data, { where: { id } })
-      .then(() => {
-        return db.ChartDatasetConfig.findByPk(id);
+      .then(async () => {
+        const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
+        if (chartDatasetConfig && shouldSyncLegacyCdc(data)) {
+          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
+            bindingId: chartDatasetConfig.id,
+            cdcData: data,
+          });
+        }
+        return chartDatasetConfig;
       })
       .catch((err) => {
         return Promise.reject(err);
       });
   }
 
-  deleteChartDatasetConfig(id) {
+  async deleteChartDatasetConfig(id) {
+    const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
     return db.ChartDatasetConfig.destroy({ where: { id } })
+      .then(async (result) => {
+        if (chartDatasetConfig) {
+          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
+            removeBinding: chartDatasetConfig.id,
+          });
+        }
+        return result;
+      })
       .catch((err) => {
         return Promise.reject(err);
       });
@@ -1485,7 +1613,7 @@ class ChartController {
       "timeInterval", "autoUpdate", "draft", "mode", "maxValue", "minValue",
       "disabledExport", "onReport", "xLabelTicks", "stacked", "horizontal",
       "showGrowth", "invertGrowth", "layout", "snapshotToken", "isLogarithmic",
-      "content", "ranges", "dashedLastPoint", "defaultRowsPerPage"
+      "content", "ranges", "dashedLastPoint", "defaultRowsPerPage", "visualization"
     ];
 
     allowedFields.forEach((field) => {
@@ -1529,6 +1657,7 @@ class ChartController {
     }
 
     // Create all chart dataset configs
+    let createdChartDatasetConfigs = [];
     if (chartDatasetConfigs && chartDatasetConfigs.length > 0) {
       // Fetch datasets to get their legend for default values
       const datasetIds = chartDatasetConfigs.map((cdc) => cdc.dataset_id).filter(Boolean);
@@ -1541,7 +1670,7 @@ class ChartController {
         datasetMap[ds.id] = ds;
       });
 
-      await Promise.all(
+      createdChartDatasetConfigs = await Promise.all(
         chartDatasetConfigs.map((cdcData) => {
           const dataset = datasetMap[cdcData.dataset_id];
 
@@ -1550,11 +1679,30 @@ class ChartController {
             chart_id: chart.id,
             legend: cdcData.legend || getDatasetName(dataset) || null
           };
+          [
+            "Dataset",
+            "bindingId",
+            "createdAt",
+            "id",
+            "templateBindingId",
+            "updatedAt",
+          ].forEach((field) => delete cdcToCreate[field]);
 
           return db.ChartDatasetConfig.create(cdcToCreate, { transaction });
         })
       );
     }
+
+    if (cleanChartData.visualization && createdChartDatasetConfigs.length > 0) {
+      const visualization = remapVisualizationBindings(
+        cleanChartData.visualization,
+        chartDatasetConfigs,
+        createdChartDatasetConfigs
+      );
+      await chart.update({ visualization }, { transaction });
+    }
+
+    await this.syncLegacyVisualization(chart.id, { transaction });
 
     // Run the chart update in the background to populate chartData
     if (!skipBackgroundUpdate) {

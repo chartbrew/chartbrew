@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chartbrew.com/schemas/visualization-v2.json",
+  "title": "Chartbrew visualization specification",
+  "type": "object",
+  "required": ["version", "layers"],
+  "properties": {
+    "version": { "const": 2 },
+    "status": { "enum": ["ready", "draft", "orphan"] },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/layer" }
+    },
+    "settings": { "type": "object" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "fieldEncoding": {
+      "type": "object",
+      "required": ["field"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": ["nominal", "ordinal", "quantitative", "temporal", "boolean", "record"]
+        },
+        "aggregate": { "enum": ["none", "sum", "avg", "min", "max", "count"] },
+        "title": { "type": "string" },
+        "nullPolicy": { "enum": ["exclude", "preserve", "label"] },
+        "nullLabel": { "type": "string" },
+        "formula": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "layer": {
+      "type": "object",
+      "required": ["id", "mark", "encoding"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "bindingId": { "type": ["string", "number"] },
+        "mark": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "rowPath": { "type": "string", "minLength": 1 },
+        "encoding": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "$ref": "#/$defs/fieldEncoding" },
+              {
+                "type": "array",
+                "items": { "$ref": "#/$defs/fieldEncoding" }
+              }
+            ]
+          }
+        },
+        "transforms": { "type": "array", "items": { "type": "object" } },
+        "style": { "type": "object" },
+        "options": { "type": "object" },
+        "stack": { "enum": ["none", "normal", "percent"] },
+        "orientation": { "enum": ["vertical", "horizontal"] },
+        "goal": { "type": ["number", "null"] },
+        "content": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

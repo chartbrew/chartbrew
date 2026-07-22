@@ -1,0 +1,6 @@
+[
+  { "period": "2026-01", "segment": "New", "total": 18 },
+  { "period": "2026-01", "segment": "Returning", "total": 11 },
+  { "period": "2026-02", "segment": "New", "total": 23 },
+  { "period": "2026-03", "segment": "Returning", "total": 17 }
+]

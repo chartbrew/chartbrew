@@ -119,10 +119,11 @@ The server context is responsible for:
 - `ConnectionController.runApiRequest()`
   - applies the effective intersected date range to reserved API placeholders such as `{{start_date}}` and `{{end_date}}`
 
-### Chart Parsing Level
+### Visualization Level
 
-- `server/charts/AxisChart.js`
-- `server/charts/DataExtractor.js`
+- `server/visualization/filterDatasets.js`
+- `server/visualization/frameBuilder.js`
+- `server/visualization/VisualizationEngine.js`
 
 These apply:
 
@@ -130,7 +131,7 @@ These apply:
 - dashboard field filters
 - chart-local exposed filters
 
-All non-variable filters use AND logic. CDC-scoped filters only apply to the matching dataset.
+All non-variable filters use AND logic. CDC-scoped filters only apply to the matching binding. Row filtering happens before semantic grouping, aggregation, breakdown-series generation, and presentation formulas.
 
 ## Persistence And Cache Rules
 
@@ -186,18 +187,6 @@ The effective behavior is:
    - dashboard variable overrides
    - AND chart-local `type` constraint
 
-## Phase 1 Boundaries
+## Surface Coverage
 
-In scope:
-
-- authenticated dashboards
-- public dashboards
-- report dashboards
-
-Out of scope:
-
-- add/edit chart preview flows
-- shared chart page
-- embedded chart page
-
-Those surfaces still use legacy local chart filtering until they adopt the shared runtime payload builder.
+Authenticated dashboards, public dashboards, reports, shared charts, embeds, snapshots, automated updates, and editor refreshes all enter the canonical chart controller and visualization-engine boundary. Some surfaces construct their runtime payload differently, but filtering and compilation share the same server implementation.

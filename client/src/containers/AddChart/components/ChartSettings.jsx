@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Separator, Input, Tooltip, Modal, Select,
+  Button, Checkbox, Description, Separator, Input, Tooltip, Modal, Select,
   Label, ListBox,
   TextField,
 } from "@heroui/react";
@@ -14,6 +14,7 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import DateRangeFilter from "../../ProjectDashboard/components/DateRangeFilter";
+import { updateMissingValuePolicy } from "../../../modules/visualization";
 
 const xLabelOptions = [{
   key: "default",
@@ -64,6 +65,14 @@ const timeIntervalOptions = [{
   value: "year",
 }];
 
+const missingValueOptions = [{
+  text: "Leave gaps",
+  value: "preserve",
+}, {
+  text: "Treat as zero",
+  value: "zero",
+}];
+
 const tableRowOptions = [{
   text: "5 rows per page",
   value: "5",
@@ -84,7 +93,7 @@ const tableRowOptions = [{
   value: "50",
 }];
 
-function ChartSettings({ chart, onChange }) {
+function ChartSettings({ chart, onChange, onVisualizationChange }) {
   const [initSelectionRange] = useState({
     startDate: moment().startOf("month").toDate(),
     endDate: moment().endOf("month").toDate(),
@@ -97,6 +106,11 @@ function ChartSettings({ chart, onChange }) {
   const [ticksSelection, setTicksSelection] = useState("default");
   const [dateFormattingModal, setDateFormattingModal] = useState(false);
   const [datesFormat, setDatesFormat] = useState(null);
+  const hasTimeEncoding = chart.visualization?.layers?.some((layer) => layer.encoding?.time);
+  const missingValuePolicy = chart.visualization?.settings?.missingValues?.policy || "preserve";
+  const legendVisible = chart.visualization?.settings?.legend?.visible
+    ?? chart.displayLegend
+    ?? true;
 
   useEffect(() => {
     if (chart.maxValue || chart.maxValue === 0) {
@@ -192,7 +206,7 @@ function ChartSettings({ chart, onChange }) {
       <Separator />
       <div className="h-4" />
 
-      <div className="text-sm text-gray-500">Date settings</div>
+      <div className="text-sm text-foreground-500">Date settings</div>
       <div className="h-2" />
       <div className="flex flex-col gap-2">
         <div className="flex flex-row items-center gap-2 flex-wrap">
@@ -335,21 +349,55 @@ function ChartSettings({ chart, onChange }) {
           </Select>
         </div>
         <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
-          <Checkbox
-            id="chart-settings-include-zeros"
-            isSelected={chart.includeZeros}
-            onChange={(selected) => onChange({ includeZeros: selected })}
-            variant="secondary"
-          >
-            <Checkbox.Control className="size-4 shrink-0">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-            <Checkbox.Content>
-              <Label htmlFor="chart-settings-include-zeros" className="text-sm">Allow zero values</Label>
-            </Checkbox.Content>
-          </Checkbox>
+          {hasTimeEncoding && (
+            <Checkbox
+              id="chart-settings-include-zeros"
+              isSelected={chart.includeZeros}
+              onChange={(selected) => onChange({ includeZeros: selected })}
+              variant="secondary"
+            >
+              <Checkbox.Control className="size-4 shrink-0">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label htmlFor="chart-settings-include-zeros" className="text-sm">Fill missing time intervals</Label>
+              </Checkbox.Content>
+            </Checkbox>
+          )}
         </div>
       </div>
+
+      {["line", "bar"].includes(chart.type) && chart.visualization && (
+        <div className="mt-4 max-w-md">
+          <div className="mb-2 text-sm font-semibold text-foreground">Missing data</div>
+          <Select
+            aria-label="Missing points"
+            onChange={(policy) => {
+              onVisualizationChange(updateMissingValuePolicy(chart.visualization, policy));
+            }}
+            selectionMode="single"
+            value={missingValuePolicy}
+            variant="secondary"
+          >
+            <Label>Missing points</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Description>Choose whether absent category or series combinations remain gaps.</Description>
+            <Select.Popover>
+              <ListBox>
+                {missingValueOptions.map((option) => (
+                  <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
+                    {option.text}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+        </div>
+      )}
 
       <div className="h-4" />
       <Separator />
@@ -410,7 +458,7 @@ function ChartSettings({ chart, onChange }) {
         <div>
           <Checkbox
             id="chart-settings-legend"
-            isSelected={chart.displayLegend}
+            isSelected={legendVisible}
             onChange={(selected) => onChange({ displayLegend: selected })}
             isDisabled={chart.type === "matrix"}
             variant="secondary"
@@ -738,6 +786,7 @@ ChartSettings.propTypes = {
   chart: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   onComplete: PropTypes.func.isRequired,
+  onVisualizationChange: PropTypes.func.isRequired,
 };
 
 export default ChartSettings;

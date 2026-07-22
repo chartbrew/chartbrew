@@ -93,6 +93,13 @@ export const chartColors = {
   }
 };
 
+export function getChartColorForKey(key) {
+  const palette = Object.values(chartColors);
+  const hashPart = `${key || ""}`.replace(/[^a-f0-9]/gi, "").slice(-8);
+  const index = Number.parseInt(hashPart || "0", 16) % palette.length;
+  return palette[index].hex;
+}
+
 export const fillChartColors = [""]
 
 export const Colors = {

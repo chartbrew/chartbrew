@@ -17,6 +17,7 @@ function ColorPickerControl(props) {
   const {
     ariaLabel,
     className,
+    clearLabel = "Remove color",
     fallbackColor = "#000000",
     onChange,
     onClear,
@@ -95,15 +96,17 @@ function ColorPickerControl(props) {
           </ColorSlider.Track>
         </ColorSlider>
 
-        <ColorSlider aria-label={`${ariaLabel} alpha`} channel="alpha" className="gap-1 px-1" colorSpace="rgb">
-          <div className="flex items-center justify-between text-xs font-medium text-muted">
-            <Label>Alpha</Label>
-            <ColorSlider.Output />
-          </div>
-          <ColorSlider.Track>
-            <ColorSlider.Thumb />
-          </ColorSlider.Track>
-        </ColorSlider>
+        {valueFormat !== "hex" && (
+          <ColorSlider aria-label={`${ariaLabel} alpha`} channel="alpha" className="gap-1 px-1" colorSpace="rgb">
+            <div className="flex items-center justify-between text-xs font-medium text-muted">
+              <Label>Alpha</Label>
+              <ColorSlider.Output />
+            </div>
+            <ColorSlider.Track>
+              <ColorSlider.Thumb />
+            </ColorSlider.Track>
+          </ColorSlider>
+        )}
 
         <ColorField aria-label={`${ariaLabel} hex input`}>
           <ColorField.Group variant="secondary">
@@ -116,7 +119,7 @@ function ColorPickerControl(props) {
 
         {showClearButton && typeof onClear === "function" && (
           <Button className="justify-start" size="sm" variant="ghost" onPress={onClear}>
-            Remove color
+            {clearLabel}
           </Button>
         )}
       </ColorPicker.Popover>
@@ -127,6 +130,7 @@ function ColorPickerControl(props) {
 ColorPickerControl.propTypes = {
   ariaLabel: PropTypes.string.isRequired,
   className: PropTypes.string,
+  clearLabel: PropTypes.string,
   fallbackColor: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   onClear: PropTypes.func,

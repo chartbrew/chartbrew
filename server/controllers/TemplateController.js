@@ -1,7 +1,8 @@
 const db = require("../models/models");
+const { remapVisualizationBindings } = require("../visualization/remapBindings");
 
 const chartAttributeExcludes = ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"];
-const chartDatasetConfigAttributeExcludes = ["id", "chart_id", "createdAt", "updatedAt"];
+const chartDatasetConfigAttributeExcludes = ["chart_id", "createdAt", "updatedAt"];
 
 const toPlainObject = (record) => {
   if (!record) return record;
@@ -11,11 +12,22 @@ const toPlainObject = (record) => {
 const sanitizeTemplateChart = (chart, tid) => {
   const safeChart = toPlainObject(chart);
   safeChart.tid = tid;
-  safeChart.ChartDatasetConfigs = (safeChart.ChartDatasetConfigs || []).map((config) => {
+  const sourceConfigs = safeChart.ChartDatasetConfigs || [];
+  const templateConfigs = sourceConfigs.map((config, index) => {
     const safeConfig = { ...config };
     delete safeConfig.Dataset;
+    safeConfig.templateBindingId = `binding-${index + 1}`;
+    delete safeConfig.id;
     return safeConfig;
   });
+  safeChart.ChartDatasetConfigs = templateConfigs;
+  if (safeChart.visualization) {
+    safeChart.visualization = remapVisualizationBindings(
+      safeChart.visualization,
+      sourceConfigs,
+      templateConfigs.map((config) => ({ id: config.templateBindingId }))
+    );
+  }
 
   return safeChart;
 };

@@ -1,6 +1,7 @@
 const _ = require("lodash");
 
 const db = require("../../models/models");
+const { remapVisualizationBindings } = require("../../visualization/remapBindings");
 
 module.exports = async (teamId, projectId, {
   template_id, charts, connections, newDatasets
@@ -74,25 +75,36 @@ module.exports = async (teamId, projectId, {
     model.Charts = newModelCharts;
   }
 
-  const createChart = (chart) => {
-    return db.Chart.create(chart)
-      .then((createdChart) => {
-        if (chart?.ChartDatasetConfigs?.length > 0) {
-          chart.ChartDatasetConfigs.forEach((cdc) => {
-            const newCdc = { ...cdc, chart_id: createdChart.id };
-            if (newModelDatasets[cdc.dataset_id]) {
-              newCdc.dataset_id = newModelDatasets[cdc.dataset_id];
-            }
-
-            db.ChartDatasetConfig.create(newCdc);
-          });
+  const createChart = async (chart) => {
+    try {
+      const sourceConfigs = chart.ChartDatasetConfigs || [];
+      const chartData = { ...chart };
+      delete chartData.ChartDatasetConfigs;
+      const createdChart = await db.Chart.create(chartData);
+      const createdConfigs = await Promise.all(sourceConfigs.map((cdc) => {
+        const newCdc = { ...cdc, chart_id: createdChart.id };
+        if (newModelDatasets[cdc.dataset_id]) {
+          newCdc.dataset_id = newModelDatasets[cdc.dataset_id];
         }
+        delete newCdc.bindingId;
+        delete newCdc.id;
+        delete newCdc.templateBindingId;
+        return db.ChartDatasetConfig.create(newCdc);
+      }));
 
-        return createdChart;
-      })
-      .catch((err) => {
-        return err;
-      });
+      if (chart.visualization && createdConfigs.length > 0) {
+        await createdChart.update({
+          visualization: remapVisualizationBindings(
+            chart.visualization,
+            sourceConfigs,
+            createdConfigs
+          ),
+        });
+      }
+      return createdChart;
+    } catch (error) {
+      return error;
+    }
   };
 
   const chartPromises = [];

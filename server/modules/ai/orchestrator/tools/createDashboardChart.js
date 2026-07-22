@@ -11,6 +11,7 @@ const {
   requireConnectionForTeam,
   requireProjectForTeam,
 } = require("./teamScope");
+const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
@@ -38,6 +39,7 @@ async function createDashboardChart(payload) {
     xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
     query, method, route, itemsLimit, conditions = [], configuration = {}, variables = [], transform = null,
     variableBindings = [], spec = {}, team_id, formula, seriesConfiguration,
+    encoding, visualization,
   } = payload;
 
   if (!team_id) {
@@ -109,7 +111,6 @@ async function createDashboardChart(payload) {
     const resolvedIncludeZeros = includeZeros !== undefined
       ? includeZeros
       : spec.includeZeros ?? true;
-
     const dataset = await datasetController.createWithDataRequests({
       team_id: normalizedTeamId,
       project_ids: [Number(project_id)],
@@ -137,6 +138,34 @@ async function createDashboardChart(payload) {
       }],
       main_dr_index: 0
     });
+    const canonicalVisualization = buildAiVisualization({
+      bindingId: "binding-1",
+      chart: {
+        ...spec,
+        name,
+        type: chartType,
+        stacked: stacked ?? spec.stacked ?? spec.options?.stacked,
+        horizontal: horizontal ?? spec.horizontal ?? spec.options?.horizontal,
+      },
+      cdc: {
+        xAxis: resolvedXAxis,
+        xAxisOperation: xAxisOperation ?? spec.xAxisOperation,
+        yAxis: yAxis ?? spec.yAxis,
+        yAxisOperation: yAxisOperation ?? spec.yAxisOperation ?? "none",
+        dateField: dateField ?? spec.dateField,
+        formula: formula ?? spec.formula,
+        goal: spec.goal,
+        legend: legend ?? spec.legend ?? getDatasetName(dataset),
+        datasetColor: spec.datasetColor || spec.options?.color || "#4285F4",
+        fillColor: spec.fillColor,
+        fill: spec.fill || false,
+        multiFill: spec.multiFill || false,
+        pointRadius: pointRadius || spec.pointRadius || 0,
+      },
+      encoding: encoding || spec.encoding,
+      goal: spec.goal,
+      visualization: visualization || spec.visualization,
+    });
 
     const dataRequestId = dataset.DataRequests && dataset.DataRequests.length > 0
       ? dataset.DataRequests[0].id
@@ -162,7 +191,9 @@ async function createDashboardChart(payload) {
       maxValue: maxValue || spec.maxValue,
       minValue: minValue || spec.minValue,
       ranges: ranges || spec.ranges,
+      visualization: canonicalVisualization,
       chartDatasetConfigs: [{
+        templateBindingId: "binding-1",
         dataset_id: dataset.id,
         xAxis: resolvedXAxis,
         xAxisOperation: xAxisOperation ?? spec.xAxisOperation,

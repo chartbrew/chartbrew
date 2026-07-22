@@ -98,8 +98,19 @@ async function seedReportChart(models, project) {
     draft: false,
     onReport: true,
     chartData: {
-      labels: ["Jan"],
-      datasets: [{ label: "Public", data: [1] }],
+      data: {
+        labels: ["Jan"],
+        datasets: [
+          { label: "Professional", data: [1] },
+          { label: "Amateur", data: [2] },
+        ],
+      },
+      meta: {
+        series: [
+          { id: "type:professional", label: "Professional" },
+          { id: "type:amateur", label: "Amateur" },
+        ],
+      },
     },
   });
 }
@@ -206,6 +217,34 @@ describe("ProjectRoute legacy dashboard access", () => {
       .set("pass", "wrong-6")
       .query({ token })
       .expect(429);
+  });
+
+  it("preserves generated series in public report payloads", async () => {
+    const team = await models.Team.create(teamFactory.build());
+    const project = await models.Project.create(projectFactory.build({
+      team_id: team.id,
+      ghost: false,
+      public: true,
+      brewName: "generated-series-report",
+      passwordProtected: false,
+    }));
+    await seedReportChart(models, project);
+    const sharePolicy = await models.SharePolicy.create({
+      entity_type: "Project",
+      entity_id: project.id,
+      visibility: "private",
+    });
+    const token = generateProjectShareToken(project.id, sharePolicy.id);
+
+    const response = await request(app)
+      .get(`/project/${project.brewName}/report`)
+      .query({ token })
+      .expect(200);
+
+    const reportChart = response.body.Charts.find((chart) => chart.name === "Public Dashboard Chart");
+    expect(reportChart.chartData.data.datasets.map((dataset) => dataset.label))
+      .toEqual(["Professional", "Amateur"]);
+    expect(reportChart.chartData.meta.series).toHaveLength(2);
   });
 
   it("stores public dashboard passwords as bcrypt hashes and accepts the raw password", async () => {
