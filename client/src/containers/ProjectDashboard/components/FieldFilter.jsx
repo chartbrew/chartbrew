@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Calendar,
-  Chip,
   DateField,
   DatePicker,
   Dropdown,
@@ -10,9 +9,10 @@ import {
   Link,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
-import { LuArrowRight } from "react-icons/lu";
+import { LuArrowRight, LuListFilter } from "react-icons/lu";
 import moment from "moment";
 import { operators } from "../../../modules/filterOperations";
+import DashboardFilterLabel from "./DashboardFilterLabel";
 
 function FieldFilter({
   filter,
@@ -49,9 +49,11 @@ function FieldFilter({
     return (
       <Dropdown aria-label="Select an operator">
         <Dropdown.Trigger>
-          <Chip variant="soft" size="sm" className="text-xs cursor-pointer">
-            <Chip.Label>{field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}</Chip.Label>
-          </Chip>
+          <div className="cursor-pointer">
+            <DashboardFilterLabel icon={LuListFilter}>
+              {field?.substring(field?.lastIndexOf(".") + 1) || "Field"} {_getOperatorKey(currentOperator)}
+            </DashboardFilterLabel>
+          </div>
         </Dropdown.Trigger>
         <Dropdown.Popover>
           <Dropdown.Menu
@@ -74,14 +76,13 @@ function FieldFilter({
   const renderInput = () => {
     if (isNullOperator) {
       return (
-        <InputGroup>
+        <InputGroup variant="primary">
           <InputGroup.Prefix>
             {renderLabel()}
           </InputGroup.Prefix>
           <InputGroup.Input
             value={currentOperator === "isNull" ? "Is null" : "Is not null"}
             isReadOnly
-            variant="secondary"
             size="sm"
           />
         </InputGroup>
@@ -153,13 +154,12 @@ function FieldFilter({
     }
 
     return (
-      <InputGroup>
+      <InputGroup variant="primary">
         <InputGroup.Prefix>
           {renderLabel()}
         </InputGroup.Prefix>
         <InputGroup.Input
           className={["pl-1", className].filter(Boolean).join(" ")}
-          variant="secondary"
           value={textValue || ""}
           onChange={(e) => setTextValue(e.target.value)}
           size="sm"

@@ -1,4 +1,5 @@
 const { cloneDeep } = require("lodash");
+const { validate: validateUuid, version: uuidVersion } = require("uuid");
 
 const db = require("../models/models");
 const TeamController = require("./TeamController");
@@ -56,7 +57,12 @@ class ProjectController {
   findById(id) {
     return db.Project.findOne({
       where: { id },
-      order: [[db.Chart, "dashboardOrder", "ASC"], [db.Chart, db.ChartDatasetConfig, "order", "ASC"]],
+      order: [
+        [db.Chart, "dashboardOrder", "ASC"],
+        [db.Chart, db.ChartDatasetConfig, "order", "ASC"],
+        [db.DashboardFilter, "position", "ASC"],
+        [db.DashboardFilter, "createdAt", "ASC"],
+      ],
       include: [
         {
           model: db.Chart,
@@ -235,7 +241,11 @@ class ProjectController {
           model: db.SharePolicy,
         }
       ],
-      order: [[db.Chart, "dashboardOrder", "ASC"]],
+      order: [
+        [db.Chart, "dashboardOrder", "ASC"],
+        [db.DashboardFilter, "position", "ASC"],
+        [db.DashboardFilter, "createdAt", "ASC"],
+      ],
     })
       .then((dashboard) => {
         if (!dashboard) return new Promise((resolve, reject) => reject(new Error(404)));
@@ -363,20 +373,25 @@ class ProjectController {
     return snapDashboard(project, options);
   }
 
-  createDashboardFilter(projectId, data) {
+  async createDashboardFilter(projectId, data) {
+    if (data.id && (!validateUuid(data.id) || uuidVersion(data.id) !== 4)) {
+      throw new Error("Dashboard filter id must be a UUID v4");
+    }
+
     const newFields = Object.fromEntries(
-      Object.entries(data).filter(([field]) => ["configuration", "onReport"].includes(field))
+      Object.entries(data).filter(([field]) => ["id", "configuration", "onReport"].includes(field))
     );
+    const normalizedProjectId = parseInt(projectId, 10);
+    const currentPosition = await db.DashboardFilter.max("position", {
+      where: { project_id: normalizedProjectId },
+    });
+    const numericPosition = currentPosition === null ? null : Number(currentPosition);
+
     return db.DashboardFilter.create({
       ...newFields,
-      project_id: parseInt(projectId, 10),
-    })
-      .then((dashboardFilter) => {
-        return dashboardFilter;
-      })
-      .catch((error) => {
-        return Promise.reject(error);
-      });
+      position: numericPosition !== null && Number.isFinite(numericPosition) ? numericPosition + 1 : 0,
+      project_id: normalizedProjectId,
+    });
   }
 
   getDashboardFilter(projectId, dashboardFilterId) {
@@ -394,7 +409,7 @@ class ProjectController {
   getDashboardFilters(projectId) {
     return db.DashboardFilter.findAll({
       where: { project_id: projectId },
-      order: [["createdAt", "DESC"]],
+      order: [["position", "ASC"], ["createdAt", "ASC"]],
     })
       .then((dashboardFilters) => {
         return dashboardFilters;
@@ -427,6 +442,46 @@ class ProjectController {
       .catch((error) => {
         return Promise.reject(error);
       });
+  }
+
+  async reorderDashboardFilters(projectId, filterIds) {
+    if (!Array.isArray(filterIds) || new Set(filterIds).size !== filterIds.length) {
+      throw new Error("A unique filterIds array is required");
+    }
+
+    const normalizedProjectId = parseInt(projectId, 10);
+    const dashboardFilters = await db.DashboardFilter.findAll({
+      where: { project_id: normalizedProjectId },
+      attributes: ["id"],
+    });
+    const existingIds = new Set(dashboardFilters.map((filter) => filter.id));
+
+    if (filterIds.length !== dashboardFilters.length
+      || filterIds.some((filterId) => !existingIds.has(filterId))) {
+      throw new Error("filterIds must contain every dashboard filter in this project");
+    }
+
+    const transaction = await db.sequelize.transaction();
+    try {
+      await Promise.all(filterIds.map((filterId, position) => (
+        db.DashboardFilter.update(
+          { position },
+          {
+            where: {
+              id: filterId,
+              project_id: normalizedProjectId,
+            },
+            transaction,
+          }
+        )
+      )));
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+
+    return this.getDashboardFilters(normalizedProjectId);
   }
 
   async createSharePolicy(projectId) {

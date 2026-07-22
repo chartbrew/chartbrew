@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import PropTypes from "prop-types"
 import { Dropdown, Modal, Button } from "@heroui/react"
-import { LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
+import { LuArrowLeft, LuArrowRight, LuCircleMinus, LuCircleX, LuEllipsisVertical, LuIterationCw, LuPencil, LuTvMinimal, LuUsers } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux"
 import toast from "react-hot-toast"
 
@@ -12,7 +12,7 @@ import EditVariableFilter from "./EditVariableFilter"
 import EditFieldFilter from "./EditFieldFilter"
 import FieldFilter from "./FieldFilter"
 import { selectCharts } from "../../../slices/chart"
-import { createDashboardFilter, deleteDashboardFilter, selectProject, updateDashboardFilter } from "../../../slices/project"
+import { createDashboardFilter, deleteDashboardFilter, reorderDashboardFilters, selectProject, updateDashboardFilter } from "../../../slices/project"
 import canAccess from "../../../config/canAccess"
 import { selectUser } from "../../../slices/user"
 import { selectTeam } from "../../../slices/team"
@@ -22,6 +22,7 @@ function DashboardFilters({
   projectId, 
   onRemoveFilter,
   onApplyFilterValue,
+  onReorderFilters = () => {},
   onReport = false,
 }) {
   const [editingFilter, setEditingFilter] = useState(null);
@@ -152,6 +153,8 @@ function DashboardFilters({
     } else {
       toast.success("Filter saved for everyone successfully.");
     }
+
+    return response;
   };
 
   const _updateReportVisibility = async (filter, onReport) => {
@@ -173,16 +176,45 @@ function DashboardFilters({
     }
   };
 
-  const _removeFromEveryone = async (filter) => {
+  const _removeFromEveryone = async (filterId) => {
     const response = await dispatch(deleteDashboardFilter({
       project_id: projectId,
-      dashboard_filter_id: filter.id,
+      dashboard_filter_id: filterId,
     }));
 
     if (response.error) {
       toast.error("Failed to remove the filter from everyone. Please try again.");
     } else {
       toast.success("Filter removed from everyone successfully.");
+    }
+  };
+
+  const _moveFilter = async (filterId, direction) => {
+    const currentIndex = projectFilters.findIndex((filter) => filter.id === filterId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= projectFilters.length) return;
+
+    const nextFilters = [...projectFilters];
+    [nextFilters[currentIndex], nextFilters[nextIndex]] = [nextFilters[nextIndex], nextFilters[currentIndex]];
+    onReorderFilters(nextFilters);
+
+    const sharedFilterIds = new Set(dashboardFilters.map((filter) => filter.id));
+    const currentSharedOrder = projectFilters
+      .filter((filter) => sharedFilterIds.has(filter.id))
+      .map((filter) => filter.id);
+    const nextSharedOrder = nextFilters
+      .filter((filter) => sharedFilterIds.has(filter.id))
+      .map((filter) => filter.id);
+
+    if (JSON.stringify(currentSharedOrder) === JSON.stringify(nextSharedOrder)) return;
+
+    const response = await dispatch(reorderDashboardFilters({
+      project_id: projectId,
+      filterIds: nextSharedOrder,
+    }));
+    if (response.error) {
+      onReorderFilters(projectFilters);
+      toast.error("Failed to update the filter order. Please try again.");
     }
   };
 
@@ -281,6 +313,7 @@ function DashboardFilters({
                   <DateRangeFilter
                     startDate={filter.startDate}
                     endDate={filter.endDate}
+                    label={filter.label || "Date range"}
                     onChange={(dates) => _handleDateRangeChange(filter, dates)}
                   />
                 )}
@@ -305,6 +338,18 @@ function DashboardFilters({
                         <LuPencil />
                         Edit filter
                       </Dropdown.Item>
+                      {_canAccess("projectEditor") && projectFilters.findIndex((item) => item.id === filter.id) > 0 && (
+                        <Dropdown.Item id="move-filter-earlier" onPress={() => _moveFilter(filter.id, -1)} textValue="Move filter earlier">
+                          <LuArrowLeft />
+                          Move earlier
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("projectEditor") && projectFilters.findIndex((item) => item.id === filter.id) < projectFilters.length - 1 && (
+                        <Dropdown.Item id="move-filter-later" onPress={() => _moveFilter(filter.id, 1)} textValue="Move filter later">
+                          <LuArrowRight />
+                          Move later
+                        </Dropdown.Item>
+                      )}
                       {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) === -1 && (
                         <Dropdown.Item id="save-everyone" onPress={() => _saveForEveryone(filter)} textValue="Save for everyone">
                           <LuUsers />
@@ -312,7 +357,7 @@ function DashboardFilters({
                         </Dropdown.Item>
                       )}
                       {_canAccess("projectEditor") && dashboardFilters.findIndex(f => f.id === filter.id) !== -1 && (
-                        <Dropdown.Item id="remove-everyone" onPress={() => _removeFromEveryone(filter)} textValue="Remove from everyone">
+                        <Dropdown.Item id="remove-everyone" onPress={() => _removeFromEveryone(filter.id)} textValue="Remove from everyone">
                           <LuUsers />
                           Remove from everyone
                         </Dropdown.Item>
@@ -424,6 +469,7 @@ DashboardFilters.propTypes = {
   projectId: PropTypes.number.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onApplyFilterValue: PropTypes.func.isRequired,
+  onReorderFilters: PropTypes.func,
   onReport: PropTypes.bool,
 }
 

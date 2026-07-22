@@ -10,8 +10,9 @@ import {
 } from "@heroui/react";
 import moment from "moment";
 import { getLocalTimeZone, parseDateTime } from "@internationalized/date";
-import { LuArrowRight } from "react-icons/lu";
+import { LuArrowRight, LuCalendarRange } from "react-icons/lu";
 import { RangeCalendarStateContext, useLocale } from "react-aria-components";
+import DashboardFilterLabel from "./DashboardFilterLabel";
 
 function RangeCalendarMonthHeading({ offset = 0 }) {
   const state = React.useContext(RangeCalendarStateContext);
@@ -40,6 +41,7 @@ function DateRangeFilter({
   size = "sm",
   variant = "primary",
   isEdit = false,
+  label = "Date range",
 }) {
   // This is the actual value that is displayed to the user
   const [currentValue, setCurrentValue] = useState({
@@ -160,6 +162,9 @@ function DateRangeFilter({
       onChange={_handleDateRangeChange}
     >
       <DateField.Group fullWidth variant={variant} size={size}>
+        <DateField.Prefix>
+          <DashboardFilterLabel icon={LuCalendarRange}>{label}</DashboardFilterLabel>
+        </DateField.Prefix>
         <DateField.Input slot="start">
           {(segment) => <DateField.Segment segment={segment} />}
         </DateField.Input>
@@ -297,6 +302,7 @@ DateRangeFilter.propTypes = {
   variant: PropTypes.string,
   size: PropTypes.string,
   isEdit: PropTypes.bool,
+  label: PropTypes.string,
 };
 
 export default DateRangeFilter;

@@ -685,6 +685,20 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
+  ** Route to reorder all shared dashboard filters
+  */
+  app.put("/project/:id/dashboard-filters/order", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.reorderDashboardFilters(req.params.id, req.body?.filterIds)
+      .then((dashboardFilters) => {
+        return res.status(200).send(dashboardFilters);
+      })
+      .catch((error) => {
+        return res.status(400).send({ error: error.message });
+      });
+  });
+  // -------------------------------------------
+
+  /*
   ** Route to update a dashboard filter
   */
   app.put("/project/:id/dashboard-filter/:dashboardFilterId", verifyToken, checkPermissions("updateOwn"), (req, res) => {

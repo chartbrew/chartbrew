@@ -412,6 +412,28 @@ export const deleteDashboardFilter = createAsyncThunk(
   }
 );
 
+export const reorderDashboardFilters = createAsyncThunk(
+  "project/reorderDashboardFilters",
+  async ({ project_id, filterIds }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/dashboard-filters/order`;
+    const method = "PUT";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    });
+    const body = JSON.stringify({ filterIds });
+
+    const response = await fetch(url, { method, headers, body });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    return response.json();
+  }
+);
+
 export const createSharePolicy = createAsyncThunk(
   "project/createSharePolicy",
   async ({ project_id }) => {
@@ -759,6 +781,25 @@ export const projectSlice = createSlice({
       });
     });
     builder.addCase(deleteDashboardFilter.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    });
+
+    // reorderDashboardFilters
+    builder.addCase(reorderDashboardFilters.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(reorderDashboardFilters.fulfilled, (state, action) => {
+      state.loading = false;
+      state.active.DashboardFilters = action.payload;
+      state.data = state.data.map((project) => {
+        if (project.id === action.meta.arg.project_id) {
+          project.DashboardFilters = action.payload;
+        }
+        return project;
+      });
+    });
+    builder.addCase(reorderDashboardFilters.rejected, (state) => {
       state.loading = false;
       state.error = true;
     });

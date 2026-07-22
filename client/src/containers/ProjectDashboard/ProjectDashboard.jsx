@@ -68,6 +68,7 @@ import DashboardFilters from "./components/DashboardFilters";
 import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
 import SuspenseLoader from "../../components/SuspenseLoader";
 import { buildChartRuntimeRequest } from "../../modules/chartRuntimeFilters";
+import { mergeDashboardFilters } from "../../modules/dashboardFilters";
 import DashboardStarter from "./components/DashboardStarter";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
@@ -216,36 +217,13 @@ function ProjectDashboard() {
       // Get existing filters for this project
       const existingFilters = storedFilters[projectId] || [];
 
-      // Update existing filters with new configuration values if they exist
-      const updatedFilters = existingFilters.map(existingFilter => {
-        const matchingFilter = project.DashboardFilters.find(newFilter => newFilter.id === existingFilter.id);
-        if (matchingFilter) {
-          return {
-            ...matchingFilter.configuration,
-            ...existingFilter,
-            onReport: matchingFilter.onReport,
-          };
-        }
-        return existingFilter;
-      });
+      const nextProjectFilters = mergeDashboardFilters(project.DashboardFilters, existingFilters);
+      const hasUpdatedFilters = JSON.stringify(nextProjectFilters) !== JSON.stringify(existingFilters);
 
-      // Add any new filters that don't exist yet
-      const newFilters = project.DashboardFilters.filter(newFilter =>
-        !existingFilters.some(existingFilter => existingFilter.id === newFilter.id)
-      ).map(filter => ({
-        id: filter.id,
-        onReport: filter.onReport,
-        ...filter.configuration
-      }));
-
-      // Only update if there are actual changes
-      const hasNewFilters = newFilters.length > 0;
-      const hasUpdatedFilters = JSON.stringify(updatedFilters) !== JSON.stringify(existingFilters);
-      
-      if (hasNewFilters || hasUpdatedFilters) {
+      if (hasUpdatedFilters) {
         const finalFilters = {
           ...storedFilters,
-          [projectId]: [...updatedFilters, ...newFilters]
+          [projectId]: nextProjectFilters,
         };
 
         // Only update localStorage if the filters have actually changed
@@ -470,6 +448,17 @@ function ProjectDashboard() {
     setFilters(newFilters);
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
     _runFiltering(newFilters);
+  };
+
+  const _onReorderFilters = (projectFilters) => {
+    const { projectId } = params;
+    const newFilters = {
+      ...(filters || {}),
+      [projectId]: projectFilters,
+    };
+
+    setFilters(newFilters);
+    window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
   };
 
   const _buildRuntimeRequest = (chart, currentFilters = filters, currentChartFilters = chartFilters) => {
@@ -985,6 +974,7 @@ function ProjectDashboard() {
                       projectId={params.projectId}
                       onRemoveFilter={_onRemoveFilter}
                       onApplyFilterValue={_runFiltering}
+                      onReorderFilters={_onReorderFilters}
                     />
                   </div>
                 </div>

@@ -173,4 +173,85 @@ describe("ProjectRoute tenant authorization", () => {
     await victimFilter.reload();
     expect(victimFilter.onReport).toBe(false);
   });
+
+  it("creates dashboard filters with stable ids and reorders the complete project list", async () => {
+    const owner = await createOwnerProject(models, "OwnerFilterOrder");
+    const firstId = "11111111-1111-4111-8111-111111111111";
+    const secondId = "22222222-2222-4222-8222-222222222222";
+
+    const firstResponse = await request(app)
+      .post(`/project/${owner.project.id}/dashboard-filter`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({
+        id: firstId,
+        configuration: { type: "variable", variable: "currency", value: "gbp" },
+        onReport: true,
+      })
+      .expect(200);
+    const secondResponse = await request(app)
+      .post(`/project/${owner.project.id}/dashboard-filter`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({
+        id: secondId,
+        configuration: { type: "field", field: "root[].country", value: "GB" },
+        onReport: true,
+      })
+      .expect(200);
+
+    expect(firstResponse.body).toMatchObject({ id: firstId, position: 0 });
+    expect(secondResponse.body).toMatchObject({ id: secondId, position: 1 });
+
+    const reorderResponse = await request(app)
+      .put(`/project/${owner.project.id}/dashboard-filters/order`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ filterIds: [secondId, firstId] })
+      .expect(200);
+
+    expect(reorderResponse.body.map((filter) => filter.id)).toEqual([secondId, firstId]);
+    expect(reorderResponse.body.map((filter) => filter.position)).toEqual([0, 1]);
+
+    const projectResponse = await request(app)
+      .get(`/project/${owner.project.id}`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .expect(200);
+    expect(projectResponse.body.DashboardFilters.map((filter) => filter.id)).toEqual([secondId, firstId]);
+
+    await models.Chart.create({
+      project_id: owner.project.id,
+      name: "Public filter order chart",
+      type: "bar",
+      onReport: true,
+    });
+    const publicDashboardResponse = await request(app)
+      .get(`/project/dashboard/${owner.project.brewName}`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .expect(200);
+    expect(publicDashboardResponse.body.DashboardFilters.map((filter) => filter.id)).toEqual([secondId, firstId]);
+  });
+
+  it("rejects reorder payloads containing filters from another project", async () => {
+    const owner = await createOwnerProject(models, "OwnerFilterTenant");
+    const other = await createOwnerProject(models, "OtherFilterTenant");
+    const ownerFilter = await models.DashboardFilter.create({
+      project_id: owner.project.id,
+      configuration: { marker: "owner" },
+      onReport: false,
+      position: 0,
+    });
+    const otherFilter = await models.DashboardFilter.create({
+      project_id: other.project.id,
+      configuration: { marker: "other" },
+      onReport: false,
+      position: 0,
+    });
+
+    await request(app)
+      .put(`/project/${owner.project.id}/dashboard-filters/order`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ filterIds: [otherFilter.id] })
+      .expect(400);
+
+    await ownerFilter.reload();
+    expect(ownerFilter.position).toBe(0);
+  });
 });

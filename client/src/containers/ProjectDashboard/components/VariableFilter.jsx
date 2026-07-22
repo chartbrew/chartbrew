@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import moment from "moment";
 import {
   Calendar,
-  Chip,
   DateField,
   DatePicker,
   Input,
@@ -13,6 +12,7 @@ import {
 } from "@heroui/react";
 import { LuArrowRight, LuVariable } from "react-icons/lu";
 import { parseDate, today } from "@internationalized/date";
+import DashboardFilterLabel from "./DashboardFilterLabel";
 
 const normalizeDateValue = (value) => {
   if (!value) return "";
@@ -23,12 +23,21 @@ const normalizeDateValue = (value) => {
   return formattedValue.format("YYYY-MM-DD");
 };
 
+const formatVariableLabel = (value) => {
+  if (!value) return "Variable";
+  const normalizedValue = value.replace(/[_-]+/g, " ").trim();
+  return normalizedValue.charAt(0).toUpperCase() + normalizedValue.slice(1);
+};
+
 function VariableFilter({
   filter,
   className = "max-w-xs",
   onApply = () => {},
 }) {
-  const { label, value, dataType, allowValueChange } = filter;
+  const {
+    label, variable, value, dataType, allowValueChange,
+  } = filter;
+  const displayLabel = label?.trim() || formatVariableLabel(variable);
 
   const [textValue, setTextValue] = useState(value);
   const [dateValue, setDateValue] = useState(value);
@@ -38,16 +47,17 @@ function VariableFilter({
     setDateValue(normalizeDateValue(value));
   }, [value]);
 
+  const renderLabel = () => (
+    <DashboardFilterLabel icon={LuVariable}>{displayLabel}</DashboardFilterLabel>
+  );
+
   const renderInput = () => {
     switch (dataType) {
       case "text":
         return (
           <Input
             startContent={(
-              <Chip variant="soft" size="sm" className="rounded-sm text-xs">
-                <LuVariable size={16} />
-                {label}
-              </Chip>
+              renderLabel()
             )}
             className={["pl-1", className].filter(Boolean).join(" ")}
             variant="primary"
@@ -67,10 +77,7 @@ function VariableFilter({
         return (
           <Input
             startContent={(
-              <Chip variant="soft" size="sm" className="rounded-sm text-xs">
-                <LuVariable size={16} />
-                {label}
-              </Chip>
+              renderLabel()
             )}
             className={["pl-1", className].filter(Boolean).join(" ")}
             variant="primary"
@@ -92,15 +99,11 @@ function VariableFilter({
           const currentDateValue = normalizeDateValue(dateValue);
 
         return (
-          <div className={["flex flex-row items-center gap-1", className].filter(Boolean).join(" ")}>
-            <Chip variant="soft" size="sm" className="shrink-0 rounded-sm text-xs">
-              <LuVariable size={16} />
-              {label}
-            </Chip>
+          <div className={["flex flex-row items-center", className].filter(Boolean).join(" ")}>
             <DatePicker
               aria-label="Filter value"
               name="variableFilterDate"
-              className="min-w-3xs flex-1 pl-1 text-xs"
+              className="min-w-3xs flex-1 text-xs"
               value={currentDateValue ? parseDate(currentDateValue) : today()}
               onChange={(date) => {
                 if (date) {
@@ -110,6 +113,9 @@ function VariableFilter({
               isDisabled={!allowValueChange}
             >
               <DateField.Group fullWidth variant="primary" size="sm">
+                <DateField.Prefix>
+                  {renderLabel()}
+                </DateField.Prefix>
                 <DateField.Input>
                   {(segment) => <DateField.Segment segment={segment} />}
                 </DateField.Input>
@@ -167,10 +173,7 @@ function VariableFilter({
             size="sm"
             isDisabled={!allowValueChange}
             startContent={(
-              <Chip variant="soft" size="sm" className="rounded-sm text-xs">
-                <LuVariable size={16} />
-                {label}
-              </Chip>
+              renderLabel()
             )}
             aria-label="Filter value"
           >
@@ -201,10 +204,13 @@ function VariableFilter({
 }
 
 VariableFilter.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  dataType: PropTypes.oneOf(["text", "number", "date", "binary"]).isRequired,
-  allowValueChange: PropTypes.bool,
+  filter: PropTypes.shape({
+    label: PropTypes.string,
+    variable: PropTypes.string,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
+    dataType: PropTypes.oneOf(["text", "number", "date", "binary"]).isRequired,
+    allowValueChange: PropTypes.bool,
+  }).isRequired,
   onApply: PropTypes.func,
   className: PropTypes.string,
 };

@@ -135,6 +135,8 @@ All non-variable filters use AND logic. CDC-scoped filters only apply to the mat
 
 ## Persistence And Cache Rules
 
+Dashboard filter presentation order is stored separately on `DashboardFilter.position`. Private and public dashboard queries return shared filters in that order, but `position` is not included in the runtime payload. Reordering filters therefore does not change AND semantics, refresh chart data, or create a new runtime cache variant.
+
 ### Query Route
 
 - Can persist chart data and refresh `chartDataUpdated`
