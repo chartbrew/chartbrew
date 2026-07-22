@@ -185,7 +185,11 @@ function AddFilters(props) {
                 Close
               </Button>
               {filterType === "date" && (
-                <Button variant="primary" onPress={_onApplyFilter}>
+                <Button
+                  variant="primary"
+                  onPress={_onApplyFilter}
+                  isDisabled={!filter.startDate || !filter.endDate}
+                >
                   Add filter
                 </Button>
               )}

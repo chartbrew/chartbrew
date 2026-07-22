@@ -13,3 +13,20 @@ export function mergeDashboardFilters(sharedFilters = [], localFilters = []) {
 
   return [...mergedSharedFilters, ...personalFilters];
 }
+
+export function resolveDateFilterChartSelection(eligibleChartIds = [], configuredChartIds = []) {
+  if (!Array.isArray(configuredChartIds) || configuredChartIds.length === 0) {
+    return [...eligibleChartIds];
+  }
+
+  const eligibleIds = new Set(eligibleChartIds);
+  return configuredChartIds.filter((chartId) => eligibleIds.has(chartId));
+}
+
+export function serializeDateFilterChartSelection(eligibleChartIds = [], selectedChartIds = []) {
+  const selectedIds = new Set(selectedChartIds);
+  const hasAllCharts = eligibleChartIds.length === selectedChartIds.length
+    && eligibleChartIds.every((chartId) => selectedIds.has(chartId));
+
+  return hasAllCharts ? [] : selectedChartIds;
+}

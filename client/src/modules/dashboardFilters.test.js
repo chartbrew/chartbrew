@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeDashboardFilters } from "./dashboardFilters";
+import {
+  mergeDashboardFilters,
+  resolveDateFilterChartSelection,
+  serializeDateFilterChartSelection,
+} from "./dashboardFilters";
 
 describe("mergeDashboardFilters", () => {
   it("uses shared order while preserving local values and appending personal filters", () => {
@@ -47,5 +51,20 @@ describe("mergeDashboardFilters", () => {
       value: "gbp",
       onReport: false,
     }])).toEqual([]);
+  });
+});
+
+describe("date filter chart selection", () => {
+  it("shows all eligible charts as selected for the all-charts sentinel", () => {
+    expect(resolveDateFilterChartSelection([1, 2, 3], [])).toEqual([1, 2, 3]);
+  });
+
+  it("keeps a configured chart subset and drops unavailable charts", () => {
+    expect(resolveDateFilterChartSelection([1, 2, 3], [2, 4])).toEqual([2]);
+  });
+
+  it("serializes a full selection as the dynamic all-charts sentinel", () => {
+    expect(serializeDateFilterChartSelection([1, 2, 3], [3, 1, 2])).toEqual([]);
+    expect(serializeDateFilterChartSelection([1, 2, 3], [1, 3])).toEqual([1, 3]);
   });
 });
