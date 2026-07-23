@@ -195,10 +195,8 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
   });
 
   const directSettings = [
-    "currentEndDate",
     "dashedLastPoint",
     "dataLabels",
-    "fixedStartDate",
     "includeZeros",
     "isLogarithmic",
     "maxValue",
@@ -210,11 +208,17 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     if (data[field] !== undefined) settings[field] = data[field];
   });
   if (data.displayLegend !== undefined) settings.legend = { visible: Boolean(data.displayLegend) };
-  if (data.startDate !== undefined || data.endDate !== undefined) {
+  if (data.startDate !== undefined
+    || data.endDate !== undefined
+    || data.currentEndDate !== undefined
+    || data.fixedStartDate !== undefined
+  ) {
     settings.dateWindow = {
       ...(settings.dateWindow || {}),
       ...(data.startDate !== undefined ? { start: data.startDate } : {}),
       ...(data.endDate !== undefined ? { end: data.endDate } : {}),
+      ...(data.currentEndDate !== undefined ? { currentEndDate: data.currentEndDate } : {}),
+      ...(data.fixedStartDate !== undefined ? { fixedStartDate: data.fixedStartDate } : {}),
     };
   }
   next.settings = settings;

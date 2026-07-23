@@ -110,6 +110,24 @@ describe("native visualization compatibility updates", () => {
     expect(next.settings.legend.visible).toBe(false);
   });
 
+  it("keeps rolling date controls inside the canonical date window", () => {
+    const next = applyChartCompatibilityUpdate(nativeVisualization, {
+      startDate: "2026-06-01T00:00:00.000Z",
+      endDate: "2026-06-30T23:59:59.999Z",
+      currentEndDate: true,
+      fixedStartDate: false,
+    });
+
+    expect(next.settings.dateWindow).toEqual({
+      start: "2026-06-01T00:00:00.000Z",
+      end: "2026-06-30T23:59:59.999Z",
+      currentEndDate: true,
+      fixedStartDate: false,
+    });
+    expect(next.settings.currentEndDate).toBeUndefined();
+    expect(next.settings.fixedStartDate).toBeUndefined();
+  });
+
   it("restores category, value, and breakdown after a KPI round trip", () => {
     const kpi = applyChartCompatibilityUpdate(nativeVisualization, { type: "kpi" });
     const restored = applyChartCompatibilityUpdate(kpi, { type: "bar" });

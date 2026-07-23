@@ -96,4 +96,21 @@ describe("client chartRuntimeFilters helper", () => {
       variables: {},
     }));
   });
+
+  it("resolves the displayed rolling date window from the configured anchors", async () => {
+    const {
+      resolveChartConfiguredDateRange,
+    } = await import("../../../client/src/modules/chartRuntimeFilters.js");
+
+    const range = resolveChartConfiguredDateRange({
+      startDate: "2026-06-01T00:00:00.000Z",
+      endDate: "2026-06-30T23:59:59.999Z",
+      currentEndDate: true,
+      fixedStartDate: false,
+      timeInterval: "day",
+    }, new Date("2026-07-23T12:00:00.000Z"));
+
+    expect(range.startDate).toBe("2026-06-24T00:00:00.000Z");
+    expect(range.endDate).toBe("2026-07-23T23:59:59.999Z");
+  });
 });

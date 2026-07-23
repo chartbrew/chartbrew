@@ -488,3 +488,8 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   databases where the original migrations are already recorded. Added canonical `count_unique`
   support and categorical date conversion for pie, doughnut, radar, and polar legacy charts,
   covering both failure families found in the production corpus.
+- 2026-07-23: Restored rolling date-window behavior in the semantic editor. Chart Settings now
+  displays the effective shifted range, changes to the range/interval/rolling controls trigger a
+  full data refresh, and native compatibility updates keep `currentEndDate` and `fixedStartDate`
+  inside the canonical `settings.dateWindow`. Regression tests verify both displayed range
+  resolution and value-level filtering against the shifted window.

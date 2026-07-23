@@ -245,6 +245,10 @@ function AddChart() {
     fixedStartDate, maxValue, minValue, xLabelTicks, stacked, horizontal, dataLabels,
     dateVarsFormat, isLogarithmic, dashedLastPoint, defaultRowsPerPage,
   }) => {
+    const shouldRefreshData = dateRange !== undefined
+      || currentEndDate !== undefined
+      || fixedStartDate !== undefined
+      || timeInterval !== undefined;
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
       displayLegend: typeof displayLegend !== "undefined" ? displayLegend : newChart.displayLegend,
@@ -284,10 +288,10 @@ function AddChart() {
       skipParsing = true;
     }
 
-    _onChangeChart(tempChart, skipParsing);
+    _onChangeChart(tempChart, skipParsing, shouldRefreshData);
   };
 
-  const _onChangeChart = (data, skipParsing) => {
+  const _onChangeChart = (data, skipParsing, refreshData = false) => {
     let shouldSkipParsing = skipParsing;
     setNewChart({ ...newChart, ...data });
     setLoading(true);
@@ -306,7 +310,7 @@ function AddChart() {
 
         // run the preview refresh only when it's needed
         if (!data.name) {
-          if (data.subType || data.type) {
+          if (refreshData || data.subType || data.type) {
             _onRefreshData();
           } else {
             _onRefreshPreview(shouldSkipParsing);

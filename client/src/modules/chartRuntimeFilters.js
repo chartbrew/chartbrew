@@ -1,3 +1,5 @@
+import moment from "moment";
+
 function hasConditionValue(filter = {}) {
   if (!filter) return false;
 
@@ -111,6 +113,41 @@ function normalizeChartFilter(filter, { includeId = false } = {}) {
   }
 
   return normalizedFilter;
+}
+
+export function resolveChartConfiguredDateRange(chart = {}, now = new Date()) {
+  if (!chart.startDate || !chart.endDate) {
+    return { startDate: chart.startDate || null, endDate: chart.endDate || null };
+  }
+
+  const interval = chart.timeInterval || "day";
+  let startDate = moment.utc(chart.startDate);
+  let endDate = moment.utc(chart.endDate);
+
+  if (interval === "month" && chart.currentEndDate && !chart.fixedStartDate) {
+    startDate = startDate.startOf("month").startOf("day");
+  } else if (interval === "year" && chart.currentEndDate && !chart.fixedStartDate) {
+    startDate = startDate.startOf("year").startOf("day");
+  } else if (!chart.fixedStartDate) {
+    startDate = startDate.startOf("day");
+  }
+
+  endDate = endDate.endOf("day");
+  if (chart.currentEndDate) {
+    const timeDiff = endDate.diff(startDate, interval);
+    endDate = moment.utc(now).endOf(interval);
+
+    if (!chart.fixedStartDate) {
+      startDate = endDate.clone()
+        .subtract(timeDiff, interval)
+        .startOf(interval);
+    }
+  }
+
+  return {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  };
 }
 
 export function getChartRuntimeFilterState(chartFilters = {}, chartId) {

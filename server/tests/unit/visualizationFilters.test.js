@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -45,6 +45,10 @@ function buildInput(options = {}) {
 }
 
 describe("visualization dataset filtering", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("applies saved CDC conditions before aggregation and returns condition options", () => {
     const input = buildInput({
       conditions: [{
@@ -151,5 +155,40 @@ describe("visualization dataset filtering", () => {
 
     expect(frameResult.datasets[0].options.dateField).toBe("root[].createdAt");
     expect(result.configuration.data.labels).toEqual(["Feb"]);
+  });
+
+  it("filters canonical chart data using the shifted rolling window", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-23T12:00:00.000Z"));
+
+    const input = buildInput({
+      dateField: "root[].createdAt",
+      fieldsSchema: {
+        "root[].amount": "number",
+        "root[].createdAt": "date",
+      },
+    });
+    input.chart.startDate = "2026-07-01T00:00:00.000Z";
+    input.chart.endDate = "2026-07-03T23:59:59.999Z";
+    input.chart.currentEndDate = true;
+    input.chart.fixedStartDate = false;
+    input.chart.visualization.layers[0].encoding = {
+      time: { field: "root[].createdAt", type: "temporal" },
+      value: { field: "root[].amount", type: "quantitative", aggregate: "sum" },
+    };
+    input.datasets[0].data = [{
+      createdAt: "2026-07-20T12:00:00.000Z",
+      amount: 100,
+    }, {
+      createdAt: "2026-07-21T12:00:00.000Z",
+      amount: 200,
+    }, {
+      createdAt: "2026-07-23T12:00:00.000Z",
+      amount: 300,
+    }];
+
+    const result = new VisualizationEngine(input).render();
+
+    expect(result.configuration.data.datasets[0].data).toEqual([200, 300]);
   });
 });

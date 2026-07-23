@@ -18,6 +18,7 @@ import {
   updateDataLabelsFormat,
   updateMissingValuePolicy,
 } from "../../../modules/visualization";
+import { resolveChartConfiguredDateRange } from "../../../modules/chartRuntimeFilters";
 
 const xLabelOptions = [{
   key: "default",
@@ -105,12 +106,6 @@ const tableRowOptions = [{
 }];
 
 function ChartSettings({ chart, onChange, onVisualizationChange }) {
-  const [initSelectionRange] = useState({
-    startDate: moment().startOf("month").toDate(),
-    endDate: moment().endOf("month").toDate(),
-    key: "selection",
-  });
-  const [dateRange, setDateRange] = useState(initSelectionRange);
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
   const [ticksNumber, setTicksNumber] = useState("");
@@ -123,6 +118,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   const legendVisible = chart.visualization?.settings?.legend?.visible
     ?? chart.displayLegend
     ?? true;
+  const displayedDateRange = resolveChartConfiguredDateRange(chart);
 
   useEffect(() => {
     if (chart.maxValue || chart.maxValue === 0) {
@@ -140,11 +136,10 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   }, [chart.maxValue, chart.minValue]);
 
   useEffect(() => {
-    setDateRange({ startDate: chart.startDate, endDate: chart.endDate });
     if (chart.dateVarsFormat) {
       setDatesFormat(chart.dateVarsFormat);
     }
-  }, [chart.startDate, chart.endDate]);
+  }, [chart.dateVarsFormat]);
 
   useEffect(() => {
     if (!chart.xLabelTicks || chart.xLabelTicks === "default") {
@@ -157,22 +152,6 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
     }
   }, [chart.xLabelTicks]);
 
-  useEffect(() => {
-    if (chart.startDate && chart.endDate) {
-      let newStartDate = moment(chart.startDate);
-      let newEndDate = moment(chart.endDate);
-
-      if (chart.currentEndDate) {
-        const timeDiff = newEndDate.diff(newStartDate, chart.timeInterval);
-        newEndDate = moment().utcOffset(0, true).endOf(chart.timeInterval);
-
-        if (!chart.fixedStartDate) {
-          newStartDate = newEndDate.clone().subtract(timeDiff, chart.timeInterval).startOf(chart.timeInterval);
-        }
-      }
-    }
-  }, [chart.currentEndDate, dateRange, chart.fixedStartDate]);
-
   const _onRemoveDateFiltering = () => {
     onChange({ dateRange: { startDate: null, endDate: null } });
   };
@@ -182,7 +161,6 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   };
 
   const _onChangeDateRangeNew = ({ startDate, endDate }) => {
-    setDateRange({ startDate, endDate });
     onChange({
       dateRange: {
         startDate: moment(startDate).utcOffset(0, true).format(),
@@ -225,8 +203,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
           <div>
             <DateRangeFilter
               variant="secondary"
-              startDate={chart.startDate}
-              endDate={chart.endDate}
+              startDate={displayedDateRange.startDate}
+              endDate={displayedDateRange.endDate}
               onChange={_onChangeDateRangeNew}
             />
           </div>
@@ -265,7 +243,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             <Checkbox
               id="chart-settings-current-end"
               isSelected={chart.currentEndDate}
-              isDisabled={!dateRange.endDate}
+              isDisabled={!chart.endDate}
               onChange={(selected) => onChange({ currentEndDate: selected })}
               className="chart-settings-relative"
               variant="secondary"

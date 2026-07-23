@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button,
@@ -9,29 +9,9 @@ import {
   RangeCalendar,
 } from "@heroui/react";
 import moment from "moment";
-import { getLocalTimeZone, parseDateTime } from "@internationalized/date";
+import { parseDateTime } from "@internationalized/date";
 import { LuArrowRight, LuCalendarRange } from "react-icons/lu";
-import { RangeCalendarStateContext, useLocale } from "react-aria-components";
 import DashboardFilterLabel from "./DashboardFilterLabel";
-
-function RangeCalendarMonthHeading({ offset = 0 }) {
-  const state = React.useContext(RangeCalendarStateContext);
-  const { locale } = useLocale();
-  if (!state) {
-    return null;
-  }
-  const startDate = state.visibleRange.start;
-  const monthDate = startDate.add({ months: offset });
-  const dateObj = monthDate.toDate(getLocalTimeZone());
-  const monthYear = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
-    dateObj,
-  );
-  return <span className="text-sm font-medium">{monthYear}</span>;
-}
-
-RangeCalendarMonthHeading.propTypes = {
-  offset: PropTypes.number,
-};
 
 function DateRangeFilter({
   startDate,
@@ -190,15 +170,14 @@ function DateRangeFilter({
       <DateRangePicker.Popover className="flex max-w-[100vw] flex-col">
         <RangeCalendar
           aria-label="Select a date range"
-          className="@container-normal w-auto overflow-x-auto"
+          className="@container-normal w-full max-w-none overflow-x-auto"
           visibleDuration={{ months: 2 }}
         >
-          <RangeCalendar.Heading className="sr-only" />
-          <div className="flex w-max gap-8">
+          <div className="mx-auto flex w-max gap-8">
             <div className="w-64">
               <RangeCalendar.Header>
                 <RangeCalendar.NavButton slot="previous" />
-                <RangeCalendarMonthHeading offset={0} />
+                <RangeCalendar.Heading className="flex-none" />
                 <div className="size-6" />
               </RangeCalendar.Header>
               <RangeCalendar.Grid>
@@ -213,7 +192,7 @@ function DateRangeFilter({
             <div className="w-64">
               <RangeCalendar.Header>
                 <div className="size-6" />
-                <RangeCalendarMonthHeading offset={1} />
+                <RangeCalendar.Heading className="flex-none" offset={{ months: 1 }} />
                 <RangeCalendar.NavButton slot="next" />
               </RangeCalendar.Header>
               <RangeCalendar.Grid offset={{ months: 1 }}>
