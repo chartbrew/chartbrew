@@ -118,6 +118,7 @@ class VisualizationEngine {
       compiled = compileChartJsMatrix({
         chart: this.chart,
         frame: resolved.frame,
+        runtimeContext: resolved.runtimeContext,
         timezone: this.timezone,
         visualization: resolved.visualization,
       });

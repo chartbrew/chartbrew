@@ -2,7 +2,9 @@ const moment = require("moment-timezone");
 const MatrixChart = require("../../charts/MatrixChart");
 const { buildSeriesStyleMap } = require("./chartJsCartesian");
 
-function compileChartJsMatrix({ chart, frame, timezone, visualization }) {
+function compileChartJsMatrix({
+  chart, frame, runtimeContext, timezone, visualization,
+}) {
   const layerFrame = frame.layers[0];
   const layer = visualization.layers.find((item) => item.id === layerFrame.id);
   const series = layerFrame.series[0];
@@ -19,8 +21,15 @@ function compileChartJsMatrix({ chart, frame, timezone, visualization }) {
     x: layerFrame.rows.map((row) => momentFn(row.time).format("YYYY-MM-DD")),
     y: [layerFrame.rows.map((row) => row.value)],
   };
-  const startDate = chart.startDate ? momentFn(chart.startDate) : null;
-  const endDate = chart.endDate ? momentFn(chart.endDate) : null;
+  const effectiveDateRange = runtimeContext?.effectiveDateRange;
+  let startDate = chart.startDate ? momentFn(chart.startDate) : null;
+  let endDate = chart.endDate ? momentFn(chart.endDate) : null;
+  if (effectiveDateRange?.startDate) {
+    startDate = momentFn(effectiveDateRange.startDate);
+  }
+  if (effectiveDateRange?.endDate) {
+    endDate = momentFn(effectiveDateRange.endDate);
+  }
   const chartWithSeries = {
     ...chart,
     ChartDatasetConfigs: [config],

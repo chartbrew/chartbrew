@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import {
+  afterEach, describe, expect, it, vi,
+} from "vitest";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const { VisualizationEngine } = require("../../visualization/VisualizationEngine.js");
 const { compileTabularExport } = require("../../visualization/compilers/tabularExport.js");
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 function buildEngine(mark, encoding, data, layer = {}, chart = {}) {
   return new VisualizationEngine({
@@ -350,5 +356,40 @@ describe("visualization output compilers", () => {
       { date: "2026-07-02", value: 0 },
       { date: "2026-07-03", value: 7 },
     ]);
+  });
+
+  it("compiles matrix points across the effective rolling date window", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+
+    const result = buildEngine("matrix", {
+      time: { field: "root[].day", timeUnit: "day", type: "temporal" },
+      value: { aggregate: "sum", field: "root[].activity", type: "quantitative" },
+    }, [
+      { activity: 2, day: "2026-07-16T12:00:00Z" },
+      { activity: 5, day: "2026-07-20T12:00:00Z" },
+      { activity: 7, day: "2026-07-23T12:00:00Z" },
+    ], { name: "Activity" }, {
+      currentEndDate: true,
+      endDate: "2026-07-12T23:59:59Z",
+      fixedStartDate: false,
+      startDate: "2026-07-05T00:00:00Z",
+      timeInterval: "day",
+    }).render();
+    const points = result.configuration.data.datasets[0].data;
+
+    expect(points).toHaveLength(8);
+    expect(points[0]).toEqual(expect.objectContaining({
+      x: "2026-07-16",
+      v: 2,
+    }));
+    expect(points[4]).toEqual(expect.objectContaining({
+      x: "2026-07-20",
+      v: 5,
+    }));
+    expect(points[7]).toEqual(expect.objectContaining({
+      x: "2026-07-23",
+      v: 7,
+    }));
   });
 });

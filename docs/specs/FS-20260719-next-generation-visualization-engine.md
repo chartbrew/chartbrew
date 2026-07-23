@@ -493,3 +493,7 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   full data refresh, and native compatibility updates keep `currentEndDate` and `fixedStartDate`
   inside the canonical `settings.dateWindow`. Regression tests verify both displayed range
   resolution and value-level filtering against the shifted window.
+- 2026-07-23: Fixed native matrix charts using the saved anchor dates after a rolling window had
+  shifted. The matrix compiler now builds its calendar cells from the effective runtime range, so
+  filtered current-period values align with the displayed dates instead of resolving to zero in
+  the previous period.
