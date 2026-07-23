@@ -7,9 +7,36 @@ const { aggregateRows } = require("../../visualization/aggregate.js");
 describe("visualization aggregation", () => {
   it("computes every supported aggregation in one grouped pass", () => {
     const rows = [
-      { category: "A", sumValue: 2, avgValue: 2, minValue: 2, maxValue: 2, countValue: "x", lastValue: 2 },
-      { category: "A", sumValue: "4", avgValue: "4", minValue: "4", maxValue: "4", countValue: "y", lastValue: 4 },
-      { category: "A", sumValue: null, avgValue: null, minValue: null, maxValue: null, countValue: null, lastValue: null },
+      {
+        category: "A",
+        sumValue: 2,
+        avgValue: 2,
+        minValue: 2,
+        maxValue: 2,
+        countValue: "x",
+        uniqueValue: "x",
+        lastValue: 2,
+      },
+      {
+        category: "A",
+        sumValue: "4",
+        avgValue: "4",
+        minValue: "4",
+        maxValue: "4",
+        countValue: "y",
+        uniqueValue: "x",
+        lastValue: 4,
+      },
+      {
+        category: "A",
+        sumValue: null,
+        avgValue: null,
+        minValue: null,
+        maxValue: null,
+        countValue: null,
+        uniqueValue: "y",
+        lastValue: null,
+      },
     ];
 
     const result = aggregateRows(rows, ["category"], {
@@ -18,6 +45,7 @@ describe("visualization aggregation", () => {
       minValue: { aggregate: "min" },
       maxValue: { aggregate: "max" },
       countValue: { aggregate: "count" },
+      uniqueValue: { aggregate: "count_unique" },
       lastValue: { aggregate: "none" },
     });
 
@@ -29,6 +57,7 @@ describe("visualization aggregation", () => {
       minValue: 2,
       maxValue: 4,
       countValue: 2,
+      uniqueValue: 2,
       lastValue: 4,
     }]);
   });

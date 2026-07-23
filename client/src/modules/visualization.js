@@ -2,6 +2,9 @@ export const AGGREGATIONS = [{ id: "none", label: "No aggregation" }, {
   id: "count",
   label: "Count",
 }, {
+  id: "count_unique",
+  label: "Count unique",
+}, {
   id: "sum",
   label: "Sum",
 }, {

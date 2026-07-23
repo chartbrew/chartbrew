@@ -1,7 +1,15 @@
 const { getMarkDefinition } = require("./registry");
 
 const VISUALIZATION_SPEC_VERSION = 2;
-const AGGREGATIONS = new Set(["none", "sum", "avg", "min", "max", "count"]);
+const AGGREGATIONS = new Set([
+  "none",
+  "sum",
+  "avg",
+  "min",
+  "max",
+  "count",
+  "count_unique",
+]);
 const FIELD_TYPES = new Set([
   "nominal",
   "ordinal",

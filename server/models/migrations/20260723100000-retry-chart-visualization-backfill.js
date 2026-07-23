@@ -3,18 +3,16 @@ const { migrateChartVisualization } = require("../scripts/migrateChartVisualizat
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
-    const report = await migrateChartVisualization(queryInterface, {
-      refreshLegacy: true,
-    });
+    const report = await migrateChartVisualization(queryInterface);
     if (report.failed > 0) {
       process.stderr.write(
-        `[visualization migration] ${report.failed} legacy chart specifications could not be refreshed: `
+        `[visualization migration] ${report.failed} chart specifications still could not be migrated: `
         + `${JSON.stringify(report.failures)}\n`
       );
     }
   },
 
   async down() {
-    // This migration re-derives legacy-owned specs without changing the schema.
+    // This migration retries a derived-data backfill without changing the schema.
   },
 };

@@ -2,6 +2,8 @@ const { resolveChartDatasetOptions } = require("../modules/resolveChartDatasetOp
 const { getMarkDefinition } = require("./registry");
 const { normalizeVisualizationSpec, validateVisualizationSpec } = require("./spec");
 
+const CATEGORY_MARKS = new Set(["pie", "doughnut", "radar", "polar"]);
+
 function toPlainObject(value) {
   if (!value) return {};
   if (typeof value.toJSON === "function") return value.toJSON();
@@ -69,6 +71,13 @@ function buildLegacyEncoding(mark, options) {
   if (mark === "matrix") {
     return compactObject({
       time: createFieldEncoding(xAxis, "temporal"),
+      value,
+    });
+  }
+
+  if (CATEGORY_MARKS.has(mark)) {
+    return compactObject({
+      category: createFieldEncoding(xAxis, "nominal"),
       value,
     });
   }

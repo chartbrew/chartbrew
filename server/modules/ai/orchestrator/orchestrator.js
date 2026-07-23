@@ -83,7 +83,10 @@ const AI_FIELD_ENCODING_SCHEMA = {
   properties: {
     field: { type: "string", description: "Dataset field path, usually using root[].field traversal syntax." },
     type: { type: "string", enum: ["nominal", "ordinal", "quantitative", "temporal", "boolean", "record"] },
-    aggregate: { type: "string", enum: ["none", "sum", "avg", "min", "max", "count"] },
+    aggregate: {
+      type: "string",
+      enum: ["none", "sum", "avg", "min", "max", "count", "count_unique"],
+    },
     title: { type: "string" },
     nullPolicy: { type: "string", enum: ["exclude", "preserve", "label"] },
     nullLabel: { type: "string" },
@@ -596,7 +599,7 @@ async function availableTools() {
           yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
           yAxisOperation: {
             type: "string",
-            enum: ["none", "sum", "avg", "min", "max", "count"],
+            enum: ["none", "sum", "avg", "min", "max", "count", "count_unique"],
             default: "none",
             description: "ChartDatasetConfig y-axis aggregation operation"
           },
@@ -675,7 +678,7 @@ async function availableTools() {
           yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
           yAxisOperation: {
             type: "string",
-            enum: ["none", "sum", "avg", "min", "max", "count"],
+            enum: ["none", "sum", "avg", "min", "max", "count", "count_unique"],
             description: "ChartDatasetConfig y-axis aggregation operation"
           },
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
@@ -744,7 +747,7 @@ async function availableTools() {
           yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax (use 'root[].field_name' for array results)" },
           yAxisOperation: {
             type: "string",
-            enum: ["none", "sum", "avg", "min", "max", "count"],
+            enum: ["none", "sum", "avg", "min", "max", "count", "count_unique"],
             default: "none",
             description: "ChartDatasetConfig y-axis aggregation operation"
           },
@@ -819,7 +822,11 @@ async function availableTools() {
           xAxis: { type: "string", description: "ChartDatasetConfig x-axis field using traversal syntax" },
           xAxisOperation: { type: "string" },
           yAxis: { type: "string", description: "ChartDatasetConfig y-axis field using traversal syntax" },
-          yAxisOperation: { type: "string", enum: ["none", "sum", "avg", "min", "max", "count"], default: "none" },
+          yAxisOperation: {
+            type: "string",
+            enum: ["none", "sum", "avg", "min", "max", "count", "count_unique"],
+            default: "none",
+          },
           dateField: { type: "string" },
           dateFormat: { type: "string" },
           query: { type: "string", description: "Source query for query-based sources" },

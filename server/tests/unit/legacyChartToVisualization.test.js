@@ -69,6 +69,57 @@ describe("legacy chart visualization conversion", () => {
     });
   });
 
+  it("preserves legacy unique-count aggregation", () => {
+    const result = legacyChartToVisualization({
+      id: 6,
+      type: "bar",
+      ChartDatasetConfigs: [{
+        id: "cdc-unique",
+        dataset_id: 14,
+        xAxis: "root[].month",
+        yAxis: "root[].email",
+        yAxisOperation: "count_unique",
+        Dataset: { id: 14, name: "Signups" },
+      }],
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.visualization.layers[0].encoding.value.aggregate).toBe("count_unique");
+  });
+
+  it.each(["pie", "doughnut", "radar", "polar"])(
+    "uses a categorical date dimension for legacy %s charts",
+    (type) => {
+      const result = legacyChartToVisualization({
+        id: 7,
+        type,
+        ChartDatasetConfigs: [{
+          id: `cdc-${type}`,
+          dataset_id: 15,
+          xAxis: "root[].createdAt",
+          yAxis: "root[].revenue",
+          yAxisOperation: "sum",
+          dateField: "root[].createdAt",
+          Dataset: {
+            id: 15,
+            name: "Revenue",
+            fieldsSchema: {
+              "root[].createdAt": "date",
+              "root[].revenue": "number",
+            },
+          },
+        }],
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.visualization.layers[0].encoding.category).toEqual({
+        field: "root[].createdAt",
+        type: "nominal",
+      });
+      expect(result.visualization.layers[0].encoding.time).toBeUndefined();
+    }
+  );
+
   it("carries the legacy table collection and presentation into the canonical layer", () => {
     const result = legacyChartToVisualization({
       id: 4,

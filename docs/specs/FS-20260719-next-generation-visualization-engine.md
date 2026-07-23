@@ -156,8 +156,9 @@ engine state and no permanent runtime flag.
 
 Local migration status on 2026-07-19: `20260719090000-add-chart-visualization.js` and
 `20260719100000-refresh-legacy-visualization-specs.js` have both been applied by the running local
-server. They are immutable; any subsequent persisted-schema or backfill correction must use a new
-migration (or explicitly undo the latest migration before editing it).
+server. Subsequent persisted-schema or backfill corrections use a new migration. The initial
+migrations are also resumable and non-fatal for individual chart conversions because MySQL
+implicitly commits schema changes even when a later data backfill fails.
 
 ## Editor UX
 
@@ -256,6 +257,11 @@ documented reason and should not be used for mirroring or synchronizing derivabl
 - [x] Add `Chart.visualization` model field and migration.
 - [x] Add deterministic `legacyChartToVisualization()` conversion.
 - [x] Add dry-run, batch, idempotency, and failure reporting to the backfill.
+- [x] Make MySQL schema/backfill migrations resumable after partial DDL commits and prevent
+  individual legacy-chart failures from blocking application startup.
+- [x] Preserve legacy unique-count operations and categorical date dimensions for pie, doughnut,
+  radar, and polar charts.
+- [x] Retry previously failed visualization rows through an immutable follow-up migration.
 - [x] Make chart API reads return a canonical visualization specification.
 - [x] Persist canonical specs on edit and creation.
 - [x] Refresh legacy-owned persisted specs through an immutable follow-up migration.
@@ -476,3 +482,9 @@ documented reason and should not be used for mirroring or synchronizing derivabl
   tests) pass. Read-only local audits cover 1,575 charts with zero conversion failures, zero invalid
   specifications, and zero charts requiring the runtime adapter; 8 are native and 1,567 remain
   legacy-owned canonical specifications.
+- 2026-07-23: Hardened production migration recovery after MySQL committed the visualization
+  column before a 58-chart backfill failure. The schema migration now resumes safely, per-chart
+  failures remain observable without blocking startup, and a follow-up retry migration handles
+  databases where the original migrations are already recorded. Added canonical `count_unique`
+  support and categorical date conversion for pie, doughnut, radar, and polar legacy charts,
+  covering both failure families found in the production corpus.

@@ -161,6 +161,7 @@ function LayerGoalField({ initialValue, onSave }) {
   return (
     <div className="rounded-xl border border-divider bg-content2/30 p-3">
       <NumberField
+        fullWidth
         name="value-goal"
         value={value}
         variant="secondary"
@@ -168,7 +169,9 @@ function LayerGoalField({ initialValue, onSave }) {
       >
         <Label>Goal</Label>
         <NumberField.Group>
+          <NumberField.DecrementButton />
           <NumberField.Input placeholder="Enter a target value" />
+          <NumberField.IncrementButton />
         </NumberField.Group>
         <Description>Used by this value’s KPI progress indicator.</Description>
       </NumberField>

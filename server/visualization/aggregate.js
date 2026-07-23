@@ -14,6 +14,7 @@ function createMeasureState() {
     min: null,
     numericCount: 0,
     sum: 0,
+    uniqueValues: new Set(),
   };
 }
 
@@ -21,6 +22,7 @@ function updateMeasureState(state, value) {
   if (value !== null && value !== undefined) {
     state.count += 1;
     state.last = value;
+    state.uniqueValues.add(serializeTypedValue(value));
   }
 
   const numericValue = toFiniteNumber(value);
@@ -36,6 +38,8 @@ function finalizeMeasure(state, operation) {
   switch (operation) {
     case "count":
       return state.count;
+    case "count_unique":
+      return state.uniqueValues.size;
     case "sum":
       return state.numericCount > 0 ? state.sum : null;
     case "avg":
