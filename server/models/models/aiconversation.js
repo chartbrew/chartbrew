@@ -75,6 +75,7 @@ module.exports = (sequelize, DataTypes) => {
     models.AiConversation.belongsTo(models.Team, { foreignKey: "team_id" });
     models.AiConversation.hasMany(models.AiMessage, { foreignKey: "conversation_id" });
     models.AiConversation.hasMany(models.AiUsage, { foreignKey: "conversation_id" });
+    models.AiConversation.hasMany(models.AiConversationContext, { foreignKey: "conversation_id" });
   };
 
   return AiConversation;

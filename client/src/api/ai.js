@@ -80,6 +80,56 @@ export async function orchestrateAi(teamId, question, conversationHistory = [], 
   return response.json();
 }
 
+export async function respondAi({
+  aiConversationId,
+  context = null,
+  message,
+  persistence = "ephemeral",
+  sessionId,
+  teamId,
+}) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/ai/respond`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify({
+      aiConversationId,
+      context,
+      message,
+      persistence,
+      sessionId,
+      teamId,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Chartbrew could not answer right now");
+  }
+  return response.json();
+}
+
+export async function promoteAiSession(teamId, sessionId) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/ai/sessions/${sessionId}/promote`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify({ teamId }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "This chat could not be saved");
+  }
+  return response.json();
+}
+
 export async function deleteAiConversation(conversationId, teamId) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/conversations/${conversationId}?teamId=${teamId}`;

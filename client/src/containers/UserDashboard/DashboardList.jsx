@@ -47,13 +47,14 @@ import { removeProject, selectProjects, updateProject } from "../../slices/proje
 import { getTeams, saveActiveTeam, selectTeam, selectTeamMembers } from "../../slices/team";
 import { getTemplates } from "../../slices/template";
 import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
-import WhatsNewPanel from "./components/WhatsNewPanel";
+import { getHome } from "../../api/observations";
+import WorkspaceAttentionPanel from "./components/WorkspaceAttentionPanel";
 
-const WHATS_NEW_PANEL_STORAGE_KEY = "__cb_whats_new_panel_collapsed";
+const ATTENTION_PANEL_STORAGE_KEY = "__cb_attention_panel_collapsed";
 
-const getInitialWhatsNewPanelState = () => {
+const getInitialAttentionPanelState = () => {
   try {
-    return window.localStorage.getItem(WHATS_NEW_PANEL_STORAGE_KEY) === "true";
+    return window.localStorage.getItem(ATTENTION_PANEL_STORAGE_KEY) === "true";
   } catch (error) {
     return false;
   }
@@ -154,7 +155,8 @@ function DashboardList() {
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
-  const [whatsNewPanelCollapsed, setWhatsNewPanelCollapsed] = useState(getInitialWhatsNewPanelState);
+  const [attentionPanelCollapsed, setAttentionPanelCollapsed] = useState(getInitialAttentionPanelState);
+  const [workspaceHome, setWorkspaceHome] = useState(null);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -171,10 +173,17 @@ function DashboardList() {
   }, []);
 
   useEffect(() => {
+    if (!team?.id) return;
+    getHome(team.id)
+      .then(setWorkspaceHome)
+      .catch(() => setWorkspaceHome(null));
+  }, [team?.id]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("create") === "dashboard") {
       setAddProject(true);
-      navigate("/");
+      navigate("/dashboards", { replace: true });
     }
   }, [navigate]);
 
@@ -193,11 +202,11 @@ function DashboardList() {
     window.localStorage.setItem("__cb_view_mode", mode);
   };
 
-  const _toggleWhatsNewPanel = () => {
-    setWhatsNewPanelCollapsed((currentValue) => {
+  const _toggleAttentionPanel = () => {
+    setAttentionPanelCollapsed((currentValue) => {
       const nextValue = !currentValue;
       try {
-        window.localStorage.setItem(WHATS_NEW_PANEL_STORAGE_KEY, String(nextValue));
+        window.localStorage.setItem(ATTENTION_PANEL_STORAGE_KEY, String(nextValue));
       } catch (error) {
         // Keep the UI responsive even if storage is unavailable.
       }
@@ -304,8 +313,8 @@ function DashboardList() {
 
   const canManageDashboards = _canAccess("teamAdmin", team?.TeamRoles);
   const filteredProjects = _getFilteredProjects();
-  const showWhatsNewRail = canManageDashboards && !whatsNewPanelCollapsed;
-  const gridClassName = showWhatsNewRail
+  const showAttentionRail = !!workspaceHome && !attentionPanelCollapsed;
+  const gridClassName = showAttentionRail
     ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
     : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3";
 
@@ -316,8 +325,8 @@ function DashboardList() {
         open={addProject}
         onClose={() => setAddProject(false)}
       />
-      <div className={cn("flex flex-col gap-4", showWhatsNewRail && "xl:flex-row xl:items-start xl:gap-6")}>
-        <div className={cn("min-w-0", showWhatsNewRail && "xl:flex-1")}>
+      <div className={cn("flex flex-col gap-4", showAttentionRail && "xl:flex-row xl:items-start xl:gap-6")}>
+        <div className={cn("min-w-0", showAttentionRail && "xl:flex-1")}>
           <div className="flex flex-row justify-between items-center gap-4">
             <div className="flex flex-row items-center">
               <div className="flex flex-col gap-1">
@@ -341,21 +350,21 @@ function DashboardList() {
                 </Button>
               )}
 
-              {canManageDashboards && (
+              {workspaceHome && (
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
                       variant="outline"
                       className="hidden xl:inline-flex"
-                      onPress={_toggleWhatsNewPanel}
-                      aria-label={whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
+                      onPress={_toggleAttentionPanel}
+                      aria-label={attentionPanelCollapsed ? "Show attention panel" : "Hide attention panel"}
                     >
-                      {whatsNewPanelCollapsed ? <LuPanelLeftClose size={18} /> : <LuPanelLeftOpen size={18} />}
+                      {attentionPanelCollapsed ? <LuPanelLeftClose size={18} /> : <LuPanelLeftOpen size={18} />}
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>
-                    {whatsNewPanelCollapsed ? "Show discover panel" : "Hide discover panel"}
+                    {attentionPanelCollapsed ? "Show attention panel" : "Hide attention panel"}
                   </Tooltip.Content>
                 </Tooltip>
               )}
@@ -433,10 +442,12 @@ function DashboardList() {
                       </div>
                       {canManageDashboards && (
                         <Dropdown size="sm">
-                          <Dropdown.Trigger>
-                            <Button isIconOnly variant="tertiary" size="sm">
-                              <LuEllipsis className="text-foreground-400" />
-                            </Button>
+                          <Dropdown.Trigger
+                            aria-label={`Open options for ${project.name}`}
+                            className="flex size-8 items-center justify-center rounded-lg hover:bg-content2"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <LuEllipsis className="text-foreground-400" />
                           </Dropdown.Trigger>
                           <Dropdown.Popover>
                             <Dropdown.Menu>
@@ -737,9 +748,9 @@ function DashboardList() {
           )}
         </div>
 
-        {canManageDashboards && (
-          <div className={cn("hidden xl:block xl:w-[360px] xl:shrink-0 sticky top-18", whatsNewPanelCollapsed && "xl:hidden")}>
-            <WhatsNewPanel onCollapse={_toggleWhatsNewPanel} />
+        {workspaceHome && (
+          <div className={cn("hidden xl:block xl:w-[360px] xl:shrink-0 sticky top-18", attentionPanelCollapsed && "xl:hidden")}>
+            <WorkspaceAttentionPanel home={workspaceHome} onCollapse={_toggleAttentionPanel} />
           </div>
         )}
       </div>

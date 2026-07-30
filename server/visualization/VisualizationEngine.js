@@ -136,6 +136,7 @@ class VisualizationEngine {
       ...compiled,
       adapted: resolved.adapted,
       conditionsOptions: resolved.conditionsOptions,
+      frame: resolved.frame,
       visualization: resolved.visualization,
     };
   }

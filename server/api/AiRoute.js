@@ -2,6 +2,8 @@ const rateLimit = require("express-rate-limit");
 
 const {
   getOrchestration,
+  respond,
+  promoteSession,
   getAvailableTools,
   getConversations,
   getConversation,
@@ -20,7 +22,7 @@ const apiLimiter = (max = 10) => {
 
 const checkAccess = async (req, res, next) => {
   try {
-    const teamId = req.body?.teamId || req.query?.teamId || req.params?.teamId;
+    const teamId = req.params?.teamId || req.body?.teamId || req.query?.teamId;
 
     if (!teamId) {
       return res.status(400).json({ error: "teamId is required" });
@@ -29,14 +31,22 @@ const checkAccess = async (req, res, next) => {
     const teamController = new TeamController();
     const teamRole = await teamController.getTeamRole(teamId, req.user.id);
 
-    if (!teamRole?.role || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+    if (!teamRole?.role) {
       return res.status(403).json({ error: "Access denied" });
     }
 
+    req.aiTeamRole = teamRole;
     return next();
   } catch (error) {
     return res.status(500).json({ error: error.message || "Access check failed" });
   }
+};
+
+const checkAdminAccess = (req, res, next) => {
+  if (!["teamOwner", "teamAdmin"].includes(req.aiTeamRole?.role)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  return next();
 };
 
 const isOpenAiApiKeySet = () => {
@@ -48,6 +58,61 @@ const isOpenAiApiKeySet = () => {
 };
 
 module.exports = (app) => {
+  app.post("/ai/respond", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
+    const {
+      aiConversationId,
+      context,
+      message,
+      persistence,
+      sessionId,
+      teamId,
+    } = req.body;
+
+    if (!teamId || !req.user.id) {
+      return res.status(400).json({ error: "teamId and user ID are required" });
+    }
+    if (!isOpenAiApiKeySet()) {
+      return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
+    }
+
+    try {
+      const orchestration = await respond({
+        aiConversationId,
+        context,
+        message,
+        persistence,
+        sessionId,
+        teamId,
+        userId: req.user.id,
+      });
+      return res.json({ orchestration });
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  });
+
+  app.post(
+    "/ai/sessions/:sessionId/promote",
+    apiLimiter(5),
+    verifyToken,
+    checkAccess,
+    async (req, res) => {
+      try {
+        const result = await promoteSession({
+          sessionId: req.params.sessionId,
+          teamId: req.body.teamId,
+          userId: req.user.id,
+        });
+        return res.json(result);
+      } catch (error) {
+        const statusCode = error.message === "This chat has expired"
+          ? 404
+          : error.statusCode || 500;
+        return res.status(statusCode).json({ error: error.message });
+      }
+    },
+  );
+
   // Main orchestration endpoint - handles conversation creation/loading automatically
   app.post("/ai/orchestrate", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
     const {
@@ -63,7 +128,7 @@ module.exports = (app) => {
     }
 
     if (!isOpenAiApiKeySet()) {
-      return res.status(400).json({ error: "OpenAI API key is not set. Check your environment variables." });
+      return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
     }
 
     try {
@@ -72,18 +137,12 @@ module.exports = (app) => {
       );
       return res.json({ orchestration });
     } catch (error) {
-      if (error.message === "Conversation does not belong to this user") {
-        return res.status(403).json({ error: error.message });
-      }
-      if (error.message === "Conversation not found") {
-        return res.status(404).json({ error: error.message });
-      }
-      return res.status(500).json({ error: error.message });
+      return res.status(error.statusCode || 500).json({ error: error.message });
     }
   });
 
   // Get available tools
-  app.get("/ai/tools", apiLimiter(10), verifyToken, checkAccess, async (req, res) => {
+  app.get("/ai/tools", apiLimiter(10), verifyToken, checkAccess, checkAdminAccess, async (req, res) => {
     try {
       const tools = await getAvailableTools();
       res.json({ tools });
@@ -125,13 +184,7 @@ module.exports = (app) => {
       const conversation = await getConversation(conversationId, teamId, req.user.id);
       return res.json({ conversation });
     } catch (error) {
-      if (error.message === "Conversation does not belong to this user") {
-        return res.status(403).json({ error: error.message });
-      }
-      if (error.message === "Conversation not found") {
-        return res.status(404).json({ error: error.message });
-      }
-      return res.status(500).json({ error: error.message });
+      return res.status(error.statusCode || 500).json({ error: error.message });
     }
   });
 
@@ -148,18 +201,12 @@ module.exports = (app) => {
       const result = await deleteConversation(conversationId, teamId, req.user.id);
       return res.json(result);
     } catch (error) {
-      if (error.message === "Conversation does not belong to this user") {
-        return res.status(403).json({ error: error.message });
-      }
-      if (error.message === "Conversation not found") {
-        return res.status(404).json({ error: error.message });
-      }
-      return res.status(500).json({ error: error.message });
+      return res.status(error.statusCode || 500).json({ error: error.message });
     }
   });
 
   // Get team usage statistics (for billing/analytics)
-  app.get("/ai/usage/:teamId", apiLimiter(20), verifyToken, checkAccess, async (req, res) => {
+  app.get("/ai/usage/:teamId", apiLimiter(20), verifyToken, checkAccess, checkAdminAccess, async (req, res) => {
     const { teamId } = req.params;
     const { startDate, endDate } = req.query;
 

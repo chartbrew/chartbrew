@@ -29,6 +29,9 @@ import { Toaster } from "react-hot-toast";
 import ConnectionList from "./UserDashboard/ConnectionList";
 import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
+import Home from "./Home/Home";
+import Activity from "./Activity/Activity";
+import ObservationDetail from "./Observation/ObservationDetail";
 import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
 import SharedChart from "./SharedChart";
@@ -215,7 +218,10 @@ function Main(props) {
           <Suspense fallback={<SuspenseLoader />}>
             <Routes>
               <Route path="/" element={<UserDashboard />}>
-                <Route index element={<DashboardList />} />
+                <Route index element={<Home />} />
+                <Route path="dashboards" element={<DashboardList />} />
+                <Route path="activity" element={<Activity />} />
+                <Route path="activity/:observationId" element={<ObservationDetail />} />
                 <Route path="connections" element={<ConnectionList />} />
                 <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="connections/:connectionId/templates" element={<ConnectionTemplates />} />
@@ -309,7 +315,7 @@ function Main(props) {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+      {team?.id && (
         <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
       )}
 

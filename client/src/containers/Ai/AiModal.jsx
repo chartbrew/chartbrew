@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, getAiTools, orchestrateAi, deleteAiConversation, getAiUsage } from "../../api/ai";
+import { getAiConversation, getAiConversations, getAiTools, respondAi, deleteAiConversation, getAiUsage } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { getChart } from "../../slices/chart";
@@ -16,6 +16,7 @@ import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import isMac from "../../modules/isMac";
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
+import canAccess from "../../config/canAccess";
 import AiComposer from "./AiComposer";
 import AiContextPicker from "./AiContextPicker";
 import AiMessageGroup from "./AiMessageGroup";
@@ -65,11 +66,12 @@ function AiModal({ isOpen, onClose }) {
   const projects = useSelector(selectProjects);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
+  const isTeamAdmin = canAccess("teamAdmin", user.id, team?.TeamRoles);
   const contextEntities = useMemo(() => [
     ...projects.map((p) => ({ ...p, entity_type: "project" })),
-    ...connections.map((c) => ({ ...c, entity_type: "connection" })),
+    ...(isTeamAdmin ? connections.map((c) => ({ ...c, entity_type: "connection" })) : []),
     ...datasets.map((d) => ({ ...d, entity_type: "dataset" })),
-  ], [projects, connections, datasets]);
+  ], [projects, connections, datasets, isTeamAdmin]);
 
   // Filter context entities based on search
   const filteredContextEntities = useMemo(() => contextEntities.filter((entity) => {
@@ -222,7 +224,7 @@ function AiModal({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen && team?.id) {
       loadConversations();
-      loadAiToolDisplayNames();
+      if (isTeamAdmin) loadAiToolDisplayNames();
       // check the route params and add project and chart id to the context
       const projectId = parseInt(params?.projectId, 10);
       const chartId = parseInt(params?.chartId, 10);
@@ -285,7 +287,7 @@ function AiModal({ isOpen, onClose }) {
       const data = await getAiConversations(team.id);
       setConversations(data.conversations);
       // load usage in the background
-      loadTeamUsage();
+      if (isTeamAdmin) loadTeamUsage();
     } catch (error) {
       toast.error(error.message);
     }
@@ -368,13 +370,13 @@ function AiModal({ isOpen, onClose }) {
         setConversation(tempConversation);
         
         // Make the API call - backend creates conversation immediately
-        const response = await orchestrateAi(
-          team.id,
-          currentQuestion,
-          [],
-          tempConversation.id, // Use the ID if we already have it from socket
-          context
-        );
+        const response = await respondAi({
+          aiConversationId: tempConversation.id,
+          context,
+          message: currentQuestion,
+          persistence: "persistent",
+          teamId: team.id,
+        });
 
         // Validate response structure
         if (!response || !response.orchestration || !response.orchestration.message) {
@@ -415,17 +417,13 @@ function AiModal({ isOpen, onClose }) {
           }
         }
       } else {
-        // Existing conversation - get complete history from database
-        const latestConversation = await getAiConversation(conversation.id, team.id);
-        const conversationHistory = latestConversation?.conversation?.full_history || [];
-
-        const response = await orchestrateAi(
-          team.id,
-          currentQuestion,
-          conversationHistory,
-          conversation.id,
-          context
-        );
+        const response = await respondAi({
+          aiConversationId: conversation.id,
+          context,
+          message: currentQuestion,
+          persistence: "persistent",
+          teamId: team.id,
+        });
 
         // Validate response structure
         if (!response || !response.orchestration || !response.orchestration.message) {
@@ -567,13 +565,13 @@ function AiModal({ isOpen, onClose }) {
       }
 
       // Call orchestrate with the suggestion action
-      const response = await orchestrateAi(
-        team.id,
-        syntheticQuestion,
-        conversation?.full_history || [],
-        currentConversationId,
-        null // no context for suggestion actions
-      );
+      const response = await respondAi({
+        aiConversationId: currentConversationId,
+        context: null,
+        message: syntheticQuestion,
+        persistence: "persistent",
+        teamId: team.id,
+      });
 
       // Validate response structure
       if (!response || !response.orchestration || !response.orchestration.message) {

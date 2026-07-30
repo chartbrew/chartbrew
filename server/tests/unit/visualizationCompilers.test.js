@@ -54,6 +54,10 @@ describe("visualization output compilers", () => {
     expect(result.configuration.data.datasets).toHaveLength(1);
     expect(result.configuration.data.datasets[0].data).toEqual([55, 25]);
     expect(result.configuration.data.datasets[0].backgroundColor).toHaveLength(2);
+    expect(result.frame.layers[0].rows).toEqual([
+      expect.objectContaining({ category: "Direct", value: 55 }),
+      expect.objectContaining({ category: "Partner", value: 25 }),
+    ]);
     expect(result.configuration.meta.categories.map((category) => category.label))
       .toEqual(["Direct", "Partner"]);
     expect(result.configuration.meta.categories.map((category) => category.color))

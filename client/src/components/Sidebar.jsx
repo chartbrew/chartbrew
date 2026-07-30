@@ -1,8 +1,8 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Avatar, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
+import { LuActivity, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
@@ -17,6 +17,7 @@ import { clearDatasets, getDatasets } from "../slices/dataset"
 import { selectSidebarCollapsed } from "../slices/ui"
 import toast from "react-hot-toast"
 import { logout } from "../slices/user"
+import { getHome } from "../api/observations"
 
 
 function Sidebar() {
@@ -26,6 +27,7 @@ function Sidebar() {
   const [createTeamModal, setCreateTeamModal] = useState(false);
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [teamName, setTeamName] = useState("");
+  const [activityCount, setActivityCount] = useState(0);
   
   const user = useSelector((state) => state.user);
   const team = useSelector(selectTeam);
@@ -36,6 +38,26 @@ function Sidebar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    let active = true;
+    const loadActivityCount = () => {
+      if (!team?.id) return;
+      getHome(team.id)
+        .then((home) => {
+          if (active) setActivityCount(home.unreadCount || 0);
+        })
+        .catch(() => {
+          if (active) setActivityCount(0);
+        });
+    };
+    loadActivityCount();
+    window.addEventListener("cb:activity-updated", loadActivityCount);
+    return () => {
+      active = false;
+      window.removeEventListener("cb:activity-updated", loadActivityCount);
+    };
+  }, [team?.id]);
+
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.data.id, teamRoles);
   };
@@ -45,7 +67,9 @@ function Sidebar() {
   };
 
   const pathMenu = _getActiveMenu();
-  const isDashboardActive = pathMenu === "" || window.location.pathname.indexOf("dashboard") > -1;
+  const isHomeActive = pathMenu === "";
+  const isDashboardActive = pathMenu === "dashboards" || window.location.pathname.indexOf("dashboard") > -1;
+  const isActivityActive = pathMenu === "activity";
   const isConnectionsActive = pathMenu === "connections";
   const isDatasetsActive = pathMenu === "datasets";
   const isIntegrationsActive = pathMenu === "integrations";
@@ -164,20 +188,24 @@ function Sidebar() {
           <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <div className={cn(collapsed ? "" : "px-2")}>
               <Dropdown>
-                <Dropdown.Trigger className="w-full">
+                <Dropdown.Trigger
+                  aria-label={collapsed ? `Switch workspace from ${team?.name}` : undefined}
+                  className={cn(
+                    "w-full",
+                    collapsed
+                      ? "flex justify-center rounded-md"
+                      : "flex min-h-10 items-center justify-between rounded-3xl border border-divider px-3 text-sm",
+                  )}
+                >
                   {collapsed ? (
                     <Avatar size="sm" className="cursor-pointer rounded-md" color="accent">
                       <Avatar.Fallback>{teamInitials || <LuUsers size={18} />}</Avatar.Fallback>
                     </Avatar>
                   ) : (
-                    <Button
-                      variant="outline"
-                      className="justify-between border"
-                      fullWidth
-                    >
+                    <>
                       <span>{team?.name}</span>
                       <LuChevronDown />
-                    </Button>
+                    </>
                   )}
                 </Dropdown.Trigger>
                 <Dropdown.Popover>
@@ -229,12 +257,40 @@ function Sidebar() {
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      variant={isDashboardActive ? "secondary" : "ghost"}
+                      variant={isHomeActive ? "secondary" : "ghost"}
                       fullWidth
                       isIconOnly
                       size="sm"
                       className="justify-center"
                       onPress={() => navigate("/")}
+                    >
+                      <LuCoffee size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">Home</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant={isHomeActive ? "secondary" : "ghost"}
+                  fullWidth
+                  size="sm"
+                  className="justify-start"
+                  onPress={() => navigate("/")}
+                >
+                  <LuCoffee size={18} />
+                  Home
+                </Button>
+              )}
+              {collapsed ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={isDashboardActive ? "secondary" : "ghost"}
+                      fullWidth
+                      isIconOnly
+                      size="sm"
+                      className="justify-center"
+                      onPress={() => navigate("/dashboards")}
                     >
                       <LuLayoutGrid size={20} />
                     </Button>
@@ -247,10 +303,53 @@ function Sidebar() {
                   fullWidth
                   size="sm"
                   className="justify-start"
-                  onPress={() => navigate("/")}
+                  onPress={() => navigate("/dashboards")}
                 >
                   <LuLayoutGrid size={18} />
                   Dashboards
+                </Button>
+              )}
+              {collapsed ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={isActivityActive ? "secondary" : "ghost"}
+                      fullWidth
+                      isIconOnly
+                      size="sm"
+                      className="relative justify-center"
+                      onPress={() => navigate("/activity")}
+                    >
+                      <LuActivity size={20} />
+                      {activityCount > 0 ? (
+                        <Chip
+                          aria-label={`${activityCount} activity items need attention`}
+                          className="absolute -right-1 -top-1 min-w-5 px-1"
+                          color="danger"
+                          size="sm"
+                        >
+                          {Math.min(activityCount, 99)}
+                        </Chip>
+                      ) : null}
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">Activity</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant={isActivityActive ? "secondary" : "ghost"}
+                  fullWidth
+                  size="sm"
+                  className="justify-start"
+                  onPress={() => navigate("/activity")}
+                >
+                  <LuActivity size={18} />
+                  Activity
+                  {activityCount > 0 ? (
+                    <Chip className="ml-auto" color="danger" size="sm">
+                      {Math.min(activityCount, 99)}
+                    </Chip>
+                  ) : null}
                 </Button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -391,7 +490,7 @@ function Sidebar() {
                       <Button
                         variant="tertiary"
                         size="sm"
-                        onPress={() => navigate("/?create=dashboard")}
+                        onPress={() => navigate("/dashboards?create=dashboard")}
                         isIconOnly
                         fullWidth
                         className="justify-center"
@@ -405,7 +504,7 @@ function Sidebar() {
                   <Button
                     variant="tertiary"
                     size="sm"
-                    onPress={() => navigate("/?create=dashboard")}
+                    onPress={() => navigate("/dashboards?create=dashboard")}
                     fullWidth
                     className="justify-start"
                   >

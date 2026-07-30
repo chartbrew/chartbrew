@@ -250,7 +250,7 @@ function NavbarContainer() {
             </Dropdown.Popover>
           </Dropdown>
           
-          {_canAccess("teamAdmin", team) && (
+          {team?.id && (
               <Button
                 variant="primary"
                 onPress={() => dispatch(toggleAiModal())}
@@ -375,7 +375,7 @@ function NavbarContainer() {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {_canAccess("teamAdmin", team) && (
+      {team?.id && (
         <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
       )}
     </>

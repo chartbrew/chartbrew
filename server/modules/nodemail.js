@@ -190,3 +190,45 @@ module.exports.sendDashboardSnapshot = (data) => {
       .catch((error) => reject(error));
   });
 };
+
+function escapeHtml(value) {
+  return `${value || ""}`
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+module.exports.sendObservationDigest = (data) => {
+  const observationLines = data.observations.map((item) => (
+    `• ${item.title}: ${item.summary}`
+  ));
+  const healthLines = data.healthItems.map((item) => `• ${item.message}`);
+  const textLines = [
+    `Your Chartbrew summary for ${data.teamName}`,
+    "",
+    ...observationLines,
+    ...healthLines,
+    "",
+    `Open Chartbrew: ${settings.client}`,
+  ];
+  const htmlItems = [
+    ...data.observations.map((item) => (
+      `<li><strong>${escapeHtml(item.title)}</strong><br />${escapeHtml(item.summary)}</li>`
+    )),
+    ...data.healthItems.map((item) => `<li>${escapeHtml(item.message)}</li>`),
+  ];
+  return nodemail.sendMail({
+    from: settings.adminMail,
+    html: `
+      <h2>Your Chartbrew summary</h2>
+      <p>Here is what needs attention in ${escapeHtml(data.teamName)}.</p>
+      <ul>${htmlItems.join("") || "<li>No current changes or data issues.</li>"}</ul>
+      <p><a href="${escapeHtml(settings.client)}">Open Chartbrew</a></p>
+    `,
+    subject: `Chartbrew summary — ${data.teamName}`,
+    text: textLines.join("\n"),
+    to: data.recipient,
+  });
+};
