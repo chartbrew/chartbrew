@@ -8,6 +8,11 @@ const { calculateBaseline, median } = require("../../modules/observations/baseli
 const { extractMonitorSnapshots } = require("../../modules/observations/extractMetrics");
 const { analyzeDimension } = require("../../modules/observations/driverAnalysis");
 const { buildMonitorDefinition } = require("../../modules/observations/monitorSchema");
+const { formatObservationText } = require("../../modules/observations/formatObservation");
+const {
+  inferChartValueFormat,
+  normalizeValueFormat,
+} = require("../../modules/observations/valueFormat");
 const {
   buildAuditEvidence,
   deterministicSample,
@@ -96,6 +101,49 @@ describe("workspace observations", () => {
       },
       layerId: "revenue",
     })).toThrow("breakdowns");
+  });
+
+  it("inherits currency and percentage meaning from chart value formulas", () => {
+    expect(inferChartValueFormat("${val / 100}")).toMatchObject({
+      currency: "USD",
+      mode: "chart",
+      scale: 0.01,
+      type: "currency",
+    });
+    expect(inferChartValueFormat("{val * 100}%")).toMatchObject({
+      mode: "chart",
+      scale: 100,
+      type: "percentage",
+    });
+  });
+
+  it("validates explicit percentage storage and reports absolute movement in points", () => {
+    const valueFormat = normalizeValueFormat({
+      mode: "override",
+      scale: 100,
+      type: "percentage",
+    });
+    const text = formatObservationText({
+      metric_spec: {
+        unit: "percent_ratio",
+        valueFormat,
+      },
+      name: "Conversion",
+    }, {
+      absoluteDelta: -0.022,
+      baselineValue: 0.124,
+      currentValue: 0.102,
+      direction: "decrease",
+      relativeDelta: -0.1774,
+    });
+
+    expect(text.summary).toContain("12.4% to 10.2%");
+    expect(text.summary).toContain("2.2 percentage points");
+    expect(() => normalizeValueFormat({
+      mode: "override",
+      scale: 10,
+      type: "percentage",
+    })).toThrow("percentage values");
   });
 
   it("treats an explicit count KPI as a database record monitor", () => {

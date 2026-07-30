@@ -23,6 +23,7 @@ import { selectTeam } from "../slices/team";
 import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
+import { getObservation } from "../api/observations";
 import getDatasetDisplayName from "../modules/getDatasetDisplayName";
 import {
   getNewsFeedUrl,
@@ -77,6 +78,7 @@ function TopNav() {
   const dataset = useSelector((state) => state.dataset.data.find((item) => `${item.id}` === `${params.datasetId}`));
   const integrations = useSelector(selectIntegrations);
   const [newsItems, setNewsItems] = useState([]);
+  const [observation, setObservation] = useState(null);
   const [seenNewsIds, setSeenNewsIds] = useState(() => getSeenNewsIds());
   const [newsOpen, setNewsOpen] = useState(false);
 
@@ -105,10 +107,32 @@ function TopNav() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (!team?.id || !params.observationId || !location.pathname.startsWith("/activity")) {
+      setObservation(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    getObservation(team.id, params.observationId)
+      .then((result) => {
+        if (!cancelled) setObservation(result);
+      })
+      .catch(() => {
+        if (!cancelled) setObservation(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [team?.id, params.observationId, location.pathname]);
+
   const isOnDashboard = () => location.pathname.startsWith("/dashboard/");
   const isOnConnections = () => location.pathname.startsWith("/connections");
   const isOnDatasets = () => location.pathname.startsWith("/datasets");
   const isOnIntegrations = () => location.pathname.startsWith("/integrations");
+  const isOnActivity = () => location.pathname.startsWith("/activity");
 
   const onDropdownAction = (key) => {
     switch (key) {
@@ -164,6 +188,11 @@ function TopNav() {
       items.push({ label: "Integrations", onPress: () => navigate("/integrations") });
       if (params.integrationId) {
         items.push({ label: integrations?.find((item) => item.id === params.integrationId)?.name || "Integration", onPress: null });
+      }
+    } else if (isOnActivity()) {
+      items.push({ label: "Activity", onPress: () => navigate("/activity") });
+      if (params.observationId) {
+        items.push({ label: observation?.title || "Change", onPress: null });
       }
     }
 

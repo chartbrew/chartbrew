@@ -11,6 +11,7 @@ const {
   getEligibleLayers,
 } = require("../modules/observations/monitorSchema");
 const { getObservationPolicy } = require("../modules/observations/policy");
+const { getValueFormat } = require("../modules/observations/valueFormat");
 
 const ALLOWED_IMPORTANCE = new Set([1, 2, 3]);
 
@@ -35,6 +36,7 @@ async function serializeMonitor(monitor) {
     sampleCount,
     status: monitor.status,
     statusReason: monitor.status_reason,
+    valueFormat: getValueFormat(monitor.metric_spec),
   };
 }
 
@@ -89,7 +91,8 @@ class MonitorController {
       definition = buildMonitorDefinition({
         chart,
         layerId: data.layerId,
-        unit: data.unit || "number",
+        unit: data.unit,
+        valueFormat: data.valueFormat,
       });
     } catch (error) {
       throw createHttpError(error.message, 400);
@@ -131,6 +134,7 @@ class MonitorController {
       await monitor.update({
         importance,
         is_active: true,
+        metric_spec: definition.metricSpec,
         name: data.name?.trim() || monitor.name,
       });
     }

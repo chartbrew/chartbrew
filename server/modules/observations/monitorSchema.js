@@ -1,16 +1,12 @@
 const { createHash } = require("../updateAudit");
+const {
+  inferChartValueFormat,
+  normalizeValueFormat,
+  toLegacyUnit,
+} = require("./valueFormat");
 
 const SCALAR_MARKS = new Set(["avg", "gauge", "kpi"]);
 const TIMESERIES_MARKS = new Set(["bar", "line"]);
-const ALLOWED_UNITS = new Set([
-  "currency_eur",
-  "currency_gbp",
-  "currency_usd",
-  "number",
-  "percent",
-  "percentage_point",
-]);
-
 function getEligibleLayer(visualization, layerId) {
   const layers = Array.isArray(visualization?.layers) ? visualization.layers : [];
   const layer = layers.find((item) => `${item.id}` === `${layerId}`);
@@ -44,6 +40,7 @@ function getEligibleLayers(visualization) {
         id: layer.id,
         kind: eligible.kind,
         name: layer.name || layer.encoding?.value?.title || null,
+        valueFormat: inferChartValueFormat(layer.encoding?.value?.formula),
       }];
     } catch (error) {
       return [];
@@ -51,11 +48,15 @@ function getEligibleLayers(visualization) {
   });
 }
 
-function buildMonitorDefinition({ chart, layerId, unit = "number" }) {
+function buildMonitorDefinition({
+  chart, layerId, unit, valueFormat,
+}) {
   const eligible = getEligibleLayer(chart.visualization, layerId);
-  if (!ALLOWED_UNITS.has(unit)) {
-    throw new Error("Choose a supported metric format");
-  }
+  const normalizedValueFormat = normalizeValueFormat(
+    valueFormat,
+    eligible.layer.encoding.value.formula,
+    unit
+  );
 
   const metricSpec = {
     aggregate: eligible.layer.encoding.value.aggregate || "none",
@@ -70,7 +71,8 @@ function buildMonitorDefinition({ chart, layerId, unit = "number" }) {
     timeUnit: eligible.layer.encoding.time?.timeUnit
       || chart.timeInterval
       || "day",
-    unit,
+    unit: toLegacyUnit(normalizedValueFormat),
+    valueFormat: normalizedValueFormat,
   };
   const baselinePolicy = eligible.kind === "timeseries"
     ? { type: "previous_period" }
@@ -78,7 +80,14 @@ function buildMonitorDefinition({ chart, layerId, unit = "number" }) {
   const definitionFingerprint = createHash({
     baselinePolicy,
     chartId: chart.id,
-    metricSpec,
+    metricSpec: {
+      aggregate: metricSpec.aggregate,
+      formula: metricSpec.formula,
+      layerId: metricSpec.layerId,
+      metricField: metricSpec.metricField,
+      timeField: metricSpec.timeField,
+      timeUnit: metricSpec.timeUnit,
+    },
     visualizationVersion: chart.visualization?.version || null,
   });
 
@@ -93,7 +102,6 @@ function buildMonitorDefinition({ chart, layerId, unit = "number" }) {
 }
 
 module.exports = {
-  ALLOWED_UNITS,
   SCALAR_MARKS,
   TIMESERIES_MARKS,
   buildMonitorDefinition,

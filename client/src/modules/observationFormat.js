@@ -1,26 +1,47 @@
-export function formatMetricValue(value, unit) {
-  if (!Number.isFinite(Number(value))) return "—";
-  if (unit === "percent" || unit === "percentage_point") {
-    return `${Number(value).toFixed(1)}%`;
-  }
+export function getObservationValueFormat(unit, valueFormat) {
+  if (valueFormat) return valueFormat;
   if (unit?.startsWith("currency_")) {
-    return new Intl.NumberFormat(undefined, {
+    return {
       currency: unit.slice("currency_".length).toUpperCase(),
-      maximumFractionDigits: 2,
-      style: "currency",
-    }).format(value);
+      mode: "override",
+      scale: 1,
+      type: "currency",
+    };
   }
-  return new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 2,
-  }).format(value);
+  if (unit === "percent_ratio") {
+    return { mode: "override", scale: 100, type: "percentage" };
+  }
+  if (unit === "percent" || unit === "percentage_point") {
+    return { mode: "override", scale: 1, type: "percentage" };
+  }
+  return { mode: "override", scale: 1, type: "number" };
 }
 
-export function formatAbsoluteDelta(value, unit) {
+export function formatMetricValue(value, unit, valueFormat) {
   if (!Number.isFinite(Number(value))) return "—";
-  if (unit === "percentage_point") {
-    return `${Math.abs(Number(value)).toFixed(1)} pp`;
+  const format = getObservationValueFormat(unit, valueFormat);
+  const displayValue = Number(value) * (Number(format.scale) || 1);
+  if (format.type === "currency") {
+    return new Intl.NumberFormat(undefined, {
+      currency: format.currency,
+      maximumFractionDigits: 2,
+      style: "currency",
+    }).format(displayValue);
   }
-  return formatMetricValue(Math.abs(Number(value)), unit);
+  const formatted = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 2,
+  }).format(displayValue);
+  if (format.type === "percentage") return `${formatted}%`;
+  return `${format.prefix || ""}${formatted}${format.suffix || ""}`;
+}
+
+export function formatAbsoluteDelta(value, unit, valueFormat) {
+  if (!Number.isFinite(Number(value))) return "—";
+  const format = getObservationValueFormat(unit, valueFormat);
+  if (format.type === "percentage") {
+    return `${Math.abs(Number(value) * format.scale).toFixed(1)} pp`;
+  }
+  return formatMetricValue(Math.abs(Number(value)), unit, format);
 }
 
 export function formatRelativeChange(value) {

@@ -26,7 +26,7 @@ function ObservationCard({ observation }) {
         ) : (
           <LuTrendingDown className="shrink-0 text-danger" size={16} aria-hidden />
         )}
-        <p className="truncate text-xs font-semibold uppercase tracking-wide text-foreground-400">
+        <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted">
           {[observation.project?.name || "Workspace", formatTimeAgo(observation.lastDetectedAt)]
             .filter(Boolean)
             .join(" · ")}
@@ -34,21 +34,18 @@ function ObservationCard({ observation }) {
       </Card.Header>
       <Card.Content className="flex-1 gap-1">
         <Card.Title className="font-tw text-base font-semibold">{observation.title}</Card.Title>
-        <p className="text-sm text-foreground-500">{observation.summary}</p>
-        <p className="mt-1 text-xs text-foreground-400">
+        <p className="text-sm text-muted">{observation.summary}</p>
+        <p className="mt-1 text-xs text-muted">
           {[observation.chart?.name, formatPeriod(observation.currentPeriod)]
             .filter(Boolean)
             .join(" · ")}
         </p>
       </Card.Content>
       <Card.Footer className="justify-between gap-3 pt-3">
-        <span className={isIncrease ? "text-sm font-medium text-success" : "text-sm font-medium text-danger"}>
-          {isIncrease ? "+" : "−"}{formatRelativeChange(observation.relativeDelta)}
-        </span>
         <Button
           onPress={() => navigate(`/activity/${observation.id}`)}
           size="sm"
-          variant="ghost"
+          variant="tertiary"
         >
           View change
           <LuArrowRight aria-hidden />

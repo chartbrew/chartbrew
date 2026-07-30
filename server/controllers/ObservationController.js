@@ -7,6 +7,7 @@ const {
   getProjectScope,
 } = require("../modules/observations/access");
 const { runDriverAnalysis } = require("../modules/observations/driverAnalysis");
+const { getValueFormat } = require("../modules/observations/valueFormat");
 
 const FEEDBACK_VERDICTS = new Set(["not_relevant", "relevant", "unsure"]);
 const FEEDBACK_REASONS = new Set([
@@ -40,6 +41,7 @@ function serializeMonitor(monitor) {
     name: monitor.name,
     status: monitor.status,
     statusReason: monitor.status_reason,
+    valueFormat: getValueFormat(monitor.metric_spec),
   };
 }
 

@@ -54,6 +54,7 @@ import ChartSharing from "./components/ChartSharing";
 import { getExposedChartFilters } from "../../modules/getChartDatasetConditions";
 import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../modules/chartRuntimeFilters";
 import { createMonitor, getMonitorOptions } from "../../api/observations";
+import WatchMetricModal from "./components/WatchMetricModal";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -112,8 +113,6 @@ function Chart(props) {
   const [monitorModal, setMonitorModal] = useState(false);
   const [monitorOptions, setMonitorOptions] = useState([]);
   const [monitorLoading, setMonitorLoading] = useState(false);
-  const [selectedMonitorLayer, setSelectedMonitorLayer] = useState(null);
-  const [selectedMonitorUnit, setSelectedMonitorUnit] = useState("number");
   const [alertsDatasetId, setAlertsDatasetId] = useState(null);
   const chartSize = useChartSize(chart.layout);
   const [isCompact, setIsCompact] = useState(false);
@@ -386,7 +385,6 @@ function Chart(props) {
     try {
       const options = await getMonitorOptions(team.id, chart.id);
       setMonitorOptions(options);
-      setSelectedMonitorLayer(options[0]?.id || null);
       setMonitorModal(true);
     } catch (monitorError) {
       toast.error(monitorError.message);
@@ -395,17 +393,19 @@ function Chart(props) {
     }
   };
 
-  const _onCreateMonitor = async () => {
-    if (!selectedMonitorLayer) return;
+  const _onCreateMonitor = async ({ layerId, valueFormat }) => {
+    if (!layerId) return;
     setMonitorLoading(true);
     try {
-      await createMonitor(team.id, {
+      const monitor = await createMonitor(team.id, {
         chartId: chart.id,
-        layerId: selectedMonitorLayer,
-        unit: selectedMonitorUnit,
+        layerId,
+        valueFormat,
       });
       setMonitorModal(false);
-      toast.success("Metric is now being watched");
+      toast.success(
+        `Watching ${monitor.name}. The baseline will start on the next successful refresh.`
+      );
     } catch (monitorError) {
       toast.error(monitorError.message);
     } finally {
@@ -1092,94 +1092,14 @@ function Chart(props) {
         </Card>
       )}
 
-      <Modal.Backdrop isOpen={monitorModal} onOpenChange={setMonitorModal}>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[420px]">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>Watch a metric</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="flex flex-col gap-4">
-              {monitorOptions.length > 0 ? (
-                <>
-                  <Select
-                    fullWidth
-                    onChange={setSelectedMonitorLayer}
-                    placeholder="Choose a metric"
-                    value={selectedMonitorLayer}
-                  >
-                    <Label>Metric</Label>
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        {monitorOptions.map((option) => (
-                          <ListBox.Item
-                            id={option.id}
-                            key={option.id}
-                            textValue={option.name || chart.name}
-                          >
-                            {option.name || chart.name}
-                            <ListBox.ItemIndicator />
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                  <Select
-                    fullWidth
-                    onChange={setSelectedMonitorUnit}
-                    placeholder="Choose a format"
-                    value={selectedMonitorUnit}
-                  >
-                    <Label>Value format</Label>
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        <ListBox.Item id="number" textValue="Number">Number</ListBox.Item>
-                        <ListBox.Item id="currency_usd" textValue="US dollars">US dollars</ListBox.Item>
-                        <ListBox.Item id="currency_eur" textValue="Euros">Euros</ListBox.Item>
-                        <ListBox.Item id="currency_gbp" textValue="British pounds">
-                          British pounds
-                        </ListBox.Item>
-                        <ListBox.Item id="percent" textValue="Percent">Percent</ListBox.Item>
-                        <ListBox.Item id="percentage_point" textValue="Percentage points">
-                          Percentage points
-                        </ListBox.Item>
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                  <p className="text-sm text-foreground-500">
-                    Chartbrew will collect a baseline after successful chart refreshes.
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-foreground-500">
-                  This chart does not yet have an eligible ungrouped time series or single-value metric.
-                </p>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onPress={() => setMonitorModal(false)} variant="secondary">
-                Cancel
-              </Button>
-              <Button
-                isDisabled={!selectedMonitorLayer}
-                isPending={monitorLoading}
-                onPress={_onCreateMonitor}
-                variant="primary"
-              >
-                Watch metric
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+      <WatchMetricModal
+        chartName={chart.name}
+        isOpen={monitorModal}
+        isPending={monitorLoading}
+        onClose={() => setMonitorModal(false)}
+        onSubmit={_onCreateMonitor}
+        options={monitorOptions}
+      />
 
       {/* DELETE CONFIRMATION MODAL */}
       <Modal.Backdrop variant="blur" isOpen={deleteModal} onOpenChange={setDeleteModal}>

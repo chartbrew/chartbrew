@@ -836,6 +836,105 @@ specific baseline/ineligibility state. LLM audit remains off unless explicitly e
 - [x] Add weekly/daily digest setup and Home recommendation states.
 - [x] Add accessible evidence tables/summaries and responsive behavior.
 
+## Iteration Two: Functionality Checklist
+
+Iteration two turns the foundation into a workflow that Maya can trust day to day and that Benji can
+configure and diagnose. Work should proceed in the order below. Broad environment work, exhaustive
+test matrices, and visual redesign are explicitly secondary to completing the product loop.
+
+### 1. Finish watched metric setup
+
+- [x] Replace the hard-coded value-format list with a display contract that defaults to the chart's
+  existing format.
+- [ ] Separate the meaning of a value (`number`, `currency`, or `percentage`) from how it is
+  displayed (currency, precision, compact notation, and percentage scale).
+- [x] Explain in the setup flow what Chartbrew watches, when it evaluates the metric, and where
+  detected changes appear.
+- [x] Show a value preview before confirmation, including percentage-point language when applicable.
+- [x] Remove percentage points as a source value type; calculate them as the absolute difference
+  between percentage values.
+- [x] Distinguish percentages stored as whole values (`12.4`) from ratios (`0.124`) without exposing
+  implementation terminology to the user.
+- [ ] Return an honest initial state after setup: ready when existing chart history was evaluated,
+  otherwise collecting until enough successful refreshes exist.
+- [ ] Prevent duplicate monitors and reactivate an existing monitor without silently discarding new
+  settings.
+
+### 2. Add watched metric management
+
+- [ ] Give Benji one place to see every watched metric, its chart, owner, status, freshness, and last
+  evaluation.
+- [ ] Allow authorized users to rename, pause, resume, reformat, and remove a watched metric.
+- [ ] Explain collecting, ready, unsupported, and failed states in user terms with a recovery action.
+- [ ] Make it clear when a watched metric no longer matches its chart definition and needs review.
+
+### 3. Improve deterministic signal quality
+
+- [ ] Revisit eligibility and scoring against representative time-series, scalar, rate, and
+  record-count scenarios.
+- [ ] Make minimum sample requirements and comparison windows explicit per monitor kind.
+- [ ] Suppress incomplete, stale, duplicated, and low-materiality candidates before publication.
+- [ ] Add versioned scoring policies and an offline replay path for tuning thresholds against saved
+  scenarios.
+- [ ] Keep LLM review optional and sampled; use it to audit disagreements, not to mutate live weights
+  automatically.
+
+### 4. Align Home and Activity
+
+- [ ] Use the same publication and visibility rules for Home and Activity so a visible change never
+  conflicts with a “nothing important changed” message.
+- [ ] Define the Home attention ranking and cap, including what is displaced when data health is more
+  urgent.
+- [ ] Make Activity the complete audit trail while Home remains a concise, prioritized view.
+- [ ] Add specific empty states for no monitors, collecting baselines, no material changes, stale
+  data, and inaccessible projects.
+
+### 5. Complete the observation workflow
+
+- [ ] Make observation detail explain the metric, comparison, evidence, freshness, and confidence
+  without exposing scoring internals.
+- [ ] Implement driver exploration only when the available dimensions can reconcile with the
+  observed change.
+- [ ] Scope Ask to the selected observation, chart, dataset, period, and allowed projects without
+  requiring conversation history.
+- [ ] Let Maya save, dismiss, snooze, resolve, reopen, and share an observation with predictable
+  effects on Home and Activity.
+
+### 6. Make summaries a complete feature
+
+- [ ] Replace the one-click “scheduled” state with a setup flow for cadence, timezone, recipient,
+  scope, and delivery channel.
+- [ ] Show the next delivery, included metrics, and last delivery result.
+- [ ] Provide edit, pause, test, and delete actions from a discoverable management surface.
+- [ ] Generate an in-product preview before the first external delivery.
+
+### 7. Cover Benji's data-health workflow
+
+- [ ] Surface connection, dataset, chart refresh, and monitor failures separately with a useful next
+  action.
+- [ ] Add record-count monitoring for databases where business metrics are not configured yet.
+- [ ] Make the first-run Home useful when a workspace has connections or datasets but no eligible
+  watched metrics.
+- [ ] Show which setup step is missing without implying that “no changes” were evaluated.
+
+### 8. Close the feedback loop
+
+- [ ] Collect lightweight relevant/not-relevant feedback at the point where Maya reviews a change.
+- [ ] Produce a calibration report that joins deterministic features, user feedback, and sampled LLM
+  audit results.
+- [ ] Require an explicit, versioned policy change before audited findings affect publication.
+- [ ] Run a final copy and interaction pass across setup, Home, Activity, detail, management, and
+  summaries so terminology and states remain consistent.
+
+### Deliberately deferred
+
+- [ ] Broad cross-browser and exhaustive performance matrices beyond focused regression coverage.
+- [ ] Automatically watching every chart without an explicit owner decision.
+- [ ] Automatic LLM-driven scoring changes or an LLM call after every refresh.
+- [ ] Additional notification channels beyond the first complete digest workflow.
+- [ ] A generic semantic layer or large observation-operations dashboard.
+- [ ] A visual redesign unrelated to completing the workflows above.
+
 ### Rollout validation
 
 - [ ] Run shadow capture before publishing observations.

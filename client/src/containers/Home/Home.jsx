@@ -75,10 +75,8 @@ function SetupState({ state }) {
       title: "A watched metric needs review",
     },
     no_important_changes: {
-      action: "View activity",
       description: "There are no open changes in your watched metrics that need attention.",
       icon: <LuCircleCheck aria-hidden />,
-      onPress: () => navigate("/activity"),
       title: "No changes need attention",
     },
     watch_metric: {
@@ -111,9 +109,11 @@ function SetupState({ state }) {
         <p className="font-medium">{content.title}</p>
         <p className="mt-1 text-sm text-foreground-500">{content.description}</p>
       </div>
-      <Button onPress={content.onPress} size="sm" variant="secondary">
-        {content.action}
-      </Button>
+      {content.action && (
+        <Button onPress={content.onPress} size="sm" variant="secondary">
+          {content.action}
+        </Button>
+      )}
     </div>
   );
 }
@@ -174,7 +174,7 @@ function Home() {
   }
 
   return (
-    <main className="flex w-full flex-col gap-8">
+    <main className="flex w-full flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="font-tw text-2xl font-semibold">
           Good to see you, {user?.name?.split(" ")[0] || "there"}.
@@ -186,7 +186,7 @@ function Home() {
 
       <HomeAsk teamId={team.id} />
 
-      <section aria-labelledby="attention-heading">
+      <section aria-labelledby="attention-heading" className="mt-8">
         <SectionHeading
           action={(
             <Button onPress={() => navigate("/activity")} size="sm" variant="ghost">
@@ -226,7 +226,7 @@ function Home() {
         </div>
       ) : null}
 
-      <section aria-labelledby="dashboards-heading">
+      <section aria-labelledby="dashboards-heading" className="mt-8">
         <SectionHeading
           action={(
             <Button onPress={() => navigate("/dashboards")} size="sm" variant="ghost">

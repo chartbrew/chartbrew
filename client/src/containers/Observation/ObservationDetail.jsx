@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Chip, Spinner } from "@heroui/react";
 import {
-  LuArrowLeft,
   LuBookmark,
   LuBookmarkCheck,
   LuChartNoAxesColumnIncreasing,
@@ -151,13 +150,6 @@ function ObservationDetail() {
 
   return (
     <main className="flex w-full flex-col gap-6">
-      <div className="flex flex-row">
-        <Button onPress={() => navigate("/activity")} size="sm" variant="ghost">
-          <LuArrowLeft aria-hidden />
-          Back to activity
-        </Button>
-      </div>
-
       <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-foreground-400">
@@ -240,7 +232,11 @@ function ObservationDetail() {
         <div className="px-4 py-3">
           <p className="text-sm text-foreground-500">Current</p>
           <p className="mt-1 font-tw text-xl font-semibold">
-            {formatMetricValue(observation.currentValue, observation.unit)}
+            {formatMetricValue(
+              observation.currentValue,
+              observation.unit,
+              observation.monitor?.valueFormat
+            )}
           </p>
           <p className="mt-1 text-xs text-foreground-400">
             {formatPeriod(observation.currentPeriod)}
@@ -249,7 +245,11 @@ function ObservationDetail() {
         <div className="px-4 py-3">
           <p className="text-sm text-foreground-500">Comparison</p>
           <p className="mt-1 font-tw text-xl font-semibold">
-            {formatMetricValue(observation.baselineValue, observation.unit)}
+            {formatMetricValue(
+              observation.baselineValue,
+              observation.unit,
+              observation.monitor?.valueFormat
+            )}
           </p>
           <p className="mt-1 text-xs text-foreground-400">
             {formatPeriod(observation.comparisonPeriod)}
@@ -266,7 +266,11 @@ function ObservationDetail() {
           </p>
           <p className="mt-1 text-xs text-foreground-400">
             {observation.direction === "increase" ? "+" : "−"}
-            {formatAbsoluteDelta(observation.absoluteDelta, observation.unit)} absolute
+            {formatAbsoluteDelta(
+              observation.absoluteDelta,
+              observation.unit,
+              observation.monitor?.valueFormat
+            )} absolute
             {" · "}
             {observation.confidence} confidence
           </p>
@@ -285,7 +289,7 @@ function ObservationDetail() {
             <Button
               onPress={() => navigate(`/dashboard/${observation.project.id}`)}
               size="sm"
-              variant="ghost"
+              variant="outline"
             >
               Open dashboard
             </Button>
@@ -310,8 +314,16 @@ function ObservationDetail() {
         <p className="text-sm text-foreground-600">
           Compared with {formatPeriod(observation.comparisonPeriod)},{" "}
           {observation.monitor?.name || "this metric"} moved from{" "}
-          {formatMetricValue(observation.baselineValue, observation.unit)} to{" "}
-          {formatMetricValue(observation.currentValue, observation.unit)}.
+          {formatMetricValue(
+            observation.baselineValue,
+            observation.unit,
+            observation.monitor?.valueFormat
+          )} to{" "}
+          {formatMetricValue(
+            observation.currentValue,
+            observation.unit,
+            observation.monitor?.valueFormat
+          )}.
         </p>
         <div className="flex flex-row">
           <Button
@@ -339,8 +351,16 @@ function ObservationDetail() {
                   <div className="min-w-0">
                     <p className="truncate font-medium">{segment.segment}</p>
                     <p className="mt-0.5 text-sm text-foreground-500">
-                      {formatMetricValue(segment.comparison, observation.unit)} to{" "}
-                      {formatMetricValue(segment.current, observation.unit)}
+                      {formatMetricValue(
+                        segment.comparison,
+                        observation.unit,
+                        observation.monitor?.valueFormat
+                      )} to{" "}
+                      {formatMetricValue(
+                        segment.current,
+                        observation.unit,
+                        observation.monitor?.valueFormat
+                      )}
                     </p>
                   </div>
                   <Chip size="sm" variant="soft">
