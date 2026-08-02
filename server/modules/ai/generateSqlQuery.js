@@ -1,14 +1,7 @@
-const OpenAI = require("openai");
+const { createOpenAiClient, getOpenAiConfig } = require("./openAiClient");
 
-const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
-let openaiClient;
-
-if (openAiKey) {
-  openaiClient = new OpenAI({
-    apiKey: openAiKey,
-  });
-}
+const { model: openAiModel } = getOpenAiConfig();
+const openaiClient = createOpenAiClient();
 
 async function generateSqlQuery(schema, question, conversationHistory = [], currentQuery = "") {
   if (!openaiClient) {

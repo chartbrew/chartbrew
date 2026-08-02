@@ -12,10 +12,10 @@
  * Main entry point: orchestrate(teamId, question, conversationHistory)
  */
 
-const OpenAI = require("openai");
 const db = require("../../../models/models");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
+const { createOpenAiClient, getOpenAiConfig } = require("../openAiClient");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
@@ -30,15 +30,8 @@ const {
   getTemplateSourceIds,
 } = require("./sourceSupport");
 
-const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
-let openaiClient;
-
-if (openAiKey) {
-  openaiClient = new OpenAI({
-    apiKey: openAiKey,
-  });
-}
+const { model: openAiModel } = getOpenAiConfig();
+const openaiClient = createOpenAiClient();
 
 const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
 
