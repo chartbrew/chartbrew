@@ -1,3 +1,8 @@
+const {
+  DEFAULT_SCORING_VERSION,
+  SCORING_POLICIES,
+} = require("../observations/scoringPolicies");
+
 const DEFAULT_DATASET_INTELLIGENCE_POLICY = Object.freeze({
   enabled: true,
   autoProfile: true,
@@ -18,6 +23,7 @@ const DEFAULT_OBSERVATION_POLICY = Object.freeze({
   publishScore: 0.75,
   minimumRelativeChange: 0.1,
   minimumPercentagePointChange: 1,
+  scoringVersion: DEFAULT_SCORING_VERSION,
   llmAuditMode: "off",
   llmAuditSampleRate: 0.05,
   llmAuditDailyLimit: 20,
@@ -118,6 +124,9 @@ function getEnvIntelligencePolicy(env = process.env) {
         0,
         100
       ),
+      scoringVersion: SCORING_POLICIES[env.CB_OBSERVATIONS_SCORING_VERSION]
+        ? env.CB_OBSERVATIONS_SCORING_VERSION
+        : DEFAULT_OBSERVATION_POLICY.scoringVersion,
       llmAuditMode: ["off", "shadow_sample", "shadow_published", "manual"].includes(
         env.CB_OBSERVATIONS_LLM_AUDIT_MODE
       )

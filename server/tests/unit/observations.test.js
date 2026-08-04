@@ -27,9 +27,13 @@ const {
   utcDayRange,
 } = require("../../modules/observations/retention");
 const { scoreCandidate } = require("../../modules/observations/scoreCandidate");
+const { replayCorpus } = require("../../modules/observations/policyReplay");
 const { isDigestDue } = require("../../modules/observations/digestSchedule");
 const { getObservationImpact } = require("../../modules/observations/metricDirection");
-const { rankObservations } = require("../../controllers/HomeController");
+const {
+  prioritizeHomeAttention,
+  rankObservations,
+} = require("../../controllers/HomeController");
 const ObservationController = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const {
@@ -41,6 +45,7 @@ const {
   projectRows,
 } = require("../../modules/ai/orchestrator/tools/runExistingDataset");
 const { DateTime } = require("luxon");
+const replayCorpusFixture = require("../fixtures/observation-replay-corpus.json");
 
 function createMonitor(overrides = {}) {
   return {
@@ -115,6 +120,39 @@ describe("workspace observations", () => {
     }];
 
     expect(changes.sort(rankObservations)[0].impact).toBe("negative");
+  });
+
+  it("reserves one Home attention slot for data health", () => {
+    const changes = Array.from({ length: 4 }, (_, index) => ({
+      impact: index === 3 ? "positive" : "negative",
+      lastDetectedAt: new Date(Date.UTC(2026, 7, 4, index)).toISOString(),
+      monitor: { importance: 1 },
+      severity: index === 0 ? "critical" : "medium",
+    }));
+    const attention = prioritizeHomeAttention(changes, 2);
+
+    expect(attention.showDataHealth).toBe(true);
+    expect(attention.observations).toHaveLength(2);
+    expect(attention.observations[0].severity).toBe("critical");
+  });
+
+  it("replays saved cases without publishing or changing the current policy", () => {
+    const referencePolicy = {
+      minimumPercentagePointChange: 1,
+      minimumRelativeChange: 0.1,
+      publishScore: 0.75,
+      scoringVersion: "deterministic-v1",
+    };
+    const unchanged = replayCorpus(replayCorpusFixture, referencePolicy, referencePolicy);
+    const tuned = replayCorpus(replayCorpusFixture, referencePolicy, {
+      ...referencePolicy,
+      publishScore: 0.4,
+    });
+
+    expect(unchanged.summary.expectedMatches).toBe(5);
+    expect(unchanged.summary.decisionsChanged).toBe(0);
+    expect(tuned.summary.decisionsChanged).toBe(1);
+    expect(tuned.summary.falsePositives).toBe(1);
   });
 
   it("orders resolved Activity history by when each change ended", async () => {

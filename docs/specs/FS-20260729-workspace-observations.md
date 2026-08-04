@@ -876,20 +876,20 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   record-count scenarios.
 - [x] Make minimum sample requirements and comparison windows explicit per monitor kind.
 - [x] Suppress incomplete, stale, duplicated, and low-materiality candidates before publication.
-- [ ] Add versioned scoring policies and an offline replay path for tuning thresholds against saved
+- [x] Add versioned scoring policies and an offline replay path for tuning thresholds against saved
   scenarios.
-- [ ] Keep LLM review optional and sampled; use it to audit disagreements, not to mutate live weights
+- [x] Keep LLM review optional and sampled; use it to audit disagreements, not to mutate live weights
   automatically.
 
 ### 4. Align Home and Activity
 
 - [x] Use the same publication and visibility rules for Home and Activity so a visible change never
   conflicts with a “nothing important changed” message.
-- [ ] Define the Home attention ranking and cap, including what is displaced when data health is more
+- [x] Define the Home attention ranking and cap, including what is displaced when data health is more
   urgent.
 - [x] Make Activity the complete audit trail while Home remains a concise, prioritized view,
   separating open changes from resolved history.
-- [ ] Add specific empty states for no monitors, collecting baselines, no material changes, stale
+- [x] Add specific empty states for no monitors, collecting baselines, no material changes, stale
   data, and inaccessible projects.
 
 ### 5. Complete the observation workflow

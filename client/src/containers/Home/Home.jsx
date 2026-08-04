@@ -60,13 +60,6 @@ function SetupState({ state }) {
       onPress: () => navigate("/connections/new"),
       title: "Connect your first data source",
     },
-    data_needs_attention: {
-      action: "Review data health",
-      description: "A recent refresh failed. Business changes are paused until the data recovers.",
-      icon: <LuRefreshCw aria-hidden />,
-      onPress: () => navigate("/activity?tab=health"),
-      title: "Some data needs attention",
-    },
     metrics_need_review: {
       action: "Review watched metrics",
       description: "A watched chart changed and its metric can no longer be evaluated.",
@@ -120,6 +113,30 @@ function SetupState({ state }) {
 
 SetupState.propTypes = {
   state: PropTypes.string.isRequired,
+};
+
+function DataHealthAttention({ count, onPress }) {
+  return (
+    <div className="flex h-full flex-row items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-4">
+      <LuRefreshCw className="mt-0.5 shrink-0 text-warning" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">
+          {count} refresh {count === 1 ? "issue needs" : "issues need"} attention
+        </p>
+        <p className="mt-1 text-sm text-foreground-500">
+          Review this before relying on the affected metrics.
+        </p>
+        <Button className="mt-3" onPress={onPress} size="sm" variant="secondary">
+          Review data health
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+DataHealthAttention.propTypes = {
+  count: PropTypes.number.isRequired,
+  onPress: PropTypes.func.isRequired,
 };
 
 function Home() {
@@ -196,10 +213,16 @@ function Home() {
           )}
           eyebrow="Worth your attention"
           id="attention-heading"
-          title="Recent changes"
+          title="Needs attention"
         />
-        {data.observations.length > 0 ? (
+        {data.observations.length > 0 || data.dataHealth.showOnHome ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {data.dataHealth.showOnHome ? (
+              <DataHealthAttention
+                count={data.dataHealth.count}
+                onPress={() => navigate("/activity?tab=health")}
+              />
+            ) : null}
             {data.observations.map((observation) => (
               <ObservationCard key={observation.id} observation={observation} />
             ))}
@@ -208,23 +231,6 @@ function Home() {
           <SetupState state={data.setupState} />
         )}
       </section>
-
-      {data.dataHealth.count > 0 ? (
-        <div className="flex flex-row items-center gap-3 rounded-xl border border-divider bg-content1 px-4 py-3">
-          <LuRefreshCw className="shrink-0 text-warning" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">
-              {data.dataHealth.count} refresh {data.dataHealth.count === 1 ? "issue" : "issues"}
-            </p>
-            <p className="text-sm text-foreground-500">
-              Resolve these before relying on affected metrics.
-            </p>
-          </div>
-          <Button onPress={() => navigate("/activity?tab=health")} size="sm" variant="secondary">
-            Review
-          </Button>
-        </div>
-      ) : null}
 
       <section aria-labelledby="dashboards-heading" className="mt-8">
         <SectionHeading
@@ -273,7 +279,15 @@ function Home() {
             ))}
           </div>
         ) : (
-          <SetupState state={data.setupState} />
+          <div className="rounded-xl border border-divider bg-content1 px-4 py-5">
+            <p className="font-medium">No dashboards available</p>
+            <p className="mt-1 text-sm text-foreground-500">
+              Dashboards you create or can access will appear here.
+            </p>
+            <Button className="mt-3" onPress={() => navigate("/dashboards")} size="sm" variant="secondary">
+              Browse dashboards
+            </Button>
+          </div>
         )}
       </section>
 

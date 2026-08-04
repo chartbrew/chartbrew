@@ -15,6 +15,7 @@ function getHealthMessage(run) {
 
 const IMPACT_RANK = { negative: 2, neutral: 1, positive: 0 };
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+const HOME_ATTENTION_LIMIT = 3;
 
 function rankObservations(left, right) {
   const impactDifference = (IMPACT_RANK[right.impact] || 0) - (IMPACT_RANK[left.impact] || 0);
@@ -25,6 +26,17 @@ function rankObservations(left, right) {
   const importanceDifference = (right.monitor?.importance || 1) - (left.monitor?.importance || 1);
   if (importanceDifference !== 0) return importanceDifference;
   return new Date(right.lastDetectedAt) - new Date(left.lastDetectedAt);
+}
+
+function prioritizeHomeAttention(observations, dataHealthCount, limit = HOME_ATTENTION_LIMIT) {
+  const safeLimit = Math.max(Number(limit) || HOME_ATTENTION_LIMIT, 1);
+  const dataHealthSlots = dataHealthCount > 0 ? 1 : 0;
+  return {
+    observations: [...observations]
+      .sort(rankObservations)
+      .slice(0, Math.max(safeLimit - dataHealthSlots, 0)),
+    showDataHealth: dataHealthSlots > 0,
+  };
 }
 
 class HomeController {
@@ -171,10 +183,12 @@ class HomeController {
       observationController.countUnread(access),
     ]);
     const now = new Date();
-    const observations = changes.items.filter((item) => {
+    const visibleObservations = changes.items.filter((item) => {
       if (item.preference.dismissedAt) return false;
       return !item.preference.snoozedUntil || new Date(item.preference.snoozedUntil) <= now;
-    }).sort(rankObservations).slice(0, 3);
+    });
+    const attention = prioritizeHomeAttention(visibleObservations, dataHealth.count);
+    const observations = attention.observations;
 
     let setupState = "active";
     if (monitors.length === 0) {
@@ -202,7 +216,10 @@ class HomeController {
 
     return {
       dashboards,
-      dataHealth,
+      dataHealth: {
+        ...dataHealth,
+        showOnHome: attention.showDataHealth,
+      },
       observations,
       setupState,
       unreadCount: unreadChanges + dataHealth.count,
@@ -216,4 +233,6 @@ class HomeController {
 }
 
 module.exports = HomeController;
+module.exports.HOME_ATTENTION_LIMIT = HOME_ATTENTION_LIMIT;
+module.exports.prioritizeHomeAttention = prioritizeHomeAttention;
 module.exports.rankObservations = rankObservations;
