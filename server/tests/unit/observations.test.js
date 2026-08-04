@@ -8,6 +8,7 @@ const { calculateBaseline, median } = require("../../modules/observations/baseli
 const { extractMonitorSnapshots } = require("../../modules/observations/extractMetrics");
 const { analyzeDimension } = require("../../modules/observations/driverAnalysis");
 const {
+  buildDatasetRecordCountDefinition,
   buildMonitorDefinition,
   getMinimumSamples,
 } = require("../../modules/observations/monitorSchema");
@@ -28,15 +29,21 @@ const {
 } = require("../../modules/observations/retention");
 const { scoreCandidate } = require("../../modules/observations/scoreCandidate");
 const { replayCorpus } = require("../../modules/observations/policyReplay");
-const { isDigestDue } = require("../../modules/observations/digestSchedule");
+const {
+  getNextDigestDelivery,
+  isDigestDue,
+} = require("../../modules/observations/digestSchedule");
 const { getObservationImpact } = require("../../modules/observations/metricDirection");
 const {
+  getHealthRunType,
+  partitionRunHealth,
   prioritizeHomeAttention,
   rankObservations,
 } = require("../../controllers/HomeController");
 const ObservationController = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const {
+  countDatasetRecords,
   persistSnapshots,
   publishObservation,
 } = require("../../modules/observations/processChartResult");
@@ -98,6 +105,30 @@ describe("workspace observations", () => {
     expect(definition.definitionFingerprint).toHaveLength(64);
   });
 
+  it("builds a dataset record-count monitor without requiring a chart", () => {
+    const definition = buildDatasetRecordCountDefinition({
+      dataset: { id: 9, name: "Orders" },
+      desiredDirection: "higher",
+    });
+
+    expect(definition.kind).toBe("record_count");
+    expect(definition.bindingKey).toBe("dataset-record-count");
+    expect(definition.metricSpec).toMatchObject({
+      aggregate: "count",
+      desiredDirection: "higher",
+      metricTitle: "Orders records",
+      unit: "number",
+    });
+    expect(definition.definitionFingerprint).toHaveLength(64);
+  });
+
+  it("counts top-level and simply wrapped dataset records", () => {
+    expect(countDatasetRecords([{ id: 1 }, { id: 2 }])).toBe(2);
+    expect(countDatasetRecords({ results: [{ id: 1 }, { id: 2 }, { id: 3 }] })).toBe(3);
+    expect(countDatasetRecords({ id: 1, name: "Single record" })).toBe(1);
+    expect(countDatasetRecords(null)).toBe(0);
+  });
+
   it("uses the healthy direction to distinguish useful movement from regressions", () => {
     expect(getObservationImpact("higher", "increase")).toBe("positive");
     expect(getObservationImpact("higher", "decrease")).toBe("negative");
@@ -134,6 +165,38 @@ describe("workspace observations", () => {
     expect(attention.showDataHealth).toBe(true);
     expect(attention.observations).toHaveLength(2);
     expect(attention.observations[0].severity).toBe("critical");
+  });
+
+  it("separates current data-health failures from recovered history", () => {
+    const failedConnection = {
+      Connection: { id: 7, name: "Production database" },
+      connectionId: 7,
+      errorStage: "connection",
+      id: 11,
+      startedAt: "2026-08-04T08:00:00.000Z",
+      status: "failed",
+    };
+    const recoveredRequest = {
+      chartId: 4,
+      connectionId: 7,
+      id: 12,
+      startedAt: "2026-08-04T09:00:00.000Z",
+      status: "success",
+    };
+    const failedDataset = {
+      Dataset: { id: 8, name: "Revenue records" },
+      datasetId: 8,
+      id: 13,
+      startedAt: "2026-08-04T10:00:00.000Z",
+      status: "failed",
+    };
+    const health = partitionRunHealth([failedConnection, recoveredRequest, failedDataset]);
+
+    expect(getHealthRunType(failedConnection)).toBe("connection");
+    expect(health.resolved).toHaveLength(1);
+    expect(health.resolved[0]).toMatchObject({ status: "resolved", type: "connection" });
+    expect(health.active).toHaveLength(1);
+    expect(health.active[0]).toMatchObject({ status: "active", type: "dataset" });
   });
 
   it("replays saved cases without publishing or changing the current policy", () => {
@@ -617,6 +680,7 @@ describe("workspace observations", () => {
   it("schedules weekly summaries once in the recipient timezone window", () => {
     const subscription = {
       cadence: "weekly",
+      day_of_week: 1,
       last_delivered_at: null,
       last_noop_at: null,
       local_delivery_time: "09:00",
@@ -630,5 +694,35 @@ describe("workspace observations", () => {
       subscription,
       DateTime.fromISO("2026-08-04T09:05:00", { zone: "Asia/Bangkok" }),
     )).toBe(false);
+    expect(getNextDigestDelivery(
+      { ...subscription, day_of_week: 5, enabled: true },
+      DateTime.fromISO("2026-08-04T10:00:00", { zone: "Asia/Bangkok" }),
+    )).toBe("2026-08-07T02:00:00.000Z");
+  });
+
+  it("limits daily summaries to the selected delivery days", () => {
+    const subscription = {
+      cadence: "daily",
+      delivery_days: ["monday", "wednesday", "friday"],
+      enabled: true,
+      last_attempted_at: null,
+      last_delivered_at: null,
+      last_noop_at: null,
+      local_delivery_time: "09:00",
+      timezone: "UTC",
+    };
+
+    expect(isDigestDue(
+      subscription,
+      DateTime.fromISO("2026-08-04T09:05:00", { zone: "UTC" }),
+    )).toBe(false);
+    expect(isDigestDue(
+      subscription,
+      DateTime.fromISO("2026-08-05T09:05:00", { zone: "UTC" }),
+    )).toBe(true);
+    expect(getNextDigestDelivery(
+      subscription,
+      DateTime.fromISO("2026-08-04T10:00:00", { zone: "UTC" }),
+    )).toBe("2026-08-05T09:00:00.000Z");
   });
 });

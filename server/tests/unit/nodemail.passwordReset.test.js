@@ -121,4 +121,41 @@ describe("nodemail React Email templates", () => {
     expect(html).toContain("View live dashboard");
     expect(html).toContain(snapshotUrl);
   });
+
+  it("renders the workspace summary with React Email", async () => {
+    const mailModule = await import("../../modules/mail.js");
+    const mail = mailModule.default || mailModule;
+    const result = await mail.sendObservationDigest({
+      healthItems: [{ message: "A dataset could not refresh" }],
+      observations: [{
+        id: "observation-1",
+        impact: "negative",
+        project: { name: "Acquisition" },
+        summary: "Organic mobile traffic is the main driver.",
+        title: "Trial conversion decreased 18%",
+      }, {
+        id: "observation-2",
+        impact: "positive",
+        project: { name: "Revenue" },
+        summary: "Expansion revenue increased this week.",
+        title: "Revenue increased 30%",
+      }],
+      recipient: "maya@example.com",
+      recipientName: "Maya Chen",
+      scopeName: "All accessible dashboards",
+      teamName: "Acme Inc.",
+    });
+
+    const message = JSON.parse(result.message);
+    const html = normalizeHtml(message.html);
+    expect(message.to).toEqual([{ address: "maya@example.com", name: "" }]);
+    expect(message.subject).toBe("Chartbrew summary — Acme Inc.");
+    expect(html).toContain("Hi Maya, here’s what needs attention");
+    expect(html).toContain("Trial conversion decreased 18%");
+    expect(html).toContain("Revenue increased 30%");
+    expect(html).toContain("color:#15803d");
+    expect(html).toContain("https://cdn2.chartbrew.com/logos/logo-light.png");
+    expect(html).toContain("A dataset could not refresh");
+    expect(html).toContain("Open Activity");
+  });
 });

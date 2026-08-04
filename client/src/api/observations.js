@@ -12,8 +12,21 @@ async function observationRequest(path, options = {}) {
     }),
   });
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "The request could not be completed");
+    const payload = await response.json().catch(() => ({}));
+    const retryAfterSeconds = payload.retryAfterSeconds
+      || Number(response.headers.get("Retry-After"))
+      || null;
+    const retryAfterMinutes = retryAfterSeconds
+      ? Math.max(1, Math.ceil(retryAfterSeconds / 60))
+      : null;
+    const rateLimitMessage = response.status === 429
+      ? `You have sent too many test summaries. Try again in ${retryAfterMinutes || 60} minutes.`
+      : null;
+    const error = new Error(payload.error || rateLimitMessage || "The request could not be completed");
+    error.code = payload.code;
+    error.retryAfterSeconds = retryAfterSeconds;
+    error.status = response.status;
+    throw error;
   }
   return response.json();
 }
@@ -79,6 +92,17 @@ export function getMonitorOptions(teamId, chartId) {
   return observationRequest(`/team/${teamId}/charts/${chartId}/monitor-options`);
 }
 
+export function getRecordCountOptions(teamId) {
+  return observationRequest(`/team/${teamId}/record-count-options`);
+}
+
+export function createRecordCountMonitor(teamId, monitor) {
+  return observationRequest(`/team/${teamId}/record-count-monitors`, {
+    body: JSON.stringify(monitor),
+    method: "POST",
+  });
+}
+
 export function createMonitor(teamId, monitor) {
   return observationRequest(`/team/${teamId}/monitors`, {
     body: JSON.stringify(monitor),
@@ -108,6 +132,17 @@ export function refreshMonitor(teamId, monitorId) {
 
 export function getObservationDigests(teamId) {
   return observationRequest(`/team/${teamId}/observation-digests`);
+}
+
+export function getObservationDigestOptions(teamId) {
+  return observationRequest(`/team/${teamId}/observation-digests/options`);
+}
+
+export function previewObservationDigest(teamId, subscription) {
+  return observationRequest(`/team/${teamId}/observation-digests/preview`, {
+    body: JSON.stringify(subscription),
+    method: "POST",
+  });
 }
 
 export function createObservationDigest(teamId, subscription) {

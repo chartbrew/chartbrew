@@ -13,12 +13,18 @@ import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-import { createObservationDigest, getHome, getObservationDigests } from "../../api/observations";
+import {
+  createRecordCountMonitor,
+  getHome,
+  getObservationDigests,
+} from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import HomeAsk from "../Ai/HomeAsk";
 import ObservationCard from "../Activity/ObservationCard";
+import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
+import RecordCountMonitorModal from "./RecordCountMonitorModal";
 
 function SectionHeading({ action, eyebrow, id, title }) {
   return (
@@ -43,7 +49,7 @@ SectionHeading.propTypes = {
   title: PropTypes.string.isRequired,
 };
 
-function SetupState({ state }) {
+function SetupState({ onWatchRecords, state }) {
   const navigate = useNavigate();
   const content = {
     collecting_baseline: {
@@ -59,6 +65,13 @@ function SetupState({ state }) {
       icon: <LuDatabase aria-hidden />,
       onPress: () => navigate("/connections/new"),
       title: "Connect your first data source",
+    },
+    create_dataset: {
+      action: "Create dataset",
+      description: "Create a dataset before choosing what Chartbrew should monitor.",
+      icon: <LuDatabase aria-hidden />,
+      onPress: () => navigate("/datasets/new"),
+      title: "Create your first dataset",
     },
     metrics_need_review: {
       action: "Review watched metrics",
@@ -79,12 +92,24 @@ function SetupState({ state }) {
       onPress: () => navigate("/dashboards"),
       title: "Watch a metric to get started",
     },
+    watch_record_count: {
+      action: "Watch records",
+      description: "Track unexpected changes in how many records a dataset returns.",
+      icon: <LuDatabase aria-hidden />,
+      onPress: onWatchRecords,
+      title: "Start by watching data volume",
+    },
     waiting_for_metrics: {
       action: "Browse dashboards",
       description: "A workspace editor can choose a metric for Chartbrew to monitor.",
       icon: <LuActivity aria-hidden />,
       onPress: () => navigate("/dashboards"),
       title: "No watched metrics yet",
+    },
+    waiting_for_setup: {
+      description: "A workspace owner needs to connect data before metrics can be watched.",
+      icon: <LuDatabase aria-hidden />,
+      title: "Waiting for workspace data",
     },
     waiting_for_data: {
       action: "View watched metrics",
@@ -112,7 +137,12 @@ function SetupState({ state }) {
 }
 
 SetupState.propTypes = {
+  onWatchRecords: PropTypes.func,
   state: PropTypes.string.isRequired,
+};
+
+SetupState.defaultProps = {
+  onWatchRecords: undefined,
 };
 
 function DataHealthAttention({ count, onPress }) {
@@ -121,7 +151,7 @@ function DataHealthAttention({ count, onPress }) {
       <LuRefreshCw className="mt-0.5 shrink-0 text-warning" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="font-medium">
-          {count} refresh {count === 1 ? "issue needs" : "issues need"} attention
+          {count} data {count === 1 ? "issue needs" : "issues need"} attention
         </p>
         <p className="mt-1 text-sm text-foreground-500">
           Review this before relying on the affected metrics.
@@ -146,7 +176,9 @@ function Home() {
   const [data, setData] = useState(null);
   const [digests, setDigests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [creatingDigest, setCreatingDigest] = useState(false);
+  const [recordCountModalOpen, setRecordCountModalOpen] = useState(false);
+  const [recordCountPending, setRecordCountPending] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   useEffect(() => {
     if (!team?.id) return;
@@ -165,20 +197,26 @@ function Home() {
       .finally(() => setLoading(false));
   }, [team?.id]);
 
-  const createWeeklySummary = async () => {
-    setCreatingDigest(true);
+  const saveSummary = (subscription) => {
+    setDigests((current) => {
+      const exists = current.some((item) => item.id === subscription.id);
+      return exists
+        ? current.map((item) => item.id === subscription.id ? subscription : item)
+        : [subscription, ...current];
+    });
+  };
+
+  const createRecordCount = async (monitor) => {
+    setRecordCountPending(true);
     try {
-      const subscription = await createObservationDigest(team.id, {
-        cadence: "weekly",
-        localDeliveryTime: "09:00",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-      });
-      setDigests((current) => [subscription, ...current]);
-      toast.success("Weekly summary scheduled");
+      await createRecordCountMonitor(team.id, monitor);
+      setData(await getHome(team.id));
+      setRecordCountModalOpen(false);
+      toast.success("Dataset records are now being watched");
     } catch (error) {
       toast.error(error.message);
     } finally {
-      setCreatingDigest(false);
+      setRecordCountPending(false);
     }
   };
 
@@ -228,7 +266,10 @@ function Home() {
             ))}
           </div>
         ) : (
-          <SetupState state={data.setupState} />
+          <SetupState
+            onWatchRecords={() => setRecordCountModalOpen(true)}
+            state={data.setupState}
+          />
         )}
       </section>
 
@@ -292,24 +333,44 @@ function Home() {
       </section>
 
       {digests.length === 0
-        && !["connect_data", "waiting_for_metrics", "watch_metric"].includes(data.setupState) ? (
+        && ![
+          "connect_data",
+          "create_dataset",
+          "waiting_for_metrics",
+          "waiting_for_setup",
+          "watch_metric",
+          "watch_record_count",
+        ].includes(data.setupState) ? (
         <div className="flex flex-col items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
           <div className="min-w-0 flex-1">
-            <p className="font-medium">Get a weekly summary</p>
+            <p className="font-medium">Get a scheduled summary</p>
             <p className="text-sm text-foreground-500">
-              Receive changes and data issues you can access every Monday morning.
+              Choose when Chartbrew emails changes and data-health issues you can access.
             </p>
           </div>
           <Button
-            isPending={creatingDigest}
-            onPress={createWeeklySummary}
+            onPress={() => setSummaryModalOpen(true)}
             size="sm"
             variant="secondary"
           >
-            Schedule weekly summary
+            Schedule summary
           </Button>
         </div>
       ) : null}
+
+      <SummaryScheduleModal
+        isOpen={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
+        onSaved={saveSummary}
+        teamId={team.id}
+      />
+      <RecordCountMonitorModal
+        isOpen={recordCountModalOpen}
+        isPending={recordCountPending}
+        onClose={() => setRecordCountModalOpen(false)}
+        onSubmit={createRecordCount}
+        options={data.recordCountOptions || []}
+      />
     </main>
   );
 }

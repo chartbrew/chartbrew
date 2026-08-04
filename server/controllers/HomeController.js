@@ -1,16 +1,173 @@
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const MonitorController = require("./MonitorController");
 const ObservationController = require("./ObservationController");
 const {
   PROJECT_EDITOR_ROLES,
   getProjectScope,
 } = require("../modules/observations/access");
 
-function getHealthMessage(run) {
-  if (run.chartId) return "A chart could not refresh";
-  if (run.datasetId) return "A dataset could not refresh";
-  return "A dashboard could not refresh";
+const FAILURE_STATUSES = new Set(["failed", "partial_failure"]);
+
+function getHealthRunType(run) {
+  if (run.connectionId && (run.errorStage === "connection" || run.entityType === "connection")) {
+    return "connection";
+  }
+  if (run.datasetId && run.entityType === "dataset") return "dataset";
+  if (run.chartId && run.entityType === "chart") return "chart";
+  if (run.chartId) return "chart";
+  if (run.datasetId) return "dataset";
+  if (run.connectionId) return "connection";
+  return "dashboard";
+}
+
+function getHealthRunKey(run) {
+  const type = getHealthRunType(run);
+  const idByType = {
+    chart: run.chartId,
+    connection: run.connectionId,
+    dashboard: run.projectId,
+    dataset: run.datasetId,
+  };
+  return idByType[type] ? `${type}:${idByType[type]}` : null;
+}
+
+function getHealthSuccessKeys(run) {
+  return [
+    run.chartId ? `chart:${run.chartId}` : null,
+    run.connectionId ? `connection:${run.connectionId}` : null,
+    run.datasetId ? `dataset:${run.datasetId}` : null,
+    run.projectId ? `dashboard:${run.projectId}` : null,
+  ].filter(Boolean);
+}
+
+function getEntityProjectIds(entity) {
+  return Array.isArray(entity?.project_ids) ? entity.project_ids.map(Number) : [];
+}
+
+function canAccessHealthRun(run, access, projectId = null) {
+  const entityProjectIds = [
+    ...getEntityProjectIds(run.Connection),
+    ...getEntityProjectIds(run.Dataset),
+  ];
+  const runProjectId = Number(run.projectId);
+  if (projectId) {
+    return runProjectId === Number(projectId) || entityProjectIds.includes(Number(projectId));
+  }
+  if (access.allProjects) return true;
+  return access.projectIds.includes(runProjectId)
+    || entityProjectIds.some((id) => access.projectIds.includes(id));
+}
+
+function buildRunHealthIssue(run, status = "active", resolvedAt = null) {
+  const type = getHealthRunType(run);
+  const project = run.Project ? { id: run.Project.id, name: run.Project.name } : null;
+  const config = {
+    chart: {
+      action: run.chartId && run.projectId ? {
+        label: "Open chart",
+        path: `/dashboard/${run.projectId}/chart/${run.chartId}/edit`,
+      } : null,
+      entity: { id: run.chartId, name: run.Chart?.name || "Chart" },
+      message: "The chart could not finish refreshing with the latest data.",
+      title: `${run.Chart?.name || "A chart"} could not refresh`,
+    },
+    connection: {
+      action: run.connectionId ? {
+        label: "Check connection",
+        path: `/connections/${run.connectionId}`,
+      } : null,
+      entity: { id: run.connectionId, name: run.Connection?.name || "Connection" },
+      message: "Chartbrew could not retrieve data from this connection.",
+      title: `${run.Connection?.name || "A connection"} could not be reached`,
+    },
+    dashboard: {
+      action: run.projectId ? {
+        label: "Open dashboard",
+        path: `/dashboard/${run.projectId}`,
+      } : null,
+      entity: { id: run.projectId, name: run.Project?.name || "Dashboard" },
+      message: "One or more items in the dashboard did not finish refreshing.",
+      title: `${run.Project?.name || "A dashboard"} did not fully refresh`,
+    },
+    dataset: {
+      action: run.datasetId ? {
+        label: "Open dataset",
+        path: `/datasets/${run.datasetId}`,
+      } : null,
+      entity: { id: run.datasetId, name: run.Dataset?.name || "Dataset" },
+      message: "The dataset could not return usable data for its latest refresh.",
+      title: `${run.Dataset?.name || "A dataset"} could not refresh`,
+    },
+  }[type];
+  return {
+    ...config,
+    detectedAt: run.startedAt,
+    id: `run:${getHealthRunKey(run)}:${run.id}`,
+    project,
+    resolvedAt,
+    status,
+    type,
+  };
+}
+
+function buildMonitorHealthIssue(monitor) {
+  const reasonCopy = {
+    ambiguous_metric: "The latest chart result contains more than one value for this metric.",
+    definition_changed: "The chart definition changed and the metric needs to be reviewed.",
+    incomplete_data: "The latest data is incomplete, so Chartbrew could not evaluate this metric.",
+    initial_evaluation_failed: "The data could not be evaluated when this metric was created.",
+    metric_not_found: "The metric no longer matches the chart definition.",
+    no_data: "The latest refresh returned no values for this metric.",
+    unsupported_metric: "The chart no longer has a metric Chartbrew can evaluate.",
+  };
+  const action = monitor.dataset_id && !monitor.chart_id
+    ? { label: "Open dataset", path: `/datasets/${monitor.dataset_id}` }
+    : { label: "Review metric", path: "/activity?tab=monitors" };
+  return {
+    action,
+    detectedAt: monitor.last_sampled_at || monitor.updatedAt,
+    entity: { id: monitor.id, name: monitor.name },
+    id: `monitor:${monitor.id}`,
+    message: reasonCopy[monitor.status_reason]
+      || "Chartbrew cannot evaluate this metric with the latest available data.",
+    project: monitor.Project ? { id: monitor.Project.id, name: monitor.Project.name } : null,
+    resolvedAt: null,
+    status: "active",
+    title: `${monitor.name} could not be evaluated`,
+    type: "monitor",
+  };
+}
+
+function partitionRunHealth(runs) {
+  const latestSuccess = new Map();
+  const latestFailure = new Map();
+  [...runs]
+    .sort((left, right) => new Date(right.startedAt) - new Date(left.startedAt))
+    .forEach((run) => {
+    const key = getHealthRunKey(run);
+    if (!key) return;
+    if (run.status === "success") {
+      getHealthSuccessKeys(run).forEach((successKey) => {
+        if (!latestSuccess.has(successKey)) latestSuccess.set(successKey, run);
+      });
+    }
+    if (FAILURE_STATUSES.has(run.status) && !latestFailure.has(key)) {
+      latestFailure.set(key, run);
+    }
+    });
+  const active = [];
+  const resolved = [];
+  latestFailure.forEach((run, key) => {
+    const recovery = latestSuccess.get(key);
+    if (recovery && new Date(recovery.startedAt) > new Date(run.startedAt)) {
+      resolved.push(buildRunHealthIssue(run, "resolved", recovery.startedAt));
+    } else {
+      active.push(buildRunHealthIssue(run));
+    }
+  });
+  return { active, resolved };
 }
 
 const IMPACT_RANK = { negative: 2, neutral: 1, positive: 0 };
@@ -87,45 +244,59 @@ class HomeController {
 
   async getDataHealth(access, projectId = null) {
     const since = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
-    let projectScope = { [Op.in]: access.projectIds.length > 0 ? access.projectIds : [-1] };
-    if (projectId) projectScope = Number(projectId);
-    else if (access.allProjects) projectScope = { [Op.ne]: null };
-    const failedRuns = await db.UpdateRun.findAll({
-      limit: 20,
-      order: [["startedAt", "DESC"]],
-      where: {
-        projectId: projectScope,
-        startedAt: { [Op.gte]: since },
-        status: "failed",
-        teamId: access.teamId,
-      },
-    });
-    const unresolved = (await Promise.all(failedRuns.map(async (run) => {
-      const entityWhere = {
-        startedAt: { [Op.gt]: run.startedAt },
-        status: "success",
-        teamId: access.teamId,
-      };
-      if (run.chartId) entityWhere.chartId = run.chartId;
-      else if (run.datasetId) entityWhere.datasetId = run.datasetId;
-      else if (run.projectId) entityWhere.projectId = run.projectId;
-      else return null;
-
-      const recovered = await db.UpdateRun.count({ where: entityWhere });
-      if (recovered > 0) return null;
-      return {
-        chartId: run.chartId,
-        datasetId: run.datasetId,
-        detectedAt: run.startedAt,
-        id: `${run.id}`,
-        message: getHealthMessage(run),
-        projectId: run.projectId,
-      };
-    }))).filter(Boolean);
+    const [runs, monitorIssues] = await Promise.all([
+      db.UpdateRun.findAll({
+        include: [{
+          model: db.Chart,
+          attributes: ["id", "name"],
+          required: false,
+        }, {
+          model: db.Connection,
+          attributes: ["id", "name", "project_ids"],
+          required: false,
+        }, {
+          model: db.Dataset,
+          attributes: ["id", "name", "project_ids"],
+          required: false,
+        }, {
+          model: db.Project,
+          attributes: ["id", "name"],
+          required: false,
+        }],
+        limit: 500,
+        order: [["startedAt", "DESC"]],
+        where: {
+          startedAt: { [Op.gte]: since },
+          status: { [Op.in]: ["failed", "partial_failure", "success"] },
+          teamId: access.teamId,
+        },
+      }),
+      db.MetricMonitor.findAll({
+        attributes: [
+          "chart_id", "dataset_id", "id", "last_sampled_at", "name", "project_id", "status",
+          "status_reason", "updatedAt",
+        ],
+        include: [{ model: db.Project, attributes: ["id", "name"], required: false }],
+        where: {
+          is_active: true,
+          status: { [Op.in]: ["ineligible", "waiting_for_data"] },
+          team_id: access.teamId,
+          ...(projectId ? { project_id: projectId } : getProjectScope(access)),
+        },
+      }),
+    ]);
+    const visibleRuns = runs.filter((run) => canAccessHealthRun(run, access, projectId));
+    const runHealth = partitionRunHealth(visibleRuns);
+    const active = [...monitorIssues.map(buildMonitorHealthIssue), ...runHealth.active];
+    const resolved = runHealth.resolved;
+    active.sort((left, right) => new Date(right.detectedAt) - new Date(left.detectedAt));
+    resolved.sort((left, right) => new Date(right.resolvedAt) - new Date(left.resolvedAt));
 
     return {
-      count: unresolved.length,
-      items: unresolved.slice(0, 5),
+      active,
+      count: active.length,
+      items: active.slice(0, 5),
+      resolved,
     };
   }
 
@@ -167,8 +338,15 @@ class HomeController {
   }
 
   async getHome(access) {
+    const monitorController = new MonitorController();
     const observationController = new ObservationController();
-    const [changes, dataHealth, dashboards, monitors, unreadChanges] = await Promise.all([
+    const [
+      changes,
+      dataHealth,
+      dashboards,
+      monitors,
+      unreadChanges,
+    ] = await Promise.all([
       observationController.list(access, { limit: 50, status: "open" }),
       this.getDataHealth(access),
       this.getRecentDashboards(access),
@@ -189,12 +367,29 @@ class HomeController {
     });
     const attention = prioritizeHomeAttention(visibleObservations, dataHealth.count);
     const observations = attention.observations;
+    let recordCountOptions = [];
 
     let setupState = "active";
     if (monitors.length === 0) {
-      setupState = access.allProjects || PROJECT_EDITOR_ROLES.has(access.role)
-        ? "watch_metric"
-        : "waiting_for_metrics";
+      const [connectionCount, datasetCount, availableDatasets] = await Promise.all([
+        db.Connection.count({ where: { team_id: access.teamId } }),
+        db.Dataset.count({ where: { draft: false, team_id: access.teamId } }),
+        access.allProjects || PROJECT_EDITOR_ROLES.has(access.role)
+          ? monitorController.recordCountOptions(access)
+          : Promise.resolve([]),
+      ]);
+      recordCountOptions = availableDatasets;
+      if (!(access.allProjects || PROJECT_EDITOR_ROLES.has(access.role))) {
+        setupState = "waiting_for_metrics";
+      } else if (connectionCount === 0) {
+        setupState = access.canConfigureTeam ? "connect_data" : "waiting_for_setup";
+      } else if (datasetCount === 0) {
+        setupState = "create_dataset";
+      } else if (recordCountOptions.length > 0) {
+        setupState = "watch_record_count";
+      } else {
+        setupState = "watch_metric";
+      }
     }
     else if (dataHealth.count > 0) {
       setupState = "data_needs_attention";
@@ -207,13 +402,6 @@ class HomeController {
     }
     else if (observations.length === 0) setupState = "no_important_changes";
 
-    if (access.canConfigureTeam) {
-      const connectionCount = await db.Connection.count({
-        where: { team_id: access.teamId },
-      });
-      if (connectionCount === 0) setupState = "connect_data";
-    }
-
     return {
       dashboards,
       dataHealth: {
@@ -221,6 +409,7 @@ class HomeController {
         showOnHome: attention.showDataHealth,
       },
       observations,
+      recordCountOptions: recordCountOptions.slice(0, 20),
       setupState,
       unreadCount: unreadChanges + dataHealth.count,
     };
@@ -234,5 +423,8 @@ class HomeController {
 
 module.exports = HomeController;
 module.exports.HOME_ATTENTION_LIMIT = HOME_ATTENTION_LIMIT;
+module.exports.buildRunHealthIssue = buildRunHealthIssue;
+module.exports.getHealthRunType = getHealthRunType;
+module.exports.partitionRunHealth = partitionRunHealth;
 module.exports.prioritizeHomeAttention = prioritizeHomeAttention;
 module.exports.rankObservations = rankObservations;

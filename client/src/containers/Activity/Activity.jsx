@@ -1,14 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Chip, InputGroup, Modal, Spinner, Tabs, Tooltip,
+  Button, Chip, Dropdown, InputGroup, Modal, Spinner, Tabs, Tooltip,
 } from "@heroui/react";
 import {
   LuBell,
+  LuChartNoAxesColumn,
   LuCircleCheck,
+  LuDatabase,
+  LuEllipsis,
+  LuMail,
   LuPause,
   LuPencil,
   LuPlay,
+  LuPlug,
+  LuPlus,
   LuRefreshCw,
   LuSearch,
   LuTrash2,
@@ -34,6 +40,7 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import ObservationCard from "./ObservationCard";
 import MonitorSettingsModal from "./MonitorSettingsModal";
+import SummaryScheduleModal from "./SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
@@ -48,6 +55,47 @@ const DIRECTION_LABELS = {
   lower: "Lower is better",
   neutral: "Either direction",
 };
+const DELIVERY_DAY_LABELS = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const HEALTH_TYPE_LABELS = {
+  chart: "Chart",
+  connection: "Connection",
+  dashboard: "Dashboard",
+  dataset: "Dataset",
+  monitor: "Watched metric",
+};
+
+function getHealthIcon(type, resolved = false) {
+  if (resolved) return <LuCircleCheck className="text-success" size={16} aria-hidden />;
+  const iconProps = { className: "text-warning", size: 16, "aria-hidden": true };
+  if (type === "connection") return <LuPlug {...iconProps} />;
+  if (type === "dataset") return <LuDatabase {...iconProps} />;
+  if (type === "chart") return <LuChartNoAxesColumn {...iconProps} />;
+  return <LuRefreshCw {...iconProps} />;
+}
+
+function getDigestMeta(subscription) {
+  let schedule = `Daily at ${subscription.localDeliveryTime}`;
+  if (subscription.cadence === "weekly") {
+    schedule = `${DELIVERY_DAY_LABELS[subscription.dayOfWeek] || "Monday"} at ${subscription.localDeliveryTime}`;
+  } else if (subscription.deliveryDays?.length) {
+    const selectedDays = subscription.deliveryDays
+      .map((day) => `${day}`.slice(0, 3))
+      .map((day) => `${day[0].toUpperCase()}${day.slice(1)}`)
+      .join(", ");
+    schedule = `${selectedDays} at ${subscription.localDeliveryTime}`;
+  }
+  const next = subscription.nextDeliveryAt
+    ? `Next ${formatTimeAgo(subscription.nextDeliveryAt)}`
+    : "No upcoming delivery";
+  const lastStatus = subscription.lastDelivery?.status === "delivered"
+    ? `Last delivered ${formatTimeAgo(subscription.lastDelivery.attemptedAt)}`
+    : subscription.lastDelivery?.status === "no_updates"
+      ? `Last checked ${formatTimeAgo(subscription.lastDelivery.attemptedAt)} · No updates`
+      : subscription.lastDelivery?.status === "failed"
+        ? `Last delivery failed ${formatTimeAgo(subscription.lastDelivery.attemptedAt)}`
+        : "Not delivered yet";
+  return `${subscription.scope?.name || "All accessible dashboards"} · Email · ${schedule} · ${subscription.timezone} · ${next} · ${lastStatus}`;
+}
 
 function getMonitorMeta(monitor) {
   if (!monitor.active) return "Evaluation is paused";
@@ -136,6 +184,11 @@ function Activity() {
   const [monitors, setMonitors] = useState([]);
   const [monitorPending, setMonitorPending] = useState(false);
   const [selectedMonitor, setSelectedMonitor] = useState(null);
+  const [selectedDigest, setSelectedDigest] = useState(null);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [testDigestPendingId, setTestDigestPendingId] = useState(null);
+  const [digestRemovePending, setDigestRemovePending] = useState(false);
+  const [digestToRemove, setDigestToRemove] = useState(null);
   const [monitorToRemove, setMonitorToRemove] = useState(null);
   const [query, setQuery] = useState("");
   const selectedTab = searchParams.get("tab") || "changes";
@@ -242,12 +295,16 @@ function Activity() {
   };
 
   const removeDigest = async (subscriptionId) => {
+    setDigestRemovePending(true);
     try {
       await deleteObservationDigest(team.id, subscriptionId);
       setDigests((current) => current.filter((item) => item.id !== subscriptionId));
+      setDigestToRemove(null);
       toast.success("Summary schedule removed");
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setDigestRemovePending(false);
     }
   };
 
@@ -259,18 +316,31 @@ function Activity() {
       setDigests((current) => current.map((item) => (
         item.id === updated.id ? updated : item
       )));
+      toast.success(updated.enabled ? "Summary schedule resumed" : "Summary schedule paused");
     } catch (error) {
       toast.error(error.message);
     }
   };
 
   const sendTestDigest = async (subscriptionId) => {
+    setTestDigestPendingId(subscriptionId);
     try {
       await sendTestObservationDigest(team.id, subscriptionId);
-      toast.success("Test summary sent");
+      toast.success("Test summary email sent");
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setTestDigestPendingId(null);
     }
+  };
+
+  const saveDigest = (subscription) => {
+    setDigests((current) => {
+      const exists = current.some((item) => item.id === subscription.id);
+      return exists
+        ? current.map((item) => item.id === subscription.id ? subscription : item)
+        : [subscription, ...current];
+    });
   };
 
   if (loading) {
@@ -413,31 +483,74 @@ function Activity() {
         </Tabs.Panel>
 
         <Tabs.Panel id="health" className="p-0">
-          {health.items.length > 0 ? (
-            <ItemList>
-              {health.items.map((item) => (
-                <ItemRow
-                  actions={(
-                    <Chip color="warning" size="sm" variant="soft">
-                      <Chip.Label>Needs attention</Chip.Label>
-                    </Chip>
-                  )}
-                  icon={<LuRefreshCw className="text-warning" size={16} aria-hidden />}
-                  key={item.id}
-                  meta={`Detected ${formatTimeAgo(item.detectedAt)}`}
-                  title={<span className="font-medium">{item.message}</span>}
-                />
-              ))}
-            </ItemList>
-          ) : (
-            <ItemList>
-              <ItemRow
-                icon={<LuCircleCheck className="text-success" size={16} aria-hidden />}
-                meta="No unresolved refresh failures were found."
-                title={<span className="font-medium">Data is refreshing normally</span>}
-              />
-            </ItemList>
-          )}
+          <div className="flex flex-col gap-6">
+            <section aria-labelledby="active-health-heading" className="flex flex-col gap-3">
+              <h2 className="font-tw text-lg font-semibold" id="active-health-heading">
+                Needs attention
+              </h2>
+              {(health.active || health.items).length > 0 ? (
+                <ItemList>
+                  {(health.active || health.items).map((item) => (
+                    <ItemRow
+                      actions={item.action ? (
+                        <Button onPress={() => navigate(item.action.path)} size="sm" variant="secondary">
+                          {item.action.label}
+                        </Button>
+                      ) : null}
+                      icon={getHealthIcon(item.type)}
+                      key={item.id}
+                      meta={(
+                        <span>
+                          {item.message} · Detected {formatTimeAgo(item.detectedAt)}
+                        </span>
+                      )}
+                      title={(
+                        <>
+                          <span className="font-medium">{item.title || item.message}</span>
+                          <Chip color="warning" size="sm" variant="soft">
+                            <Chip.Label>{HEALTH_TYPE_LABELS[item.type] || "Data issue"}</Chip.Label>
+                          </Chip>
+                        </>
+                      )}
+                    />
+                  ))}
+                </ItemList>
+              ) : (
+                <ItemList>
+                  <ItemRow
+                    icon={<LuCircleCheck className="text-success" size={16} aria-hidden />}
+                    meta="No current connection, dataset, chart, or watched metric failures were found."
+                    title={<span className="font-medium">Data is refreshing normally</span>}
+                  />
+                </ItemList>
+              )}
+            </section>
+
+            {health.resolved?.length > 0 ? (
+              <section aria-labelledby="resolved-health-heading" className="flex flex-col gap-3">
+                <h2 className="font-tw text-lg font-semibold" id="resolved-health-heading">
+                  Resolved recently
+                </h2>
+                <ItemList>
+                  {health.resolved.map((item) => (
+                    <ItemRow
+                      icon={getHealthIcon(item.type, true)}
+                      key={item.id}
+                      meta={`${item.message} · Recovered ${formatTimeAgo(item.resolvedAt)}`}
+                      title={(
+                        <>
+                          <span className="font-medium">{item.title}</span>
+                          <Chip color="success" size="sm" variant="soft">
+                            <Chip.Label>Resolved</Chip.Label>
+                          </Chip>
+                        </>
+                      )}
+                    />
+                  ))}
+                </ItemList>
+              </section>
+            ) : null}
+          </div>
         </Tabs.Panel>
 
         <Tabs.Panel id="monitors" className="p-0">
@@ -500,7 +613,7 @@ function Activity() {
                     <>
                       <span className="text-muted">{[
                         monitor.projectName,
-                        monitor.chartName,
+                        monitor.chartName || monitor.datasetName,
                         monitor.createdBy?.name ? `Added by ${monitor.createdBy.name}` : null,
                       ].filter(Boolean).join(" · ")}</span>
                       <span className="block text-muted text-xs mt-2">{getMonitorMeta(monitor)}</span>
@@ -535,8 +648,22 @@ function Activity() {
         </Tabs.Panel>
 
         <Tabs.Panel id="summaries" className="p-0">
-          {digests.length > 0 ? (
-            <ItemList>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-end">
+              <Button
+                onPress={() => {
+                  setSelectedDigest(null);
+                  setSummaryModalOpen(true);
+                }}
+                size="sm"
+                variant="primary"
+              >
+                <LuPlus size={16} aria-hidden />
+                Schedule summary
+              </Button>
+            </div>
+            {digests.length > 0 ? (
+              <ItemList>
               {digests.map((subscription) => (
                 <ItemRow
                   actions={(
@@ -548,32 +675,60 @@ function Activity() {
                       >
                         {subscription.enabled ? "Pause" : "Resume"}
                       </Button>
-                      <Button
-                        onPress={() => sendTestDigest(subscription.id)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Send test
-                      </Button>
-                      <Tooltip>
-                        <Tooltip.Trigger>
+                      <Dropdown aria-label="Summary schedule options">
+                        <Dropdown.Trigger>
                           <Button
-                            aria-label="Delete summary schedule"
+                            aria-label={testDigestPendingId === subscription.id
+                              ? "Sending test summary email"
+                              : "Open summary schedule options"}
+                            isDisabled={Boolean(testDigestPendingId)}
                             isIconOnly
-                            onPress={() => removeDigest(subscription.id)}
                             size="sm"
                             variant="ghost"
                           >
-                            <LuTrash2 size={16} aria-hidden />
+                            {testDigestPendingId === subscription.id
+                              ? <Spinner aria-hidden size="sm" />
+                              : <LuEllipsis size={18} aria-hidden />}
                           </Button>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Delete schedule</Tooltip.Content>
-                      </Tooltip>
+                        </Dropdown.Trigger>
+                        <Dropdown.Popover>
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              id="edit"
+                              onPress={() => {
+                                setSelectedDigest(subscription);
+                                setSummaryModalOpen(true);
+                              }}
+                              textValue="Edit schedule"
+                            >
+                              <LuPencil size={16} aria-hidden />
+                              Edit schedule
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              id="send-test"
+                              onPress={() => sendTestDigest(subscription.id)}
+                              textValue="Send test email"
+                            >
+                              <LuMail size={16} aria-hidden />
+                              Send test email
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              id="delete"
+                              onPress={() => setDigestToRemove(subscription)}
+                              textValue="Delete schedule"
+                              variant="danger"
+                            >
+                              <LuTrash2 size={16} aria-hidden />
+                              Delete schedule
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown.Popover>
+                      </Dropdown>
                     </>
                   )}
                   icon={<LuBell className="text-foreground-400" size={16} aria-hidden />}
                   key={subscription.id}
-                  meta={`${subscription.localDeliveryTime} · ${subscription.timezone}`}
+                  meta={getDigestMeta(subscription)}
                   title={(
                     <>
                       <span className="font-medium">
@@ -588,13 +743,14 @@ function Activity() {
                   )}
                 />
               ))}
-            </ItemList>
-          ) : (
-            <EmptyState
-              description="Schedule one from Home after your first watched metric has a baseline."
-              title="No scheduled summaries"
-            />
-          )}
+              </ItemList>
+            ) : (
+              <EmptyState
+                description="Choose when Chartbrew should email changes and data-health issues."
+                title="No scheduled summaries"
+              />
+            )}
+          </div>
         </Tabs.Panel>
       </Tabs>
 
@@ -604,6 +760,51 @@ function Activity() {
         onClose={() => setSelectedMonitor(null)}
         onSave={saveMonitor}
       />
+
+      <SummaryScheduleModal
+        isOpen={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
+        onSaved={saveDigest}
+        subscription={selectedDigest}
+        teamId={team.id}
+      />
+
+      <Modal.Backdrop
+        isOpen={Boolean(digestToRemove)}
+        onOpenChange={(open) => {
+          if (!open && !digestRemovePending) setDigestToRemove(null);
+        }}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-md">
+            <Modal.Header>
+              <Modal.Heading>Delete this summary schedule?</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <p className="text-sm text-foreground-500">
+                Chartbrew will stop sending this summary. Activity and emails already sent
+                will not be removed.
+              </p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                isDisabled={digestRemovePending}
+                onPress={() => setDigestToRemove(null)}
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+              <Button
+                isPending={digestRemovePending}
+                onPress={() => removeDigest(digestToRemove.id)}
+                variant="danger"
+              >
+                Delete schedule
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       <Modal.Backdrop
         isOpen={Boolean(monitorToRemove)}

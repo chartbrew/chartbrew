@@ -905,20 +905,24 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 
 ### 6. Make summaries a complete feature
 
-- [ ] Replace the one-click “scheduled” state with a setup flow for cadence, timezone, recipient,
+- [x] Replace the one-click “scheduled” state with a setup flow for cadence, timezone, recipient,
   scope, and delivery channel.
-- [ ] Show the next delivery, included metrics, and last delivery result.
-- [ ] Provide edit, pause, test, and delete actions from a discoverable management surface.
-- [ ] Generate an in-product preview before the first external delivery.
+- [x] Show the next delivery, included metrics, and last delivery result.
+- [x] Provide edit, pause, test, and delete actions from a discoverable management surface.
+- [x] Generate an in-product preview before the first external delivery, using the same rendered
+  email content as delivery without sending a message.
 
 ### 7. Cover Benji's data-health workflow
 
-- [ ] Surface connection, dataset, chart refresh, and monitor failures separately with a useful next
+- [x] Surface connection, dataset, chart refresh, and monitor failures separately with a useful next
   action.
-- [ ] Add record-count monitoring for databases where business metrics are not configured yet.
-- [ ] Make the first-run Home useful when a workspace has connections or datasets but no eligible
+- [x] Separate current failures from recently recovered refreshes so historical problems do not look
+  active.
+- [x] Add record-count monitoring for datasets where business metrics are not configured yet, using
+  normal dataset refreshes as samples in the existing deterministic observation pipeline.
+- [x] Make the first-run Home useful when a workspace has connections or datasets but no eligible
   watched metrics.
-- [ ] Show which setup step is missing without implying that “no changes” were evaluated.
+- [x] Show which setup step is missing without implying that “no changes” were evaluated.
 
 ### 8. Close the feedback loop
 

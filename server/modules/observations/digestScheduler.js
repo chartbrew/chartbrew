@@ -25,6 +25,12 @@ async function deliverDueDigests(now = DateTime.utc()) {
         if (result.delivered) report.delivered += 1;
         else report.noops += 1;
       } catch (error) {
+        // Record one failed attempt so the same schedule is not retried every 15 minutes.
+        // oxlint-disable-next-line no-await-in-loop
+        await subscription.update({
+          last_attempted_at: new Date(),
+          last_delivery_status: "failed",
+        });
         report.failed += 1;
         console.error("[observation-digest] Delivery failed", error.message); // oxlint-disable-line no-console
       }

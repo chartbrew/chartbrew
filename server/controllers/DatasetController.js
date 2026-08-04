@@ -21,6 +21,7 @@ const {
 const runtimeCache = require("../modules/runtimeCache");
 const { markDatasetIntelligenceStale } = require("../modules/datasetIntelligence/profileLifecycle");
 const { scheduleDatasetProfile } = require("../modules/datasetIntelligence/profileScheduler");
+const { processDatasetResult } = require("../modules/observations/processChartResult");
 
 function joinData(joins, index, requests, data) {
   const dr = requests.find((r) => r?.dataRequest?.id === joins[index].dr_id);
@@ -774,6 +775,23 @@ class DatasetController {
             teamId: gDataset?.team_id || teamId || team_id,
             sampleData: data,
           }).catch(() => null);
+
+          const hasFilters = Array.isArray(filters) && filters.length > 0;
+          const hasVariables = variables && Object.keys(variables).length > 0;
+          const hasRuntimeFilters = Boolean(runtimeContext?.cacheableChartPayload?.hasRuntimeFilters);
+          if (!noSource && !hasFilters && !hasVariables && !hasRuntimeFilters) {
+            try {
+              await processDatasetResult({
+                data,
+                dataset: gDataset,
+                refreshedAt: new Date(),
+                teamId: gDataset?.team_id || teamId || team_id,
+                updateRunId: traceContext?.runId || null,
+              });
+            } catch (error) {
+              console.error("[observations] Dataset result processing failed", error.message); // eslint-disable-line no-console
+            }
+          }
 
           return Promise.resolve({
             options: gDataset,

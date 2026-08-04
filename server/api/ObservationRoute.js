@@ -12,6 +12,25 @@ const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
 });
 
+const testDigestLimiter = rateLimit({
+  keyGenerator: (req) => `${req.user.id}:${req.params.team_id}`,
+  legacyHeaders: false,
+  limit: 3,
+  standardHeaders: true,
+  windowMs: 60 * 60 * 1000,
+  handler: (req, res) => {
+    const resetTime = req.rateLimit?.resetTime?.getTime?.() || (Date.now() + (60 * 60 * 1000));
+    const retryAfterSeconds = Math.max(1, Math.ceil((resetTime - Date.now()) / 1000));
+    const retryAfterMinutes = Math.max(1, Math.ceil(retryAfterSeconds / 60));
+    res.set("Retry-After", `${retryAfterSeconds}`);
+    return res.status(429).send({
+      code: "SUMMARY_TEST_RATE_LIMITED",
+      error: `You have sent too many test summaries. Try again in ${retryAfterMinutes} minutes.`,
+      retryAfterSeconds,
+    });
+  },
+});
+
 function sendError(res, error) {
   return res.status(error.statusCode || 500).send({
     error: error.message || "The request could not be completed",
@@ -176,6 +195,25 @@ module.exports = (app) => {
     }
   });
 
+  app.get("/team/:team_id/record-count-options", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await monitorController.recordCountOptions(req.observationAccess));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.post("/team/:team_id/record-count-monitors", ...routeAccess, async (req, res) => {
+    try {
+      return res.status(201).send(await monitorController.createRecordCount(
+        req.observationAccess,
+        req.body
+      ));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
   app.post("/team/:team_id/monitors", ...routeAccess, async (req, res) => {
     try {
       return res.status(201).send(await monitorController.create(
@@ -231,6 +269,22 @@ module.exports = (app) => {
     }
   });
 
+  app.get("/team/:team_id/observation-digests/options", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await digestController.options(req.observationAccess));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.post("/team/:team_id/observation-digests/preview", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await digestController.preview(req.observationAccess, req.body));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
   app.post("/team/:team_id/observation-digests", ...routeAccess, async (req, res) => {
     try {
       return res.status(201).send(await digestController.create(
@@ -276,6 +330,7 @@ module.exports = (app) => {
   app.post(
     "/team/:team_id/observation-digests/:subscription_id/send-test",
     ...routeAccess,
+    testDigestLimiter,
     async (req, res) => {
       try {
         return res.send(await digestController.sendTest(

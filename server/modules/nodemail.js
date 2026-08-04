@@ -11,6 +11,7 @@ const emailTemplatePaths = {
   emailUpdate: path.join(__dirname, "../email-templates/emails/email-update.tsx"),
   chartAlert: path.join(__dirname, "../email-templates/emails/chart-alert.tsx"),
   dashboardSnapshot: path.join(__dirname, "../email-templates/emails/dashboard-snapshot.tsx"),
+  observationSummary: path.join(__dirname, "../email-templates/emails/observation-summary.tsx"),
 };
 
 // setup nodemailer
@@ -191,16 +192,21 @@ module.exports.sendDashboardSnapshot = (data) => {
   });
 };
 
-function escapeHtml(value) {
-  return `${value || ""}`
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#039;");
+async function renderObservationDigest(data) {
+  const activityUrl = `${settings.client}/activity`;
+  return renderEmailTemplate("observationSummary", {
+    activityUrl,
+    healthItems: data.healthItems,
+    observations: data.observations,
+    recipientName: data.recipientName,
+    scopeName: data.scopeName,
+    teamName: data.teamName,
+  });
 }
 
-module.exports.sendObservationDigest = (data) => {
+module.exports.renderObservationDigest = renderObservationDigest;
+
+module.exports.sendObservationDigest = async (data) => {
   const observationLines = data.observations.map((item) => (
     `• ${item.title}: ${item.summary}`
   ));
@@ -213,20 +219,10 @@ module.exports.sendObservationDigest = (data) => {
     "",
     `Open Chartbrew: ${settings.client}`,
   ];
-  const htmlItems = [
-    ...data.observations.map((item) => (
-      `<li><strong>${escapeHtml(item.title)}</strong><br />${escapeHtml(item.summary)}</li>`
-    )),
-    ...data.healthItems.map((item) => `<li>${escapeHtml(item.message)}</li>`),
-  ];
+  const emailHtml = await renderObservationDigest(data);
   return nodemail.sendMail({
     from: settings.adminMail,
-    html: `
-      <h2>Your Chartbrew summary</h2>
-      <p>Here is what needs attention in ${escapeHtml(data.teamName)}.</p>
-      <ul>${htmlItems.join("") || "<li>No current changes or data issues.</li>"}</ul>
-      <p><a href="${escapeHtml(settings.client)}">Open Chartbrew</a></p>
-    `,
+    html: emailHtml,
     subject: `Chartbrew summary — ${data.teamName}`,
     text: textLines.join("\n"),
     to: data.recipient,

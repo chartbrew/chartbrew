@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    day_of_week: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+    },
+    delivery_days: DataTypes.JSON,
     channel: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -39,6 +45,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     last_delivered_at: DataTypes.DATE,
     last_noop_at: DataTypes.DATE,
+    last_attempted_at: DataTypes.DATE,
+    last_delivery_status: DataTypes.STRING,
   }, {
     freezeTableName: true,
     indexes: [

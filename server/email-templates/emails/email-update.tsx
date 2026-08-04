@@ -15,7 +15,7 @@ export type EmailUpdateEmailProps = {
 
 export const DEFAULT_EMAIL_UPDATE_EMAIL_PROPS = {
   appName: "Chartbrew",
-  logoUrl: "https://cdn2.chartbrew.com/logos/cb_logo_light.svg",
+  logoUrl: "https://cdn2.chartbrew.com/logos/logo-light.png",
   supportEmail: "",
 } as const;
 
