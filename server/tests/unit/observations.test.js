@@ -25,6 +25,9 @@ const {
 } = require("../../modules/observations/retention");
 const { scoreCandidate } = require("../../modules/observations/scoreCandidate");
 const { isDigestDue } = require("../../modules/observations/digestSchedule");
+const { getObservationImpact } = require("../../modules/observations/metricDirection");
+const { rankObservations } = require("../../controllers/HomeController");
+const ObservationController = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const { publishObservation } = require("../../modules/observations/processChartResult");
 const {
@@ -73,13 +76,56 @@ describe("workspace observations", () => {
           }],
         },
       },
+      desiredDirection: "higher",
       layerId: "revenue",
       unit: "currency_usd",
     });
 
     expect(definition.kind).toBe("timeseries");
+    expect(definition.metricSpec.desiredDirection).toBe("higher");
     expect(definition.metricSpec.metricTitle).toBe("Revenue");
     expect(definition.definitionFingerprint).toHaveLength(64);
+  });
+
+  it("uses the healthy direction to distinguish useful movement from regressions", () => {
+    expect(getObservationImpact("higher", "increase")).toBe("positive");
+    expect(getObservationImpact("higher", "decrease")).toBe("negative");
+    expect(getObservationImpact("lower", "increase")).toBe("negative");
+    expect(getObservationImpact("lower", "decrease")).toBe("positive");
+    expect(getObservationImpact("neutral", "increase")).toBe("neutral");
+  });
+
+  it("prioritizes harmful changes on Home before positive movement", () => {
+    const changes = [{
+      impact: "positive",
+      lastDetectedAt: "2026-08-03T10:00:00.000Z",
+      monitor: { importance: 3 },
+      severity: "critical",
+    }, {
+      impact: "negative",
+      lastDetectedAt: "2026-08-03T09:00:00.000Z",
+      monitor: { importance: 1 },
+      severity: "medium",
+    }];
+
+    expect(changes.sort(rankObservations)[0].impact).toBe("negative");
+  });
+
+  it("orders resolved Activity history by when each change ended", async () => {
+    const findSpy = vi.spyOn(db.Observation, "findAll").mockResolvedValue([]);
+
+    await new ObservationController().list({
+      allProjects: true,
+      projectIds: [],
+      teamId: 1,
+      userId: 2,
+    }, { status: "resolved" });
+
+    expect(findSpy).toHaveBeenCalledWith(expect.objectContaining({
+      order: [["resolved_at", "DESC"], ["id", "ASC"]],
+      where: expect.objectContaining({ status: "resolved" }),
+    }));
+    findSpy.mockRestore();
   });
 
   it("rejects ambiguous breakdown charts", () => {

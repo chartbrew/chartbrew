@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Label, ListBox, Modal, Select, Separator,
+  Button, Label, ListBox, Modal, Select,
 } from "@heroui/react";
 
 import {
@@ -51,6 +51,7 @@ function WatchMetricModal({
   options,
 }) {
   const [currency, setCurrency] = useState("USD");
+  const [desiredDirection, setDesiredDirection] = useState("neutral");
   const [formatMode, setFormatMode] = useState("chart");
   const [layerId, setLayerId] = useState(null);
   const [percentageScale, setPercentageScale] = useState("1");
@@ -58,6 +59,7 @@ function WatchMetricModal({
   useEffect(() => {
     if (!isOpen) return;
     setCurrency("USD");
+    setDesiredDirection("neutral");
     setFormatMode("chart");
     setLayerId(options[0]?.id || null);
     setPercentageScale("1");
@@ -92,6 +94,39 @@ function WatchMetricModal({
           <Modal.Body className="flex flex-col gap-5">
             {options.length > 0 ? (
               <>
+                <div className="flex flex-col gap-2">
+                  <Select
+                    fullWidth
+                    onChange={setDesiredDirection}
+                    value={desiredDirection}
+                  >
+                    <Label>What is a healthy result?</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        <ListBox.Item id="higher" textValue="Higher is better">
+                          Higher is better
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="lower" textValue="Lower is better">
+                          Lower is better
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="neutral" textValue="Either direction can matter">
+                          Either direction can matter
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  <p className="text-xs text-foreground-500">
+                    This helps Chartbrew prioritize changes that need attention.
+                  </p>
+                </div>
+
                 <div className="flex flex-col gap-2">
                   <Select
                     fullWidth
@@ -267,6 +302,7 @@ function WatchMetricModal({
               isDisabled={!layerId}
               isPending={isPending}
               onPress={() => onSubmit({
+                desiredDirection,
                 layerId,
                 valueFormat: selectedValueFormat,
               })}

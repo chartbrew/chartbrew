@@ -11,7 +11,12 @@ const {
   getEligibleLayers,
 } = require("../modules/observations/monitorSchema");
 const { getObservationPolicy } = require("../modules/observations/policy");
-const { getValueFormat } = require("../modules/observations/valueFormat");
+const {
+  getValueFormat,
+  normalizeValueFormat,
+  toLegacyUnit,
+} = require("../modules/observations/valueFormat");
+const { normalizeDesiredDirection } = require("../modules/observations/metricDirection");
 
 const ALLOWED_IMPORTANCE = new Set([1, 2, 3]);
 
@@ -25,7 +30,10 @@ async function serializeMonitor(monitor) {
   return {
     active: monitor.is_active,
     chartId: monitor.chart_id,
+    chartName: monitor.Chart?.name || null,
+    createdBy: monitor.creator ? { id: monitor.creator.id, name: monitor.creator.name } : null,
     datasetId: monitor.dataset_id,
+    desiredDirection: normalizeDesiredDirection(monitor.metric_spec?.desiredDirection),
     id: monitor.id,
     importance: monitor.importance,
     kind: monitor.kind,
@@ -33,6 +41,7 @@ async function serializeMonitor(monitor) {
     minimumSamples: monitor.minimum_samples,
     name: monitor.name,
     projectId: monitor.project_id,
+    projectName: monitor.Project?.name || null,
     sampleCount,
     status: monitor.status,
     statusReason: monitor.status_reason,
@@ -43,6 +52,20 @@ async function serializeMonitor(monitor) {
 class MonitorController {
   async list(access) {
     const monitors = await db.MetricMonitor.findAll({
+      include: [{
+        model: db.Chart,
+        attributes: ["id", "name"],
+        required: false,
+      }, {
+        model: db.Project,
+        attributes: ["id", "name"],
+        required: false,
+      }, {
+        model: db.User,
+        as: "creator",
+        attributes: ["id", "name"],
+        required: false,
+      }],
       order: [["createdAt", "DESC"]],
       where: {
         team_id: access.teamId,
@@ -90,6 +113,7 @@ class MonitorController {
     try {
       definition = buildMonitorDefinition({
         chart,
+        desiredDirection: data.desiredDirection,
         layerId: data.layerId,
         unit: data.unit,
         valueFormat: data.valueFormat,
@@ -165,6 +189,25 @@ class MonitorController {
         throw createHttpError("Choose a valid metric importance", 400);
       }
       values.importance = importance;
+    }
+    if (data.desiredDirection !== undefined || data.valueFormat !== undefined) {
+      const metricSpec = { ...monitor.metric_spec };
+      if (data.desiredDirection !== undefined) {
+        metricSpec.desiredDirection = normalizeDesiredDirection(data.desiredDirection);
+      }
+      if (data.valueFormat !== undefined) {
+        try {
+          metricSpec.valueFormat = normalizeValueFormat(
+            data.valueFormat,
+            metricSpec.formula,
+            metricSpec.unit
+          );
+        } catch (error) {
+          throw createHttpError(error.message, 400);
+        }
+        metricSpec.unit = toLegacyUnit(metricSpec.valueFormat);
+      }
+      values.metric_spec = metricSpec;
     }
     await monitor.update(values);
     return serializeMonitor(monitor);

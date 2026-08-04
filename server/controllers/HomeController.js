@@ -13,6 +13,20 @@ function getHealthMessage(run) {
   return "A dashboard could not refresh";
 }
 
+const IMPACT_RANK = { negative: 2, neutral: 1, positive: 0 };
+const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+
+function rankObservations(left, right) {
+  const impactDifference = (IMPACT_RANK[right.impact] || 0) - (IMPACT_RANK[left.impact] || 0);
+  if (impactDifference !== 0) return impactDifference;
+  const severityDifference = (SEVERITY_RANK[right.severity] || 0)
+    - (SEVERITY_RANK[left.severity] || 0);
+  if (severityDifference !== 0) return severityDifference;
+  const importanceDifference = (right.monitor?.importance || 1) - (left.monitor?.importance || 1);
+  if (importanceDifference !== 0) return importanceDifference;
+  return new Date(right.lastDetectedAt) - new Date(left.lastDetectedAt);
+}
+
 class HomeController {
   async getAlerts(access) {
     const alerts = await db.Alert.findAll({
@@ -160,7 +174,7 @@ class HomeController {
     const observations = changes.items.filter((item) => {
       if (item.preference.dismissedAt) return false;
       return !item.preference.snoozedUntil || new Date(item.preference.snoozedUntil) <= now;
-    }).slice(0, 3);
+    }).sort(rankObservations).slice(0, 3);
 
     let setupState = "active";
     if (monitors.length === 0) {
@@ -202,3 +216,4 @@ class HomeController {
 }
 
 module.exports = HomeController;
+module.exports.rankObservations = rankObservations;

@@ -850,6 +850,8 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   displayed (currency, precision, compact notation, and percentage scale).
 - [x] Explain in the setup flow what Chartbrew watches, when it evaluates the metric, and where
   detected changes appear.
+- [x] Let the user specify whether higher values, lower values, or movement in either direction is
+  meaningful so changes can be prioritized correctly.
 - [x] Show a value preview before confirmation, including percentage-point language when applicable.
 - [x] Remove percentage points as a source value type; calculate them as the absolute difference
   between percentage values.
@@ -862,9 +864,9 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 
 ### 2. Add watched metric management
 
-- [ ] Give Benji one place to see every watched metric, its chart, owner, status, freshness, and last
+- [x] Give Benji one place to see every watched metric, its chart, owner, status, freshness, and last
   evaluation.
-- [ ] Allow authorized users to rename, pause, resume, reformat, and remove a watched metric.
+- [x] Allow authorized users to rename, pause, resume, reformat, and remove a watched metric.
 - [ ] Explain collecting, ready, unsupported, and failed states in user terms with a recovery action.
 - [ ] Make it clear when a watched metric no longer matches its chart definition and needs review.
 
@@ -881,11 +883,12 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 
 ### 4. Align Home and Activity
 
-- [ ] Use the same publication and visibility rules for Home and Activity so a visible change never
+- [x] Use the same publication and visibility rules for Home and Activity so a visible change never
   conflicts with a “nothing important changed” message.
 - [ ] Define the Home attention ranking and cap, including what is displaced when data health is more
   urgent.
-- [ ] Make Activity the complete audit trail while Home remains a concise, prioritized view.
+- [x] Make Activity the complete audit trail while Home remains a concise, prioritized view,
+  separating open changes from resolved history.
 - [ ] Add specific empty states for no monitors, collecting baselines, no material changes, stale
   data, and inaccessible projects.
 

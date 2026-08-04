@@ -393,12 +393,13 @@ function Chart(props) {
     }
   };
 
-  const _onCreateMonitor = async ({ layerId, valueFormat }) => {
+  const _onCreateMonitor = async ({ desiredDirection, layerId, valueFormat }) => {
     if (!layerId) return;
     setMonitorLoading(true);
     try {
       const monitor = await createMonitor(team.id, {
         chartId: chart.id,
+        desiredDirection,
         layerId,
         valueFormat,
       });

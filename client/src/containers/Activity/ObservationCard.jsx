@@ -1,10 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, Card } from "@heroui/react";
-import { LuArrowRight, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
+import { Button, Card, Chip } from "@heroui/react";
+import {
+  LuArrowRight, LuCircleCheck, LuTrendingDown, LuTrendingUp,
+} from "react-icons/lu";
 import { useNavigate } from "react-router";
 
-import { formatRelativeChange, formatTimeAgo } from "../../modules/observationFormat";
+import { formatTimeAgo } from "../../modules/observationFormat";
 
 function formatPeriod(period) {
   if (!period?.start || !period?.end) return null;
@@ -18,19 +20,44 @@ function formatPeriod(period) {
 function ObservationCard({ observation }) {
   const navigate = useNavigate();
   const isIncrease = observation.direction === "increase";
+  const isResolved = observation.status === "resolved";
+  const impactClass = isResolved
+    ? "text-foreground-400"
+    : observation.impact === "negative"
+    ? "text-danger"
+    : observation.impact === "positive"
+      ? "text-success"
+      : "text-foreground-500";
+  const activityTime = isResolved
+    ? observation.resolvedAt
+      ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
+      : "Resolved"
+    : formatTimeAgo(observation.lastDetectedAt);
   return (
-    <Card className="h-full gap-0 border border-divider shadow-none">
-      <Card.Header className="flex flex-row items-center gap-2 pb-2">
-        {isIncrease ? (
-          <LuTrendingUp className="shrink-0 text-success" size={16} aria-hidden />
+    <Card className={`h-full gap-0 border border-divider shadow-none ${
+      isResolved ? "bg-content2/40" : ""
+    }`}>
+      <Card.Header className="flex flex-row flex-wrap items-center gap-2 pb-2">
+        {isResolved ? (
+          <LuCircleCheck className="shrink-0 text-foreground-400" size={16} aria-hidden />
+        ) : isIncrease ? (
+          <LuTrendingUp className={`shrink-0 ${impactClass}`} size={16} aria-hidden />
         ) : (
-          <LuTrendingDown className="shrink-0 text-danger" size={16} aria-hidden />
+          <LuTrendingDown className={`shrink-0 ${impactClass}`} size={16} aria-hidden />
         )}
-        <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted">
-          {[observation.project?.name || "Workspace", formatTimeAgo(observation.lastDetectedAt)]
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
+          {[
+            observation.project?.name || "Workspace",
+            isResolved ? null : activityTime,
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
+        {isResolved ? (
+          <Chip className="shrink-0" size="sm" variant="soft">
+            <Chip.Label>{activityTime}</Chip.Label>
+          </Chip>
+        ) : null}
       </Card.Header>
       <Card.Content className="flex-1 gap-1">
         <Card.Title className="font-tw text-base font-semibold">{observation.title}</Card.Title>

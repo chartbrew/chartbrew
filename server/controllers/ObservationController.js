@@ -8,6 +8,10 @@ const {
 } = require("../modules/observations/access");
 const { runDriverAnalysis } = require("../modules/observations/driverAnalysis");
 const { getValueFormat } = require("../modules/observations/valueFormat");
+const {
+  getObservationImpact,
+  normalizeDesiredDirection,
+} = require("../modules/observations/metricDirection");
 
 const FEEDBACK_VERDICTS = new Set(["not_relevant", "relevant", "unsure"]);
 const FEEDBACK_REASONS = new Set([
@@ -35,7 +39,9 @@ function serializeMonitor(monitor) {
   if (!monitor) return null;
   return {
     active: monitor.is_active,
+    desiredDirection: normalizeDesiredDirection(monitor.metric_spec?.desiredDirection),
     id: monitor.id,
+    importance: monitor.importance,
     kind: monitor.kind,
     minimumSamples: monitor.minimum_samples,
     name: monitor.name,
@@ -47,6 +53,9 @@ function serializeMonitor(monitor) {
 
 function serializeObservation(observation, options = {}) {
   const preference = getPreference(observation);
+  const desiredDirection = normalizeDesiredDirection(
+    observation.MetricMonitor?.metric_spec?.desiredDirection
+  );
   const response = {
     absoluteDelta: observation.absolute_delta,
     baselineValue: observation.baseline_value,
@@ -67,6 +76,7 @@ function serializeObservation(observation, options = {}) {
     direction: observation.direction,
     firstDetectedAt: observation.first_detected_at,
     id: observation.id,
+    impact: getObservationImpact(desiredDirection, observation.direction),
     lastDetectedAt: observation.last_detected_at,
     monitor: serializeMonitor(observation.MetricMonitor),
     preference: serializePreference(preference),
@@ -96,6 +106,7 @@ function getIncludes(userId) {
         "dataset_id",
         "id",
         "is_active",
+        "importance",
         "kind",
         "metric_spec",
         "minimum_samples",
@@ -155,21 +166,29 @@ class ObservationController {
     if (query.cursor) {
       const cursor = new Date(query.cursor);
       if (!Number.isNaN(cursor.getTime())) {
-        where.last_detected_at = { [Op.lt]: cursor };
+        const cursorField = query.status === "resolved" ? "resolved_at" : "last_detected_at";
+        where[cursorField] = { [Op.lt]: cursor };
       }
     }
 
     const observations = await db.Observation.findAll({
       include: getIncludes(access.userId),
       limit,
-      order: [["last_detected_at", "DESC"], ["id", "ASC"]],
+      order: query.status === "resolved"
+        ? [["resolved_at", "DESC"], ["id", "ASC"]]
+        : [["last_detected_at", "DESC"], ["id", "ASC"]],
       where,
     });
+    const lastObservation = observations[observations.length - 1];
+    let nextCursor = null;
+    if (observations.length === limit) {
+      nextCursor = query.status === "resolved"
+        ? lastObservation.resolved_at
+        : lastObservation.last_detected_at;
+    }
     return {
       items: observations.map((observation) => serializeObservation(observation)),
-      nextCursor: observations.length === limit
-        ? observations[observations.length - 1].last_detected_at
-        : null,
+      nextCursor,
     };
   }
 

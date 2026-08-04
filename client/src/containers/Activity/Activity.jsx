@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Chip, InputGroup, Spinner, Tabs, Tooltip } from "@heroui/react";
+import {
+  Button, Chip, InputGroup, Modal, Spinner, Tabs, Tooltip,
+} from "@heroui/react";
 import {
   LuBell,
   LuCircleCheck,
+  LuPause,
+  LuPencil,
+  LuPlay,
   LuRefreshCw,
   LuSearch,
   LuTrash2,
@@ -22,11 +27,13 @@ import {
   getObservationDigests,
   refreshMonitor,
   sendTestObservationDigest,
+  updateMonitor,
   updateObservationDigest,
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import ObservationCard from "./ObservationCard";
+import MonitorSettingsModal from "./MonitorSettingsModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
@@ -36,8 +43,14 @@ const MONITOR_STATUS_LABELS = {
   ready: "Ready",
   waiting_for_data: "Waiting for data",
 };
+const DIRECTION_LABELS = {
+  higher: "Higher is better",
+  lower: "Lower is better",
+  neutral: "Either direction",
+};
 
 function getMonitorMeta(monitor) {
+  if (!monitor.active) return "Evaluation is paused";
   if (monitor.status === "collecting") {
     return `${monitor.sampleCount} of ${monitor.minimumSamples} baseline samples`;
   }
@@ -109,6 +122,9 @@ function Activity() {
   const [health, setHealth] = useState({ count: 0, items: [] });
   const [loading, setLoading] = useState(true);
   const [monitors, setMonitors] = useState([]);
+  const [monitorPending, setMonitorPending] = useState(false);
+  const [selectedMonitor, setSelectedMonitor] = useState(null);
+  const [monitorToRemove, setMonitorToRemove] = useState(null);
   const [query, setQuery] = useState("");
   const selectedTab = searchParams.get("tab") || "changes";
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
@@ -118,14 +134,16 @@ function Activity() {
     if (!team?.id) return;
     setLoading(true);
     try {
-      const [changes, workspaceAlerts, dataHealth, watchedMetrics, summaries] = await Promise.all([
-        getActivity(team.id, { limit: 50 }),
-        getAlerts(team.id),
-        getDataHealth(team.id),
-        getMonitors(team.id),
-        getObservationDigests(team.id),
-      ]);
-      setActivity(changes.items);
+      const [openChanges, pastChanges, workspaceAlerts, dataHealth, watchedMetrics, summaries]
+        = await Promise.all([
+          getActivity(team.id, { limit: 50, status: "open" }),
+          getActivity(team.id, { limit: 50, status: "resolved" }),
+          getAlerts(team.id),
+          getDataHealth(team.id),
+          getMonitors(team.id),
+          getObservationDigests(team.id),
+        ]);
+      setActivity([...openChanges.items, ...pastChanges.items]);
       setAlerts(workspaceAlerts);
       setHealth(dataHealth);
       setMonitors(watchedMetrics);
@@ -151,14 +169,51 @@ function Activity() {
       item.chart?.name,
     ].filter(Boolean).join(" ").toLowerCase().includes(normalized));
   }, [activity, query]);
+  const openActivity = filteredActivity.filter((item) => item.status === "open");
+  const pastActivity = filteredActivity.filter((item) => item.status === "resolved");
 
   const removeMonitor = async (monitorId) => {
+    setMonitorPending(true);
     try {
       await deleteMonitor(team.id, monitorId);
       setMonitors((current) => current.filter((monitor) => monitor.id !== monitorId));
       toast.success("Metric is no longer watched");
+      setMonitorToRemove(null);
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setMonitorPending(false);
+    }
+  };
+
+  const saveMonitor = async (changes) => {
+    setMonitorPending(true);
+    try {
+      const updated = await updateMonitor(team.id, selectedMonitor.id, changes);
+      setMonitors((current) => current.map((item) => (
+        item.id === updated.id ? { ...item, ...updated } : item
+      )));
+      setSelectedMonitor(null);
+      toast.success("Watched metric updated");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setMonitorPending(false);
+    }
+  };
+
+  const toggleMonitor = async (monitor) => {
+    setMonitorPending(true);
+    try {
+      const updated = await updateMonitor(team.id, monitor.id, { active: !monitor.active });
+      setMonitors((current) => current.map((item) => (
+        item.id === updated.id ? { ...item, ...updated } : item
+      )));
+      toast.success(updated.active ? "Metric resumed" : "Metric paused");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setMonitorPending(false);
     }
   };
 
@@ -166,7 +221,7 @@ function Activity() {
     try {
       const monitor = await refreshMonitor(team.id, monitorId);
       setMonitors((current) => current.map((item) => (
-        item.id === monitor.id ? monitor : item
+        item.id === monitor.id ? { ...item, ...monitor } : item
       )));
       toast.success("Metric refreshed");
     } catch (error) {
@@ -268,18 +323,36 @@ function Activity() {
                 <LuSearch className="size-4 text-muted" aria-hidden />
               </InputGroup.Suffix>
             </InputGroup>
-            {filteredActivity.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {filteredActivity.map((observation) => (
-                  <ObservationCard key={observation.id} observation={observation} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                description="Material changes in watched metrics will appear here."
-                title="No changes found"
-              />
-            )}
+            <section aria-labelledby="open-changes-heading" className="flex flex-col gap-3">
+              <h2 className="font-tw text-lg font-semibold" id="open-changes-heading">
+                Needs attention
+              </h2>
+              {openActivity.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {openActivity.map((observation) => (
+                    <ObservationCard key={observation.id} observation={observation} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  description="There are no open changes in your watched metrics."
+                  title="Nothing needs attention"
+                />
+              )}
+            </section>
+
+            {pastActivity.length > 0 ? (
+              <section aria-labelledby="past-changes-heading" className="mt-4 flex flex-col gap-3">
+                <h2 className="font-tw text-lg font-semibold" id="past-changes-heading">
+                  Past changes
+                </h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {pastActivity.map((observation) => (
+                    <ObservationCard key={observation.id} observation={observation} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
         </Tabs.Panel>
 
@@ -362,16 +435,44 @@ function Activity() {
                 <ItemRow
                   actions={canEdit ? (
                     <>
-                      <Button onPress={() => runMonitor(monitor.id)} size="sm" variant="secondary">
+                      <Button
+                        isDisabled={monitorPending}
+                        onPress={() => toggleMonitor(monitor)}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        {monitor.active ? <LuPause size={16} aria-hidden /> : <LuPlay size={16} aria-hidden />}
+                        {monitor.active ? "Pause" : "Resume"}
+                      </Button>
+                      <Button
+                        isDisabled={!monitor.active || monitorPending}
+                        onPress={() => runMonitor(monitor.id)}
+                        size="sm"
+                        variant="secondary"
+                      >
                         <LuRefreshCw size={16} aria-hidden />
                         Refresh
                       </Button>
                       <Tooltip>
                         <Tooltip.Trigger>
                           <Button
+                            aria-label={`Edit ${monitor.name}`}
+                            isIconOnly
+                            onPress={() => setSelectedMonitor(monitor)}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            <LuPencil size={16} aria-hidden />
+                          </Button>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>Edit metric</Tooltip.Content>
+                      </Tooltip>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Button
                             aria-label={`Stop watching ${monitor.name}`}
                             isIconOnly
-                            onPress={() => removeMonitor(monitor.id)}
+                            onPress={() => setMonitorToRemove(monitor)}
                             size="sm"
                             variant="ghost"
                           >
@@ -383,13 +484,29 @@ function Activity() {
                     </>
                   ) : null}
                   key={monitor.id}
-                  meta={getMonitorMeta(monitor)}
+                  meta={(
+                    <>
+                      <span className="text-muted">{[
+                        monitor.projectName,
+                        monitor.chartName,
+                        monitor.createdBy?.name ? `Added by ${monitor.createdBy.name}` : null,
+                      ].filter(Boolean).join(" · ")}</span>
+                      <span className="block text-muted text-xs mt-2">{getMonitorMeta(monitor)}</span>
+                    </>
+                  )}
                   title={(
                     <>
                       <span className="font-medium">{monitor.name}</span>
+                      <Chip color={monitor.active ? "accent" : "warning"} size="sm" variant="soft">
+                        <Chip.Label>
+                          {monitor.active
+                            ? MONITOR_STATUS_LABELS[monitor.status] || "Unavailable"
+                            : "Paused"}
+                        </Chip.Label>
+                      </Chip>
                       <Chip size="sm" variant="soft">
                         <Chip.Label>
-                          {MONITOR_STATUS_LABELS[monitor.status] || "Unavailable"}
+                          {DIRECTION_LABELS[monitor.desiredDirection] || DIRECTION_LABELS.neutral}
                         </Chip.Label>
                       </Chip>
                     </>
@@ -468,6 +585,42 @@ function Activity() {
           )}
         </Tabs.Panel>
       </Tabs>
+
+      <MonitorSettingsModal
+        isPending={monitorPending}
+        monitor={selectedMonitor}
+        onClose={() => setSelectedMonitor(null)}
+        onSave={saveMonitor}
+      />
+
+      <Modal.Backdrop
+        isOpen={Boolean(monitorToRemove)}
+        onOpenChange={(open) => !open && setMonitorToRemove(null)}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-md">
+            <Modal.Header>
+              <Modal.Heading>Stop watching this metric?</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <p className="text-sm text-foreground-500">
+                Existing changes remain in Activity, but Chartbrew will stop evaluating
+                {monitorToRemove ? ` ${monitorToRemove.name}` : " this metric"}.
+              </p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onPress={() => setMonitorToRemove(null)} variant="secondary">Cancel</Button>
+              <Button
+                isPending={monitorPending}
+                onPress={() => removeMonitor(monitorToRemove.id)}
+                variant="danger"
+              >
+                Stop watching
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </main>
   );
 }

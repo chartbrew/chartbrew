@@ -4,6 +4,7 @@ const {
   normalizeValueFormat,
   toLegacyUnit,
 } = require("./valueFormat");
+const { normalizeDesiredDirection } = require("./metricDirection");
 
 const SCALAR_MARKS = new Set(["avg", "gauge", "kpi"]);
 const TIMESERIES_MARKS = new Set(["bar", "line"]);
@@ -49,7 +50,7 @@ function getEligibleLayers(visualization) {
 }
 
 function buildMonitorDefinition({
-  chart, layerId, unit, valueFormat,
+  chart, desiredDirection, layerId, unit, valueFormat,
 }) {
   const eligible = getEligibleLayer(chart.visualization, layerId);
   const normalizedValueFormat = normalizeValueFormat(
@@ -60,6 +61,7 @@ function buildMonitorDefinition({
 
   const metricSpec = {
     aggregate: eligible.layer.encoding.value.aggregate || "none",
+    desiredDirection: normalizeDesiredDirection(desiredDirection),
     formula: eligible.layer.encoding.value.formula || null,
     layerId: `${eligible.layer.id}`,
     metricField: eligible.layer.encoding.value.field,
