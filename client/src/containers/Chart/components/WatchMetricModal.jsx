@@ -280,8 +280,8 @@ function WatchMetricModal({
                   </div>
 
                   <p className="text-sm text-foreground-500">
-                    After setup, Chartbrew will start building a baseline on the next successful
-                    refresh. It will let you know when there is enough history to evaluate changes.
+                    Chartbrew will evaluate the chart's existing data now. If it needs more history,
+                    you can follow its progress and refresh it from Activity.
                   </p>
                 </div>
               </>

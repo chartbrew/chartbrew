@@ -7,7 +7,10 @@ const require = createRequire(import.meta.url);
 const { calculateBaseline, median } = require("../../modules/observations/baseline");
 const { extractMonitorSnapshots } = require("../../modules/observations/extractMetrics");
 const { analyzeDimension } = require("../../modules/observations/driverAnalysis");
-const { buildMonitorDefinition } = require("../../modules/observations/monitorSchema");
+const {
+  buildMonitorDefinition,
+  getMinimumSamples,
+} = require("../../modules/observations/monitorSchema");
 const { formatObservationText } = require("../../modules/observations/formatObservation");
 const {
   inferChartValueFormat,
@@ -29,7 +32,10 @@ const { getObservationImpact } = require("../../modules/observations/metricDirec
 const { rankObservations } = require("../../controllers/HomeController");
 const ObservationController = require("../../controllers/ObservationController");
 const db = require("../../models/models");
-const { publishObservation } = require("../../modules/observations/processChartResult");
+const {
+  persistSnapshots,
+  publishObservation,
+} = require("../../modules/observations/processChartResult");
 const {
   getSafeViewerFields,
   projectRows,
@@ -218,6 +224,8 @@ describe("workspace observations", () => {
 
     expect(definition.kind).toBe("record_count");
     expect(definition.baselinePolicy.type).toBe("rolling_median");
+    expect(getMinimumSamples(definition.kind, 7)).toBe(7);
+    expect(getMinimumSamples("timeseries", 7)).toBe(2);
   });
 
   it("extracts compact timeseries snapshots from the renderer-neutral frame", () => {
@@ -266,6 +274,60 @@ describe("workspace observations", () => {
     expect(candidate.publish).toBe(true);
     expect(candidate.direction).toBe("decrease");
     expect(candidate.relativeDelta).toBeCloseTo(-0.18);
+  });
+
+  it("suppresses a large relative rate change when the absolute movement is under one point", () => {
+    const monitor = createMonitor({
+      metric_spec: {
+        layerId: "failure-rate",
+        unit: "percent_ratio",
+        valueFormat: { mode: "override", scale: 100, type: "percentage" },
+      },
+    });
+    const candidate = scoreCandidate({
+      baseline: 0.01,
+      comparison: { completeness: 1 },
+      current: { completeness: 1, value: 0.019 },
+      eligible: true,
+      historyValues: [0.01],
+      sampleCount: 2,
+    }, monitor, {
+      minimumPercentagePointChange: 1,
+      minimumRelativeChange: 0.1,
+      publishScore: 0.75,
+    });
+
+    expect(candidate.relativeDelta).toBeCloseTo(0.9);
+    expect(candidate.features.percentagePointMagnitude).toBeCloseTo(0.9);
+    expect(candidate.publish).toBe(false);
+    expect(candidate.reason).toBe("below_absolute_threshold");
+  });
+
+  it("does not treat an unchanged timeseries refresh as new evidence", async () => {
+    const record = {
+      completeness: 1,
+      sample_count: 1,
+      update: vi.fn().mockResolvedValue(undefined),
+      update_run_id: null,
+      value: 100,
+    };
+    const findSpy = vi.spyOn(db.MetricSnapshot, "findOrCreate")
+      .mockResolvedValue([record, false]);
+    const result = await persistSnapshots(createMonitor({
+      definition_fingerprint: "definition",
+      team_id: 1,
+    }), [{
+      completeness: 1,
+      granularity: "day",
+      periodEnd: new Date("2026-08-02T00:00:00.000Z"),
+      periodStart: new Date("2026-08-01T00:00:00.000Z"),
+      sampleCount: 1,
+      value: 100,
+    }], "run-2");
+
+    expect(result).toEqual({ changed: false, createdCount: 0 });
+    expect(record.update).toHaveBeenCalled();
+    findSpy.mockRestore();
   });
 
   it("reopens the same resolved incident when its deterministic window recurs", async () => {
@@ -419,6 +481,28 @@ describe("workspace observations", () => {
     expect(baseline.eligible).toBe(true);
     expect(baseline.baseline).toBe(100);
     expect(baseline.current.value).toBe(120);
+  });
+
+  it("publishes a material record-count regression after the rolling baseline is ready", () => {
+    const monitor = createMonitor({
+      kind: "record_count",
+      metric_spec: { layerId: "records", unit: "number" },
+      minimum_samples: 4,
+    });
+    const baseline = calculateBaseline([100, 102, 98, 70].map((value, index) => ({
+      completeness: 1,
+      periodEnd: new Date(Date.UTC(2026, 7, index + 2)),
+      periodStart: new Date(Date.UTC(2026, 7, index + 1)),
+      value,
+    })), monitor);
+    const candidate = scoreCandidate(baseline, monitor, {
+      minimumPercentagePointChange: 1,
+      minimumRelativeChange: 0.1,
+      publishScore: 0.75,
+    });
+
+    expect(candidate.publish).toBe(true);
+    expect(candidate.direction).toBe("decrease");
   });
 
   it("builds weighted daily rollups before raw snapshot cleanup", () => {

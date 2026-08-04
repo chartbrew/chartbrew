@@ -857,9 +857,9 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   between percentage values.
 - [x] Distinguish percentages stored as whole values (`12.4`) from ratios (`0.124`) without exposing
   implementation terminology to the user.
-- [ ] Return an honest initial state after setup: ready when existing chart history was evaluated,
+- [x] Return an honest initial state after setup: ready when existing chart history was evaluated,
   otherwise collecting until enough successful refreshes exist.
-- [ ] Prevent duplicate monitors and reactivate an existing monitor without silently discarding new
+- [x] Prevent duplicate monitors and reactivate an existing monitor without silently discarding new
   settings.
 
 ### 2. Add watched metric management
@@ -867,15 +867,15 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 - [x] Give Benji one place to see every watched metric, its chart, owner, status, freshness, and last
   evaluation.
 - [x] Allow authorized users to rename, pause, resume, reformat, and remove a watched metric.
-- [ ] Explain collecting, ready, unsupported, and failed states in user terms with a recovery action.
-- [ ] Make it clear when a watched metric no longer matches its chart definition and needs review.
+- [x] Explain collecting, ready, unsupported, and failed states in user terms with a recovery action.
+- [x] Make it clear when a watched metric no longer matches its chart definition and needs review.
 
 ### 3. Improve deterministic signal quality
 
-- [ ] Revisit eligibility and scoring against representative time-series, scalar, rate, and
+- [x] Revisit eligibility and scoring against representative time-series, scalar, rate, and
   record-count scenarios.
-- [ ] Make minimum sample requirements and comparison windows explicit per monitor kind.
-- [ ] Suppress incomplete, stale, duplicated, and low-materiality candidates before publication.
+- [x] Make minimum sample requirements and comparison windows explicit per monitor kind.
+- [x] Suppress incomplete, stale, duplicated, and low-materiality candidates before publication.
 - [ ] Add versioned scoring policies and an offline replay path for tuning thresholds against saved
   scenarios.
 - [ ] Keep LLM review optional and sampled; use it to audit disagreements, not to mutate live weights
@@ -894,13 +894,13 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 
 ### 5. Complete the observation workflow
 
-- [ ] Make observation detail explain the metric, comparison, evidence, freshness, and confidence
+- [x] Make observation detail explain the metric, comparison, evidence, freshness, and confidence
   without exposing scoring internals.
-- [ ] Implement driver exploration only when the available dimensions can reconcile with the
+- [x] Implement driver exploration only when the available dimensions can reconcile with the
   observed change.
-- [ ] Scope Ask to the selected observation, chart, dataset, period, and allowed projects without
+- [x] Scope Ask to the selected observation, chart, dataset, period, and allowed projects without
   requiring conversation history.
-- [ ] Let Maya save, dismiss, snooze, resolve, reopen, and share an observation with predictable
+- [x] Let Maya save, dismiss, snooze, resolve, reopen, and share an observation with predictable
   effects on Home and Activity.
 
 ### 6. Make summaries a complete feature

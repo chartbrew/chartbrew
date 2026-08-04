@@ -8,6 +8,10 @@ const { normalizeDesiredDirection } = require("./metricDirection");
 
 const SCALAR_MARKS = new Set(["avg", "gauge", "kpi"]);
 const TIMESERIES_MARKS = new Set(["bar", "line"]);
+
+function getMinimumSamples(kind, policyMinimum = 7) {
+  return kind === "timeseries" ? 2 : Math.max(Number(policyMinimum) || 7, 3);
+}
 function getEligibleLayer(visualization, layerId) {
   const layers = Array.isArray(visualization?.layers) ? visualization.layers : [];
   const layer = layers.find((item) => `${item.id}` === `${layerId}`);
@@ -109,4 +113,5 @@ module.exports = {
   buildMonitorDefinition,
   getEligibleLayer,
   getEligibleLayers,
+  getMinimumSamples,
 };

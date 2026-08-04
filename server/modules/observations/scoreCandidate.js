@@ -1,4 +1,5 @@
 const { median, medianAbsoluteDeviation } = require("./baseline");
+const { getValueFormat } = require("./valueFormat");
 
 const SCORE_VERSION = "deterministic-v1";
 
@@ -26,6 +27,10 @@ function scoreCandidate(baselineResult, monitor, policy) {
 
   const relativeDelta = absoluteDelta / Math.abs(baselineValue);
   const relativeMagnitude = Math.abs(relativeDelta);
+  const valueFormat = getValueFormat(monitor.metric_spec);
+  const percentagePointMagnitude = valueFormat.type === "percentage"
+    ? Math.abs(absoluteDelta * valueFormat.scale)
+    : null;
   const completeness = Math.min(
     Number(baselineResult.current.completeness),
     Number(baselineResult.comparison.completeness ?? 1)
@@ -47,8 +52,20 @@ function scoreCandidate(baselineResult, monitor, policy) {
       + (deviationScore * 0.25)
       + importanceBonus
   );
+  const configuredPercentagePointThreshold = Number(policy.minimumPercentagePointChange);
+  const minimumPercentagePointChange = Number.isFinite(configuredPercentagePointThreshold)
+    && configuredPercentagePointThreshold >= 0
+    ? configuredPercentagePointThreshold
+    : 1;
+  const meetsPercentagePointThreshold = percentagePointMagnitude === null
+    || percentagePointMagnitude >= minimumPercentagePointChange;
   const publish = relativeMagnitude >= policy.minimumRelativeChange
+    && meetsPercentagePointThreshold
     && score >= policy.publishScore;
+  let reason = null;
+  if (!publish) {
+    reason = meetsPercentagePointThreshold ? "below_threshold" : "below_absolute_threshold";
+  }
 
   return {
     absoluteDelta,
@@ -61,11 +78,12 @@ function scoreCandidate(baselineResult, monitor, policy) {
       deviationScore,
       importance: Number(monitor.importance),
       magnitudeScore,
+      percentagePointMagnitude,
       relativeMagnitude,
       robustDeviation,
     },
     publish,
-    reason: publish ? null : "below_threshold",
+    reason,
     relativeDelta,
     score,
     scoreVersion: SCORE_VERSION,

@@ -51,15 +51,27 @@ const DIRECTION_LABELS = {
 
 function getMonitorMeta(monitor) {
   if (!monitor.active) return "Evaluation is paused";
+  if (monitor.statusReason === "initial_evaluation_failed") {
+    return "Current chart data could not be evaluated. Refresh to try again";
+  }
+  if (monitor.statusReason === "definition_changed") {
+    return "The chart changed. Refresh to build a new baseline";
+  }
   if (monitor.status === "collecting") {
     return `${monitor.sampleCount} of ${monitor.minimumSamples} baseline samples`;
   }
   if (monitor.status === "waiting_for_data") {
-    return "No values were returned by the latest refresh";
+    return monitor.statusReason === "incomplete_data"
+      ? "The latest data is incomplete. Refresh after the dataset is ready"
+      : "No values were returned by the latest refresh";
   }
   if (monitor.status === "ineligible") {
     return "This metric can no longer be evaluated";
   }
+  if (monitor.statusReason === "no_new_data") {
+    return `No new periods in the latest refresh · Checked ${formatTimeAgo(monitor.lastSampledAt)}`;
+  }
+  if (!monitor.lastSampledAt) return "Ready for its first evaluation";
   return `Last sampled ${formatTimeAgo(monitor.lastSampledAt)}`;
 }
 

@@ -404,9 +404,17 @@ function Chart(props) {
         valueFormat,
       });
       setMonitorModal(false);
-      toast.success(
-        `Watching ${monitor.name}. The baseline will start on the next successful refresh.`
-      );
+      if (monitor.status === "ready") {
+        toast.success(`Watching ${monitor.name}. Existing chart data was evaluated.`);
+      } else if (monitor.statusReason === "initial_evaluation_failed") {
+        toast.success(
+          `Watching ${monitor.name}. Refresh it from Activity to evaluate the current data.`
+        );
+      } else {
+        toast.success(
+          `Watching ${monitor.name}. ${monitor.sampleCount} of ${monitor.minimumSamples} samples are ready.`
+        );
+      }
     } catch (monitorError) {
       toast.error(monitorError.message);
     } finally {

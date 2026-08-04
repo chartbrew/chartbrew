@@ -11,6 +11,8 @@ const { scoreCandidate } = require("./scoreCandidate");
 const { queueObservationAudit } = require("./auditQueue");
 
 async function persistSnapshots(monitor, snapshots, updateRunId) {
+  let changed = false;
+  let createdCount = 0;
   await snapshots.reduce(async (promise, snapshot) => {
     await promise;
     const where = {
@@ -33,6 +35,12 @@ async function persistSnapshots(monitor, snapshots, updateRunId) {
         value: snapshot.value,
       },
     });
+    const valuesChanged = created
+      || Number(record.value) !== Number(snapshot.value)
+      || Number(record.completeness) !== Number(snapshot.completeness)
+      || Number(record.sample_count) !== Number(snapshot.sampleCount);
+    if (valuesChanged) changed = true;
+    if (created) createdCount += 1;
     if (!created) {
       await record.update({
         completeness: snapshot.completeness,
@@ -42,6 +50,7 @@ async function persistSnapshots(monitor, snapshots, updateRunId) {
       });
     }
   }, Promise.resolve());
+  return { changed, createdCount };
 }
 
 async function getBaselineSnapshots(monitor, extractedSnapshots) {
@@ -57,7 +66,7 @@ async function getBaselineSnapshots(monitor, extractedSnapshots) {
 }
 
 async function resolveRecoveredObservation(monitor, candidate) {
-  if (candidate.reason !== "below_threshold") return;
+  if (!["below_absolute_threshold", "below_threshold"].includes(candidate.reason)) return;
   await db.Observation.update({
     resolved_at: new Date(),
     status: "resolved",
@@ -200,7 +209,15 @@ async function processMonitor(monitor, frame, options, policy) {
     return { monitorId: monitor.id, status: extraction.status };
   }
 
-  await persistSnapshots(monitor, extraction.snapshots, options.updateRunId);
+  const persistence = await persistSnapshots(monitor, extraction.snapshots, options.updateRunId);
+  if (monitor.kind === "timeseries" && !persistence.changed) {
+    await monitor.update({
+      last_sampled_at: options.refreshedAt,
+      status: "ready",
+      status_reason: "no_new_data",
+    });
+    return { monitorId: monitor.id, reason: "no_new_data", status: "ready" };
+  }
   const history = await getBaselineSnapshots(monitor, extraction.snapshots);
   const baseline = calculateBaseline(history, monitor);
   if (!baseline.eligible) {
@@ -217,6 +234,14 @@ async function processMonitor(monitor, frame, options, policy) {
   }
 
   const candidate = scoreCandidate(baseline, monitor, policy);
+  if (candidate.reason === "incomplete_data") {
+    await monitor.update({
+      last_sampled_at: options.refreshedAt,
+      status: "waiting_for_data",
+      status_reason: "incomplete_data",
+    });
+    return { monitorId: monitor.id, reason: candidate.reason, status: "waiting_for_data" };
+  }
   await monitor.update({
     last_sampled_at: options.refreshedAt,
     status: "ready",

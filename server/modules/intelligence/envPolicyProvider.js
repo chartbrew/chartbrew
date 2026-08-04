@@ -17,6 +17,7 @@ const DEFAULT_OBSERVATION_POLICY = Object.freeze({
   deduplicationCooldownDays: 7,
   publishScore: 0.75,
   minimumRelativeChange: 0.1,
+  minimumPercentagePointChange: 1,
   llmAuditMode: "off",
   llmAuditSampleRate: 0.05,
   llmAuditDailyLimit: 20,
@@ -110,6 +111,12 @@ function getEnvIntelligencePolicy(env = process.env) {
         DEFAULT_OBSERVATION_POLICY.minimumRelativeChange,
         0,
         10
+      ),
+      minimumPercentagePointChange: parseNumber(
+        env.CB_OBSERVATIONS_MINIMUM_PERCENTAGE_POINT_CHANGE,
+        DEFAULT_OBSERVATION_POLICY.minimumPercentagePointChange,
+        0,
+        100
       ),
       llmAuditMode: ["off", "shadow_sample", "shadow_published", "manual"].includes(
         env.CB_OBSERVATIONS_LLM_AUDIT_MODE

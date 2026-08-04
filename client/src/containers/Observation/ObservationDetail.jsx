@@ -45,6 +45,13 @@ function formatPeriod(period) {
   return `${formatter.format(new Date(period.start))} – ${formatter.format(new Date(period.end))}`;
 }
 
+function getComparisonDescription(observation) {
+  if (observation.monitor?.comparisonMethod === "previous_period") {
+    return `Previous period · ${formatPeriod(observation.comparisonPeriod)}`;
+  }
+  return `Usual value from earlier refreshes · ${formatPeriod(observation.comparisonPeriod)}`;
+}
+
 function ObservationDetail() {
   const { observationId } = useParams();
   const navigate = useNavigate();
@@ -78,11 +85,12 @@ function ObservationDetail() {
       .finally(() => setLoading(false));
   }, [team?.id, observationId]);
 
-  const updatePreference = async (values) => {
+  const updatePreference = async (values, message) => {
     try {
       const preference = await updateObservationPreference(team.id, observationId, values);
       setObservation((current) => ({ ...current, preference }));
       window.dispatchEvent(new CustomEvent("cb:activity-updated"));
+      if (message) toast.success(message);
     } catch (error) {
       toast.error(error.message);
     }
@@ -101,6 +109,8 @@ function ObservationDetail() {
     try {
       const updated = await resolveObservation(team.id, observationId, resolved);
       setObservation((current) => ({ ...current, ...updated }));
+      window.dispatchEvent(new CustomEvent("cb:activity-updated"));
+      toast.success(resolved ? "Moved to Past changes" : "Moved to Needs attention");
     } catch (error) {
       toast.error(error.message);
     }
@@ -163,7 +173,9 @@ function ObservationDetail() {
               size="sm"
               variant="soft"
             >
-              <Chip.Label>{observation.status}</Chip.Label>
+              <Chip.Label>
+                {observation.status === "resolved" ? "Resolved" : "Needs attention"}
+              </Chip.Label>
             </Chip>
             {observation.monitor ? (
               <Chip color={observation.monitor.active ? "accent" : "default"} size="sm" variant="soft">
@@ -173,8 +185,16 @@ function ObservationDetail() {
               </Chip>
             ) : null}
             <span className="text-sm text-foreground-500">
-              Last detected {formatTimeAgo(observation.lastDetectedAt)}
+              {observation.status === "resolved" && observation.resolvedAt
+                ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
+                : `Last detected ${formatTimeAgo(observation.lastDetectedAt)}`}
             </span>
+            {observation.preference.dismissedAt ? (
+              <Chip size="sm" variant="soft"><Chip.Label>Hidden from Home</Chip.Label></Chip>
+            ) : null}
+            {isSnoozed ? (
+              <Chip size="sm" variant="soft"><Chip.Label>Snoozed on Home</Chip.Label></Chip>
+            ) : null}
           </div>
         </div>
         <div className="flex shrink-0 flex-row flex-wrap items-center gap-2">
@@ -183,7 +203,10 @@ function ObservationDetail() {
             Share
           </Button>
           <Button
-            onPress={() => updatePreference({ saved: !observation.preference.savedAt })}
+            onPress={() => updatePreference(
+              { saved: !observation.preference.savedAt },
+              observation.preference.savedAt ? "Removed from saved changes" : "Change saved"
+            )}
             size="sm"
             variant="secondary"
           >
@@ -193,24 +216,32 @@ function ObservationDetail() {
             {observation.preference.savedAt ? "Saved" : "Save"}
           </Button>
           <Button
-            onPress={() => updatePreference({
-              snoozedUntil: isSnoozed
-                ? null
-                : new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString(),
-            })}
+            onPress={() => updatePreference(
+              {
+                snoozedUntil: isSnoozed
+                  ? null
+                  : new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString(),
+              },
+              isSnoozed ? "Change restored on Home" : "Hidden from Home for 24 hours"
+            )}
             size="sm"
             variant="ghost"
           >
             <LuClock size={16} aria-hidden />
-            {isSnoozed ? "Unsnooze" : "Snooze 24h"}
+            {isSnoozed ? "Show on Home" : "Snooze on Home 24h"}
           </Button>
           <Button
-            onPress={() => updatePreference({ dismissed: !observation.preference.dismissedAt })}
+            onPress={() => updatePreference(
+              { dismissed: !observation.preference.dismissedAt },
+              observation.preference.dismissedAt
+                ? "Change restored on Home"
+                : "Change hidden from Home"
+            )}
             size="sm"
             variant="ghost"
           >
             <LuEyeOff size={16} aria-hidden />
-            {observation.preference.dismissedAt ? "Restore" : "Dismiss"}
+            {observation.preference.dismissedAt ? "Show on Home" : "Dismiss from Home"}
           </Button>
           {canEdit ? (
             <Button
@@ -252,14 +283,16 @@ function ObservationDetail() {
             )}
           </p>
           <p className="mt-1 text-xs text-foreground-400">
-            {formatPeriod(observation.comparisonPeriod)}
+            {getComparisonDescription(observation)}
           </p>
         </div>
         <div className="px-4 py-3">
           <p className="text-sm text-foreground-500">Change</p>
-          <p className={observation.direction === "increase"
+          <p className={observation.impact === "positive"
             ? "mt-1 font-tw text-xl font-semibold text-success"
-            : "mt-1 font-tw text-xl font-semibold text-danger"}
+            : observation.impact === "negative"
+              ? "mt-1 font-tw text-xl font-semibold text-danger"
+              : "mt-1 font-tw text-xl font-semibold"}
           >
             {observation.direction === "increase" ? "+" : "−"}
             {formatRelativeChange(observation.relativeDelta)}
@@ -271,11 +304,24 @@ function ObservationDetail() {
               observation.unit,
               observation.monitor?.valueFormat
             )} absolute
-            {" · "}
-            {observation.confidence} confidence
           </p>
         </div>
       </section>
+
+      {observation.evidence ? (
+        <p className="text-sm text-foreground-500">
+          {observation.confidence
+            ? `${observation.confidence.charAt(0).toUpperCase()}${observation.confidence.slice(1)} confidence · `
+            : ""}
+          {observation.evidence.sampleCount || 0} samples
+          {Number.isFinite(Number(observation.evidence.completeness))
+            ? ` · ${Math.round(Number(observation.evidence.completeness) * 100)}% complete`
+            : ""}
+          {observation.monitor?.lastSampledAt
+            ? ` · Last evaluated ${formatTimeAgo(observation.monitor.lastSampledAt)}`
+            : ""}
+        </p>
+      ) : null}
 
       {observation.chart ? (
         <div className="flex flex-col gap-3 rounded-xl border border-divider bg-content1 px-4 py-3 md:flex-row md:items-center">

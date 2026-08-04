@@ -43,11 +43,13 @@ function serializeMonitor(monitor) {
     id: monitor.id,
     importance: monitor.importance,
     kind: monitor.kind,
+    lastSampledAt: monitor.last_sampled_at,
     minimumSamples: monitor.minimum_samples,
     name: monitor.name,
     status: monitor.status,
     statusReason: monitor.status_reason,
     valueFormat: getValueFormat(monitor.metric_spec),
+    comparisonMethod: monitor.baseline_policy?.type || null,
   };
 }
 
@@ -108,9 +110,11 @@ function getIncludes(userId) {
         "is_active",
         "importance",
         "kind",
+        "last_sampled_at",
         "metric_spec",
         "minimum_samples",
         "name",
+        "baseline_policy",
         "status",
         "status_reason",
       ],

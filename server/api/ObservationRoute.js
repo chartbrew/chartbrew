@@ -180,7 +180,8 @@ module.exports = (app) => {
     try {
       return res.status(201).send(await monitorController.create(
         req.observationAccess,
-        req.body
+        req.body,
+        req.user
       ));
     } catch (error) {
       return sendError(res, error);

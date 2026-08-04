@@ -9,6 +9,7 @@ const {
 const {
   buildMonitorDefinition,
   getEligibleLayers,
+  getMinimumSamples,
 } = require("../modules/observations/monitorSchema");
 const { getObservationPolicy } = require("../modules/observations/policy");
 const {
@@ -98,16 +99,10 @@ class MonitorController {
     return getEligibleLayers(chart.visualization);
   }
 
-  async create(access, data = {}) {
+  async create(access, data = {}, user = null) {
     const chart = await this.getChart(access, data.chartId);
     assertCanEditProject(access, chart.project_id);
     const policy = getObservationPolicy();
-    const monitorCount = await db.MetricMonitor.count({
-      where: { is_active: true, team_id: access.teamId },
-    });
-    if (monitorCount >= policy.maximumMonitors) {
-      throw createHttpError("This workspace has reached its watched metric limit", 400);
-    }
 
     let definition;
     try {
@@ -131,6 +126,21 @@ class MonitorController {
     if (!ALLOWED_IMPORTANCE.has(importance)) {
       throw createHttpError("Choose a valid metric importance", 400);
     }
+    const existingMonitor = await db.MetricMonitor.findOne({
+      where: {
+        binding_key: definition.bindingKey,
+        chart_id: chart.id,
+        team_id: access.teamId,
+      },
+    });
+    if (!existingMonitor?.is_active) {
+      const monitorCount = await db.MetricMonitor.count({
+        where: { is_active: true, team_id: access.teamId },
+      });
+      if (monitorCount >= policy.maximumMonitors) {
+        throw createHttpError("This workspace has reached its watched metric limit", 400);
+      }
+    }
 
     const [monitor, created] = await db.MetricMonitor.findOrCreate({
       where: {
@@ -148,19 +158,44 @@ class MonitorController {
         importance,
         kind: definition.kind,
         metric_spec: definition.metricSpec,
-        minimum_samples: definition.kind === "timeseries" ? 2 : policy.minimumSamples,
+        minimum_samples: getMinimumSamples(definition.kind, policy.minimumSamples),
         name: data.name?.trim() || definition.name,
         project_id: chart.project_id,
         team_id: access.teamId,
       },
     });
     if (!created) {
+      const definitionChanged = monitor.definition_fingerprint !== definition.definitionFingerprint;
       await monitor.update({
+        baseline_policy: definition.baselinePolicy,
+        dataset_id: binding?.dataset_id || binding?.Dataset?.id || null,
+        definition_fingerprint: definition.definitionFingerprint,
         importance,
         is_active: true,
+        kind: definition.kind,
+        last_sampled_at: definitionChanged ? null : monitor.last_sampled_at,
         metric_spec: definition.metricSpec,
+        minimum_samples: getMinimumSamples(definition.kind, policy.minimumSamples),
         name: data.name?.trim() || monitor.name,
+        project_id: chart.project_id,
+        status: definitionChanged ? "collecting" : monitor.status,
+        status_reason: definitionChanged ? "definition_changed" : monitor.status_reason,
       });
+    }
+    if (user) {
+      try {
+        const chartController = new ChartController();
+        await chartController.updateChartData(chart.id, user, {
+          getCache: false,
+          noSource: false,
+        });
+        await monitor.reload();
+      } catch (error) {
+        await monitor.update({
+          status: "collecting",
+          status_reason: "initial_evaluation_failed",
+        });
+      }
     }
     return serializeMonitor(monitor);
   }

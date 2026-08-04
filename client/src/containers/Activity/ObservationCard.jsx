@@ -33,6 +33,8 @@ function ObservationCard({ observation }) {
       ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
       : "Resolved"
     : formatTimeAgo(observation.lastDetectedAt);
+  const isSnoozed = observation.preference?.snoozedUntil
+    && new Date(observation.preference.snoozedUntil) > new Date();
   return (
     <Card className={`h-full gap-0 border border-divider shadow-none ${
       isResolved ? "bg-content2/40" : ""
@@ -56,6 +58,16 @@ function ObservationCard({ observation }) {
         {isResolved ? (
           <Chip className="shrink-0" size="sm" variant="soft">
             <Chip.Label>{activityTime}</Chip.Label>
+          </Chip>
+        ) : null}
+        {observation.preference?.dismissedAt ? (
+          <Chip className="shrink-0" size="sm" variant="soft">
+            <Chip.Label>Hidden from Home</Chip.Label>
+          </Chip>
+        ) : null}
+        {isSnoozed ? (
+          <Chip className="shrink-0" size="sm" variant="soft">
+            <Chip.Label>Snoozed on Home</Chip.Label>
           </Chip>
         ) : null}
       </Card.Header>
