@@ -50,12 +50,12 @@ export default function ObservationSummaryEmail(props: ObservationSummaryEmailPr
     >
       <Section>
         <Img src={logoUrl} alt={`${appName} logo`} width="200" style={styles.logo} />
-        <Text style={styles.eyebrow}>Workspace summary</Text>
+        <Text style={styles.eyebrow}>Activity digest</Text>
         <Text style={styles.title}>
           {greetingName ? `Hi ${greetingName}, here’s` : "Here’s"} what needs attention
         </Text>
         <Text style={styles.bodyCopy}>
-          This summary covers {props.scopeName} in {props.teamName}.
+          This digest covers {props.scopeName} in {props.teamName}.
         </Text>
 
         {props.observations.length > 0 ? (
@@ -105,7 +105,7 @@ export default function ObservationSummaryEmail(props: ObservationSummaryEmailPr
 
       <Hr style={styles.hr} />
       <Text style={styles.footerCopy}>
-        This email was sent from your Chartbrew summary schedule. Manage or disable it from Activity.
+        This email was sent from your Chartbrew Activity digest. Manage or disable it from Activity.
         {supportEmail ? (
           <> Need help? <Link href={`mailto:${supportEmail}`} style={styles.footerLink}>Contact support</Link>.</>
         ) : null}

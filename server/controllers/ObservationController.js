@@ -7,6 +7,7 @@ const {
   getProjectScope,
 } = require("../modules/observations/access");
 const { runDriverAnalysis } = require("../modules/observations/driverAnalysis");
+const { formatObservationText } = require("../modules/observations/formatObservation");
 const { getValueFormat } = require("../modules/observations/valueFormat");
 const {
   getObservationImpact,
@@ -68,6 +69,15 @@ function serializeMonitor(monitor) {
 
 function serializeObservation(observation, options = {}) {
   const preference = getPreference(observation);
+  const displayText = observation.MetricMonitor
+    ? formatObservationText(observation.MetricMonitor, {
+      absoluteDelta: Number(observation.absolute_delta),
+      baselineValue: Number(observation.baseline_value),
+      currentValue: Number(observation.current_value),
+      direction: observation.direction,
+      relativeDelta: Number(observation.relative_delta),
+    })
+    : null;
   const desiredDirection = normalizeDesiredDirection(
     observation.MetricMonitor?.metric_spec?.desiredDirection
   );
@@ -104,8 +114,8 @@ function serializeObservation(observation, options = {}) {
     resolvedAt: observation.resolved_at,
     severity: observation.severity,
     status: observation.status,
-    summary: observation.summary,
-    title: observation.title,
+    summary: displayText?.summary || observation.summary,
+    title: displayText?.title || observation.title,
     unit: observation.unit,
   };
   if (options.includeEvidence) response.evidence = observation.evidence;
@@ -175,6 +185,10 @@ class ObservationController {
 
   async list(access, query = {}) {
     const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || 30, 1), 50);
+    const usesPagePagination = query.page !== undefined && query.page !== null;
+    const page = usesPagePagination
+      ? Math.max(Number.parseInt(query.page, 10) || 1, 1)
+      : null;
     const where = {
       team_id: access.teamId,
       ...getProjectScope(access),
@@ -187,6 +201,16 @@ class ObservationController {
       }
       where.project_id = projectId;
     }
+    const search = `${query.search || ""}`.trim().slice(0, 100);
+    if (search) {
+      const searchOperator = db.sequelize.getDialect() === "postgres" ? Op.iLike : Op.like;
+      where[Op.or] = [
+        { title: { [searchOperator]: `%${search}%` } },
+        { summary: { [searchOperator]: `%${search}%` } },
+        { "$Project.name$": { [searchOperator]: `%${search}%` } },
+        { "$Chart.name$": { [searchOperator]: `%${search}%` } },
+      ];
+    }
     if (query.cursor) {
       const cursor = new Date(query.cursor);
       if (!Number.isNaN(cursor.getTime())) {
@@ -195,14 +219,23 @@ class ObservationController {
       }
     }
 
-    const observations = await db.Observation.findAll({
-      include: getIncludes(access.userId),
-      limit,
-      order: query.status === "resolved"
-        ? [["resolved_at", "DESC"], ["id", "ASC"]]
-        : [["last_detected_at", "DESC"], ["id", "ASC"]],
-      where,
-    });
+    const [observations, total] = await Promise.all([
+      db.Observation.findAll({
+        include: getIncludes(access.userId),
+        limit,
+        offset: usesPagePagination ? (page - 1) * limit : undefined,
+        order: query.status === "resolved"
+          ? [["resolved_at", "DESC"], ["id", "ASC"]]
+          : [["last_detected_at", "DESC"], ["id", "ASC"]],
+        subQuery: !search,
+        where,
+      }),
+      usesPagePagination ? db.Observation.count({
+        distinct: true,
+        include: search ? getIncludes(access.userId) : undefined,
+        where,
+      }) : Promise.resolve(null),
+    ]);
     const lastObservation = observations[observations.length - 1];
     let nextCursor = null;
     if (observations.length === limit) {
@@ -213,6 +246,9 @@ class ObservationController {
     return {
       items: observations.map((observation) => serializeObservation(observation)),
       nextCursor,
+      page,
+      pageSize: limit,
+      total,
     };
   }
 

@@ -209,7 +209,9 @@ class DigestController {
   async create(access, data) {
     const values = await validateSubscription(access, data);
     const user = await db.User.findByPk(access.userId, { attributes: ["email"] });
-    if (!user?.email) throw createHttpError("Add an email address before scheduling a summary", 400);
+    if (!user?.email) {
+      throw createHttpError("Add an email address before scheduling an Activity digest", 400);
+    }
     const existing = await db.ObservationDigestSubscription.findOne({
       where: {
         channel: values.channel,
@@ -227,7 +229,7 @@ class DigestController {
       where: { team_id: access.teamId, user_id: access.userId },
     });
     if (subscriptionCount >= 10) {
-      throw createHttpError("You can schedule up to 10 summaries", 400);
+      throw createHttpError("You can schedule up to 10 Activity digests", 400);
     }
     const subscription = await db.ObservationDigestSubscription.create({
       ...values,
@@ -246,7 +248,7 @@ class DigestController {
         user_id: access.userId,
       },
     });
-    if (!subscription) throw createHttpError("Summary schedule not found", 404);
+    if (!subscription) throw createHttpError("Activity digest not found", 404);
     return subscription;
   }
 
@@ -364,7 +366,9 @@ class DigestController {
       });
       return { delivered: false, empty: true };
     }
-    if (!user?.email) throw createHttpError("Add an email address before scheduling a summary", 400);
+    if (!user?.email) {
+      throw createHttpError("Add an email address before scheduling an Activity digest", 400);
+    }
     await mail.sendObservationDigest(content.mailData);
     if (!isTest) {
       await digest.update({

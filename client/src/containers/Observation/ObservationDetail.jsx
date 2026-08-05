@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Button, Chip, Spinner } from "@heroui/react";
+import {
+  Button, Chip, Dropdown, Spinner,
+} from "@heroui/react";
 import {
   LuBookmark,
   LuBookmarkCheck,
   LuChartNoAxesColumnIncreasing,
   LuCheck,
   LuClock,
+  LuEllipsis,
   LuExternalLink,
   LuEyeOff,
   LuShare2,
   LuThumbsDown,
   LuThumbsUp,
+  LuTrendingDown,
+  LuTrendingUp,
 } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router";
 import { useSelector } from "react-redux";
@@ -59,6 +64,25 @@ function getComparisonDescription(observation) {
   return `Usual value from earlier refreshes · ${formatPeriod(observation.comparisonPeriod)}`;
 }
 
+function getComparisonBasis(observation) {
+  return observation.monitor?.comparisonMethod === "previous_period"
+    ? "Previous period"
+    : "Recent history";
+}
+
+function getCoverageLabel(value) {
+  if (!Number.isFinite(value)) return "Not available";
+  if (value >= 0.99) return "Complete";
+  if (value >= 0.9) return "Mostly complete";
+  return "Some data missing";
+}
+
+function getEvidenceWidth(value, currentValue, baselineValue) {
+  const maximum = Math.max(Math.abs(Number(currentValue)), Math.abs(Number(baselineValue)));
+  if (!Number.isFinite(maximum) || maximum === 0) return 0;
+  return Math.min(100, (Math.abs(Number(value)) / maximum) * 100);
+}
+
 function ObservationDetail() {
   const { observationId } = useParams();
   const navigate = useNavigate();
@@ -69,6 +93,7 @@ function ObservationDetail() {
   const [driverAnalysis, setDriverAnalysis] = useState(null);
   const [driverLoading, setDriverLoading] = useState(false);
   const [feedbackPending, setFeedbackPending] = useState(null);
+  const [resolvePending, setResolvePending] = useState(false);
   const [showFeedbackReasons, setShowFeedbackReasons] = useState(false);
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const canEdit = EDIT_ROLES.has(teamRole);
@@ -124,13 +149,19 @@ function ObservationDetail() {
   };
 
   const setResolved = async (resolved) => {
+    setResolvePending(true);
     try {
       const updated = await resolveObservation(team.id, observationId, resolved);
       setObservation((current) => ({ ...current, ...updated }));
       window.dispatchEvent(new CustomEvent("cb:activity-updated"));
-      toast.success(resolved ? "Moved to Past changes" : "Moved to Needs attention");
+      const openDestination = observation?.impact === "positive"
+        ? "Notable changes"
+        : "Needs attention";
+      toast.success(resolved ? "Moved to Past changes" : `Moved to ${openDestination}`);
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setResolvePending(false);
     }
   };
 
@@ -167,7 +198,7 @@ function ObservationDetail() {
   }
   if (!observation) {
     return (
-      <div className="rounded-xl border border-divider bg-content1 px-4 py-5">
+      <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
         <p className="font-medium">This change is not available</p>
         <Button className="mt-3" onPress={() => navigate("/activity")} size="sm" variant="secondary">
           Back to activity
@@ -176,33 +207,76 @@ function ObservationDetail() {
     );
   }
 
+  const isIncrease = observation.direction === "increase";
+  const changeSign = isIncrease ? "+" : "−";
+  const impactTextClass = observation.impact === "positive"
+    ? "text-success"
+    : observation.impact === "negative"
+      ? "text-danger"
+      : "text-foreground";
+  const impactBgClass = observation.impact === "positive"
+    ? "bg-success/20"
+    : observation.impact === "negative"
+      ? "bg-danger/20"
+      : "bg-accent/20";
+  const impactBarClass = observation.impact === "positive"
+    ? "bg-success"
+    : observation.impact === "negative"
+      ? "bg-danger"
+      : "bg-accent";
+  const currentWidth = getEvidenceWidth(
+    observation.currentValue,
+    observation.currentValue,
+    observation.baselineValue
+  );
+  const baselineWidth = getEvidenceWidth(
+    observation.baselineValue,
+    observation.currentValue,
+    observation.baselineValue
+  );
+  const metricName = observation.monitor?.name || "This metric";
+  const completeness = Number(observation.evidence?.completeness);
+  const openStatusLabel = observation.impact === "positive"
+    ? "Notable change"
+    : "Needs attention";
+
   return (
-    <main className="flex w-full flex-col gap-6">
-      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-foreground-400">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 pb-8">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
             {observation.project?.name || "Workspace"}
           </p>
-          <h1 className="font-tw text-2xl font-semibold">{observation.title}</h1>
-          <p className="text-sm text-foreground-500">{observation.summary}</p>
-          <div className="flex flex-row flex-wrap items-center gap-2">
+          <div className="flex items-start gap-3">
+            <div className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg ${impactBgClass} ${impactTextClass}`}>
+              {isIncrease
+                ? <LuTrendingUp size={19} aria-hidden />
+                : <LuTrendingDown size={19} aria-hidden />}
+            </div>
+            <h1 className="min-w-0 font-tw text-2xl font-semibold leading-tight md:text-3xl">
+              {observation.title}
+            </h1>
+          </div>
+          <div className="mt-4 flex flex-row flex-wrap items-center gap-2">
             <Chip
-              color={observation.status === "resolved" ? "success" : "warning"}
-              size="sm"
+              color={observation.status === "resolved" || observation.impact === "positive"
+                ? "success"
+                : "warning"}
               variant="soft"
             >
               <Chip.Label>
-                {observation.status === "resolved" ? "Resolved" : "Needs attention"}
+                {observation.status === "resolved" ? "Resolved" : openStatusLabel}
               </Chip.Label>
             </Chip>
             {observation.monitor ? (
-              <Chip color={observation.monitor.active ? "accent" : "default"} size="sm" variant="soft">
+              <Chip color={observation.monitor.active ? "accent" : "default"} variant="soft">
                 <Chip.Label>
                   {observation.monitor.active ? "Watched" : "No longer watched"}
                 </Chip.Label>
               </Chip>
             ) : null}
-            <span className="text-sm text-foreground-500">
+            <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+              <LuClock size={15} aria-hidden />
               {observation.status === "resolved" && observation.resolvedAt
                 ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
                 : `Last detected ${formatTimeAgo(observation.lastDetectedAt)}`}
@@ -215,284 +289,357 @@ function ObservationDetail() {
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 flex-row flex-wrap items-center gap-2">
-          <Button onPress={share} size="sm" variant="ghost">
-            <LuShare2 size={16} aria-hidden />
-            Share
-          </Button>
-          <Button
-            onPress={() => updatePreference(
-              { saved: !observation.preference.savedAt },
-              observation.preference.savedAt ? "Removed from saved changes" : "Change saved"
-            )}
-            size="sm"
-            variant="secondary"
-          >
-            {observation.preference.savedAt
-              ? <LuBookmarkCheck size={16} aria-hidden />
-              : <LuBookmark size={16} aria-hidden />}
-            {observation.preference.savedAt ? "Saved" : "Save"}
-          </Button>
-          <Button
-            onPress={() => updatePreference(
-              {
-                snoozedUntil: isSnoozed
-                  ? null
-                  : new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString(),
-              },
-              isSnoozed ? "Change restored on Home" : "Hidden from Home for 24 hours"
-            )}
-            size="sm"
-            variant="ghost"
-          >
-            <LuClock size={16} aria-hidden />
-            {isSnoozed ? "Show on Home" : "Snooze on Home 24h"}
-          </Button>
-          <Button
-            onPress={() => updatePreference(
-              { dismissed: !observation.preference.dismissedAt },
-              observation.preference.dismissedAt
-                ? "Change restored on Home"
-                : "Change hidden from Home"
-            )}
-            size="sm"
-            variant="ghost"
-          >
-            <LuEyeOff size={16} aria-hidden />
-            {observation.preference.dismissedAt ? "Show on Home" : "Dismiss from Home"}
-          </Button>
+
+        <div className="flex shrink-0 items-center gap-2">
           {canEdit ? (
             <Button
+              isPending={resolvePending}
               onPress={() => setResolved(observation.status !== "resolved")}
-              size="sm"
               variant="primary"
             >
-              <LuCheck size={16} aria-hidden />
+              <LuCheck size={17} aria-hidden />
               {observation.status === "resolved" ? "Reopen" : "Resolve"}
             </Button>
           ) : null}
+          <Dropdown aria-label="Change actions">
+            <Dropdown.Trigger
+              aria-label="More change actions"
+              className="flex size-10 items-center justify-center rounded-3xl border border-divider bg-surface text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <LuEllipsis size={19} aria-hidden />
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu>
+                <Dropdown.Item
+                  id="save"
+                  onPress={() => updatePreference(
+                    { saved: !observation.preference.savedAt },
+                    observation.preference.savedAt
+                      ? "Removed from saved changes"
+                      : "Change saved"
+                  )}
+                  textValue={observation.preference.savedAt ? "Remove from saved" : "Save change"}
+                >
+                  {observation.preference.savedAt
+                    ? <LuBookmarkCheck size={17} aria-hidden />
+                    : <LuBookmark size={17} aria-hidden />}
+                  {observation.preference.savedAt ? "Remove from saved" : "Save change"}
+                </Dropdown.Item>
+                <Dropdown.Item id="share" onPress={share} textValue="Share change">
+                  <LuShare2 size={17} aria-hidden />
+                  Share change
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="snooze"
+                  onPress={() => updatePreference(
+                    {
+                      snoozedUntil: isSnoozed
+                        ? null
+                        : new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString(),
+                    },
+                    isSnoozed ? "Change restored on Home" : "Hidden from Home for 24 hours"
+                  )}
+                  textValue={isSnoozed ? "Show on Home" : "Snooze on Home for 24 hours"}
+                >
+                  <LuClock size={17} aria-hidden />
+                  {isSnoozed ? "Show on Home" : "Snooze on Home for 24 hours"}
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="dismiss"
+                  onPress={() => updatePreference(
+                    { dismissed: !observation.preference.dismissedAt },
+                    observation.preference.dismissedAt
+                      ? "Change restored on Home"
+                      : "Change hidden from Home"
+                  )}
+                  showDivider
+                  textValue={observation.preference.dismissedAt
+                    ? "Show on Home"
+                    : "Dismiss from Home"}
+                >
+                  <LuEyeOff size={17} aria-hidden />
+                  {observation.preference.dismissedAt ? "Show on Home" : "Dismiss from Home"}
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
         </div>
       </header>
 
-      <section
-        className="grid grid-cols-1 divide-y divide-divider rounded-xl border border-divider bg-content1 md:grid-cols-3 md:divide-x md:divide-y-0"
-        aria-label="Change evidence"
-      >
-        <div className="px-4 py-3">
-          <p className="text-sm text-foreground-500">Current</p>
-          <p className="mt-1 font-tw text-xl font-semibold">
-            {formatMetricValue(
-              observation.currentValue,
-              observation.unit,
-              observation.monitor?.valueFormat
-            )}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section
+          aria-labelledby="change-evidence-heading"
+          className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-1"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-medium text-muted" id="change-evidence-heading">
+              Change
+            </h2>
+            <span className="text-sm text-muted">
+              {formatPeriod(observation.currentPeriod)}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <p className={`font-tw text-4xl font-semibold leading-none md:text-5xl ${impactTextClass}`}>
+              {changeSign}{formatRelativeChange(observation.relativeDelta)}
+            </p>
+            <Chip
+              color={observation.impact === "positive"
+                ? "success"
+                : observation.impact === "negative"
+                  ? "danger"
+                  : "default"}
+              size="sm"
+              variant="soft"
+            >
+              <Chip.Label>
+                {changeSign}{formatAbsoluteDelta(
+                  observation.absoluteDelta,
+                  observation.unit,
+                  observation.monitor?.valueFormat
+                )} absolute
+              </Chip.Label>
+            </Chip>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-foreground-600">
+            {metricName} moved from{" "}
+            <span className="font-medium text-foreground">
+              {formatMetricValue(
+                observation.baselineValue,
+                observation.unit,
+                observation.monitor?.valueFormat
+              )}
+            </span>{" "}
+            to{" "}
+            <span className="font-medium text-foreground">
+              {formatMetricValue(
+                observation.currentValue,
+                observation.unit,
+                observation.monitor?.valueFormat
+              )}
+            </span>.
           </p>
-          <p className="mt-1 text-xs text-foreground-400">
-            {formatPeriod(observation.currentPeriod)}
-          </p>
-        </div>
-        <div className="px-4 py-3">
-          <p className="text-sm text-foreground-500">Comparison</p>
-          <p className="mt-1 font-tw text-xl font-semibold">
-            {formatMetricValue(
-              observation.baselineValue,
-              observation.unit,
-              observation.monitor?.valueFormat
-            )}
-          </p>
-          <p className="mt-1 text-xs text-foreground-400">
+
+          <div className="mt-6 space-y-4">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-4 text-sm">
+                <span className="text-muted">Current</span>
+                <span className="font-medium">
+                  {formatMetricValue(
+                    observation.currentValue,
+                    observation.unit,
+                    observation.monitor?.valueFormat
+                  )}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-content3">
+                <div
+                  className={`h-full rounded-full ${impactBarClass}`}
+                  style={{ width: `${currentWidth}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-4 text-sm">
+                <span className="text-muted">Comparison</span>
+                <span className="font-medium">
+                  {formatMetricValue(
+                    observation.baselineValue,
+                    observation.unit,
+                    observation.monitor?.valueFormat
+                  )}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-content3">
+                <div
+                  className="h-full rounded-full bg-default-300"
+                  style={{ width: `${baselineWidth}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-5 border-t border-divider pt-4 text-xs text-muted">
             {getComparisonDescription(observation)}
           </p>
-        </div>
-        <div className="px-4 py-3">
-          <p className="text-sm text-foreground-500">Change</p>
-          <p className={observation.impact === "positive"
-            ? "mt-1 font-tw text-xl font-semibold text-success"
-            : observation.impact === "negative"
-              ? "mt-1 font-tw text-xl font-semibold text-danger"
-              : "mt-1 font-tw text-xl font-semibold"}
-          >
-            {observation.direction === "increase" ? "+" : "−"}
-            {formatRelativeChange(observation.relativeDelta)}
-          </p>
-          <p className="mt-1 text-xs text-foreground-400">
-            {observation.direction === "increase" ? "+" : "−"}
-            {formatAbsoluteDelta(
-              observation.absoluteDelta,
-              observation.unit,
-              observation.monitor?.valueFormat
-            )} absolute
-          </p>
-        </div>
-      </section>
+        </section>
 
-      {observation.evidence ? (
-        <p className="text-sm text-foreground-500">
-          {observation.confidence
-            ? `${observation.confidence.charAt(0).toUpperCase()}${observation.confidence.slice(1)} confidence · `
-            : ""}
-          {observation.evidence.sampleCount || 0} samples
-          {Number.isFinite(Number(observation.evidence.completeness))
-            ? ` · ${Math.round(Number(observation.evidence.completeness) * 100)}% complete`
-            : ""}
-          {observation.monitor?.lastSampledAt
-            ? ` · Last evaluated ${formatTimeAgo(observation.monitor.lastSampledAt)}`
-            : ""}
-        </p>
-      ) : null}
+        <aside className="overflow-hidden rounded-3xl border border-divider bg-content1 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+          <section className="p-5" aria-labelledby="comparison-details-heading">
+            <h2 className="font-tw text-base font-semibold" id="comparison-details-heading">
+              Comparison details
+            </h2>
+            <dl className="mt-4 divide-y divide-divider text-sm">
+              <div className="flex items-center justify-between gap-4 py-3 first:pt-0">
+                <dt className="text-muted">Compared with</dt>
+                <dd className="text-right font-medium">{getComparisonBasis(observation)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <dt className="text-muted">Data points</dt>
+                <dd className="font-medium">{observation.evidence?.sampleCount || "—"}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <dt className="text-muted">Data coverage</dt>
+                <dd className="text-right font-medium">{getCoverageLabel(completeness)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3 last:pb-0">
+                <dt className="text-muted">Checked</dt>
+                <dd className="text-right font-medium">
+                  {observation.monitor?.lastSampledAt
+                    ? formatTimeAgo(observation.monitor.lastSampledAt)
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+          </section>
 
-      {observation.chart ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-divider bg-content1 px-4 py-3 md:flex-row md:items-center">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-400">
-              Source chart
-            </p>
-            <p className="mt-0.5 truncate font-medium">{observation.chart.name}</p>
-          </div>
-          <div className="flex shrink-0 flex-row items-center gap-2">
-            <Button
-              onPress={() => navigate(`/dashboard/${observation.project.id}`)}
-              size="sm"
-              variant="outline"
-            >
-              Open dashboard
-            </Button>
-            {canEdit ? (
-              <Button
-                onPress={() => navigate(
-                  `/dashboard/${observation.project.id}/chart/${observation.chart.id}/edit`
-                )}
-                size="sm"
-                variant="secondary"
-              >
-                Open chart
-                <LuExternalLink size={16} aria-hidden />
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-tw text-lg font-semibold">What changed?</h2>
-        <p className="text-sm text-foreground-600">
-          Compared with {formatPeriod(observation.comparisonPeriod)},{" "}
-          {observation.monitor?.name || "this metric"} moved from{" "}
-          {formatMetricValue(
-            observation.baselineValue,
-            observation.unit,
-            observation.monitor?.valueFormat
-          )} to{" "}
-          {formatMetricValue(
-            observation.currentValue,
-            observation.unit,
-            observation.monitor?.valueFormat
-          )}.
-        </p>
-        <div className="flex flex-row">
-          <Button
-            isPending={driverLoading}
-            onPress={exploreDrivers}
-            size="sm"
-            variant="secondary"
-          >
-            <LuChartNoAxesColumnIncreasing size={16} aria-hidden />
-            Explore drivers
-          </Button>
-        </div>
-        {driverAnalysis?.status === "not_enough_evidence" ? (
-          <p className="text-sm text-foreground-500">{driverAnalysis.message}</p>
-        ) : null}
-        {driverAnalysis?.status === "ready" ? (
-          <>
-            <p className="text-sm font-medium">{driverAnalysis.message}</p>
-            <div className="divide-y divide-divider rounded-xl border border-divider bg-content1">
-              {driverAnalysis.segments.map((segment) => (
-                <div
-                  className="flex flex-row items-center justify-between gap-3 px-4 py-3"
-                  key={segment.segment}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{segment.segment}</p>
-                    <p className="mt-0.5 text-sm text-foreground-500">
-                      {formatMetricValue(
-                        segment.comparison,
-                        observation.unit,
-                        observation.monitor?.valueFormat
-                      )} to{" "}
-                      {formatMetricValue(
-                        segment.current,
-                        observation.unit,
-                        observation.monitor?.valueFormat
-                      )}
-                    </p>
-                  </div>
-                  <Chip size="sm" variant="soft">
-                    <Chip.Label>
-                      {formatRelativeChange(segment.movementShare)} of movement
-                    </Chip.Label>
-                  </Chip>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-tw text-lg font-semibold">Investigate this change</h2>
-        <ObservationInvestigation observationId={observation.id} teamId={team.id} />
-      </section>
-
-      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-content1 px-4 py-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <p className="flex-1 text-sm text-foreground-500">Was this change useful?</p>
-          <div className="flex shrink-0 flex-row items-center gap-2">
-            <Button
-              aria-pressed={observation.feedback?.verdict === "relevant"}
-              isDisabled={Boolean(feedbackPending)}
-              isPending={feedbackPending === "relevant"}
-              onPress={() => feedback("relevant", null)}
-              size="sm"
-              variant={observation.feedback?.verdict === "relevant" ? "secondary" : "ghost"}
-            >
-              <LuThumbsUp size={16} aria-hidden />
-              Useful
-            </Button>
-            <Button
-              aria-pressed={observation.feedback?.verdict === "not_relevant"}
-              isDisabled={Boolean(feedbackPending)}
-              onPress={() => setShowFeedbackReasons(true)}
-              size="sm"
-              variant={observation.feedback?.verdict === "not_relevant" ? "secondary" : "ghost"}
-            >
-              <LuThumbsDown size={16} aria-hidden />
-              Not useful
-            </Button>
-          </div>
-        </div>
-        {showFeedbackReasons || observation.feedback?.verdict === "not_relevant" ? (
-          <div className="flex flex-col gap-2 border-t border-divider pt-3">
-            <p className="text-sm text-foreground-500">What made it unhelpful?</p>
-            <div className="flex flex-row flex-wrap gap-2">
-              {NOT_USEFUL_REASONS.map((reason) => (
+          {observation.chart ? (
+            <section className="border-t border-divider p-5" aria-labelledby="source-chart-heading">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Source chart
+              </p>
+              <h2 className="mt-1 truncate font-tw text-lg font-semibold" id="source-chart-heading">
+                {observation.chart.name}
+              </h2>
+              <div className="mt-2 flex flex-col gap-2">
+                {canEdit ? (
+                  <Button
+                    className="w-full"
+                    onPress={() => navigate(
+                      `/dashboard/${observation.project.id}/chart/${observation.chart.id}/edit`
+                    )}
+                    variant="primary"
+                  >
+                    Open chart
+                    <LuExternalLink size={16} aria-hidden />
+                  </Button>
+                ) : null}
                 <Button
-                  aria-pressed={observation.feedback?.reasonCode === reason.code}
-                  isDisabled={Boolean(feedbackPending)}
-                  isPending={feedbackPending === reason.code}
-                  key={reason.code}
-                  onPress={() => feedback("not_relevant", reason.code)}
-                  size="sm"
-                  variant={observation.feedback?.reasonCode === reason.code
-                    ? "secondary"
-                    : "outline"}
+                  className="w-full"
+                  onPress={() => navigate(`/dashboard/${observation.project.id}`)}
+                  variant={canEdit ? "outline" : "primary"}
                 >
-                  {reason.label}
+                  Open dashboard
                 </Button>
-              ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="border-t border-divider p-5" aria-labelledby="usefulness-heading">
+            <h2 className="text-sm font-medium" id="usefulness-heading">
+              Was this change useful?
+            </h2>
+            <div className="mt-3 flex flex-row gap-2">
+              <Button
+                aria-pressed={observation.feedback?.verdict === "relevant"}
+                isDisabled={Boolean(feedbackPending)}
+                isPending={feedbackPending === "relevant"}
+                onPress={() => feedback("relevant", null)}
+                size="sm"
+                fullWidth
+                variant={observation.feedback?.verdict === "relevant" ? "secondary" : "outline"}
+              >
+                <LuThumbsUp size={16} aria-hidden />
+                Useful
+              </Button>
+              <Button
+                aria-pressed={observation.feedback?.verdict === "not_relevant"}
+                isDisabled={Boolean(feedbackPending)}
+                onPress={() => setShowFeedbackReasons(true)}
+                size="sm"
+                fullWidth
+                variant={observation.feedback?.verdict === "not_relevant" ? "secondary" : "outline"}
+              >
+                <LuThumbsDown size={16} aria-hidden />
+                Not useful
+              </Button>
             </div>
+            {showFeedbackReasons || observation.feedback?.verdict === "not_relevant" ? (
+              <div className="mt-4 border-t border-divider pt-4">
+                <p className="text-xs text-muted">What made it unhelpful?</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {NOT_USEFUL_REASONS.map((reason) => (
+                    <Button
+                      aria-pressed={observation.feedback?.reasonCode === reason.code}
+                      isDisabled={Boolean(feedbackPending)}
+                      isPending={feedbackPending === reason.code}
+                      key={reason.code}
+                      onPress={() => feedback("not_relevant", reason.code)}
+                      size="sm"
+                      variant={observation.feedback?.reasonCode === reason.code
+                        ? "secondary"
+                        : "outline"}
+                    >
+                      {reason.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </aside>
+
+        <section className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-2">
+          <h2 className="font-tw text-lg font-semibold">What changed?</h2>
+          <p className="mt-3 text-sm leading-6 text-foreground-600">{observation.summary}</p>
+          <div className="mt-4 flex flex-row">
+            <Button
+              isPending={driverLoading}
+              onPress={exploreDrivers}
+              size="sm"
+              variant="secondary"
+            >
+              <LuChartNoAxesColumnIncreasing size={16} aria-hidden />
+              Explore drivers
+            </Button>
           </div>
-        ) : null}
+          {driverAnalysis?.status === "not_enough_evidence" ? (
+            <p className="mt-4 border-t border-divider pt-4 text-sm text-muted">
+              {driverAnalysis.message}
+            </p>
+          ) : null}
+          {driverAnalysis?.status === "ready" ? (
+            <div className="mt-5 border-t border-divider pt-4">
+              <p className="text-sm font-medium">{driverAnalysis.message}</p>
+              <div className="mt-2 divide-y divide-divider">
+                {driverAnalysis.segments.map((segment) => (
+                  <div
+                    className="flex flex-row items-center justify-between gap-3 py-3"
+                    key={segment.segment}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{segment.segment}</p>
+                      <p className="mt-0.5 text-sm text-muted">
+                        {formatMetricValue(
+                          segment.comparison,
+                          observation.unit,
+                          observation.monitor?.valueFormat
+                        )} to{" "}
+                        {formatMetricValue(
+                          segment.current,
+                          observation.unit,
+                          observation.monitor?.valueFormat
+                        )}
+                      </p>
+                    </div>
+                    <Chip size="sm" variant="soft">
+                      <Chip.Label>
+                        {formatRelativeChange(segment.movementShare)} of movement
+                      </Chip.Label>
+                    </Chip>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-3">
+          <h2 className="font-tw text-lg font-semibold">Investigate this change</h2>
+          <div className="mt-4">
+            <ObservationInvestigation observationId={observation.id} teamId={team.id} />
+          </div>
+        </section>
       </div>
     </main>
   );

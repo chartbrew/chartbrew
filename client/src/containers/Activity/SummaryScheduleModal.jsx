@@ -130,7 +130,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
         ? await updateObservationDigest(teamId, subscription.id, payload)
         : await createObservationDigest(teamId, payload);
       onSaved(saved);
-      toast.success(subscription ? "Summary schedule updated" : "Summary scheduled");
+      toast.success(subscription ? "Activity digest updated" : "Activity digest scheduled");
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -155,7 +155,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
     try {
       const saved = await updateObservationDigest(teamId, subscription.id, { enabled: false });
       onSaved(saved);
-      toast.success("Summary schedule disabled");
+      toast.success("Activity digest disabled");
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -169,12 +169,14 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
       <Modal.Container scroll="inside">
         <Modal.Dialog className="sm:max-w-2xl">
           <Modal.Header>
-            <Modal.Heading>{subscription ? "Edit summary schedule" : "Schedule a summary"}</Modal.Heading>
+            <Modal.Heading>
+              {subscription ? "Edit Activity digest" : "Schedule an Activity digest"}
+            </Modal.Heading>
           </Modal.Header>
           <Modal.Body className="flex flex-col gap-5">
             {!options ? (
               <div className="flex min-h-40 items-center justify-center">
-                <Spinner aria-label="Loading summary options" />
+                <Spinner aria-label="Loading Activity digest options" />
               </div>
             ) : (
               <>
@@ -187,7 +189,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                   <Select
-                    aria-label="Summary frequency"
+                    aria-label="Activity digest frequency"
                     onChange={(cadence) => setSchedule((current) => ({ ...current, cadence }))}
                     value={schedule.cadence}
                     variant="secondary"
@@ -204,7 +206,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                   </Select>
                   {schedule.cadence === "weekly" ? (
                     <Select
-                      aria-label="Summary delivery day"
+                      aria-label="Activity digest delivery day"
                       onChange={(dayOfWeek) => setSchedule((current) => ({
                         ...current,
                         dayOfWeek: Number(dayOfWeek),
@@ -227,7 +229,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                     </Select>
                   ) : null}
                   <TimeField
-                    aria-label="Summary delivery time"
+                    aria-label="Activity digest delivery time"
                     className="min-w-36"
                     hourCycle={12}
                     onChange={(time) => setSchedule((current) => ({ ...current, time }))}
@@ -254,7 +256,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 <div className="flex items-end gap-2">
                   <Autocomplete
-                    aria-label="Summary timezone"
+                    aria-label="Activity digest timezone"
                     onChange={(timezone) => setSchedule((current) => ({
                       ...current,
                       timezone: timezone || "",
@@ -302,7 +304,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                 </div>
 
                 <Select
-                  aria-label="Summary scope"
+                  aria-label="Activity digest scope"
                   onChange={(scopeType) => setSchedule((current) => ({
                     ...current,
                     monitorId: null,
@@ -326,7 +328,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 {schedule.scopeType === "project" ? (
                   <Select
-                    aria-label="Dashboard included in summary"
+                    aria-label="Dashboard included in Activity digest"
                     onChange={(projectId) => setSchedule((current) => ({ ...current, projectId }))}
                     placeholder="Choose a dashboard"
                     value={schedule.projectId ? `${schedule.projectId}` : null}
@@ -349,7 +351,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 {schedule.scopeType === "monitor" ? (
                   <Select
-                    aria-label="Watched metric included in summary"
+                    aria-label="Watched metric included in Activity digest"
                     onChange={(monitorId) => setSchedule((current) => ({ ...current, monitorId }))}
                     placeholder="Choose a watched metric"
                     value={schedule.monitorId || null}
@@ -378,7 +380,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                       className="h-[32rem] w-full rounded-lg border border-divider bg-white"
                       sandbox=""
                       srcDoc={previewData.html}
-                      title="Summary email preview"
+                      title="Activity digest email preview"
                     />
                   </div>
                 ) : null}
@@ -401,7 +403,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
               Preview email
             </Button>
             <Button isDisabled={!canSave} isPending={pending} onPress={save} variant="primary">
-              {subscription ? "Save changes" : "Schedule summary"}
+              {subscription ? "Save changes" : "Schedule digest"}
             </Button>
           </Modal.Footer>
         </Modal.Dialog>

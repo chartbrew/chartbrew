@@ -29,8 +29,8 @@ function scoreCandidate(baselineResult, monitor, policy) {
   const relativeDelta = absoluteDelta / Math.abs(baselineValue);
   const relativeMagnitude = Math.abs(relativeDelta);
   const valueFormat = getValueFormat(monitor.metric_spec);
-  const percentagePointMagnitude = valueFormat.type === "percentage"
-    ? Math.abs(absoluteDelta * valueFormat.scale)
+  const percentagePointMagnitude = valueFormat.meaning === "percentage"
+    ? Math.abs(absoluteDelta * valueFormat.display.scale)
     : null;
   const completeness = Math.min(
     Number(baselineResult.current.completeness),

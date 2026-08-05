@@ -188,10 +188,18 @@ function rankObservations(left, right) {
 function prioritizeHomeAttention(observations, dataHealthCount, limit = HOME_ATTENTION_LIMIT) {
   const safeLimit = Math.max(Number(limit) || HOME_ATTENTION_LIMIT, 1);
   const dataHealthSlots = dataHealthCount > 0 ? 1 : 0;
+  const observationSlots = Math.max(safeLimit - dataHealthSlots, 0);
+  const ranked = [...observations].sort(rankObservations);
+  const needsAttention = ranked
+    .filter((observation) => observation.impact !== "positive")
+    .slice(0, observationSlots);
+  const notableChanges = ranked
+    .filter((observation) => observation.impact === "positive")
+    .slice(0, Math.max(observationSlots - needsAttention.length, 0));
   return {
-    observations: [...observations]
-      .sort(rankObservations)
-      .slice(0, Math.max(safeLimit - dataHealthSlots, 0)),
+    needsAttention,
+    notableChanges,
+    observations: [...needsAttention, ...notableChanges],
     showDataHealth: dataHealthSlots > 0,
   };
 }
@@ -400,7 +408,7 @@ class HomeController {
         ? "metrics_need_review"
         : "waiting_for_data";
     }
-    else if (observations.length === 0) setupState = "no_important_changes";
+    else if (attention.needsAttention.length === 0) setupState = "no_important_changes";
 
     return {
       dashboards,
@@ -409,6 +417,8 @@ class HomeController {
         showOnHome: attention.showDataHealth,
       },
       observations,
+      needsAttention: attention.needsAttention,
+      notableChanges: attention.notableChanges,
       recordCountOptions: recordCountOptions.slice(0, 20),
       setupState,
       unreadCount: unreadChanges + dataHealth.count,

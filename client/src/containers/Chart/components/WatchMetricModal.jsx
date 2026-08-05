@@ -5,6 +5,7 @@ import {
 } from "@heroui/react";
 
 import {
+  createObservationValueFormat,
   formatMetricValue,
   getObservationValueFormat,
 } from "../../../modules/observationFormat";
@@ -31,17 +32,6 @@ function getCurrencyName(currency) {
   }
 }
 
-function getFormatSelection(mode, currency, percentageScale) {
-  if (mode === "chart") return { mode: "chart" };
-  if (mode === "currency") {
-    return { currency, mode: "override", type: "currency" };
-  }
-  if (mode === "percentage") {
-    return { mode: "override", scale: Number(percentageScale), type: "percentage" };
-  }
-  return { mode: "override", type: "number" };
-}
-
 function WatchMetricModal({
   chartName,
   isOpen,
@@ -51,32 +41,45 @@ function WatchMetricModal({
   options,
 }) {
   const [currency, setCurrency] = useState("USD");
+  const [decimals, setDecimals] = useState("auto");
   const [desiredDirection, setDesiredDirection] = useState("neutral");
-  const [formatMode, setFormatMode] = useState("chart");
+  const [formatSource, setFormatSource] = useState("chart");
   const [layerId, setLayerId] = useState(null);
+  const [notation, setNotation] = useState("standard");
   const [percentageScale, setPercentageScale] = useState("1");
+  const [valueMeaning, setValueMeaning] = useState("number");
 
   useEffect(() => {
     if (!isOpen) return;
     setCurrency("USD");
+    setDecimals("auto");
     setDesiredDirection("neutral");
-    setFormatMode("chart");
+    setFormatSource("chart");
     setLayerId(options[0]?.id || null);
+    setNotation("standard");
     setPercentageScale("1");
+    setValueMeaning("number");
   }, [isOpen, options]);
 
   const selectedOption = useMemo(() => {
     return options.find((option) => `${option.id}` === `${layerId}`) || options[0];
   }, [layerId, options]);
-  const selectedValueFormat = getFormatSelection(formatMode, currency, percentageScale);
-  const previewFormat = formatMode === "chart"
+  const selectedValueFormat = createObservationValueFormat({
+    currency,
+    decimals,
+    meaning: valueMeaning,
+    mode: formatSource,
+    notation,
+    percentageScale,
+  });
+  const previewFormat = formatSource === "chart"
     ? getObservationValueFormat("number", selectedOption?.valueFormat)
     : getObservationValueFormat("number", selectedValueFormat);
-  const previewValues = previewFormat.type === "percentage"
-    ? (previewFormat.scale === 100 ? [0.124, 0.102] : [12.4, 10.2])
+  const previewValues = previewFormat.meaning === "percentage"
+    ? (previewFormat.display.scale === 100 ? [0.124, 0.102] : [12.4, 10.2])
     : [12500, 10000];
-  const previewDifference = previewFormat.type === "percentage"
-    ? `down ${Math.abs((previewValues[1] - previewValues[0]) * previewFormat.scale).toFixed(1)} percentage points`
+  const previewDifference = previewFormat.meaning === "percentage"
+    ? `down ${Math.abs((previewValues[1] - previewValues[0]) * previewFormat.display.scale).toFixed(1)} percentage points`
     : "down 20.0%";
 
   return (
@@ -132,7 +135,7 @@ function WatchMetricModal({
                     fullWidth
                     onChange={(value) => {
                       setLayerId(value);
-                      setFormatMode("chart");
+                      setFormatSource("chart");
                     }}
                     placeholder="Choose a metric"
                     value={layerId}
@@ -170,42 +173,57 @@ function WatchMetricModal({
                 <div className="flex flex-col gap-2">
                   <Select
                     fullWidth
-                    onChange={setFormatMode}
+                    onChange={setFormatSource}
                     placeholder="Choose how values appear"
-                    value={formatMode}
+                    value={formatSource}
                   >
-                    <Label>Display values as</Label>
+                    <Label>Value formatting</Label>
                     <Select.Trigger>
                       <Select.Value />
                       <Select.Indicator />
                     </Select.Trigger>
                     <Select.Popover>
                       <ListBox>
-                        <ListBox.Item id="chart" textValue="Same as chart">
-                          Same as chart
+                        <ListBox.Item id="chart" textValue="Use chart formatting">
+                          Use chart formatting
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
-                        <ListBox.Item id="number" textValue="Number">
-                          Number
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                        <ListBox.Item id="currency" textValue="Currency">
-                          Currency
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                        <ListBox.Item id="percentage" textValue="Percentage">
-                          Percentage
+                        <ListBox.Item id="override" textValue="Customize formatting">
+                          Customize formatting
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
                       </ListBox>
                     </Select.Popover>
                   </Select>
                   <p className="text-xs text-foreground-500">
-                    This only changes how values appear in detected changes. It does not change the chart.
+                    Custom formatting only affects detected changes, not the chart.
                   </p>
                 </div>
 
-                {formatMode === "currency" ? (
+                {formatSource === "override" ? (
+                  <Select fullWidth onChange={setValueMeaning} value={valueMeaning}>
+                    <Label>Value type</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        <ListBox.Item id="number" textValue="Number">
+                          Number<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="currency" textValue="Currency">
+                          Currency<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="percentage" textValue="Percentage">
+                          Percentage<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                ) : null}
+
+                {formatSource === "override" && valueMeaning === "currency" ? (
                   <Select
                     fullWidth
                     onChange={setCurrency}
@@ -234,7 +252,7 @@ function WatchMetricModal({
                   </Select>
                 ) : null}
 
-                {formatMode === "percentage" ? (
+                {formatSource === "override" && valueMeaning === "percentage" ? (
                   <div className="flex flex-col gap-2">
                     <Select
                       fullWidth
@@ -262,6 +280,49 @@ function WatchMetricModal({
                     <p className="text-xs text-foreground-500">
                       Pick the example that matches the values returned by the dataset.
                     </p>
+                  </div>
+                ) : null}
+
+                {formatSource === "override" ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Select fullWidth onChange={setDecimals} value={decimals}>
+                      <Label>Decimal places</Label>
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          <ListBox.Item id="auto" textValue="Automatic">
+                            Automatic<ListBox.ItemIndicator />
+                          </ListBox.Item>
+                          {[0, 1, 2, 3].map((value) => (
+                            <ListBox.Item id={`${value}`} key={value} textValue={`${value}`}>
+                              {value}<ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    {valueMeaning === "percentage" ? null : (
+                      <Select fullWidth onChange={setNotation} value={notation}>
+                        <Label>Large numbers</Label>
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            <ListBox.Item id="standard" textValue="Show full value">
+                              Show full value<ListBox.ItemIndicator />
+                            </ListBox.Item>
+                            <ListBox.Item id="compact" textValue="Abbreviate">
+                              Abbreviate<ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    )}
                   </div>
                 ) : null}
 
@@ -328,12 +389,14 @@ WatchMetricModal.propTypes = {
     kind: PropTypes.string.isRequired,
     name: PropTypes.string,
     valueFormat: PropTypes.shape({
-      currency: PropTypes.string,
+      display: PropTypes.shape({
+        currency: PropTypes.string,
+        decimals: PropTypes.number,
+        notation: PropTypes.string,
+        scale: PropTypes.number,
+      }),
+      meaning: PropTypes.string,
       mode: PropTypes.string,
-      prefix: PropTypes.string,
-      scale: PropTypes.number,
-      suffix: PropTypes.string,
-      type: PropTypes.string,
     }),
   })).isRequired,
 };

@@ -4,29 +4,34 @@ import {
   Button, Input, Label, ListBox, Modal, Select,
 } from "@heroui/react";
 
-function buildValueFormat(mode, currency, scale) {
-  if (mode === "chart") return { mode: "chart" };
-  if (mode === "currency") return { currency: currency || "USD", mode: "override", type: "currency" };
-  if (mode === "percentage") return { mode: "override", scale: Number(scale), type: "percentage" };
-  return { mode: "override", type: "number" };
-}
+import {
+  createObservationValueFormat,
+  getObservationValueFormat,
+} from "../../modules/observationFormat";
 
 function MonitorSettingsModal({ isPending, monitor, onClose, onSave }) {
   const [currency, setCurrency] = useState("USD");
+  const [decimals, setDecimals] = useState("auto");
   const [desiredDirection, setDesiredDirection] = useState("neutral");
-  const [formatMode, setFormatMode] = useState("chart");
+  const [formatSource, setFormatSource] = useState("chart");
   const [name, setName] = useState("");
+  const [notation, setNotation] = useState("standard");
   const [percentageScale, setPercentageScale] = useState("1");
+  const [valueMeaning, setValueMeaning] = useState("number");
 
   useEffect(() => {
     if (!monitor) return;
-    setCurrency(monitor.valueFormat?.currency || "USD");
+    const valueFormat = getObservationValueFormat("number", monitor.valueFormat);
+    setCurrency(valueFormat.display.currency || "USD");
+    setDecimals(Number.isInteger(valueFormat.display.decimals)
+      ? `${valueFormat.display.decimals}`
+      : "auto");
     setDesiredDirection(monitor.desiredDirection || "neutral");
-    setFormatMode(monitor.valueFormat?.mode === "chart"
-      ? "chart"
-      : monitor.valueFormat?.type || "number");
+    setFormatSource(valueFormat.mode === "chart" ? "chart" : "override");
     setName(monitor.name || "");
-    setPercentageScale(`${monitor.valueFormat?.scale || 1}`);
+    setNotation(valueFormat.display.notation || "standard");
+    setPercentageScale(`${valueFormat.display.scale || 1}`);
+    setValueMeaning(valueFormat.meaning);
   }, [monitor]);
 
   return (
@@ -60,19 +65,40 @@ function MonitorSettingsModal({ isPending, monitor, onClose, onSave }) {
                 </ListBox>
               </Select.Popover>
             </Select>
-            <Select fullWidth onChange={setFormatMode} value={formatMode}>
-              <Label>Display values as</Label>
+            <Select fullWidth onChange={setFormatSource} value={formatSource}>
+              <Label>Value formatting</Label>
               <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
               <Select.Popover>
                 <ListBox>
-                  <ListBox.Item id="chart" textValue="Same as chart">Same as chart<ListBox.ItemIndicator /></ListBox.Item>
-                  <ListBox.Item id="number" textValue="Number">Number<ListBox.ItemIndicator /></ListBox.Item>
-                  <ListBox.Item id="currency" textValue="Currency">Currency<ListBox.ItemIndicator /></ListBox.Item>
-                  <ListBox.Item id="percentage" textValue="Percentage">Percentage<ListBox.ItemIndicator /></ListBox.Item>
+                  <ListBox.Item id="chart" textValue="Use chart formatting">
+                    Use chart formatting<ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  <ListBox.Item id="override" textValue="Customize formatting">
+                    Customize formatting<ListBox.ItemIndicator />
+                  </ListBox.Item>
                 </ListBox>
               </Select.Popover>
             </Select>
-            {formatMode === "currency" ? (
+            {formatSource === "override" ? (
+              <Select fullWidth onChange={setValueMeaning} value={valueMeaning}>
+                <Label>Value type</Label>
+                <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="number" textValue="Number">
+                      Number<ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="currency" textValue="Currency">
+                      Currency<ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="percentage" textValue="Percentage">
+                      Percentage<ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            ) : null}
+            {formatSource === "override" && valueMeaning === "currency" ? (
               <Input
                 label="Currency code"
                 maxLength={3}
@@ -80,7 +106,7 @@ function MonitorSettingsModal({ isPending, monitor, onClose, onSave }) {
                 value={currency}
               />
             ) : null}
-            {formatMode === "percentage" ? (
+            {formatSource === "override" && valueMeaning === "percentage" ? (
               <Select fullWidth onChange={setPercentageScale} value={percentageScale}>
                 <Label>How is the percentage stored?</Label>
                 <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
@@ -92,6 +118,42 @@ function MonitorSettingsModal({ isPending, monitor, onClose, onSave }) {
                 </Select.Popover>
               </Select>
             ) : null}
+            {formatSource === "override" ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Select fullWidth onChange={setDecimals} value={decimals}>
+                  <Label>Decimal places</Label>
+                  <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="auto" textValue="Automatic">
+                        Automatic<ListBox.ItemIndicator />
+                      </ListBox.Item>
+                      {[0, 1, 2, 3].map((value) => (
+                        <ListBox.Item id={`${value}`} key={value} textValue={`${value}`}>
+                          {value}<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+                {valueMeaning === "percentage" ? null : (
+                  <Select fullWidth onChange={setNotation} value={notation}>
+                    <Label>Large numbers</Label>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        <ListBox.Item id="standard" textValue="Show full value">
+                          Show full value<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="compact" textValue="Abbreviate">
+                          Abbreviate<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                )}
+              </div>
+            ) : null}
           </Modal.Body>
           <Modal.Footer>
             <Button onPress={onClose} variant="secondary">Cancel</Button>
@@ -101,7 +163,14 @@ function MonitorSettingsModal({ isPending, monitor, onClose, onSave }) {
               onPress={() => onSave({
                 desiredDirection,
                 name: name.trim(),
-                valueFormat: buildValueFormat(formatMode, currency, percentageScale),
+                valueFormat: createObservationValueFormat({
+                  currency,
+                  decimals,
+                  meaning: valueMeaning,
+                  mode: formatSource,
+                  notation,
+                  percentageScale,
+                }),
               })}
               variant="primary"
             >

@@ -228,6 +228,11 @@ function Home() {
     );
   }
 
+  const needsAttention = data.needsAttention
+    || data.observations.filter((observation) => observation.impact !== "positive");
+  const notableChanges = data.notableChanges
+    || data.observations.filter((observation) => observation.impact === "positive");
+
   return (
     <main className="flex w-full flex-col gap-4">
       <header className="flex flex-col gap-1">
@@ -253,7 +258,7 @@ function Home() {
           id="attention-heading"
           title="Needs attention"
         />
-        {data.observations.length > 0 || data.dataHealth.showOnHome ? (
+        {needsAttention.length > 0 || data.dataHealth.showOnHome ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {data.dataHealth.showOnHome ? (
               <DataHealthAttention
@@ -261,7 +266,7 @@ function Home() {
                 onPress={() => navigate("/activity?tab=health")}
               />
             ) : null}
-            {data.observations.map((observation) => (
+            {needsAttention.map((observation) => (
               <ObservationCard key={observation.id} observation={observation} />
             ))}
           </div>
@@ -272,6 +277,21 @@ function Home() {
           />
         )}
       </section>
+
+      {notableChanges.length > 0 ? (
+        <section aria-labelledby="notable-heading" className="mt-8">
+          <SectionHeading
+            eyebrow="Moving in the right direction"
+            id="notable-heading"
+            title="Notable changes"
+          />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {notableChanges.map((observation) => (
+              <ObservationCard key={observation.id} observation={observation} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section aria-labelledby="dashboards-heading" className="mt-8">
         <SectionHeading
@@ -343,7 +363,7 @@ function Home() {
         ].includes(data.setupState) ? (
         <div className="flex flex-col items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
           <div className="min-w-0 flex-1">
-            <p className="font-medium">Get a scheduled summary</p>
+            <p className="font-medium">Get an Activity digest</p>
             <p className="text-sm text-foreground-500">
               Choose when Chartbrew emails changes and data-health issues you can access.
             </p>
@@ -353,7 +373,7 @@ function Home() {
             size="sm"
             variant="secondary"
           >
-            Schedule summary
+            Schedule digest
           </Button>
         </div>
       ) : null}

@@ -4,6 +4,7 @@ import {
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
+const { Op } = require("sequelize");
 const { calculateBaseline, median } = require("../../modules/observations/baseline");
 const { extractMonitorSnapshots } = require("../../modules/observations/extractMetrics");
 const { analyzeDimension } = require("../../modules/observations/driverAnalysis");
@@ -14,6 +15,7 @@ const {
 } = require("../../modules/observations/monitorSchema");
 const { formatObservationText } = require("../../modules/observations/formatObservation");
 const {
+  formatMetricValue,
   inferChartValueFormat,
   normalizeValueFormat,
 } = require("../../modules/observations/valueFormat");
@@ -45,6 +47,7 @@ const ObservationController = require("../../controllers/ObservationController")
 const {
   getIncludes: getObservationIncludes,
   serializeFeedback,
+  serializeObservation,
 } = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const {
@@ -169,7 +172,28 @@ describe("workspace observations", () => {
 
     expect(attention.showDataHealth).toBe(true);
     expect(attention.observations).toHaveLength(2);
+    expect(attention.needsAttention).toHaveLength(2);
+    expect(attention.notableChanges).toHaveLength(0);
     expect(attention.observations[0].severity).toBe("critical");
+  });
+
+  it("keeps healthy movement out of Home's Needs attention section", () => {
+    const attention = prioritizeHomeAttention([{
+      id: "regression",
+      impact: "negative",
+      lastDetectedAt: "2026-08-04T10:00:00.000Z",
+      monitor: { importance: 1 },
+      severity: "medium",
+    }, {
+      id: "healthy-growth",
+      impact: "positive",
+      lastDetectedAt: "2026-08-04T11:00:00.000Z",
+      monitor: { importance: 3 },
+      severity: "critical",
+    }], 0);
+
+    expect(attention.needsAttention.map((item) => item.id)).toEqual(["regression"]);
+    expect(attention.notableChanges.map((item) => item.id)).toEqual(["healthy-growth"]);
   });
 
   it("separates current data-health failures from recovered history", () => {
@@ -238,6 +262,37 @@ describe("workspace observations", () => {
       where: expect.objectContaining({ status: "resolved" }),
     }));
     findSpy.mockRestore();
+  });
+
+  it("returns searchable Activity pages with the total resolved-change count", async () => {
+    const findSpy = vi.spyOn(db.Observation, "findAll").mockResolvedValue([]);
+    const countSpy = vi.spyOn(db.Observation, "count").mockResolvedValue(24);
+
+    const result = await new ObservationController().list({
+      allProjects: true,
+      projectIds: [],
+      teamId: 1,
+      userId: 2,
+    }, {
+      limit: 10,
+      page: 2,
+      search: "Revenue",
+      status: "resolved",
+    });
+
+    expect(findSpy).toHaveBeenCalledWith(expect.objectContaining({
+      limit: 10,
+      offset: 10,
+      subQuery: false,
+      where: expect.objectContaining({ status: "resolved" }),
+    }));
+    expect(findSpy.mock.calls[0][0].where[Op.or]).toHaveLength(4);
+    expect(countSpy).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ status: "resolved" }),
+    }));
+    expect(result).toMatchObject({ page: 2, pageSize: 10, total: 24 });
+    findSpy.mockRestore();
+    countSpy.mockRestore();
   });
 
   it("returns only the current user's observation feedback", () => {
@@ -311,16 +366,33 @@ describe("workspace observations", () => {
 
   it("inherits currency and percentage meaning from chart value formulas", () => {
     expect(inferChartValueFormat("${val / 100}")).toMatchObject({
-      currency: "USD",
+      display: { currency: "USD", scale: 0.01 },
+      meaning: "currency",
       mode: "chart",
-      scale: 0.01,
-      type: "currency",
     });
     expect(inferChartValueFormat("{val * 100}%")).toMatchObject({
+      display: { scale: 100 },
+      meaning: "percentage",
       mode: "chart",
-      scale: 100,
-      type: "percentage",
     });
+  });
+
+  it("keeps metric meaning separate from display precision and notation", () => {
+    const valueFormat = normalizeValueFormat({
+      display: {
+        currency: "USD",
+        decimals: 1,
+        notation: "compact",
+      },
+      meaning: "currency",
+      mode: "override",
+    });
+
+    expect(valueFormat).toMatchObject({
+      display: { currency: "USD", decimals: 1, notation: "compact" },
+      meaning: "currency",
+    });
+    expect(formatMetricValue(12500, valueFormat)).toBe("$12.5K");
   });
 
   it("validates explicit percentage storage and reports absolute movement in points", () => {
@@ -344,12 +416,58 @@ describe("workspace observations", () => {
     });
 
     expect(text.summary).toContain("12.4% to 10.2%");
-    expect(text.summary).toContain("2.2 percentage points");
+    expect(text.title).toContain("2.2 percentage points");
     expect(() => normalizeValueFormat({
       mode: "override",
       scale: 10,
       type: "percentage",
     })).toThrow("percentage values");
+  });
+
+  it("serializes observations with the monitor's current value formatting", () => {
+    const observation = serializeObservation({
+      absolute_delta: -0.022,
+      baseline_value: 0.124,
+      comparison_period_end: new Date("2026-08-03T00:00:00.000Z"),
+      comparison_period_start: new Date("2026-08-02T00:00:00.000Z"),
+      confidence: "medium",
+      current_period_end: new Date("2026-08-05T00:00:00.000Z"),
+      current_period_start: new Date("2026-08-04T00:00:00.000Z"),
+      current_value: 0.102,
+      direction: "decrease",
+      id: 91,
+      relative_delta: -0.1774,
+      status: "open",
+      summary: "Stored fallback summary",
+      title: "Stored fallback title",
+      unit: "percent_ratio",
+      MetricMonitor: createMonitor({
+        name: "Trial conversion",
+        metric_spec: {
+          desiredDirection: "increase",
+          unit: "percent_ratio",
+          valueFormat: {
+            display: {
+              currency: null,
+              decimals: 1,
+              notation: "standard",
+              prefix: "",
+              scale: 100,
+              suffix: "",
+            },
+            meaning: "percentage",
+            mode: "override",
+          },
+        },
+      }),
+    });
+
+    expect(observation.title).toBe("Trial conversion decreased 2.2 percentage points");
+    expect(observation.summary).toContain("12.4% to 10.2%");
+    expect(observation.monitor.valueFormat).toMatchObject({
+      display: { decimals: 1, scale: 100 },
+      meaning: "percentage",
+    });
   });
 
   it("treats an explicit count KPI as a database record monitor", () => {

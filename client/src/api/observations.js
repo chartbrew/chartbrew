@@ -20,7 +20,7 @@ async function observationRequest(path, options = {}) {
       ? Math.max(1, Math.ceil(retryAfterSeconds / 60))
       : null;
     const rateLimitMessage = response.status === 429
-      ? `You have sent too many test summaries. Try again in ${retryAfterMinutes || 60} minutes.`
+      ? `You have sent too many test Activity digests. Try again in ${retryAfterMinutes || 60} minutes.`
       : null;
     const error = new Error(payload.error || rateLimitMessage || "The request could not be completed");
     error.code = payload.code;

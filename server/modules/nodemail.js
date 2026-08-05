@@ -212,7 +212,7 @@ module.exports.sendObservationDigest = async (data) => {
   ));
   const healthLines = data.healthItems.map((item) => `• ${item.message}`);
   const textLines = [
-    `Your Chartbrew summary for ${data.teamName}`,
+    `Your Chartbrew Activity digest for ${data.teamName}`,
     "",
     ...observationLines,
     ...healthLines,
@@ -223,7 +223,7 @@ module.exports.sendObservationDigest = async (data) => {
   return nodemail.sendMail({
     from: settings.adminMail,
     html: emailHtml,
-    subject: `Chartbrew summary — ${data.teamName}`,
+    subject: `Chartbrew Activity digest — ${data.teamName}`,
     text: textLines.join("\n"),
     to: data.recipient,
   });

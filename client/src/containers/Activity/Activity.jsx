@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect, useMemo, useRef, useState,
+} from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Chip, Dropdown, InputGroup, Modal, Spinner, Tabs, Tooltip,
+  Button, Chip, Dropdown, InputGroup, Modal, Spinner, Table, Tabs, Tooltip,
 } from "@heroui/react";
 import {
   LuBell,
   LuChartNoAxesColumn,
+  LuChevronRight,
   LuCircleCheck,
   LuDatabase,
   LuEllipsis,
@@ -38,6 +41,7 @@ import {
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
+import HeroPaginationNav from "../../components/HeroPaginationNav";
 import ObservationCard from "./ObservationCard";
 import MonitorSettingsModal from "./MonitorSettingsModal";
 import SummaryScheduleModal from "./SummaryScheduleModal";
@@ -63,6 +67,17 @@ const HEALTH_TYPE_LABELS = {
   dataset: "Dataset",
   monitor: "Watched metric",
 };
+const PAST_CHANGES_PER_PAGE = 10;
+
+function formatPeriod(period) {
+  if (!period?.start || !period?.end) return "—";
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${formatter.format(new Date(period.start))} – ${formatter.format(new Date(period.end))}`;
+}
 
 function getHealthIcon(type, resolved = false) {
   if (resolved) return <LuCircleCheck className="text-success" size={16} aria-hidden />;
@@ -177,6 +192,7 @@ function Activity() {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const [activity, setActivity] = useState([]);
+  const [pastActivity, setPastActivity] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [digests, setDigests] = useState([]);
   const [health, setHealth] = useState({ count: 0, items: [] });
@@ -190,7 +206,11 @@ function Activity() {
   const [digestRemovePending, setDigestRemovePending] = useState(false);
   const [digestToRemove, setDigestToRemove] = useState(null);
   const [monitorToRemove, setMonitorToRemove] = useState(null);
+  const [pastLoading, setPastLoading] = useState(false);
+  const [pastPage, setPastPage] = useState(1);
+  const [pastTotal, setPastTotal] = useState(0);
   const [query, setQuery] = useState("");
+  const pastRequestId = useRef(0);
   const selectedTab = searchParams.get("tab") || "changes";
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const canEdit = EDIT_ROLES.has(teamRole);
@@ -199,16 +219,15 @@ function Activity() {
     if (!team?.id) return;
     setLoading(true);
     try {
-      const [openChanges, pastChanges, workspaceAlerts, dataHealth, watchedMetrics, summaries]
+      const [openChanges, workspaceAlerts, dataHealth, watchedMetrics, summaries]
         = await Promise.all([
           getActivity(team.id, { limit: 50, status: "open" }),
-          getActivity(team.id, { limit: 50, status: "resolved" }),
           getAlerts(team.id),
           getDataHealth(team.id),
           getMonitors(team.id),
           getObservationDigests(team.id),
         ]);
-      setActivity([...openChanges.items, ...pastChanges.items]);
+      setActivity(openChanges.items);
       setAlerts(workspaceAlerts);
       setHealth(dataHealth);
       setMonitors(watchedMetrics);
@@ -224,6 +243,35 @@ function Activity() {
     load();
   }, [team?.id]);
 
+  const loadPastPage = async (page, search = query) => {
+    if (!team?.id) return;
+    const requestId = pastRequestId.current + 1;
+    pastRequestId.current = requestId;
+    setPastLoading(true);
+    try {
+      const response = await getActivity(team.id, {
+        limit: PAST_CHANGES_PER_PAGE,
+        page,
+        search: search.trim(),
+        status: "resolved",
+      });
+      if (requestId !== pastRequestId.current) return;
+      setPastActivity(response.items);
+      setPastPage(response.page || page);
+      setPastTotal(response.total || response.items.length);
+    } catch (error) {
+      if (requestId === pastRequestId.current) toast.error(error.message);
+    } finally {
+      if (requestId === pastRequestId.current) setPastLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!team?.id) return undefined;
+    const timeout = setTimeout(() => loadPastPage(1, query), query.trim() ? 250 : 0);
+    return () => clearTimeout(timeout);
+  }, [team?.id, query]);
+
   const filteredActivity = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return activity;
@@ -235,7 +283,11 @@ function Activity() {
     ].filter(Boolean).join(" ").toLowerCase().includes(normalized));
   }, [activity, query]);
   const openActivity = filteredActivity.filter((item) => item.status === "open");
-  const pastActivity = filteredActivity.filter((item) => item.status === "resolved");
+  const needsAttentionActivity = openActivity.filter((item) => item.impact !== "positive");
+  const notableActivity = openActivity.filter((item) => item.impact === "positive");
+  const pastTotalPages = Math.max(1, Math.ceil(pastTotal / PAST_CHANGES_PER_PAGE));
+  const pastPageStart = pastTotal === 0 ? 0 : ((pastPage - 1) * PAST_CHANGES_PER_PAGE) + 1;
+  const pastPageEnd = Math.min(pastPage * PAST_CHANGES_PER_PAGE, pastTotal);
 
   const removeMonitor = async (monitorId) => {
     setMonitorPending(true);
@@ -300,7 +352,7 @@ function Activity() {
       await deleteObservationDigest(team.id, subscriptionId);
       setDigests((current) => current.filter((item) => item.id !== subscriptionId));
       setDigestToRemove(null);
-      toast.success("Summary schedule removed");
+      toast.success("Activity digest removed");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -316,7 +368,7 @@ function Activity() {
       setDigests((current) => current.map((item) => (
         item.id === updated.id ? updated : item
       )));
-      toast.success(updated.enabled ? "Summary schedule resumed" : "Summary schedule paused");
+      toast.success(updated.enabled ? "Activity digest resumed" : "Activity digest paused");
     } catch (error) {
       toast.error(error.message);
     }
@@ -326,7 +378,7 @@ function Activity() {
     setTestDigestPendingId(subscriptionId);
     try {
       await sendTestObservationDigest(team.id, subscriptionId);
-      toast.success("Test summary email sent");
+      toast.success("Test Activity digest sent");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -353,11 +405,27 @@ function Activity() {
 
   return (
     <main className="flex w-full flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-tw text-2xl font-semibold">Activity</h1>
-        <p className="text-sm text-foreground-500">
-          Review detected changes, refresh issues, and watched metrics.
-        </p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-tw text-2xl font-semibold">Activity</h1>
+          <p className="text-sm text-foreground-500">
+            Review detected changes, refresh issues, and watched metrics.
+          </p>
+        </div>
+        {selectedTab === "summaries" ? (
+          <Button
+            className="self-start sm:self-auto"
+            onPress={() => {
+              setSelectedDigest(null);
+              setSummaryModalOpen(true);
+            }}
+            size="sm"
+            variant="primary"
+          >
+            <LuPlus size={16} aria-hidden />
+            Schedule digest
+          </Button>
+        ) : null}
       </header>
 
       <Tabs
@@ -381,18 +449,18 @@ function Activity() {
               Data health
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab id="monitors">
+            <Tabs.Tab className="ml-2 border-l border-divider pl-3" id="monitors">
               Watched metrics
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="summaries">
-              Summaries
+              Activity digests
               <Tabs.Indicator />
             </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
 
-        <Tabs.Panel id="changes" className="p-0">
+        <Tabs.Panel id="changes" className="p-0 pt-1">
           <div className="flex flex-col gap-4">
             <InputGroup fullWidth className="max-w-lg">
               <InputGroup.Input
@@ -409,36 +477,123 @@ function Activity() {
               <h2 className="font-tw text-lg font-semibold" id="open-changes-heading">
                 Needs attention
               </h2>
-              {openActivity.length > 0 ? (
+              {needsAttentionActivity.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {openActivity.map((observation) => (
+                  {needsAttentionActivity.map((observation) => (
                     <ObservationCard key={observation.id} observation={observation} />
                   ))}
                 </div>
               ) : (
                 <EmptyState
-                  description="There are no open changes in your watched metrics."
+                  description="No current change needs your attention."
                   title="Nothing needs attention"
                 />
               )}
             </section>
 
-            {pastActivity.length > 0 ? (
-              <section aria-labelledby="past-changes-heading" className="mt-4 flex flex-col gap-3">
-                <h2 className="font-tw text-lg font-semibold" id="past-changes-heading">
-                  Past changes
+            {notableActivity.length > 0 ? (
+              <section aria-labelledby="notable-changes-heading" className="mt-4 flex flex-col gap-3">
+                <h2 className="font-tw text-lg font-semibold" id="notable-changes-heading">
+                  Notable changes
                 </h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {pastActivity.map((observation) => (
+                  {notableActivity.map((observation) => (
                     <ObservationCard key={observation.id} observation={observation} />
                   ))}
                 </div>
               </section>
             ) : null}
+
+            {pastLoading || pastTotal > 0 ? (
+              <section aria-labelledby="past-changes-heading" className="mt-4 flex flex-col gap-3">
+                <h2 className="font-tw text-lg font-semibold" id="past-changes-heading">
+                  Past changes
+                </h2>
+                <Table className={`border border-divider shadow-none ${pastLoading ? "opacity-60" : ""}`}>
+                  <Table.ScrollContainer>
+                    <Table.Content
+                      aria-label="Past changes"
+                      className="min-w-[760px]"
+                      onRowAction={(key) => navigate(`/activity/${key}`)}
+                    >
+                      <Table.Header>
+                        <Table.Column id="change" isRowHeader textValue="Change">
+                          Change
+                        </Table.Column>
+                        <Table.Column id="source" textValue="Source">
+                          Source
+                        </Table.Column>
+                        <Table.Column id="period" textValue="Period">
+                          Period
+                        </Table.Column>
+                        <Table.Column id="resolved" textValue="Resolved">
+                          Resolved
+                        </Table.Column>
+                        <Table.Column className="w-10" id="action" textValue="Open change" />
+                      </Table.Header>
+                      <Table.Body renderEmptyState={() => (
+                        <span className="text-sm text-muted">No matching changes on this page</span>
+                      )}>
+                        {pastActivity.map((observation) => (
+                          <Table.Row
+                            className="cursor-pointer"
+                            id={String(observation.id)}
+                            key={observation.id}
+                          >
+                            <Table.Cell>
+                              <div className="flex max-w-md flex-col gap-0.5 py-1">
+                                <span className="font-medium text-foreground">{observation.title}</span>
+                                <span className="truncate text-xs text-muted">{observation.summary}</span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <div className="flex flex-col gap-0.5">
+                                <span>{observation.project?.name || "Workspace"}</span>
+                                <span className="text-xs text-muted">{observation.chart?.name || "—"}</span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="whitespace-nowrap text-sm text-muted">
+                              {formatPeriod(observation.currentPeriod)}
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Chip className="whitespace-nowrap" size="sm" variant="soft">
+                                <Chip.Label>
+                                  {observation.resolvedAt
+                                    ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
+                                    : "Resolved"}
+                                </Chip.Label>
+                              </Chip>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <LuChevronRight className="text-foreground-400" size={16} aria-hidden />
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table.ScrollContainer>
+                  <Table.Footer className="flex flex-col gap-3 border-t border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-sm text-muted" aria-live="polite">
+                      {pastLoading
+                        ? "Loading past changes…"
+                        : `${pastPageStart}–${pastPageEnd} of ${pastTotal}`}
+                    </span>
+                    {pastTotalPages > 1 ? (
+                      <HeroPaginationNav
+                        ariaLabel="Past changes pagination"
+                        onPageChange={loadPastPage}
+                        page={pastPage}
+                        totalPages={pastTotalPages}
+                      />
+                    ) : null}
+                  </Table.Footer>
+                </Table>
+              </section>
+            ) : null}
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel id="alerts" className="p-0">
+        <Tabs.Panel id="alerts" className="p-0 pt-1">
           {alerts.length > 0 ? (
             <ItemList>
               {alerts.map((alert) => (
@@ -482,7 +637,7 @@ function Activity() {
           )}
         </Tabs.Panel>
 
-        <Tabs.Panel id="health" className="p-0">
+        <Tabs.Panel id="health" className="p-0 pt-1">
           <div className="flex flex-col gap-6">
             <section aria-labelledby="active-health-heading" className="flex flex-col gap-3">
               <h2 className="font-tw text-lg font-semibold" id="active-health-heading">
@@ -553,7 +708,7 @@ function Activity() {
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel id="monitors" className="p-0">
+        <Tabs.Panel id="monitors" className="p-0 pt-1">
           {monitors.length > 0 ? (
             <ItemList>
               {monitors.map((monitor) => (
@@ -579,30 +734,22 @@ function Activity() {
                         Refresh
                       </Button>
                       <Tooltip>
-                        <Tooltip.Trigger>
-                          <Button
-                            aria-label={`Edit ${monitor.name}`}
-                            isIconOnly
-                            onPress={() => setSelectedMonitor(monitor)}
-                            size="sm"
-                            variant="ghost"
-                          >
-                            <LuPencil size={16} aria-hidden />
-                          </Button>
+                        <Tooltip.Trigger
+                          aria-label={`Edit ${monitor.name}`}
+                          className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                          onClick={() => setSelectedMonitor(monitor)}
+                        >
+                          <LuPencil size={16} aria-hidden />
                         </Tooltip.Trigger>
                         <Tooltip.Content>Edit metric</Tooltip.Content>
                       </Tooltip>
                       <Tooltip>
-                        <Tooltip.Trigger>
-                          <Button
-                            aria-label={`Stop watching ${monitor.name}`}
-                            isIconOnly
-                            onPress={() => setMonitorToRemove(monitor)}
-                            size="sm"
-                            variant="ghost"
-                          >
-                            <LuTrash2 size={16} aria-hidden />
-                          </Button>
+                        <Tooltip.Trigger
+                          aria-label={`Stop watching ${monitor.name}`}
+                          className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                          onClick={() => setMonitorToRemove(monitor)}
+                        >
+                          <LuTrash2 size={16} aria-hidden />
                         </Tooltip.Trigger>
                         <Tooltip.Content>Stop watching</Tooltip.Content>
                       </Tooltip>
@@ -647,23 +794,9 @@ function Activity() {
           )}
         </Tabs.Panel>
 
-        <Tabs.Panel id="summaries" className="p-0">
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-end">
-              <Button
-                onPress={() => {
-                  setSelectedDigest(null);
-                  setSummaryModalOpen(true);
-                }}
-                size="sm"
-                variant="primary"
-              >
-                <LuPlus size={16} aria-hidden />
-                Schedule summary
-              </Button>
-            </div>
-            {digests.length > 0 ? (
-              <ItemList>
+        <Tabs.Panel id="summaries" className="p-0 pt-1">
+          {digests.length > 0 ? (
+            <ItemList>
               {digests.map((subscription) => (
                 <ItemRow
                   actions={(
@@ -675,21 +808,17 @@ function Activity() {
                       >
                         {subscription.enabled ? "Pause" : "Resume"}
                       </Button>
-                      <Dropdown aria-label="Summary schedule options">
-                        <Dropdown.Trigger>
-                          <Button
-                            aria-label={testDigestPendingId === subscription.id
-                              ? "Sending test summary email"
-                              : "Open summary schedule options"}
-                            isDisabled={Boolean(testDigestPendingId)}
-                            isIconOnly
-                            size="sm"
-                            variant="ghost"
-                          >
-                            {testDigestPendingId === subscription.id
-                              ? <Spinner aria-hidden size="sm" />
-                              : <LuEllipsis size={18} aria-hidden />}
-                          </Button>
+                      <Dropdown aria-label="Activity digest options">
+                        <Dropdown.Trigger
+                          aria-label={testDigestPendingId === subscription.id
+                            ? "Sending test Activity digest"
+                            : "Open Activity digest options"}
+                          className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                          isDisabled={Boolean(testDigestPendingId)}
+                        >
+                          {testDigestPendingId === subscription.id
+                            ? <Spinner aria-hidden size="sm" />
+                            : <LuEllipsis size={18} aria-hidden />}
                         </Dropdown.Trigger>
                         <Dropdown.Popover>
                           <Dropdown.Menu>
@@ -732,7 +861,7 @@ function Activity() {
                   title={(
                     <>
                       <span className="font-medium">
-                        {subscription.cadence === "weekly" ? "Weekly" : "Daily"} summary
+                        {subscription.cadence === "weekly" ? "Weekly" : "Daily"} Activity digest
                       </span>
                       {!subscription.enabled ? (
                         <Chip size="sm" variant="soft">
@@ -743,14 +872,13 @@ function Activity() {
                   )}
                 />
               ))}
-              </ItemList>
-            ) : (
-              <EmptyState
-                description="Choose when Chartbrew should email changes and data-health issues."
-                title="No scheduled summaries"
-              />
-            )}
-          </div>
+            </ItemList>
+          ) : (
+            <EmptyState
+              description="Choose when Chartbrew should email changes and data-health issues."
+              title="No Activity digests scheduled"
+            />
+          )}
         </Tabs.Panel>
       </Tabs>
 
@@ -778,11 +906,11 @@ function Activity() {
         <Modal.Container>
           <Modal.Dialog className="sm:max-w-md">
             <Modal.Header>
-              <Modal.Heading>Delete this summary schedule?</Modal.Heading>
+              <Modal.Heading>Delete this Activity digest?</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
               <p className="text-sm text-foreground-500">
-                Chartbrew will stop sending this summary. Activity and emails already sent
+                Chartbrew will stop sending this digest. Activity and emails already sent
                 will not be removed.
               </p>
             </Modal.Body>

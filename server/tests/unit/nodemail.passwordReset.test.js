@@ -122,7 +122,7 @@ describe("nodemail React Email templates", () => {
     expect(html).toContain(snapshotUrl);
   });
 
-  it("renders the workspace summary with React Email", async () => {
+  it("renders the Activity digest with React Email", async () => {
     const mailModule = await import("../../modules/mail.js");
     const mail = mailModule.default || mailModule;
     const result = await mail.sendObservationDigest({
@@ -149,7 +149,7 @@ describe("nodemail React Email templates", () => {
     const message = JSON.parse(result.message);
     const html = normalizeHtml(message.html);
     expect(message.to).toEqual([{ address: "maya@example.com", name: "" }]);
-    expect(message.subject).toBe("Chartbrew summary — Acme Inc.");
+    expect(message.subject).toBe("Chartbrew Activity digest — Acme Inc.");
     expect(html).toContain("Hi Maya, here’s what needs attention");
     expect(html).toContain("Trial conversion decreased 18%");
     expect(html).toContain("Revenue increased 30%");

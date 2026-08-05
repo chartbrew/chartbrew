@@ -5,7 +5,8 @@ const CURRENCY_BY_SYMBOL = {
   "£": "GBP",
   "€": "EUR",
 };
-const VALUE_TYPES = new Set(["currency", "number", "percentage"]);
+const VALUE_MEANINGS = new Set(["currency", "number", "percentage"]);
+const DISPLAY_NOTATIONS = new Set(["compact", "standard"]);
 
 function inferScale(formula) {
   if (!formula) return 1;
@@ -16,41 +17,88 @@ function inferScale(formula) {
   return Number.isFinite(scale) && scale !== 0 ? scale : 1;
 }
 
+function normalizeDecimals(value) {
+  if (value === undefined || value === null || value === "auto") return null;
+  const decimals = Number(value);
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 6) {
+    throw new Error("Choose between 0 and 6 decimal places");
+  }
+  return decimals;
+}
+
+function normalizeNotation(value) {
+  const notation = value || "standard";
+  if (!DISPLAY_NOTATIONS.has(notation)) {
+    throw new Error("Choose a valid number style");
+  }
+  return notation;
+}
+
+function getMeaning(valueFormat = {}) {
+  return valueFormat.meaning || valueFormat.type || "number";
+}
+
+function getDisplay(valueFormat = {}) {
+  return valueFormat.display || valueFormat;
+}
+
+function buildValueFormat({
+  currency = null,
+  decimals = null,
+  meaning = "number",
+  mode = "override",
+  notation = "standard",
+  prefix = "",
+  scale = 1,
+  suffix = "",
+}) {
+  return {
+    display: {
+      currency,
+      decimals,
+      notation,
+      prefix,
+      scale,
+      suffix,
+    },
+    meaning,
+    mode,
+  };
+}
+
 function inferChartValueFormat(formula) {
   const parsed = parseValueFormula(formula);
   const prefix = parsed.prefix.trim();
   const suffix = parsed.suffix.trim();
   const currency = CURRENCY_BY_SYMBOL[prefix] || null;
-  let type = "number";
-  if (suffix === "%") type = "percentage";
-  else if (currency) type = "currency";
+  let meaning = "number";
+  if (suffix === "%") meaning = "percentage";
+  else if (currency) meaning = "currency";
 
-  return {
+  return buildValueFormat({
     currency,
+    meaning,
     mode: "chart",
     prefix: currency ? "" : parsed.prefix,
     scale: inferScale(formula),
     suffix: suffix === "%" ? "" : parsed.suffix,
-    type,
-  };
+  });
 }
 
 function fromLegacyUnit(unit) {
   if (unit?.startsWith("currency_")) {
-    return {
+    return buildValueFormat({
       currency: unit.slice("currency_".length).toUpperCase(),
-      mode: "override",
-      scale: 1,
-      type: "currency",
-    };
+      meaning: "currency",
+    });
   }
   if (unit === "percent_ratio") {
-    return { mode: "override", scale: 100, type: "percentage" };
+    return buildValueFormat({ meaning: "percentage", scale: 100 });
   }
   if (unit === "percent" || unit === "percentage_point") {
-    return { mode: "override", scale: 1, type: "percentage" };
+    return buildValueFormat({ meaning: "percentage" });
   }
-  return { mode: "override", scale: 1, type: "number" };
+  return buildValueFormat({ meaning: "number" });
 }
 
 function normalizeValueFormat(valueFormat, formula, legacyUnit) {
@@ -58,33 +106,40 @@ function normalizeValueFormat(valueFormat, formula, legacyUnit) {
   if (!valueFormat || valueFormat.mode === "chart") {
     return inferChartValueFormat(formula);
   }
-  if (!VALUE_TYPES.has(valueFormat.type)) {
-    throw new Error("Choose how Chartbrew should display this metric");
+
+  const meaning = getMeaning(valueFormat);
+  if (!VALUE_MEANINGS.has(meaning)) {
+    throw new Error("Choose what this metric represents");
   }
 
-  if (valueFormat.type === "currency") {
-    const currency = `${valueFormat.currency || ""}`.trim().toUpperCase();
+  const source = getDisplay(valueFormat);
+  const decimals = normalizeDecimals(source.decimals);
+  const notation = normalizeNotation(source.notation);
+  if (meaning === "currency") {
+    const currency = `${source.currency || valueFormat.currency || ""}`.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency)) {
       throw new Error("Choose a valid currency");
     }
-    return { currency, mode: "override", scale: 1, type: "currency" };
+    return buildValueFormat({ currency, decimals, meaning, notation });
   }
-  if (valueFormat.type === "percentage") {
-    const scale = Number(valueFormat.scale);
+  if (meaning === "percentage") {
+    const scale = Number(source.scale ?? valueFormat.scale);
     if (![1, 100].includes(scale)) {
       throw new Error("Choose how percentage values are stored");
     }
-    return { mode: "override", scale, type: "percentage" };
+    return buildValueFormat({ decimals, meaning, notation, scale });
   }
-  return { mode: "override", scale: 1, type: "number" };
+  return buildValueFormat({ decimals, meaning, notation });
 }
 
 function toLegacyUnit(valueFormat) {
-  if (valueFormat.type === "currency") {
-    return `currency_${valueFormat.currency.toLowerCase()}`;
+  const meaning = getMeaning(valueFormat);
+  const display = getDisplay(valueFormat);
+  if (meaning === "currency") {
+    return `currency_${display.currency.toLowerCase()}`;
   }
-  if (valueFormat.type === "percentage") {
-    return valueFormat.scale === 100 ? "percent_ratio" : "percent";
+  if (meaning === "percentage") {
+    return Number(display.scale) === 100 ? "percent_ratio" : "percent";
   }
   return "number";
 }
@@ -100,24 +155,33 @@ function getValueFormat(metricSpec = {}) {
 function formatMetricValue(value, valueFormat) {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) return "—";
-  const format = valueFormat || { mode: "override", scale: 1, type: "number" };
-  const displayValue = numericValue * (Number(format.scale) || 1);
+  const meaning = getMeaning(valueFormat);
+  const display = getDisplay(valueFormat);
+  const displayValue = numericValue * (Number(display.scale) || 1);
+  const hasFixedDecimals = Number.isInteger(display.decimals);
+  let fractionDigits = 2;
+  if (hasFixedDecimals) fractionDigits = display.decimals;
+  else if (display.notation === "compact") fractionDigits = 1;
+  const options = {
+    maximumFractionDigits: fractionDigits,
+    notation: normalizeNotation(display.notation),
+  };
+  if (hasFixedDecimals) options.minimumFractionDigits = fractionDigits;
 
-  if (format.type === "currency") {
+  if (meaning === "currency") {
     return new Intl.NumberFormat("en", {
-      currency: format.currency,
-      maximumFractionDigits: 2,
+      ...options,
+      currency: display.currency,
       style: "currency",
     }).format(displayValue);
   }
-  const formatted = new Intl.NumberFormat("en", {
-    maximumFractionDigits: 2,
-  }).format(displayValue);
-  if (format.type === "percentage") return `${formatted}%`;
-  return `${format.prefix || ""}${formatted}${format.suffix || ""}`;
+  const formatted = new Intl.NumberFormat("en", options).format(displayValue);
+  if (meaning === "percentage") return `${formatted}%`;
+  return `${display.prefix || ""}${formatted}${display.suffix || ""}`;
 }
 
 module.exports = {
+  buildValueFormat,
   formatMetricValue,
   fromLegacyUnit,
   getValueFormat,

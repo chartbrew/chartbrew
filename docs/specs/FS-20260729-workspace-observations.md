@@ -198,8 +198,9 @@ Activity provides a searchable, filterable history without mixing domain semanti
 
 - **Changes:** published observations, with read/saved/snoozed state. Show two or three open items
   requiring attention prominently, place positive or neutral open movement under **Notable
-  changes**, and render **Past changes** as a dense chronological list rather than another card
-  grid. Past rows retain metric, direction, dashboard, resolved time, and a full status chip.
+  changes**, and render **Past changes** as a chronological table rather than another card grid.
+  The table shows ten changes per page and retains metric, dashboard, period, resolved time, and a
+  full status chip.
 - **Alerts:** existing configured alerts and their trigger events.
 - **Data health:** freshness and refresh failures in user language. Detailed diagnostics remain
   team-owner/admin only.
@@ -967,7 +968,7 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 
 - [x] Replace the hard-coded value-format list with a display contract that defaults to the chart's
   existing format.
-- [ ] Separate the meaning of a value (`number`, `currency`, or `percentage`) from how it is
+- [x] Separate the meaning of a value (`number`, `currency`, or `percentage`) from how it is
   displayed (currency, precision, compact notation, and percentage scale).
 - [x] Explain in the setup flow what Chartbrew watches, when it evaluates the metric, and where
   detected changes appear.
@@ -1012,13 +1013,13 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   separating open changes from resolved history.
 - [x] Add specific empty states for no monitors, collecting baselines, no material changes, stale
   data, and inaccessible projects.
-- [ ] Separate unhealthy **Needs attention** items from positive or neutral **Notable changes**.
-- [ ] Replace the Past changes card grid with a dense chronological list.
-- [ ] Remove mechanically repetitive card copy and apply percentage-point language where clearer.
+- [x] Separate unhealthy **Needs attention** items from positive or neutral **Notable changes**.
+- [x] Replace the Past changes card grid with a paginated chronological table.
+- [x] Remove mechanically repetitive card copy and apply percentage-point language where clearer.
 
 ### 5. Complete the observation workflow
 
-- [ ] Finish observation detail with a canonical evidence visual and user-facing comparison language
+- [x] Finish observation detail with a canonical evidence visual and user-facing comparison language
   instead of confidence, score, and completeness internals.
 - [x] Implement driver exploration only when the available dimensions can reconcile with the
   observed change.
@@ -1060,7 +1061,7 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 - [x] Produce a calibration report that joins deterministic features, user feedback, and sampled LLM
   audit results.
 - [x] Require an explicit, versioned policy change before audited findings affect publication.
-- [ ] Run a final copy and interaction pass across setup, Home, Activity, detail, management, and
+- [x] Run a final copy and interaction pass across setup, Home, Activity, detail, management, and
   summaries so terminology and states remain consistent.
 
 ## Iteration Three: From Monitoring To Proactive Intelligence
@@ -1085,17 +1086,17 @@ and optional audit agreement, making threshold decisions evidence-based rather t
 
 ### Phase 2 — Make the intelligence surfaces editorial and scannable
 
-- [ ] Make Home distinguish **Needs attention** from **Notable changes**, with healthy direction
+- [x] Make Home distinguish **Needs attention** from **Notable changes**, with healthy direction
   affecting placement and priority.
-- [ ] Rewrite change cards so the supporting line adds context instead of repeating the headline.
-- [ ] Use percentage-point headlines for rate changes when they are easier to interpret.
-- [ ] Render Past changes as dense chronological rows and visually separate Activity tabs from
-  watched-metric and digest management.
-- [ ] Add a compact evidence visual to change detail, translate comparison quality into user
+- [x] Rewrite change cards so the supporting line adds context instead of repeating the headline.
+- [x] Use percentage-point headlines for rate changes when they are easier to interpret.
+- [x] Render Past changes as a chronological table with ten changes per page.
+- [x] Visually separate Activity tabs from watched-metric and digest management.
+- [x] Add a compact evidence visual to change detail, translate comparison quality into user
   language, and move secondary lifecycle actions into an overflow menu.
-- [ ] Finish the value contract so metric meaning and display formatting are independent and
+- [x] Finish the value contract so metric meaning and display formatting are independent and
   consistent across Home, Activity, detail, and email.
-- [ ] Use **Activity digest** consistently in user-facing copy while retaining `digest` as the
+- [x] Use **Activity digest** consistently in user-facing copy while retaining `digest` as the
   implementation term.
 
 **Exit condition:** Maya can scan Home, understand why each item matters, and review history without
