@@ -16,6 +16,13 @@ fact, and represents missing data or insufficient history honestly. An optional,
 runs asynchronously in shadow mode to measure relevance and recommend scoring-policy changes. It
 does not run after every refresh, invent evidence, or change production weights automatically.
 
+Explicit monitoring is the trust-building foundation, not the final product identity. Once real
+relevance feedback has calibrated publication quality, Chartbrew should proactively recommend
+high-confidence metrics worth watching from existing chart definitions and Dataset Intelligence.
+Benji approves the definition and healthy direction before a recommendation becomes a monitor.
+Home remains the primary proactive surface: it should tell Maya what deserves attention now,
+while Activity remains the denser audit trail and management surface.
+
 Refactor **Ask your data** into reusable chat building blocks. Home can show an ephemeral composer
 and inline result without a conversation browser, while the existing modal and observation
 investigations can compose the same chat UI with persistent history where useful. The client stops
@@ -50,6 +57,8 @@ accessibility conventions, colors, and light/dark behavior.
   published values.
 - Explicit meaning beats guessed meaning. Start with existing canonical chart encodings, active
   alerts, and user-created monitors before broader Dataset Intelligence candidates.
+- Proactive, not presumptive. Recommend well-supported metrics and next actions, but require user
+  confirmation before monitoring or persisting new reporting assets.
 - No data is a real state. Never turn missing, stale, partial, or insufficient data into an
   observation.
 - Refresh once, analyze once. Automatic observation processing reuses a successful runtime result
@@ -80,6 +89,10 @@ accessibility conventions, colors, and light/dark behavior.
 - Add explicitly configured weekly/daily observation digests without turning every observation into
   an immediate notification.
 - Add cost-controlled, optional LLM relevance auditing and a human-reviewed calibration report.
+- Graduate from manual setup to bounded, explainable metric recommendations after relevance has
+  been validated against real feedback.
+- Keep Home concise and editorial: distinguish problems requiring action from positive or neutral
+  changes worth knowing, and never repeat the same fact across a card title and supporting copy.
 - Harden and document UpdateRun retention and apply the same maintenance framework to new
   intelligence data.
 
@@ -111,9 +124,12 @@ accessibility conventions, colors, and light/dark behavior.
 | Investigation | A user's contextual Ask session and temporary supporting artifacts. |
 | Digest | Scheduled summary of accessible observations and data-health changes. |
 | Data-health issue | Refresh, freshness, connection, or result-completeness problem. |
+| Metric recommendation | A bounded suggestion to watch an existing, reproducible metric; it is not active until approved. |
 
 User-facing copy should normally use **change**, **insight**, **activity**, **watch**, and
-**data freshness**. `Observation` remains the implementation term. Do not show observation IDs.
+**data freshness**. `Observation` remains the implementation term. Use **Activity digest** for the
+scheduled email feature so it is not confused with dashboard summaries or snapshots. Do not show
+observation IDs.
 
 ## Experience And Information Architecture
 
@@ -137,16 +153,32 @@ Sidebar visibility follows role:
 Home is a bounded aggregate, not a second dashboard:
 
 1. Reusable Ask composer.
-2. Up to three unread or high-priority observations.
-3. At most one actionable data-health summary.
+2. **Needs attention:** up to three total items, with at most one actionable data-health summary and
+   the remaining slots used for unhealthy metric changes ranked by impact, severity, importance,
+   and freshness.
+3. **Notable changes:** at most two positive or neutral changes when they add useful awareness and
+   do not displace a problem requiring action.
 4. Recent or pinned dashboards.
 5. One contextual next step only when it is genuinely relevant.
 
 Do not show generic product promotion in the operational attention rail. Replace “overnight” with
 “since your last visit” or an exact detection time because refresh schedules differ.
 
-After eligible monitors exist, Home may recommend setting up a weekly summary. The card disappears
-after setup or dismissal and never implies that a digest already exists.
+Home copy is editorial rather than mechanically generated:
+
+- The title states one clear fact: `Revenue rose 30%` or `Failed sync rate rose 30 percentage
+  points`.
+- Supporting copy adds information such as the comparison period, unusual range, concentration, or
+  configured healthy direction. It is omitted when it would merely repeat the title.
+- Rate changes prefer percentage-point language when that is the clearest interpretation. A
+  relative percentage may remain secondary evidence.
+- Positive movement for a metric where higher is better does not appear as a problem. Neutral
+  movement may be notable, but it is not labelled unhealthy.
+- Empty copy says `No changes need attention` only after eligible monitors refreshed successfully;
+  it never claims that nothing changed.
+
+After eligible monitors exist, Home may recommend setting up a weekly Activity digest. The
+recommendation disappears after setup or dismissal and never implies that a digest already exists.
 
 ### Dashboard list
 
@@ -164,10 +196,17 @@ The rail is useful to viewers as well as admins; each action remains permission-
 
 Activity provides a searchable, filterable history without mixing domain semantics:
 
-- **Changes:** published observations, with read/saved/snoozed state.
+- **Changes:** published observations, with read/saved/snoozed state. Show two or three open items
+  requiring attention prominently, place positive or neutral open movement under **Notable
+  changes**, and render **Past changes** as a dense chronological list rather than another card
+  grid. Past rows retain metric, direction, dashboard, resolved time, and a full status chip.
 - **Alerts:** existing configured alerts and their trigger events.
 - **Data health:** freshness and refresh failures in user language. Detailed diagnostics remain
   team-owner/admin only.
+
+Search and filters operate across open, notable, and past changes. Activity may remain one route,
+but configuration tabs should be visually separated from the audit trail: **Changes**, **Alerts**,
+and **Data health** are activity; **Watched metrics** and **Digests** are management.
 
 The sidebar badge counts unread changes plus unresolved data-health items visible to the user, not
 every historical event.
@@ -180,9 +219,13 @@ Show:
 - Current value, baseline, absolute delta, relative delta, period, and freshness.
 - Correct unit language, including percentage points versus relative percent.
 - The source chart or a canonical evidence chart with the change period marked.
-- A short deterministic “What changed?” statement.
+- A short deterministic “What changed?” statement that adds context instead of restating the
+  title.
 - Links to the source dashboard and chart.
-- Watch, share, save, snooze, dismiss, feedback, and authorized resolve actions.
+- A restrained action hierarchy: **Investigate**, **Open chart**, and **Save** may remain visible;
+  share, snooze, dismiss, and authorized resolve actions move to an overflow menu.
+- Relevance feedback after the user has seen the evidence, with the current selection visible and
+  editable.
 - Inline reusable Ask scoped to the observation, chart, dataset, comparison window, and allowed
   projects.
 
@@ -190,6 +233,12 @@ Show:
 or “associated with,” never “caused by” or “drove” unless a future causal method supports it.
 Supporting charts appear only after the analysis succeeds and remain temporary until explicitly
 placed.
+
+Do not show scoring confidence, fingerprints, internal sample metadata, or completeness percentages
+as product status. Translate reproducibility into user language such as `Compared with the latest
+14 complete daily periods` and `Last checked 2 hours ago`. Put additional deterministic evidence
+behind **How was this calculated?**. When the source chart does not clearly mark the comparison,
+show a compact canonical evidence chart with the current and comparison windows highlighted.
 
 ## Persona Flows And Empty States
 
@@ -206,7 +255,8 @@ placed.
 8. Maya may save her private investigation or share the observation link. Adding the chart or
    creating an alert is offered only if her role permits it. Promotion persists a real chart
    against the existing dataset; otherwise she can share the observation with an editor.
-9. She marks the change read, saves it, snoozes it, or dismisses it with optional relevance feedback.
+9. She marks the change read, saves it, snoozes it, or dismisses it. Separately, she can answer
+   whether the change was useful; lifecycle actions do not submit feedback on her behalf.
 
 ### Benji: new workspace or no usable history
 
@@ -258,6 +308,34 @@ Version 1 prioritizes:
 
 Exclude unsupported formulas, ambiguous multi-value layers, incomplete periods, high-cardinality
 breakdowns, stale results, and any metric whose unit or aggregation cannot be reproduced.
+
+### Metric recommendations
+
+Recommendations are the bridge from explicit monitoring to a proactive platform. They are
+generated only from reproducible definitions Chartbrew already understands:
+
+- Eligible canonical chart layers used on accessible dashboards.
+- Existing alerts, pinned dashboards, and repeated chart usage as bounded importance evidence.
+- High-confidence Dataset Intelligence metric roles after ambiguity, unit, aggregation, and access
+  checks pass.
+
+Each recommendation explains why it appeared, names its source dashboard/chart or dataset, previews
+the metric definition and value format, and asks the user to confirm what healthy movement means.
+Accepting a recommendation creates a normal `MetricMonitor`; rejecting it stores a bounded dismissal
+so the same suggestion does not immediately return. Recommendations expire when the underlying
+chart or dataset definition changes.
+
+Recommendations must not:
+
+- Execute an additional source query merely to decide what to recommend.
+- Automatically activate monitoring, infer business importance from a field name alone, or guess a
+  healthy direction without confirmation.
+- Occupy Home while a current metric regression or data-health problem needs attention.
+- Expand beyond per-team candidate and monitor limits.
+
+The first recommendation surface belongs in honest setup states and the watched-metric management
+surface. Home may show one contextual recommendation only after signal relevance has been reviewed
+against real feedback. Automatic monitoring remains disabled.
 
 ### Sources of history
 
@@ -318,6 +396,29 @@ cannot select a dataset outside the user's allowed projects.
 
 ## Optional LLM Audit And Calibration
 
+### User relevance feedback
+
+The existing feedback model and endpoint are the storage foundation, but the product loop is not
+complete until feedback is explicit, reversible, and analytically useful:
+
+- Ask `Was this change useful?` after Maya has reviewed the evidence. Relevance remains the internal
+  calibration term, not required user vocabulary.
+- **Useful** is a one-tap response. **Not useful** reveals a short reason selector with bounded
+  options such as `Expected change`, `Too small`, `Wrong comparison or context`, `Already knew
+  this`, and `Not actionable`.
+- Return the current user's verdict and reason with observation detail so the selected state survives
+  reload and can be changed.
+- Feedback is separate from dismissing, resolving, saving, or snoozing. None of those actions imply
+  a relevance verdict.
+- Do not collect free-form tenant text in version 1.
+
+The calibration report joins feedback to the deterministic inputs that produced the observation:
+monitor kind, configured healthy direction, observed direction and impact, severity, magnitude,
+baseline type, completeness, sample count, policy version, and whether a sampled LLM audit agreed.
+It reports cohort counts and low-sample warnings before rates, preserves team privacy, and does not
+print metric names or evidence. The initial aggregate-only operational report remains useful for
+smoke checks but is not sufficient for threshold decisions.
+
 LLM auditing is a separate asynchronous queue and is disabled by default.
 
 Modes:
@@ -356,9 +457,9 @@ Rules:
   user conversations.
 - Compare audit results with explicit user relevance feedback, opens, saves, snoozes, and dismissals.
 
-Add `npm run observations:audit-report` to summarize deterministic outcomes, LLM disagreement, user
-feedback, false-positive proxies, costs, and suggested policy changes without printing tenant
-labels or evidence.
+Use `npm run observations:audit-report` to summarize deterministic outcomes, joined user feedback,
+LLM disagreement, false-positive proxies, costs, and suggested policy changes without printing
+tenant labels or evidence.
 
 ## Reusable Ask Architecture
 
@@ -463,7 +564,9 @@ approved breakdown dimensions. It does not store credentials, raw rows, or full 
 ### `ObservationFeedback`
 
 - Observation/user relation with `relevant`, `not_relevant`, or `unsure`.
-- Optional bounded reason code, not free-form tenant data in version 1.
+- Optional bounded reason code (`expected_change`, `too_small`, `incorrect_context`,
+  `already_known`, `not_actionable`, or `clear_and_useful`), not free-form tenant data in version 1.
+- The observation detail response includes only the authenticated user's current feedback.
 
 ### `ObservationAudit`
 
@@ -667,18 +770,21 @@ type.
 
 ## Rollout
 
-1. **Retention hardening:** document and batch UpdateRun cleanup, add indexes and manual tooling.
-2. **Shadow metric capture:** add monitor/snapshot models and extract explicit chart metrics without
-   publishing observations.
-3. **Deterministic publication:** enable observations for explicitly watched eligible metrics,
-   initially for team owners/admins.
-4. **Maya read experience:** Home, Activity, detail, personal state, feedback, and viewer-safe APIs.
-5. **Reusable Ask:** retain the persistent modal, add a decoupled chat surface, ephemeral sessions,
-   HomeAsk, and scoped investigations.
-6. **Supporting analysis:** bounded driver analysis and authorized session-artifact promotion.
-7. **LLM shadow audit:** enable only for selected test teams with cost ceilings; review reports.
-8. **Wider monitoring and delivery:** editor-created monitors, record-count paths, digest
-   subscriptions, and tuned policy after real feedback.
+The implementation foundation now includes retention, explicit monitors, deterministic publication,
+Home and Activity, scoped Ask, supporting analysis, record-count monitoring, data health, and
+digests. That foundation should roll out in the following remaining order:
+
+1. **Relevance calibration:** finish feedback capture and the joined report before tuning or
+   expanding publication.
+2. **Editorial refinement:** clarify Home priority, dense history, value language, and evidence so
+   users can judge the current system accurately.
+3. **Recommended monitoring:** introduce explainable, approval-based metric recommendations from
+   existing chart and Dataset Intelligence evidence.
+4. **Controlled proactivity:** run on selected real workspaces, optionally sample LLM audits, and
+   review publication precision and recommendation acceptance before broad enablement.
+
+The LLM audit machinery may exist before step four, but it remains off by default. Implementation
+completion is not permission to enable it for every team.
 
 Every phase has an independent kill switch. Disabling observations stops capture/publication jobs
 without changing chart refresh success or hiding existing dashboards.
@@ -698,6 +804,9 @@ without changing chart refresh success or hiding existing dashboards.
 - Chat adapters, ephemeral TTL, persistent promotion, and no client-supplied history.
 - Digest scheduling, timezone boundaries, re-authorization, empty-digest policy, and idempotent
   delivery.
+- Feedback reason validation, user-scoped serialization, cohort grouping, and low-sample reporting.
+- Recommendation eligibility, ranking, fingerprint expiry, dismissal, and explicit monitor
+  creation.
 
 ### Integration
 
@@ -712,6 +821,10 @@ without changing chart refresh success or hiding existing dashboards.
 - UpdateRun/MetricSnapshot/ObservationAudit cleanup works on large seeded batches for MySQL,
   PostgreSQL, and SQLite test paths.
 - Optional LLM failure and budget exhaustion do not affect refresh or deterministic publication.
+- Feedback from one user is not exposed as another user's selected state.
+- Calibration joins feedback and audits to the exact policy/features that produced an observation.
+- Recommendation generation issues no source query and cannot activate a monitor without an
+  authorized confirmation.
 
 ### Client
 
@@ -720,6 +833,10 @@ without changing chart refresh success or hiding existing dashboards.
 - Home Ask renders without a history browser.
 - Modal chat retains its persistent history while inline chat remains history-free.
 - Observation context cannot be replaced with an unauthorized client-supplied ID.
+- Relevance feedback restores its selected state, can be changed, and requests a reason only when
+  the answer needs diagnostic context.
+- Healthy positive movement does not appear under **Needs attention**, and Past changes remain
+  scannable at audit-trail volume.
 - Accessible chart summaries, loading announcements, focus order, reduced motion, mobile adaptation,
   and light/dark themes use existing Chartbrew/HeroUI behavior.
 
@@ -741,6 +858,9 @@ without changing chart refresh success or hiding existing dashboards.
 - A digest is sent only after explicit setup and is re-scoped to the recipient at delivery time.
 - UpdateRun cleanup is documented, indexed, batched, observable, and manually runnable.
 - Metric snapshots, observation audits, and resolved observations have tested retention.
+- Feedback can be analyzed by deterministic policy/features without exposing tenant labels.
+- A metric recommendation explains its source and rationale, and accepting it creates the same
+  explicit monitor contract as manual setup.
 - Existing refreshes, alerts, dashboards, filters, exports, snapshots, source plugins, and public
   sharing retain current behavior.
 
@@ -803,7 +923,8 @@ specific baseline/ineligibility state. LLM audit remains off unless explicitly e
 - [x] Add validated redacted audit input/output contracts.
 - [x] Add sampling modes, per-team budgets, token caps, and usage purpose.
 - [x] Keep v1 audits shadow-only.
-- [x] Add user feedback signals and the calibration report.
+- [x] Add bounded feedback storage, an authorized endpoint, and an initial aggregate audit report.
+- [x] Complete the user-facing feedback loop and joined calibration report in Iteration Three.
 
 ### APIs and permissions
 
@@ -832,8 +953,8 @@ specific baseline/ineligibility state. LLM audit remains off unless explicitly e
 - [x] Add bounded Home sections and all empty/baseline/health states.
 - [x] Replace the generic dashboard discovery rail with contextual activity.
 - [x] Add Activity tabs and observation detail.
-- [x] Add watch, personal state, feedback, share, resolve, and investigation actions.
-- [x] Add weekly/daily digest setup and Home recommendation states.
+- [x] Add watch, personal state, basic feedback, share, resolve, and investigation actions.
+- [x] Add weekly/daily digest setup and contextual digest recommendation states.
 - [x] Add accessible evidence tables/summaries and responsive behavior.
 
 ## Iteration Two: Functionality Checklist
@@ -891,11 +1012,14 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   separating open changes from resolved history.
 - [x] Add specific empty states for no monitors, collecting baselines, no material changes, stale
   data, and inaccessible projects.
+- [ ] Separate unhealthy **Needs attention** items from positive or neutral **Notable changes**.
+- [ ] Replace the Past changes card grid with a dense chronological list.
+- [ ] Remove mechanically repetitive card copy and apply percentage-point language where clearer.
 
 ### 5. Complete the observation workflow
 
-- [x] Make observation detail explain the metric, comparison, evidence, freshness, and confidence
-  without exposing scoring internals.
+- [ ] Finish observation detail with a canonical evidence visual and user-facing comparison language
+  instead of confidence, score, and completeness internals.
 - [x] Implement driver exploration only when the available dimensions can reconcile with the
   observed change.
 - [x] Scope Ask to the selected observation, chart, dataset, period, and allowed projects without
@@ -903,7 +1027,7 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 - [x] Let Maya save, dismiss, snooze, resolve, reopen, and share an observation with predictable
   effects on Home and Activity.
 
-### 6. Make summaries a complete feature
+### 6. Make Activity digests a complete feature
 
 - [x] Replace the one-click “scheduled” state with a setup flow for cadence, timezone, recipient,
   scope, and delivery channel.
@@ -918,20 +1042,96 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   action.
 - [x] Separate current failures from recently recovered refreshes so historical problems do not look
   active.
-- [x] Add record-count monitoring for datasets where business metrics are not configured yet, using
-  normal dataset refreshes as samples in the existing deterministic observation pipeline.
+- [x] Add dataset result-volume monitoring where business metrics are not configured yet, using the
+  rows returned by normal dataset refreshes as samples in the deterministic observation pipeline.
+- [ ] Add a distinct source-wide database record-total path backed by an explicit aggregate count
+  query; never infer that total from a bounded or sampled dataset response.
 - [x] Make the first-run Home useful when a workspace has connections or datasets but no eligible
   watched metrics.
 - [x] Show which setup step is missing without implying that “no changes” were evaluated.
 
 ### 8. Close the feedback loop
 
-- [ ] Collect lightweight relevant/not-relevant feedback at the point where Maya reviews a change.
-- [ ] Produce a calibration report that joins deterministic features, user feedback, and sampled LLM
+- [x] Persist bounded relevant/not-relevant feedback through the authorized observation endpoint.
+- [x] Return the current user's feedback and make the selected state visible, reversible, and stable
+  across reloads.
+- [x] Ask for a bounded diagnostic reason after **Not relevant** instead of submitting one fixed
+  reason from the button.
+- [x] Produce a calibration report that joins deterministic features, user feedback, and sampled LLM
   audit results.
-- [ ] Require an explicit, versioned policy change before audited findings affect publication.
+- [x] Require an explicit, versioned policy change before audited findings affect publication.
 - [ ] Run a final copy and interaction pass across setup, Home, Activity, detail, management, and
   summaries so terminology and states remain consistent.
+
+## Iteration Three: From Monitoring To Proactive Intelligence
+
+The current system is the conservative trust foundation. The remaining work must move Chartbrew
+from `users configure monitors and inspect a feed` toward `Chartbrew tells users what matters and
+recommends what to watch next`. The order below is intentional: recommending more metrics before
+measuring relevance would only amplify false positives.
+
+### Phase 1 — Complete relevance calibration
+
+- [x] Finish the Maya feedback interaction and bounded reason selection described above.
+- [x] Join feedback to monitor kind, healthy direction, impact, magnitude, baseline, samples,
+  completeness, policy version, and sampled LLM verdicts.
+- [x] Report cohort counts, relevance rates, disagreement, false-positive reasons, audit cost, and
+  low-sample warnings without tenant labels or metric names.
+- [x] Add focused tests proving feedback is user-scoped, editable, and included in calibration.
+- [x] Keep live scoring unchanged until a human reviews the report and ships a new policy version.
+
+**Exit condition:** a published change can be traced from deterministic features to user feedback
+and optional audit agreement, making threshold decisions evidence-based rather than intuitive.
+
+### Phase 2 — Make the intelligence surfaces editorial and scannable
+
+- [ ] Make Home distinguish **Needs attention** from **Notable changes**, with healthy direction
+  affecting placement and priority.
+- [ ] Rewrite change cards so the supporting line adds context instead of repeating the headline.
+- [ ] Use percentage-point headlines for rate changes when they are easier to interpret.
+- [ ] Render Past changes as dense chronological rows and visually separate Activity tabs from
+  watched-metric and digest management.
+- [ ] Add a compact evidence visual to change detail, translate comparison quality into user
+  language, and move secondary lifecycle actions into an overflow menu.
+- [ ] Finish the value contract so metric meaning and display formatting are independent and
+  consistent across Home, Activity, detail, and email.
+- [ ] Use **Activity digest** consistently in user-facing copy while retaining `digest` as the
+  implementation term.
+
+**Exit condition:** Maya can scan Home, understand why each item matters, and review history without
+every event looking current or equally urgent.
+
+### Phase 3 — Recommend metrics worth watching
+
+- [ ] Generate bounded candidates from eligible chart layers, existing alerts, dashboard usage, and
+  high-confidence Dataset Intelligence roles without another source request.
+- [ ] Rank candidates by reproducibility and usage evidence, not field-name plausibility.
+- [ ] Show why each metric is recommended and let Benji confirm its definition, value format,
+  importance, and healthy direction.
+- [ ] Make acceptance create the same explicit `MetricMonitor` used today; add bounded dismissal and
+  expiry when the source definition changes.
+- [ ] Introduce recommendations first in setup and monitoring management, then allow at most one
+  contextual Home recommendation after relevance quality is acceptable.
+- [ ] When Benji wants a source-wide database record total, recommend or create an efficient,
+  explicit aggregate count metric rather than reusing dataset result-volume monitoring.
+
+**Exit condition:** Benji no longer has to discover every monitor manually, but Chartbrew still
+never watches a guessed metric without approval.
+
+### Phase 4 — Controlled proactive rollout
+
+- [ ] Run shadow capture on selected real workspaces before broad publication.
+- [ ] Compare deterministic outcomes with Maya/Benji feedback and enable sampled LLM auditing only
+  for selected teams with existing cost ceilings.
+- [ ] Review publication precision, recommendation acceptance, dismissals, and audit disagreement
+  before each versioned policy change.
+- [ ] Verify snapshot, audit, feedback, observation, and UpdateRun retention after a full production
+  retention window.
+- [ ] Promote Home—not Activity—as the primary proof of value in rollout review.
+
+**Exit condition:** the system proactively surfaces and recommends useful intelligence at a
+measured quality level, with Activity serving as evidence and history rather than the product's
+center of gravity.
 
 ### Deliberately deferred
 
@@ -941,11 +1141,3 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
 - [ ] Additional notification channels beyond the first complete digest workflow.
 - [ ] A generic semantic layer or large observation-operations dashboard.
 - [ ] A visual redesign unrelated to completing the workflows above.
-
-### Rollout validation
-
-- [ ] Run shadow capture before publishing observations.
-- [ ] Compare deterministic observations with Benji/Maya feedback.
-- [ ] Enable LLM shadow audit only for selected teams.
-- [ ] Review audit cost/disagreement before changing a versioned scoring policy.
-- [ ] Verify retention counts and database growth after one full retention window.

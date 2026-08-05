@@ -1,23 +1,45 @@
 const { col, fn, Op } = require("sequelize");
 
 const db = require("../models/models");
+const { buildCalibrationReport } = require("../modules/observations/calibrationReport");
+
+const REPORT_LIMIT = 5000;
 
 async function run() {
   try {
-    const [audits, feedback, usage, read, saved, dismissed, snoozed, resolved] = await Promise.all([
+    const [auditRows, feedbackRows, usage, read, saved, dismissed, snoozed, resolved] = await Promise.all([
       db.ObservationAudit.findAll({
-        attributes: ["verdict"],
-        limit: 5000,
+        attributes: ["observation_id", "verdict"],
+        limit: REPORT_LIMIT + 1,
         order: [["createdAt", "DESC"]],
       }),
       db.ObservationFeedback.findAll({
-        attributes: ["verdict", [fn("COUNT", col("id")), "count"]],
-        group: ["verdict"],
-        raw: true,
+        attributes: ["reason_code", "verdict"],
+        include: [{
+          attributes: [
+            "direction",
+            "evidence",
+            "id",
+            "relative_delta",
+            "score",
+            "score_version",
+            "severity",
+          ],
+          include: [{
+            attributes: ["baseline_policy", "kind", "metric_spec"],
+            model: db.MetricMonitor,
+            required: false,
+          }],
+          model: db.Observation,
+          required: true,
+        }],
+        limit: REPORT_LIMIT + 1,
+        order: [["updatedAt", "DESC"]],
       }),
       db.AiUsage.findOne({
         attributes: [
           [fn("COUNT", col("id")), "calls"],
+          [fn("SUM", col("cost_micros")), "costMicros"],
           [fn("SUM", col("total_tokens")), "tokens"],
         ],
         raw: true,
@@ -29,23 +51,10 @@ async function run() {
       db.ObservationPreference.count({ where: { snoozed_until: { [Op.ne]: null } } }),
       db.Observation.count({ where: { status: "resolved" } }),
     ]);
-    const auditSummary = audits.reduce((summary, audit) => {
-      const key = audit.verdict?.relevant ? "relevant" : "notRelevant";
-      summary[key] += 1;
-      if (!audit.verdict?.evidenceSupported) summary.unsupported += 1;
-      (audit.verdict?.suggestedWeightChanges || []).forEach((suggestion) => {
-        const suggestionKey = `${suggestion.feature}:${suggestion.direction}`;
-        summary.suggestions[suggestionKey] = (summary.suggestions[suggestionKey] || 0) + 1;
-      });
-      return summary;
-    }, {
-      notRelevant: 0,
-      relevant: 0,
-      suggestions: {},
-      unsupported: 0,
-    });
-    process.stdout.write(`${JSON.stringify({
-      audits: auditSummary,
+    const audits = auditRows.slice(0, REPORT_LIMIT);
+    const feedback = feedbackRows.slice(0, REPORT_LIMIT);
+    process.stdout.write(`${JSON.stringify(buildCalibrationReport({
+      audits,
       engagement: {
         dismissed,
         read,
@@ -54,11 +63,18 @@ async function run() {
         snoozed,
       },
       feedback,
+      limits: {
+        audits: REPORT_LIMIT,
+        auditsTruncated: auditRows.length > REPORT_LIMIT,
+        feedback: REPORT_LIMIT,
+        feedbackTruncated: feedbackRows.length > REPORT_LIMIT,
+      },
       usage: {
         calls: Number(usage?.calls) || 0,
+        costMicros: Number(usage?.costMicros) || 0,
         tokens: Number(usage?.tokens) || 0,
       },
-    }, null, 2)}\n`);
+    }), null, 2)}\n`);
   } finally {
     await db.sequelize.close();
   }

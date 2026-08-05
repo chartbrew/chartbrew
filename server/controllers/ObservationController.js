@@ -17,6 +17,7 @@ const FEEDBACK_VERDICTS = new Set(["not_relevant", "relevant", "unsure"]);
 const FEEDBACK_REASONS = new Set([
   "already_known",
   "clear_and_useful",
+  "expected_change",
   "incorrect_context",
   "not_actionable",
   "too_small",
@@ -32,6 +33,18 @@ function serializePreference(preference) {
     readAt: preference?.read_at || null,
     savedAt: preference?.saved_at || null,
     snoozedUntil: preference?.snoozed_until || null,
+  };
+}
+
+function getFeedback(observation) {
+  return observation.ObservationFeedbacks?.[0] || null;
+}
+
+function serializeFeedback(feedback) {
+  if (!feedback) return null;
+  return {
+    reasonCode: feedback.reason_code || null,
+    verdict: feedback.verdict,
   };
 }
 
@@ -76,6 +89,7 @@ function serializeObservation(observation, options = {}) {
     },
     currentValue: observation.current_value,
     direction: observation.direction,
+    feedback: serializeFeedback(getFeedback(observation)),
     firstDetectedAt: observation.first_detected_at,
     id: observation.id,
     impact: getObservationImpact(desiredDirection, observation.direction),
@@ -123,6 +137,12 @@ function getIncludes(userId) {
     {
       model: db.ObservationPreference,
       attributes: ["dismissed_at", "read_at", "saved_at", "snoozed_until"],
+      required: false,
+      where: { user_id: userId },
+    },
+    {
+      model: db.ObservationFeedback,
+      attributes: ["reason_code", "verdict"],
       required: false,
       where: { user_id: userId },
     },
@@ -247,26 +267,24 @@ class ObservationController {
     if (data.reasonCode && !FEEDBACK_REASONS.has(data.reasonCode)) {
       throw createHttpError("Choose a feedback reason", 400);
     }
+    const reasonCode = data.reasonCode || null;
     const [feedback] = await db.ObservationFeedback.findOrCreate({
       where: {
         observation_id: observationId,
         user_id: access.userId,
       },
       defaults: {
-        reason_code: data.reasonCode || null,
+        reason_code: reasonCode,
         verdict: data.verdict,
       },
     });
-    if (feedback.verdict !== data.verdict || feedback.reason_code !== data.reasonCode) {
+    if (feedback.verdict !== data.verdict || feedback.reason_code !== reasonCode) {
       await feedback.update({
-        reason_code: data.reasonCode || null,
+        reason_code: reasonCode,
         verdict: data.verdict,
       });
     }
-    return {
-      reasonCode: feedback.reason_code,
-      verdict: feedback.verdict,
-    };
+    return serializeFeedback(feedback);
   }
 
   async setResolved(access, observationId, resolved) {
@@ -303,4 +321,6 @@ class ObservationController {
 module.exports = ObservationController;
 module.exports.FEEDBACK_REASONS = FEEDBACK_REASONS;
 module.exports.FEEDBACK_VERDICTS = FEEDBACK_VERDICTS;
+module.exports.getIncludes = getIncludes;
+module.exports.serializeFeedback = serializeFeedback;
 module.exports.serializeObservation = serializeObservation;

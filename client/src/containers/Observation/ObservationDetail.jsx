@@ -34,6 +34,13 @@ import { selectUser } from "../../slices/user";
 import ObservationInvestigation from "../Ai/ObservationInvestigation";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
+const NOT_USEFUL_REASONS = [
+  { code: "expected_change", label: "Expected change" },
+  { code: "too_small", label: "Too small" },
+  { code: "incorrect_context", label: "Wrong comparison" },
+  { code: "already_known", label: "Already knew this" },
+  { code: "not_actionable", label: "Not actionable" },
+];
 
 function formatPeriod(period) {
   if (!period?.start || !period?.end) return "Period unavailable";
@@ -61,6 +68,8 @@ function ObservationDetail() {
   const [observation, setObservation] = useState(null);
   const [driverAnalysis, setDriverAnalysis] = useState(null);
   const [driverLoading, setDriverLoading] = useState(false);
+  const [feedbackPending, setFeedbackPending] = useState(null);
+  const [showFeedbackReasons, setShowFeedbackReasons] = useState(false);
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const canEdit = EDIT_ROLES.has(teamRole);
   const isSnoozed = observation?.preference?.snoozedUntil
@@ -97,11 +106,20 @@ function ObservationDetail() {
   };
 
   const feedback = async (verdict, reasonCode) => {
+    setFeedbackPending(reasonCode || verdict);
     try {
-      await sendObservationFeedback(team.id, observationId, { reasonCode, verdict });
-      toast.success("Thanks for the feedback");
+      const savedFeedback = await sendObservationFeedback(
+        team.id,
+        observationId,
+        { reasonCode, verdict }
+      );
+      setObservation((current) => ({ ...current, feedback: savedFeedback }));
+      setShowFeedbackReasons(verdict === "not_relevant");
+      toast.success("Feedback saved");
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setFeedbackPending(null);
     }
   };
 
@@ -426,26 +444,55 @@ function ObservationDetail() {
         <ObservationInvestigation observationId={observation.id} teamId={team.id} />
       </section>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-content1 px-4 py-3 md:flex-row md:items-center">
-        <p className="flex-1 text-sm text-foreground-500">Was this change useful?</p>
-        <div className="flex shrink-0 flex-row items-center gap-2">
-          <Button
-            onPress={() => feedback("relevant", "clear_and_useful")}
-            size="sm"
-            variant="secondary"
-          >
-            <LuThumbsUp size={16} aria-hidden />
-            Useful
-          </Button>
-          <Button
-            onPress={() => feedback("not_relevant", "not_actionable")}
-            size="sm"
-            variant="ghost"
-          >
-            <LuThumbsDown size={16} aria-hidden />
-            Not useful
-          </Button>
+      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-content1 px-4 py-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <p className="flex-1 text-sm text-foreground-500">Was this change useful?</p>
+          <div className="flex shrink-0 flex-row items-center gap-2">
+            <Button
+              aria-pressed={observation.feedback?.verdict === "relevant"}
+              isDisabled={Boolean(feedbackPending)}
+              isPending={feedbackPending === "relevant"}
+              onPress={() => feedback("relevant", null)}
+              size="sm"
+              variant={observation.feedback?.verdict === "relevant" ? "secondary" : "ghost"}
+            >
+              <LuThumbsUp size={16} aria-hidden />
+              Useful
+            </Button>
+            <Button
+              aria-pressed={observation.feedback?.verdict === "not_relevant"}
+              isDisabled={Boolean(feedbackPending)}
+              onPress={() => setShowFeedbackReasons(true)}
+              size="sm"
+              variant={observation.feedback?.verdict === "not_relevant" ? "secondary" : "ghost"}
+            >
+              <LuThumbsDown size={16} aria-hidden />
+              Not useful
+            </Button>
+          </div>
         </div>
+        {showFeedbackReasons || observation.feedback?.verdict === "not_relevant" ? (
+          <div className="flex flex-col gap-2 border-t border-divider pt-3">
+            <p className="text-sm text-foreground-500">What made it unhelpful?</p>
+            <div className="flex flex-row flex-wrap gap-2">
+              {NOT_USEFUL_REASONS.map((reason) => (
+                <Button
+                  aria-pressed={observation.feedback?.reasonCode === reason.code}
+                  isDisabled={Boolean(feedbackPending)}
+                  isPending={feedbackPending === reason.code}
+                  key={reason.code}
+                  onPress={() => feedback("not_relevant", reason.code)}
+                  size="sm"
+                  variant={observation.feedback?.reasonCode === reason.code
+                    ? "secondary"
+                    : "outline"}
+                >
+                  {reason.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );

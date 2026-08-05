@@ -34,6 +34,7 @@ const {
   isDigestDue,
 } = require("../../modules/observations/digestSchedule");
 const { getObservationImpact } = require("../../modules/observations/metricDirection");
+const { buildCalibrationReport } = require("../../modules/observations/calibrationReport");
 const {
   getHealthRunType,
   partitionRunHealth,
@@ -41,6 +42,10 @@ const {
   rankObservations,
 } = require("../../controllers/HomeController");
 const ObservationController = require("../../controllers/ObservationController");
+const {
+  getIncludes: getObservationIncludes,
+  serializeFeedback,
+} = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const {
   countDatasetRecords,
@@ -232,6 +237,54 @@ describe("workspace observations", () => {
       order: [["resolved_at", "DESC"], ["id", "ASC"]],
       where: expect.objectContaining({ status: "resolved" }),
     }));
+    findSpy.mockRestore();
+  });
+
+  it("returns only the current user's observation feedback", () => {
+    const feedbackInclude = getObservationIncludes(42).find(
+      (include) => include.model === db.ObservationFeedback
+    );
+
+    expect(feedbackInclude).toMatchObject({
+      attributes: ["reason_code", "verdict"],
+      required: false,
+      where: { user_id: 42 },
+    });
+    expect(serializeFeedback(null)).toBeNull();
+    expect(serializeFeedback({ reason_code: "too_small", verdict: "not_relevant" }))
+      .toEqual({ reasonCode: "too_small", verdict: "not_relevant" });
+  });
+
+  it("lets a user revise previously saved observation feedback", async () => {
+    const controller = new ObservationController();
+    const savedFeedback = {
+      reason_code: null,
+      update: vi.fn(function update(values) {
+        Object.assign(this, values);
+        return Promise.resolve(this);
+      }),
+      verdict: "relevant",
+    };
+    vi.spyOn(controller, "findById").mockResolvedValue({});
+    const findSpy = vi.spyOn(db.ObservationFeedback, "findOrCreate")
+      .mockResolvedValue([savedFeedback, false]);
+
+    const result = await controller.feedback({ userId: 42 }, "observation-1", {
+      reasonCode: "expected_change",
+      verdict: "not_relevant",
+    });
+
+    expect(findSpy).toHaveBeenCalledWith(expect.objectContaining({
+      where: { observation_id: "observation-1", user_id: 42 },
+    }));
+    expect(savedFeedback.update).toHaveBeenCalledWith({
+      reason_code: "expected_change",
+      verdict: "not_relevant",
+    });
+    expect(result).toEqual({
+      reasonCode: "expected_change",
+      verdict: "not_relevant",
+    });
     findSpy.mockRestore();
   });
 
@@ -675,6 +728,85 @@ describe("workspace observations", () => {
     expect(deterministicSample("same-candidate", 0.5)).toBe(
       deterministicSample("same-candidate", 0.5),
     );
+  });
+
+  it("joins user feedback to deterministic features and sampled audits", () => {
+    const createFeedback = ({
+      desiredDirection,
+      id,
+      kind,
+      reasonCode,
+      verdict,
+    }) => ({
+      Observation: {
+        MetricMonitor: {
+          baseline_policy: { type: "rolling_median" },
+          kind,
+          metric_spec: { desiredDirection },
+        },
+        direction: "decrease",
+        evidence: {
+          completeness: 1,
+          featureValues: { magnitudeScore: 0.8, relativeMagnitude: 0.3 },
+          sampleCount: 14,
+        },
+        id,
+        relative_delta: -0.3,
+        score: 0.9,
+        score_version: "deterministic-v1",
+        severity: "high",
+      },
+      reason_code: reasonCode,
+      verdict,
+    });
+    const feedback = [
+      createFeedback({
+        desiredDirection: "higher",
+        id: "observation-1",
+        kind: "timeseries",
+        verdict: "relevant",
+      }),
+      createFeedback({
+        desiredDirection: "neutral",
+        id: "observation-2",
+        kind: "record_count",
+        reasonCode: "expected_change",
+        verdict: "not_relevant",
+      }),
+    ];
+    const audits = [{
+      observation_id: "observation-1",
+      verdict: { evidenceSupported: true, relevant: true, suggestedWeightChanges: [] },
+    }, {
+      observation_id: "observation-2",
+      verdict: { evidenceSupported: true, relevant: true, suggestedWeightChanges: [] },
+    }];
+
+    const report = buildCalibrationReport({
+      audits,
+      feedback,
+      generatedAt: new Date("2026-08-05T00:00:00.000Z"),
+    });
+
+    expect(report.feedback.overall).toMatchObject({
+      lowSample: true,
+      notRelevant: 1,
+      relevanceRate: 0.5,
+      relevant: 1,
+      total: 2,
+    });
+    expect(report.feedback.cohorts.monitorKind.timeseries.relevant).toBe(1);
+    expect(report.feedback.cohorts.impact.negative.relevant).toBe(1);
+    expect(report.feedback.falsePositiveReasons.expected_change).toBe(1);
+    expect(report.feedback.llmAgreement).toMatchObject({
+      agreed: 1,
+      compared: 2,
+      disagreed: 1,
+      lowSample: true,
+    });
+    expect(report.feedback.featureAverages.relevant.relativeMagnitude)
+      .toEqual({ average: 0.3, samples: 1 });
+    expect(JSON.stringify(report)).not.toContain("metricTitle");
   });
 
   it("schedules weekly summaries once in the recipient timezone window", () => {
