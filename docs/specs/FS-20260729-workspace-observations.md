@@ -1127,7 +1127,7 @@ every event looking current or equally urgent.
   importance, and healthy direction.
 - [x] Make acceptance create the same explicit `MetricMonitor` used today; add bounded dismissal and
   expiry when the source definition changes.
-- [ ] Introduce recommendations first in setup and monitoring management, then allow at most one
+- [x] Introduce recommendations first in setup and monitoring management, then allow at most one
   contextual Home recommendation after relevance quality is acceptable.
 - [ ] When Benji wants a source-wide database record total, recommend or create an efficient,
   explicit aggregate count metric rather than reusing dataset result-volume monitoring.

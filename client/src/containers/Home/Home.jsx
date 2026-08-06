@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Card, Chip, Spinner } from "@heroui/react";
+import {
+  Button, Card, Chip, Dropdown, Spinner,
+} from "@heroui/react";
 import {
   LuActivity,
   LuArrowRight,
   LuChartNoAxesColumnIncreasing,
   LuChevronRight,
   LuCircleCheck,
+  LuClock,
   LuDatabase,
+  LuEllipsis,
+  LuEyeOff,
   LuRefreshCw,
+  LuSparkles,
 } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import {
+  acceptMonitorRecommendation,
   createRecordCountMonitor,
+  dismissMonitorRecommendation,
   getHome,
+  getMonitorRecommendations,
   getObservationDigests,
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
@@ -27,6 +36,7 @@ import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 import HomeDiscover from "./HomeDiscover";
 import RecordCountMonitorModal from "./RecordCountMonitorModal";
+import WatchMetricModal from "../Chart/components/WatchMetricModal";
 
 function SectionHeading({ action, eyebrow, id, title }) {
   return (
@@ -181,6 +191,70 @@ DataHealthAttention.propTypes = {
   onPress: PropTypes.func.isRequired,
 };
 
+function MetricRecommendation({ isPending, onDismiss, onReview, recommendation }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-3xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
+      <div className="flex min-w-0 flex-1 flex-row items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-accent/10 text-accent">
+          <LuSparkles size={18} aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Suggested metric
+          </p>
+          <p className="mt-0.5 font-medium text-foreground">{recommendation.name}</p>
+          <p className="mt-1 text-sm text-muted">
+            {recommendation.reasons[0]}
+            {" · "}{recommendation.project.name} · {recommendation.chart.name}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-row items-center gap-2 self-end md:self-auto">
+        <Button isDisabled={isPending} onPress={onReview} size="sm" variant="secondary">
+          Review
+        </Button>
+        <Dropdown aria-label={`Options for ${recommendation.name}`}>
+          <Dropdown.Trigger
+            aria-label={`Dismiss ${recommendation.name}`}
+            className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+            isDisabled={isPending}
+          >
+            {isPending ? <Spinner aria-hidden size="sm" /> : <LuEllipsis size={18} aria-hidden />}
+          </Dropdown.Trigger>
+          <Dropdown.Popover>
+            <Dropdown.Menu>
+              <Dropdown.Item id="later" onPress={() => onDismiss("later")} textValue="Not now">
+                <LuClock size={16} aria-hidden />
+                Not now
+              </Dropdown.Item>
+              <Dropdown.Item
+                id="definition"
+                onPress={() => onDismiss("definition")}
+                textValue="Do not suggest this metric"
+              >
+                <LuEyeOff size={16} aria-hidden />
+                Don&apos;t suggest this metric
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
+      </div>
+    </div>
+  );
+}
+
+MetricRecommendation.propTypes = {
+  isPending: PropTypes.bool.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+  onReview: PropTypes.func.isRequired,
+  recommendation: PropTypes.shape({
+    chart: PropTypes.shape({ name: PropTypes.string.isRequired }).isRequired,
+    name: PropTypes.string.isRequired,
+    project: PropTypes.shape({ name: PropTypes.string.isRequired }).isRequired,
+    reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }).isRequired,
+};
+
 function Home() {
   const navigate = useNavigate();
   const team = useSelector(selectTeam);
@@ -190,13 +264,20 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [recordCountModalOpen, setRecordCountModalOpen] = useState(false);
   const [recordCountPending, setRecordCountPending] = useState(false);
+  const [recommendation, setRecommendation] = useState(null);
+  const [recommendationPending, setRecommendationPending] = useState(false);
+  const [recommendationReviewOpen, setRecommendationReviewOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   useEffect(() => {
     if (!team?.id) return;
     setLoading(true);
-    Promise.allSettled([getHome(team.id), getObservationDigests(team.id)])
-      .then(([homeResult, subscriptionsResult]) => {
+    Promise.allSettled([
+      getHome(team.id),
+      getObservationDigests(team.id),
+      getMonitorRecommendations(team.id),
+    ])
+      .then(([homeResult, subscriptionsResult, recommendationsResult]) => {
         if (homeResult.status === "rejected") throw homeResult.reason;
         const home = homeResult.value;
         const subscriptions = subscriptionsResult.status === "fulfilled"
@@ -204,6 +285,9 @@ function Home() {
           : [];
         setData(home);
         setDigests(subscriptions);
+        setRecommendation(recommendationsResult.status === "fulfilled"
+          ? recommendationsResult.value[0] || null
+          : null);
       })
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
@@ -232,6 +316,37 @@ function Home() {
     }
   };
 
+  const acceptRecommendation = async (settings) => {
+    if (!recommendation) return;
+    setRecommendationPending(true);
+    try {
+      const monitor = await acceptMonitorRecommendation(team.id, recommendation.id, settings);
+      setRecommendation(null);
+      setRecommendationReviewOpen(false);
+      toast.success(`Watching ${monitor.name}`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRecommendationPending(false);
+    }
+  };
+
+  const dismissRecommendation = async (type) => {
+    if (!recommendation) return;
+    setRecommendationPending(true);
+    try {
+      await dismissMonitorRecommendation(team.id, recommendation.id, type);
+      setRecommendation(null);
+      toast.success(type === "later"
+        ? "Suggestion hidden for 30 days"
+        : "This metric will not be suggested again unless the chart changes");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRecommendationPending(false);
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="flex min-h-80 items-center justify-center">
@@ -244,6 +359,10 @@ function Home() {
     || data.observations.filter((observation) => observation.impact !== "positive");
   const notableChanges = data.notableChanges
     || data.observations.filter((observation) => observation.impact === "positive");
+  const showRecommendation = recommendation
+    && data.setupState === "no_important_changes"
+    && needsAttention.length === 0
+    && !data.dataHealth.showOnHome;
 
   return (
     <main className="flex w-full flex-col gap-6">
@@ -290,10 +409,20 @@ function Home() {
             ))}
           </div>
         ) : (
-          <SetupState
-            onWatchRecords={() => setRecordCountModalOpen(true)}
-            state={data.setupState}
-          />
+          <div className="flex flex-col gap-3">
+            <SetupState
+              onWatchRecords={() => setRecordCountModalOpen(true)}
+              state={data.setupState}
+            />
+            {showRecommendation ? (
+              <MetricRecommendation
+                isPending={recommendationPending}
+                onDismiss={dismissRecommendation}
+                onReview={() => setRecommendationReviewOpen(true)}
+                recommendation={recommendation}
+              />
+            ) : null}
+          </div>
         )}
       </section>
 
@@ -410,6 +539,27 @@ function Home() {
         onClose={() => setRecordCountModalOpen(false)}
         onSubmit={createRecordCount}
         options={data.recordCountOptions || []}
+      />
+      <WatchMetricModal
+        chartName={recommendation?.chart?.name}
+        description="Confirm how this metric should be interpreted before Chartbrew starts watching it."
+        heading="Review suggested metric"
+        initialImportance={recommendation?.defaultImportance || 1}
+        initialLayerId={recommendation?.layerId || null}
+        isOpen={recommendationReviewOpen && Boolean(recommendation)}
+        isPending={recommendationPending}
+        lockMetric
+        onClose={() => {
+          if (!recommendationPending) setRecommendationReviewOpen(false);
+        }}
+        onSubmit={acceptRecommendation}
+        options={recommendation ? [{
+          id: recommendation.layerId,
+          kind: recommendation.kind,
+          name: recommendation.name,
+          valueFormat: recommendation.valueFormat,
+        }] : []}
+        submitLabel="Start watching"
       />
     </main>
   );
