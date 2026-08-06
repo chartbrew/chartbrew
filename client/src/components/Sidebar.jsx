@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Avatar, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
+import { Avatar, Badge, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
 import { LuActivity, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
@@ -312,26 +312,28 @@ function Sidebar() {
               {collapsed ? (
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button
-                      variant={isActivityActive ? "secondary" : "ghost"}
-                      fullWidth
-                      isIconOnly
-                      size="sm"
-                      className="relative justify-center"
-                      onPress={() => navigate("/activity")}
-                    >
-                      <LuActivity size={20} />
+                    <Badge.Anchor className="relative inline-flex">
+                      <Button
+                        variant={isActivityActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className="justify-center"
+                        onPress={() => navigate("/activity")}
+                      >
+                        <LuActivity size={20} />
+                      </Button>
                       {activityCount > 0 ? (
-                        <Chip
+                        <Badge
                           aria-label={`${activityCount} activity items need attention`}
-                          className="absolute -right-1 -top-1 min-w-5 px-1"
-                          color="danger"
+                          color="accent"
                           size="sm"
+                          variant="soft"
                         >
-                          {Math.min(activityCount, 99)}
-                        </Chip>
+                          {activityCount > 99 ? "99+" : activityCount}
+                        </Badge>
                       ) : null}
-                    </Button>
+                    </Badge.Anchor>
                   </Tooltip.Trigger>
                   <Tooltip.Content placement="right">Activity</Tooltip.Content>
                 </Tooltip>
@@ -346,8 +348,16 @@ function Sidebar() {
                   <LuActivity size={18} />
                   Activity
                   {activityCount > 0 ? (
-                    <Chip className="ml-auto" color="danger" size="sm">
-                      {Math.min(activityCount, 99)}
+                    <Chip
+                      aria-label={`${activityCount} activity items need attention`}
+                      className="ml-auto text-[10px] rounded-full"
+                      color="accent"
+                      size="sm"
+                      variant="soft"
+                    >
+                      <Chip.Label>
+                        {activityCount > 99 ? "99+" : activityCount}
+                      </Chip.Label>
                     </Chip>
                   ) : null}
                 </Button>

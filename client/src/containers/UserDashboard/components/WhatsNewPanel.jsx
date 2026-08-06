@@ -11,102 +11,16 @@ import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
 
 import { cn } from "../../../modules/utils";
-import { toggleAiModal } from "../../../slices/ui";
 import {
   getIconComponent,
   getTone,
+  getWhatsNewContent,
 } from "./whatsNewPanelUtils";
 
 const panelGlassSurfaceClassName = "relative overflow-hidden rounded-[28px] border border-white/50 bg-surface/72 shadow-[0_26px_60px_-42px_rgba(4,139,222,0.55)] backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-surface/80 dark:shadow-[0_26px_80px_-42px_rgba(4,139,222,0.35)]";
 const itemGlassSurfaceClassName = "relative overflow-hidden rounded-[24px] border bg-surface/58 shadow-none backdrop-blur-xl backdrop-saturate-150 dark:bg-surface/58";
 const itemGlassOverlayClassName = "pointer-events-none absolute inset-0 rounded-[inherit] bg-linear-to-br from-white/55 via-white/8 to-transparent dark:from-white/8 dark:via-white/[0.04] dark:to-transparent";
 const separatorClassName = "bg-white/55 dark:bg-white/8";
-
-function getWhatsNewContent({ navigate, dispatch }) {
-  return {
-    groups: [
-      {
-        key: "features",
-        title: "New features",
-        items: [
-          {
-            id: "slack-ai-integration",
-            type: "newFeature",
-            title: "Ask Chartbrew from Slack",
-            body: "Use Slack to ask Chartbrew questions and get instant insights.",
-            // badge: "New",
-            icon: "slack",
-            colorScheme: "primary",
-            ctaLabel: "Open integrations",
-            timestampLabel: "Just added",
-            action: {
-              label: "Open integrations",
-              onPress: () => navigate("/integrations"),
-            },
-          },
-          {
-            id: "ai-chart-builder",
-            type: "newFeature",
-            title: "AI chart builder",
-            body: "Describe the chart you want, Chartbrew creates the first draft.",
-            // badge: "New",
-            icon: "brain",
-            colorScheme: "primary",
-            ctaLabel: "Open AI assistant",
-            timestampLabel: "Just added",
-            action: {
-              label: "Open AI assistant",
-              onPress: () => dispatch(toggleAiModal()),
-            },
-          },
-        ],
-      },
-      // {
-      //   key: "releaseHighlights",
-      //   title: "Release highlights",
-      //   items: [
-      //   ],
-      // },
-      {
-        key: "underusedCapabilities",
-        title: "Underused capabilities",
-        items: [
-          {
-            id: "scheduled-reports",
-            type: "underusedCapability",
-            title: "Scheduled reports",
-            body: "Send chart snapshots automatically to your inbox.",
-            icon: "calendar",
-            colorScheme: "warning",
-            ctaLabel: "Read tutorial",
-            timestampLabel: "Often missed",
-            action: {
-              label: "Read tutorial",
-              onPress: () => window.open("https://chartbrew.com/blog/automated-dashboard-snapshots-in-chartbrew", "_blank"),
-              type: "external",
-            },
-          },
-        ],
-      },
-    ],
-    tip: {
-      id: "tip-variables",
-      type: "tip",
-      variant: "tip",
-      eyebrow: "Pro tip",
-      title: "Turn one dashboard into many views",
-      body: "Variables help you reuse the same charts across date ranges, filters, and segments.",
-      icon: "sparkles",
-      colorScheme: "tip",
-      ctaLabel: "Open variables guide",
-      action: {
-        label: "Open variables guide",
-        onPress: () => window.open("https://chartbrew.com/blog/how-to-use-variables-in-chartbrew", "_blank"),
-        type: "external",
-      },
-    },
-  };
-}
 
 function WhatsNewItemCard({ item, onAction }) {
   const tone = getTone(item.colorScheme);

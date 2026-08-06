@@ -15,6 +15,7 @@ const getInitialSidebarState = () => {
 
 const initialState = {
   aiModalOpen: false,
+  aiModalConversationId: null,
   feedbackModalOpen: false,
   sidebarCollapsed: getInitialSidebarState(),
 };
@@ -23,14 +24,22 @@ export const uiSlice = createSlice({
   name: "ui",
   initialState,
   reducers: {
-    showAiModal: (state) => {
+    showAiModal: (state, action) => {
       state.aiModalOpen = true;
+      state.aiModalConversationId = action.payload?.conversationId || null;
     },
     hideAiModal: (state) => {
       state.aiModalOpen = false;
+      state.aiModalConversationId = null;
     },
     toggleAiModal: (state) => {
       state.aiModalOpen = !state.aiModalOpen;
+      if (!state.aiModalOpen) {
+        state.aiModalConversationId = null;
+      }
+    },
+    clearAiModalConversationId: (state) => {
+      state.aiModalConversationId = null;
     },
     showFeedbackModal: (state) => {
       state.feedbackModalOpen = true;
@@ -60,9 +69,20 @@ export const uiSlice = createSlice({
   },
 });
 
-export const { showAiModal, hideAiModal, toggleAiModal, showFeedbackModal, hideFeedbackModal, toggleFeedbackModal, setSidebarCollapsed, toggleSidebar } = uiSlice.actions;
+export const {
+  showAiModal,
+  hideAiModal,
+  toggleAiModal,
+  clearAiModalConversationId,
+  showFeedbackModal,
+  hideFeedbackModal,
+  toggleFeedbackModal,
+  setSidebarCollapsed,
+  toggleSidebar,
+} = uiSlice.actions;
 
 export const selectAiModalOpen = (state) => state.ui.aiModalOpen;
+export const selectAiModalConversationId = (state) => state.ui.aiModalConversationId;
 export const selectFeedbackModalOpen = (state) => state.ui.feedbackModalOpen;
 export const selectSidebarCollapsed = (state) => state.ui.sidebarCollapsed;
 

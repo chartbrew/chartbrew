@@ -24,7 +24,7 @@ function AiChat({
   return (
     <div className="flex flex-col gap-3">
       {messages.length > 0 ? (
-        <div aria-live="polite" className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto">
+        <div aria-live="polite" className="flex max-h-96 flex-col gap-3 overflow-y-auto">
           {messages.map((message, index) => (
             <div
               className={message.role === "user" ? "flex justify-end" : "flex justify-start"}

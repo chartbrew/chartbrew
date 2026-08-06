@@ -80,8 +80,8 @@ function formatPeriod(period) {
 }
 
 function getHealthIcon(type, resolved = false) {
-  if (resolved) return <LuCircleCheck className="text-success" size={16} aria-hidden />;
-  const iconProps = { className: "text-warning", size: 16, "aria-hidden": true };
+  if (resolved) return <LuCircleCheck className="text-success" size={18} aria-hidden />;
+  const iconProps = { className: "text-warning", size: 18, "aria-hidden": true };
   if (type === "connection") return <LuPlug {...iconProps} />;
   if (type === "dataset") return <LuDatabase {...iconProps} />;
   if (type === "chart") return <LuChartNoAxesColumn {...iconProps} />;
@@ -168,13 +168,17 @@ function ItemRow({ actions, icon, meta, title }) {
   return (
     <div className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center">
       <div className="flex min-w-0 flex-1 flex-row items-start gap-3">
-        {icon ? <div className="mt-0.5 shrink-0">{icon}</div> : null}
-        <div className="min-w-0">
+        {icon ? (
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40">
+            {icon}
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1 pt-0.5">
           <div className="flex flex-row flex-wrap items-center gap-2">{title}</div>
-          <p className="mt-0.5 text-sm text-foreground-500">{meta}</p>
+          {meta ? <div className="mt-1 text-sm text-muted">{meta}</div> : null}
         </div>
       </div>
-      {actions ? <div className="flex shrink-0 flex-row items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex shrink-0 flex-row items-center gap-2 md:self-center">{actions}</div> : null}
     </div>
   );
 }
@@ -474,7 +478,7 @@ function Activity() {
               </InputGroup.Suffix>
             </InputGroup>
             <section aria-labelledby="open-changes-heading" className="flex flex-col gap-3">
-              <h2 className="font-tw text-lg font-semibold" id="open-changes-heading">
+              <h2 className="text-lg font-semibold" id="open-changes-heading">
                 Needs attention
               </h2>
               {needsAttentionActivity.length > 0 ? (
@@ -493,7 +497,7 @@ function Activity() {
 
             {notableActivity.length > 0 ? (
               <section aria-labelledby="notable-changes-heading" className="mt-4 flex flex-col gap-3">
-                <h2 className="font-tw text-lg font-semibold" id="notable-changes-heading">
+                <h2 className="text-lg font-semibold" id="notable-changes-heading">
                   Notable changes
                 </h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -506,7 +510,7 @@ function Activity() {
 
             {pastLoading || pastTotal > 0 ? (
               <section aria-labelledby="past-changes-heading" className="mt-4 flex flex-col gap-3">
-                <h2 className="font-tw text-lg font-semibold" id="past-changes-heading">
+                <h2 className="text-lg font-semibold" id="past-changes-heading">
                   Past changes
                 </h2>
                 <Table className={`border border-divider shadow-none ${pastLoading ? "opacity-60" : ""}`}>
@@ -610,17 +614,24 @@ function Activity() {
                   icon={(
                     <LuBell
                       className={alert.lastTriggeredAt ? "text-warning" : "text-foreground-400"}
-                      size={16}
+                      size={18}
                       aria-hidden
                     />
                   )}
                   key={alert.id}
-                  meta={`${alert.project.name}${alert.lastTriggeredAt
-                    ? ` · Last triggered ${formatTimeAgo(alert.lastTriggeredAt)}`
-                    : " · Not triggered yet"}`}
+                  meta={(
+                    <>
+                      <span className="text-muted">{alert.project.name}</span>
+                      <span className="mt-2 block text-xs text-muted">
+                        {alert.lastTriggeredAt
+                          ? `Last triggered ${formatTimeAgo(alert.lastTriggeredAt)}`
+                          : "Not triggered yet"}
+                      </span>
+                    </>
+                  )}
                   title={(
                     <>
-                      <span className="font-medium">{alert.chart.name}</span>
+                      <span className="font-medium text-foreground">{alert.chart.name}</span>
                       <Chip color={alert.active ? "success" : "default"} size="sm" variant="soft">
                         <Chip.Label>{alert.active ? "Active" : "Paused"}</Chip.Label>
                       </Chip>
@@ -640,7 +651,7 @@ function Activity() {
         <Tabs.Panel id="health" className="p-0 pt-1">
           <div className="flex flex-col gap-6">
             <section aria-labelledby="active-health-heading" className="flex flex-col gap-3">
-              <h2 className="font-tw text-lg font-semibold" id="active-health-heading">
+              <h2 className="text-lg font-semibold" id="active-health-heading">
                 Needs attention
               </h2>
               {(health.active || health.items).length > 0 ? (
@@ -655,13 +666,16 @@ function Activity() {
                       icon={getHealthIcon(item.type)}
                       key={item.id}
                       meta={(
-                        <span>
-                          {item.message} · Detected {formatTimeAgo(item.detectedAt)}
-                        </span>
+                        <>
+                          <span className="text-muted">{item.message}</span>
+                          <span className="mt-2 block text-xs text-muted">
+                            Detected {formatTimeAgo(item.detectedAt)}
+                          </span>
+                        </>
                       )}
                       title={(
                         <>
-                          <span className="font-medium">{item.title || item.message}</span>
+                          <span className="font-medium text-foreground">{item.title || item.message}</span>
                           <Chip color="warning" size="sm" variant="soft">
                             <Chip.Label>{HEALTH_TYPE_LABELS[item.type] || "Data issue"}</Chip.Label>
                           </Chip>
@@ -673,9 +687,9 @@ function Activity() {
               ) : (
                 <ItemList>
                   <ItemRow
-                    icon={<LuCircleCheck className="text-success" size={16} aria-hidden />}
+                    icon={<LuCircleCheck className="text-success" size={18} aria-hidden />}
                     meta="No current connection, dataset, chart, or watched metric failures were found."
-                    title={<span className="font-medium">Data is refreshing normally</span>}
+                    title={<span className="font-medium text-foreground">Data is refreshing normally</span>}
                   />
                 </ItemList>
               )}
@@ -683,7 +697,7 @@ function Activity() {
 
             {health.resolved?.length > 0 ? (
               <section aria-labelledby="resolved-health-heading" className="flex flex-col gap-3">
-                <h2 className="font-tw text-lg font-semibold" id="resolved-health-heading">
+                <h2 className="text-lg font-semibold" id="resolved-health-heading">
                   Resolved recently
                 </h2>
                 <ItemList>
@@ -691,10 +705,17 @@ function Activity() {
                     <ItemRow
                       icon={getHealthIcon(item.type, true)}
                       key={item.id}
-                      meta={`${item.message} · Recovered ${formatTimeAgo(item.resolvedAt)}`}
+                      meta={(
+                        <>
+                          <span className="text-muted">{item.message}</span>
+                          <span className="mt-2 block text-xs text-muted">
+                            Recovered {formatTimeAgo(item.resolvedAt)}
+                          </span>
+                        </>
+                      )}
                       title={(
                         <>
-                          <span className="font-medium">{item.title}</span>
+                          <span className="font-medium text-foreground">{item.title}</span>
                           <Chip color="success" size="sm" variant="soft">
                             <Chip.Label>Resolved</Chip.Label>
                           </Chip>
@@ -855,12 +876,12 @@ function Activity() {
                       </Dropdown>
                     </>
                   )}
-                  icon={<LuBell className="text-foreground-400" size={16} aria-hidden />}
+                  icon={<LuBell className="text-foreground-400" size={18} aria-hidden />}
                   key={subscription.id}
                   meta={getDigestMeta(subscription)}
                   title={(
                     <>
-                      <span className="font-medium">
+                      <span className="font-medium text-foreground">
                         {subscription.cadence === "weekly" ? "Weekly" : "Daily"} Activity digest
                       </span>
                       {!subscription.enabled ? (

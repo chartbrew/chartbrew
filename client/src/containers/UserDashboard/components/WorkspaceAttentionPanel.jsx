@@ -20,6 +20,7 @@ function getSetupAction(home) {
       action: "View progress",
       description: "Chartbrew is collecting enough history to compare your watched metrics.",
       icon: LuRefreshCw,
+      iconClassName: "text-foreground-400",
       path: "/activity?tab=monitors",
       title: "Building a baseline",
     },
@@ -27,6 +28,7 @@ function getSetupAction(home) {
       action: "Connect data",
       description: "Connect a source before creating dashboards and watching metrics.",
       icon: LuDatabase,
+      iconClassName: "text-foreground-400",
       path: "/connections/new",
       title: "Connect your first source",
     },
@@ -34,6 +36,7 @@ function getSetupAction(home) {
       action: "Review watched metrics",
       description: "A watched chart changed and its metric can no longer be evaluated.",
       icon: LuActivity,
+      iconClassName: "text-warning",
       path: "/activity?tab=monitors",
       title: "A watched metric needs review",
     },
@@ -41,6 +44,7 @@ function getSetupAction(home) {
       action: "View activity",
       description: "There are no open changes in your watched metrics that need attention.",
       icon: LuCircleCheck,
+      iconClassName: "text-success",
       path: "/activity",
       title: "No changes need attention",
     },
@@ -48,6 +52,7 @@ function getSetupAction(home) {
       action: firstDashboard ? "Open a dashboard" : "Create a dashboard",
       description: "Choose an eligible chart metric to start detecting material changes.",
       icon: LuActivity,
+      iconClassName: "text-foreground-400",
       path: firstDashboard ? `/dashboard/${firstDashboard.id}` : "/dashboards?create=dashboard",
       title: "Watch a metric",
     },
@@ -55,6 +60,7 @@ function getSetupAction(home) {
       action: "View dashboards",
       description: "A workspace editor can choose a metric for Chartbrew to monitor.",
       icon: LuActivity,
+      iconClassName: "text-foreground-400",
       path: "/dashboards",
       title: "No watched metrics yet",
     },
@@ -62,24 +68,29 @@ function getSetupAction(home) {
       action: "View watched metrics",
       description: "The latest refresh did not return enough data to evaluate your watched metrics.",
       icon: LuRefreshCw,
+      iconClassName: "text-warning",
       path: "/activity?tab=monitors",
       title: "Waiting for data",
     },
   }[home.setupState] || null;
 }
 
-function PanelItem({ action, description, eyebrow, icon, onPress, title }) {
+function PanelItem({ action, description, icon, iconClassName, meta, onPress, title }) {
   const Icon = icon;
   return (
     <div className="flex flex-row items-start gap-3 px-4 py-4">
-      <Icon className="mt-0.5 shrink-0 text-foreground-400" size={16} aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground-400">
-          {eyebrow}
-        </p>
-        <p className="mt-1 font-medium">{title}</p>
-        <p className="mt-1 text-sm text-foreground-500">{description}</p>
-        <Button className="mt-2" onPress={onPress} size="sm" variant="ghost">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40">
+        <Icon className={iconClassName || "text-foreground-400"} size={18} aria-hidden />
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <p className="font-medium text-foreground">{title}</p>
+        {description ? (
+          <p className="mt-1 text-sm text-muted">{description}</p>
+        ) : null}
+        {meta ? (
+          <p className="mt-2 text-xs text-muted">{meta}</p>
+        ) : null}
+        <Button className="mt-2" onPress={onPress} size="sm" variant="tertiary">
           {action}
           <LuArrowRight size={16} aria-hidden />
         </Button>
@@ -90,11 +101,18 @@ function PanelItem({ action, description, eyebrow, icon, onPress, title }) {
 
 PanelItem.propTypes = {
   action: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  eyebrow: PropTypes.string.isRequired,
+  description: PropTypes.string,
   icon: PropTypes.func.isRequired,
+  iconClassName: PropTypes.string,
+  meta: PropTypes.string,
   onPress: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+};
+
+PanelItem.defaultProps = {
+  description: undefined,
+  iconClassName: undefined,
+  meta: undefined,
 };
 
 function WorkspaceAttentionPanel({ home, onCollapse }) {
@@ -102,16 +120,13 @@ function WorkspaceAttentionPanel({ home, onCollapse }) {
   const observation = home.observations?.[0];
   const healthIssue = home.dataHealth?.items?.[0];
   const setup = getSetupAction(home);
-
-  if (!observation && !healthIssue && !setup) {
-    return null;
-  }
+  const hasContent = Boolean(observation || healthIssue || setup);
 
   return (
     <Card className="gap-0 border border-divider p-0 shadow-none">
       <Card.Header className="flex flex-row items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
-          <Card.Title className="font-tw text-base font-semibold">
+          <Card.Title className="text-base font-semibold">
             What to look at next
           </Card.Title>
           <Card.Description>From dashboards you can access.</Card.Description>
@@ -126,40 +141,60 @@ function WorkspaceAttentionPanel({ home, onCollapse }) {
           <LuX size={16} aria-hidden />
         </Button>
       </Card.Header>
-      <Card.Content className="mt-3 divide-y divide-divider border-t border-divider">
-        {observation ? (
-          <PanelItem
-            action="View change"
-            description={observation.project?.name || "Workspace"}
-            eyebrow={`Change · ${formatTimeAgo(observation.lastDetectedAt)}`}
-            icon={LuActivity}
-            onPress={() => navigate(`/activity/${observation.id}`)}
-            title={observation.title}
-          />
-        ) : null}
+      {hasContent ? (
+        <Card.Content className="mt-3 divide-y divide-divider border-t border-divider">
+          {observation ? (
+            <PanelItem
+              action="View change"
+              description={observation.project?.name || "Workspace"}
+              icon={LuActivity}
+              iconClassName="text-warning"
+              meta={`Detected ${formatTimeAgo(observation.lastDetectedAt)}`}
+              onPress={() => navigate(`/activity/${observation.id}`)}
+              title={observation.title}
+            />
+          ) : null}
 
-        {setup ? (
-          <PanelItem
-            action={setup.action}
-            description={setup.description}
-            eyebrow="Suggested next step"
-            icon={setup.icon}
-            onPress={() => navigate(setup.path)}
-            title={setup.title}
-          />
-        ) : null}
+          {setup ? (
+            <PanelItem
+              action={setup.action}
+              description={setup.description}
+              icon={setup.icon}
+              iconClassName={setup.iconClassName}
+              onPress={() => navigate(setup.path)}
+              title={setup.title}
+            />
+          ) : null}
 
-        {healthIssue ? (
-          <PanelItem
-            action="Review data health"
-            description={`Detected ${formatTimeAgo(healthIssue.detectedAt)}`}
-            eyebrow="Data health"
-            icon={LuRefreshCw}
-            onPress={() => navigate("/activity?tab=health")}
-            title={healthIssue.message}
-          />
-        ) : null}
-      </Card.Content>
+          {healthIssue ? (
+            <PanelItem
+              action="Review data health"
+              description={healthIssue.title && healthIssue.title !== healthIssue.message
+                ? healthIssue.message
+                : undefined}
+              icon={LuRefreshCw}
+              iconClassName="text-warning"
+              meta={`Detected ${formatTimeAgo(healthIssue.detectedAt)}`}
+              onPress={() => navigate("/activity?tab=health")}
+              title={healthIssue.title || healthIssue.message}
+            />
+          ) : null}
+        </Card.Content>
+      ) : (
+        <Card.Content className="mt-3 border-t border-divider px-4 py-10">
+          <div className="flex flex-col items-center justify-center gap-3 text-center">
+            <div className="flex size-11 items-center justify-center rounded-lg border border-divider bg-content2/40">
+              <LuCircleCheck className="text-success" size={22} aria-hidden />
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="font-medium">Nothing needs attention</p>
+              <p className="text-sm text-muted">
+                Changes and data issues will show up here when they appear.
+              </p>
+            </div>
+          </div>
+        </Card.Content>
+      )}
     </Card>
   );
 }

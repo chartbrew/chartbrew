@@ -4,6 +4,7 @@ import { Button, Chip, Spinner } from "@heroui/react";
 import {
   LuActivity,
   LuArrowRight,
+  LuChartNoAxesColumnIncreasing,
   LuChevronRight,
   LuCircleCheck,
   LuDatabase,
@@ -24,6 +25,7 @@ import HomeAsk from "../Ai/HomeAsk";
 import ObservationCard from "../Activity/ObservationCard";
 import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
+import HomeDiscover from "./HomeDiscover";
 import RecordCountMonitorModal from "./RecordCountMonitorModal";
 
 function SectionHeading({ action, eyebrow, id, title }) {
@@ -35,7 +37,7 @@ function SectionHeading({ action, eyebrow, id, title }) {
             {eyebrow}
           </p>
         )}
-        <h2 className="font-tw text-lg font-semibold" id={id}>{title}</h2>
+        <h2 className="text-lg font-semibold" id={id}>{title}</h2>
       </div>
       {action}
     </div>
@@ -234,7 +236,7 @@ function Home() {
     || data.observations.filter((observation) => observation.impact === "positive");
 
   return (
-    <main className="flex w-full flex-col gap-4">
+    <main className="flex w-full flex-col gap-6">
       <header className="flex flex-col gap-1">
         <h1 className="font-tw text-2xl font-semibold">
           Good to see you, {user?.name?.split(" ")[0] || "there"}.
@@ -244,9 +246,17 @@ function Home() {
         </p>
       </header>
 
-      <HomeAsk teamId={team.id} />
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
+        <div className="min-w-0 flex-1">
+          <HomeAsk teamId={team.id} />
+        </div>
 
-      <section aria-labelledby="attention-heading" className="mt-8">
+        <div className="hidden w-90 shrink-0 lg:block">
+          <HomeDiscover />
+        </div>
+      </div>
+
+      <section aria-labelledby="attention-heading">
         <SectionHeading
           action={(
             <Button onPress={() => navigate("/activity")} size="sm" variant="ghost">
@@ -254,7 +264,6 @@ function Home() {
               <LuArrowRight aria-hidden />
             </Button>
           )}
-          eyebrow="Worth your attention"
           id="attention-heading"
           title="Needs attention"
         />
@@ -279,9 +288,8 @@ function Home() {
       </section>
 
       {notableChanges.length > 0 ? (
-        <section aria-labelledby="notable-heading" className="mt-8">
+        <section aria-labelledby="notable-heading">
           <SectionHeading
-            eyebrow="Moving in the right direction"
             id="notable-heading"
             title="Notable changes"
           />
@@ -293,14 +301,13 @@ function Home() {
         </section>
       ) : null}
 
-      <section aria-labelledby="dashboards-heading" className="mt-8">
+      <section aria-labelledby="dashboards-heading">
         <SectionHeading
           action={(
             <Button onPress={() => navigate("/dashboards")} size="sm" variant="ghost">
               All dashboards
             </Button>
           )}
-          eyebrow="Your workspace"
           id="dashboards-heading"
           title="Continue working"
         />
@@ -308,7 +315,7 @@ function Home() {
           <div className="divide-y divide-divider overflow-hidden rounded-xl border border-divider bg-content1">
             {data.dashboards.map((dashboard) => (
               <div
-                className="flex cursor-pointer flex-row items-center gap-3 px-4 py-3 hover:bg-content2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
+                className="flex cursor-pointer flex-row items-center gap-3 px-4 py-3.5 hover:bg-content2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
                 key={dashboard.id}
                 onClick={() => navigate(`/dashboard/${dashboard.id}`)}
                 onKeyDown={(event) => {
@@ -320,16 +327,19 @@ function Home() {
                 role="button"
                 tabIndex={0}
               >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-foreground-600">
+                  <LuChartNoAxesColumnIncreasing size={18} aria-hidden />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-row items-center gap-2">
-                    <span className="truncate font-medium">{dashboard.name}</span>
+                    <span className="truncate font-medium text-foreground">{dashboard.name}</span>
                     {dashboard.pinned ? (
                       <Chip size="sm" variant="soft">
                         <Chip.Label>Pinned</Chip.Label>
                       </Chip>
                     ) : null}
                   </div>
-                  <p className="mt-0.5 text-sm text-foreground-500">
+                  <p className="mt-0.5 text-sm text-muted">
                     {dashboard.chartCount} {dashboard.chartCount === 1 ? "chart" : "charts"}
                     {" · "}
                     {formatTimeAgo(dashboard.lastUpdatedAt)}

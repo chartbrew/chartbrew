@@ -13,6 +13,7 @@ import { getChart } from "../../slices/chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
+import { clearAiModalConversationId, selectAiModalConversationId } from "../../slices/ui";
 import isMac from "../../modules/isMac";
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
@@ -59,6 +60,7 @@ function AiModal({ isOpen, onClose }) {
   const params = useParams();
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
+  const pendingConversationId = useSelector(selectAiModalConversationId);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const dispatch = useDispatch();
@@ -492,6 +494,14 @@ function AiModal({ isOpen, onClose }) {
       setIsLoading(false);
     }
   };
+
+  // Open a specific conversation when requested from outside the modal
+  useEffect(() => {
+    if (!isOpen || !team?.id || !pendingConversationId) return;
+    const conversationId = pendingConversationId;
+    dispatch(clearAiModalConversationId());
+    _onSelectConversation(conversationId);
+  }, [isOpen, team?.id, pendingConversationId]);
 
   const _onDeleteConversation = async (conversationId) => {
     try {

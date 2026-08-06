@@ -72,7 +72,7 @@ function ObservationCard({ observation }) {
         ) : null}
       </Card.Header>
       <Card.Content className="flex-1 gap-1">
-        <Card.Title className="font-tw text-base font-semibold">{observation.title}</Card.Title>
+        <Card.Title className="text-base font-semibold">{observation.title}</Card.Title>
         <p className="text-sm text-muted">{observation.summary}</p>
         <p className="mt-1 text-xs text-muted">
           {[observation.chart?.name, formatPeriod(observation.currentPeriod)]

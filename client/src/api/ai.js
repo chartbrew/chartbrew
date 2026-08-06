@@ -1,9 +1,12 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
-export async function getAiConversations(teamId) {
+export async function getAiConversations(teamId, options = {}) {
   const token = getAuthToken();
-  const url = `${API_HOST}/ai/conversations?teamId=${teamId}`;
+  const params = new URLSearchParams({ teamId: String(teamId) });
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
+  const url = `${API_HOST}/ai/conversations?${params.toString()}`;
   const headers = new Headers({
     "Accept": "application/json",
     "Authorization": `Bearer ${token}`,
