@@ -3,15 +3,17 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Chip, Dropdown, InputGroup, Modal, Spinner, Table, Tabs, Tooltip,
+  Accordion, Button, Chip, Dropdown, InputGroup, Modal, Spinner, Table, Tabs, Tooltip,
 } from "@heroui/react";
 import {
   LuBell,
   LuChartNoAxesColumn,
   LuChevronRight,
   LuCircleCheck,
+  LuClock,
   LuDatabase,
   LuEllipsis,
+  LuEyeOff,
   LuMail,
   LuPause,
   LuPencil,
@@ -20,6 +22,7 @@ import {
   LuPlus,
   LuRefreshCw,
   LuSearch,
+  LuSparkles,
   LuTrash2,
 } from "react-icons/lu";
 import { useNavigate, useSearchParams } from "react-router";
@@ -27,12 +30,15 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import {
+  acceptMonitorRecommendation,
   deleteMonitor,
   deleteObservationDigest,
+  dismissMonitorRecommendation,
   getActivity,
   getAlerts,
   getDataHealth,
   getMonitors,
+  getMonitorRecommendations,
   getObservationDigests,
   refreshMonitor,
   sendTestObservationDigest,
@@ -45,6 +51,7 @@ import HeroPaginationNav from "../../components/HeroPaginationNav";
 import ObservationCard from "./ObservationCard";
 import MonitorSettingsModal from "./MonitorSettingsModal";
 import SummaryScheduleModal from "./SummaryScheduleModal";
+import WatchMetricModal from "../Chart/components/WatchMetricModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
@@ -140,7 +147,7 @@ function getMonitorMeta(monitor) {
 
 function EmptyState({ description, title }) {
   return (
-    <div className="rounded-xl border border-divider bg-content1 px-4 py-5">
+    <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-sm text-foreground-500">{description}</p>
     </div>
@@ -154,7 +161,7 @@ EmptyState.propTypes = {
 
 function ItemList({ children }) {
   return (
-    <div className="divide-y divide-divider rounded-xl border border-divider bg-content1">
+    <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-content1">
       {children}
     </div>
   );
@@ -203,6 +210,9 @@ function Activity() {
   const [loading, setLoading] = useState(true);
   const [monitors, setMonitors] = useState([]);
   const [monitorPending, setMonitorPending] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationPendingId, setRecommendationPendingId] = useState(null);
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
   const [selectedMonitor, setSelectedMonitor] = useState(null);
   const [selectedDigest, setSelectedDigest] = useState(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
@@ -223,18 +233,27 @@ function Activity() {
     if (!team?.id) return;
     setLoading(true);
     try {
-      const [openChanges, workspaceAlerts, dataHealth, watchedMetrics, summaries]
+      const [
+        openChanges,
+        workspaceAlerts,
+        dataHealth,
+        watchedMetrics,
+        metricRecommendations,
+        summaries,
+      ]
         = await Promise.all([
           getActivity(team.id, { limit: 50, status: "open" }),
           getAlerts(team.id),
           getDataHealth(team.id),
           getMonitors(team.id),
+          getMonitorRecommendations(team.id).catch(() => []),
           getObservationDigests(team.id),
         ]);
       setActivity(openChanges.items);
       setAlerts(workspaceAlerts);
       setHealth(dataHealth);
       setMonitors(watchedMetrics);
+      setRecommendations(metricRecommendations);
       setDigests(summaries);
     } catch (error) {
       toast.error(error.message);
@@ -347,6 +366,43 @@ function Activity() {
       toast.success("Metric refreshed");
     } catch (error) {
       toast.error(error.message);
+    }
+  };
+
+  const acceptRecommendation = async (settings) => {
+    if (!selectedRecommendation) return;
+    setRecommendationPendingId(selectedRecommendation.id);
+    try {
+      const monitor = await acceptMonitorRecommendation(
+        team.id,
+        selectedRecommendation.id,
+        settings
+      );
+      setMonitors((current) => [monitor, ...current]);
+      setRecommendations((current) => current.filter((item) => (
+        item.id !== selectedRecommendation.id
+      )));
+      setSelectedRecommendation(null);
+      toast.success(`Watching ${monitor.name}`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRecommendationPendingId(null);
+    }
+  };
+
+  const dismissRecommendation = async (recommendation, type) => {
+    setRecommendationPendingId(recommendation.id);
+    try {
+      await dismissMonitorRecommendation(team.id, recommendation.id, type);
+      setRecommendations((current) => current.filter((item) => item.id !== recommendation.id));
+      toast.success(type === "later"
+        ? "Suggestion hidden for 30 days"
+        : "This metric will not be suggested again unless the chart changes");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRecommendationPendingId(null);
     }
   };
 
@@ -513,7 +569,7 @@ function Activity() {
                 <h2 className="text-lg font-semibold" id="past-changes-heading">
                   Past changes
                 </h2>
-                <Table className={`border border-divider shadow-none ${pastLoading ? "opacity-60" : ""}`}>
+                <Table className={`overflow-hidden rounded-3xl border border-divider shadow-none ${pastLoading ? "opacity-60" : ""}`}>
                   <Table.ScrollContainer>
                     <Table.Content
                       aria-label="Past changes"
@@ -730,10 +786,112 @@ function Activity() {
         </Tabs.Panel>
 
         <Tabs.Panel id="monitors" className="p-0 pt-1">
-          {monitors.length > 0 ? (
-            <ItemList>
-              {monitors.map((monitor) => (
-                <ItemRow
+          <div className="flex flex-col gap-6">
+            {canEdit && recommendations.length > 0 ? (
+              <Accordion
+                className="w-full overflow-hidden rounded-3xl"
+                defaultExpandedKeys={["suggested-metrics"]}
+                hideSeparator
+                variant="surface"
+              >
+                <Accordion.Item id="suggested-metrics" textValue="Suggested metrics">
+                  <Accordion.Heading>
+                    <Accordion.Trigger className="items-start gap-3 py-3">
+                      <div className="flex min-w-0 flex-1 flex-col items-start gap-1 text-start">
+                        <div className="flex flex-row flex-wrap items-center gap-2">
+                          <span className="text-lg font-semibold text-foreground">
+                            Suggested metrics
+                          </span>
+                          <Chip size="sm" variant="soft" color="accent">
+                            <Chip.Label>{recommendations.length}</Chip.Label>
+                          </Chip>
+                        </div>
+                        <span className="text-sm font-normal text-muted">
+                          Based on charts your team already relies on. Nothing is watched until you approve it.
+                        </span>
+                      </div>
+                      <Accordion.Indicator className="mt-1 shrink-0 text-muted" />
+                    </Accordion.Trigger>
+                  </Accordion.Heading>
+                  <Accordion.Panel>
+                    <Accordion.Body className="pt-0 pb-4">
+                      <ItemList>
+                        {recommendations.map((recommendation) => (
+                          <ItemRow
+                            actions={(
+                              <>
+                                <Button
+                                  isDisabled={Boolean(recommendationPendingId)}
+                                  onPress={() => setSelectedRecommendation(recommendation)}
+                                  size="sm"
+                                  variant="secondary"
+                                >
+                                  Review
+                                </Button>
+                                <Dropdown aria-label={`Options for ${recommendation.name}`}>
+                                  <Dropdown.Trigger
+                                    aria-label={`Dismiss ${recommendation.name}`}
+                                    className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                                    isDisabled={Boolean(recommendationPendingId)}
+                                  >
+                                    {recommendationPendingId === recommendation.id
+                                      ? <Spinner aria-hidden size="sm" />
+                                      : <LuEllipsis size={18} aria-hidden />}
+                                  </Dropdown.Trigger>
+                                  <Dropdown.Popover>
+                                    <Dropdown.Menu>
+                                      <Dropdown.Item
+                                        id="later"
+                                        onPress={() => dismissRecommendation(recommendation, "later")}
+                                        textValue="Not now"
+                                      >
+                                        <LuClock size={16} aria-hidden />
+                                        Not now
+                                      </Dropdown.Item>
+                                      <Dropdown.Item
+                                        id="definition"
+                                        onPress={() => dismissRecommendation(recommendation, "definition")}
+                                        textValue="Do not suggest this metric"
+                                      >
+                                        <LuEyeOff size={16} aria-hidden />
+                                        Don&apos;t suggest this metric
+                                      </Dropdown.Item>
+                                    </Dropdown.Menu>
+                                  </Dropdown.Popover>
+                                </Dropdown>
+                              </>
+                            )}
+                            icon={<LuSparkles className="text-accent" size={18} aria-hidden />}
+                            key={recommendation.id}
+                            meta={(
+                              <>
+                                <span className="text-muted">{recommendation.reasons.join(" ")}</span>
+                                <span className="mt-2 block text-xs text-muted">
+                                  {recommendation.project.name} · {recommendation.chart.name}
+                                  {" · "}{recommendation.calculation} · {recommendation.comparison}
+                                </span>
+                              </>
+                            )}
+                            title={<span className="font-medium text-foreground">{recommendation.name}</span>}
+                          />
+                        ))}
+                      </ItemList>
+                    </Accordion.Body>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            ) : null}
+
+            <section aria-labelledby="watched-metrics-heading" className="flex flex-col gap-3">
+              {recommendations.length > 0 ? (
+                <h2 className="text-lg font-semibold" id="watched-metrics-heading">
+                  Watched metrics
+                </h2>
+              ) : null}
+              {monitors.length > 0 ? (
+                <ItemList>
+                  {monitors.map((monitor) => (
+                    <ItemRow
                   actions={canEdit ? (
                     <>
                       <Button
@@ -804,15 +962,19 @@ function Activity() {
                       </Chip>
                     </>
                   )}
+                    />
+                  ))}
+                </ItemList>
+              ) : (
+                <EmptyState
+                  description={recommendations.length > 0
+                    ? "Review a suggestion above or watch an eligible metric from a chart menu."
+                    : "Editors can watch an eligible metric from a chart menu."}
+                  title="No watched metrics yet"
                 />
-              ))}
-            </ItemList>
-          ) : (
-            <EmptyState
-              description="Editors can watch an eligible metric from a chart menu."
-              title="No watched metrics yet"
-            />
-          )}
+              )}
+            </section>
+          </div>
         </Tabs.Panel>
 
         <Tabs.Panel id="summaries" className="p-0 pt-1">
@@ -908,6 +1070,28 @@ function Activity() {
         monitor={selectedMonitor}
         onClose={() => setSelectedMonitor(null)}
         onSave={saveMonitor}
+      />
+
+      <WatchMetricModal
+        chartName={selectedRecommendation?.chart?.name}
+        description="Confirm how this metric should be interpreted before Chartbrew starts watching it."
+        heading="Review suggested metric"
+        initialImportance={selectedRecommendation?.defaultImportance || 1}
+        initialLayerId={selectedRecommendation?.layerId || null}
+        isOpen={Boolean(selectedRecommendation)}
+        isPending={recommendationPendingId === selectedRecommendation?.id}
+        lockMetric
+        onClose={() => {
+          if (!recommendationPendingId) setSelectedRecommendation(null);
+        }}
+        onSubmit={acceptRecommendation}
+        options={selectedRecommendation ? [{
+          id: selectedRecommendation.layerId,
+          kind: selectedRecommendation.kind,
+          name: selectedRecommendation.name,
+          valueFormat: selectedRecommendation.valueFormat,
+        }] : []}
+        submitLabel="Start watching"
       />
 
       <SummaryScheduleModal

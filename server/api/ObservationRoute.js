@@ -2,6 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const HomeController = require("../controllers/HomeController");
 const DigestController = require("../controllers/DigestController");
+const MetricRecommendationController = require("../controllers/MetricRecommendationController");
 const MonitorController = require("../controllers/MonitorController");
 const ObservationController = require("../controllers/ObservationController");
 const verifyToken = require("../modules/verifyToken");
@@ -51,6 +52,7 @@ function checkAccess() {
 module.exports = (app) => {
   const homeController = new HomeController();
   const digestController = new DigestController();
+  const metricRecommendationController = new MetricRecommendationController();
   const monitorController = new MonitorController();
   const observationController = new ObservationController();
   const routeAccess = [apiLimiter, verifyToken, checkAccess()];
@@ -183,6 +185,47 @@ module.exports = (app) => {
       return sendError(res, error);
     }
   });
+
+  app.get("/team/:team_id/monitor-recommendations", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await metricRecommendationController.list(req.observationAccess));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.post(
+    "/team/:team_id/monitor-recommendations/:recommendation_id/accept",
+    ...routeAccess,
+    async (req, res) => {
+      try {
+        return res.status(201).send(await metricRecommendationController.accept(
+          req.observationAccess,
+          req.params.recommendation_id,
+          req.body,
+          req.user
+        ));
+      } catch (error) {
+        return sendError(res, error);
+      }
+    }
+  );
+
+  app.post(
+    "/team/:team_id/monitor-recommendations/:recommendation_id/dismiss",
+    ...routeAccess,
+    async (req, res) => {
+      try {
+        return res.send(await metricRecommendationController.dismiss(
+          req.observationAccess,
+          req.params.recommendation_id,
+          req.body
+        ));
+      } catch (error) {
+        return sendError(res, error);
+      }
+    }
+  );
 
   app.get("/team/:team_id/charts/:chart_id/monitor-options", ...routeAccess, async (req, res) => {
     try {

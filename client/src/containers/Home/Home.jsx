@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Chip, Spinner } from "@heroui/react";
+import { Button, Card, Chip, Spinner } from "@heroui/react";
 import {
   LuActivity,
   LuArrowRight,
@@ -123,7 +123,7 @@ function SetupState({ onWatchRecords, state }) {
   }[state];
   if (!content) return null;
   return (
-    <div className="flex flex-row items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-5">
+    <div className="flex flex-row items-start gap-3 rounded-3xl border border-divider bg-content1 px-4 py-5">
       <div className="mt-0.5 text-primary">{content.icon}</div>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{content.title}</p>
@@ -149,20 +149,30 @@ SetupState.defaultProps = {
 
 function DataHealthAttention({ count, onPress }) {
   return (
-    <div className="flex h-full flex-row items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-4">
-      <LuRefreshCw className="mt-0.5 shrink-0 text-warning" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium">
-          {count} data {count === 1 ? "issue needs" : "issues need"} attention
+    <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
+      <Card.Header className="flex flex-row items-center gap-2 pb-2">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-divider bg-warning/10">
+          <LuRefreshCw className="text-warning" size={16} aria-hidden />
+        </div>
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
+          Data health
         </p>
-        <p className="mt-1 text-sm text-foreground-500">
+      </Card.Header>
+      <Card.Content className="flex-1 gap-1">
+        <Card.Title className="text-base font-semibold">
+          {count} data {count === 1 ? "issue needs" : "issues need"} attention
+        </Card.Title>
+        <p className="text-sm text-muted">
           Review this before relying on the affected metrics.
         </p>
-        <Button className="mt-3" onPress={onPress} size="sm" variant="secondary">
+      </Card.Content>
+      <Card.Footer className="justify-between gap-3 pt-3">
+        <Button onPress={onPress} size="sm" variant="tertiary">
           Review data health
+          <LuArrowRight aria-hidden />
         </Button>
-      </div>
-    </div>
+      </Card.Footer>
+    </Card>
   );
 }
 
@@ -312,7 +322,7 @@ function Home() {
           title="Continue working"
         />
         {data.dashboards.length > 0 ? (
-          <div className="divide-y divide-divider overflow-hidden rounded-xl border border-divider bg-content1">
+          <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-content1">
             {data.dashboards.map((dashboard) => (
               <div
                 className="flex cursor-pointer flex-row items-center gap-3 px-4 py-3.5 hover:bg-content2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
@@ -350,7 +360,7 @@ function Home() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-divider bg-content1 px-4 py-5">
+          <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
             <p className="font-medium">No dashboards available</p>
             <p className="mt-1 text-sm text-foreground-500">
               Dashboards you create or can access will appear here.
@@ -371,7 +381,7 @@ function Home() {
           "watch_metric",
           "watch_record_count",
         ].includes(data.setupState) ? (
-        <div className="flex flex-col items-start gap-3 rounded-xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
+        <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
           <div className="min-w-0 flex-1">
             <p className="font-medium">Get an Activity digest</p>
             <p className="text-sm text-foreground-500">

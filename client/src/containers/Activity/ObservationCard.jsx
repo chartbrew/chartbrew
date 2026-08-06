@@ -36,7 +36,7 @@ function ObservationCard({ observation }) {
   const isSnoozed = observation.preference?.snoozedUntil
     && new Date(observation.preference.snoozedUntil) > new Date();
   return (
-    <Card className={`h-full gap-0 border border-divider shadow-none ${
+    <Card className={`h-full gap-0 rounded-3xl border border-divider shadow-none ${
       isResolved ? "bg-content2/40" : ""
     }`}>
       <Card.Header className="flex flex-row flex-wrap items-center gap-2 pb-2">

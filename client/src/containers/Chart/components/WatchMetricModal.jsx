@@ -34,16 +34,23 @@ function getCurrencyName(currency) {
 
 function WatchMetricModal({
   chartName,
+  description,
+  heading,
+  initialImportance,
+  initialLayerId,
   isOpen,
   isPending,
+  lockMetric,
   onClose,
   onSubmit,
   options,
+  submitLabel,
 }) {
   const [currency, setCurrency] = useState("USD");
   const [decimals, setDecimals] = useState("auto");
   const [desiredDirection, setDesiredDirection] = useState("neutral");
   const [formatSource, setFormatSource] = useState("chart");
+  const [importance, setImportance] = useState("1");
   const [layerId, setLayerId] = useState(null);
   const [notation, setNotation] = useState("standard");
   const [percentageScale, setPercentageScale] = useState("1");
@@ -55,11 +62,12 @@ function WatchMetricModal({
     setDecimals("auto");
     setDesiredDirection("neutral");
     setFormatSource("chart");
-    setLayerId(options[0]?.id || null);
+    setImportance(`${initialImportance || 1}`);
+    setLayerId(initialLayerId || options[0]?.id || null);
     setNotation("standard");
     setPercentageScale("1");
     setValueMeaning("number");
-  }, [isOpen, options]);
+  }, [initialImportance, initialLayerId, isOpen, options]);
 
   const selectedOption = useMemo(() => {
     return options.find((option) => `${option.id}` === `${layerId}`) || options[0];
@@ -88,10 +96,9 @@ function WatchMetricModal({
         <Modal.Dialog className="sm:max-w-[520px]">
           <Modal.CloseTrigger />
           <Modal.Header className="flex flex-col items-start gap-1 pr-12">
-            <Modal.Heading>Watch this metric</Modal.Heading>
+            <Modal.Heading>{heading}</Modal.Heading>
             <p className="text-sm font-normal text-foreground-500">
-              Chartbrew will compare this value after successful chart refreshes and surface
-              material changes on <span className="font-bold">Home</span> and <span className="font-medium">Activity</span>.
+              {description}
             </p>
           </Modal.Header>
           <Modal.Body className="flex flex-col gap-5">
@@ -130,43 +137,83 @@ function WatchMetricModal({
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Select
-                    fullWidth
-                    onChange={(value) => {
-                      setLayerId(value);
-                      setFormatSource("chart");
-                    }}
-                    placeholder="Choose a metric"
-                    value={layerId}
-                  >
+                {lockMetric ? (
+                  <div className="flex flex-col gap-1">
                     <Label>Metric to watch</Label>
+                    <p className="font-medium text-foreground">
+                      {selectedOption?.name || chartName}
+                    </p>
+                    <p className="text-xs text-foreground-500">
+                      {selectedOption?.kind === "timeseries"
+                        ? "Compared by time period"
+                        : "Compared after each refresh"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Select
+                      fullWidth
+                      onChange={(value) => {
+                        setLayerId(value);
+                        setFormatSource("chart");
+                      }}
+                      placeholder="Choose a metric"
+                      value={layerId}
+                    >
+                      <Label>Metric to watch</Label>
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {options.map((option) => (
+                            <ListBox.Item
+                              id={option.id}
+                              key={option.id}
+                              textValue={option.name || chartName}
+                            >
+                              <div>
+                                <p>{option.name || chartName}</p>
+                                <p className="text-xs text-foreground-400">
+                                  {option.kind === "timeseries" ? "Compared by time period" : "Compared after each refresh"}
+                                </p>
+                              </div>
+                              <ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    <p className="text-xs text-foreground-500">
+                      Choose the value that should be tracked over time.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <Select fullWidth onChange={setImportance} value={importance}>
+                    <Label>How important is this metric?</Label>
                     <Select.Trigger>
                       <Select.Value />
                       <Select.Indicator />
                     </Select.Trigger>
                     <Select.Popover>
                       <ListBox>
-                        {options.map((option) => (
-                          <ListBox.Item
-                            id={option.id}
-                            key={option.id}
-                            textValue={option.name || chartName}
-                          >
-                            <div>
-                              <p>{option.name || chartName}</p>
-                              <p className="text-xs text-foreground-400">
-                                {option.kind === "timeseries" ? "Compared by time period" : "Compared after each refresh"}
-                              </p>
-                            </div>
-                            <ListBox.ItemIndicator />
-                          </ListBox.Item>
-                        ))}
+                        <ListBox.Item id="1" textValue="Standard">
+                          Standard<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="2" textValue="Important">
+                          Important<ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="3" textValue="Critical">
+                          Critical<ListBox.ItemIndicator />
+                        </ListBox.Item>
                       </ListBox>
                     </Select.Popover>
                   </Select>
                   <p className="text-xs text-foreground-500">
-                    Choose the value that should be tracked over time.
+                    More important metrics are prioritized when several changes happen together.
                   </p>
                 </div>
 
@@ -364,12 +411,13 @@ function WatchMetricModal({
               isPending={isPending}
               onPress={() => onSubmit({
                 desiredDirection,
+                importance: Number(importance),
                 layerId,
                 valueFormat: selectedValueFormat,
               })}
               variant="primary"
             >
-              Start watching
+              {submitLabel}
             </Button>
           </Modal.Footer>
         </Modal.Dialog>
@@ -380,8 +428,13 @@ function WatchMetricModal({
 
 WatchMetricModal.propTypes = {
   chartName: PropTypes.string,
+  description: PropTypes.node,
+  heading: PropTypes.string,
+  initialImportance: PropTypes.number,
+  initialLayerId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   isOpen: PropTypes.bool.isRequired,
   isPending: PropTypes.bool.isRequired,
+  lockMetric: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(PropTypes.shape({
@@ -399,10 +452,22 @@ WatchMetricModal.propTypes = {
       mode: PropTypes.string,
     }),
   })).isRequired,
+  submitLabel: PropTypes.string,
 };
 
 WatchMetricModal.defaultProps = {
   chartName: "Metric",
+  description: (
+    <>
+      Chartbrew will compare this value after successful chart refreshes and surface material
+      changes on <span className="font-bold">Home</span> and <span className="font-medium">Activity</span>.
+    </>
+  ),
+  heading: "Watch this metric",
+  initialImportance: 1,
+  initialLayerId: null,
+  lockMetric: false,
+  submitLabel: "Start watching",
 };
 
 export default WatchMetricModal;

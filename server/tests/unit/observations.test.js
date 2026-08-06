@@ -36,6 +36,11 @@ const {
   isDigestDue,
 } = require("../../modules/observations/digestSchedule");
 const { getObservationImpact } = require("../../modules/observations/metricDirection");
+const {
+  buildMetricRecommendations,
+  isCurrentDismissal,
+  serializeRecommendation,
+} = require("../../modules/observations/metricRecommendations");
 const { buildCalibrationReport } = require("../../modules/observations/calibrationReport");
 const {
   getHealthRunType,
@@ -44,6 +49,8 @@ const {
   rankObservations,
 } = require("../../controllers/HomeController");
 const ObservationController = require("../../controllers/ObservationController");
+const MetricRecommendationController = require("../../controllers/MetricRecommendationController");
+const MonitorController = require("../../controllers/MonitorController");
 const {
   getIncludes: getObservationIncludes,
   serializeFeedback,
@@ -78,6 +85,183 @@ function createMonitor(overrides = {}) {
 }
 
 describe("workspace observations", () => {
+  function createRecommendationChart({
+    activeAlert = false,
+    chartId = 4,
+    field = "root[].amount",
+    projectId = 10,
+    semanticConfidence = 0.98,
+  } = {}) {
+    return {
+      Alerts: activeAlert ? [{ active: true, id: "alert-1" }] : [],
+      ChartDatasetConfigs: [{
+        Dataset: {
+          DatasetIntelligence: {
+            expires_at: "2026-09-01T00:00:00.000Z",
+            profile: {
+              fields: {
+                [field]: {
+                  confidence: semanticConfidence,
+                  defaultAggregation: "sum",
+                  role: "measure",
+                },
+              },
+            },
+            status: "ready",
+          },
+          id: 8,
+        },
+        dataset_id: 8,
+        id: "binding-1",
+      }],
+      Project: { id: projectId, name: `Dashboard ${projectId}` },
+      autoUpdate: 3600,
+      chartDataUpdated: "2026-08-05T00:00:00.000Z",
+      id: chartId,
+      name: `Revenue ${chartId}`,
+      project_id: projectId,
+      timeInterval: "day",
+      visualization: {
+        layers: [{
+          bindingId: "binding-1",
+          encoding: {
+            time: { field: "root[].date", timeUnit: "day", type: "temporal" },
+            value: {
+              aggregate: "sum",
+              field,
+              title: "Revenue",
+              type: "quantitative",
+            },
+          },
+          id: "revenue",
+          mark: "line",
+          name: "Revenue",
+        }],
+        version: 2,
+      },
+    };
+  }
+
+  it("ranks reproducible chart recommendations by explicit workspace evidence", () => {
+    const recommendations = buildMetricRecommendations({
+      charts: [
+        createRecommendationChart({ chartId: 4, projectId: 10 }),
+        createRecommendationChart({ activeAlert: true, chartId: 5, projectId: 11 }),
+      ],
+      pinCounts: new Map([[10, 3]]),
+      teamId: 2,
+      now: new Date("2026-08-06T00:00:00.000Z"),
+    });
+
+    expect(recommendations).toHaveLength(2);
+    expect(recommendations[0].chart.id).toBe(5);
+    expect(recommendations[0].reasons[0]).toContain("active alert");
+    expect(recommendations[1].reasons[0]).toContain("3 people have pinned");
+    expect(serializeRecommendation(recommendations[0])).not.toHaveProperty("rank");
+    expect(serializeRecommendation(recommendations[0])).not.toHaveProperty("_definition");
+  });
+
+  it("does not recommend an existing or currently dismissed chart metric", () => {
+    const chart = createRecommendationChart();
+    const initial = buildMetricRecommendations({
+      charts: [chart],
+      teamId: 2,
+      now: new Date("2026-08-06T00:00:00.000Z"),
+    });
+    const definition = initial[0]._definition;
+
+    expect(buildMetricRecommendations({
+      charts: [chart],
+      monitors: [{ binding_key: definition.bindingKey, chart_id: chart.id }],
+      teamId: 2,
+      now: new Date("2026-08-06T00:00:00.000Z"),
+    })).toHaveLength(0);
+    expect(buildMetricRecommendations({
+      charts: [chart],
+      dismissals: [{
+        binding_key: definition.bindingKey,
+        chart_id: chart.id,
+        definition_fingerprint: definition.definitionFingerprint,
+        expires_at: "2026-09-05T00:00:00.000Z",
+      }],
+      teamId: 2,
+      now: new Date("2026-08-06T00:00:00.000Z"),
+    })).toHaveLength(0);
+  });
+
+  it("lets a temporary recommendation dismissal expire", () => {
+    expect(isCurrentDismissal({
+      expires_at: "2026-08-05T00:00:00.000Z",
+    }, new Date("2026-08-06T00:00:00.000Z"))).toBe(false);
+    expect(isCurrentDismissal({ expires_at: null })).toBe(true);
+  });
+
+  it("revalidates a recommendation before creating its normal metric monitor", async () => {
+    const controller = new MetricRecommendationController();
+    const access = { teamId: 2, userId: 3 };
+    const user = { id: 3 };
+    controller.generate = vi.fn().mockResolvedValue([{
+      chart: { id: 42 },
+      id: "recommendation-1",
+      layerId: "revenue",
+      valueFormat: { meaning: "currency", mode: "chart" },
+    }]);
+    const createSpy = vi.spyOn(MonitorController.prototype, "create").mockResolvedValue({
+      id: "monitor-1",
+    });
+
+    await controller.accept(access, "recommendation-1", {
+      chartId: 999,
+      desiredDirection: "higher",
+      importance: 2,
+    }, user);
+
+    expect(controller.generate).toHaveBeenCalledWith(access, {
+      includeDismissed: false,
+      limit: 100,
+    });
+    expect(createSpy).toHaveBeenCalledWith(access, expect.objectContaining({
+      chartId: 42,
+      desiredDirection: "higher",
+      importance: 2,
+      layerId: "revenue",
+    }), user);
+    createSpy.mockRestore();
+  });
+
+  it("stores team-wide recommendation dismissals against the current definition", async () => {
+    const controller = new MetricRecommendationController();
+    const access = { teamId: 2, userId: 3 };
+    controller.findCurrent = vi.fn().mockResolvedValue({
+      _definition: {
+        bindingKey: "revenue:default",
+        definitionFingerprint: "fingerprint-1",
+      },
+      chart: { id: 42 },
+      project: { id: 10 },
+    });
+    const update = vi.fn().mockResolvedValue({});
+    const findSpy = vi.spyOn(db.MetricRecommendationDismissal, "findOne")
+      .mockResolvedValue({ update });
+
+    await controller.dismiss(access, "recommendation-1", { type: "definition" });
+
+    expect(controller.findCurrent).toHaveBeenCalledWith(access, "recommendation-1", true);
+    expect(findSpy).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        chart_id: 42,
+        team_id: 2,
+      }),
+    }));
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      dismissal_type: "definition",
+      definition_fingerprint: "fingerprint-1",
+      dismissed_by: 3,
+      expires_at: null,
+    }));
+    findSpy.mockRestore();
+  });
+
   it("builds a reproducible monitor definition from an explicit chart layer", () => {
     const definition = buildMonitorDefinition({
       chart: {

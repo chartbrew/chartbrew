@@ -338,6 +338,15 @@ The first recommendation surface belongs in honest setup states and the watched-
 surface. Home may show one contextual recommendation only after signal relevance has been reviewed
 against real feedback. Automatic monitoring remains disabled.
 
+Version 1 derives at most five recommendations on demand from eligible chart layers. Active alerts,
+team dashboard pins, automatic refreshes, recent chart data, and matching high-confidence Dataset
+Intelligence are ranking evidence; Dataset Intelligence does not create a standalone monitor until
+the dataset refresh pipeline can reproduce that metric directly. Recommendations are never stored.
+A team-level dismissal stores one current definition fingerprint per chart metric slot, which keeps
+the data bounded while allowing a materially changed chart definition to be suggested again.
+Acceptance regenerates and authorizes the candidate on the server before using the normal
+`MetricMonitor` creation path.
+
 ### Sources of history
 
 - A chart time series containing enough comparable periods may be evaluated on its first monitored
@@ -539,6 +548,13 @@ Replace the client contract that submits `conversationHistory` with:
 
 `metric_spec` stores semantic field roles, aggregation, unit, time field, filters, formula, and
 approved breakdown dimensions. It does not store credentials, raw rows, or full query text.
+
+### `MetricRecommendationDismissal`
+
+- Team, project, chart, binding identity, current definition fingerprint, dismissing user, and type.
+- `later` dismissals expire after 30 days; `definition` dismissals remain until the chart definition
+  changes or the chart is deleted.
+- One row per team/chart/binding keeps historical definition changes from growing the table.
 
 ### `MetricSnapshot`
 
@@ -1104,12 +1120,12 @@ every event looking current or equally urgent.
 
 ### Phase 3 — Recommend metrics worth watching
 
-- [ ] Generate bounded candidates from eligible chart layers, existing alerts, dashboard usage, and
-  high-confidence Dataset Intelligence roles without another source request.
-- [ ] Rank candidates by reproducibility and usage evidence, not field-name plausibility.
-- [ ] Show why each metric is recommended and let Benji confirm its definition, value format,
+- [x] Generate bounded chart-backed candidates from eligible layers, using active alerts, dashboard
+  pins, refresh evidence, and high-confidence Dataset Intelligence without another source request.
+- [x] Rank candidates by reproducibility and explicit workspace evidence, not field-name plausibility.
+- [x] Show why each metric is recommended and let Benji confirm its definition, value format,
   importance, and healthy direction.
-- [ ] Make acceptance create the same explicit `MetricMonitor` used today; add bounded dismissal and
+- [x] Make acceptance create the same explicit `MetricMonitor` used today; add bounded dismissal and
   expiry when the source definition changes.
 - [ ] Introduce recommendations first in setup and monitoring management, then allow at most one
   contextual Home recommendation after relevance quality is acceptable.

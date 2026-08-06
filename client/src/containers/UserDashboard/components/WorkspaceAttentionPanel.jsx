@@ -123,7 +123,7 @@ function WorkspaceAttentionPanel({ home, onCollapse }) {
   const hasContent = Boolean(observation || healthIssue || setup);
 
   return (
-    <Card className="gap-0 border border-divider p-0 shadow-none">
+    <Card className="gap-0 rounded-3xl border border-divider p-0 shadow-none">
       <Card.Header className="flex flex-row items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
           <Card.Title className="text-base font-semibold">

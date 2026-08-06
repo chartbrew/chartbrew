@@ -44,7 +44,7 @@ function HomeDiscover() {
 
   return (
     <aside className="max-h-96" aria-label="Discover more">
-      <Card className="max-h-96 gap-0 border border-divider shadow-none">
+      <Card className="max-h-96 gap-0 rounded-3xl border border-divider shadow-none">
         <Card.Content className="flex max-h-96 flex-col gap-4 overflow-hidden p-5">
           <div className="flex flex-row items-start justify-between gap-3">
             {Icon ? (

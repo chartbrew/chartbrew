@@ -88,6 +88,30 @@ export function getMonitors(teamId) {
   return observationRequest(`/team/${teamId}/monitors`);
 }
 
+export function getMonitorRecommendations(teamId) {
+  return observationRequest(`/team/${teamId}/monitor-recommendations`);
+}
+
+export function acceptMonitorRecommendation(teamId, recommendationId, monitor) {
+  return observationRequest(
+    `/team/${teamId}/monitor-recommendations/${recommendationId}/accept`,
+    {
+      body: JSON.stringify(monitor),
+      method: "POST",
+    }
+  );
+}
+
+export function dismissMonitorRecommendation(teamId, recommendationId, type) {
+  return observationRequest(
+    `/team/${teamId}/monitor-recommendations/${recommendationId}/dismiss`,
+    {
+      body: JSON.stringify({ type }),
+      method: "POST",
+    }
+  );
+}
+
 export function getMonitorOptions(teamId, chartId) {
   return observationRequest(`/team/${teamId}/charts/${chartId}/monitor-options`);
 }

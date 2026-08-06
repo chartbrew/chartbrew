@@ -41,7 +41,7 @@ function HomeAsk({ teamId }) {
   };
 
   return (
-    <Card className="gap-0 border border-divider shadow-none">
+    <Card className="gap-0 rounded-3xl border border-divider shadow-none">
       <Card.Content className="flex flex-col gap-5 p-5">
         <div className="flex flex-col gap-2">
           <AiChat
