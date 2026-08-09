@@ -1061,8 +1061,6 @@ test matrices, and visual redesign are explicitly secondary to completing the pr
   active.
 - [x] Add dataset result-volume monitoring where business metrics are not configured yet, using the
   rows returned by normal dataset refreshes as samples in the deterministic observation pipeline.
-- [ ] Add a distinct source-wide database record-total path backed by an explicit aggregate count
-  query; never infer that total from a bounded or sampled dataset response.
 - [x] Make the first-run Home useful when a workspace has connections or datasets but no eligible
   watched metrics.
 - [x] Show which setup step is missing without implying that “no changes” were evaluated.
@@ -1129,13 +1127,27 @@ every event looking current or equally urgent.
   expiry when the source definition changes.
 - [x] Introduce recommendations first in setup and monitoring management, then allow at most one
   contextual Home recommendation after relevance quality is acceptable.
-- [ ] When Benji wants a source-wide database record total, recommend or create an efficient,
-  explicit aggregate count metric rather than reusing dataset result-volume monitoring.
-
 **Exit condition:** Benji no longer has to discover every monitor manually, but Chartbrew still
 never watches a guessed metric without approval.
 
-### Phase 4 — Controlled proactive rollout
+### Phase 4 — Make Ask feel like an agent workspace
+
+- [x] Replace alternating chat bubbles with a focused conversation canvas that reads like an
+  analytical document.
+- [x] Present agent work as concise, collapsible user-facing activities without exposing raw tool
+  names, arguments, results, chain-of-thought, or model internals.
+- [x] Treat generated charts and analytical results as first-class artifacts with clear source,
+  state, and next actions.
+- [x] Give the composer a stable multi-line layout, visible context scope, and useful follow-up
+  suggestions without overwhelming the primary question.
+- [ ] Provide quiet answer actions for copy and retry, plus honest loading, empty, and error states.
+- [x] Use the same transcript, activity, artifact, and composer primitives in Home, observation
+  investigation, and the persistent Ask experience.
+
+**Exit condition:** asking a question feels like watching Chartbrew investigate and produce a
+trustworthy analytical result, rather than waiting for a text chatbot to reply.
+
+### Phase 5 — Controlled proactive rollout
 
 - [ ] Run shadow capture on selected real workspaces before broad publication.
 - [ ] Compare deterministic outcomes with Maya/Benji feedback and enable sampled LLM auditing only

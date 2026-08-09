@@ -215,6 +215,17 @@ describe("orchestrator Responses API adapters", () => {
     expect(tool.parameters.required).toEqual(expect.arrayContaining(["connection_id", "question"]));
   });
 
+  it("exposes workspace activity for summary and freshness questions", async () => {
+    const tools = await availableTools();
+    const tool = tools.find((candidate) => candidate.name === "get_workspace_activity");
+
+    expect(tool).toMatchObject({
+      name: "get_workspace_activity",
+      displayName: "Review workspace activity",
+    });
+    expect(tool.description).toContain("recent changes");
+  });
+
   it("exposes generic source action and record search tools", async () => {
     const tools = await availableTools();
     const actionTool = tools.find((candidate) => candidate.name === "source_run_action");

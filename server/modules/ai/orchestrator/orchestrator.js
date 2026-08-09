@@ -49,6 +49,7 @@ const {
   getSchema,
   searchDatasets,
   getDatasetIntelligence,
+  getWorkspaceActivity,
   runExistingDataset,
   generateQuery,
   validateQuery,
@@ -161,6 +162,7 @@ const TEAM_SCOPED_TOOLS = new Set([
   "get_schema",
   "search_datasets",
   "get_dataset_intelligence",
+  "get_workspace_activity",
   "run_existing_dataset",
   "validate_query",
   "run_query",
@@ -192,6 +194,7 @@ const TEAM_SCOPED_TOOLS = new Set([
 const USER_SCOPED_TOOLS = new Set([
   "create_dashboard",
   "create_dashboard_from_template",
+  "get_workspace_activity",
   "run_existing_dataset",
 ]);
 
@@ -216,6 +219,16 @@ async function availableTools() {
   const queryGenerationSourceIds = getQueryGenerationSourceIds();
 
   return [
+    {
+      name: "get_workspace_activity",
+      displayName: "Review workspace activity",
+      description: "Get the current watched-metric changes and data-health issues visible to the user. Use this immediately for requests about recent changes, metrics needing attention, notable improvements, workspace summaries, or data freshness. Answer from the result instead of asking the user to choose a connection or dashboard.",
+      parameters: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+    },
     {
       name: "search_datasets",
       displayName: "Find existing datasets",
@@ -968,6 +981,8 @@ async function callTool(name, payload) {
         return searchDatasets(payload);
       case "get_dataset_intelligence":
         return getDatasetIntelligence(payload);
+      case "get_workspace_activity":
+        return getWorkspaceActivity(payload);
       case "run_existing_dataset":
         return runExistingDataset(payload);
       case "generate_query":
@@ -1088,6 +1103,7 @@ ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `-
 ${ENTITY_CREATION_RULES}
 
 ## Your Capabilities
+- Review the user's current watched-metric changes and data-health issues
 - List and identify appropriate supported source connections
 - Retrieve database schemas with tables, columns, and sample data
 - Search existing reusable datasets and retrieve their semantic intelligence
@@ -1202,6 +1218,7 @@ ${ENTITY_CREATION_RULES}
    - **REMEMBER: Temporary charts give users control over what gets saved to their dashboards. Users can always edit charts and datasets afterwards**
 
 3. Best practices:
+   - For requests to summarize recent changes, identify metrics needing attention, describe notable improvements, or check data freshness, call get_workspace_activity first and answer directly from its result. Do not ask the user to choose between a connection, database, or dashboard for these workspace-level questions.
    - **CRITICAL: Default to temporary charts.** Only place in dashboards when explicitly requested.
    - **CRITICAL: Respect user instructions exactly.** If the user specifies a dashboard, use that exact dashboard. Never create charts in other dashboards for any reason.
    - **CRITICAL: No validation or test runs.** Create charts once, as temporary previews by default.

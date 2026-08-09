@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, Card } from "@heroui/react";
-import { LuBookmark, LuLoader } from "react-icons/lu";
+import { Button } from "@heroui/react";
+import { LuBookmark } from "react-icons/lu";
 
 import AiComposer from "./AiComposer";
-import AiMarkdown from "./AiMarkdown";
+import { AiAnswer, AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
+import { parseAiMessage } from "./aiMessageUtils";
 
 const EMPTY_CONTEXT = {
   multiSelect: [],
@@ -24,32 +25,54 @@ function AiChat({
   return (
     <div className="flex flex-col gap-3">
       {messages.length > 0 ? (
-        <div aria-live="polite" className="flex max-h-96 flex-col gap-3 overflow-y-auto">
-          {messages.map((message, index) => (
-            <div
-              className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
-              key={`${message.role}-${index}`}
-            >
-              <Card
-                className="max-w-[90%] gap-0 border border-divider p-3 shadow-none"
-                variant={message.role === "user" ? "secondary" : "default"}
-              >
-                <Card.Content>
-                  {message.role === "assistant" ? (
-                    <AiMarkdown isError={message.isError}>{message.content}</AiMarkdown>
-                  ) : (
-                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                  )}
-                </Card.Content>
-              </Card>
-            </div>
-          ))}
-          {isLoading ? (
-            <div className="flex items-center gap-2 px-2 text-sm text-foreground-500">
-              <LuLoader className="animate-spin" aria-hidden />
-              Looking through your data…
-            </div>
-          ) : null}
+        <div aria-live="polite" className="max-h-[34rem] overflow-y-auto pr-1">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+            {messages.map((message, index) => {
+              if (message.role === "user") {
+                return (
+                  <AiUserPrompt key={`${message.role}-${index}`}>{message.content}</AiUserPrompt>
+                );
+              }
+              const parsed = parseAiMessage(message);
+              return (
+                <AiAnswer
+                  actions={showSave && index === messages.length - 1 ? (
+                    <Button
+                      className="h-7 min-h-7 px-2 text-xs text-muted"
+                      onPress={onSave}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <LuBookmark size={13} aria-hidden />
+                      Save conversation
+                    </Button>
+                  ) : null}
+                  after={parsed.type === "message_with_suggestions" ? (
+                    <div className="mt-3 flex flex-row flex-wrap gap-2">
+                      {parsed.suggestions.map((suggestion) => (
+                        <Button
+                          className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
+                          isDisabled={isLoading}
+                          key={suggestion.id}
+                          onPress={() => onSubmit(suggestion.label)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          {suggestion.label}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : null}
+                  content={parsed.content || "I need a little more information to answer that."}
+                  isError={message.isError}
+                  key={`${message.role}-${index}`}
+                />
+              );
+            })}
+            {isLoading ? (
+              <AiLoadingActivity />
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -60,17 +83,9 @@ function AiChat({
         onSubmitQuestion={onSubmit}
         placeholder={placeholder}
         selectedContext={EMPTY_CONTEXT}
+        showEnterHint={messages.length > 0}
         suggestions={suggestions}
       />
-
-      {showSave ? (
-        <div className="flex justify-end">
-          <Button onPress={onSave} size="sm" variant="tertiary">
-            <LuBookmark aria-hidden />
-            Save conversation
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }

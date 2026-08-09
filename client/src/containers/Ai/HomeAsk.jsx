@@ -42,7 +42,7 @@ function HomeAsk({ teamId }) {
 
   return (
     <Card className="gap-0 rounded-3xl border border-divider shadow-none">
-      <Card.Content className="flex flex-col gap-5 p-5">
+      <Card.Content className="flex flex-col gap-3 p-4">
         <div className="flex flex-col gap-2">
           <AiChat
             id="home-ask"
@@ -73,24 +73,24 @@ function HomeAsk({ teamId }) {
 
         {!conversationStarted ? (
           <>
-            <Separator />
-            <div className="flex flex-col gap-3">
+            <Separator className="mt-4" />
+            <div className="flex flex-col gap-1">
               {conversations.length > 0 ? (
                 <>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                    Pick up where you left off
+                  <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                    Continue where you left off
                   </p>
-                  <ul className="flex flex-col gap-0.5">
+                  <ul className="flex flex-col">
                     {conversations.map((conversation) => (
                       <li key={conversation.id}>
                         <button
-                          className="flex w-full flex-row items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          className="flex w-full flex-row items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                           onClick={() => openConversation(conversation.id)}
                           type="button"
                         >
                           <LuMessageSquare
                             className="shrink-0 text-foreground-400"
-                            size={16}
+                            size={14}
                             aria-hidden
                           />
                           <span className="min-w-0 flex-1 truncate text-sm">
@@ -102,15 +102,9 @@ function HomeAsk({ teamId }) {
                   </ul>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-lg border border-divider bg-content2/40">
-                    <LuMessageSquare className="text-foreground-400" size={18} aria-hidden />
-                  </div>
-                  <p className="font-medium">No recent questions yet</p>
-                  <p className="text-sm text-muted">
-                    Try asking something above to get started.
-                  </p>
-                </div>
+                <p className="px-1 py-1 text-sm text-muted">
+                  No recent questions yet
+                </p>
               )}
             </div>
           </>

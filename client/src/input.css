@@ -1,6 +1,7 @@
 @layer theme, base, components, utilities;
 
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "@heroui/styles";
 
 @theme inline {

@@ -10,6 +10,7 @@ const { getObservationAccess } = require("../modules/observations/access");
 
 const READ_ONLY_AI_TOOLS = [
   "get_dataset_intelligence",
+  "get_workspace_activity",
   "run_existing_dataset",
   "search_datasets",
   "summarize",

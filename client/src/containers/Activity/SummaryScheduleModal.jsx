@@ -387,24 +387,28 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
               </>
             )}
           </Modal.Body>
-          <Modal.Footer>
-            {subscription?.enabled ? (
-              <Button isPending={pending} onPress={disable} variant="danger-soft">
-                Disable schedule
+          <Modal.Footer className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center gap-2">
+              {subscription?.enabled ? (
+                <Button isPending={pending} onPress={disable} variant="danger-soft">
+                  Disable schedule
+                </Button>
+              ) : null}
+              <Button
+                isDisabled={!canSave || pending}
+                isPending={previewPending}
+                onPress={preview}
+                variant="secondary"
+              >
+                Preview email
               </Button>
-            ) : null}
-            <Button onPress={onClose} variant="tertiary">Cancel</Button>
-            <Button
-              isDisabled={!canSave || pending}
-              isPending={previewPending}
-              onPress={preview}
-              variant="secondary"
-            >
-              Preview email
-            </Button>
-            <Button isDisabled={!canSave} isPending={pending} onPress={save} variant="primary">
-              {subscription ? "Save changes" : "Schedule digest"}
-            </Button>
+            </div>
+            <div className="flex flex-row items-center gap-2">
+              <Button onPress={onClose} variant="tertiary">Cancel</Button>
+              <Button isDisabled={!canSave} isPending={pending} onPress={save} variant="primary">
+                {subscription ? "Save changes" : "Schedule digest"}
+              </Button>
+            </div>
           </Modal.Footer>
         </Modal.Dialog>
       </Modal.Container>

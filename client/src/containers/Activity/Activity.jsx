@@ -74,7 +74,49 @@ const HEALTH_TYPE_LABELS = {
   dataset: "Dataset",
   monitor: "Watched metric",
 };
+const ALERT_TYPE_LABELS = {
+  anomaly: "Anomaly detection",
+  milestone: "Milestone",
+  threshold_above: "Above threshold",
+  threshold_below: "Below threshold",
+  threshold_between: "Between thresholds",
+  threshold_outside: "Outside thresholds",
+};
 const PAST_CHANGES_PER_PAGE = 10;
+
+function getAlertSummary(alert) {
+  const rules = alert.rules || {};
+  const typeLabel = ALERT_TYPE_LABELS[alert.type] || "Chart alert";
+  const hasValue = (value) => value !== null && value !== undefined && value !== "";
+
+  if (alert.type === "milestone" && hasValue(rules.value)) {
+    return `${typeLabel}: ${rules.value}`;
+  }
+  if (alert.type === "threshold_above" && hasValue(rules.value)) {
+    return `${typeLabel}: ${rules.value}`;
+  }
+  if (alert.type === "threshold_below" && hasValue(rules.value)) {
+    return `${typeLabel}: ${rules.value}`;
+  }
+  if (alert.type === "threshold_between" && hasValue(rules.lower) && hasValue(rules.upper)) {
+    return `${typeLabel}: ${rules.lower}–${rules.upper}`;
+  }
+  if (alert.type === "threshold_outside" && hasValue(rules.lower) && hasValue(rules.upper)) {
+    return `${typeLabel}: ${rules.lower}–${rules.upper}`;
+  }
+  if (alert.type === "anomaly") {
+    return typeLabel;
+  }
+  return typeLabel;
+}
+
+function getAlertTriggeredValueLabel(alert) {
+  const values = alert.lastTriggeredValues || [];
+  if (values.length < 1) return null;
+  return values
+    .map((item) => (item.label ? `${item.label} ${item.value}` : `${item.value}`))
+    .join(", ");
+}
 
 function formatPeriod(period) {
   if (!period?.start || !period?.end) return "—";
@@ -660,11 +702,13 @@ function Activity() {
                 <ItemRow
                   actions={(
                     <Button
-                      onPress={() => navigate(`/dashboard/${alert.project.id}`)}
+                      onPress={() => navigate(
+                        `/dashboard/${alert.project.id}/chart/${alert.chart.id}/edit`
+                      )}
                       size="sm"
                       variant="secondary"
                     >
-                      Open dashboard
+                      Open chart
                     </Button>
                   )}
                   icon={(
@@ -677,11 +721,16 @@ function Activity() {
                   key={alert.id}
                   meta={(
                     <>
-                      <span className="text-muted">{alert.project.name}</span>
+                      <span className="text-muted">{getAlertSummary(alert)}</span>
                       <span className="mt-2 block text-xs text-muted">
-                        {alert.lastTriggeredAt
-                          ? `Last triggered ${formatTimeAgo(alert.lastTriggeredAt)}`
-                          : "Not triggered yet"}
+                        {[
+                          alert.project.name,
+                          alert.oneTime ? "One-time" : null,
+                          alert.lastTriggeredAt
+                            ? `Last triggered ${formatTimeAgo(alert.lastTriggeredAt)}`
+                            : "Not triggered yet",
+                          getAlertTriggeredValueLabel(alert),
+                        ].filter(Boolean).join(" · ")}
                       </span>
                     </>
                   )}

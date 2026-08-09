@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, Input, ListBox, Popover } from "@heroui/react";
-import { LuAtSign, LuLayers, LuLayoutGrid, LuPlug } from "react-icons/lu";
+import { Button, Input, ListBox, Popover, Tooltip } from "@heroui/react";
+import { LuLayers, LuLayoutGrid, LuPaperclip, LuPlug } from "react-icons/lu";
 
 function getEntityIcon(entityType) {
   switch (entityType) {
@@ -32,32 +32,38 @@ function AiContextPicker({
   triggerSize = "sm",
   triggerIsIconOnly = false,
   showTriggerLabel = false,
+  triggerTooltip,
 }) {
   const hasSelectedContext = selectedContext.multiSelect.length > 0;
+  const isIconOnly = triggerIsIconOnly || (showTriggerLabel && hasSelectedContext);
+  const triggerButton = (
+    <Button
+      type="button"
+      variant={triggerVariant}
+      size={triggerSize}
+      isPending={isLoading}
+      isIconOnly={isIconOnly}
+      aria-label="Add context"
+    >
+      <LuPaperclip size={triggerSize === "sm" ? 16 : 18} />
+      {showTriggerLabel && !hasSelectedContext ? "Add context" : null}
+      {showTriggerLabel && hasSelectedContext ? selectedContext.multiSelect.length : null}
+    </Button>
+  );
 
-  return (
+  const picker = (
     <Popover isOpen={isOpen} onOpenChange={onOpenChange}>
       <Popover.Trigger>
-        <Button
-          type="button"
-          variant={triggerVariant}
-          size={triggerSize}
-          isPending={isLoading}
-          isIconOnly={triggerIsIconOnly || (showTriggerLabel && hasSelectedContext)}
-          aria-label="Add context"
-        >
-          <LuAtSign size={triggerSize === "sm" ? 16 : 18} />
-          {showTriggerLabel && !hasSelectedContext ? "Add extra context" : null}
-        </Button>
+        {triggerButton}
       </Popover.Trigger>
       <Popover.Content placement={placement} className={contentClassName}>
         <Popover.Dialog>
           <div className="p-2 w-full">
-            <div className="text-xs text-foreground-500 mb-2">
-              Context helps our AI to understand your intentions better.
+            <div className="mb-2 text-xs font-medium text-foreground">
+              Add workspace context
             </div>
             <Input
-              placeholder="Search projects, connections, datasets..."
+              placeholder="Search dashboards, connections, or datasets"
               value={contextSearch}
               onChange={(e) => setContextSearch(e.target.value)}
               size="sm"
@@ -131,6 +137,19 @@ function AiContextPicker({
       </Popover.Content>
     </Popover>
   );
+
+  if (!triggerTooltip) return picker;
+
+  return (
+    <Tooltip delay={0} isDisabled={isOpen}>
+      <Tooltip.Trigger>
+        <div className="inline-flex">{picker}</div>
+      </Tooltip.Trigger>
+      <Tooltip.Content>
+        <p className="text-xs">{triggerTooltip}</p>
+      </Tooltip.Content>
+    </Tooltip>
+  );
 }
 
 AiContextPicker.propTypes = {
@@ -151,6 +170,7 @@ AiContextPicker.propTypes = {
   triggerSize: PropTypes.string,
   triggerIsIconOnly: PropTypes.bool,
   showTriggerLabel: PropTypes.bool,
+  triggerTooltip: PropTypes.string,
 };
 
 export default AiContextPicker;

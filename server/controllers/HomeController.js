@@ -224,7 +224,7 @@ class HomeController {
       }, {
         model: db.AlertEvent,
         as: "events",
-        attributes: ["createdAt", "id"],
+        attributes: ["createdAt", "id", "trigger"],
         limit: 1,
         order: [["createdAt", "DESC"]],
         separate: true,
@@ -233,21 +233,33 @@ class HomeController {
       order: [["updatedAt", "DESC"]],
     });
 
-    return alerts.map((alert) => ({
-      active: alert.active,
-      chart: {
-        id: alert.Chart.id,
-        name: alert.Chart.name,
-      },
-      id: alert.id,
-      lastTriggeredAt: alert.events?.[0]?.createdAt || null,
-      oneTime: alert.oneTime,
-      project: {
-        id: alert.Chart.Project.id,
-        name: alert.Chart.Project.name,
-      },
-      type: alert.type,
-    }));
+    return alerts.map((alert) => {
+      const latestEvent = alert.events?.[0] || null;
+      const triggerItems = Array.isArray(latestEvent?.trigger) ? latestEvent.trigger : [];
+      return {
+        active: alert.active,
+        chart: {
+          id: alert.Chart.id,
+          name: alert.Chart.name,
+        },
+        id: alert.id,
+        lastTriggeredAt: latestEvent?.createdAt || null,
+        lastTriggeredValues: triggerItems
+          .filter((item) => item?.value !== null && item?.value !== undefined && item?.value !== "")
+          .slice(0, 3)
+          .map((item) => ({
+            label: item.seriesLabel || item.label || null,
+            value: item.value,
+          })),
+        oneTime: alert.oneTime,
+        project: {
+          id: alert.Chart.Project.id,
+          name: alert.Chart.Project.name,
+        },
+        rules: alert.rules || {},
+        type: alert.type,
+      };
+    });
   }
 
   async getDataHealth(access, projectId = null) {
