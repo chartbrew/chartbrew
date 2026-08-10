@@ -23,6 +23,9 @@ const resetMigration = require(
 const evaluationThresholdMigration = require(
   "../../models/migrations/20260810102000-add-evaluation-threshold-result"
 );
+const digestDayOfMonthMigration = require(
+  "../../models/migrations/20260810103000-add-digest-day-of-month"
+);
 
 function captureModel(factory) {
   const sequelize = {
@@ -201,6 +204,25 @@ describe("period observation persistence", () => {
     expect(columns.passes_threshold).toEqual(expect.objectContaining({
       allowNull: false,
       defaultValue: false,
+    }));
+  });
+
+  it("adds the monthly delivery day to an already-upgraded digest table", async () => {
+    const columns = {};
+    const queryInterface = {
+      addColumn: vi.fn(async (tableName, columnName, definition) => {
+        columns[columnName] = definition;
+      }),
+      describeTable: vi.fn(async () => columns),
+    };
+
+    await digestDayOfMonthMigration.up(queryInterface);
+    await digestDayOfMonthMigration.up(queryInterface);
+
+    expect(queryInterface.addColumn).toHaveBeenCalledTimes(1);
+    expect(columns.day_of_month).toEqual(expect.objectContaining({
+      allowNull: false,
+      defaultValue: 1,
     }));
   });
 
