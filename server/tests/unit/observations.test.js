@@ -318,6 +318,10 @@ describe("workspace observations", () => {
       automatic: false,
       intervalSeconds: null,
     });
+    expect(getRefreshSchedule({ autoUpdate: 0, Project: { updateSchedule: null } })).toEqual({
+      automatic: false,
+      intervalSeconds: null,
+    });
   });
 
   it("uses the healthy direction to distinguish useful movement from regressions", () => {

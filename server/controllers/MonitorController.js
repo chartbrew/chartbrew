@@ -31,18 +31,19 @@ const { normalizeDesiredDirection } = require("../modules/observations/metricDir
 const ALLOWED_IMPORTANCE = new Set([1, 2, 3]);
 
 function getProjectRefreshIntervalSeconds(schedule = {}) {
-  const frequencyNumber = Number(schedule.frequencyNumber);
-  if (schedule.frequency === "every_x_minutes" && frequencyNumber > 0) {
+  const safeSchedule = schedule || {};
+  const frequencyNumber = Number(safeSchedule.frequencyNumber);
+  if (safeSchedule.frequency === "every_x_minutes" && frequencyNumber > 0) {
     return frequencyNumber * 60;
   }
-  if (schedule.frequency === "every_x_hours" && frequencyNumber > 0) {
+  if (safeSchedule.frequency === "every_x_hours" && frequencyNumber > 0) {
     return frequencyNumber * 60 * 60;
   }
-  if (schedule.frequency === "every_x_days" && frequencyNumber > 0) {
+  if (safeSchedule.frequency === "every_x_days" && frequencyNumber > 0) {
     return frequencyNumber * 24 * 60 * 60;
   }
-  if (schedule.frequency === "daily") return 24 * 60 * 60;
-  if (schedule.frequency === "weekly") return 7 * 24 * 60 * 60;
+  if (safeSchedule.frequency === "daily") return 24 * 60 * 60;
+  if (safeSchedule.frequency === "weekly") return 7 * 24 * 60 * 60;
   return null;
 }
 
