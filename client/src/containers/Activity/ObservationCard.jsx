@@ -6,15 +6,97 @@ import {
 } from "react-icons/lu";
 import { useNavigate } from "react-router";
 
-import { formatTimeAgo } from "../../modules/observationFormat";
+import {
+  formatAbsoluteDelta,
+  getObservationValueFormat,
+} from "../../modules/observationFormat";
 
-function formatPeriod(period) {
-  if (!period?.start || !period?.end) return null;
-  const formatter = new Intl.DateTimeFormat(undefined, {
+function getDateParts(value, timezone) {
+  const parts = new Intl.DateTimeFormat(undefined, {
     day: "numeric",
     month: "short",
-  });
-  return `${formatter.format(new Date(period.start))} – ${formatter.format(new Date(period.end))}`;
+    timeZone: timezone || "UTC",
+    year: "numeric",
+  }).formatToParts(new Date(value));
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
+function formatWeek(period, timezone, includeYear) {
+  const start = getDateParts(period.start, timezone);
+  const end = getDateParts(new Date(period.end).getTime() - 1, timezone);
+  if (start.year !== end.year) {
+    return `${start.month} ${start.day}, ${start.year}–${end.month} ${end.day}, ${end.year}`;
+  }
+  const year = includeYear ? `, ${start.year}` : "";
+  if (start.month !== end.month) {
+    return `${start.month} ${start.day}–${end.month} ${end.day}${year}`;
+  }
+  return `${start.month} ${start.day}–${end.day}${year}`;
+}
+
+function formatCompactComparison(observation) {
+  const current = observation.currentPeriod;
+  const previous = observation.comparisonPeriod;
+  const period = observation.monitor?.comparisonPeriod;
+  if (!current?.start || !current?.end || !previous?.start || !previous?.end || !period) {
+    return observation.comparisonLabel?.replace(" compared with ", " vs ") || null;
+  }
+
+  const timezone = observation.monitor?.comparisonTimezone || "UTC";
+  const currentStart = getDateParts(current.start, timezone);
+  const previousStart = getDateParts(previous.start, timezone);
+  const currentYear = getDateParts(new Date(), timezone).year;
+  const crossesYear = currentStart.year !== previousStart.year;
+  const isHistorical = currentStart.year !== currentYear;
+
+  if (period === "month") {
+    if (crossesYear) {
+      return `${currentStart.month} ${currentStart.year} vs ${
+        previousStart.month
+      } ${previousStart.year}`;
+    }
+    return `${currentStart.month} vs ${previousStart.month}${
+      isHistorical ? ` ${currentStart.year}` : ""
+    }`;
+  }
+  if (period === "week") {
+    const comparison = `${formatWeek(current, timezone, crossesYear)} vs ${
+      formatWeek(previous, timezone, crossesYear)
+    }`;
+    return `${comparison}${isHistorical && !crossesYear ? `, ${currentStart.year}` : ""}`;
+  }
+
+  if (crossesYear) {
+    return `${currentStart.month} ${currentStart.day}, ${currentStart.year} vs ${
+      previousStart.month
+    } ${previousStart.day}, ${previousStart.year}`;
+  }
+  return `${currentStart.month} ${currentStart.day} vs ${previousStart.month} ${
+    previousStart.day
+  }${isHistorical ? `, ${currentStart.year}` : ""}`;
+}
+
+function formatChangeMagnitude(observation) {
+  const valueFormat = getObservationValueFormat(
+    observation.unit,
+    observation.monitor?.valueFormat
+  );
+  if (valueFormat.meaning === "percentage") {
+    const points = Math.abs(Number(observation.absoluteDelta) * valueFormat.display.scale);
+    const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(points);
+    return `${formatted} ${points === 1 ? "point" : "points"}`;
+  }
+  if (observation.relativeDelta !== null
+    && observation.relativeDelta !== undefined
+    && Number.isFinite(Number(observation.relativeDelta))) {
+    const percent = Math.abs(Number(observation.relativeDelta) * 100);
+    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(percent)}%`;
+  }
+  return formatAbsoluteDelta(
+    observation.absoluteDelta,
+    observation.unit,
+    observation.monitor?.valueFormat
+  );
 }
 
 function ObservationCard({ observation }) {
@@ -28,36 +110,23 @@ function ObservationCard({ observation }) {
     : observation.impact === "positive"
       ? "text-success"
       : "text-foreground-500";
-  const activityTime = isResolved
-    ? observation.resolvedAt
-      ? `Resolved ${formatTimeAgo(observation.resolvedAt)}`
-      : "Resolved"
-    : formatTimeAgo(observation.lastDetectedAt);
+  const metricName = observation.chart?.name || observation.monitor?.name || "Watched metric";
+  const changeMagnitude = formatChangeMagnitude(observation);
+  const changeSign = isIncrease ? "+" : "−";
+  const comparison = formatCompactComparison(observation);
   const isSnoozed = observation.preference?.snoozedUntil
     && new Date(observation.preference.snoozedUntil) > new Date();
   return (
     <Card className={`h-full gap-0 rounded-3xl border border-divider shadow-none ${
       isResolved ? "bg-content2/40" : ""
     }`}>
-      <Card.Header className="flex flex-row flex-wrap items-center gap-2 pb-2">
-        {isResolved ? (
-          <LuCircleCheck className="shrink-0 text-foreground-400" size={16} aria-hidden />
-        ) : isIncrease ? (
-          <LuTrendingUp className={`shrink-0 ${impactClass}`} size={16} aria-hidden />
-        ) : (
-          <LuTrendingDown className={`shrink-0 ${impactClass}`} size={16} aria-hidden />
-        )}
+      <Card.Header className="flex flex-row flex-wrap items-center gap-2 pb-1">
         <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
-          {[
-            observation.project?.name || "Workspace",
-            isResolved ? null : activityTime,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {observation.project?.name || "Workspace"}
         </p>
         {isResolved ? (
           <Chip className="shrink-0" size="sm" variant="soft">
-            <Chip.Label>{activityTime}</Chip.Label>
+            <Chip.Label>Resolved</Chip.Label>
           </Chip>
         ) : null}
         {observation.preference?.dismissedAt ? (
@@ -71,17 +140,24 @@ function ObservationCard({ observation }) {
           </Chip>
         ) : null}
       </Card.Header>
-      <Card.Content className="flex-1 gap-1">
-        <Card.Title className="text-base font-semibold">{observation.title}</Card.Title>
-        <p className="text-sm text-muted">{observation.summary}</p>
-        <p className="mt-1 text-xs text-muted">
-          {[
-            observation.chart?.name,
-            observation.comparisonLabel || formatPeriod(observation.currentPeriod),
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
+      <Card.Content className="flex-1 gap-2">
+        <Card.Title className="text-base font-semibold">{metricName}</Card.Title>
+        <div className={`flex items-center gap-2 ${impactClass}`}>
+          {isResolved ? (
+            <LuCircleCheck className="shrink-0" size={20} aria-hidden />
+          ) : isIncrease ? (
+            <LuTrendingUp className="shrink-0" size={20} aria-hidden />
+          ) : (
+            <LuTrendingDown className="shrink-0" size={20} aria-hidden />
+          )}
+          <p
+            aria-label={`${isIncrease ? "Increased" : "Decreased"} by ${changeMagnitude}`}
+            className="text-2xl font-semibold tracking-tight"
+          >
+            {changeSign}{changeMagnitude}
+          </p>
+        </div>
+        {comparison ? <p className="text-sm text-muted">{comparison}</p> : null}
       </Card.Content>
       <Card.Footer className="justify-between gap-3 pt-3">
         <Button
