@@ -1328,13 +1328,18 @@ Run a bounded UpdateRun cleanup:
 npm run retention:run -- --category=update-runs --limit=5000
 ```
 
-Replay the completed-day evaluator against the external Synthbrew watched-metrics catalogue without
-publishing observations or making source requests:
+Replay the completed-period evaluator against the external Synthbrew watched-metrics catalogue
+without publishing observations or making source requests:
 
 ```bash
 cd server
 npm run observations:replay:synthbrew -- all
 ```
+
+The catalogue must include daily, weekly, and monthly monitors in one dashboard. It must cover
+native rates, additive totals from smaller chart buckets, and period-end state checkpoints. Its
+baseline must include normal calendar and segment variation. It must also include mixed-period,
+below-threshold, missing-data, collecting, correction, and zero-baseline cases.
 
 In a test team, watch one eligible time-series chart with a completed-week comparison and refresh it
 during the open week. Verify snapshots are written, no source request is repeated, and no period
