@@ -43,10 +43,10 @@ function HomeDiscover() {
   };
 
   return (
-    <aside className="max-h-96" aria-label="Discover more">
-      <Card className="max-h-96 gap-0 rounded-3xl border border-divider shadow-none">
-        <Card.Content className="flex max-h-96 flex-col gap-4 overflow-hidden p-5">
-          <div className="flex flex-row items-start justify-between gap-3">
+    <aside className="h-[20rem]" aria-label="Discover more">
+      <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
+        <Card.Content className="flex h-full flex-col gap-4 overflow-hidden">
+          <div className="flex shrink-0 flex-row items-start justify-between gap-3">
             {Icon ? (
               <div className={cn(
                 "flex size-10 shrink-0 items-center justify-center rounded-lg border border-divider",
@@ -60,7 +60,7 @@ function HomeDiscover() {
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
             {slide.eyebrow ? (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                 {slide.eyebrow}
@@ -75,7 +75,7 @@ function HomeDiscover() {
 
             {slide.action ? (
               <Button
-                className="mt-1 self-start"
+                className="mt-auto self-start"
                 onPress={() => slide.action?.onPress?.()}
                 size="sm"
                 variant="tertiary"

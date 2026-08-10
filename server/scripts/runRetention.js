@@ -37,6 +37,7 @@ async function run() {
       report.observations = await cleanupObservationData({
         ...sharedOptions,
         auditDays: process.env.CB_OBSERVATION_AUDIT_RETENTION_DAYS,
+        evaluationDays: process.env.CB_METRIC_EVALUATION_RETENTION_DAYS,
         rawSnapshotDays: process.env.CB_METRIC_SNAPSHOT_RETENTION_DAYS,
         resolvedObservationDays: process.env.CB_OBSERVATION_RESOLVED_RETENTION_DAYS,
         rollupDays: process.env.CB_METRIC_ROLLUP_RETENTION_DAYS,

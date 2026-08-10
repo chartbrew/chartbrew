@@ -9,6 +9,39 @@ const { normalizeDesiredDirection } = require("./metricDirection");
 const SCALAR_MARKS = new Set(["avg", "gauge", "kpi"]);
 const TIMESERIES_MARKS = new Set(["bar", "line"]);
 
+function getRecommendedMetricBehavior(kind, aggregate) {
+  if (kind === "scalar" || kind === "record_count") return "state";
+  if (["count", "sum"].includes(aggregate)) return "flow";
+  return null;
+}
+
+function buildDefinitionFingerprint({
+  baselinePolicy,
+  bindingKey,
+  chartId,
+  datasetId,
+  metricSpec,
+}) {
+  return createHash({
+    baselinePolicy,
+    bindingKey,
+    chartId: chartId || null,
+    datasetId: datasetId || null,
+    metricSpec: {
+      aggregate: metricSpec.aggregate,
+      formula: metricSpec.formula,
+      kind: metricSpec.kind,
+      layerId: metricSpec.layerId,
+      metricBehavior: metricSpec.metricBehavior || null,
+      metricField: metricSpec.metricField,
+      percentageScale: metricSpec.valueFormat?.display?.scale || null,
+      timeField: metricSpec.timeField,
+      timeUnit: metricSpec.timeUnit,
+      valueMeaning: metricSpec.valueFormat?.meaning || null,
+    },
+  });
+}
+
 function getMinimumSamples(kind, policyMinimum = 7) {
   return kind === "timeseries" ? 2 : Math.max(Number(policyMinimum) || 7, 3);
 }
@@ -42,9 +75,15 @@ function getEligibleLayers(visualization) {
     try {
       const eligible = getEligibleLayer(visualization, layer.id);
       return [{
+        aggregate: eligible.layer.encoding.value.aggregate || "none",
         id: layer.id,
         kind: eligible.kind,
         name: layer.name || layer.encoding?.value?.title || null,
+        recommendedMetricBehavior: getRecommendedMetricBehavior(
+          eligible.kind,
+          eligible.layer.encoding.value.aggregate || "none"
+        ),
+        timeUnit: eligible.layer.encoding.time?.timeUnit || null,
         valueFormat: inferChartValueFormat(layer.encoding?.value?.formula),
       }];
     } catch (error) {
@@ -54,7 +93,7 @@ function getEligibleLayers(visualization) {
 }
 
 function buildMonitorDefinition({
-  chart, desiredDirection, layerId, unit, valueFormat,
+  chart, desiredDirection, layerId, periodContract, unit, valueFormat,
 }) {
   const eligible = getEligibleLayer(chart.visualization, layerId);
   const normalizedValueFormat = normalizeValueFormat(
@@ -67,8 +106,10 @@ function buildMonitorDefinition({
     aggregate: eligible.layer.encoding.value.aggregate || "none",
     desiredDirection: normalizeDesiredDirection(desiredDirection),
     formula: eligible.layer.encoding.value.formula || null,
+    kind: eligible.kind,
     layerId: `${eligible.layer.id}`,
     metricField: eligible.layer.encoding.value.field,
+    metricBehavior: periodContract?.metricBehavior || null,
     metricTitle: eligible.layer.name
       || eligible.layer.encoding.value.title
       || chart.name
@@ -80,30 +121,25 @@ function buildMonitorDefinition({
     unit: toLegacyUnit(normalizedValueFormat),
     valueFormat: normalizedValueFormat,
   };
-  const baselinePolicy = eligible.kind === "timeseries"
+  const baselinePolicy = periodContract?.baselinePolicy || (eligible.kind === "timeseries"
     ? { type: "previous_period" }
-    : { type: "rolling_median" };
-  const definitionFingerprint = createHash({
+    : { type: "rolling_median" });
+  const bindingKey = `${eligible.layer.id}:default`;
+  const definitionFingerprint = buildDefinitionFingerprint({
     baselinePolicy,
+    bindingKey,
     chartId: chart.id,
-    metricSpec: {
-      aggregate: metricSpec.aggregate,
-      formula: metricSpec.formula,
-      layerId: metricSpec.layerId,
-      metricField: metricSpec.metricField,
-      timeField: metricSpec.timeField,
-      timeUnit: metricSpec.timeUnit,
-    },
-    visualizationVersion: chart.visualization?.version || null,
+    metricSpec,
   });
 
   return {
     baselinePolicy,
-    bindingKey: `${eligible.layer.id}:default`,
+    bindingKey,
     definitionFingerprint,
     kind: eligible.kind,
     metricSpec,
     name: metricSpec.metricTitle,
+    publicationPolicy: periodContract?.publicationPolicy || null,
   };
 }
 
@@ -150,8 +186,10 @@ module.exports = {
   SCALAR_MARKS,
   TIMESERIES_MARKS,
   buildDatasetRecordCountDefinition,
+  buildDefinitionFingerprint,
   buildMonitorDefinition,
   getEligibleLayer,
   getEligibleLayers,
   getMinimumSamples,
+  getRecommendedMetricBehavior,
 };

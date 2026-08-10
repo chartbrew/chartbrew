@@ -10,10 +10,18 @@ const {
 } = require("../modules/observations/access");
 const {
   buildDatasetRecordCountDefinition,
+  buildDefinitionFingerprint,
   buildMonitorDefinition,
   getEligibleLayers,
   getMinimumSamples,
 } = require("../modules/observations/monitorSchema");
+const {
+  getMonitorPeriodContract,
+  hasPeriodContractInput,
+  mergeMonitorPeriodInput,
+  normalizePeriodContract,
+} = require("../modules/observations/periodContract");
+const { getPeriodEvaluationSchedule } = require("../modules/observations/periodWindows");
 const { getObservationPolicy } = require("../modules/observations/policy");
 const {
   getValueFormat,
@@ -31,11 +39,25 @@ async function serializeMonitor(monitor) {
       monitor_id: monitor.id,
     },
   });
+  const baselinePolicy = monitor.baseline_policy?.type === "completed_period"
+    ? monitor.baseline_policy
+    : null;
+  const publicationPolicy = monitor.publication_policy || null;
   return {
     active: monitor.is_active,
+    aggregate: monitor.metric_spec?.aggregate || "none",
     chartId: monitor.chart_id,
     chartName: monitor.Chart?.name || null,
     createdBy: monitor.creator ? { id: monitor.creator.id, name: monitor.creator.name } : null,
+    comparison: baselinePolicy ? {
+      checkpointToleranceMinutes: baselinePolicy.checkpointToleranceMinutes,
+      mode: baselinePolicy.periodMode,
+      period: baselinePolicy.comparisonPeriod,
+      rule: baselinePolicy.comparison,
+      settlingDelayMinutes: baselinePolicy.settlingDelayMinutes,
+      timezone: baselinePolicy.calendarTimezone,
+      weekStartsOn: baselinePolicy.weekStartsOn,
+    } : null,
     datasetId: monitor.dataset_id,
     datasetName: monitor.Dataset?.name || null,
     desiredDirection: normalizeDesiredDirection(monitor.metric_spec?.desiredDirection),
@@ -43,13 +65,22 @@ async function serializeMonitor(monitor) {
     importance: monitor.importance,
     kind: monitor.kind,
     lastSampledAt: monitor.last_sampled_at,
+    lastEvaluatedPeriodEnd: monitor.last_evaluated_period_end,
+    metricBehavior: monitor.metric_spec?.metricBehavior || null,
     minimumSamples: monitor.minimum_samples,
     name: monitor.name,
+    nextEvaluationAt: monitor.next_evaluation_at,
     projectId: monitor.project_id,
     projectName: monitor.Project?.name || null,
     sampleCount,
+    sourceName: monitor.metric_spec?.metricTitle || monitor.name,
     status: monitor.status,
     statusReason: monitor.status_reason,
+    threshold: publicationPolicy ? {
+      type: publicationPolicy.thresholdType,
+      value: publicationPolicy.thresholdValue,
+    } : null,
+    timeUnit: monitor.metric_spec?.timeUnit || null,
     valueFormat: getValueFormat(monitor.metric_spec),
   };
 }
@@ -91,7 +122,7 @@ class MonitorController {
         include: [{ model: db.Dataset, attributes: ["id"] }],
       }, {
         model: db.Project,
-        attributes: ["id", "name", "team_id"],
+        attributes: ["id", "name", "team_id", "timezone"],
       }],
       where: { id: chartId },
     });
@@ -104,7 +135,11 @@ class MonitorController {
 
   async options(access, chartId) {
     const chart = await this.getChart(access, chartId);
-    return getEligibleLayers(chart.visualization);
+    return getEligibleLayers(chart.visualization).map((option) => ({
+      ...option,
+      calendarTimezone: chart.Project?.timezone || "UTC",
+      timeUnit: option.timeUnit || chart.timeInterval || "day",
+    }));
   }
 
   async recordCountOptions(access) {
@@ -175,7 +210,6 @@ class MonitorController {
         throw createHttpError("This workspace has reached its watched metric limit", 400);
       }
     }
-
     const values = {
       baseline_policy: definition.baselinePolicy,
       binding_key: definition.bindingKey,
@@ -235,11 +269,21 @@ class MonitorController {
     const policy = getObservationPolicy();
 
     let definition;
+    let periodContract;
     try {
+      const draftDefinition = buildMonitorDefinition({
+        chart,
+        desiredDirection: data.desiredDirection,
+        layerId: data.layerId,
+        unit: data.unit,
+        valueFormat: data.valueFormat,
+      });
+      periodContract = normalizePeriodContract(data, draftDefinition.metricSpec);
       definition = buildMonitorDefinition({
         chart,
         desiredDirection: data.desiredDirection,
         layerId: data.layerId,
+        periodContract,
         unit: data.unit,
         valueFormat: data.valueFormat,
       });
@@ -290,7 +334,16 @@ class MonitorController {
         metric_spec: definition.metricSpec,
         minimum_samples: getMinimumSamples(definition.kind, policy.minimumSamples),
         name: data.name?.trim() || definition.name,
+        next_evaluation_at: getPeriodEvaluationSchedule({
+          comparison: periodContract.baselinePolicy.comparison,
+          comparisonPeriod: periodContract.baselinePolicy.comparisonPeriod,
+          periodMode: periodContract.baselinePolicy.periodMode,
+          settlingDelayMinutes: periodContract.baselinePolicy.settlingDelayMinutes,
+          timezone: periodContract.baselinePolicy.calendarTimezone,
+          weekStartsOn: periodContract.baselinePolicy.weekStartsOn,
+        }).currentDueAt,
         project_id: chart.project_id,
+        publication_policy: definition.publicationPolicy,
         team_id: access.teamId,
       },
     });
@@ -307,7 +360,18 @@ class MonitorController {
         metric_spec: definition.metricSpec,
         minimum_samples: getMinimumSamples(definition.kind, policy.minimumSamples),
         name: data.name?.trim() || monitor.name,
+        next_evaluation_at: definitionChanged
+          ? getPeriodEvaluationSchedule({
+            comparison: periodContract.baselinePolicy.comparison,
+            comparisonPeriod: periodContract.baselinePolicy.comparisonPeriod,
+            periodMode: periodContract.baselinePolicy.periodMode,
+            settlingDelayMinutes: periodContract.baselinePolicy.settlingDelayMinutes,
+            timezone: periodContract.baselinePolicy.calendarTimezone,
+            weekStartsOn: periodContract.baselinePolicy.weekStartsOn,
+          }).currentDueAt
+          : monitor.next_evaluation_at,
         project_id: chart.project_id,
+        publication_policy: definition.publicationPolicy,
         status: definitionChanged ? "collecting" : monitor.status,
         status_reason: definitionChanged ? "definition_changed" : monitor.status_reason,
       });
@@ -373,8 +437,8 @@ class MonitorController {
       }
       values.importance = importance;
     }
+    let metricSpec = { ...monitor.metric_spec };
     if (data.desiredDirection !== undefined || data.valueFormat !== undefined) {
-      const metricSpec = { ...monitor.metric_spec };
       if (data.desiredDirection !== undefined) {
         metricSpec.desiredDirection = normalizeDesiredDirection(data.desiredDirection);
       }
@@ -390,7 +454,60 @@ class MonitorController {
         }
         metricSpec.unit = toLegacyUnit(metricSpec.valueFormat);
       }
+    }
+    let periodContract = null;
+    if (hasPeriodContractInput(data)) {
+      try {
+        periodContract = normalizePeriodContract(
+          mergeMonitorPeriodInput(data, monitor),
+          { ...metricSpec, kind: monitor.kind }
+        );
+      } catch (error) {
+        throw createHttpError(error.message, 400);
+      }
+      metricSpec = {
+        ...metricSpec,
+        kind: monitor.kind,
+        metricBehavior: periodContract.metricBehavior,
+      };
+      values.baseline_policy = periodContract.baselinePolicy;
+      values.publication_policy = periodContract.publicationPolicy;
+    } else {
+      try {
+        periodContract = getMonitorPeriodContract(monitor);
+      } catch (error) {
+        periodContract = null;
+      }
+    }
+    if (data.desiredDirection !== undefined || data.valueFormat !== undefined || periodContract) {
       values.metric_spec = metricSpec;
+    }
+    if (periodContract) {
+      const baselinePolicy = values.baseline_policy || monitor.baseline_policy;
+      const definitionFingerprint = buildDefinitionFingerprint({
+        baselinePolicy,
+        bindingKey: monitor.binding_key,
+        chartId: monitor.chart_id,
+        datasetId: monitor.dataset_id,
+        metricSpec,
+      });
+      const definitionChanged = definitionFingerprint !== monitor.definition_fingerprint;
+      values.definition_fingerprint = definitionFingerprint;
+      if (definitionChanged) {
+        const schedule = getPeriodEvaluationSchedule({
+          comparison: baselinePolicy.comparison,
+          comparisonPeriod: baselinePolicy.comparisonPeriod,
+          periodMode: baselinePolicy.periodMode,
+          settlingDelayMinutes: baselinePolicy.settlingDelayMinutes,
+          timezone: baselinePolicy.calendarTimezone,
+          weekStartsOn: baselinePolicy.weekStartsOn,
+        });
+        values.last_evaluated_period_end = null;
+        values.last_sampled_at = null;
+        values.next_evaluation_at = schedule.currentDueAt;
+        values.status = "collecting";
+        values.status_reason = "definition_changed";
+      }
     }
     await monitor.update(values);
     return serializeMonitor(monitor);

@@ -45,6 +45,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 1,
     },
+    coverage: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "unknown",
+    },
+    result_as_of: DataTypes.DATE,
     definition_fingerprint: {
       type: DataTypes.STRING,
       allowNull: false,

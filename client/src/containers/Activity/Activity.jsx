@@ -49,16 +49,16 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import HeroPaginationNav from "../../components/HeroPaginationNav";
 import ObservationCard from "./ObservationCard";
-import MonitorSettingsModal from "./MonitorSettingsModal";
 import SummaryScheduleModal from "./SummaryScheduleModal";
 import WatchMetricModal from "../Chart/components/WatchMetricModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
 const MONITOR_STATUS_LABELS = {
-  collecting: "Building baseline",
+  collecting: "Waiting",
   ineligible: "Needs review",
   ready: "Ready",
+  review_required: "Needs review",
   waiting_for_data: "Waiting for data",
 };
 const DIRECTION_LABELS = {
@@ -162,29 +162,63 @@ function getDigestMeta(subscription) {
 }
 
 function getMonitorMeta(monitor) {
+  const nextEvaluation = monitor.nextEvaluationAt
+    ? `Next evaluation ${formatTimeAgo(monitor.nextEvaluationAt)}`
+    : null;
+  const withNextEvaluation = (message) => [message, nextEvaluation].filter(Boolean).join(" · ");
   if (!monitor.active) return "Evaluation is paused";
+  if (monitor.status === "review_required") {
+    return "Choose how this metric should be compared";
+  }
   if (monitor.statusReason === "initial_evaluation_failed") {
-    return "Current chart data could not be evaluated. Refresh to try again";
+    return "Current chart data could not be captured. Refresh to try again";
   }
   if (monitor.statusReason === "definition_changed") {
-    return "The chart changed. Refresh to build a new baseline";
+    return "The comparison changed. Waiting for matching period data";
+  }
+  if (monitor.statusReason === "settling") {
+    return withNextEvaluation("The latest completed period is settling");
   }
   if (monitor.status === "collecting") {
-    return `${monitor.sampleCount} of ${monitor.minimumSamples} baseline samples`;
+    return withNextEvaluation(monitor.statusReason === "waiting_for_fresh_data"
+      ? "Waiting for fresh data after the period closed"
+      : "Waiting for a complete comparison period");
   }
   if (monitor.status === "waiting_for_data") {
-    return monitor.statusReason === "incomplete_data"
-      ? "The latest data is incomplete. Refresh after the dataset is ready"
+    return ["checkpoint_missing", "incomplete_coverage", "missing_window"].includes(
+      monitor.statusReason
+    )
+      ? "The completed period does not have enough data"
       : "No values were returned by the latest refresh";
   }
   if (monitor.status === "ineligible") {
     return "This metric can no longer be evaluated";
   }
-  if (monitor.statusReason === "no_new_data") {
-    return `No new periods in the latest refresh · Checked ${formatTimeAgo(monitor.lastSampledAt)}`;
+  if (monitor.lastEvaluatedPeriodEnd) {
+    return withNextEvaluation(
+      `Last completed period evaluated ${formatTimeAgo(monitor.lastEvaluatedPeriodEnd)}`
+    );
   }
-  if (!monitor.lastSampledAt) return "Ready for its first evaluation";
-  return `Last sampled ${formatTimeAgo(monitor.lastSampledAt)}`;
+  if (!monitor.lastSampledAt) return "Waiting for its first data capture";
+  return withNextEvaluation(`Last data captured ${formatTimeAgo(monitor.lastSampledAt)}`);
+}
+
+function getComparisonLabel(monitor) {
+  if (!monitor.comparison?.period) return null;
+  const periodLabels = { day: "Daily", month: "Monthly", week: "Weekly" };
+  const period = periodLabels[monitor.comparison.period] || "Completed period";
+  const behavior = monitor.metricBehavior === "flow"
+    ? "Total"
+    : monitor.metricBehavior === "state" ? "Period end" : "Native period";
+  return `${period} · ${behavior}`;
+}
+
+function getMonitorStatusColor(monitor) {
+  if (!monitor.active) return "warning";
+  if (["ineligible", "review_required", "waiting_for_data"].includes(monitor.status)) {
+    return "warning";
+  }
+  return "accent";
 }
 
 function EmptyState({ description, title }) {
@@ -551,7 +585,7 @@ function Activity() {
               Data health
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab className="ml-2 border-l border-divider pl-3" id="monitors">
+            <Tabs.Tab id="monitors">
               Watched metrics
               <Tabs.Indicator />
             </Tabs.Tab>
@@ -997,7 +1031,7 @@ function Activity() {
                   title={(
                     <>
                       <span className="font-medium">{monitor.name}</span>
-                      <Chip color={monitor.active ? "accent" : "warning"} size="sm" variant="soft">
+                      <Chip color={getMonitorStatusColor(monitor)} size="sm" variant="soft">
                         <Chip.Label>
                           {monitor.active
                             ? MONITOR_STATUS_LABELS[monitor.status] || "Unavailable"
@@ -1009,6 +1043,11 @@ function Activity() {
                           {DIRECTION_LABELS[monitor.desiredDirection] || DIRECTION_LABELS.neutral}
                         </Chip.Label>
                       </Chip>
+                      {getComparisonLabel(monitor) ? (
+                        <Chip size="sm" variant="soft">
+                          <Chip.Label>{getComparisonLabel(monitor)}</Chip.Label>
+                        </Chip>
+                      ) : null}
                     </>
                   )}
                     />
@@ -1114,16 +1153,35 @@ function Activity() {
         </Tabs.Panel>
       </Tabs>
 
-      <MonitorSettingsModal
+      <WatchMetricModal
+        chartName={selectedMonitor?.chartName || selectedMonitor?.datasetName}
+        description="Choose what Chartbrew compares and when a change matters."
+        heading="Edit watched metric"
+        initialImportance={selectedMonitor?.importance || 1}
+        initialLayerId={selectedMonitor?.id || null}
+        initialName={selectedMonitor?.name || null}
+        initialSettings={selectedMonitor}
+        isOpen={Boolean(selectedMonitor)}
         isPending={monitorPending}
-        monitor={selectedMonitor}
+        lockMetric
         onClose={() => setSelectedMonitor(null)}
-        onSave={saveMonitor}
+        onSubmit={saveMonitor}
+        options={selectedMonitor ? [{
+          aggregate: selectedMonitor.aggregate,
+          calendarTimezone: selectedMonitor.comparison?.timezone,
+          id: selectedMonitor.id,
+          kind: selectedMonitor.kind,
+          name: selectedMonitor.sourceName || selectedMonitor.name,
+          recommendedMetricBehavior: selectedMonitor.metricBehavior,
+          timeUnit: selectedMonitor.timeUnit,
+          valueFormat: selectedMonitor.valueFormat,
+        }] : []}
+        submitLabel="Save changes"
       />
 
       <WatchMetricModal
         chartName={selectedRecommendation?.chart?.name}
-        description="Confirm how this metric should be interpreted before Chartbrew starts watching it."
+        description="Choose how Chartbrew should watch this chart."
         heading="Review suggested metric"
         initialImportance={selectedRecommendation?.defaultImportance || 1}
         initialLayerId={selectedRecommendation?.layerId || null}
@@ -1135,9 +1193,13 @@ function Activity() {
         }}
         onSubmit={acceptRecommendation}
         options={selectedRecommendation ? [{
+          aggregate: selectedRecommendation.aggregate,
+          calendarTimezone: selectedRecommendation.calendarTimezone,
           id: selectedRecommendation.layerId,
           kind: selectedRecommendation.kind,
           name: selectedRecommendation.name,
+          recommendedMetricBehavior: selectedRecommendation.recommendedMetricBehavior,
+          timeUnit: selectedRecommendation.timeUnit,
           valueFormat: selectedRecommendation.valueFormat,
         }] : []}
         submitLabel="Start watching"

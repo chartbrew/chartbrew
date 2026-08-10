@@ -29,6 +29,7 @@ const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 const updateAuditRetention = require("./modules/updateAuditRetention");
 const observationDigestScheduler = require("./modules/observations/digestScheduler");
+const periodEvaluationScheduler = require("./modules/observations/periodEvaluationScheduler");
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
@@ -155,6 +156,7 @@ db.migrate()
           cleanGhostChartsCron();
           updateAuditRetention();
           observationDigestScheduler();
+          periodEvaluationScheduler();
         }, 5000);
       }
 

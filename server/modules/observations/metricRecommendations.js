@@ -73,7 +73,7 @@ function getReasons({
     reasons.push("The chart refreshes automatically.");
   }
   if (reasons.length === 0) {
-    reasons.push("This chart contains a metric Chartbrew can reproduce after each refresh.");
+    reasons.push("This chart contains a metric Chartbrew can compare across completed periods.");
   }
   return reasons.slice(0, 2);
 }
@@ -144,15 +144,16 @@ function buildMetricRecommendations({
       const projectName = chart.Project?.name || "Dashboard";
 
       return [{
+        aggregate: option.aggregate,
+        calendarTimezone: chart.Project?.timezone || "UTC",
         chart: { id: chart.id, name: chart.name || definition.name },
-        comparison: definition.kind === "timeseries"
-          ? "Compared with the previous period"
-          : "Compared across successful refreshes",
+        comparison: "Daily, weekly, or monthly comparison",
         defaultImportance: activeAlertCount > 0 || pinCount > 0 ? 2 : 1,
         id: getRecommendationId(teamId, candidate),
         kind: definition.kind,
         layerId: option.id,
         name: definition.name,
+        recommendedMetricBehavior: option.recommendedMetricBehavior,
         project: { id: chart.project_id, name: projectName },
         calculation: aggregate === "none"
           ? aggregateLabel
@@ -174,6 +175,7 @@ function buildMetricRecommendations({
           updatedAtValue,
         },
         valueFormat: definition.metricSpec.valueFormat,
+        timeUnit: definition.metricSpec.timeUnit,
         _definition: candidate,
       }];
     });

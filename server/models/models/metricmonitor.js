@@ -47,6 +47,15 @@ module.exports = (sequelize, DataTypes) => {
         return getEncryptedJson(this, "baseline_policy");
       },
     },
+    publication_policy: {
+      type: DataTypes.TEXT("long"),
+      set(value) {
+        setEncryptedJson(this, "publication_policy", value);
+      },
+      get() {
+        return getEncryptedJson(this, "publication_policy");
+      },
+    },
     cadence: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -78,6 +87,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     last_sampled_at: DataTypes.DATE,
+    last_evaluated_period_end: DataTypes.DATE,
+    next_evaluation_at: DataTypes.DATE,
   }, {
     freezeTableName: true,
     indexes: [
@@ -95,6 +106,7 @@ module.exports = (sequelize, DataTypes) => {
     models.MetricMonitor.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
     models.MetricMonitor.belongsTo(models.User, { foreignKey: "created_by", as: "creator" });
     models.MetricMonitor.hasMany(models.MetricSnapshot, { foreignKey: "monitor_id" });
+    models.MetricMonitor.hasMany(models.MetricEvaluation, { foreignKey: "monitor_id" });
     models.MetricMonitor.hasMany(models.Observation, { foreignKey: "monitor_id" });
   };
 

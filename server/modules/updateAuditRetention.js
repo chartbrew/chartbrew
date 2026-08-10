@@ -19,6 +19,7 @@ async function runCleanup() {
     auditDays: process.env.CB_OBSERVATION_AUDIT_RETENTION_DAYS,
     batchSize: process.env.CB_DATA_RETENTION_BATCH_SIZE,
     maxRuntimeSeconds: process.env.CB_DATA_RETENTION_MAX_RUNTIME_SECONDS,
+    evaluationDays: process.env.CB_METRIC_EVALUATION_RETENTION_DAYS,
     rawSnapshotDays: process.env.CB_METRIC_SNAPSHOT_RETENTION_DAYS,
     resolvedObservationDays: process.env.CB_OBSERVATION_RESOLVED_RETENTION_DAYS,
     rollupDays: process.env.CB_METRIC_ROLLUP_RETENTION_DAYS,
@@ -41,6 +42,7 @@ module.exports = () => {
     ["Daily metric rollups", process.env.CB_METRIC_ROLLUP_RETENTION_DAYS],
     ["Resolved observations", process.env.CB_OBSERVATION_RESOLVED_RETENTION_DAYS],
     ["Observation audits", process.env.CB_OBSERVATION_AUDIT_RETENTION_DAYS],
+    ["Metric evaluations", process.env.CB_METRIC_EVALUATION_RETENTION_DAYS],
   ].forEach(([label, value]) => {
     if (`${value}` === "0") {
       console.warn(`[retention] ${label} cleanup is disabled`); // eslint-disable-line no-console

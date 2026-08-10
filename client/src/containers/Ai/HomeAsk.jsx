@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Card, Separator } from "@heroui/react";
+import { Button, Card } from "@heroui/react";
 import {
   LuChevronUp,
   LuMessageSquare,
@@ -42,7 +42,7 @@ function HomeAsk({ teamId }) {
 
   return (
     <Card className="gap-0 rounded-3xl border border-divider shadow-none">
-      <Card.Content className="flex flex-col gap-3 p-4">
+      <Card.Content className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <AiChat
             id="home-ask"
@@ -73,7 +73,6 @@ function HomeAsk({ teamId }) {
 
         {!conversationStarted ? (
           <>
-            <Separator className="mt-4" />
             <div className="flex flex-col gap-1">
               {conversations.length > 0 ? (
                 <>

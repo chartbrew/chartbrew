@@ -542,7 +542,7 @@ function Home() {
       />
       <WatchMetricModal
         chartName={recommendation?.chart?.name}
-        description="Confirm how this metric should be interpreted before Chartbrew starts watching it."
+        description="Choose how Chartbrew should watch this chart."
         heading="Review suggested metric"
         initialImportance={recommendation?.defaultImportance || 1}
         initialLayerId={recommendation?.layerId || null}
@@ -554,9 +554,13 @@ function Home() {
         }}
         onSubmit={acceptRecommendation}
         options={recommendation ? [{
+          aggregate: recommendation.aggregate,
+          calendarTimezone: recommendation.calendarTimezone,
           id: recommendation.layerId,
           kind: recommendation.kind,
           name: recommendation.name,
+          recommendedMetricBehavior: recommendation.recommendedMetricBehavior,
+          timeUnit: recommendation.timeUnit,
           valueFormat: recommendation.valueFormat,
         }] : []}
         submitLabel="Start watching"

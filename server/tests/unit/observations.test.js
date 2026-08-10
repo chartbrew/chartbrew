@@ -60,7 +60,7 @@ const db = require("../../models/models");
 const {
   countDatasetRecords,
   persistSnapshots,
-  publishObservation,
+  processMonitor,
 } = require("../../modules/observations/processChartResult");
 const {
   getSafeViewerFields,
@@ -762,6 +762,8 @@ describe("workspace observations", () => {
   it("does not treat an unchanged timeseries refresh as new evidence", async () => {
     const record = {
       completeness: 1,
+      coverage: "unknown",
+      result_as_of: null,
       sample_count: 1,
       update: vi.fn().mockResolvedValue(undefined),
       update_run_id: null,
@@ -786,70 +788,53 @@ describe("workspace observations", () => {
     findSpy.mockRestore();
   });
 
-  it("reopens the same resolved incident when its deterministic window recurs", async () => {
-    const existing = {
-      deduplication_key: "same-incident",
-      evidence_revision: 2,
-      update: vi.fn().mockResolvedValue({ id: "observation-1" }),
-    };
-    const updateSpy = vi.spyOn(db.Observation, "update").mockResolvedValue([0]);
-    const findSpy = vi.spyOn(db.Observation, "findOne")
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(existing);
-    const createSpy = vi.spyOn(db.Observation, "create").mockResolvedValue({});
+  it("captures snapshots without creating observations during refresh", async () => {
+    const refreshedAt = new Date("2026-08-09T05:00:00.000Z");
     const monitor = createMonitor({
-      baseline_policy: { type: "previous_period" },
-      chart_id: 4,
-      dataset_id: 8,
       definition_fingerprint: "definition",
-      metric_spec: {
-        aggregate: "sum",
-        layerId: "revenue",
-        timeUnit: "day",
-        unit: "currency_usd",
-      },
-      name: "Revenue",
-      project_id: 2,
+      kind: "scalar",
+      metric_spec: { layerId: "revenue" },
       team_id: 1,
+      update: vi.fn().mockResolvedValue(undefined),
     });
-    const baseline = {
-      comparison: {
-        periodEnd: new Date("2026-07-29T00:00:00.000Z"),
-        periodStart: new Date("2026-07-28T00:00:00.000Z"),
-      },
-      current: {
-        periodEnd: new Date("2026-07-30T00:00:00.000Z"),
-        periodStart: new Date("2026-07-29T00:00:00.000Z"),
-      },
-      sampleCount: 14,
-    };
-    const candidate = {
-      absoluteDelta: -30,
-      baselineValue: 100,
-      confidence: "high",
-      currentValue: 70,
-      direction: "decrease",
-      features: { completeness: 1 },
-      relativeDelta: -0.3,
-      score: 1,
-      scoreVersion: "deterministic-v1",
-      severity: "high",
-    };
+    const snapshotSpy = vi.spyOn(db.MetricSnapshot, "findOrCreate")
+      .mockResolvedValue([{}, true]);
+    const observationSpy = vi.spyOn(db.Observation, "update").mockResolvedValue([0]);
 
-    await publishObservation(monitor, baseline, candidate, {
-      deduplicationCooldownDays: 7,
+    const result = await processMonitor(monitor, {
+      layers: [{
+        fields: { value: "value" },
+        id: "revenue",
+        mark: "kpi",
+        rows: [{ value: 120 }],
+        warnings: [],
+      }],
+    }, {
+      refreshedAt,
+      updateRunId: 8,
+    }, {
+      maximumSnapshotsPerRefresh: 400,
     });
 
-    expect(createSpy).not.toHaveBeenCalled();
-    expect(existing.update).toHaveBeenCalledWith(expect.objectContaining({
-      evidence_revision: 3,
-      resolved_at: null,
-      status: "open",
+    expect(result).toEqual({
+      evaluationStatus: "review_required",
+      monitorId: "monitor-1",
+      reason: null,
+      status: "captured",
+    });
+    expect(snapshotSpy).toHaveBeenCalledWith(expect.objectContaining({
+      defaults: expect.objectContaining({
+        coverage: "complete",
+        result_as_of: refreshedAt,
+      }),
     }));
-
-    createSpy.mockRestore();
-    findSpy.mockRestore();
-    updateSpy.mockRestore();
+    expect(monitor.update).toHaveBeenCalledWith(expect.objectContaining({
+      status: "review_required",
+      status_reason: "metric_behavior_required",
+    }));
+    expect(observationSpy).not.toHaveBeenCalled();
+    snapshotSpy.mockRestore();
+    observationSpy.mockRestore();
   });
 
   it("only reports additive segment movement when totals reconcile", () => {
@@ -996,6 +981,7 @@ describe("workspace observations", () => {
       rawSnapshotDays: "0",
     });
     expect(options.auditDays).toBe(0);
+    expect(options.evaluationDays).toBe(730);
     expect(options.rawSnapshotDays).toBe(0);
     expect(options.rollupDays).toBe(730);
   });

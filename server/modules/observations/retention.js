@@ -16,6 +16,7 @@ function normalizeRetentionOptions(options = {}) {
     auditDays: parseRetentionNumber(options.auditDays, 90),
     batchSize: parseRetentionNumber(options.batchSize, 1000, 1),
     dryRun: Boolean(options.dryRun),
+    evaluationDays: parseRetentionNumber(options.evaluationDays, 730),
     limit: options.limit === undefined
       ? null
       : parseRetentionNumber(options.limit, null, 1),
@@ -188,19 +189,21 @@ async function rollupRawSnapshots(options, cutoff, deadline) {
 }
 
 async function cleanupObservationData(rawOptions = {}) {
-  if (!db.MetricSnapshot || !db.Observation || !db.ObservationAudit) {
+  if (!db.MetricEvaluation || !db.MetricSnapshot || !db.Observation || !db.ObservationAudit) {
     return { disabled: true };
   }
   const options = normalizeRetentionOptions(rawOptions);
   const now = rawOptions.now || new Date();
   const cutoffs = {
     audits: cutoffDate(options.auditDays, now),
+    evaluations: cutoffDate(options.evaluationDays, now),
     rawSnapshots: cutoffDate(options.rawSnapshotDays, now),
     resolvedObservations: cutoffDate(options.resolvedObservationDays, now),
     rollups: cutoffDate(options.rollupDays, now),
   };
   const where = {
     audits: { createdAt: { [Op.lt]: cutoffs.audits } },
+    evaluations: { current_period_end: { [Op.lt]: cutoffs.evaluations } },
     rawSnapshots: {
       period_end: { [Op.lt]: cutoffs.rawSnapshots },
       rollup: { [Op.ne]: "daily" },
@@ -220,6 +223,9 @@ async function cleanupObservationData(rawOptions = {}) {
         ? { disabled: true }
         : await countCategory(db.ObservationAudit, where.audits, "createdAt"),
       dryRun: true,
+      evaluations: options.evaluationDays === 0
+        ? { disabled: true }
+        : await countCategory(db.MetricEvaluation, where.evaluations, "current_period_end"),
       rawSnapshots: options.rawSnapshotDays === 0
         ? { disabled: true }
         : await countCategory(db.MetricSnapshot, where.rawSnapshots, "period_end"),
@@ -245,6 +251,7 @@ async function cleanupObservationData(rawOptions = {}) {
     report.rawSnapshots = { disabled: true };
   }
   const categories = [
+    ["evaluations", db.MetricEvaluation, where.evaluations, options.evaluationDays],
     ["rollups", db.MetricSnapshot, where.rollups, options.rollupDays],
     ["audits", db.ObservationAudit, where.audits, options.auditDays],
     [

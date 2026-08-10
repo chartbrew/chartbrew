@@ -114,9 +114,12 @@ class MetricRecommendationController {
     const monitorController = new MonitorController();
     return monitorController.create(access, {
       chartId: recommendation.chart.id,
+      comparison: data.comparison,
       desiredDirection: data.desiredDirection,
       importance: data.importance,
       layerId: recommendation.layerId,
+      metricBehavior: data.metricBehavior,
+      threshold: data.threshold,
       valueFormat: data.valueFormat || recommendation.valueFormat,
     }, user);
   }

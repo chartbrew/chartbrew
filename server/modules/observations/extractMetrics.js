@@ -1,20 +1,18 @@
-function addPeriod(date, granularity) {
-  const value = new Date(date);
-  const fieldByGranularity = {
-    second: "Seconds",
-    minute: "Minutes",
-    hour: "Hours",
-    day: "Date",
-    week: "Date",
-    month: "Month",
-    year: "FullYear",
+const { DateTime } = require("luxon");
+
+function addPeriod(date, granularity, timezone = "UTC") {
+  const durationByGranularity = {
+    day: { days: 1 },
+    hour: { hours: 1 },
+    minute: { minutes: 1 },
+    month: { months: 1 },
+    second: { seconds: 1 },
+    week: { weeks: 1 },
+    year: { years: 1 },
   };
-  const field = fieldByGranularity[granularity] || "Date";
-  const increment = granularity === "week" ? 7 : 1;
-  const utcMethod = `setUTC${field}`;
-  const getUtcMethod = `getUTC${field}`;
-  value[utcMethod](value[getUtcMethod]() + increment);
-  return value;
+  return DateTime.fromJSDate(new Date(date), { zone: timezone })
+    .plus(durationByGranularity[granularity] || { days: 1 })
+    .toJSDate();
 }
 
 function getLayer(frame, layerId) {
@@ -45,19 +43,27 @@ function extractTimeseries(monitor, layer, options) {
   }
 
   const granularity = monitor.metric_spec.timeUnit || "day";
-  const completeness = (layer.warnings || []).length === 0 ? 1 : 0;
+  const refreshedAt = new Date(options.refreshedAt || Date.now());
+  const hasCompleteResult = (layer.warnings || []).length === 0;
+  const timezone = monitor.baseline_policy?.calendarTimezone || "UTC";
   return {
     reason: rows.length < 2 ? "needs_more_history" : null,
-    snapshots: rows.map((row, index) => ({
-      completeness,
-      granularity,
-      periodEnd: rows[index + 1]
+    snapshots: rows.map((row, index) => {
+      const periodEnd = rows[index + 1]
         ? new Date(rows[index + 1].time)
-        : addPeriod(new Date(row.time), granularity),
-      periodStart: new Date(row.time),
-      sampleCount: 1,
-      value: row.value,
-    })),
+        : addPeriod(new Date(row.time), granularity, timezone);
+      const coverage = hasCompleteResult && periodEnd <= refreshedAt ? "complete" : "partial";
+      return {
+        completeness: coverage === "complete" ? 1 : 0,
+        coverage,
+        granularity,
+        periodEnd,
+        periodStart: new Date(row.time),
+        resultAsOf: refreshedAt,
+        sampleCount: 1,
+        value: row.value,
+      };
+    }),
     status: rows.length < 2 ? "collecting" : "ready",
   };
 }
@@ -83,9 +89,11 @@ function extractScalar(monitor, layer, refreshedAt) {
     reason: "needs_more_history",
     snapshots: [{
       completeness: (layer.warnings || []).length === 0 ? 1 : 0,
+      coverage: (layer.warnings || []).length === 0 ? "complete" : "partial",
       granularity: "refresh",
       periodEnd: new Date(periodStart.getTime() + 1),
       periodStart,
+      resultAsOf: periodStart,
       sampleCount: 1,
       value: values[0],
     }],
@@ -101,6 +109,7 @@ function extractMonitorSnapshots(monitor, frame, options = {}) {
 
   const extractionOptions = {
     maximumSnapshotsPerRefresh: options.maximumSnapshotsPerRefresh || 400,
+    refreshedAt: options.refreshedAt || new Date(),
   };
   if (monitor.kind === "timeseries") {
     return extractTimeseries(monitor, layer, extractionOptions);

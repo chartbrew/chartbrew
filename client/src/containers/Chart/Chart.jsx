@@ -394,28 +394,31 @@ function Chart(props) {
   };
 
   const _onCreateMonitor = async ({
-    desiredDirection, importance, layerId, valueFormat,
+    comparison, desiredDirection, importance, layerId, metricBehavior, threshold, valueFormat,
   }) => {
     if (!layerId) return;
     setMonitorLoading(true);
     try {
       const monitor = await createMonitor(team.id, {
         chartId: chart.id,
+        comparison,
         desiredDirection,
         importance,
         layerId,
+        metricBehavior,
+        threshold,
         valueFormat,
       });
       setMonitorModal(false);
       if (monitor.status === "ready") {
-        toast.success(`Watching ${monitor.name}. Existing chart data was evaluated.`);
+        toast.success(`Watching ${monitor.name}. Completed chart periods were evaluated.`);
       } else if (monitor.statusReason === "initial_evaluation_failed") {
         toast.success(
           `Watching ${monitor.name}. Refresh it from Activity to evaluate the current data.`
         );
       } else {
         toast.success(
-          `Watching ${monitor.name}. ${monitor.sampleCount} of ${monitor.minimumSamples} samples are ready.`
+          `Watching ${monitor.name}. Chartbrew will evaluate its completed periods.`
         );
       }
     } catch (monitorError) {
